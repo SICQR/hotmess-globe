@@ -1,17 +1,18 @@
 /**
  * L2SellSheet — List an Item for sale
  *
+ * Tier-gated: only Connected, Promoter, or Venue tiers can sell.
  * Writes to `preloved_listings` table via the market data layer.
- * Seller must be authenticated.
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { supabase } from '@/components/utils/supabaseClient';
 import { uploadToStorage } from '@/lib/uploadToStorage';
 import { createListing } from '@/lib/data/market';
 import {
   Camera, X, Loader2, Package, CheckCircle,
-  ChevronDown,
+  ChevronDown, Crown, Sparkles, ShieldCheck, TrendingUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -26,13 +27,103 @@ const CONDITIONS = [
   { value: 'fair', label: 'Fair' },
 ];
 const MAX_PHOTOS = 4;
+const SELL_TIERS = ['connected', 'promoter', 'venue'];
+
+function TierGate({ onUpgrade }) {
+  const benefits = [
+    { icon: ShieldCheck, text: 'Sell on MESSMARKET' },
+    { icon: TrendingUp, text: 'Priority placement in search' },
+    { icon: Sparkles, text: 'Verified seller badge' },
+    { icon: Crown, text: 'Lower platform fees' },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex flex-col items-center justify-center h-full px-6 py-12 text-center"
+    >
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+        className="w-20 h-20 rounded-full bg-[#C8962C]/15 border-2 border-[#C8962C]/40 flex items-center justify-center mb-6"
+      >
+        <Crown className="w-10 h-10 text-[#C8962C]" />
+      </motion.div>
+
+      <h2 className="text-white font-black text-xl uppercase mb-2">Upgrade to Sell</h2>
+      <p className="text-white/50 text-sm mb-6 max-w-xs">
+        Upgrade to <span className="text-[#C8962C] font-bold">Connected</span> or above to list items on MESSMARKET.
+      </p>
+
+      <div className="w-full max-w-xs space-y-3 mb-8">
+        {benefits.map(({ icon: Icon, text }, i) => (
+          <motion.div
+            key={text}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 + i * 0.08 }}
+            className="flex items-center gap-3 px-4 py-3 bg-[#1C1C1E] rounded-xl border border-white/[0.06]"
+          >
+            <Icon className="w-4 h-4 text-[#C8962C] flex-shrink-0" />
+            <span className="text-white/70 text-sm">{text}</span>
+          </motion.div>
+        ))}
+      </div>
+
+      <motion.button
+        whileTap={{ scale: 0.97 }}
+        onClick={onUpgrade}
+        className="w-full max-w-xs bg-[#C8962C] text-black font-black text-sm uppercase tracking-wide rounded-2xl py-4 flex items-center justify-center gap-2"
+      >
+        <Crown className="w-4 h-4" />
+        View Membership Tiers
+      </motion.button>
+    </motion.div>
+  );
+}
 
 export default function L2SellSheet() {
-  const { closeSheet } = useSheet();
+  const { closeSheet, openSheet } = useSheet();
   const photoInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+
+  // Tier gate
+  const [userTier, setUserTier] = useState(null);
+  const [tierLoading, setTierLoading] = useState(true);
+
+  useEffect(() => {
+    const checkTier = async () => {
+      try {
+        // Try RPC first
+        const { data, error } = await supabase.rpc('get_user_tier');
+        if (!error && data?.tier) {
+          setUserTier(data.tier);
+        } else {
+          // Fallback: check profiles.membership_tier or subscriptions
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('membership_tier')
+              .eq('id', session.user.id)
+              .single();
+            setUserTier(profile?.membership_tier || 'mess');
+          } else {
+            setUserTier('mess');
+          }
+        }
+      } catch {
+        setUserTier('mess');
+      } finally {
+        setTierLoading(false);
+      }
+    };
+    checkTier();
+  }, []);
 
   const [form, setForm] = useState({
     title: '',
@@ -58,7 +149,6 @@ export default function L2SellSheet() {
 
     setLoading(true);
     try {
-      // Ensure seller profile exists (auto-create on first listing)
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Please log in to sell');
 
@@ -76,9 +166,7 @@ export default function L2SellSheet() {
           avatar_url: profile?.avatar_url || null,
           email: profile?.email || user.email,
           status: 'active',
-        }).then(null, () => {
-          // Table might not exist — seller profile is nice-to-have, not a blocker
-        });
+        }).then(null, () => {});
       }
 
       const imageUrls = [];
@@ -87,7 +175,7 @@ export default function L2SellSheet() {
           const url = await uploadPhoto(p.file);
           imageUrls.push(url);
         } catch {
-          // Photo upload failed — continue without it
+          // Photo upload failed — continue
         }
       }
 
@@ -127,12 +215,35 @@ export default function L2SellSheet() {
     set('photos', form.photos.filter((_, i) => i !== idx));
   };
 
+  // Loading state
+  if (tierLoading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <Loader2 className="w-6 h-6 text-[#C8962C] animate-spin" />
+      </div>
+    );
+  }
+
+  // Tier gate
+  if (!SELL_TIERS.includes(userTier)) {
+    return <TierGate onUpgrade={() => openSheet('membership')} />;
+  }
+
   if (submitted) {
     return (
-      <div className="flex flex-col items-center justify-center h-full py-16 px-6 text-center gap-6">
-        <div className="w-20 h-20 rounded-full bg-[#C8962C]/15 border-2 border-[#C8962C] flex items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col items-center justify-center h-full py-16 px-6 text-center gap-6"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+          className="w-20 h-20 rounded-full bg-[#C8962C]/15 border-2 border-[#C8962C] flex items-center justify-center"
+        >
           <CheckCircle className="w-10 h-10 text-[#C8962C]" />
-        </div>
+        </motion.div>
         <div>
           <h2 className="text-xl font-black text-white uppercase">Listed!</h2>
           <p className="text-white/50 text-sm mt-2">Your item is live in MessMarket.</p>
@@ -151,7 +262,7 @@ export default function L2SellSheet() {
             Done
           </Button>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
@@ -166,7 +277,7 @@ export default function L2SellSheet() {
           </label>
           <div className="grid grid-cols-4 gap-2">
             {form.photos.map((p, i) => (
-              <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-white/5">
+              <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-white/5 border border-white/[0.06]">
                 <img src={p.preview} alt="" className="w-full h-full object-cover" />
                 <button
                   onClick={() => removePhoto(i)}
@@ -204,7 +315,7 @@ export default function L2SellSheet() {
             onChange={e => set('title', e.target.value)}
             placeholder="What are you selling?"
             maxLength={80}
-            className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/25 focus:outline-none focus:border-[#C8962C]/60 text-sm"
+            className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/25 focus:outline-none focus:border-[#C8962C]/60 text-sm transition-colors"
           />
         </div>
 
@@ -221,7 +332,7 @@ export default function L2SellSheet() {
                 value={form.price}
                 onChange={e => set('price', e.target.value)}
                 placeholder="0.00"
-                className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl pl-8 pr-4 py-3 text-white placeholder-white/25 focus:outline-none focus:border-[#C8962C]/60 text-sm"
+                className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl pl-8 pr-4 py-3 text-white placeholder-white/25 focus:outline-none focus:border-[#C8962C]/60 text-sm transition-colors"
               />
             </div>
           </div>
@@ -231,7 +342,7 @@ export default function L2SellSheet() {
               <select
                 value={form.category}
                 onChange={e => set('category', e.target.value)}
-                className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#C8962C]/60 text-sm appearance-none"
+                className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#C8962C]/60 text-sm appearance-none transition-colors"
               >
                 <option value="">Choose...</option>
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
@@ -271,7 +382,7 @@ export default function L2SellSheet() {
             placeholder="Tell buyers more about the item..."
             rows={3}
             maxLength={500}
-            className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/25 focus:outline-none focus:border-[#C8962C]/60 text-sm resize-none"
+            className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/25 focus:outline-none focus:border-[#C8962C]/60 text-sm resize-none transition-colors"
           />
           <p className="text-white/20 text-[10px] text-right mt-1">{form.description.length}/500</p>
         </div>
@@ -279,7 +390,6 @@ export default function L2SellSheet() {
 
       {/* Sticky CTA */}
       <div className="px-4 py-4 border-t border-white/10 bg-black/80">
-        {/* Prohibited items warning */}
         <div className="mb-3 p-3 bg-red-500/5 border border-red-500/15 rounded-xl">
           <p className="text-red-400/80 text-[10px] font-bold uppercase tracking-wider mb-1">Prohibited Items</p>
           <p className="text-white/30 text-[10px] leading-relaxed">
@@ -287,7 +397,6 @@ export default function L2SellSheet() {
           </p>
         </div>
 
-        {/* Terms checkbox */}
         <label className="flex items-start gap-3 mb-3 cursor-pointer">
           <input
             type="checkbox"

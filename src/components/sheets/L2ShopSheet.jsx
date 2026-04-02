@@ -10,13 +10,14 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   ShoppingBag, ShoppingCart, Loader2,
-  ChevronRight, Tag, Share2
+  ChevronRight, Tag, Share2, MessageCircle, HandCoins,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SheetSection, SheetActions, SheetDivider } from './L2SheetContainer';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import { toast } from 'sonner';
+import ProductReviews from '@/components/marketplace/ProductReviews';
 
 /**
  * Render a full-screen age confirmation modal for 18+ products.
@@ -385,24 +386,58 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
 
         <SheetDivider />
 
+        {/* Reviews */}
+        <SheetSection title="">
+          <ProductReviews productId={product.id} />
+        </SheetSection>
+
+        <SheetDivider />
+
         <SheetActions>
           <Button
             onClick={() => {
-              // Pass only the seller UUID — L2ChatSheet resolves identity internally
               openSheet('chat', {
                 userId: product.seller_id,
                 title: seller?.name || 'Seller',
               });
             }}
             variant="outline"
-            className="flex-1 h-12 border-white/20"
+            className="h-12 border-white/20 px-4"
           >
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Message Seller
+            <MessageCircle className="w-4 h-4" />
           </Button>
           <Button
             onClick={() => {
-              // Add preloved item to localStorage cart
+              const offer = prompt(`Make an offer for ${product.title} (listed at £${parseFloat(product.price || 0).toFixed(2)})`);
+              if (!offer) return;
+              const amount = parseFloat(offer);
+              if (isNaN(amount) || amount <= 0) { toast.error('Enter a valid amount'); return; }
+              supabase.from('preloved_offers').insert({
+                listing_id: product.id,
+                buyer_id: null, // will be set server-side via RLS or trigger
+                amount_gbp: amount,
+                status: 'pending',
+              }).then(async ({ error }) => {
+                if (error) {
+                  console.warn('[offers] insert error:', error.message);
+                  toast.error('Could not send offer — feature coming soon');
+                } else {
+                  toast.success(`Offer of £${amount.toFixed(2)} sent!`);
+                  openSheet('chat', {
+                    userId: product.seller_id,
+                    title: `Offer: £${amount.toFixed(2)} for ${product.title}`,
+                  });
+                }
+              });
+            }}
+            variant="outline"
+            className="h-12 border-[#C8962C]/40 text-[#C8962C] hover:bg-[#C8962C]/10 font-bold px-4"
+          >
+            <HandCoins className="w-4 h-4 mr-1.5" />
+            Offer
+          </Button>
+          <Button
+            onClick={() => {
               try {
                 const existing = JSON.parse(localStorage.getItem('hm_cart') || '[]');
                 const already = existing.find((i) => i.id === product.id);
@@ -413,7 +448,7 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
                     id: product.id,
                     title: product.title,
                     price: parseFloat(product.price || 0),
-                    image: img,
+                    image: allImages[0],
                     seller_id: product.seller_id,
                     source: 'preloved',
                     qty: 1,

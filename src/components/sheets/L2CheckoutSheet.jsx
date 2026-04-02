@@ -3,12 +3,13 @@
  *
  * Routes checkout by source:
  * - Shopify items → redirect to Shopify hosted checkout via ShopCartProvider.beginCheckout()
- * - Preloved items → create order record + open chat with seller to arrange payment
+ * - Preloved items → Stripe Checkout Session OR arrange with seller P2P
  * - Mixed → "Complete Shopify items first" guidance
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { Lock, Package, Loader2, CheckCircle, MessageCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Lock, Package, Loader2, CheckCircle, MessageCircle, CreditCard, HandshakeIcon, ShieldCheck, ArrowRight } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
@@ -21,6 +22,8 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
   const [loading, setLoading] = useState(!!id);
   const [processing, setProcessing] = useState(false);
   const [step, setStep] = useState('review'); // 'review' | 'payment' | 'success'
+  const [paymentMethod, setPaymentMethod] = useState(null); // 'stripe' | 'p2p'
+  const [orderCreated, setOrderCreated] = useState(null);
 
   const [form, setForm] = useState({
     fullName: '',
@@ -47,8 +50,8 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
 
   // Pre-fill email from auth
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user?.email) setForm(f => ({ ...f, email: user.email }));
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.email) setForm(f => ({ ...f, email: session.user.email }));
     });
   }, []);
 
@@ -98,70 +101,100 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
     setStep('payment');
   };
 
-  const handlePayment = async () => {
+  const createOrderRecord = async (session, status = 'pending_payment') => {
+    const user = session?.user;
+    if (!user) { toast.error('Please log in'); return null; }
+
+    const { data: order, error: orderErr } = await supabase.from('orders').insert({
+      buyer_id: user.id,
+      buyer_email: form.email,
+      total_gbp: orderTotal,
+      status,
+      shipping_address: `${form.addressLine1}, ${form.city}, ${form.postcode}, ${form.country}`,
+      items: prelovedItems.map(i => ({ id: i.id, title: i.title, price: i.price, qty: i.qty })),
+    }).select('id').single();
+
+    if (orderErr) throw orderErr;
+
+    // Notify seller(s)
+    const sellerIds = [...new Set(prelovedItems.map(i => i.seller_id).filter(Boolean))];
+    for (const sellerId of sellerIds) {
+      const { data: sellerProfile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', sellerId)
+        .single();
+
+      if (sellerProfile?.email) {
+        await supabase.from('notifications').insert({
+          user_email: sellerProfile.email,
+          type: 'order',
+          title: 'New Order!',
+          message: `${form.fullName || 'A buyer'} ordered from you — £${orderTotal.toFixed(2)}`,
+          metadata: { order_id: order?.id, buyer_email: form.email },
+          read: false,
+        }).then(null, () => {});
+      }
+    }
+
+    return order;
+  };
+
+  // Stripe payment: create order then redirect to Stripe Checkout
+  const handleStripePayment = async () => {
     setProcessing(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-      if (!user) { toast.error('Please log in'); setProcessing(false); return; }
+      const order = await createOrderRecord(session, 'pending_payment');
+      if (!order) { setProcessing(false); return; }
 
-      // 1. Create order record
-      const { data: order, error: orderErr } = await supabase.from('orders').insert({
-        buyer_id: user.id,
-        buyer_email: form.email,
-        total_gbp: orderTotal,
-        status: 'pending_payment',
-        shipping_address: `${form.addressLine1}, ${form.city}, ${form.postcode}, ${form.country}`,
-        items: prelovedItems.map(i => ({ id: i.id, title: i.title, price: i.price, qty: i.qty })),
-      }).select('id').single();
+      // Create Stripe Checkout Session
+      const res = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          type: 'preloved_order',
+          orderId: order.id,
+          amount: Math.round(orderTotal * 100),
+          productTitle: items[0]?.title || 'Preloved Item',
+          sellerId: prelovedItems[0]?.seller_id,
+        }),
+      });
 
-      if (orderErr) throw orderErr;
-
-      // 2. Notify seller(s) via notification_outbox
-      const sellerIds = [...new Set(prelovedItems.map(i => i.seller_id).filter(Boolean))];
-      for (const sellerId of sellerIds) {
-        // Look up seller email
-        const { data: sellerProfile } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('id', sellerId)
-          .single();
-
-        if (sellerProfile?.email) {
-          await supabase.from('notifications').insert({
-            user_email: sellerProfile.email,
-            type: 'order',
-            title: 'New Order!',
-            message: `${form.fullName || 'A buyer'} ordered from you — £${orderTotal.toFixed(2)}`,
-            metadata: { order_id: order?.id, buyer_email: form.email },
-            read: false,
-          }).then(null, () => {});
+      if (res.ok) {
+        const { url } = await res.json();
+        if (url) {
+          localStorage.removeItem('hm_cart');
+          window.location.href = url; // Redirect to Stripe hosted checkout
+          return;
         }
       }
 
-      // 3. Try Stripe payment (graceful degradation if not configured)
-      try {
-        const payRes = await fetch('/api/payments/create', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ type: 'product', referenceId: order?.id }),
-        });
+      // Stripe not available — fallback to P2P
+      toast('Stripe unavailable right now — arrange payment with seller via chat', { duration: 4000 });
+      setOrderCreated(order);
+      localStorage.removeItem('hm_cart');
+      setStep('success');
+    } catch (err) {
+      console.error('Stripe checkout error:', err);
+      toast.error('Payment processing failed. Try arranging with seller.');
+    } finally {
+      setProcessing(false);
+    }
+  };
 
-        if (payRes.ok) {
-          const { clientSecret } = await payRes.json();
-          // Store client secret for future Stripe Elements integration
-          // For now, mark as payment initiated
-          await supabase.from('orders').update({ status: 'payment_initiated', stripe_client_secret: clientSecret }).eq('id', order?.id);
-        }
-        // If Stripe isn't configured (500), fall through to P2P flow
-      } catch {
-        // Stripe not available — P2P payment via chat
-      }
+  // P2P payment: create order and open chat
+  const handleP2PPayment = async () => {
+    setProcessing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const order = await createOrderRecord(session, 'pending_payment');
+      if (!order) { setProcessing(false); return; }
 
-      // 4. Clear cart + show success
+      setOrderCreated(order);
       localStorage.removeItem('hm_cart');
       setStep('success');
     } catch (err) {
@@ -190,34 +223,47 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
     );
   }
 
+  // ---- SUCCESS SCREEN ----
   if (step === 'success') {
     return (
-      <div className="flex flex-col items-center justify-center py-16 px-6 text-center h-full">
-        <div className="w-20 h-20 rounded-full bg-[#C8962C]/20 border-2 border-[#C8962C] flex items-center justify-center mb-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col items-center justify-center py-16 px-6 text-center h-full"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+          className="w-20 h-20 rounded-full bg-[#C8962C]/20 border-2 border-[#C8962C] flex items-center justify-center mb-6"
+        >
           <CheckCircle className="w-10 h-10 text-[#C8962C]" />
-        </div>
-        <h2 className="text-white font-black text-xl mb-2">Order Created!</h2>
+        </motion.div>
+        <h2 className="text-white font-black text-xl mb-2">Order Placed!</h2>
         <p className="text-white/50 text-sm mb-1">
-          Message the seller to arrange payment
+          {paymentMethod === 'stripe'
+            ? 'Payment processing — you\'ll get a confirmation email'
+            : 'Message the seller to arrange payment'}
         </p>
         <p className="text-[#C8962C] font-bold text-sm">{form.fullName || 'Order Confirmation'}</p>
         <p className="text-white/30 text-xs mt-3">Order total: £{orderTotal.toFixed(2)}</p>
-        <div className="flex gap-3 mt-6">
+
+        <div className="flex gap-3 mt-6 w-full max-w-xs">
           <button
             onClick={handleMessageSeller}
-            className="bg-[#C8962C] text-black font-black text-sm rounded-2xl px-6 py-3 flex items-center gap-2"
+            className="flex-1 bg-[#C8962C] text-black font-black text-sm rounded-2xl px-5 py-3 flex items-center justify-center gap-2 active:scale-95 transition-transform"
           >
             <MessageCircle className="w-4 h-4" />
             Message Seller
           </button>
           <button
             onClick={() => openSheet('my-orders')}
-            className="bg-white/10 text-white font-bold text-sm rounded-2xl px-6 py-3"
+            className="flex-1 bg-white/10 text-white font-bold text-sm rounded-2xl px-5 py-3 border border-white/[0.06] active:scale-95 transition-transform"
           >
             View Orders
           </button>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
@@ -228,12 +274,12 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
         {/* Order summary */}
         <div>
           <p className="text-xs uppercase tracking-widest text-white/30 font-black mb-3">Order Summary</p>
-          <div className="bg-[#1C1C1E] rounded-2xl divide-y divide-white/5">
+          <div className="bg-[#1C1C1E] rounded-xl border border-white/[0.06] divide-y divide-white/5">
             {items.map(item => (
               <div key={item.id} className="px-4 py-3 flex items-center gap-3">
                 <Package className="w-4 h-4 text-[#C8962C] flex-shrink-0" />
                 <span className="flex-1 text-white text-sm truncate">{item.title || item.name}</span>
-                <span className="text-white/60 text-sm">£{((item.price || 0) * (item.qty || 1)).toFixed(2)}</span>
+                <span className="text-[#C8962C] font-black text-sm">£{((item.price || 0) * (item.qty || 1)).toFixed(2)}</span>
               </div>
             ))}
             <div className="px-4 py-3 flex justify-between">
@@ -262,7 +308,7 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
                     value={form[key]}
                     onChange={e => set(key, e.target.value)}
                     placeholder={placeholder}
-                    className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/25 text-sm focus:outline-none focus:border-[#C8962C]/60"
+                    className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/25 text-sm focus:outline-none focus:border-[#C8962C]/60 transition-colors"
                   />
                 ))}
               </div>
@@ -271,25 +317,81 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
         )}
 
         {step === 'payment' && (
-          <div>
-            <p className="text-xs uppercase tracking-widest text-white/30 font-black mb-3">Arrange Payment</p>
-            <div className="bg-[#C8962C]/10 border border-[#C8962C]/20 rounded-2xl p-4 flex items-start gap-3">
-              <MessageCircle className="w-4 h-4 text-[#C8962C] flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-[#C8962C] font-bold text-sm">Peer-to-Peer Purchase</p>
-                <p className="text-white/40 text-xs mt-0.5">
-                  Your order will be created and the seller notified. Arrange payment directly with the seller via chat.
-                </p>
+          <div className="space-y-4">
+            <p className="text-xs uppercase tracking-widest text-white/30 font-black mb-1">Choose Payment Method</p>
+
+            {/* Pay Now — Stripe */}
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setPaymentMethod('stripe')}
+              className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+                paymentMethod === 'stripe'
+                  ? 'border-[#C8962C] bg-[#C8962C]/10'
+                  : 'border-white/10 bg-[#1C1C1E] hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  paymentMethod === 'stripe' ? 'bg-[#C8962C]/20' : 'bg-white/5'
+                }`}>
+                  <CreditCard className={`w-5 h-5 ${paymentMethod === 'stripe' ? 'text-[#C8962C]' : 'text-white/40'}`} />
+                </div>
+                <div className="flex-1">
+                  <p className={`font-black text-sm ${paymentMethod === 'stripe' ? 'text-[#C8962C]' : 'text-white'}`}>
+                    Pay Now
+                  </p>
+                  <p className="text-white/40 text-xs mt-0.5">
+                    Secure card payment via Stripe. Buyer protection included.
+                  </p>
+                </div>
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 ${
+                  paymentMethod === 'stripe' ? 'border-[#C8962C]' : 'border-white/20'
+                }`}>
+                  {paymentMethod === 'stripe' && (
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#C8962C]" />
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="mt-3 bg-[#1C1C1E] rounded-2xl p-4">
-              <p className="text-white/50 text-sm text-center">
-                HOTMESS holds your order details. Payment is arranged between buyer and seller.
-              </p>
-              <div className="flex items-center justify-center gap-2 mt-3 text-white/25 text-xs">
-                <Lock className="w-3 h-3" />
-                <span>Protected by HOTMESS Community Guidelines</span>
+            </motion.button>
+
+            {/* Arrange with Seller — P2P */}
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setPaymentMethod('p2p')}
+              className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+                paymentMethod === 'p2p'
+                  ? 'border-[#C8962C] bg-[#C8962C]/10'
+                  : 'border-white/10 bg-[#1C1C1E] hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  paymentMethod === 'p2p' ? 'bg-[#C8962C]/20' : 'bg-white/5'
+                }`}>
+                  <HandshakeIcon className={`w-5 h-5 ${paymentMethod === 'p2p' ? 'text-[#C8962C]' : 'text-white/40'}`} />
+                </div>
+                <div className="flex-1">
+                  <p className={`font-black text-sm ${paymentMethod === 'p2p' ? 'text-[#C8962C]' : 'text-white'}`}>
+                    Arrange with Seller
+                  </p>
+                  <p className="text-white/40 text-xs mt-0.5">
+                    Place order and arrange payment directly via chat.
+                  </p>
+                </div>
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 ${
+                  paymentMethod === 'p2p' ? 'border-[#C8962C]' : 'border-white/20'
+                }`}>
+                  {paymentMethod === 'p2p' && (
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#C8962C]" />
+                  )}
+                </div>
               </div>
+            </motion.button>
+
+            {/* Trust badge */}
+            <div className="flex items-center justify-center gap-2 pt-2 text-white/25 text-xs">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>HOTMESS Buyer Protection</span>
             </div>
           </div>
         )}
@@ -298,22 +400,31 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
 
       <div className="px-4 py-4 border-t border-white/8 space-y-2">
         {step === 'review' ? (
-          <button
+          <motion.button
+            whileTap={{ scale: 0.97 }}
             onClick={handleProceedToPayment}
-            className="w-full bg-[#C8962C] text-black font-black text-sm rounded-2xl py-4 flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            className="w-full bg-[#C8962C] text-black font-black text-sm rounded-2xl py-4 flex items-center justify-center gap-2"
           >
-            Continue to Payment · £{orderTotal.toFixed(2)}
-          </button>
+            Continue to Payment
+            <ArrowRight className="w-4 h-4" />
+          </motion.button>
         ) : (
-          <button
-            onClick={handlePayment}
-            disabled={processing}
-            className="w-full bg-[#C8962C] text-black font-black text-sm rounded-2xl py-4 flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-60"
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={paymentMethod === 'stripe' ? handleStripePayment : handleP2PPayment}
+            disabled={processing || !paymentMethod}
+            className="w-full bg-[#C8962C] text-black font-black text-sm rounded-2xl py-4 flex items-center justify-center gap-2 disabled:opacity-40 transition-opacity"
           >
-            {processing
-              ? <><Loader2 className="w-4 h-4 animate-spin" /> Creating Order...</>
-              : <><MessageCircle className="w-4 h-4" /> Place Order · £{orderTotal.toFixed(2)}</>}
-          </button>
+            {processing ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+            ) : paymentMethod === 'stripe' ? (
+              <><CreditCard className="w-4 h-4" /> Pay Now · £{orderTotal.toFixed(2)}</>
+            ) : paymentMethod === 'p2p' ? (
+              <><MessageCircle className="w-4 h-4" /> Place Order · £{orderTotal.toFixed(2)}</>
+            ) : (
+              'Select a payment method'
+            )}
+          </motion.button>
         )}
         <div className="flex items-center justify-center gap-1.5">
           <Lock className="w-3 h-3 text-white/20" />

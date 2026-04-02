@@ -4,14 +4,19 @@
  * Two tabs:
  *   Buying — orders I placed
  *   Selling — orders for my listings
+ *
+ * Tap order → opens L2OrderSheet with full detail.
+ * Seller: "Mark Shipped" on paid orders.
+ * Buyer: "Confirm Delivered" on shipped orders.
  */
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { supabase } from '@/components/utils/supabaseClient';
 import {
   Package, ShoppingBag, Loader2, Truck,
-  CheckCircle2, Clock, XCircle,
+  CheckCircle2, Clock, XCircle, CreditCard, AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -20,13 +25,14 @@ import { useSheet } from '@/contexts/SheetContext';
 import { cn } from '@/lib/utils';
 
 const STATUS_CONFIG = {
-  pending:   { label: 'Pending',   color: 'text-white/50',    bg: 'bg-white/10',           icon: Clock },
-  paid:      { label: 'Paid',      color: 'text-[#C8962C]',   bg: 'bg-[#C8962C]/15',       icon: CheckCircle2 },
-  shipped:   { label: 'Shipped',   color: 'text-blue-400',    bg: 'bg-blue-400/15',         icon: Truck },
-  delivered: { label: 'Delivered', color: 'text-[#39FF14]',   bg: 'bg-[#39FF14]/15',        icon: CheckCircle2 },
-  completed: { label: 'Completed', color: 'text-[#39FF14]',   bg: 'bg-[#39FF14]/15',        icon: CheckCircle2 },
-  cancelled: { label: 'Cancelled', color: 'text-red-400',     bg: 'bg-red-400/15',          icon: XCircle },
-  disputed:  { label: 'Disputed',  color: 'text-yellow-400',  bg: 'bg-yellow-400/15',       icon: XCircle },
+  pending_payment: { label: 'Awaiting Payment', color: 'text-amber-400',     bg: 'bg-amber-400/15',     icon: CreditCard },
+  pending:         { label: 'Pending',          color: 'text-white/50',      bg: 'bg-white/10',         icon: Clock },
+  paid:            { label: 'Paid',             color: 'text-green-400',     bg: 'bg-green-400/15',     icon: CheckCircle2 },
+  shipped:         { label: 'Shipped',          color: 'text-blue-400',      bg: 'bg-blue-400/15',      icon: Truck },
+  delivered:       { label: 'Delivered',        color: 'text-[#C8962C]',     bg: 'bg-[#C8962C]/15',     icon: CheckCircle2 },
+  completed:       { label: 'Completed',        color: 'text-[#C8962C]',     bg: 'bg-[#C8962C]/15',     icon: CheckCircle2 },
+  cancelled:       { label: 'Cancelled',        color: 'text-red-400',       bg: 'bg-red-400/15',       icon: XCircle },
+  disputed:        { label: 'Disputed',         color: 'text-yellow-400',    bg: 'bg-yellow-400/15',    icon: AlertCircle },
 };
 
 function StatusBadge({ status }) {
@@ -38,24 +44,32 @@ function StatusBadge({ status }) {
   );
 }
 
-function OrderCard({ order, isSeller, onMarkShipped, onMarkDelivered }) {
-  // Get product name from joined order_items (first item)
+function OrderCard({ order, isSeller, onMarkShipped, onMarkDelivered, onTap }) {
   const firstItem = order.order_items?.[0];
-  const productName = firstItem?.product_name || 'Item';
+  // Also check order.items JSONB (preloved orders)
+  const inlineItem = Array.isArray(order.items) ? order.items[0] : null;
+  const productName = firstItem?.product_name || inlineItem?.title || 'Item';
   const displayTotal = order.total_gbp;
+  const itemCount = (order.order_items?.length || 0) + (Array.isArray(order.items) ? order.items.length : 0);
 
   return (
-    <div className="bg-[#1C1C1E] rounded-2xl border border-white/8 overflow-hidden">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onTap}
+      className="bg-[#1C1C1E] rounded-xl border border-white/[0.06] overflow-hidden cursor-pointer active:bg-white/5 transition-colors"
+    >
       {/* Header */}
       <div className="flex items-start gap-3 p-4">
-        {/* Product icon placeholder */}
-        <div className="w-14 h-14 rounded-xl bg-white/5 flex-shrink-0 flex items-center justify-center">
-          <Package className="w-6 h-6 text-white/20" />
+        <div className="w-14 h-14 rounded-xl bg-[#C8962C]/10 flex-shrink-0 flex items-center justify-center">
+          <Package className="w-6 h-6 text-[#C8962C]/40" />
         </div>
 
         <div className="flex-1 min-w-0">
           <p className="text-white font-bold text-sm leading-tight truncate">
             {productName}
+            {itemCount > 1 && <span className="text-white/30 text-xs ml-1">+{itemCount - 1} more</span>}
           </p>
           <p className="text-white/40 text-xs mt-0.5">
             {isSeller
@@ -69,18 +83,18 @@ function OrderCard({ order, isSeller, onMarkShipped, onMarkDelivered }) {
 
         <div className="text-right flex-shrink-0">
           <p className="text-[#C8962C] font-black text-base">
-            {displayTotal != null ? `£${Number(displayTotal).toFixed(2)}` : '—'}
+            {displayTotal != null ? `£${Number(displayTotal).toFixed(2)}` : '--'}
           </p>
           <StatusBadge status={order.status} />
         </div>
       </div>
 
       {/* Seller actions */}
-      {isSeller && (
-        <div className="flex gap-2 px-4 pb-4">
+      {isSeller && (order.status === 'paid' || order.status === 'shipped') && (
+        <div className="flex gap-2 px-4 pb-4" onClick={e => e.stopPropagation()}>
           {order.status === 'paid' && (
             <Button
-              onClick={() => onMarkShipped(order.id)}
+              onClick={(e) => { e.stopPropagation(); onMarkShipped(order.id); }}
               className="flex-1 bg-[#C8962C] text-black font-black text-xs rounded-xl py-2"
             >
               <Truck className="w-3.5 h-3.5 mr-1" /> Mark Shipped
@@ -88,8 +102,8 @@ function OrderCard({ order, isSeller, onMarkShipped, onMarkDelivered }) {
           )}
           {order.status === 'shipped' && (
             <Button
-              onClick={() => onMarkDelivered(order.id)}
-              className="flex-1 bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/30 font-black text-xs rounded-xl py-2"
+              onClick={(e) => { e.stopPropagation(); onMarkDelivered(order.id); }}
+              className="flex-1 bg-[#C8962C]/20 text-[#C8962C] border border-[#C8962C]/30 font-black text-xs rounded-xl py-2"
             >
               <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Confirm Delivered
             </Button>
@@ -97,15 +111,27 @@ function OrderCard({ order, isSeller, onMarkShipped, onMarkDelivered }) {
         </div>
       )}
 
+      {/* Buyer: confirm delivered */}
+      {!isSeller && order.status === 'shipped' && (
+        <div className="flex gap-2 px-4 pb-4" onClick={e => e.stopPropagation()}>
+          <Button
+            onClick={(e) => { e.stopPropagation(); onMarkDelivered(order.id); }}
+            className="flex-1 bg-[#C8962C] text-black font-black text-xs rounded-xl py-2"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Confirm Delivered
+          </Button>
+        </div>
+      )}
+
       {/* Buyer: tracking number */}
       {!isSeller && order.tracking_number && (
-        <div className="px-4 pb-4">
+        <div className="px-4 pb-4" onClick={e => e.stopPropagation()}>
           <p className="text-white/40 text-xs">
             Tracking: <span className="text-white font-mono">{order.tracking_number}</span>
           </p>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -114,45 +140,44 @@ export default function L2MyOrdersSheet() {
   const queryClient = useQueryClient();
   const { openSheet } = useSheet();
 
-  // Get current user from Supabase auth
   const { data: user } = useQuery({
     queryKey: ['supabase-user'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      return user;
+      const { data: { session } } = await supabase.auth.getSession();
+      return session?.user || null;
     },
   });
 
   const { data: buyingOrders = [], isLoading: buyLoading } = useQuery({
-    queryKey: ['my-buying-orders', user?.email],
+    queryKey: ['my-buying-orders', user?.id],
     queryFn: async () => {
-      if (!user?.email) return [];
+      if (!user?.id) return [];
       const { data, error } = await supabase
         .from('orders')
         .select('*, order_items(product_name, price_gbp)')
-        .eq('buyer_email', user.email)
+        .eq('buyer_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50);
       if (error) { console.warn('[orders] buying:', error); return []; }
       return data || [];
     },
-    enabled: !!user?.email,
+    enabled: !!user?.id,
   });
 
   const { data: sellingOrders = [], isLoading: sellLoading } = useQuery({
-    queryKey: ['my-selling-orders', user?.email],
+    queryKey: ['my-selling-orders', user?.id],
     queryFn: async () => {
-      if (!user?.email) return [];
+      if (!user?.id) return [];
       const { data, error } = await supabase
         .from('orders')
         .select('*, order_items(product_name, price_gbp)')
-        .eq('seller_email', user.email)
+        .eq('seller_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50);
       if (error) { console.warn('[orders] selling:', error); return []; }
       return data || [];
     },
-    enabled: !!user?.email,
+    enabled: !!user?.id,
   });
 
   const updateStatus = useMutation({
@@ -164,8 +189,8 @@ export default function L2MyOrdersSheet() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['my-selling-orders']);
-      queryClient.invalidateQueries(['seller-completed-orders']);
+      queryClient.invalidateQueries({ queryKey: ['my-selling-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['my-buying-orders'] });
       toast.success('Order updated');
     },
     onError: () => toast.error('Failed to update order'),
@@ -216,13 +241,13 @@ export default function L2MyOrdersSheet() {
           <div className="text-center py-16">
             {tab === 'buying' ? (
               <>
-                <ShoppingBag className="w-10 h-10 text-white/10 mx-auto mb-3" />
+                <ShoppingBag className="w-10 h-10 text-[#C8962C]/15 mx-auto mb-3" />
                 <p className="text-white/40 font-bold">No orders yet</p>
                 <p className="text-white/20 text-sm mt-1">Browse MessMarket to find something</p>
               </>
             ) : (
               <>
-                <Package className="w-10 h-10 text-white/10 mx-auto mb-3" />
+                <Package className="w-10 h-10 text-[#C8962C]/15 mx-auto mb-3" />
                 <p className="text-white/40 font-bold">No sales yet</p>
                 <p className="text-white/20 text-sm mt-1">List an item to start selling</p>
               </>
@@ -230,14 +255,14 @@ export default function L2MyOrdersSheet() {
           </div>
         ) : (
           <div className="space-y-3">
-            {orders.map(order => (
+            {orders.map((order, idx) => (
               <OrderCard
                 key={order.id}
                 order={order}
                 isSeller={tab === 'selling'}
                 onMarkShipped={(id) => updateStatus.mutate({ orderId: id, status: 'shipped' })}
                 onMarkDelivered={(id) => updateStatus.mutate({ orderId: id, status: 'delivered' })}
-
+                onTap={() => openSheet('order', { orderId: order.id })}
               />
             ))}
           </div>

@@ -273,10 +273,10 @@ export default function SellerDashboard() {
         </motion.div>
 
         {/* Inventory Alerts */}
-        {currentUser && <InventoryAlerts sellerEmail={currentUser.email} />}
+        {currentUser && <InventoryAlerts sellerId={currentUser.id} />}
 
         {/* Seller Rating Display */}
-        {currentUser && <SellerRatingDisplay sellerEmail={currentUser.email} />}
+        {currentUser && <SellerRatingDisplay sellerId={currentUser.id} />}
 
         {showForm && (
           <div className="mb-8">
@@ -428,7 +428,7 @@ export default function SellerDashboard() {
           </TabsContent>
 
           <TabsContent value="offers">
-            <OffersList userEmail={currentUser?.email} type="received" />
+            <OffersList sellerId={currentUser?.id} type="received" />
           </TabsContent>
 
           <TabsContent value="analytics">
@@ -442,19 +442,19 @@ export default function SellerDashboard() {
           <TabsContent value="featured">
             <FeaturedListingsManager
               products={products}
-              sellerEmail={currentUser?.email}
+              sellerId={currentUser?.id}
             />
           </TabsContent>
 
           <TabsContent value="disputes">
-            <DisputeResolution sellerEmail={currentUser?.email} />
+            <DisputeResolution sellerId={currentUser?.id} />
           </TabsContent>
 
           <TabsContent value="promotions">
             <PromotionManager
               promotions={promotions}
               products={products}
-              sellerEmail={currentUser?.email}
+              sellerId={currentUser?.id}
             />
           </TabsContent>
 
@@ -462,7 +462,7 @@ export default function SellerDashboard() {
             <PayoutManager
               payouts={payouts}
               orders={enrichedOrders}
-              sellerEmail={currentUser?.email}
+              sellerId={currentUser?.id}
               stripeConnectId={currentUser?.stripe_connect_id}
             />
           </TabsContent>
