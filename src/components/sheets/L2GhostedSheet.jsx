@@ -94,7 +94,7 @@ export default function L2GhostedSheet() {
   const usersWithStatus = rightNowUsers
     .map(status => ({
       status,
-      user: allUsers.find(u => u.email === status.user_email),
+      user: (Array.isArray(allUsers) ? allUsers : []).find(u => u.id === status.user_id),
     }))
     .filter(item => item.user && item.user.email !== currentUser?.email);
 

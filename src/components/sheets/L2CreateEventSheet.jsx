@@ -44,7 +44,7 @@ export default function L2CreateEventSheet() {
         description: form.description.trim() || null,
         venue_name: form.venue.trim() || null,
         starts_at: form.starts_at,
-        end_at: form.ends_at || null,
+        ends_at: form.ends_at || null,
         capacity: form.max_attendees ? parseInt(form.max_attendees) : null,
         image_url: form.image_url || null,
         ticket_price_cents: form.is_free ? 0 : Math.round((parseFloat(form.price) || 0) * 100),

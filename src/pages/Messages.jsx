@@ -57,8 +57,8 @@ export default function Messages() {
   const { data: threads = [], isLoading } = useQuery({
     queryKey: ['chat-threads', currentUser?.email],
     queryFn: async () => {
-      const allThreads = await supabase.from('chat_threads').select('*').eq({ active: true }, '-last_message_at');
-      return allThreads.filter(t => t.participant_emails.includes(currentUser.email));
+      const { data: allThreads } = await supabase.from('chat_threads').select('*').eq('active', true).order('last_message_at', { ascending: false });
+      return (allThreads || []).filter(t => t.participant_emails?.includes(currentUser.email));
     },
     enabled: !!currentUser,
     // No polling - we use realtime subscriptions below

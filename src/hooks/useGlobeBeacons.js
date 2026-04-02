@@ -59,7 +59,7 @@ function mapBeaconToGlobe(row) {
       title: row.title,
       intensity: row.intensity,
     },
-    expiresAt: row.end_at || row.beacon_expires_at,
+    expiresAt: row.ends_at || row.beacon_expires_at,
   };
 }
 
@@ -75,8 +75,8 @@ export function useGlobeBeacons(options = {}) {
     try {
       let q = supabase
         .from('beacons')
-        .select('id, kind, type, latitude, longitude, city, title, intensity, end_at, promoter_id, created_date, metadata')
-        .gte('end_at', new Date().toISOString());
+        .select('id, kind, type, latitude, longitude, city, title, intensity, ends_at, promoter_id, created_date, metadata')
+        .gte('ends_at', new Date().toISOString());
 
       if (kindFilter) {
         q = q.eq('kind', kindFilter);
@@ -86,7 +86,7 @@ export function useGlobeBeacons(options = {}) {
       if (e) throw e;
       const now = new Date();
       const notExpired = (row) => {
-        const end = row.end_at || row.beacon_expires_at;
+        const end = row.ends_at || row.beacon_expires_at;
         return !end || new Date(end) > now;
       };
       setBeacons((data || []).filter(notExpired).map(mapBeaconToGlobe));

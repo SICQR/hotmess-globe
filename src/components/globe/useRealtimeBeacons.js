@@ -120,7 +120,7 @@ export function useRealtimeBeacons() {
         .select('*')
         .eq('kind', 'event')
         .lte('starts_at', now)
-        .gte('end_at', now);
+        .gte('ends_at', now);
       
       if (events) {
         const beacons = events

@@ -131,7 +131,7 @@ export default function Home() {
       .reverse()
       .find((b) => {
         const start = new Date(b.release_at);
-        const end = b.end_at ? new Date(b.end_at) : null;
+        const end = b.ends_at ? new Date(b.ends_at) : null;
         return start <= now && (!end || now < end);
       });
     if (live) return { beacon: live, state: 'live' };

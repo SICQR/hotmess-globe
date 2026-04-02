@@ -66,7 +66,7 @@ export default function MusicRelease() {
 
   const effective = release || releaseBeacon;
   const releaseAt = effective?.release_at ? new Date(effective.release_at) : null;
-  const endAt = effective?.end_at ? new Date(effective.end_at) : null;
+  const endAt = effective?.ends_at ? new Date(effective.ends_at) : null;
   const now = serverNow ?? new Date();
   const isPreLaunch = releaseAt ? now < releaseAt : false;
   const isEnded = releaseAt && endAt ? now >= endAt : false;

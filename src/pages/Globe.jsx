@@ -196,7 +196,7 @@ export default function GlobePage({ embedded = false }) {
           intensity: 1,
           active: true,
           isRightNow: true,
-          user_email: s.user_email,
+          user_id: s.user_id,
         }));
     },
     refetchInterval: 30000,

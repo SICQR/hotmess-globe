@@ -952,9 +952,9 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('beacons')
-        .select('id, metadata, starts_at, end_at, lat, lng, kind, type, title')
+        .select('id, metadata, starts_at, ends_at, lat, lng, kind, type, title')
         .or(`type.eq.event,kind.eq.event`)
-        .gte('end_at', now)
+        .gte('ends_at', now)
         .order('starts_at', { ascending: true })
         .limit(12);
       if (error) {
@@ -969,7 +969,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
           imageUrl: meta.image_url || undefined,
           address: meta.address || meta.venue_address || undefined,
           startsAt: b.starts_at as string,
-          endsAt: b.end_at as string,
+          endsAt: b.ends_at as string,
           kind: 'event',
           type: 'event',
           lat: b.lat as number,
@@ -990,8 +990,8 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('beacons')
-        .select('id, metadata, starts_at, end_at, latitude, longitude, kind, type, intensity, title')
-        .or('end_at.is.null,end_at.gte.' + now)
+        .select('id, metadata, starts_at, ends_at, latitude, longitude, kind, type, intensity, title')
+        .or('ends_at.is.null,ends_at.gte.' + now)
         .order('starts_at', { ascending: false })
         .limit(50);
       if (error) {
@@ -1007,7 +1007,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
           address: meta.address || meta.venue_address || undefined,
           imageUrl: meta.image_url || undefined,
           startsAt: b.starts_at as string,
-          endsAt: b.end_at as string,
+          endsAt: b.ends_at as string,
           kind,
           type: b.type as string,
           intensity: b.intensity as number,
@@ -1029,9 +1029,9 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('beacons')
-        .select('id, metadata, starts_at, end_at, latitude, longitude, kind, type, title')
+        .select('id, metadata, starts_at, ends_at, latitude, longitude, kind, type, title')
         .or(`type.eq.safety,kind.eq.safety`)
-        .or('end_at.is.null,end_at.gte.' + now)
+        .or('ends_at.is.null,ends_at.gte.' + now)
         .order('starts_at', { ascending: false })
         .limit(10);
       if (error) {

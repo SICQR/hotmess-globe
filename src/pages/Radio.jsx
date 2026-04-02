@@ -139,7 +139,7 @@ export default function Radio() {
   useEffect(() => {
     supabase
       .from('beacons')
-      .select('id,title,description,release_slug,release_title,release_at,end_at,image_url,shopify_handle')
+      .select('id,title,description,release_slug,release_title,release_at,ends_at,image_url,shopify_handle')
       .not('release_slug', 'is', null)
       .order('release_at', { ascending: false })
       .limit(6)

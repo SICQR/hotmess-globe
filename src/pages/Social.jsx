@@ -47,8 +47,8 @@ export default function Social() {
     queryKey: ['message-threads', currentUser?.email],
     queryFn: async () => {
       if (!currentUser) return [];
-      const allThreads = await supabase.from('chat_threads').select('*').eq({ active: true }, '-updated_date');
-      return allThreads.filter(
+      const { data: allThreads } = await supabase.from('chat_threads').select('*').eq('active', true).order('last_message_at', { ascending: false });
+      return (allThreads || []).filter(
         (t) => Array.isArray(t.participant_emails) && t.participant_emails.includes(currentUser.email)
       );
     },

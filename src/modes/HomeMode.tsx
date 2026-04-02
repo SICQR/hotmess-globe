@@ -664,16 +664,16 @@ export function HomeMode({ className = '' }: HomeModeProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('right_now_status')
-        .select('id, user_email, intent, location, expires_at')
+        .select('id, user_id, intent, location, expires_at')
         .gte('expires_at', new Date().toISOString())
         .order('updated_at', { ascending: false })
         .limit(12);
       if (error) throw error;
       return (data ?? []).map((r: Record<string, unknown>) => ({
         id: r.id as string,
-        email: r.user_email as string,
+        userId: r.user_id as string,
         intent: (r.intent as string) || 'Explore',
-        name: ((r.user_email as string) ?? '').split('@')[0] ?? 'Anon',
+        name: 'Anon',
         avatarUrl: undefined as string | undefined,
       }));
     },
@@ -690,8 +690,8 @@ export function HomeMode({ className = '' }: HomeModeProps) {
       const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('beacons')
-        .select('id, metadata, starts_at, end_at, kind, type')
-        .gte('end_at', now)
+        .select('id, metadata, starts_at, ends_at, kind, type')
+        .gte('ends_at', now)
         .order('starts_at', { ascending: true })
         .limit(8);
       if (error) throw error;
@@ -720,8 +720,8 @@ export function HomeMode({ className = '' }: HomeModeProps) {
       const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('beacons')
-        .select('id, metadata, starts_at, end_at, kind, type, intensity')
-        .gte('end_at', now)
+        .select('id, metadata, starts_at, ends_at, kind, type, intensity')
+        .gte('ends_at', now)
         .order('starts_at', { ascending: true })
         .limit(3);
       if (error) throw error;

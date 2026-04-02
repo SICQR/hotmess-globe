@@ -79,10 +79,7 @@ export default function SquadChat() {
   const { data: chatThread } = useQuery({
     queryKey: ['squad-thread', squadId],
     queryFn: async () => {
-      const threads = await supabase.from('chat_threads').select('*').eq({
-        thread_type: 'squad',
-        'metadata.squad_id': squadId
-      });
+      const { data: threads } = await supabase.from('chat_threads').select('*').eq('thread_type', 'squad').eq('metadata->>squad_id', squadId);
       return threads[0] || null;
     },
     enabled: !!squadId,
