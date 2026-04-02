@@ -78,7 +78,7 @@ export default function CreatePrelovedSheet({ open, onClose, currentUser }) {
       const imageUrls = [];
       for (const file of photoFiles) {
         try {
-          const url = await uploadToStorage(file, 'preloved-images', currentUser.id);
+          const url = await uploadToStorage(file, 'listing-images', currentUser.id);
           imageUrls.push(url);
         } catch (error) {
           console.error('Upload error:', error);
@@ -100,7 +100,7 @@ export default function CreatePrelovedSheet({ open, onClose, currentUser }) {
         size: form.size.trim() || null,
         condition: form.condition,
         images: imageUrls,
-        status: 'pending',
+        status: 'active',
         location_country: 'GB',
         shipping_available: form.shipping_available,
         local_pickup: form.local_pickup,
