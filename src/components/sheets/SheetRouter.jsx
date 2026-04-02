@@ -63,6 +63,7 @@ const L2TapsSheet = lazy(() => import('./L2TapsSheet'));
 const L2CommunityPostSheet = lazy(() => import('./L2CommunityPostSheet'));
 const L2CreatorSubscriptionSheet = lazy(() => import('./L2CreatorSubscriptionSheet'));
 const L2CreatePersonaSheet = lazy(() => import('./L2CreatePersonaSheet'));
+const L2UberSheet = lazy(() => import('./L2UberSheet'));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PLACEHOLDER FOR UNIMPLEMENTED SHEETS
@@ -132,6 +133,7 @@ const SHEET_COMPONENTS = {
   // Search / discovery
   'search': L2SearchSheet,
   'directions': L2DirectionsSheet,
+  'uber': L2UberSheet,
   // Cart & checkout
   'cart': L2CartSheet,
   'checkout': L2CheckoutSheet,
