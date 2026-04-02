@@ -21,8 +21,11 @@ const VIBES = [
 ];
 
 const SCENES = [
-  'Rave', 'Queer', 'Fetish', 'House', 'Techno', 'Jungle',
-  'Disco', 'Kink-friendly', 'Sober Curious', 'Bears', 'Masc', 'Leather',
+  'Rave','House','Techno','Jungle','Disco','UK Garage','Bass','Deep House','Ambient',
+  'Queer','Bears','Masc','Twinks','Daddies','Otters','Cubs','Muscles','Jocks',
+  'Fetish','Kink-friendly','Leather','Rubber','Gear','Military','Sportswear','Underwear','Pup Play',
+  'Sober Curious','Cali Sober','Fitness','Circuit','Alternative','Spiritual',
+  'Networking','Travel Buddy','After Party','Clubbing',
 ];
 
 const VIBE_LABELS = Object.fromEntries(VIBES.map((v) => [v.value, v.label]));
@@ -31,6 +34,12 @@ export default function VibeScreen({ session, onComplete, onBack }) {
   const [selectedVibe, setSelectedVibe] = useState(null);
   const [selectedScenes, setSelectedScenes] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [age, setAge] = useState('');
+  const [position, setPosition] = useState('');
+  const [lookingFor, setLookingFor] = useState([]);
+  const [relationshipStatus, setRelationshipStatus] = useState('');
+  const [timeHorizon, setTimeHorizon] = useState('');
+  const [bio, setBio] = useState('');
 
   const userEmail = session?.user?.email;
   const userId = session?.user?.id;
@@ -46,41 +55,34 @@ export default function VibeScreen({ session, onComplete, onBack }) {
   const handleSubmit = async (skip = false) => {
     setLoading(true);
     try {
-      if (!skip && selectedVibe && userEmail) {
-        // Write vibe
-        await supabase.from('user_vibes').upsert(
-          {
-            user_email: userEmail,
-            archetype: selectedVibe,
-            vibe_title: VIBE_LABELS[selectedVibe],
-            traits: selectedScenes,
-            last_synthesized: new Date().toISOString(),
-            synthesis_count: 1,
-          },
-          { onConflict: 'user_email' }
-        );
-
-        // Write tribes
-        for (const scene of selectedScenes) {
-          await supabase.from('user_tribes').upsert(
-            {
-              user_email: userEmail,
-              tribe_id: scene,
-            },
-            { onConflict: 'user_email,tribe_id' }
-          );
-        }
+      if (selectedVibe && userEmail) {
+        await supabase.from('user_vibes').upsert({
+          user_email: userEmail, archetype: selectedVibe, vibe_title: VIBE_LABELS[selectedVibe], traits: selectedScenes,
+        }, { onConflict: 'user_email' });
       }
-
-      // Advance stage
-      await supabase
-        .from('profiles')
-        .update({
-          onboarding_stage: 'safety',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', userId);
-
+      for (const scene of selectedScenes) {
+        await supabase.from('user_tribes').upsert({
+          user_email: userEmail, tribe_id: scene.toLowerCase().replace(/\s+/g,'-'),
+        }, { onConflict: 'user_email,tribe_id' });
+      }
+      await supabase.from('profiles').upsert({
+        id: userId,
+        bio: bio.trim() || null,
+        public_attributes: {
+          age: age ? parseInt(age) : undefined,
+          position: position || undefined,
+          looking_for: lookingFor.length ? lookingFor : undefined,
+          relationship_status: relationshipStatus || undefined,
+          time_horizon: timeHorizon || undefined,
+          vibe: selectedVibe || undefined,
+          scenes: selectedScenes,
+        },
+        onboarding_stage: 'vibe_complete',
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id' });
+      await supabase.from('personas')
+        .update({ position, looking_for: lookingFor, tags: selectedScenes })
+        .eq('user_id', userId).eq('is_default', true);
       onComplete();
     } catch (err) {
       console.error('[VibeScreen] error:', err);
@@ -146,6 +148,44 @@ export default function VibeScreen({ session, onComplete, onBack }) {
               </button>
             );
           })}
+        </div>
+
+        <div className="mt-6 space-y-5">
+          <h3 className="text-white font-black text-lg">About you</h3>
+          <div>
+            <p className="text-white/50 text-xs uppercase tracking-wider mb-2">Age</p>
+            <input type="number" min="18" max="99" value={age} onChange={e=>setAge(e.target.value)}
+              placeholder="25" className="bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white w-24 outline-none focus:border-[#C8962C]/50" />
+          </div>
+          {[
+            {label:'Position', key:'position', set:setPosition, val:position, opts:['Top','Vers Top','Versatile','Vers Bottom','Bottom','Side','No preference'], single:true},
+            {label:'Looking for (max 3)', key:'looking_for', opts:['Hookups','Dates','Friends','Relationship','Networking'], multi:true},
+            {label:'Relationship status', key:'relationship_status', set:setRelationshipStatus, val:relationshipStatus, opts:['Single','Open','Partnered'], single:true},
+            {label:'Available', key:'time_horizon', set:setTimeHorizon, val:timeHorizon, opts:['Right Now','Tonight','Ongoing'], single:true},
+          ].map(({label,key,set,val,opts,single,multi})=>(
+            <div key={key}>
+              <p className="text-white/50 text-xs uppercase tracking-wider mb-2">{label}</p>
+              <div className="flex flex-wrap gap-2">
+                {opts.map(o=>(
+                  <button key={o} onClick={()=>{
+                    if(single) set(v=>v===o?'':o);
+                    else if(multi) setLookingFor(p=>p.includes(o)?p.filter(x=>x!==o):p.length<3?[...p,o]:p);
+                  }} className={`px-3 py-1.5 rounded-full text-sm font-bold border transition-all ${
+                    (single?val===o:lookingFor.includes(o))
+                      ?'bg-[#C8962C] text-black border-[#C8962C]'
+                      :'bg-white/5 text-white/60 border-white/15'
+                  }`}>{o}</button>
+                ))}
+              </div>
+            </div>
+          ))}
+          <div>
+            <p className="text-white/50 text-xs uppercase tracking-wider mb-2">Bio (optional)</p>
+            <textarea value={bio} onChange={e=>setBio(e.target.value)} maxLength={500}
+              placeholder="Say something about yourself…"
+              className="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[#C8962C]/50 resize-none" rows={3} />
+            <p className="text-white/20 text-xs mt-1 text-right">{bio.length}/500</p>
+          </div>
         </div>
 
         {/* CTAs */}

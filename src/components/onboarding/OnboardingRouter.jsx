@@ -28,6 +28,8 @@ import SplashScreen from './screens/SplashScreen';
 import AgeGateScreen from './screens/AgeGateScreen';
 import SignUpScreen from './screens/SignUpScreen';
 import QuickSetupScreen from './screens/QuickSetupScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import PinSetupScreen from './screens/PinSetupScreen';
 
 // Screen keys
 const SCREENS = {
@@ -36,6 +38,8 @@ const SCREENS = {
   SIGNUP: 'signup',
   SIGNIN: 'signin',
   QUICK_SETUP: 'quick_setup',
+  PROFILE: 'profile_screen',
+  PIN_SETUP: 'pin_setup',
 };
 
 // Map onboarding_stage → screen.
@@ -46,6 +50,10 @@ const STAGE_TO_SCREEN = {
   age_gate: SCREENS.SIGNUP,        // authed, age already verified pre-auth
   age_verified: SCREENS.SIGNUP,    // explicit age_verified stage
   signed_up: SCREENS.QUICK_SETUP,  // signed up, quick setup not yet done
+  quick_setup: SCREENS.PROFILE,    // ProfileScreen
+  profile_complete: SCREENS.QUICK_SETUP,  // VibeScreen (in QuickSetupScreen)
+  vibe_complete: SCREENS.PIN_SETUP,  // PinSetupScreen
+  pin_complete: SCREENS.QUICK_SETUP,  // Location/onboard finish
   // Legacy stages → QuickSetup (new minimum to unlock)
   signup: SCREENS.QUICK_SETUP,
   profile: SCREENS.QUICK_SETUP,
@@ -306,6 +314,22 @@ export default function OnboardingRouter() {
           session={session}
           onComplete={handleQuickSetupComplete}
           onBack={canGoBack ? goBack : undefined}
+        />
+      );
+
+    case SCREENS.PROFILE:
+      return (
+        <ProfileScreen
+          onNext={() => goTo(SCREENS.QUICK_SETUP)}
+          onSkip={() => goTo(SCREENS.QUICK_SETUP)}
+        />
+      );
+
+    case SCREENS.PIN_SETUP:
+      return (
+        <PinSetupScreen
+          onNext={() => goTo(SCREENS.QUICK_SETUP)}
+          onSkip={() => goTo(SCREENS.QUICK_SETUP)}
         />
       );
 
