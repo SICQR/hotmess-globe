@@ -1,0 +1,683 @@
+/* ========================================
+   HOTMESS ENHANCED DESIGN SYSTEM
+   Premium effects, sophisticated interactions, and modern aesthetics
+   ======================================== */
+
+@layer base {
+  /* Enhanced Color Tokens - Semantic & Contextual */
+  :root {
+    /* Extended Brand Palette */
+    --hm-gold-50: #FFF9E5;
+    --hm-gold-100: #FFEEB8;
+    --hm-gold-200: #FFE28A;
+    --hm-gold-300: #FFD65C;
+    --hm-gold-400: #E8C547;
+    --hm-gold-500: #D4AF37;  /* Primary gold */
+    --hm-gold-600: #C8962C;  /* Brand gold */
+    --hm-gold-700: #A67C23;
+    --hm-gold-800: #85621C;
+    --hm-gold-900: #644815;
+    
+    /* Cyan Spectrum */
+    --hm-cyan-50: #E0F7FF;
+    --hm-cyan-100: #B3EBFF;
+    --hm-cyan-200: #80DFFF;
+    --hm-cyan-300: #4DD3FF;
+    --hm-cyan-400: #26C9FF;
+    --hm-cyan-500: #00C2E0;  /* Primary cyan */
+    --hm-cyan-600: #00A8C7;
+    --hm-cyan-700: #008EAD;
+    --hm-cyan-800: #007494;
+    --hm-cyan-900: #005A7A;
+    
+    /* Surface Hierarchy */
+    --hm-surface-base: #050507;
+    --hm-surface-raised: #0D0D0F;
+    --hm-surface-overlay: #1C1C1E;
+    --hm-surface-elevated: #2C2C2E;
+    --hm-surface-float: #3C3C3E;
+    
+    /* Interactive States */
+    --hm-interactive-rest: rgba(255, 255, 255, 0.05);
+    --hm-interactive-hover: rgba(255, 255, 255, 0.10);
+    --hm-interactive-active: rgba(255, 255, 255, 0.15);
+    --hm-interactive-disabled: rgba(255, 255, 255, 0.02);
+    
+    /* Shadows - Depth System */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.7), 0 8px 16px rgba(0, 0, 0, 0.6);
+    --shadow-2xl: 0 24px 48px rgba(0, 0, 0, 0.8), 0 12px 24px rgba(0, 0, 0, 0.7);
+    
+    /* Premium Glows */
+    --glow-gold-subtle: 0 0 10px rgba(200, 150, 44, 0.2);
+    --glow-gold-medium: 0 0 20px rgba(200, 150, 44, 0.4), 0 0 40px rgba(200, 150, 44, 0.2);
+    --glow-gold-strong: 0 0 30px rgba(200, 150, 44, 0.6), 0 0 60px rgba(200, 150, 44, 0.3), 0 0 90px rgba(200, 150, 44, 0.1);
+    --glow-cyan-subtle: 0 0 10px rgba(0, 194, 224, 0.2);
+    --glow-cyan-medium: 0 0 20px rgba(0, 194, 224, 0.4), 0 0 40px rgba(0, 194, 224, 0.2);
+    --glow-cyan-strong: 0 0 30px rgba(0, 194, 224, 0.6), 0 0 60px rgba(0, 194, 224, 0.3);
+    
+    /* Motion Tokens */
+    --spring-smooth: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --spring-subtle: cubic-bezier(0.5, 1.25, 0.75, 1);
+    --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+}
+
+/* ========================================
+   PREMIUM GLASS MORPHISM
+   ======================================== */
+
+@layer components {
+  /* Glass Variants with Enhanced Depth */
+  .glass-premium {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.06) 100%
+    );
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 
+      var(--shadow-lg),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+      inset 0 -1px 0 0 rgba(0, 0, 0, 0.3);
+  }
+  
+  .glass-frosted {
+    background: rgba(28, 28, 30, 0.7);
+    backdrop-filter: blur(40px) saturate(150%);
+    -webkit-backdrop-filter: blur(40px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: var(--shadow-md);
+  }
+  
+  .glass-elevated {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0.08) 100%
+    );
+    backdrop-filter: blur(32px) saturate(200%);
+    -webkit-backdrop-filter: blur(32px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+      var(--shadow-xl),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+      0 0 0 1px rgba(200, 150, 44, 0.1);
+  }
+  
+  .glass-gold {
+    background: linear-gradient(
+      135deg,
+      rgba(200, 150, 44, 0.2) 0%,
+      rgba(200, 150, 44, 0.08) 100%
+    );
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid rgba(200, 150, 44, 0.3);
+    box-shadow: 
+      var(--shadow-lg),
+      var(--glow-gold-subtle),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+  }
+  
+  .glass-cyan {
+    background: linear-gradient(
+      135deg,
+      rgba(0, 194, 224, 0.2) 0%,
+      rgba(0, 194, 224, 0.08) 100%
+    );
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid rgba(0, 194, 224, 0.3);
+    box-shadow: 
+      var(--shadow-lg),
+      var(--glow-cyan-subtle),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* ========================================
+   ENHANCED BUTTONS
+   ======================================== */
+
+@layer components {
+  /* Primary Gold Button */
+  .btn-gold {
+    @apply relative inline-flex items-center justify-center font-black text-sm uppercase tracking-widest rounded-xl px-6 py-3.5 overflow-hidden;
+    background: linear-gradient(135deg, var(--hm-gold-500) 0%, var(--hm-gold-600) 100%);
+    color: #000;
+    border: 2px solid var(--hm-gold-400);
+    box-shadow: 
+      var(--shadow-md),
+      var(--glow-gold-subtle),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+      inset 0 -1px 0 0 rgba(0, 0, 0, 0.2);
+    transition: all 0.3s var(--ease-premium);
+  }
+  
+  .btn-gold::before {
+    content: '';
+    @apply absolute inset-0;
+    background: linear-gradient(135deg, var(--hm-gold-400) 0%, var(--hm-gold-500) 100%);
+    opacity: 0;
+    transition: opacity 0.3s var(--ease-premium);
+  }
+  
+  .btn-gold:hover::before {
+    opacity: 1;
+  }
+  
+  .btn-gold:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      var(--shadow-lg),
+      var(--glow-gold-medium),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
+  }
+  
+  .btn-gold:active {
+    transform: translateY(0);
+    box-shadow: 
+      var(--shadow-sm),
+      var(--glow-gold-subtle);
+  }
+  
+  /* Ghost Button with Glow */
+  .btn-ghost-gold {
+    @apply relative inline-flex items-center justify-center font-bold text-sm uppercase tracking-wide rounded-xl px-6 py-3 overflow-hidden;
+    color: var(--hm-gold-500);
+    background: rgba(200, 150, 44, 0.05);
+    border: 2px solid rgba(200, 150, 44, 0.3);
+    transition: all 0.3s var(--ease-premium);
+  }
+  
+  .btn-ghost-gold:hover {
+    background: rgba(200, 150, 44, 0.15);
+    border-color: rgba(200, 150, 44, 0.5);
+    box-shadow: var(--glow-gold-subtle);
+    transform: translateY(-1px);
+  }
+  
+  .btn-ghost-gold:active {
+    transform: translateY(0);
+    background: rgba(200, 150, 44, 0.1);
+  }
+  
+  /* Minimal Button */
+  .btn-minimal {
+    @apply inline-flex items-center justify-center font-semibold text-sm px-4 py-2 rounded-lg;
+    color: rgba(255, 255, 255, 0.7);
+    background: transparent;
+    transition: all 0.2s var(--ease-premium);
+  }
+  
+  .btn-minimal:hover {
+    color: rgba(255, 255, 255, 1);
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  .btn-minimal:active {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* ========================================
+   ENHANCED CARDS
+   ======================================== */
+
+@layer components {
+  /* Premium Card with Hover Lift */
+  .card-premium-interactive {
+    @apply relative rounded-2xl overflow-hidden;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.03) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s var(--ease-premium);
+  }
+  
+  .card-premium-interactive::before {
+    content: '';
+    @apply absolute inset-0 pointer-events-none;
+    background: radial-gradient(
+      600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      rgba(200, 150, 44, 0.1),
+      transparent 40%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .card-premium-interactive:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 
+      var(--shadow-xl),
+      0 0 0 1px rgba(200, 150, 44, 0.1);
+  }
+  
+  .card-premium-interactive:hover::before {
+    opacity: 1;
+  }
+  
+  /* Featured Card with Gold Accent */
+  .card-featured {
+    @apply relative rounded-2xl overflow-hidden;
+    background: linear-gradient(
+      135deg,
+      rgba(200, 150, 44, 0.15) 0%,
+      rgba(200, 150, 44, 0.05) 100%
+    );
+    border: 2px solid rgba(200, 150, 44, 0.4);
+    box-shadow: 
+      var(--shadow-lg),
+      var(--glow-gold-subtle);
+    transition: all 0.4s var(--ease-premium);
+  }
+  
+  .card-featured::after {
+    content: '';
+    @apply absolute top-0 left-0 right-0 h-1;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--hm-gold-500),
+      transparent
+    );
+  }
+  
+  .card-featured:hover {
+    transform: translateY(-6px);
+    border-color: rgba(200, 150, 44, 0.6);
+    box-shadow: 
+      var(--shadow-2xl),
+      var(--glow-gold-medium);
+  }
+  
+  /* Elevated Card */
+  .card-elevated {
+    @apply rounded-2xl;
+    background: var(--hm-surface-elevated);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+/* ========================================
+   ENHANCED BADGES
+   ======================================== */
+
+@layer components {
+  /* Premium Badge */
+  .badge-premium {
+    @apply inline-flex items-center gap-1 font-black text-[10px] uppercase tracking-widest rounded-full px-3 py-1.5;
+    background: linear-gradient(135deg, var(--hm-gold-500) 0%, var(--hm-gold-600) 100%);
+    color: #000;
+    border: 1px solid var(--hm-gold-400);
+    box-shadow: 
+      var(--shadow-sm),
+      var(--glow-gold-subtle),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.4);
+  }
+  
+  /* Outline Badge with Glow */
+  .badge-outline-glow {
+    @apply inline-flex items-center gap-1 font-black text-[10px] uppercase tracking-widest rounded-full px-3 py-1.5;
+    color: var(--hm-gold-500);
+    background: rgba(200, 150, 44, 0.08);
+    border: 1.5px solid rgba(200, 150, 44, 0.4);
+    box-shadow: var(--glow-gold-subtle);
+  }
+  
+  /* Pulse Badge */
+  .badge-pulse {
+    @apply inline-flex items-center gap-1 font-black text-[10px] uppercase tracking-widest rounded-full px-3 py-1.5;
+    background: var(--hm-gold-600);
+    color: #000;
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+}
+
+/* ========================================
+   ADVANCED ANIMATIONS
+   ======================================== */
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: var(--glow-gold-subtle);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: var(--glow-gold-medium);
+    opacity: 0.9;
+  }
+}
+
+@keyframes float-gentle {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.02);
+  }
+}
+
+@keyframes shimmer-slide {
+  0% {
+    transform: translateX(-100%) rotate(-45deg);
+  }
+  100% {
+    transform: translateX(200%) rotate(-45deg);
+  }
+}
+
+@keyframes glow-expand {
+  0% {
+    box-shadow: var(--glow-gold-subtle);
+  }
+  50% {
+    box-shadow: var(--glow-gold-strong);
+  }
+  100% {
+    box-shadow: var(--glow-gold-subtle);
+  }
+}
+
+@keyframes ripple-out {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+@keyframes rotate-hue {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
+  }
+}
+
+/* ========================================
+   ENHANCED UTILITIES
+   ======================================== */
+
+@layer utilities {
+  /* Smooth Hover Lift */
+  .hover-lift-sm {
+    @apply transition-all duration-300;
+  }
+  
+  .hover-lift-sm:hover {
+    transform: translateY(-2px);
+  }
+  
+  .hover-lift-md {
+    @apply transition-all duration-300;
+  }
+  
+  .hover-lift-md:hover {
+    transform: translateY(-4px);
+  }
+  
+  .hover-lift-lg {
+    @apply transition-all duration-400;
+  }
+  
+  .hover-lift-lg:hover {
+    transform: translateY(-8px);
+  }
+  
+  /* Hover Scale */
+  .hover-scale {
+    @apply transition-transform duration-300;
+  }
+  
+  .hover-scale:hover {
+    transform: scale(1.05);
+  }
+  
+  .hover-scale-sm:hover {
+    transform: scale(1.02);
+  }
+  
+  .hover-scale-lg:hover {
+    transform: scale(1.08);
+  }
+  
+  /* Glow On Hover */
+  .hover-glow-gold {
+    @apply transition-all duration-300;
+  }
+  
+  .hover-glow-gold:hover {
+    box-shadow: var(--glow-gold-medium);
+  }
+  
+  .hover-glow-cyan:hover {
+    box-shadow: var(--glow-cyan-medium);
+  }
+  
+  /* Premium Borders */
+  .border-shimmer {
+    @apply relative overflow-hidden;
+  }
+  
+  .border-shimmer::before {
+    content: '';
+    @apply absolute inset-0 pointer-events-none;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(200, 150, 44, 0.3),
+      transparent
+    );
+    transform: translateX(-100%);
+    animation: shimmer-slide 3s infinite;
+  }
+  
+  /* Text Effects */
+  .text-shimmer {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(
+      90deg,
+      var(--hm-gold-400) 0%,
+      var(--hm-gold-500) 50%,
+      var(--hm-gold-400) 100%
+    );
+    background-size: 200% auto;
+    animation: shimmer-slide 3s linear infinite;
+  }
+  
+  .text-glow-gold-strong {
+    text-shadow: 
+      0 0 10px rgba(200, 150, 44, 0.8),
+      0 0 20px rgba(200, 150, 44, 0.6),
+      0 0 30px rgba(200, 150, 44, 0.4);
+  }
+  
+  .text-glow-cyan-strong {
+    text-shadow: 
+      0 0 10px rgba(0, 194, 224, 0.8),
+      0 0 20px rgba(0, 194, 224, 0.6),
+      0 0 30px rgba(0, 194, 224, 0.4);
+  }
+  
+  /* Premium Shadows */
+  .shadow-premium {
+    box-shadow: var(--shadow-xl);
+  }
+  
+  .shadow-elevated {
+    box-shadow: var(--shadow-2xl);
+  }
+  
+  /* Animation Utilities */
+  .animate-float-gentle {
+    animation: float-gentle 6s ease-in-out infinite;
+  }
+  
+  .animate-glow-expand {
+    animation: glow-expand 3s ease-in-out infinite;
+  }
+  
+  .animate-ripple {
+    animation: ripple-out 1s ease-out;
+  }
+  
+  /* Transition Utilities */
+  .transition-premium {
+    transition: all 0.4s var(--ease-premium);
+  }
+  
+  .transition-spring {
+    transition: all 0.5s var(--spring-smooth);
+  }
+  
+  .transition-bounce {
+    transition: all 0.6s var(--ease-bounce);
+  }
+}
+
+/* ========================================
+   LOADING STATES
+   ======================================== */
+
+@layer components {
+  /* Skeleton Loader */
+  .skeleton {
+    @apply relative overflow-hidden;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.03) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes skeleton-shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+  
+  /* Spinner */
+  .spinner {
+    @apply inline-block;
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: var(--hm-gold-500);
+    border-radius: 50%;
+    animation: spinner-rotate 0.8s linear infinite;
+  }
+  
+  @keyframes spinner-rotate {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  .spinner-gold {
+    border-top-color: var(--hm-gold-500);
+    box-shadow: var(--glow-gold-subtle);
+  }
+  
+  .spinner-cyan {
+    border-top-color: var(--hm-cyan-500);
+    box-shadow: var(--glow-cyan-subtle);
+  }
+}
+
+/* ========================================
+   TOUCH FEEDBACK (Mobile)
+   ======================================== */
+
+@layer utilities {
+  /* Tap Highlight */
+  .tap-highlight {
+    -webkit-tap-highlight-color: rgba(200, 150, 44, 0.2);
+    tap-highlight-color: rgba(200, 150, 44, 0.2);
+  }
+  
+  /* Active Press Feedback */
+  .active-press:active {
+    transform: scale(0.97);
+    opacity: 0.8;
+  }
+  
+  .active-press-gold:active {
+    background-color: rgba(200, 150, 44, 0.15);
+  }
+  
+  /* Touch Ripple Effect */
+  .touch-ripple {
+    @apply relative overflow-hidden;
+  }
+  
+  .touch-ripple::after {
+    content: '';
+    @apply absolute inset-0 pointer-events-none;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+    transform: scale(0);
+    opacity: 0;
+    transition: transform 0.6s, opacity 0.6s;
+  }
+  
+  .touch-ripple:active::after {
+    transform: scale(2);
+    opacity: 1;
+    transition: 0s;
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY ENHANCEMENTS
+   ======================================== */
+
+@layer base {
+  /* Focus Visible States */
+  *:focus-visible {
+    outline: 2px solid var(--hm-gold-500);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  
+  button:focus-visible,
+  a:focus-visible {
+    box-shadow: 
+      0 0 0 3px rgba(200, 150, 44, 0.3),
+      var(--glow-gold-subtle);
+  }
+  
+  /* Reduced Motion Support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
