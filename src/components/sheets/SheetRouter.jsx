@@ -66,6 +66,7 @@ const L2CreatePersonaSheet = lazy(() => import('./L2CreatePersonaSheet'));
 const L2UberSheet = lazy(() => import('./L2UberSheet'));
 const L2BoostShopSheet = lazy(() => import('./L2BoostShopSheet'));
 const L2ReferralSheet = lazy(() => import('./L2ReferralSheet'));
+const L2CityPickerSheet = lazy(() => import('./L2CityPickerSheet'));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PLACEHOLDER FOR UNIMPLEMENTED SHEETS
@@ -171,6 +172,8 @@ const SHEET_COMPONENTS = {
   // Boosts & referral
   'boost-shop': L2BoostShopSheet,
   'referral': L2ReferralSheet,
+  // Globe city picker (Pulse HUD → city-picker sheet → globe flyTo)
+  'city-picker': L2CityPickerSheet,
 };
 
 
