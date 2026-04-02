@@ -358,12 +358,16 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
         <SheetActions>
           <Button
             onClick={() => {
-              openSheet('chat', { recipientId: product.seller_id });
+              // Pass only the seller UUID — L2ChatSheet resolves identity internally
+              openSheet('chat', {
+                userId: product.seller_id,
+                title: seller?.name || 'Seller',
+              });
             }}
             variant="outline"
             className="flex-1 h-12 border-white/20"
           >
-            <ChevronRight className="w-4 h-4 mr-2 rotate-180" />
+            <MessageCircle className="w-4 h-4 mr-2" />
             Message Seller
           </Button>
           <Button
@@ -641,3 +645,4 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
     </div>
   );
 }
+
