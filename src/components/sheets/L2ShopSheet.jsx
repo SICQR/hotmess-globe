@@ -261,6 +261,9 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
   const { openSheet, updateSheetProps } = useSheet();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [descExpanded, setDescExpanded] = useState(false);
+  const [addedSuccess, setAddedSuccess] = useState(false);
   const { addItem } = useShopCart();
 
   // Fetch featured products (hooks must be called unconditionally)
@@ -443,10 +446,6 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
       })
       .filter(Boolean);
     const hasSizes = sizeOptions.length > 0;
-    const [selectedSize, setSelectedSize] = useState(null);
-    const [descExpanded, setDescExpanded] = useState(false);
-    const [addedSuccess, setAddedSuccess] = useState(false);
-
     const selectedVariant = hasSizes
       ? variants.find(v => v.id === selectedSize)
       : variants.find(v => v.availableForSale) || variants[0];
