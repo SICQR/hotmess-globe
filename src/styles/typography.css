@@ -3,6 +3,10 @@
    Modern hierarchy with premium aesthetics
    ======================================== */
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @layer base {
   /* Typography Tokens */
   :root {

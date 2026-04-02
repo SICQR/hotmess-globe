@@ -3,6 +3,10 @@
    Premium effects, sophisticated interactions, and modern aesthetics
    ======================================== */
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @layer base {
   /* Enhanced Color Tokens - Semantic & Contextual */
   :root {
