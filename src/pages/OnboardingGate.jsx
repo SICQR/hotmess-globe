@@ -643,6 +643,15 @@ export default function OnboardingGate() {
               </div>
             </div>
 
+            <a
+              href="/legal/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-center text-[#C8962C]/60 text-[10px] font-bold uppercase tracking-wider mb-4 hover:text-[#C8962C] transition-colors"
+            >
+              Read full terms &rarr;
+            </a>
+
             <div className="mb-6">
               <GoldCheckbox
                 id="terms-agree"
@@ -1221,6 +1230,17 @@ export default function OnboardingGate() {
 
         {/* Gold progress bar */}
         {step >= 1 && step <= 7 && <ProgressBar current={step} total={7} />}
+
+        {/* Back button (steps 2-7, not on age gate) */}
+        {step >= 2 && step <= 7 && (
+          <button
+            onClick={() => setStep((s) => Math.max(1, s - 1))}
+            className="flex items-center gap-1 text-white/30 hover:text-white/60 text-xs font-bold mb-2 transition-colors"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back
+          </button>
+        )}
 
         {/* Step card */}
         <div className="bg-[#1C1C1E] border border-white/8 rounded-3xl p-6">

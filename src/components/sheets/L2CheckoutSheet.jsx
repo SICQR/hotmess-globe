@@ -101,21 +101,71 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
   const handlePayment = async () => {
     setProcessing(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      if (!user) { toast.error('Please log in'); setProcessing(false); return; }
 
-      // Create order record for preloved items
-      await supabase.from('orders').insert({
-        buyer_id: user?.id,
+      // 1. Create order record
+      const { data: order, error: orderErr } = await supabase.from('orders').insert({
+        buyer_id: user.id,
         buyer_email: form.email,
         total_gbp: orderTotal,
         status: 'pending_payment',
         shipping_address: `${form.addressLine1}, ${form.city}, ${form.postcode}, ${form.country}`,
-      });
+        items: prelovedItems.map(i => ({ id: i.id, title: i.title, price: i.price, qty: i.qty })),
+      }).select('id').single();
 
-      // Clear preloved items from local cart
+      if (orderErr) throw orderErr;
+
+      // 2. Notify seller(s) via notification_outbox
+      const sellerIds = [...new Set(prelovedItems.map(i => i.seller_id).filter(Boolean))];
+      for (const sellerId of sellerIds) {
+        // Look up seller email
+        const { data: sellerProfile } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('id', sellerId)
+          .single();
+
+        if (sellerProfile?.email) {
+          await supabase.from('notifications').insert({
+            user_email: sellerProfile.email,
+            type: 'order',
+            title: 'New Order!',
+            message: `${form.fullName || 'A buyer'} ordered from you — £${orderTotal.toFixed(2)}`,
+            metadata: { order_id: order?.id, buyer_email: form.email },
+            read: false,
+          }).then(null, () => {});
+        }
+      }
+
+      // 3. Try Stripe payment (graceful degradation if not configured)
+      try {
+        const payRes = await fetch('/api/payments/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ type: 'product', referenceId: order?.id }),
+        });
+
+        if (payRes.ok) {
+          const { clientSecret } = await payRes.json();
+          // Store client secret for future Stripe Elements integration
+          // For now, mark as payment initiated
+          await supabase.from('orders').update({ status: 'payment_initiated', stripe_client_secret: clientSecret }).eq('id', order?.id);
+        }
+        // If Stripe isn't configured (500), fall through to P2P flow
+      } catch {
+        // Stripe not available — P2P payment via chat
+      }
+
+      // 4. Clear cart + show success
       localStorage.removeItem('hm_cart');
       setStep('success');
-    } catch {
+    } catch (err) {
+      console.error('Checkout error:', err);
       toast.error('Failed to create order. Please try again.');
     } finally {
       setProcessing(false);

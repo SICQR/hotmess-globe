@@ -33,7 +33,7 @@ export default function L2EmergencyContactSheet() {
     if (!user) { setLoading(false); return; }
 
     const { data, error: fetchError } = await supabase
-      .from('emergency_contacts')
+      .from('trusted_contacts')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: true });
@@ -55,7 +55,7 @@ export default function L2EmergencyContactSheet() {
     if (!user) { setSaving(false); setError('Not signed in.'); return; }
 
     const { error: insertError } = await supabase
-      .from('emergency_contacts')
+      .from('trusted_contacts')
       .insert({ user_id: user.id, name: form.name.trim(), phone: form.phone.trim(), relation: form.relation });
 
     setSaving(false);
@@ -81,7 +81,7 @@ export default function L2EmergencyContactSheet() {
     if (!user) { setDeleting(null); return; }
 
     await supabase
-      .from('emergency_contacts')
+      .from('trusted_contacts')
       .delete()
       .eq('id', contactId)
       .eq('user_id', user.id);

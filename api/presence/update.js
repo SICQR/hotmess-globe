@@ -115,10 +115,12 @@ export default async function handler(req, res) {
 
   // Store precise coords in private table (RLS-protected) for PostGIS/RPC queries.
   // Keep bucketed coords in public."User" for compatibility and reduced leakage.
-  const bucketed = bucketLatLng(lat, lng, 3);
+  // bucketLatLng returns a string "lat,lng" — parse it back to numbers.
+  const bucketedStr = bucketLatLng(lat, lng, 3);
+  const [bLat, bLng] = bucketedStr.split(',').map(Number);
   const bucketedCoords = {
-    lat: bucketed.lat,
-    lng: bucketed.lng,
+    lat: bLat,
+    lng: bLng,
     accuracy_m,
   };
 

@@ -356,11 +356,17 @@ export function BootGuardProvider({ children }) {
       if (!profileData?.age_verified) {
         setBootState(BOOT_STATES.NEEDS_AGE);
       } else if (!profileData?.onboarding_completed) {
-        setBootState(BOOT_STATES.NEEDS_ONBOARDING);
-      } else if (!profileData?.community_attested_at && !localCommunity) {
-        setBootState(BOOT_STATES.NEEDS_COMMUNITY_GATE);
+        // Community gate applies ONLY during onboarding (pre-completion).
+        // Once onboarding_completed is true, user is always READY.
+        if (!profileData?.community_attested_at && !localCommunity) {
+          setBootState(BOOT_STATES.NEEDS_COMMUNITY_GATE);
+        } else {
+          setBootState(BOOT_STATES.NEEDS_ONBOARDING);
+        }
       } else {
         // onboarding_completed === true → READY. Always. No display_name gate.
+        // Community attestation is captured during onboarding step 7 —
+        // if onboarding is marked complete, community was attested.
         setBootState(BOOT_STATES.READY);
       }
     } catch (err) {

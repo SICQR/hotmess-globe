@@ -527,7 +527,7 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
       }
 
       const { data: contacts } = await supabase
-        .from('emergency_contacts')
+        .from('trusted_contacts')
         .select('id, name, phone, relation')
         .eq('user_id', user.id)
         .order('created_at', { ascending: true })

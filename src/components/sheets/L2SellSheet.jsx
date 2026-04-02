@@ -58,6 +58,29 @@ export default function L2SellSheet() {
 
     setLoading(true);
     try {
+      // Ensure seller profile exists (auto-create on first listing)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Please log in to sell');
+
+      const { data: existingSeller } = await supabase
+        .from('market_sellers')
+        .select('id')
+        .eq('owner_id', user.id)
+        .maybeSingle();
+
+      if (!existingSeller) {
+        const { data: profile } = await supabase.from('profiles').select('display_name, avatar_url, email').eq('id', user.id).single();
+        await supabase.from('market_sellers').insert({
+          owner_id: user.id,
+          display_name: profile?.display_name || 'Seller',
+          avatar_url: profile?.avatar_url || null,
+          email: profile?.email || user.email,
+          status: 'active',
+        }).then(null, () => {
+          // Table might not exist — seller profile is nice-to-have, not a blocker
+        });
+      }
+
       const imageUrls = [];
       for (const p of form.photos) {
         try {

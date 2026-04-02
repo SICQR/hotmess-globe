@@ -517,6 +517,41 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: true,
     deepLinkParams: ['creatorId'],
   },
+  'boost-shop': {
+    id: 'boost-shop',
+    title: 'Power-Ups',
+    height: 'large',
+    auth: true,
+    deepLinkParams: [],
+  },
+  'city-picker': {
+    id: 'city-picker',
+    title: 'City',
+    height: 'small',
+    auth: false,
+    deepLinkParams: [],
+  },
+  'create-persona': {
+    id: 'create-persona',
+    title: 'New Persona',
+    height: 'large',
+    auth: true,
+    deepLinkParams: [],
+  },
+  'referral': {
+    id: 'referral',
+    title: 'Invite Friends',
+    height: 'medium',
+    auth: true,
+    deepLinkParams: [],
+  },
+  'uber': {
+    id: 'uber',
+    title: 'Get There',
+    height: 'small',
+    auth: false,
+    deepLinkParams: ['lat', 'lng'],
+  },
 } as const;
 
 /**

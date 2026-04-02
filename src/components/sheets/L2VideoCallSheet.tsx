@@ -27,6 +27,7 @@ import { Video, VideoOff, Mic, MicOff, PhoneOff, Maximize, Shield, Loader2 } fro
 import { useSheet } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { pushNotify } from '@/lib/pushNotify';
+import { useRadio } from '@/contexts/RadioContext';
 
 interface L2VideoCallSheetProps {
   callId?: string;
@@ -51,6 +52,14 @@ export default function L2VideoCallSheet({
   calleeAvatar,
 }: L2VideoCallSheetProps) {
   const { closeSheet } = useSheet();
+  const { isPlaying, togglePlay, audioRef: radioAudioRef } = useRadio();
+
+  // Pause radio when video call opens
+  useEffect(() => {
+    if (isPlaying && radioAudioRef?.current) {
+      radioAudioRef.current.pause();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [videoEnabled, setVideoEnabled]   = useState(true);
   const [audioEnabled, setAudioEnabled]   = useState(true);

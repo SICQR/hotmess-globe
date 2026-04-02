@@ -128,13 +128,44 @@ export default function L2SettingsSheet() {
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    toast.info('Account deletion request submitted. We\'ll email you to confirm.');
+                  onClick={async () => {
+                    try {
+                      const { data: { session } } = await supabase.auth.getSession();
+                      if (!session?.user?.id) { toast.error('Not signed in'); return; }
+                      const uid = session.user.id;
+                      // Anonymise profile data (GDPR right to erasure)
+                      await supabase.from('profiles').update({
+                        display_name: '[deleted]',
+                        bio: null,
+                        avatar_url: null,
+                        photos: null,
+                        location: null,
+                        public_attributes: null,
+                        tags: [],
+                        emergency_message: null,
+                        notification_prefs: null,
+                        deleted_at: new Date().toISOString(),
+                      }).eq('id', uid);
+                      // Delete related records
+                      await Promise.allSettled([
+                        supabase.from('trusted_contacts').delete().eq('user_id', uid),
+                        supabase.from('taps').delete().or(`tapper_id.eq.${uid},tapped_id.eq.${uid}`),
+                        supabase.from('right_now_status').delete().eq('user_id', uid),
+                        supabase.from('user_presence').delete().eq('user_id', uid),
+                      ]);
+                      // Sign out
+                      await supabase.auth.signOut();
+                      toast.success('Account deleted. Goodbye.');
+                      window.location.replace('/');
+                    } catch (err) {
+                      console.error('Account deletion error:', err);
+                      toast.error('Deletion failed. Contact support@hotmess.app');
+                    }
                     setShowDeleteConfirm(false);
                   }}
                   className="flex-1 py-2 rounded-xl bg-red-500/20 text-red-400 text-xs font-bold"
                 >
-                  Request Deletion
+                  Delete Forever
                 </button>
               </div>
             </div>

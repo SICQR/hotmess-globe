@@ -128,6 +128,28 @@ const STATIC_SHOWS: ShowData[] = [
   },
 ];
 
+/** Determine the currently scheduled show based on day/time.
+ *  Returns the show object or null if no show is on air. */
+function getCurrentScheduledShow(shows: ShowData[]): ShowData | null {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun
+  const hour = now.getHours();
+
+  // Parse schedule ranges from show.time strings
+  const schedules: Array<{ show: ShowData; days: number[]; startH: number; endH: number }> = [
+    { show: shows[0], days: [1,2,3,4,5], startH: 7, endH: 10 },    // Wake the Mess Mon-Fri 7-10am
+    { show: shows[1], days: [1,2,3,4,5], startH: 15, endH: 17 },   // Dial-a-Daddy Mon-Fri 3-5pm
+    { show: shows[2], days: [1,2,3,4,5], startH: 17, endH: 19 },   // Drive Time Mon-Fri 5-7pm
+    { show: shows[3], days: [5,6], startH: 19, endH: 23 },          // HOTMESS Nights Fri-Sat 7-11pm
+    { show: shows[4], days: [0], startH: 18, endH: 20 },            // Hand-in-Hand Sun 6-8pm
+  ];
+
+  for (const s of schedules) {
+    if (s.days.includes(day) && hour >= s.startH && hour < s.endH) return s.show;
+  }
+  return null;
+}
+
 const SOUNDCLOUD_URL = 'https://soundcloud.com/rawconvictrecords';
 
 // RAW CONVICT RECORDS — label releases (from Playlist.m3u)
@@ -183,12 +205,14 @@ export function RadioMode({ className = '' }: RadioModeProps) {
     return () => window.removeEventListener('hm:request-audio-consent', h);
   }, []);
 
-  // Set initial show name on mount
+  // Determine scheduled show and set initial show name
+  const scheduledShow = getCurrentScheduledShow(shows);
+
   useEffect(() => {
     if (!currentShowName) {
-      setCurrentShowName('HOTMESS RADIO');
+      setCurrentShowName(scheduledShow?.name || 'HOTMESS RADIO');
     }
-  }, [currentShowName, setCurrentShowName]);
+  }, [currentShowName, setCurrentShowName, scheduledShow?.name]);
 
   // Sync volume/mute to audio element
   useEffect(() => {
@@ -424,6 +448,11 @@ export function RadioMode({ className = '' }: RadioModeProps) {
                 <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                 LIVE
               </span>
+            ) : scheduledShow ? (
+              <span className="inline-flex items-center gap-1.5 bg-[#C8962C]/20 text-[#C8962C] text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                <span className="w-2 h-2 bg-[#C8962C] rounded-full animate-pulse" />
+                ON AIR
+              </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 bg-white/10 text-white/40 text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
                 <span className="w-2 h-2 bg-white/20 rounded-full" />
@@ -434,6 +463,11 @@ export function RadioMode({ className = '' }: RadioModeProps) {
               <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-white/30">
                 <span className="w-1.5 h-1.5 bg-[#34C759] rounded-full" />
                 Streaming
+              </span>
+            )}
+            {!isPlaying && scheduledShow && (
+              <span className="text-[10px] font-semibold text-white/30">
+                {scheduledShow.name}
               </span>
             )}
           </motion.div>

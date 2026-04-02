@@ -145,8 +145,11 @@ function ImageCarousel({ images = [], alt = 'Product' }) {
  */
 function InternalProductDetail({ product }) {
   const [showAgeGate, setShowAgeGate] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
+  const { addItem, beginCheckout } = useShopCart();
+  const { openSheet } = useSheet();
   const isAgeRestricted = product?.metadata?.ageVerifiedOnly === true;
-  const shopifyStoreUrl = import.meta.env.VITE_SHOPIFY_STORE_URL;
   const shopifyVariantId = import.meta.env.VITE_SHOPIFY_LUBE_VARIANT_ID;
 
   const isAgeConfirmed = () => {
@@ -161,13 +164,28 @@ function InternalProductDetail({ product }) {
     proceedToCheckout();
   };
 
-  const proceedToCheckout = () => {
-    if (!shopifyStoreUrl || !shopifyVariantId) {
+  const proceedToCheckout = async () => {
+    if (!shopifyVariantId) {
       toast('Shop coming soon — check back shortly', { icon: '🛍️' });
       return;
     }
-    const checkoutUrl = `https://${shopifyStoreUrl}/cart/${shopifyVariantId}:1`;
-    window.open(checkoutUrl, '_blank', 'noopener');
+    setAdding(true);
+    try {
+      await addItem({ variantId: `gid://shopify/ProductVariant/${shopifyVariantId}`, quantity: 1 });
+      setAdded(true);
+      toast.success('Added to cart');
+      setTimeout(() => { setAdded(false); openSheet('cart'); }, 800);
+    } catch (err) {
+      // Fallback: direct Shopify cart URL
+      const shopifyStoreUrl = import.meta.env.VITE_SHOPIFY_STORE_URL;
+      if (shopifyStoreUrl) {
+        window.open(`https://${shopifyStoreUrl}/cart/${shopifyVariantId}:1`, '_blank', 'noopener');
+      } else {
+        toast.error(err?.message || 'Could not add to cart');
+      }
+    } finally {
+      setAdding(false);
+    }
   };
 
   const handleAgeConfirm = () => {
@@ -237,10 +255,19 @@ function InternalProductDetail({ product }) {
       <SheetActions>
         <Button
           onClick={handleBuyNow}
-          className="flex-1 h-14 bg-[#C8962C] hover:bg-[#C8962C]/90 font-black text-base"
+          disabled={adding}
+          className={`flex-1 h-14 font-black text-base ${added ? 'bg-green-600' : 'bg-[#C8962C] hover:bg-[#C8962C]/90'}`}
         >
-          <ShoppingBag className="w-5 h-5 mr-2" />
-          Buy Now — £{product.price.toFixed(2)}
+          {adding ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : added ? (
+            'Added ✓'
+          ) : (
+            <>
+              <ShoppingBag className="w-5 h-5 mr-2" />
+              Add to Cart — £{product.price.toFixed(2)}
+            </>
+          )}
         </Button>
       </SheetActions>
     </div>
