@@ -8,11 +8,9 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
-import { Package, Loader2, Edit, Trash2 } from 'lucide-react';
+import { Package, Loader2, Edit } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useSheet } from '@/contexts/SheetContext';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 
 export default function L2MyListingsSheet() {
   const [tier, setTier] = useState(null);
