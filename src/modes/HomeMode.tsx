@@ -136,15 +136,18 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-center justify-between mb-3">
-      <h2 className="text-white font-bold text-base">{title}</h2>
+      <div className="flex items-center gap-2">
+        <div className="w-0.5 h-4 rounded-full" style={{ background: AMBER }} />
+        <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">{title}</h2>
+      </div>
       {linkLabel && onLink && (
         <button
           onClick={onLink}
-          className="flex items-center gap-0.5 text-xs font-semibold active:opacity-70 transition-opacity"
+          className="flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider active:opacity-70 transition-opacity"
           style={{ color: AMBER }}
         >
           {linkLabel}
-          <ChevronRight className="w-3.5 h-3.5" />
+          <ChevronRight className="w-3 h-3" />
         </button>
       )}
     </div>
@@ -300,32 +303,38 @@ function EventCard({
   return (
     <button
       onClick={onTap}
-      className="w-[260px] flex-shrink-0 snap-start text-left active:scale-[0.98] transition-transform rounded-2xl overflow-hidden border border-white/5"
+      className="w-[260px] flex-shrink-0 snap-start text-left active:scale-[0.98] transition-transform rounded-xl overflow-hidden border border-white/[0.08] relative"
       style={{ background: CARD_BG }}
       aria-label={`View event: ${title}`}
     >
-      {imageUrl ? (
-        <img src={imageUrl} alt={title} className="w-full h-36 object-cover" />
-      ) : (
-        <div className="w-full h-36 flex items-center justify-center" style={{ background: `${AMBER}15` }}>
-          <Calendar className="w-10 h-10" style={{ color: `${AMBER}60` }} />
-        </div>
-      )}
-      <div className="p-3">
-        <p className="text-white font-bold text-sm leading-tight line-clamp-1 mb-1">{title}</p>
-        {venue && (
-          <p className="text-xs leading-tight mb-2 line-clamp-1" style={{ color: MUTED }}>
-            {venue}
-          </p>
+      <div className="relative">
+        {imageUrl ? (
+          <img src={imageUrl} alt={title} className="w-full h-40 object-cover" />
+        ) : (
+          <div className="w-full h-40 flex items-center justify-center" style={{ background: `${AMBER}15` }}>
+            <Calendar className="w-10 h-10" style={{ color: `${AMBER}60` }} />
+          </div>
         )}
+        {/* Gradient overlay for readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+        {/* Date badge top-left */}
         {datePill && (
           <span
-            className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full"
-            style={{ background: `${AMBER}20`, color: AMBER }}
+            className="absolute top-2.5 left-2.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full backdrop-blur-sm"
+            style={{ background: `${AMBER}dd`, color: '#000' }}
           >
             {datePill}
           </span>
         )}
+        {/* Bottom text overlay */}
+        <div className="absolute bottom-0 left-0 right-0 p-3">
+          <p className="text-white font-bold text-sm leading-tight line-clamp-1 drop-shadow-lg">{title}</p>
+          {venue && (
+            <p className="text-white/60 text-xs leading-tight mt-0.5 line-clamp-1 drop-shadow">
+              {venue}
+            </p>
+          )}
+        </div>
       </div>
     </button>
   );
@@ -393,24 +402,28 @@ function ProductCard({
   return (
     <button
       onClick={onTap}
-      className="text-left active:scale-[0.98] transition-transform rounded-2xl overflow-hidden border border-white/5"
+      className="text-left active:scale-[0.98] transition-transform rounded-xl overflow-hidden border border-white/[0.08] relative"
       style={{ background: CARD_BG }}
       aria-label={`View product: ${title}`}
     >
-      {imageUrl ? (
-        <img src={imageUrl} alt={title} className="w-full aspect-square object-cover" />
-      ) : (
-        <div className="w-full aspect-square flex items-center justify-center" style={{ background: `${AMBER}10` }}>
-          <Sparkles className="w-8 h-8" style={{ color: `${AMBER}60` }} />
-        </div>
-      )}
-      <div className="p-3">
-        <p className="text-white text-xs font-semibold leading-tight line-clamp-2 mb-1">{title}</p>
-        {price != null && (
-          <p className="text-sm font-bold" style={{ color: AMBER }}>
-            &pound;{price}
-          </p>
+      <div className="relative aspect-[3/4]">
+        {imageUrl ? (
+          <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center" style={{ background: `${AMBER}10` }}>
+            <Sparkles className="w-8 h-8" style={{ color: `${AMBER}60` }} />
+          </div>
         )}
+        {/* Bottom gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-3">
+          <p className="text-white text-xs font-bold leading-tight line-clamp-2 mb-1 drop-shadow-lg">{title}</p>
+          {price != null && (
+            <p className="text-base font-black drop-shadow-lg" style={{ color: AMBER }}>
+              &pound;{price}
+            </p>
+          )}
+        </div>
       </div>
     </button>
   );
@@ -466,23 +479,23 @@ function RadioBanner({ onNavigate }: { onNavigate: () => void }) {
 
   return (
     <div
-      className="rounded-2xl border border-white/5 p-4 flex items-center gap-4 cursor-pointer"
-      style={{ background: CARD_BG }}
+      className="rounded-xl border border-[#00C2E0]/20 p-4 flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-transform"
+      style={{ background: 'linear-gradient(135deg, rgba(0,194,224,0.08) 0%, #1C1C1E 60%)', boxShadow: '0 0 24px rgba(0,194,224,0.06)' }}
       onClick={onNavigate}
       role="link"
       aria-label="Open HOTMESS Radio"
     >
       {/* Left: Radio icon */}
       <div
-        className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-        style={{ background: `${AMBER}15` }}
+        className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+        style={{ background: 'rgba(0,194,224,0.12)', border: '1px solid rgba(0,194,224,0.2)' }}
       >
-        <Radio className="w-6 h-6" style={{ color: AMBER }} />
+        <Radio className="w-6 h-6" style={{ color: '#00C2E0' }} />
       </div>
 
       {/* Middle: Info + waveform */}
       <div className="flex-1 min-w-0">
-        <p className="font-black text-xs tracking-wider mb-0.5" style={{ color: AMBER }}>
+        <p className="font-black text-xs tracking-[0.15em] mb-0.5" style={{ color: '#00C2E0' }}>
           HOTMESS RADIO
         </p>
         <div className="flex items-center gap-2">

@@ -607,12 +607,15 @@ function BottomDrawer({
         aria-label={expanded ? 'Collapse drawer' : 'Expand drawer'}
         tabIndex={0}
       >
-        <div className="w-10 h-1 rounded-full bg-white/30" />
+        <div className="w-10 h-1 rounded-full bg-white/20" />
       </div>
 
       {/* Drawer header */}
       <div className="flex items-center justify-between px-4 pb-3">
-        <h2 className="text-white font-bold text-base">Nearby now</h2>
+        <div className="flex items-center gap-2">
+          <div className="w-0.5 h-4 rounded-full" style={{ background: AMBER }} />
+          <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Nearby now</h2>
+        </div>
         <button
           onClick={toggleExpanded}
           className="flex items-center gap-1 active:opacity-70 transition-opacity"
@@ -644,9 +647,10 @@ function BottomDrawer({
         {(eventsLoading || events.length > 0) && (
           <section className="mb-5">
             <div className="flex items-center justify-between mb-2.5">
-              <h3 className="text-white/70 text-xs font-semibold uppercase tracking-wider">
-                Upcoming Events
-              </h3>
+              <div className="flex items-center gap-2">
+                <div className="w-0.5 h-3.5 rounded-full" style={{ background: AMBER }} />
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Upcoming Events</h3>
+              </div>
               {events.length > 0 && (
                 <button
                   onClick={onSeeAllEvents}
@@ -689,9 +693,10 @@ function BottomDrawer({
         {/* Beacons section */}
         {(beaconsLoading || beacons.length > 0) && (
           <section className="mb-5">
-            <h3 className="text-white/70 text-xs font-semibold uppercase tracking-wider mb-2.5">
-              Active Beacons
-            </h3>
+            <div className="flex items-center gap-2 mb-2.5">
+              <div className="w-0.5 h-3.5 rounded-full" style={{ background: AMBER }} />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Active Beacons</h3>
+            </div>
             {beaconsLoading ? (
               <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)' }}>
                 {[0, 1, 2].map((i) => (

@@ -96,7 +96,7 @@ export default function MorePage() {
       >
         <div className="pt-[env(safe-area-inset-top)]" />
         <div className="flex items-center justify-center h-14">
-          <h1 className="font-black text-base tracking-[0.12em] uppercase" style={{ color: GOLD }}>
+          <h1 className="font-black text-sm tracking-[0.25em] uppercase" style={{ color: GOLD }}>
             More
           </h1>
         </div>
@@ -186,11 +186,13 @@ export default function MorePage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
-                className="w-full flex items-center gap-4 p-4 rounded-2xl bg-[#1C1C1E] border border-white/5 active:scale-[0.98] transition-transform text-left"
+                className={`w-full flex items-center gap-4 p-4 rounded-xl bg-[#1C1C1E] border border-white/[0.06] active:scale-[0.98] active:bg-white/[0.04] transition-all text-left ${
+                  isSafety ? 'border-l-2 border-l-red-500/60' : ''
+                }`}
               >
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: `${item.accent}15`, border: `1px solid ${item.accent}30` }}
+                  style={{ background: `${item.accent}12`, border: `1px solid ${item.accent}25` }}
                 >
                   <Icon className="w-5 h-5" style={{ color: item.accent }} />
                 </div>
@@ -199,16 +201,16 @@ export default function MorePage() {
                     <span className="text-sm font-bold text-white">{item.label}</span>
                     {showBadge && (
                       <span
-                        className="text-[10px] font-black px-1.5 py-0.5 rounded-full"
-                        style={{ background: 'rgba(255,149,0,0.18)', color: '#FF9500' }}
+                        className="text-[10px] font-black px-1.5 py-0.5 rounded-full animate-pulse"
+                        style={{ background: 'rgba(255,59,48,0.2)', color: '#FF6961' }}
                       >
                         !
                       </span>
                     )}
                   </div>
-                  <span className="text-xs text-white/40">{item.sub}</span>
+                  <span className="text-[11px] text-white/35">{item.sub}</span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-white/20 flex-shrink-0" />
+                <ChevronRight className="w-4 h-4 text-white/15 flex-shrink-0" />
               </motion.button>
             );
           })}

@@ -589,27 +589,31 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
           </div>
 
           {/* ====== TAB STRIP ====== */}
-          <div className="flex gap-2 pb-2 overflow-x-auto scrollbar-hide -mx-4 px-4">
+          <div className="flex gap-1 pb-2 overflow-x-auto scrollbar-hide -mx-4 px-4">
             {TABS.map((tab) => {
               const isActive = activeTab === tab.key;
               return (
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`flex-shrink-0 h-9 px-4 rounded-full text-sm font-semibold transition-all active:scale-95 ${
-                    isActive
-                      ? 'text-white'
-                      : 'text-[#8E8E93] border border-white/5'
-                  }`}
+                  className="flex-shrink-0 h-9 px-4 rounded-full text-sm font-semibold transition-all active:scale-95 relative"
                   style={
                     isActive
-                      ? { backgroundColor: AMBER }
-                      : { backgroundColor: CARD_BG }
+                      ? { color: '#fff' }
+                      : { color: '#8E8E93' }
                   }
                   aria-label={`Show ${tab.label}`}
                   aria-pressed={isActive}
                 >
                   {tab.label}
+                  {isActive && (
+                    <motion.div
+                      layoutId="ghosted-tab-underline"
+                      className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full"
+                      style={{ background: AMBER }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    />
+                  )}
                 </button>
               );
             })}
@@ -631,12 +635,12 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
                       setFilters({ ...defaultGhostedFilters(), ...preset.filters });
                     }
                   }}
-                  className={`flex-shrink-0 h-7 px-3 rounded-full text-xs font-medium transition-all active:scale-95 ${
+                  className={`flex-shrink-0 h-7 px-3 rounded-full text-xs font-semibold transition-all active:scale-95 ${
                     isActive
-                      ? 'bg-white/15 text-white border border-white/20'
-                      : 'text-white/50 border border-white/8'
+                      ? 'text-black'
+                      : 'text-white/40 border border-white/[0.06]'
                   }`}
-                  style={{ backgroundColor: isActive ? 'rgba(200,150,44,0.15)' : CARD_BG }}
+                  style={{ backgroundColor: isActive ? AMBER : 'transparent' }}
                 >
                   {preset.label}
                 </button>

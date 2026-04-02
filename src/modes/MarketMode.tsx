@@ -250,19 +250,19 @@ function ProductCard({ product, index, onTap }: ProductCardProps) {
       animate="visible"
       variants={gridItemVariants}
       layout
-      className="relative bg-[#1C1C1E] rounded-2xl overflow-hidden border border-white/[0.08]"
+      className="relative bg-[#1C1C1E] rounded-xl overflow-hidden border border-white/[0.06] group"
     >
       {/* Image area -- tap opens product sheet */}
       <button
         onClick={onTap}
-        className="relative block w-full aspect-square bg-white/[0.03] overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#C8962C] focus:ring-offset-1 focus:ring-offset-[#1C1C1E]"
+        className="relative block w-full aspect-[3/4] bg-white/[0.03] overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#C8962C] focus:ring-offset-1 focus:ring-offset-[#1C1C1E]"
         aria-label={`View ${product.title}`}
       >
         {product.images[0] ? (
           <img
             src={product.images[0]}
             alt={product.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
           />
         ) : (
@@ -271,24 +271,41 @@ function ProductCard({ product, index, onTap }: ProductCardProps) {
           </div>
         )}
 
-        {/* Source badge -- top-right */}
+        {/* Bottom gradient for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+        {/* Source badge -- top-left pill */}
         <span
-          className={`absolute top-2 right-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border bg-black/50 backdrop-blur-sm ${getSourceBadgeStyle(product.source)}`}
+          className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider backdrop-blur-sm"
+          style={
+            product.source === 'shopify'
+              ? { background: 'rgba(200,150,44,0.85)', color: '#000' }
+              : product.source === 'preloved'
+              ? { background: 'rgba(158,125,71,0.85)', color: '#fff' }
+              : { background: 'rgba(124,58,237,0.85)', color: '#fff' }
+          }
         >
           {getSourceLabel(product.source)}
         </span>
 
-        {/* Condition badge -- top-left (preloved only) */}
+        {/* Condition badge -- top-right (preloved only) */}
         {product.source === 'preloved' && product.condition && (
-          <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-black/50 backdrop-blur-sm border border-white/20 text-white/70">
+          <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-black/60 backdrop-blur-sm border border-white/20 text-white/80">
             {getConditionLabel(product.condition)}
+          </span>
+        )}
+
+        {/* Category chip -- bottom-left */}
+        {product.category && (
+          <span className="absolute bottom-10 left-2 px-2 py-0.5 rounded-full text-[9px] font-medium uppercase tracking-wider bg-black/50 backdrop-blur-sm text-white/60 border border-white/10">
+            {product.category}
           </span>
         )}
 
         {/* Sale badge */}
         {product.compareAtPrice != null &&
           product.compareAtPrice > product.price && (
-            <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-[#FF3B30] rounded-full text-[9px] font-bold text-white uppercase tracking-wider">
+            <span className="absolute bottom-10 right-2 px-2 py-0.5 bg-[#FF3B30] rounded-full text-[9px] font-bold text-white uppercase tracking-wider">
               Sale
             </span>
           )}
@@ -342,7 +359,7 @@ function ProductCard({ product, index, onTap }: ProductCardProps) {
           {product.title}
         </h3>
         <div className="flex items-baseline gap-1.5 mt-1">
-          <span className="text-[#C8962C] font-extrabold text-base leading-none">
+          <span className="font-black text-base leading-none" style={{ color: '#C8962C' }}>
             {symbol}
             {product.price.toFixed(2)}
           </span>
