@@ -121,7 +121,7 @@ export function SimpleProfileCard({
       {/* Status indicator — using PresenceIndicator for gold pulsing dot */}
       {status !== 'offline' && !showOnlineDot && (
         <div className="absolute top-2 right-2 z-10">
-          <PresenceIndicator isOnline={status === 'online'} size="lg" />
+          <PresenceIndicator isOnline={false} size="lg" />
         </div>
       )}
 
