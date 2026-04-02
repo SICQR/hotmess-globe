@@ -8,7 +8,8 @@
     { "path": "/api/events/cron", "schedule": "0 3 * * *" },
     { "path": "/api/notifications/process", "schedule": "*/5 * * * *" },
     { "path": "/api/notifications/dispatch", "schedule": "*/5 * * * *" },
-    { "path": "/api/admin/cleanup/rate-limits", "schedule": "20 4 * * *" }
+    { "path": "/api/admin/cleanup/rate-limits", "schedule": "20 4 * * *" },
+    { "path": "/api/cron/referral-rewards", "schedule": "15 */6 * * *" }
   ],
   "routes": [
     {
