@@ -15,6 +15,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import {
   MessageCircle, MapPin, Shield, Plane,
   Loader2, MoreVertical, Flag, Ban, X, ChevronLeft, Ghost,
+  Footprints, Bike, Car,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
@@ -107,12 +108,47 @@ export default function L2ProfileSheet({ email, uid, id }) {
     supabase.auth.getUser().then(({ data }) => { if (data?.user?.id) setAuthUid(data.user.id); });
   }, []);
 
-  // Travel times will be wired in P6 once GPS consent and location available
+  // Travel times calculation
   useEffect(() => {
-    // Placeholder — real fetch wired in P6
-    // Only show travel time if profile has consented to GPS and has location
     if (!profileUser?.has_consented_gps) return;
     if (!profileUser?.last_lat || !profileUser?.last_lng) return;
+
+    // Get viewer's location from currentUser or geolocation
+    const getViewerCoords = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data: myProfile } = await supabase.from('profiles')
+          .select('last_lat,last_lng')
+          .eq('id', user.id)
+          .single();
+        if (!myProfile?.last_lat || !myProfile?.last_lng) return;
+
+        const destLat = profileUser.last_lat;
+        const destLng = profileUser.last_lng;
+        const originLat = myProfile.last_lat;
+        const originLng = myProfile.last_lng;
+
+        // Calculate approximate travel times based on distance
+        const R = 6371; // Earth radius km
+        const dLat = (destLat - originLat) * Math.PI / 180;
+        const dLon = (destLng - originLng) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(originLat * Math.PI / 180) * Math.cos(destLat * Math.PI / 180) *
+          Math.sin(dLon/2) * Math.sin(dLon/2);
+        const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+        // Rough estimates: walking 5km/h, cycling 15km/h, uber 30km/h avg
+        setTravelTimes({
+          walking: { durationSeconds: Math.round(distKm / 5 * 3600) },
+          bicycling: { durationSeconds: Math.round(distKm / 15 * 3600) },
+          uber: { durationSeconds: Math.round(distKm / 30 * 3600) },
+          distKm,
+        });
+      } catch {}
+    };
+
+    getViewerCoords();
   }, [profileUser]);
 
   const isOwnProfile =
@@ -451,7 +487,28 @@ export default function L2ProfileSheet({ email, uid, id }) {
       {/* ── Travel time chips — wired in P6 ────────────────────────────── */}
       {travelTimes && (
         <div className="flex gap-2 px-4 py-2">
-          {/* populated when travelTimes available */}
+          {travelTimes.walking && travelTimes.distKm < 5 && (
+            <div className="flex-1 flex flex-col items-center py-2 rounded-xl bg-[#39FF14]/10 border border-[#39FF14]/30">
+              <Footprints className="w-4 h-4 text-[#39FF14]" />
+              <span className="text-[#39FF14] font-black text-sm mt-0.5">{Math.round(travelTimes.walking.durationSeconds/60)}m</span>
+              <span className="text-white/30 text-[9px]">walk</span>
+            </div>
+          )}
+          {travelTimes.bicycling && travelTimes.distKm < 10 && (
+            <div className="flex-1 flex flex-col items-center py-2 rounded-xl bg-[#00C2E0]/10 border border-[#00C2E0]/30">
+              <Bike className="w-4 h-4 text-[#00C2E0]" />
+              <span className="text-[#00C2E0] font-black text-sm mt-0.5">{Math.round(travelTimes.bicycling.durationSeconds/60)}m</span>
+              <span className="text-white/30 text-[9px]">bike</span>
+            </div>
+          )}
+          {travelTimes.uber && (
+            <button onClick={()=>openSheet?.('uber',{lat:profileUser.last_lat,lng:profileUser.last_lng,label:profileUser.display_name,travelTimes,profileUser})}
+              className="flex-1 flex flex-col items-center py-2 rounded-xl bg-white/8 border border-white/15">
+              <Car className="w-4 h-4 text-white" />
+              <span className="text-white font-black text-sm mt-0.5">{Math.round(travelTimes.uber.durationSeconds/60)}m</span>
+              <span className="text-white/30 text-[9px]">uber</span>
+            </button>
+          )}
         </div>
       )}
 
