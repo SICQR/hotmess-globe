@@ -3,13 +3,14 @@
  * Triggered by long-pressing the profile avatar in OSBottomNav or ProfileMode.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Plus, User } from 'lucide-react';
 import { usePersona } from '@/contexts/PersonaContext';
 import { useBootGuard } from '@/contexts/BootGuardContext';
 import { useSheet } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
+import { supabase } from '@/components/utils/supabaseClient';
 
 // Color per persona_type
 const PERSONA_COLORS: Record<string, string> = {
@@ -19,6 +20,8 @@ const PERSONA_COLORS: Record<string, string> = {
   custom:  '#39FF14',
 };
 
+const PERSONA_LIMITS: Record<string, number> = { mess: 1, hotmess: 2, connected: 3, promoter: 5, venue: 10 };
+
 interface PersonaSwitcherSheetProps {
   onClose: () => void;
 }
@@ -27,10 +30,17 @@ export default function PersonaSwitcherSheet({ onClose }: PersonaSwitcherSheetPr
   const { personas, activePersona, loadPersonas, switchPersona, isLoading } = usePersona();
   const { session } = useBootGuard();
   const { openSheet } = useSheet();
+  const [userTier, setUserTier] = useState<string>('mess');
 
   useEffect(() => {
     if (session?.user?.id) loadPersonas(session.user.id);
   }, [session?.user?.id, loadPersonas]);
+
+  useEffect(() => {
+    supabase.rpc('get_user_tier').then(({ data }) => {
+      if (data?.tier) setUserTier(data.tier);
+    });
+  }, []);
 
   const handleSwitch = async (personaId: string) => {
     if (personaId === activePersona?.id) { onClose(); return; }
@@ -131,8 +141,8 @@ export default function PersonaSwitcherSheet({ onClose }: PersonaSwitcherSheetPr
           })
         )}
 
-        {/* Add persona (max 5) */}
-        {personas.length < 5 && (
+        {/* Add persona (tier-aware limit) */}
+        {personas.length < (PERSONA_LIMITS[userTier] ?? 1) && (
           <button
             className="w-full flex items-center gap-3 p-3 rounded-2xl bg-white/4 border border-dashed border-white/15 text-white/40 hover:text-white/60 transition-colors"
             onClick={handleAddPersona}
@@ -141,7 +151,17 @@ export default function PersonaSwitcherSheet({ onClose }: PersonaSwitcherSheetPr
               <Plus className="w-4 h-4" />
             </div>
             <span className="text-sm font-bold">Add persona</span>
-            <span className="ml-auto text-xs text-white/20">{personas.length}/5</span>
+            <span className="ml-auto text-xs text-white/20">{personas.length}/{PERSONA_LIMITS[userTier] ?? 1}</span>
+          </button>
+        )}
+
+        {/* Upgrade prompt when at limit */}
+        {personas.length >= (PERSONA_LIMITS[userTier] ?? 1) && (
+          <button
+            onClick={() => openSheet('membership', {})}
+            className="w-full py-3 text-center text-[#C8962C] text-sm font-bold border border-[#C8962C]/30 rounded-2xl"
+          >
+            Upgrade to add more personas
           </button>
         )}
       </div>

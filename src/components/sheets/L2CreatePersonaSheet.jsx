@@ -38,6 +38,7 @@ export default function L2CreatePersonaSheet({ onClose }) {
   const [selectedType, setSelectedType] = useState(null);
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
+  const [personaPosition, setPersonaPosition] = useState('');
   const [saving, setSaving] = useState(false);
 
   const handleClose = () => (onClose ? onClose() : closeSheet());
@@ -51,6 +52,7 @@ export default function L2CreatePersonaSheet({ onClose }) {
       personaType: selectedType,
       displayName: name,
       bio: bio.trim() || null,
+      position: personaPosition || null,
     });
     setSaving(false);
 
@@ -162,6 +164,19 @@ export default function L2CreatePersonaSheet({ onClose }) {
             placeholder="A line about this version of you…"
             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-white/25 outline-none focus:border-[#C8962C]/40 transition-colors resize-none"
           />
+        </div>
+
+        {/* Position */}
+        <div>
+          <label className="text-white/50 text-xs uppercase tracking-wider mb-2 block">Position for this persona</label>
+          <div className="flex flex-wrap gap-2">
+            {['Top','Vers Top','Versatile','Vers Bottom','Bottom','Side'].map(p=>(
+              <button key={p} onClick={()=>setPersonaPosition(v=>v===p?'':p)}
+                className={`px-3 py-1.5 rounded-full text-sm font-bold border transition-all ${
+                  personaPosition===p?'bg-[#C8962C] text-black border-[#C8962C]':'bg-white/5 text-white/60 border-white/15'
+                }`}>{p}</button>
+            ))}
+          </div>
         </div>
 
         {/* Create button */}
