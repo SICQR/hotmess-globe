@@ -101,9 +101,19 @@ export default function L2ProfileSheet({ email, uid, id }) {
 
   // Robust own-profile detection: match on email OR auth_user_id
   const [authUid, setAuthUid] = useState(null);
+  const [travelTimes, setTravelTimes] = useState(null);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => { if (data?.user?.id) setAuthUid(data.user.id); });
   }, []);
+
+  // Travel times will be wired in P6 once GPS consent and location available
+  useEffect(() => {
+    // Placeholder — real fetch wired in P6
+    // Only show travel time if profile has consented to GPS and has location
+    if (!profileUser?.has_consented_gps) return;
+    if (!profileUser?.last_lat || !profileUser?.last_lng) return;
+  }, [profileUser]);
 
   const isOwnProfile =
     (!email && !resolvedUid) ||
@@ -409,9 +419,45 @@ export default function L2ProfileSheet({ email, uid, id }) {
         </div>
       </div>
 
+      {/* ── Identity chips ────────────────────────────────────────────── */}
+      <div className="flex gap-1.5 px-4 py-2 overflow-x-auto no-scrollbar">
+        {profileUser?.public_attributes?.age && (
+          <span className="shrink-0 px-2.5 py-1 bg-white/8 text-white/60 text-xs rounded-full border border-white/10">
+            {profileUser.public_attributes.age}
+          </span>
+        )}
+        {profileUser?.public_attributes?.position && (
+          <span className="shrink-0 px-2.5 py-1 bg-[#C8962C]/15 text-[#C8962C] text-xs font-bold rounded-full border border-[#C8962C]/30">
+            {profileUser.public_attributes.position}
+          </span>
+        )}
+        {(profileUser?.public_attributes?.looking_for||[]).map(l=>(
+          <span key={l} className="shrink-0 px-2.5 py-1 bg-white/8 text-white/60 text-xs rounded-full border border-white/10">{l}</span>
+        ))}
+        {profileUser?.public_attributes?.time_horizon && (
+          <span className="shrink-0 px-2.5 py-1 bg-amber-400/15 text-amber-400 text-xs font-bold rounded-full border border-amber-400/30">
+            {profileUser.public_attributes.time_horizon}
+          </span>
+        )}
+      </div>
+
+      {/* ── Bio ────────────────────────────────────────────────────────── */}
+      {profileUser?.bio && (
+        <div className="px-4 py-2">
+          <p className="text-white/70 text-sm leading-relaxed">{profileUser.bio}</p>
+        </div>
+      )}
+
+      {/* ── Travel time chips — wired in P6 ────────────────────────────── */}
+      {travelTimes && (
+        <div className="flex gap-2 px-4 py-2">
+          {/* populated when travelTimes available */}
+        </div>
+      )}
+
       {/* ── Profile attribute chips ────────────────────────────────────── */}
       {profileAttrs && Object.keys(profileAttrs).some(k => profileAttrs[k] && (Array.isArray(profileAttrs[k]) ? profileAttrs[k].length : true)) && (
-        <div className="px-4 pt-4 pb-2">
+        <div className="px-4 pt-2 pb-2">
           <div className="flex flex-wrap gap-1.5">
             {profileAttrs.pronouns && (
               <Chip>{profileAttrs.pronouns}</Chip>

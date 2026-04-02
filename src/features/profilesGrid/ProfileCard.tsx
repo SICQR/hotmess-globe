@@ -151,6 +151,14 @@ const getProductPreviewUrls = (profile: Profile): string[] => {
   return urls.slice(0, 3);
 };
 
+// Helper to get distance badge with color coding
+const distanceBadge = (km?: number) => {
+  if (!km && km !== 0) return null;
+  const label = km < 1 ? `${Math.round(km*1000)}m` : `${km.toFixed(1)}km`;
+  const color = km < 0.5 ? 'text-[#39FF14]' : km < 2 ? 'text-amber-400' : 'text-white/50';
+  return <span className={`text-[10px] font-bold ${color}`}>{label}</span>;
+};
+
 // Memoize ProfileCard to prevent re-renders when parent updates
 function ProfileCardInner({
   profile,
@@ -545,6 +553,9 @@ function ProfileCardInner({
           position={typeof (profile as any)?.position === 'string' ? (profile as any).position : undefined}
           age={typeof (profile as any)?.age === 'number' ? (profile as any).age : undefined}
           lastSeen={lastSeen}
+          distanceKm={typeof (profile as any)?.distance_km === 'number' ? (profile as any).distance_km : undefined}
+          isOnline={(profile as any)?.is_online === true}
+          sceneTag={Array.isArray((profile as any)?.public_attributes?.scenes) && (profile as any).public_attributes.scenes.length > 0 ? (profile as any).public_attributes.scenes[0] : undefined}
           onClick={openProfile}
           onMessage={
             (profile as any)?.userId || (profile as any)?.authUserId
