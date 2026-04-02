@@ -45,12 +45,12 @@ export default function SellerDashboard() {
   }, []);
 
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ['seller-products', currentUser?.email],
+    queryKey: ['seller-products', currentUser?.id],
     queryFn: async () => {
-      if (!currentUser?.email) return [];
+      if (!currentUser?.id) return [];
       try {
-        const { data, error } = await supabase.from('products').select('*')
-          .eq('seller_email', currentUser.email)
+        const { data, error } = await supabase.from('market_listings').select('*')
+          .eq('seller_id', currentUser.id)
           .order('created_at', { ascending: false });
         if (error) return [];
         return data || [];
@@ -62,12 +62,12 @@ export default function SellerDashboard() {
   });
 
   const { data: orders = [] } = useQuery({
-    queryKey: ['seller-orders', currentUser?.email],
+    queryKey: ['seller-orders', currentUser?.id],
     queryFn: async () => {
-      if (!currentUser?.email) return [];
+      if (!currentUser?.id) return [];
       try {
         const { data, error } = await supabase.from('orders').select('*')
-          .eq('seller_email', currentUser.email)
+          .eq('seller_id', currentUser.id)
           .order('created_at', { ascending: false });
         if (error) return [];
         return data || [];
@@ -85,16 +85,17 @@ export default function SellerDashboard() {
   });
 
   const { data: promotions = [] } = useQuery({
-    queryKey: ['promotions', currentUser?.email],
-    queryFn: () => supabase.from('promotions').select('*').order('-created_date', { ascending: false }),
+    queryKey: ['promotions', currentUser?.id],
+    queryFn: () => supabase.from('promotions').select('*').eq('seller_id', currentUser.id).order('created_at', { ascending: false }),
     enabled: !!currentUser,
   });
 
   const { data: payouts = [] } = useQuery({
-    queryKey: ['seller-payouts', currentUser?.email],
+    queryKey: ['seller-payouts', currentUser?.id],
     queryFn: async () => {
       try {
         const { data, error } = await supabase.from('seller_payouts').select('*')
+          .eq('seller_id', currentUser.id)
           .order('created_at', { ascending: false });
         if (error) return [];
         return data || [];
@@ -118,12 +119,12 @@ export default function SellerDashboard() {
   }));
 
   const createMutation = useMutation({
-    mutationFn: (data) => supabase.from('products').insert({ ...data, seller_email: currentUser.email }),
+    mutationFn: (data) => supabase.from('market_listings').insert({ ...data, seller_id: currentUser.id }),
     onSuccess: async (createdProduct) => {
       queryClient.invalidateQueries(['seller-products']);
       setShowForm(false);
       toast.success('Product created!');
-      
+
       // Wire to Globe: Create Gold beacon for P2P listing
       const promoterId = currentUser?.auth_user_id ?? currentUser?.id;
       if (promoterId && createdProduct) {
@@ -137,7 +138,7 @@ export default function SellerDashboard() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => supabase.from('products').update(data),
+    mutationFn: ({ id, data }) => supabase.from('market_listings').update(data).eq('id', id),
     onSuccess: () => {
       queryClient.invalidateQueries(['seller-products']);
       setShowForm(false);
@@ -150,11 +151,11 @@ export default function SellerDashboard() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => supabase.from('products').delete().eq('id', id),
+    mutationFn: (id) => supabase.from('market_listings').delete().eq('id', id),
     onSuccess: async (_, deletedId) => {
       queryClient.invalidateQueries(['seller-products']);
       toast.success('Product deleted');
-      
+
       // Wire to Globe: Remove beacon for deleted P2P listing
       if (deletedId) {
         await deleteBeaconForP2PListing(deletedId);

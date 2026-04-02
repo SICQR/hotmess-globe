@@ -15,7 +15,7 @@ const STEPS = [
   { id: 'welcome', title: 'Welcome', icon: Store },
   { id: 'profile', title: 'Profile', icon: FileText },
   { id: 'products', title: 'Products', icon: ShoppingBag },
-  { id: 'payout', title: 'Payout', icon: CreditCard },
+  { id: 'payouts', title: 'Payouts', icon: CreditCard },
   { id: 'complete', title: 'Complete', icon: Check },
 ];
 
@@ -37,9 +37,6 @@ export default function SellerOnboarding() {
     instagram: '',
     acceptsXP: true,
     acceptsGBP: false,
-    bankName: '',
-    accountNumber: '',
-    sortCode: '',
   });
 
   useEffect(() => {
@@ -241,7 +238,7 @@ export default function SellerOnboarding() {
           </motion.div>
         );
 
-      case 3: // Payout
+      case 3: // Payouts
         return (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
@@ -250,57 +247,24 @@ export default function SellerOnboarding() {
             className="space-y-6"
           >
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-black uppercase mb-2">Payout Details</h2>
-              <p className="text-white/60">Where should we send your earnings?</p>
+              <h2 className="text-2xl font-black uppercase mb-2">Payouts</h2>
+              <p className="text-white/60">Complete your payout setup</p>
             </div>
 
-            {formData.acceptsGBP ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-white/60 uppercase mb-2 block">Bank Name</label>
-                  <Input
-                    value={formData.bankName}
-                    onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
-                    placeholder="e.g. Barclays"
-                    className="bg-white/5 border-white/20"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm text-white/60 uppercase mb-2 block">Sort Code</label>
-                    <Input
-                      value={formData.sortCode}
-                      onChange={(e) => setFormData({ ...formData, sortCode: e.target.value })}
-                      placeholder="00-00-00"
-                      className="bg-white/5 border-white/20"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm text-white/60 uppercase mb-2 block">Account Number</label>
-                    <Input
-                      value={formData.accountNumber}
-                      onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
-                      placeholder="12345678"
-                      className="bg-white/5 border-white/20"
-                    />
-                  </div>
-                </div>
-                <div className="p-4 bg-[#00C2E0]/10 border border-[#00C2E0]/30 rounded-lg flex items-start gap-3">
-                  <Shield className="w-5 h-5 text-[#00C2E0] mt-0.5" />
-                  <p className="text-sm text-white/80">
-                    Your bank details are encrypted and stored securely. We use Stripe for all GBP payouts.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-12 bg-white/5 rounded-xl">
-                <Zap className="w-12 h-12 text-[#C8962C] mx-auto mb-4" />
-                <h3 className="text-xl font-bold mb-2">Credit Seller</h3>
-                <p className="text-white/60 max-w-sm mx-auto">
-                  You're set up to accept credit payments. Payments are transferred instantly to your account when a sale is made.
-                </p>
-              </div>
-            )}
+            <div className="text-center py-12 bg-white/5 rounded-xl">
+              <CreditCard className="w-12 h-12 text-[#C8962C] mx-auto mb-4" />
+              <h3 className="text-xl font-bold mb-2">Stripe Connect</h3>
+              <p className="text-white/60 max-w-sm mx-auto">
+                Payouts are processed via Stripe Connect. You'll be prompted to complete payout verification after your first sale.
+              </p>
+            </div>
+
+            <div className="p-4 bg-[#00C2E0]/10 border border-[#00C2E0]/30 rounded-lg flex items-start gap-3">
+              <Shield className="w-5 h-5 text-[#00C2E0] mt-0.5" />
+              <p className="text-sm text-white/80">
+                Your payout information is handled securely by Stripe. No sensitive banking details are stored on HOTMESS.
+              </p>
+            </div>
           </motion.div>
         );
 
