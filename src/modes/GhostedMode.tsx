@@ -442,7 +442,11 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
 
       // Tab filters
       if (activeTab === 'online') {
-        if (!profile.is_online && !profile.onlineNow) return false;
+        // Show if is_online OR last_seen within 15 minutes
+        const lastSeen = profile.last_seen ? new Date(profile.last_seen).getTime() : 0;
+        const fifteenMinutesAgo = Date.now() - 15 * 60 * 1000;
+        const isRecentlyActive = lastSeen > fifteenMinutesAgo;
+        if (!profile.is_online && !profile.onlineNow && !isRecentlyActive) return false;
       }
 
       if (activeTab === 'rightnow') {

@@ -31,6 +31,9 @@ interface SimpleProfileCardProps {
   position?: string;
   age?: number;
   lastSeen?: string;
+  distanceKm?: number;
+  isOnline?: boolean;
+  sceneTag?: string;
   onClick?: () => void;
   onMessage?: () => void;
 }
@@ -54,6 +57,9 @@ export function SimpleProfileCard({
   position,
   age,
   lastSeen,
+  distanceKm,
+  isOnline,
+  sceneTag,
   onClick,
   onMessage,
 }: SimpleProfileCardProps) {
@@ -63,6 +69,17 @@ export function SimpleProfileCard({
     .join('')
     .slice(0, 2)
     .toUpperCase() || 'HM';
+
+  // Helper to get distance badge with color coding
+  const getDist = (km?: number) => {
+    if (!km && km !== 0) return null;
+    const label = km < 1 ? `${Math.round(km*1000)}m` : `${km.toFixed(1)}km`;
+    const color = km < 0.5 ? 'text-[#39FF14]' : km < 2 ? 'text-amber-400' : 'text-white/50';
+    return <span className={`text-[10px] font-bold ${color}`}>{label}</span>;
+  };
+
+  // Check if online: is_online OR within 15 minutes
+  const showOnlineDot = isOnline || (status === 'online');
 
   return (
     <motion.div
@@ -89,8 +106,20 @@ export function SimpleProfileCard({
       {/* Gradient overlay for text readability */}
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80" />
 
+      {/* TOP-LEFT: Online dot (8px green if online within 15min) */}
+      {showOnlineDot && (
+        <div className="absolute top-2 left-2 w-2 h-2 bg-[#39FF14] rounded-full z-10" />
+      )}
+
+      {/* TOP-RIGHT: Distance badge */}
+      {distanceKm !== undefined && (
+        <div className="absolute top-2 right-2 z-10">
+          {getDist(distanceKm)}
+        </div>
+      )}
+
       {/* Status indicator — using PresenceIndicator for gold pulsing dot */}
-      {status !== 'offline' && (
+      {status !== 'offline' && !showOnlineDot && (
         <div className="absolute top-2 right-2 z-10">
           <PresenceIndicator isOnline={status === 'online'} size="lg" />
         </div>
@@ -105,21 +134,25 @@ export function SimpleProfileCard({
 
       {/* Content */}
       <div className="absolute bottom-0 left-0 right-0 p-3">
-        {/* Name + age + verified (Grindr-style inline) */}
-        <div className="flex items-baseline gap-1.5">
+        {/* Name + age (inline) */}
+        <div className="flex items-baseline gap-1">
           <h3 className="text-white font-black text-sm truncate">{name}</h3>
           {age && <span className="text-white/55 text-xs flex-shrink-0">{age}</span>}
-          {isVerified && (
-            <span className="text-[#00C2E0] text-xs flex-shrink-0">✓</span>
-          )}
         </div>
 
-        {/* Position line (if present) */}
-        {position && (
-          <div className="flex items-center gap-1.5 mt-0.5 text-white/55 text-xs">
-            <span>{position}</span>
-          </div>
-        )}
+        {/* Position + scene tag chips */}
+        <div className="flex gap-1 mt-0.5 flex-wrap">
+          {position && (
+            <span className="px-1.5 py-0.5 bg-[#C8962C]/20 text-[#C8962C] text-[9px] font-black rounded-full border border-[#C8962C]/30">
+              {position.toUpperCase().slice(0,4)}
+            </span>
+          )}
+          {sceneTag && (
+            <span className="px-1.5 py-0.5 bg-white/10 text-white/50 text-[9px] rounded-full">
+              {sceneTag.slice(0,8)}
+            </span>
+          )}
+        </div>
 
         {/* Location/distance */}
         {(location || distance) && (
