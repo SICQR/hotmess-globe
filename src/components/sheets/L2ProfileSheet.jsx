@@ -15,7 +15,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import {
   MessageCircle, MapPin, Shield, Plane,
   Loader2, MoreVertical, Flag, Ban, X, ChevronLeft, Ghost,
-  Footprints, Bike, Car, Video, Heart,
+  Footprints, Bike, Car, Heart, Video,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
@@ -33,6 +33,73 @@ const Chip = ({ children, gold = false }) => (
   </span>
 );
 
+// ── Photo carousel (CSS snap-scroll, 3:4 portrait) ──────────────────────────
+function PhotoCarousel({ images = [], fallbackInitial = '?' }) {
+  const scrollRef = useRef(null);
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const idx = Math.round(el.scrollLeft / el.offsetWidth);
+    setActiveIdx(Math.max(0, Math.min(idx, images.length - 1)));
+  }, [images.length]);
+
+  // 0 photos — initials fallback
+  if (!images.length) {
+    return (
+      <div className="relative" style={{ aspectRatio: '3/4', maxHeight: '55vh' }}>
+        <div className="w-full h-full bg-gradient-to-br from-[#C8962C]/40 via-[#1C1C1E] to-black flex items-center justify-center">
+          <span className="text-6xl font-black text-white/20">{fallbackInitial}</span>
+        </div>
+      </div>
+    );
+  }
+
+  // 1 photo — static, no dots
+  if (images.length === 1) {
+    return (
+      <div className="relative" style={{ aspectRatio: '3/4', maxHeight: '55vh' }}>
+        <img src={images[0]} alt="" className="w-full h-full object-cover" />
+      </div>
+    );
+  }
+
+  // Multi-photo carousel
+  return (
+    <div className="relative" style={{ aspectRatio: '3/4', maxHeight: '55vh' }}>
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
+        {images.map((url, i) => (
+          <div key={i} className="w-full h-full flex-shrink-0 snap-center">
+            <img
+              src={url}
+              alt={`Photo ${i + 1}`}
+              className="w-full h-full object-cover"
+              loading={i === 0 ? 'eager' : 'lazy'}
+            />
+          </div>
+        ))}
+      </div>
+      {/* Dot indicators */}
+      <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+        {images.map((_, i) => (
+          <div
+            key={i}
+            className={`h-1.5 rounded-full transition-all duration-200 ${
+              i === activeIdx ? 'bg-[#C8962C] w-4' : 'bg-white/30 w-1.5'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function L2ProfileSheet({ email, uid, id }) {
   const navigate = useNavigate();
   const { openSheet, closeSheet } = useSheet();
@@ -42,6 +109,8 @@ export default function L2ProfileSheet({ email, uid, id }) {
   const [isBlocking, setIsBlocking] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
   const { isTapped, sendTap } = useTaps();
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // ── Data queries ────────────────────────────────────────────────────────
 
@@ -264,7 +333,81 @@ export default function L2ProfileSheet({ email, uid, id }) {
     enabled: !!profileUser?.email,
   });
 
+  // Check if profile is saved/favorited
+  useEffect(() => {
+    if (!profileUser?.auth_user_id && !profileUser?.id) return;
+    const checkSaved = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const targetId = profileUser.auth_user_id || profileUser.id;
+        const { count } = await supabase
+          .from('taps')
+          .select('id', { count: 'exact', head: true })
+          .eq('from_email', user.email || user.id)
+          .eq('to_email', targetId)
+          .eq('type', 'save');
+        setIsSaved((count || 0) > 0);
+      } catch {}
+    };
+    checkSaved();
+  }, [profileUser?.auth_user_id, profileUser?.id]);
+
+  // Fetch view count for this profile
+  const { data: viewCount } = useQuery({
+    queryKey: ['profile-view-count', profileUser?.auth_user_id],
+    queryFn: async () => {
+      if (!profileUser?.auth_user_id) return 0;
+      const { count } = await supabase
+        .from('profile_views')
+        .select('id', { count: 'exact', head: true })
+        .eq('viewed_id', profileUser.auth_user_id);
+      return count || 0;
+    },
+    enabled: !!profileUser?.auth_user_id,
+  });
+
   // ── Handlers ────────────────────────────────────────────────────────────
+
+  const handleSaveToggle = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error('Sign in to save profiles'); return; }
+      const targetId = profileUser.auth_user_id || profileUser.id;
+      const fromKey = user.email || user.id;
+
+      if (isSaved) {
+        await supabase
+          .from('taps')
+          .delete()
+          .eq('from_email', fromKey)
+          .eq('to_email', targetId)
+          .eq('type', 'save');
+        setIsSaved(false);
+        toast('Removed from saved');
+      } else {
+        await supabase
+          .from('taps')
+          .insert({ from_email: fromKey, to_email: targetId, type: 'save' });
+        setIsSaved(true);
+        toast.success('Profile saved');
+      }
+    } catch {
+      toast.error('Failed to save');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleVideoCall = () => {
+    if (!profileUser?.auth_user_id && !profileUser?.id) return;
+    openSheet(SHEET_TYPES.VIDEO, {
+      toUid: profileUser.auth_user_id || profileUser.id,
+      title: `Video with ${profileUser.username || profileUser.display_name || 'Anonymous'}`,
+    });
+  };
 
   const handleMessage = () => {
     if (!profileUser?.auth_user_id && !profileUser?.id) return;
@@ -338,81 +481,6 @@ export default function L2ProfileSheet({ email, uid, id }) {
     }
   };
 
-  // ── Photo carousel state (must be before early returns) ───────────────
-  const [activePhotoIdx, setActivePhotoIdx] = useState(0);
-  const carouselRef = useRef(null);
-  const [isFavorited, setIsFavorited] = useState(false);
-
-  // Scroll observer for snap-scroll carousel
-  useEffect(() => {
-    const el = carouselRef.current;
-    if (!el) return;
-    let ticking = false;
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        const scrollLeft = el.scrollLeft;
-        const width = el.clientWidth;
-        const idx = Math.round(scrollLeft / width);
-        setActivePhotoIdx(idx);
-        ticking = false;
-      });
-    };
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
-  }, []);
-
-  // Favorite toggle
-  const handleFavorite = useCallback(async () => {
-    setIsFavorited(prev => !prev);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !profileUser?.id) return;
-      if (!isFavorited) {
-        await supabase.from('taps').upsert({
-          tapper_email: user.email,
-          tapped_email: profileUser?.email || profileUser?.id,
-          tap_type: 'favorite',
-        }, { onConflict: 'tapper_email,tapped_email,tap_type' });
-      } else {
-        await supabase.from('taps')
-          .delete()
-          .eq('tapper_email', user.email)
-          .eq('tapped_email', profileUser?.email || profileUser?.id)
-          .eq('tap_type', 'favorite');
-      }
-    } catch {
-      setIsFavorited(prev => !prev);
-    }
-  }, [isFavorited, profileUser?.id, profileUser?.email]);
-
-  // Check if already favorited on mount
-  useEffect(() => {
-    if (!profileUser?.id) return;
-    (async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        const { data } = await supabase.from('taps')
-          .select('id')
-          .eq('tapper_email', user.email)
-          .eq('tapped_email', profileUser?.email || profileUser?.id)
-          .eq('tap_type', 'favorite')
-          .maybeSingle();
-        if (data) setIsFavorited(true);
-      } catch {}
-    })();
-  }, [profileUser?.id, profileUser?.email]);
-
-  const handleVideoCall = useCallback(() => {
-    if (!profileUser?.auth_user_id && !profileUser?.id) return;
-    openSheet('video-call', {
-      toUid: profileUser?.auth_user_id || profileUser?.id,
-      title: `Video call with ${profileUser?.username || profileUser?.profileName || profileUser?.display_name || 'Anonymous'}`,
-    });
-  }, [profileUser?.auth_user_id, profileUser?.id, profileUser?.username, profileUser?.profileName, profileUser?.display_name, openSheet]);
-
   // ── Loading / empty states ──────────────────────────────────────────────
 
   if (isLoading) {
@@ -437,29 +505,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
 
   // IDENTITY MODEL: username is the public handle — never expose real name to other users
   const name = profileUser.username || profileUser.profileName || profileUser.display_name || 'Anonymous';
-  // Collect all photos: avatar + photos array, deduplicated
-  const allPhotos = (() => {
-    const urls = [];
-    const seen = new Set();
-    const push = (v) => {
-      const url = typeof v === 'string' ? v.trim() : (v?.url || v?.file_url || '');
-      if (!url || seen.has(url)) return;
-      seen.add(url);
-      urls.push(url);
-    };
-    push(profileUser.avatar_url);
-    if (Array.isArray(profileUser.photos)) {
-      for (const p of profileUser.photos) push(p);
-    }
-    if (Array.isArray(profileUser.photo_urls)) {
-      for (const p of profileUser.photo_urls) push(p);
-    }
-    if (Array.isArray(profileUser.images)) {
-      for (const p of profileUser.images) push(p);
-    }
-    return urls.slice(0, 6);
-  })();
-  const avatarUrl = allPhotos[0] || null;
+  const avatarUrl = profileUser.avatar_url || profileUser.photos?.[0];
   const isTravel = profileUser.persona === 'TRAVEL' || profileUser.persona === 'travel';
   const visitingCity = profileUser.city || profileUser.visiting_city;
   const distance = profileUser.distance_km || profileUser.distance;
@@ -472,62 +518,19 @@ export default function L2ProfileSheet({ email, uid, id }) {
 
   return (
     <div className="pb-20 -mt-4">
-      {/* ── Hero photo carousel (full-bleed, 45vh) ────────────────────── */}
-      <div className="relative" style={{ height: '45vh', minHeight: 280 }}>
-        {allPhotos.length > 1 ? (
-          <>
-            <div
-              ref={carouselRef}
-              className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide"
-              style={{ WebkitOverflowScrolling: 'touch' }}
-            >
-              {allPhotos.map((url, i) => (
-                <div key={url} className="w-full h-full flex-shrink-0 snap-center">
-                  <img
-                    src={url}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    draggable={false}
-                    loading={i === 0 ? 'eager' : 'lazy'}
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* Photo count badge — top-right */}
-            <div
-              className="absolute top-4 right-14 z-10 px-2 py-1 rounded-full text-[11px] font-bold text-white"
-              style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', marginTop: 'env(safe-area-inset-top, 0px)' }}
-            >
-              {activePhotoIdx + 1}/{allPhotos.length}
-            </div>
-
-            {/* Dot indicators */}
-            <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
-              {allPhotos.map((_, i) => (
-                <div
-                  key={i}
-                  className="rounded-full transition-all duration-200"
-                  style={{
-                    width: i === activePhotoIdx ? 16 : 6,
-                    height: 6,
-                    background: i === activePhotoIdx ? '#C8962C' : 'rgba(255,255,255,0.4)',
-                  }}
-                />
-              ))}
-            </div>
-          </>
-        ) : avatarUrl ? (
-          <img
-            src={avatarUrl}
-            alt=""
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[#C8962C]/40 via-[#1C1C1E] to-black flex items-center justify-center">
-            <span className="text-6xl font-black text-white/20">{name[0]}</span>
-          </div>
-        )}
+      {/* ── Photo carousel (full-bleed, 3:4 portrait) ────────────────── */}
+      <div className="relative">
+        <PhotoCarousel
+          images={(() => {
+            const urls = [];
+            const seen = new Set();
+            const add = (u) => { if (u && !seen.has(u)) { seen.add(u); urls.push(u); } };
+            add(avatarUrl);
+            (profileUser.photos || []).forEach(p => add(typeof p === 'string' ? p : p?.url));
+            return urls;
+          })()}
+          fallbackInitial={name[0]}
+        />
 
         {/* Gradient overlay at bottom */}
         <div
@@ -538,7 +541,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
         {/* Back button */}
         <button
           onClick={closeSheet}
-          className="absolute top-4 left-4 w-9 h-9 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm active:bg-black/70 z-10"
+          className="absolute top-4 left-4 w-9 h-9 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm active:bg-black/70 z-20"
           style={{ marginTop: 'env(safe-area-inset-top, 0px)' }}
         >
           <ChevronLeft className="w-5 h-5 text-white" />
@@ -548,28 +551,44 @@ export default function L2ProfileSheet({ email, uid, id }) {
         {!isOwnProfile && (
           <button
             onClick={() => setShowMoreMenu(!showMoreMenu)}
-            className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm active:bg-black/70 z-10"
+            className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm active:bg-black/70 z-20"
             style={{ marginTop: 'env(safe-area-inset-top, 0px)' }}
           >
             <MoreVertical className="w-5 h-5 text-white" />
           </button>
         )}
 
-        {/* Name + persona overlay at bottom of hero */}
-        <div className="absolute bottom-4 left-4 right-4 z-10">
+        {/* Views badge */}
+        {viewCount > 0 && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/50 backdrop-blur-sm z-20">
+            <span className="text-white/70 text-xs font-medium">👁 {viewCount} views</span>
+          </div>
+        )}
+
+        {/* Name + presence + persona overlay at bottom of hero */}
+        <div className="absolute bottom-4 left-4 right-4 z-20">
           <div className="flex items-center gap-2">
-            {/* Presence dot */}
+            {/* Presence status */}
             {(() => {
               const ls = profileUser.last_seen;
               const ms = ls ? Date.now() - new Date(ls).getTime() : Infinity;
               const isOn = profileUser.is_online || ms < 10 * 60_000;
-              const isAway = ms < 60 * 60_000;
-              return (isOn || isAway) ? (
+              const isAway = !isOn && ms < 60 * 60_000;
+              const isOff = !isOn && !isAway;
+
+              const dot = isOn
+                ? { color: '#30D158', glow: '0 0 6px #30D158' }
+                : isAway
+                  ? { color: '#FFAB00', glow: undefined }
+                  : { color: '#8E8E93', glow: undefined };
+
+              return (
                 <span
                   className="w-3 h-3 rounded-full flex-shrink-0"
-                  style={{ background: isOn ? '#30D158' : '#FFCC00', boxShadow: isOn ? '0 0 6px #30D158' : '0 0 6px #FFCC00' }}
+                  style={{ background: dot.color, boxShadow: dot.glow }}
+                  title={isOn ? 'Online now' : isAway ? 'Recently active' : 'Offline'}
                 />
-              ) : null;
+              );
             })()}
             <h2 className="text-2xl font-black text-white">{name}</h2>
             {isTravel && <Plane className="w-5 h-5 text-white/70 -rotate-45" />}
@@ -579,6 +598,18 @@ export default function L2ProfileSheet({ email, uid, id }) {
               </div>
             )}
           </div>
+          {/* Status label */}
+          {(() => {
+            const ls = profileUser.last_seen;
+            const ms = ls ? Date.now() - new Date(ls).getTime() : Infinity;
+            const isOn = profileUser.is_online || ms < 10 * 60_000;
+            const isAway = !isOn && ms < 60 * 60_000;
+            const label = isOn ? 'Online now' : isAway ? 'Recently active' : 'Offline';
+            const color = isOn ? '#30D158' : isAway ? '#FFAB00' : '#8E8E93';
+            return (
+              <span className="text-xs font-medium mt-0.5 block" style={{ color }}>{label}</span>
+            );
+          })()}
           <div className="flex items-center gap-2 mt-0.5">
             {visitingCity && (
               <span className="text-white/60 text-sm">
@@ -759,9 +790,9 @@ export default function L2ProfileSheet({ email, uid, id }) {
         )}
       </div>
 
-      {/* ── Bottom action bar — 4 actions ──────────────────────────────── */}
+      {/* ── Bottom action bar ──────────────────────────────────────────── */}
       <div
-        className="fixed bottom-0 left-0 right-0 px-4 py-3 z-10 flex items-center gap-2"
+        className="fixed bottom-0 left-0 right-0 px-4 py-3 z-10 flex gap-2"
         style={{
           background: 'rgba(5,5,7,0.95)',
           backdropFilter: 'blur(16px)',
@@ -769,53 +800,52 @@ export default function L2ProfileSheet({ email, uid, id }) {
           borderTop: '1px solid rgba(255,255,255,0.06)',
         }}
       >
-        {/* Boo */}
+        {/* Boo button */}
         <button
           onClick={() => {
             const targetEmail = profileUser.email || profileUser.userId;
             if (targetEmail) sendTap(targetEmail, name, 'boo');
           }}
-          className={`flex flex-col items-center justify-center w-14 h-14 rounded-xl transition-all ${
+          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
             (profileUser.email || profileUser.userId) && isTapped(profileUser.email || profileUser.userId, 'boo')
               ? 'bg-[#C8962C] text-black' : 'bg-white/10 text-white/60 hover:bg-white/15'
           }`}
           title="Boo"
         >
           <Ghost className="w-5 h-5" />
-          <span className="text-[9px] font-semibold mt-0.5">Boo</span>
         </button>
 
-        {/* Favorite */}
+        {/* Save / Favorite button */}
         <button
-          onClick={handleFavorite}
-          className={`flex flex-col items-center justify-center w-14 h-14 rounded-xl transition-all ${
-            isFavorited
-              ? 'bg-red-500/20 text-red-500' : 'bg-white/10 text-white/60 hover:bg-white/15'
+          onClick={handleSaveToggle}
+          disabled={isSaving}
+          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+            isSaved
+              ? 'bg-[#C8962C] text-black'
+              : 'bg-white/10 text-white/60 hover:bg-white/15'
           }`}
-          title="Favorite"
+          title={isSaved ? 'Unsave' : 'Save profile'}
         >
-          <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
-          <span className="text-[9px] font-semibold mt-0.5">{isFavorited ? 'Saved' : 'Save'}</span>
+          <Heart className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
         </button>
 
-        {/* Video Call */}
-        <button
-          onClick={handleVideoCall}
-          className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-white/10 text-white/60 hover:bg-white/15 transition-all"
-          title="Video Call"
-        >
-          <Video className="w-5 h-5" />
-          <span className="text-[9px] font-semibold mt-0.5">Video</span>
-        </button>
-
-        {/* Message — primary CTA */}
+        {/* Message button */}
         <Button
           onClick={handleMessage}
-          className="flex-1 h-14 bg-[#C8962C] hover:bg-[#C8962C]/90 rounded-xl font-bold text-sm"
+          className="flex-1 h-12 bg-[#C8962C] hover:bg-[#C8962C]/90 rounded-xl font-bold"
         >
           <MessageCircle className="w-5 h-5 mr-2" />
           Message
         </Button>
+
+        {/* Video Call button */}
+        <button
+          onClick={handleVideoCall}
+          className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/10 text-white/60 hover:bg-white/15 transition-all"
+          title="Video call"
+        >
+          <Video className="w-5 h-5" />
+        </button>
       </div>
 
       {/* ── More menu dropdown ─────────────────────────────────────────── */}
