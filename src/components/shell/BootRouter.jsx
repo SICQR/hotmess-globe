@@ -12,7 +12,6 @@ const PUBLIC_PATH_PREFIXES = [
   '/guidelines',
   '/contact',
   '/accessibility',
-  '/auth/callback',
 ];
 
 // Branded loading — cinematic pulse
@@ -57,6 +56,19 @@ export default function BootRouter({ children }) {
   // Always allow password reset page
   if (location.pathname === '/reset-password') {
     return <PublicShell />;
+  }
+
+  // Auth callback is a standalone full-screen page — never render inside OS chrome.
+  // It handles its own loading/error/redirect UI.
+  if (location.pathname === '/auth/callback') {
+    const AuthCallback = React.lazy(
+      () => import('@/pages/auth/callback')
+    );
+    return (
+      <React.Suspense fallback={<LoadingSpinner />}>
+        <AuthCallback />
+      </React.Suspense>
+    );
   }
 
   // Show loading while checking auth
