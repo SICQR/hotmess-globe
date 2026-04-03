@@ -7,12 +7,11 @@
  * Uses SHEET_REGISTRY from /src/lib/sheetSystem.ts for configuration.
  */
 
-import React, { Suspense, lazy, useEffect, useRef } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { useSheet } from '@/contexts/SheetContext';
 import { SHEET_REGISTRY, getSheetHeight } from '@/lib/sheetSystem';
 import L2SheetContainer from './L2SheetContainer';
 import { Loader2, Construction } from 'lucide-react';
-import { useRadio } from '@/contexts/RadioContext';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // LAZY-LOADED SHEET COMPONENTS
@@ -72,16 +71,6 @@ const L2AchievementsSheet = lazy(() => import('./L2AchievementsSheet'));
 const L2SquadsSheet = lazy(() => import('./L2SquadsSheet'));
 const L2SweatCoinsSheet = lazy(() => import('./L2SweatCoinsSheet'));
 const L2AuthMethodsSheet = lazy(() => import('./L2AuthMethodsSheet'));
-const L2QuickActionsSheet = lazy(() => import('./L2QuickActionsSheet'));
-const L2NowHappeningSheet = lazy(() => import('./L2NowHappeningSheet'));
-const L2CardActionsSheet = lazy(() => import('./L2CardActionsSheet'));
-const L2SupportSheet = lazy(() => import('./L2SupportSheet'));
-const L2PremiumGateSheet = lazy(() => import('./L2PremiumGateSheet'));
-const L2EditListingSheet = lazy(() => import('./L2EditListingSheet'));
-const L2LegalSheet = lazy(() => import('./L2LegalSheet'));
-const L2AccessibilitySheet = lazy(() => import('./L2AccessibilitySheet'));
-const L2DataExportSheet = lazy(() => import('./L2DataExportSheet'));
-const L2ReportSheet = lazy(() => import('./L2ReportSheet'));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PLACEHOLDER FOR UNIMPLEMENTED SHEETS
@@ -195,21 +184,6 @@ const SHEET_COMPONENTS = {
   'sweat-coins': L2SweatCoinsSheet,
   // Auth — more sign-in methods
   'more-auth-methods': L2AuthMethodsSheet,
-  // Quick actions / Now happening / Card actions
-  'quick-actions': L2QuickActionsSheet,
-  'now-happening': L2NowHappeningSheet,
-  'card-actions': L2CardActionsSheet,
-  // Support ticket
-  'support': L2SupportSheet,
-  // Premium gate (context-aware paywall)
-  'premium-gate': L2PremiumGateSheet,
-  // Edit listing
-  'edit-listing': L2EditListingSheet,
-  // Legal / Accessibility / Data Export / Report
-  'legal': L2LegalSheet,
-  'accessibility': L2AccessibilitySheet,
-  'data-export': L2DataExportSheet,
-  'report': L2ReportSheet,
 };
 
 
@@ -217,24 +191,8 @@ const SHEET_COMPONENTS = {
 // SHEET ROUTER COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
 
-// Sheet types that should pause radio (audio/video content)
-const AUDIO_VIDEO_SHEETS = new Set(['video-call', 'schedule', 'show']);
-
 export default function SheetRouter() {
   const { activeSheet, sheetProps, isOpen } = useSheet();
-  const radio = useRadio();
-  const pausedForRef = useRef(null);
-
-  // Pause radio when audio/video sheets open, resume when they close
-  useEffect(() => {
-    if (activeSheet && AUDIO_VIDEO_SHEETS.has(activeSheet)) {
-      radio.pauseForSheet();
-      pausedForRef.current = activeSheet;
-    } else if (pausedForRef.current && !AUDIO_VIDEO_SHEETS.has(activeSheet || '')) {
-      radio.resumeFromSheet();
-      pausedForRef.current = null;
-    }
-  }, [activeSheet]);
 
   if (!isOpen || !activeSheet) {
     return null;

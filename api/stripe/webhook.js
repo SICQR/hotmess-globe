@@ -89,38 +89,6 @@ export default async function handler(req, res) {
           return res.json({ received: true });
         }
 
-        // ── Preloved order fulfilment ──────────────────────────────────────
-        const listingId = session.metadata?.listing_id;
-        if (userId && type === 'preloved_order' && listingId) {
-          // Mark listing as sold
-          const { error: listingErr } = await supabase
-            .from('preloved_listings')
-            .update({ status: 'sold' })
-            .eq('id', listingId);
-          if (listingErr) {
-            console.error('[Stripe webhook] preloved listing update error:', listingErr.message, { listingId });
-          }
-
-          // Record in vault for buyer
-          await supabase.from('vault_items').insert({
-            user_id: userId,
-            item_type: 'preloved_purchase',
-            source_system: 'stripe',
-            source_ref: session.id,
-            status: 'paid',
-            title: 'Preloved Item',
-            metadata: {
-              stripe_session_id: session.id,
-              listing_id: listingId,
-              paid_at: new Date().toISOString(),
-            },
-          }).catch((err) => {
-            console.error('[Stripe webhook] vault_items insert error:', err?.message);
-          });
-
-          break;
-        }
-
         if (userId && type === 'membership' && tierId) {
           // Upsert into memberships table — one active row per user
           const { error: memberErr } = await supabase
@@ -319,22 +287,6 @@ export default async function handler(req, res) {
           });
           if (boostError) console.error('activate_user_boost error:', boostError.message);
           return res.json({ received: true });
-        }
-
-        // ── Preloved order (async payment) ─────────────────────────────────
-        const asyncListingId = session.metadata?.listing_id;
-        if (userId && type === 'preloved_order' && asyncListingId) {
-          await supabase.from('preloved_listings').update({ status: 'sold' }).eq('id', asyncListingId);
-          await supabase.from('vault_items').insert({
-            user_id: userId,
-            item_type: 'preloved_purchase',
-            source_system: 'stripe',
-            source_ref: session.id,
-            status: 'paid',
-            title: 'Preloved Item',
-            metadata: { stripe_session_id: session.id, listing_id: asyncListingId, paid_at: new Date().toISOString() },
-          }).catch(() => {});
-          break;
         }
 
         if (userId && type === 'membership' && tierId) {

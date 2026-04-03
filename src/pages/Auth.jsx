@@ -163,11 +163,11 @@ export default function Auth() {
         options: { redirectTo: window.location.origin + '/auth/callback' },
       });
       if (error) {
-        toast.error('Couldn\'t sign in with Google. Try again.');
+        toast.error(error.message || 'Google sign in failed');
         setGoogleLoading(false);
       }
     } catch (err) {
-      toast.error('Couldn\'t sign in with Google. Try again.');
+      toast.error(err.message || 'Google sign in failed');
       setGoogleLoading(false);
     }
   };
@@ -209,10 +209,10 @@ export default function Auth() {
         email: pendingEmail,
         options: { emailRedirectTo: window.location.origin + '/auth/callback' },
       });
-      if (error) { toast.error('Couldn\'t resend. Wait a moment and try again.'); }
+      if (error) { toast.error(error.message || 'Failed to resend'); }
       else { toast.success('Magic link resent'); setCountdown(RESEND_COOLDOWN); }
     } catch (err) {
-      toast.error('Couldn\'t resend. Wait a moment and try again.');
+      toast.error(err.message || 'Failed to resend');
     } finally {
       setResending(false);
     }
@@ -245,13 +245,13 @@ export default function Auth() {
     setLoading(true);
     try {
       const { error } = await supabase.auth.signUp({ email: email.trim(), password });
-      if (error) { toast.error('Sign up failed. Check your details and try again.'); setLoading(false); return; }
+      if (error) { toast.error(error.message || 'Sign up failed'); setLoading(false); return; }
       setPendingEmail(email.trim());
       setView('confirmation-pending');
       setPassword('');
       setConfirmPassword('');
     } catch (err) {
-      toast.error('Sign up failed. Check your details and try again.');
+      toast.error(err.message || 'Sign up failed');
     } finally {
       setLoading(false);
     }
@@ -263,10 +263,10 @@ export default function Auth() {
     setResending(true);
     try {
       const { error } = await supabase.auth.resend({ type: 'signup', email: pendingEmail });
-      if (error) { toast.error('Couldn\'t resend. Wait a moment and try again.'); }
+      if (error) { toast.error(error.message || 'Failed to resend'); }
       else { toast.success('Confirmation email resent'); }
     } catch (err) {
-      toast.error('Couldn\'t resend. Wait a moment and try again.');
+      toast.error(err.message || 'Failed to resend');
     } finally {
       setResending(false);
     }
@@ -281,11 +281,11 @@ export default function Auth() {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: 'https://hotmessldn.com/auth?reset=true',
       });
-      if (error) { toast.error('Couldn\'t send reset link. Check your email and try again.'); setLoading(false); return; }
+      if (error) { toast.error(error.message || 'Reset request failed'); setLoading(false); return; }
       setView('reset-sent');
       toast.success('Check your inbox for reset link');
     } catch (err) {
-      toast.error('Couldn\'t send reset link. Check your email and try again.');
+      toast.error(err.message || 'Reset request failed');
     } finally {
       setLoading(false);
     }
@@ -300,13 +300,13 @@ export default function Auth() {
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
-      if (error) { toast.error('Couldn\'t update your password. Try again.'); setLoading(false); return; }
+      if (error) { toast.error(error.message || 'Password update failed'); setLoading(false); return; }
       toast.success('Password updated!');
       setPassword('');
       setConfirmPassword('');
       setTimeout(() => navigate('/'), REDIRECT_DELAY_MS);
     } catch (err) {
-      toast.error('Couldn\'t update your password. Try again.');
+      toast.error(err.message || 'Password update failed');
       setLoading(false);
     }
   };
@@ -319,7 +319,7 @@ export default function Auth() {
           provider: 'apple',
           options: { redirectTo: window.location.origin + '/auth/callback' },
         }).then(({ error }) => {
-          if (error) toast.error('Couldn\'t sign in with Apple. Try again.');
+          if (error) toast.error(error.message || 'Apple sign in failed');
         });
       },
       onSelectMagicLink: () => { setView('email'); },
