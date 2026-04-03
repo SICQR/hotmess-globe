@@ -75,6 +75,8 @@ const L2QuickActionsSheet = lazy(() => import('./L2QuickActionsSheet'));
 const L2NowHappeningSheet = lazy(() => import('./L2NowHappeningSheet'));
 const L2CardActionsSheet = lazy(() => import('./L2CardActionsSheet'));
 const L2SupportSheet = lazy(() => import('./L2SupportSheet'));
+const L2PremiumGateSheet = lazy(() => import('./L2PremiumGateSheet'));
+const L2EditListingSheet = lazy(() => import('./L2EditListingSheet'));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PLACEHOLDER FOR UNIMPLEMENTED SHEETS
@@ -194,6 +196,10 @@ const SHEET_COMPONENTS = {
   'card-actions': L2CardActionsSheet,
   // Support ticket
   'support': L2SupportSheet,
+  // Premium gate (context-aware paywall)
+  'premium-gate': L2PremiumGateSheet,
+  // Edit listing
+  'edit-listing': L2EditListingSheet,
 };
 
 

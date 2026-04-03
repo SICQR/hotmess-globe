@@ -10,7 +10,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   Package, ShoppingBag, Ticket, Lock, Loader2,
-  QrCode, Trophy
+  QrCode, Trophy, Heart
 } from 'lucide-react';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
@@ -24,6 +24,7 @@ const TABS = [
   { id: 'orders', label: 'Orders', icon: ShoppingBag },
   { id: 'tickets', label: 'Tickets', icon: Ticket },
   { id: 'listings', label: 'Sold', icon: Package },
+  { id: 'saved', label: 'Saved', icon: Heart },
 ] as const;
 
 type Tab = typeof TABS[number]['id'];
@@ -49,6 +50,25 @@ type ListingRow = {
   price: number;
   created_at: string;
   status: string;
+};
+
+type VaultItemRow = {
+  id: string;
+  item_type: string;
+  title: string;
+  status: string;
+  source_system: string;
+  source_ref: string;
+  created_at: string;
+  metadata: Record<string, unknown>;
+};
+
+type SavedItemRow = {
+  id: string;
+  item_type: string;
+  item_id: string;
+  created_at: string;
+  metadata: Record<string, unknown>;
 };
 
 export default function VaultMode() {
@@ -119,20 +139,57 @@ export default function VaultMode() {
     enabled: !!user?.id,
   });
 
-  const isLoading = ordersLoading || ticketsLoading || listingsLoading;
+  // Vault items (purchases from Stripe: shopify_order, preloved_purchase, membership)
+  const { data: vaultItems = [], isLoading: vaultItemsLoading } = useQuery<VaultItemRow[]>({
+    queryKey: ['vault-items', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data } = await supabase
+        .from('vault_items')
+        .select('id, item_type, title, status, source_system, source_ref, created_at, metadata')
+        .eq('user_id', user.id)
+        .in('item_type', ['shopify_order', 'preloved_purchase', 'membership'])
+        .order('created_at', { ascending: false })
+        .limit(30);
+      return data || [];
+    },
+    enabled: !!user?.id,
+  });
+
+  // Saved items
+  const { data: savedItems = [], isLoading: savedLoading } = useQuery<SavedItemRow[]>({
+    queryKey: ['vault-saved', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data } = await supabase
+        .from('saved_items')
+        .select('id, item_type, item_id, created_at, metadata')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(30);
+      return data || [];
+    },
+    enabled: !!user?.id,
+  });
+
+  const isLoading = ordersLoading || ticketsLoading || listingsLoading || vaultItemsLoading || savedLoading;
 
   const allItems = [
     ...orders.map(o => ({ type: 'order' as const, data: o, date: o.created_at })),
+    ...vaultItems.map(v => ({ type: 'vault-item' as const, data: v, date: v.created_at })),
     ...tickets.map(t => ({ type: 'ticket' as const, data: t, date: t.created_at })),
     ...listings.map(l => ({ type: 'listing' as const, data: l, date: l.created_at })),
+    ...savedItems.map(s => ({ type: 'saved' as const, data: s, date: s.created_at })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const visibleItems = tab === 'all'
     ? allItems
     : tab === 'orders'
-    ? allItems.filter(i => i.type === 'order')
+    ? allItems.filter(i => i.type === 'order' || i.type === 'vault-item')
     : tab === 'tickets'
     ? allItems.filter(i => i.type === 'ticket')
+    : tab === 'saved'
+    ? allItems.filter(i => i.type === 'saved')
     : allItems.filter(i => i.type === 'listing');
 
   const totalSpend = orders.reduce((sum, o) => sum + (o.total_gbp || 0), 0);
@@ -155,9 +212,10 @@ export default function VaultMode() {
         {/* Stats row */}
         <div className="flex gap-3 mt-3">
           {[
-            { label: 'Orders', count: orders.length, icon: ShoppingBag },
+            { label: 'Orders', count: orders.length + vaultItems.length, icon: ShoppingBag },
             { label: 'Tickets', count: tickets.length, icon: Ticket },
             { label: 'Items Sold', count: listings.length, icon: Package },
+            { label: 'Saved', count: savedItems.length, icon: Heart },
           ].map(({ label, count, icon: Icon }) => (
             <div key={label} className="flex-1 bg-[#1C1C1E] rounded-xl p-2.5 text-center">
               <Icon className="w-3.5 h-3.5 text-[#C8962C] mx-auto mb-1" />
@@ -197,11 +255,25 @@ export default function VaultMode() {
         ) : visibleItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
             <div className="w-16 h-16 rounded-2xl bg-[#1C1C1E] flex items-center justify-center mb-4">
-              <Lock className="w-8 h-8 text-white/10" />
+              {tab === 'orders' ? <ShoppingBag className="w-8 h-8 text-white/10" />
+                : tab === 'tickets' ? <Ticket className="w-8 h-8 text-white/10" />
+                : tab === 'saved' ? <Heart className="w-8 h-8 text-white/10" />
+                : tab === 'listings' ? <Package className="w-8 h-8 text-white/10" />
+                : <Lock className="w-8 h-8 text-white/10" />}
             </div>
-            <p className="text-white font-bold text-base">Your archive starts here</p>
+            <p className="text-white font-bold text-base">
+              {tab === 'orders' ? 'No orders yet'
+                : tab === 'tickets' ? 'No tickets yet'
+                : tab === 'saved' ? 'Nothing saved yet'
+                : tab === 'listings' ? 'No sold items yet'
+                : 'Your archive starts here'}
+            </p>
             <p className="text-white/40 text-sm mt-1.5 max-w-[260px]">
-              Orders, event tickets, and sold items all end up in your Vault. Start exploring to build your collection.
+              {tab === 'orders' ? 'Shop on Market to see your orders here.'
+                : tab === 'tickets' ? 'RSVP to events and your tickets will appear here.'
+                : tab === 'saved' ? 'Save items you like and they will show up here.'
+                : tab === 'listings' ? 'Items you sell will appear here once sold.'
+                : 'Orders, event tickets, and sold items all end up in your Vault. Start exploring to build your collection.'}
             </p>
             <div className="flex gap-3 mt-5">
               <button
@@ -228,8 +300,10 @@ export default function VaultMode() {
                 transition={{ delay: i * 0.025 }}
               >
                 {item.type === 'order' && <OrderItem order={item.data} onQR={() => openSheet('qr', { orderId: item.data.id })} />}
+                {item.type === 'vault-item' && <VaultPurchaseItem item={item.data} />}
                 {item.type === 'ticket' && <TicketItem ticket={item.data} onQR={() => openSheet('qr', { ticketId: item.data.event_id })} />}
                 {item.type === 'listing' && <ListingItem listing={item.data} onResell={() => openSheet('sell')} />}
+                {item.type === 'saved' && <SavedItem item={item.data} onTap={() => openSheet('product', { productId: item.data.item_id })} />}
               </motion.div>
             ))}
           </div>
@@ -319,5 +393,43 @@ function ListingItem({ listing, onResell }: { listing: ListingRow; onResell: () 
         Resell
       </button>
     </div>
+  );
+}
+
+function VaultPurchaseItem({ item }: { item: VaultItemRow }) {
+  const typeLabel = item.item_type === 'preloved_purchase' ? 'Preloved' : item.item_type === 'membership' ? 'Membership' : 'Order';
+  const statusColor = item.status === 'paid' || item.status === 'active' ? '#30D158' : item.status === 'refunded' ? '#FF3B30' : '#C8962C';
+  return (
+    <div className="p-4 flex items-center gap-3">
+      <div className="w-10 h-10 rounded-xl bg-[#1C1C1E] flex items-center justify-center flex-shrink-0">
+        <ShoppingBag className="w-4 h-4 text-[#C8962C]" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-white font-bold text-sm truncate">{item.title || typeLabel}</p>
+        <p className="text-white/40 text-[11px] mt-0.5">
+          {format(new Date(item.created_at), 'd MMM yyyy')} · {typeLabel}
+        </p>
+        <p className="text-[11px] mt-0.5 font-semibold capitalize" style={{ color: statusColor }}>
+          {item.status || 'pending'}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function SavedItem({ item, onTap }: { item: SavedItemRow; onTap: () => void }) {
+  const meta = item.metadata as Record<string, string> | null;
+  return (
+    <button onClick={onTap} className="p-4 flex items-center gap-3 w-full text-left active:bg-white/5 transition-colors">
+      <div className="w-10 h-10 rounded-xl bg-[#1C1C1E] flex items-center justify-center flex-shrink-0">
+        <Heart className="w-4 h-4 text-[#C8962C]" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-white font-bold text-sm truncate">{meta?.title || item.item_type || 'Saved item'}</p>
+        <p className="text-white/40 text-[11px] mt-0.5">
+          {format(new Date(item.created_at), 'd MMM yyyy')}
+        </p>
+      </div>
+    </button>
   );
 }

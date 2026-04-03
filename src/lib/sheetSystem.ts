@@ -599,6 +599,28 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: false,
     deepLinkParams: [],
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PREMIUM GATE
+  // ─────────────────────────────────────────────────────────────────────────
+  'premium-gate': {
+    id: 'premium-gate',
+    title: 'Go Premium',
+    height: 'medium',
+    auth: true,
+    deepLinkParams: ['origin'],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // EDIT LISTING
+  // ─────────────────────────────────────────────────────────────────────────
+  'edit-listing': {
+    id: 'edit-listing',
+    title: 'Edit Listing',
+    height: 'full',
+    auth: true,
+    deepLinkParams: ['listingId'],
+  },
 } as const;
 
 /**
