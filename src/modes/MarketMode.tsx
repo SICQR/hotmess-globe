@@ -57,6 +57,7 @@ import { useBootGuard } from '@/contexts/BootGuardContext';
 import { isBrandVisible, BRAND_CONFIG } from '@/config/brands';
 import { AppBanner } from '@/components/banners/AppBanner';
 import { HNHMarketHero } from '@/components/home/HNHMarketHero';
+import { CardMoreButton } from '@/components/ui/CardMoreButton';
 import {
   getAllProducts,
   getProductsByBrand,
@@ -291,10 +292,19 @@ function ProductCard({ product, index, onTap }: ProductCardProps) {
 
         {/* Condition badge -- top-right (preloved only) */}
         {product.source === 'preloved' && product.condition && (
-          <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-black/60 backdrop-blur-sm border border-white/20 text-white/80">
+          <span className="absolute top-2 right-10 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-black/60 backdrop-blur-sm border border-white/20 text-white/80">
             {getConditionLabel(product.condition)}
           </span>
         )}
+
+        {/* More actions -- top-right */}
+        <CardMoreButton
+          itemType="product"
+          itemId={product.id}
+          title={product.title}
+          profileId={product.sellerId}
+          className="absolute top-2 right-2"
+        />
 
         {/* Category chip -- bottom-left */}
         {product.category && (
@@ -472,22 +482,39 @@ function EmptyState({ onClear, hasFilters }: EmptyStateProps) {
       variants={fadeVariants}
       className="flex flex-col items-center justify-center py-24 px-8"
     >
-      <ShoppingBag className="w-16 h-16 mb-4" style={{ color: MUTED }} />
-      <h3 className="text-xl font-bold text-white mb-2">No drops found</h3>
-      <p className="text-sm text-center mb-6" style={{ color: MUTED }}>
+      <div className="w-16 h-16 rounded-2xl bg-[#1C1C1E] flex items-center justify-center mb-4">
+        <ShoppingBag className="w-8 h-8 text-white/10" />
+      </div>
+      <h3 className="text-lg font-bold text-white mb-1">Nothing here yet</h3>
+      <p className="text-sm text-center mb-6 text-white/40">
         {hasFilters
-          ? 'Try adjusting your filters or search to find what you need.'
-          : 'Nothing here yet. Check back soon for new drops.'}
+          ? 'No products match your current filters. Broaden your search or start fresh.'
+          : 'New drops land all the time. Check back soon.'}
       </p>
-      {hasFilters && (
+      <div className="flex gap-3">
+        {hasFilters && (
+          <button
+            onClick={onClear}
+            className="h-11 px-6 rounded-xl font-bold text-sm text-black active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-[#C8962C]"
+            style={{ backgroundColor: AMBER }}
+          >
+            Clear filters
+          </button>
+        )}
         <button
-          onClick={onClear}
-          className="h-12 px-8 rounded-xl font-semibold text-white active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-[#C8962C]"
-          style={{ backgroundColor: AMBER }}
+          onClick={() => {
+            onClear();
+          }}
+          className={`h-11 px-6 rounded-xl font-bold text-sm active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-[#C8962C] ${
+            hasFilters
+              ? 'border border-white/15 text-white/70'
+              : 'text-black'
+          }`}
+          style={hasFilters ? {} : { backgroundColor: AMBER }}
         >
-          Clear filters
+          Browse all
         </button>
-      )}
+      </div>
     </motion.div>
   );
 }

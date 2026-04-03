@@ -25,6 +25,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { AppBanner } from '@/components/banners/AppBanner';
 import { fetchBannersByPrefix } from '@/services/AppBannerService';
+import { CardMoreButton } from '@/components/ui/CardMoreButton';
 
 const GOLD = '#C8962C';
 const BG = '#050507';
@@ -544,8 +545,34 @@ export default function MusicTab() {
 
       {/* ── Releases ── */}
       <div className="px-4 mt-2">
+        {/* Empty state when no releases exist */}
+        {releases.length === 0 && !loading && (
+          <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-[#1C1C1E] flex items-center justify-center mb-4">
+              <Disc3 className="w-8 h-8 text-white/10" />
+            </div>
+            <p className="text-white font-bold text-base">No music yet</p>
+            <p className="text-white/40 text-sm mt-1.5 max-w-[260px]">
+              New releases from Raw Convict Records and Smash Daddys are on the way. Check back soon.
+            </p>
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => navigate('/radio')}
+                className="h-10 px-5 rounded-xl bg-[#C8962C] text-black font-bold text-xs active:scale-95 transition-transform"
+              >
+                Listen to radio
+              </button>
+              <button
+                onClick={() => navigate('/')}
+                className="h-10 px-5 rounded-xl border border-white/15 text-white/70 font-bold text-xs active:scale-95 transition-transform"
+              >
+                Check back soon
+              </button>
+            </div>
+          </div>
+        )}
         {/* Helper function to render a single release card */}
-        {(() => {
+        {releases.length > 0 && (() => {
           const renderReleaseCard = (rel) => {
             const isActive = player.currentTrack &&
               (player.currentTrack.id === rel.id ||
@@ -584,6 +611,13 @@ export default function MusicTab() {
                   <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-black/60 text-white/60">
                     {rel.release_type}
                   </span>
+                  {/* More actions */}
+                  <CardMoreButton
+                    itemType="release"
+                    itemId={rel.id}
+                    title={rel.title}
+                    className="absolute bottom-2 left-2 z-10"
+                  />
                   {/* Track count for EPs */}
                   {trackCount > 1 && (
                     <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[8px] font-black bg-[#9B1B2A] text-white">

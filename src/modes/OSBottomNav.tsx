@@ -54,7 +54,12 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
   }, [location.pathname]);
 
   const handleModeChange = (mode: OSMode) => {
-    if (mode === currentMode) return;
+    if (mode === currentMode) {
+      // Double-tap on active tab: scroll to top
+      hapticLight();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     hapticLight();
     // Save current scroll position
     try {
@@ -70,7 +75,23 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
     });
   };
 
-  const longPress = useLongPress(() => setShowSwitcher(true));
+  // Long-press handlers for each tab — opens quick actions sheet
+  const lpHome = useLongPress(() => { hapticLight(); openSheet('quick-actions', { tabOrigin: 'home' }); });
+  const lpPulse = useLongPress(() => { hapticLight(); openSheet('quick-actions', { tabOrigin: 'pulse' }); });
+  const lpGhosted = useLongPress(() => { hapticLight(); openSheet('quick-actions', { tabOrigin: 'ghosted' }); });
+  const lpMarket = useLongPress(() => { hapticLight(); openSheet('quick-actions', { tabOrigin: 'market' }); });
+  const lpMusic = useLongPress(() => { hapticLight(); openSheet('quick-actions', { tabOrigin: 'music' }); });
+  // More tab: long-press opens persona switcher (existing behaviour)
+  const lpMore = useLongPress(() => setShowSwitcher(true));
+
+  const longPressMap: Record<string, ReturnType<typeof useLongPress>> = {
+    home: lpHome,
+    pulse: lpPulse,
+    ghosted: lpGhosted,
+    market: lpMarket,
+    music: lpMusic,
+    more: lpMore,
+  };
 
   return (
     <>
@@ -89,7 +110,7 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
               <button
                 key={modeId}
                 onClick={() => handleModeChange(modeId)}
-                {...(isMore ? longPress : {})}
+                {...(longPressMap[modeId] || {})}
                 className="relative flex flex-col items-center justify-center flex-1 h-full min-w-[44px] min-h-[44px] active:opacity-70 transition-opacity"
                 aria-label={mode.label}
                 aria-current={isActive ? 'page' : undefined}

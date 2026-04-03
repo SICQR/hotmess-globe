@@ -7,11 +7,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSheet } from '@/contexts/SheetContext';
 import { fetchBanners } from '@/services/AppBannerService';
 
 export function GlobalTicker({ className = '' }) {
   const [items, setItems] = useState([]);
   const navigate = useNavigate();
+  const { openSheet } = useSheet();
 
   useEffect(() => {
     let mounted = true;
@@ -26,11 +28,15 @@ export function GlobalTicker({ className = '' }) {
   if (items.length === 0) return null;
 
   const handleClick = (item) => {
-    if (!item.cta_url) return;
-    if (item.cta_url.startsWith('http')) {
-      window.open(item.cta_url, '_blank', 'noopener');
+    // If the ticker item has a specific CTA URL, follow it; otherwise open Now Happening sheet
+    if (item.cta_url) {
+      if (item.cta_url.startsWith('http')) {
+        window.open(item.cta_url, '_blank', 'noopener');
+      } else {
+        navigate(item.cta_url);
+      }
     } else {
-      navigate(item.cta_url);
+      openSheet('now-happening', {});
     }
   };
 

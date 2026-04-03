@@ -53,6 +53,7 @@ import RightNowModal from '@/components/globe/RightNowModal';
 import { AppBanner } from '@/components/banners/AppBanner';
 import { HNHMessHero } from '@/components/home/HNHMessHero';
 import { HNHMessStrip } from '@/components/home/HNHMessStrip';
+import { CardMoreButton } from '@/components/ui/CardMoreButton';
 import '@/styles/radio-waveform.css';
 
 interface HomeModeProps {
@@ -287,12 +288,14 @@ function RightNowEmpty({ onGoLive }: { onGoLive: () => void }) {
 
 // ---- Event card -------------------------------------------------------------
 function EventCard({
+  id,
   title,
   imageUrl,
   venue,
   startsAt,
   onTap,
 }: {
+  id?: string;
   title: string;
   imageUrl?: string;
   venue?: string;
@@ -326,6 +329,8 @@ function EventCard({
             {datePill}
           </span>
         )}
+        {/* More actions top-right */}
+        {id && <CardMoreButton itemType="event" itemId={id} title={title} className="absolute top-2.5 right-2.5" />}
         {/* Bottom text overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-3">
           <p className="text-white font-bold text-sm leading-tight line-clamp-1 drop-shadow-lg">{title}</p>
@@ -348,12 +353,14 @@ const BEACON_ICONS: Record<string, typeof Flame> = {
 };
 
 function BeaconRow({
+  id,
   title,
   kind,
   distance,
   isLast,
   onTap,
 }: {
+  id?: string;
   title: string;
   kind?: string;
   distance?: string;
@@ -383,17 +390,20 @@ function BeaconRow({
           {distance}
         </span>
       )}
+      {id && <CardMoreButton itemType="beacon" itemId={id} title={title} className="ml-1" />}
     </button>
   );
 }
 
 // ---- Product card -----------------------------------------------------------
 function ProductCard({
+  id,
   title,
   imageUrl,
   price,
   onTap,
 }: {
+  id?: string;
   title: string;
   imageUrl?: string;
   price?: number;
@@ -416,6 +426,8 @@ function ProductCard({
         )}
         {/* Bottom gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        {/* More actions top-right */}
+        {id && <CardMoreButton itemType="product" itemId={id} title={title} className="absolute top-2.5 right-2.5" />}
         <div className="absolute bottom-0 left-0 right-0 p-3">
           <p className="text-white text-xs font-bold leading-tight line-clamp-2 mb-1 drop-shadow-lg">{title}</p>
           {price != null && (
@@ -1047,6 +1059,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
                   {nearbyEvents.map((ev) => (
                     <EventCard
                       key={ev.id}
+                      id={ev.id}
                       title={ev.title}
                       imageUrl={ev.imageUrl}
                       venue={ev.venue}
@@ -1074,6 +1087,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
                   activeBeacons.map((b, i) => (
                     <BeaconRow
                       key={b.id}
+                      id={b.id}
                       title={b.title}
                       kind={b.kind}
                       isLast={i === activeBeacons.length - 1}
@@ -1105,6 +1119,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
                   {marketListings.map((p) => (
                     <ProductCard
                       key={p.id}
+                      id={p.id}
                       title={p.title}
                       imageUrl={p.imageUrl}
                       price={p.price}
