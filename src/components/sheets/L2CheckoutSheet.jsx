@@ -148,7 +148,8 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
       const order = await createOrderRecord(session, 'pending_payment');
       if (!order) { setProcessing(false); return; }
 
-      // Create Stripe Checkout Session
+      // Create Stripe Checkout Session for preloved item
+      const firstItem = prelovedItems[0];
       const res = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -157,17 +158,19 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
         },
         body: JSON.stringify({
           type: 'preloved_order',
-          orderId: order.id,
-          amount: Math.round(orderTotal * 100),
-          productTitle: items[0]?.title || 'Preloved Item',
-          sellerId: prelovedItems[0]?.seller_id,
+          listing_id: firstItem?.id || id,
+          price_gbp: orderTotal,
+          title: firstItem?.title || 'Preloved Item',
         }),
       });
 
       if (res.ok) {
         const { url } = await res.json();
         if (url) {
-          localStorage.removeItem('hm_cart');
+          // Clear preloved cart items from Supabase
+          if (session?.user) {
+            await supabase.from('cart_items').delete().eq('auth_user_id', session.user.id).eq('source', 'preloved');
+          }
           window.location.href = url; // Redirect to Stripe hosted checkout
           return;
         }
@@ -176,7 +179,9 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
       // Stripe not available — fallback to P2P
       toast('Stripe unavailable right now — arrange payment with seller via chat', { duration: 4000 });
       setOrderCreated(order);
-      localStorage.removeItem('hm_cart');
+      if (session?.user) {
+        await supabase.from('cart_items').delete().eq('auth_user_id', session.user.id).eq('source', 'preloved').catch(() => {});
+      }
       setStep('success');
     } catch (err) {
       console.error('Stripe checkout error:', err);
@@ -195,7 +200,9 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
       if (!order) { setProcessing(false); return; }
 
       setOrderCreated(order);
-      localStorage.removeItem('hm_cart');
+      if (session?.user) {
+        await supabase.from('cart_items').delete().eq('auth_user_id', session.user.id).eq('source', 'preloved').catch(() => {});
+      }
       setStep('success');
     } catch (err) {
       console.error('Checkout error:', err);

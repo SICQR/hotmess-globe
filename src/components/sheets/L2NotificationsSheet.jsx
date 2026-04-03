@@ -3,7 +3,10 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Bell, MessageCircle, Calendar, ShoppingBag, Heart, Loader2 } from 'lucide-react';
+import {
+  Bell, MessageCircle, Calendar, ShoppingBag, Heart, Loader2,
+  Zap, Users, Radio, Shield, Package,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/components/utils/supabaseClient';
 
@@ -25,19 +28,29 @@ function Toggle({ enabled, onToggle }) {
 }
 
 const NOTIFICATION_ROWS = [
-  { key: 'notif_messages', icon: MessageCircle, title: 'New Messages', desc: 'When someone sends you a message' },
+  { key: 'notif_taps', icon: Zap, title: 'Taps & Interactions', desc: 'Boos, saves, and profile taps' },
+  { key: 'notif_messages', icon: MessageCircle, title: 'Messages', desc: 'When someone sends you a message' },
+  { key: 'notif_live_nearby', icon: Users, title: 'Live Nearby', desc: 'When someone goes live near you' },
+  { key: 'notif_shop', icon: ShoppingBag, title: 'Shop & Drops', desc: 'New products, restocks, and sales' },
+  { key: 'notif_orders', icon: Package, title: 'Orders & Shipping', desc: 'Order updates and delivery tracking' },
+  { key: 'notif_radio', icon: Radio, title: 'Radio Shows', desc: 'Live show alerts and new episodes' },
+  { key: 'notif_safety', icon: Shield, title: 'Safety Alerts', desc: 'Safety alerts in your area (always recommended)' },
+  { key: 'notif_care', icon: Heart, title: 'Care Nudges', desc: 'Wellbeing check-ins from Hand N Hand' },
   { key: 'notif_events', icon: Calendar, title: 'Events', desc: 'Upcoming events and new events nearby' },
-  { key: 'notif_orders', icon: ShoppingBag, title: 'Orders', desc: 'Order updates and shipping notifications' },
-  { key: 'notif_likes', icon: Heart, title: 'Profile Likes', desc: 'When someone saves your profile' },
   { key: 'notif_marketing', icon: Bell, title: 'HOTMESS News', desc: 'Updates, features, and promotions' },
 ];
 
 export default function L2NotificationsSheet() {
   const [prefs, setPrefs] = useState({
+    notif_taps: true,
     notif_messages: true,
-    notif_events: true,
+    notif_live_nearby: true,
+    notif_shop: true,
     notif_orders: true,
-    notif_likes: false,
+    notif_radio: true,
+    notif_safety: true,
+    notif_care: true,
+    notif_events: true,
     notif_marketing: false,
   });
   const [loading, setLoading] = useState(true);

@@ -51,6 +51,7 @@ import { useLongPress } from '@/hooks/useLongPress';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { AppBanner } from '@/components/banners/AppBanner';
+import { usePowerups } from '@/hooks/usePowerups';
 
 // ---- Brand constants --------------------------------------------------------
 const AMBER = '#C8962C';
@@ -746,6 +747,32 @@ function BottomDrawer({
           </section>
         )}
 
+        {/* Cross-links */}
+        <section className="mb-5 space-y-2">
+          <button
+            onClick={() => window.location.assign('/ghosted')}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl active:scale-[0.98] transition-all"
+            style={{ background: 'rgba(200,150,44,0.06)', border: '1px solid rgba(200,150,44,0.15)' }}
+          >
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-xs font-bold" style={{ color: AMBER }}>Who's nearby</p>
+              <p className="text-[10px] text-white/40">See people around you on Ghosted</p>
+            </div>
+          </button>
+          {events.length > 0 && (
+            <button
+              onClick={() => onSeeAllEvents()}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl active:scale-[0.98] transition-all"
+              style={{ background: 'rgba(200,150,44,0.06)', border: '1px solid rgba(200,150,44,0.15)' }}
+            >
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-xs font-bold" style={{ color: AMBER }}>Tonight's events</p>
+                <p className="text-[10px] text-white/40">{events.length} event{events.length !== 1 ? 's' : ''} happening</p>
+              </div>
+            </button>
+          )}
+        </section>
+
         {/* Empty state (all sections empty after load) */}
         {!eventsLoading && !beaconsLoading && events.length === 0 && beacons.length === 0 && safetyAlerts.length === 0 && (
           <div className="flex flex-col items-center py-8">
@@ -893,6 +920,7 @@ function PostComposer({ onClose, city, onPosted }: { onClose: () => void; city: 
 export function PulseMode({ className = '' }: PulseModeProps) {
   const { openSheet } = useSheet();
   const queryClient = useQueryClient();
+  const { isActive: isBoostActive, expiresAt: boostExpiresAt } = usePowerups();
 
   // ---- Pull-to-refresh -------------------------------------------------------
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -1468,8 +1496,36 @@ export function PulseMode({ className = '' }: PulseModeProps) {
         </div>
       )}
 
-      {/* Amplify pill (bottom-right, above FAB) */}
-      <div className="fixed right-4 z-[45] pointer-events-auto" style={{ bottom: 'calc(250px + env(safe-area-inset-bottom, 0px))' }}>
+      {/* Amplify + Globe Glow pills (bottom-right, above FAB) */}
+      <div className="fixed right-4 z-[45] pointer-events-auto flex flex-col gap-2 items-end" style={{ bottom: 'calc(250px + env(safe-area-inset-bottom, 0px))' }}>
+        {/* Globe Glow toggle */}
+        <button
+          onClick={() => {
+            if (isBoostActive('globe_glow')) {
+              const exp = boostExpiresAt('globe_glow');
+              const m = exp ? Math.round((exp.getTime() - Date.now()) / 60000) : 0;
+              toast(`Globe Glow active - ${m < 60 ? `${m}m` : `${Math.round(m / 60)}h`} left`, {
+                style: { background: '#1C1C1E', color: '#C8962C', border: '1px solid rgba(200,150,44,0.3)' },
+              });
+            } else {
+              openSheet('boost-shop', {});
+            }
+          }}
+          className="flex items-center gap-1.5 px-3.5 h-10 rounded-full text-xs font-bold transition-all active:scale-95"
+          style={{
+            background: isBoostActive('globe_glow') ? 'rgba(200,150,44,0.15)' : 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: isBoostActive('globe_glow') ? `1.5px solid ${AMBER}` : `1px solid ${AMBER}40`,
+            color: AMBER,
+            boxShadow: isBoostActive('globe_glow') ? `0 0 20px ${AMBER}30` : 'none',
+          }}
+          aria-label={isBoostActive('globe_glow') ? 'Globe Glow active' : 'Activate Globe Glow'}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          {isBoostActive('globe_glow') ? 'Glowing' : 'Glow'}
+        </button>
+
         <button
           onClick={handleAmplify}
           className="flex items-center gap-1.5 px-3.5 h-10 rounded-full text-xs font-bold transition-all active:scale-95"

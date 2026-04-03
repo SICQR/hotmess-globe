@@ -3,7 +3,7 @@
  *
  * Displays items from BOTH sources:
  * - Shopify items via ShopCartContext (Storefront API cart)
- * - Preloved items via localStorage 'hm_cart'
+ * - Preloved items via Supabase cart_items table
  *
  * Checkout routes per source:
  * - Shopify → Shopify hosted checkout (beginCheckout)
@@ -14,21 +14,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { ShoppingBag, X, Plus, Minus, Loader2, Tag } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
+import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
-
-/** Read preloved items from localStorage */
-function getPrelovedCart() {
-  try {
-    return JSON.parse(localStorage.getItem('hm_cart') || '[]');
-  } catch {
-    return [];
-  }
-}
-
-/** Write preloved items to localStorage */
-function setPrelovedCart(items) {
-  localStorage.setItem('hm_cart', JSON.stringify(items));
-}
 
 export default function L2CartSheet() {
   const { closeSheet, openSheet } = useSheet();
@@ -39,13 +26,37 @@ export default function L2CartSheet() {
   const shopifyTotal = parseFloat(cart?.cost?.totalAmount?.amount || '0');
   const currency = cart?.cost?.totalAmount?.currencyCode || 'GBP';
 
-  // Preloved items (localStorage)
-  const [prelovedItems, setPrelovedItems] = useState(getPrelovedCart);
+  // Preloved items (Supabase cart_items)
+  const [prelovedItems, setPrelovedItems] = useState([]);
+  const [prelovedLoading, setPrelovedLoading] = useState(true);
 
-  // Refresh preloved items when sheet opens
-  useEffect(() => {
-    setPrelovedItems(getPrelovedCart());
+  const loadPrelovedCart = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) { setPrelovedLoading(false); return; }
+      const { data } = await supabase
+        .from('cart_items')
+        .select('id, product_id, quantity, metadata')
+        .eq('auth_user_id', session.user.id)
+        .eq('source', 'preloved');
+      setPrelovedItems((data || []).map(row => ({
+        id: row.product_id,
+        cart_row_id: row.id,
+        title: row.metadata?.title || 'Item',
+        price: row.metadata?.price || 0,
+        image: row.metadata?.image || null,
+        seller_id: row.metadata?.seller_id || null,
+        qty: row.quantity || 1,
+        source: 'preloved',
+      })));
+    } catch {
+      // Fallback: empty cart
+    } finally {
+      setPrelovedLoading(false);
+    }
   }, []);
+
+  useEffect(() => { loadPrelovedCart(); }, [loadPrelovedCart]);
 
   const prelovedTotal = prelovedItems.reduce((sum, i) => sum + (i.price || 0) * (i.qty || 1), 0);
   const combinedTotal = shopifyTotal + prelovedTotal;
@@ -73,26 +84,32 @@ export default function L2CartSheet() {
     }
   };
 
-  // ---- Preloved cart handlers ----
-  const handlePrelovedQty = useCallback((itemId, delta) => {
+  // ---- Preloved cart handlers (Supabase) ----
+  const handlePrelovedQty = useCallback(async (itemId, delta) => {
     setPrelovedItems(prev => {
-      const updated = prev.map(i => {
+      return prev.map(i => {
         if (i.id !== itemId) return i;
         const newQty = Math.max(0, (i.qty || 1) + delta);
         return newQty === 0 ? null : { ...i, qty: newQty };
       }).filter(Boolean);
-      setPrelovedCart(updated);
-      return updated;
     });
-  }, []);
+    const item = prelovedItems.find(i => i.id === itemId);
+    if (!item?.cart_row_id) return;
+    const newQty = Math.max(0, (item.qty || 1) + delta);
+    if (newQty === 0) {
+      await supabase.from('cart_items').delete().eq('id', item.cart_row_id);
+    } else {
+      await supabase.from('cart_items').update({ quantity: newQty }).eq('id', item.cart_row_id);
+    }
+  }, [prelovedItems]);
 
-  const handlePrelovedRemove = useCallback((itemId) => {
-    setPrelovedItems(prev => {
-      const updated = prev.filter(i => i.id !== itemId);
-      setPrelovedCart(updated);
-      return updated;
-    });
-  }, []);
+  const handlePrelovedRemove = useCallback(async (itemId) => {
+    const item = prelovedItems.find(i => i.id === itemId);
+    setPrelovedItems(prev => prev.filter(i => i.id !== itemId));
+    if (item?.cart_row_id) {
+      await supabase.from('cart_items').delete().eq('id', item.cart_row_id);
+    }
+  }, [prelovedItems]);
 
   // ---- Checkout handlers ----
   const handleShopifyCheckout = () => {

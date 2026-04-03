@@ -168,7 +168,7 @@ export default function Settings() {
       toast.success('Avatar updated!');
     } catch (error) {
       console.error('Upload failed:', error);
-      toast.error('Failed to upload avatar');
+      toast.error('Couldn\'t upload avatar. Try again or pick another photo.');
     } finally {
       setUploading(false);
     }
@@ -183,7 +183,7 @@ export default function Settings() {
       toast.success('Settings saved successfully');
     } catch (error) {
       console.error('Failed to save:', error);
-      toast.error('Failed to save settings');
+      toast.error('Couldn\'t save settings. Try again.');
     }
   };
 

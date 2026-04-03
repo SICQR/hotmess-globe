@@ -29,6 +29,8 @@ export interface RadioContextValue {
   togglePlay: () => void;
   setCurrentShowName: (name: string) => void;
   audioRef: React.RefObject<HTMLAudioElement | null>;
+  pauseForSheet: () => void;
+  resumeFromSheet: () => void;
 }
 
 const RadioContext = createContext<RadioContextValue | null>(null);
@@ -39,6 +41,7 @@ export function RadioProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pendingPlayRef = useRef(false);
   const lastSignalWriteRef = useRef<number>(0);
+  const wasPlayingBeforeSheetRef = useRef(false);
   
   const { hasConsent, showModal, requestConsent, grantConsent, declineConsent } = useSoundConsent();
 
@@ -130,9 +133,26 @@ export function RadioProvider({ children }: { children: React.ReactNode }) {
     grantConsent();
   }, [grantConsent]);
 
+  /** Pause radio when a video/audio sheet opens */
+  const pauseForSheet = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    wasPlayingBeforeSheetRef.current = isPlaying;
+    if (isPlaying) {
+      audio.pause();
+    }
+  }, [isPlaying]);
+
+  /** Resume radio when the sheet that triggered the pause closes */
+  const resumeFromSheet = useCallback(() => {
+    if (!wasPlayingBeforeSheetRef.current) return;
+    wasPlayingBeforeSheetRef.current = false;
+    startPlayback();
+  }, [startPlayback]);
+
   return (
     <RadioContext.Provider
-      value={{ isPlaying, currentShowName, togglePlay, setCurrentShowName, audioRef }}
+      value={{ isPlaying, currentShowName, togglePlay, setCurrentShowName, audioRef, pauseForSheet, resumeFromSheet }}
     >
       {children}
       <SoundConsentModal 
@@ -144,8 +164,19 @@ export function RadioProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+const NOOP_RADIO: RadioContextValue = {
+  isPlaying: false,
+  currentShowName: '',
+  togglePlay: () => {},
+  setCurrentShowName: () => {},
+  audioRef: { current: null },
+  pauseForSheet: () => {},
+  resumeFromSheet: () => {},
+};
+
 export function useRadio(): RadioContextValue {
   const ctx = useContext(RadioContext);
-  if (!ctx) throw new Error('useRadio must be used within RadioProvider');
+  // Return no-op if called outside RadioProvider (e.g. SheetRouter)
+  if (!ctx) return NOOP_RADIO;
   return ctx;
 }

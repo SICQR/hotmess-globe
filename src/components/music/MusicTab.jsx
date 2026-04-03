@@ -20,11 +20,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, ChevronDown, ChevronUp, Disc3, X, Loader2,
   Lock, Crown, FileAudio, Link2, Headphones,
+  Radio as RadioIcon, Calendar,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { AppBanner } from '@/components/banners/AppBanner';
 import { fetchBannersByPrefix } from '@/services/AppBannerService';
+import { CardMoreButton } from '@/components/ui/CardMoreButton';
 
 const GOLD = '#C8962C';
 const BG = '#050507';
@@ -405,7 +407,24 @@ export default function MusicTab() {
   const [selectedRelease, setSelectedRelease] = useState(null);
   const [bannerMap, setBannerMap] = useState({});  // catalog -> banner
   const [showMemberCTA, setShowMemberCTA] = useState(false);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
   const player = useMusicPlayer();
+
+  // Fetch upcoming events for cross-link
+  useEffect(() => {
+    let mounted = true;
+    supabase
+      .from('beacons')
+      .select('id, title, starts_at')
+      .or('type.eq.event,kind.eq.event')
+      .gte('ends_at', new Date().toISOString())
+      .order('starts_at', { ascending: true })
+      .limit(3)
+      .then(({ data }) => {
+        if (mounted && data?.length) setUpcomingEvents(data);
+      });
+    return () => { mounted = false; };
+  }, []);
 
   // Fetch data
   useEffect(() => {
@@ -542,10 +561,74 @@ export default function MusicTab() {
         </div>
       )}
 
+      {/* ── Cross-links: Radio + Events ── */}
+      <div className="px-4 mt-2 space-y-2 mb-4">
+        <button
+          onClick={() => navigate('/radio')}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl active:scale-[0.98] transition-all"
+          style={{ background: '#00C2E010', border: '1px solid #00C2E025' }}
+        >
+          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#00C2E020' }}>
+            <RadioIcon className="w-4 h-4" style={{ color: '#00C2E0' }} />
+          </div>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-xs font-bold text-white/80">Live Radio</p>
+            <p className="text-[10px] text-white/40">HOTMESS RADIO -- tune in now</p>
+          </div>
+          <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{ background: '#00C2E020', color: '#00C2E0' }}>
+            LISTEN
+          </span>
+        </button>
+        {upcomingEvents.length > 0 && (
+          <button
+            onClick={() => navigate('/pulse')}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl active:scale-[0.98] transition-all"
+            style={{ background: 'rgba(200,150,44,0.06)', border: '1px solid rgba(200,150,44,0.15)' }}
+          >
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'rgba(200,150,44,0.15)' }}>
+              <Calendar className="w-4 h-4" style={{ color: GOLD }} />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-xs font-bold text-white/80">Upcoming Events</p>
+              <p className="text-[10px] text-white/40">{upcomingEvents.length} event{upcomingEvents.length !== 1 ? 's' : ''} near you</p>
+            </div>
+            <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{ background: 'rgba(200,150,44,0.15)', color: GOLD }}>
+              VIEW
+            </span>
+          </button>
+        )}
+      </div>
+
       {/* ── Releases ── */}
       <div className="px-4 mt-2">
+        {/* Empty state when no releases exist */}
+        {releases.length === 0 && !loading && (
+          <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-[#1C1C1E] flex items-center justify-center mb-4">
+              <Disc3 className="w-8 h-8 text-white/10" />
+            </div>
+            <p className="text-white font-bold text-base">No music yet</p>
+            <p className="text-white/40 text-sm mt-1.5 max-w-[260px]">
+              New releases from Raw Convict Records and Smash Daddys are on the way. Check back soon.
+            </p>
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => navigate('/radio')}
+                className="h-10 px-5 rounded-xl bg-[#C8962C] text-black font-bold text-xs active:scale-95 transition-transform"
+              >
+                Listen to radio
+              </button>
+              <button
+                onClick={() => navigate('/')}
+                className="h-10 px-5 rounded-xl border border-white/15 text-white/70 font-bold text-xs active:scale-95 transition-transform"
+              >
+                Check back soon
+              </button>
+            </div>
+          </div>
+        )}
         {/* Helper function to render a single release card */}
-        {(() => {
+        {releases.length > 0 && (() => {
           const renderReleaseCard = (rel) => {
             const isActive = player.currentTrack &&
               (player.currentTrack.id === rel.id ||
@@ -584,6 +667,13 @@ export default function MusicTab() {
                   <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-black/60 text-white/60">
                     {rel.release_type}
                   </span>
+                  {/* More actions */}
+                  <CardMoreButton
+                    itemType="release"
+                    itemId={rel.id}
+                    title={rel.title}
+                    className="absolute bottom-2 left-2 z-10"
+                  />
                   {/* Track count for EPs */}
                   {trackCount > 1 && (
                     <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[8px] font-black bg-[#9B1B2A] text-white">

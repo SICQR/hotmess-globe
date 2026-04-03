@@ -1,10 +1,17 @@
-import { json } from './_utils.js';
+import { getQueryParam, json } from './_utils.js';
 import { ensureStorefrontConfigured, getStorefrontConfig, storefrontFetch } from './_storefront.js';
 
 const DEFAULT_HANDLES = ['hnh-mess-lube-50ml', 'hnh-mess-lube-250ml'];
 
 const normalizeHandle = (value) => String(value || '').trim().toLowerCase();
 
+/**
+ * GET /api/shopify/featured
+ *
+ * Returns featured products by handle.
+ * Supports: ?handles=handle-a,handle-b  (comma-separated)
+ * Falls back to DEFAULT_HANDLES (HNH lube) when no handles param provided.
+ */
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
@@ -17,13 +24,22 @@ export default async function handler(req, res) {
   const { shopDomain, token } = configured;
   const { apiVersion } = getStorefrontConfig();
 
-  const handles = DEFAULT_HANDLES;
+  // Parse handles from query param or fall back to defaults
+  const handlesParam = getQueryParam(req, 'handles');
+  const handles = handlesParam
+    ? handlesParam.split(',').map(h => h.trim()).filter(Boolean)
+    : DEFAULT_HANDLES;
+
+  // Cap at 10 handles to avoid abuse
+  const cappedHandles = handles.slice(0, 10);
 
   const productFields = `
     id
     title
     handle
     descriptionHtml
+    productType
+    tags
     featuredImage { url altText }
     images(first: 10) { nodes { url altText } }
     variants(first: 25) {
@@ -47,7 +63,7 @@ export default async function handler(req, res) {
 
   try {
     const responses = await Promise.all(
-      handles.map((handle) =>
+      cappedHandles.map((handle) =>
         storefrontFetch({
           shopDomain,
           token,
@@ -62,8 +78,8 @@ export default async function handler(req, res) {
       .map((resp) => resp?.data?.productByHandle || null)
       .filter(Boolean);
 
-    // Preserve the configured order (50ml then 250ml).
-    const indexByHandle = new Map(handles.map((h, i) => [normalizeHandle(h), i]));
+    // Preserve the requested order.
+    const indexByHandle = new Map(cappedHandles.map((h, i) => [normalizeHandle(h), i]));
     products.sort((a, b) => (indexByHandle.get(normalizeHandle(a?.handle)) ?? 999) - (indexByHandle.get(normalizeHandle(b?.handle)) ?? 999));
 
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=600');

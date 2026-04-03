@@ -39,6 +39,10 @@ export type ProfilesGridProps = {
   onLongPress?: (profile: Profile, position: { x: number; y: number }) => void;
   /** Custom component to render when grid is empty. */
   emptyComponent?: React.ReactNode;
+  /** Called when a vibe/scene tag is tapped on a card (for filtering). */
+  onVibeTagClick?: (tag: string) => void;
+  /** User IDs with active profile_bump boost -- sorted to top of grid. */
+  boostUserIds?: Set<string>;
 };
 
 const normalizeEmail = (value: unknown) => String(value || '').trim().toLowerCase();
@@ -84,6 +88,8 @@ export default function ProfilesGrid({
   viewerEmail: viewerEmailProp,
   onLongPress,
   emptyComponent,
+  onVibeTagClick,
+  boostUserIds,
 }: ProfilesGridProps) {
   const navigate = useNavigate();
   const { openProfile } = useProfileOpener();
@@ -235,9 +241,22 @@ export default function ProfilesGrid({
     const base = Array.isArray(items) ? items : [];
     const filtered = typeof filterProfiles === 'function' ? base.filter(filterProfiles) : base;
     const prioritized = prioritizeViewerFirst(filtered, viewerEmail);
-    if (typeof maxItems === 'number') return prioritized.slice(0, Math.max(0, maxItems));
-    return prioritized;
-  }, [filterProfiles, items, maxItems, viewerEmail]);
+
+    // Sort boosted (profile_bump) users to top of grid
+    let result = prioritized;
+    if (boostUserIds && boostUserIds.size > 0) {
+      result = [...prioritized].sort((a, b) => {
+        const aId = String((a as any)?.authUserId || (a as any)?.userId || a.id || '');
+        const bId = String((b as any)?.authUserId || (b as any)?.userId || b.id || '');
+        const aBoosted = boostUserIds.has(aId) ? 1 : 0;
+        const bBoosted = boostUserIds.has(bId) ? 1 : 0;
+        return bBoosted - aBoosted; // boosted first
+      });
+    }
+
+    if (typeof maxItems === 'number') return result.slice(0, Math.max(0, maxItems));
+    return result;
+  }, [filterProfiles, items, maxItems, viewerEmail, boostUserIds]);
 
   const totalFilteredCount = useMemo(() => {
     if (typeof maxItems !== 'number') return null;
@@ -375,39 +394,24 @@ export default function ProfilesGrid({
           </div>
         ) : (
           <div className={cols === 3
-            ? 'grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-px'
+            ? 'grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-0.5'
             : 'grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4'
           }>
             {displayItems.map((profile) => (
-              cols === 3 ? (
-                <div key={profile.id} className="aspect-[3/4] overflow-hidden">
-                  <ProfileCard
-                    profile={profile}
-                    viewerLocation={viewerLocation}
-                    viewerProfile={viewerProfile}
-                    onOpenProfile={handleOpenProfile}
-                    onNavigateUrl={handleNavigateUrl}
-                    isTapped={isTapped}
-                    onSendTap={sendTap}
-                    onLongPress={onLongPress}
-                    checkin={checkinByUserId.get(profile.id) || null}
-                  />
-                </div>
-              ) : (
-                <div key={profile.id} className="aspect-[3/4] overflow-hidden">
-                  <ProfileCard
-                    profile={profile}
-                    viewerLocation={viewerLocation}
-                    viewerProfile={viewerProfile}
-                    onOpenProfile={handleOpenProfile}
-                    onNavigateUrl={handleNavigateUrl}
-                    isTapped={isTapped}
-                    onSendTap={sendTap}
-                    onLongPress={onLongPress}
-                    checkin={checkinByUserId.get(profile.id) || null}
-                  />
-                </div>
-              )
+              <div key={profile.id} className="aspect-[3/4] overflow-hidden">
+                <ProfileCard
+                  profile={profile}
+                  viewerLocation={viewerLocation}
+                  viewerProfile={viewerProfile}
+                  onOpenProfile={handleOpenProfile}
+                  onNavigateUrl={handleNavigateUrl}
+                  isTapped={isTapped}
+                  onSendTap={sendTap}
+                  onLongPress={onLongPress}
+                  checkin={checkinByUserId.get(profile.id) || null}
+                  onVibeTagClick={onVibeTagClick}
+                />
+              </div>
             ))}
 
             {Array.from({ length: skeletonCount }).map((_, idx) => (

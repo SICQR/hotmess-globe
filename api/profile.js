@@ -194,7 +194,7 @@ export default async function handler(req, res) {
         return safe;
       };
 
-      const tables = ['User', 'users'];
+      const tables = ['profiles'];
       for (const table of tables) {
         if (email) {
           const { data } = await fetchMaybeSingle(authedClient, table, { email });
@@ -202,9 +202,6 @@ export default async function handler(req, res) {
         }
 
         if (uid) {
-          const { data: byAuth } = await fetchMaybeSingle(authedClient, table, { auth_user_id: uid });
-          if (byAuth) return json(res, 200, { user: stripEmail(byAuth) });
-
           const { data: byId } = await fetchMaybeSingle(authedClient, table, { id: uid });
           if (byId) return json(res, 200, { user: stripEmail(byId) });
         }
@@ -227,7 +224,7 @@ export default async function handler(req, res) {
     return json(res, 200, { user: match });
   }
 
-  const tables = ['User', 'users'];
+  const tables = ['profiles'];
   const whereEmail = email ? { email } : null;
 
   let sawMissingTable = false;
@@ -262,11 +259,6 @@ export default async function handler(req, res) {
     }
 
     if (uid) {
-      // Try auth_user_id first, then id.
-      const { data: byAuth, error: byAuthError } = await fetchMaybeSingle(serviceClient, table, { auth_user_id: uid });
-      if (byAuthError && isMissingTableError(byAuthError)) sawMissingTable = true;
-      if (byAuth) return respondWithUser(byAuth);
-
       const { data: byId, error: byIdError } = await fetchMaybeSingle(serviceClient, table, { id: uid });
       if (byIdError && isMissingTableError(byIdError)) sawMissingTable = true;
       if (byId) return respondWithUser(byId);

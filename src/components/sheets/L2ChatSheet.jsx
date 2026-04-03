@@ -27,6 +27,8 @@ import MeetpointCard from '@/components/messaging/MeetpointCard';
 import VideoCallModal from '@/components/video/VideoCallModal';
 import TravelModal from '@/components/messaging/TravelModal';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
+import { usePowerups } from '@/hooks/usePowerups';
+import { Zap } from 'lucide-react';
 
 // ── Read-state helpers ────────────────────────────────────────────────────────
 // getLastRead: kept for backward compat (returns local timestamp or 0)
@@ -74,6 +76,7 @@ const markRead = (threadId, userEmail) => {
  */
 export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmail, userId: initialUserId, title }) {
   const { openSheet, updateSheetProps } = useSheet();
+  const { isActive: isBoostActive, refresh: refreshBoosts } = usePowerups();
 
   const [currentUser, setCurrentUser]   = useState(null); // { id, email }
   const [threads, setThreads]           = useState([]);
@@ -89,6 +92,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   const [searchQuery, setSearchQuery]   = useState('');
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showTravelModal, setShowTravelModal] = useState(false);
+  const [highlightNext, setHighlightNext] = useState(false);
 
   // ── Wingman AI state ─────────────────────────────────────────────────────
   const [wingmanLoading, setWingmanLoading] = useState(false);
@@ -284,6 +288,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       const senderProfile = profiles[currentUser.email];
 
       // Insert message (sender_name not a DB column — display name resolved client-side from profiles cache)
+      const isHighlighted = highlightNext && isBoostActive('highlighted_message');
       const { error: msgError } = await supabase
         .from('chat_messages')
         .insert({
@@ -291,9 +296,12 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           sender_email: currentUser.email,
           content: text,
           message_type: 'text',
+          metadata: isHighlighted ? { is_highlighted: true } : null,
           created_date: new Date().toISOString(),
         });
       if (msgError) throw msgError;
+      // Consume the highlight toggle after sending
+      if (isHighlighted) setHighlightNext(false);
 
       // Mark thread read on send (DB-first via markRead helper)
       markRead(thread.id, currentUser?.email);
@@ -647,6 +655,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           messages.map((msg, i) => {
             const isMe = msg.sender_email === currentUser?.email;
             const isMeetpoint = msg.message_type === 'meetpoint';
+            const isHighlightedMsg = !!msg.metadata?.is_highlighted;
             const isPhoto =
               msg.message_type === 'photo' ||
               /\.(jpe?g|png|gif|webp|avif|heic)(\?.*)?$/i.test(msg.content || '');
@@ -708,10 +717,17 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                       'max-w-[80%] px-4 py-2.5 rounded-2xl shadow-lg',
                       isMe
                         ? 'text-white rounded-br-sm'
-                        : 'bg-[#1C1C1E] text-white rounded-bl-sm border border-white/[0.06]'
+                        : 'bg-[#1C1C1E] text-white rounded-bl-sm border border-white/[0.06]',
+                      isHighlightedMsg && 'ring-2 ring-[#C8962C] ring-offset-1 ring-offset-[#050507]'
                     )}
-                    style={isMe ? { background: 'linear-gradient(135deg, #C8962C 0%, #A07722 100%)' } : undefined}
+                    style={isMe ? { background: isHighlightedMsg ? 'linear-gradient(135deg, #C8962C 0%, #D4A94E 100%)' : 'linear-gradient(135deg, #C8962C 0%, #A07722 100%)' } : isHighlightedMsg ? { background: '#1C1C1E', border: '2px solid #C8962C' } : undefined}
                   >
+                    {isHighlightedMsg && (
+                      <div className="flex items-center gap-1 mb-1">
+                        <Zap className="w-3 h-3 text-[#C8962C]" />
+                        <span className="text-[10px] font-black uppercase tracking-wider text-[#C8962C]">Highlighted</span>
+                      </div>
+                    )}
                     <p className="text-sm leading-relaxed">{msg.content}</p>
                     {msg.created_date && (
                       <p className="text-[10px] mt-1 opacity-50 flex items-center gap-0.5">
@@ -867,8 +883,38 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
 
         </div>
 
+        {/* Highlight toggle indicator */}
+        {highlightNext && (
+          <div className="px-3 py-1 flex items-center gap-2">
+            <Zap className="w-3.5 h-3.5 text-[#C8962C]" />
+            <span className="text-xs font-bold text-[#C8962C]">Next message will be highlighted</span>
+            <button onClick={() => setHighlightNext(false)} className="ml-auto text-xs text-white/40">Cancel</button>
+          </div>
+        )}
+
         {/* Text input row — auto-grow textarea (WhatsApp pattern) */}
         <div className="flex items-end gap-2 px-3 pb-3">
+          {/* Highlight message button */}
+          <button
+            onClick={() => {
+              if (isBoostActive('highlighted_message')) {
+                setHighlightNext(prev => !prev);
+              } else {
+                openSheet('boost-shop', {});
+              }
+            }}
+            className={cn(
+              'flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full border transition-all active:scale-95',
+              highlightNext
+                ? 'bg-[#C8962C]/20 border-[#C8962C]/50'
+                : 'bg-white/5 border-white/10'
+            )}
+            title={isBoostActive('highlighted_message') ? 'Highlight this message' : 'Get Highlighted Message power-up'}
+            aria-label="Highlight message"
+          >
+            <Zap className={cn('w-4 h-4', highlightNext ? 'text-[#C8962C]' : 'text-white/40')} />
+          </button>
+
           <textarea
             ref={inputRef}
             value={newMessage}

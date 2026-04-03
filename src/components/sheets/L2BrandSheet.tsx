@@ -3,18 +3,15 @@
  *
  * Props: { brand: BrandKey }
  *
- * Now fetches REAL Shopify products via getProductsByBrand() instead of
- * hardcoded placeholders. Non-product brand content (radio shows, releases,
- * producers, beats, HNH manifesto) remains static editorial.
+ * Clothing/product brands (raw, hung, high, hungmess, superhung, superraw, hnhMess)
+ * fetch REAL products from Shopify via getProductsByBrand().
  *
- * Brands with shopifyCollection: fetch from /api/shopify/products?category=handle
- * Brands without (messmarket): show preloved listings or "coming soon"
- * Radio/label/production: editorial content only (no product grid)
+ * Non-commerce brands (hotmessRadio, rawConvictRecords, smashDaddys) keep static
+ * editorial content — shows, releases, beats.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
 import {
   ChevronLeft,
   Flame,
@@ -27,10 +24,8 @@ import {
   Play,
   ExternalLink,
   ShoppingBag,
-  Loader2,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
-import { BRAND_CONFIG as BRAND_REGISTRY } from '@/config/brands';
 import { getProductsByBrand, type Product } from '@/lib/data/market';
 
 // ---- Brand types -----------------------------------------------------------
@@ -56,6 +51,11 @@ const MUTED = '#8E8E93';
 const HNH_PLUM = '#8B5CF6';
 const RADIO_STREAM_URL =
   'https://listen.radioking.com/radio/736103/stream/802454';
+
+// Brands that have Shopify products to fetch
+const SHOPIFY_BRANDS: BrandKey[] = [
+  'raw', 'hung', 'high', 'hungmess', 'superhung', 'superraw', 'hnhMess',
+];
 
 // ---- Radio show data -------------------------------------------------------
 interface RadioShow {
@@ -115,16 +115,8 @@ const SD_BEATS: BeatShowcase[] = [
   { id: 'sd-004', title: 'Raw Signal', producer: 'RAWCONVICT', bpm: 130, key: 'Cm' },
 ];
 
-// ---- Editorial image paths -------------------------------------------------
-const EDITORIAL_IMAGES = [
-  '/images/editorial-drop-01.svg',
-  '/images/editorial-drop-02.svg',
-  '/images/editorial-drop-03.svg',
-  '/images/editorial-drop-04.svg',
-];
-
 // ---- Brand config ----------------------------------------------------------
-interface BrandPageConfig {
+interface BrandDisplayConfig {
   wordmark: string;
   tagline: string;
   ctaLabel: string;
@@ -136,9 +128,10 @@ interface BrandPageConfig {
   taglineColor: string;
   layout: 'grid' | 'editorial' | 'editorial-gallery' | 'limited-drop' | 'radio' | 'label' | 'production' | 'hnh';
   isLimitedDrop?: boolean;
+  sectionTitle?: string;
 }
 
-const BRAND_PAGE_CONFIG: Record<BrandKey, BrandPageConfig> = {
+const BRAND_DISPLAY: Record<BrandKey, BrandDisplayConfig> = {
   raw: {
     wordmark: 'RAW',
     tagline: 'BOLD BASICS. NO BULLSHIT.',
@@ -148,6 +141,7 @@ const BRAND_PAGE_CONFIG: Record<BrandKey, BrandPageConfig> = {
     wordmarkStyle: 'font-black',
     taglineColor: MUTED,
     layout: 'grid',
+    sectionTitle: 'The Collection',
   },
   hung: {
     wordmark: 'HUNG',
@@ -158,6 +152,7 @@ const BRAND_PAGE_CONFIG: Record<BrandKey, BrandPageConfig> = {
     wordmarkStyle: 'font-black',
     taglineColor: '#FFFFFF',
     layout: 'grid',
+    sectionTitle: 'Statement Pieces',
   },
   high: {
     wordmark: 'HIGH',
@@ -168,6 +163,7 @@ const BRAND_PAGE_CONFIG: Record<BrandKey, BrandPageConfig> = {
     wordmarkStyle: 'font-light',
     taglineColor: MUTED,
     layout: 'editorial',
+    sectionTitle: 'The Edit',
   },
   hungmess: {
     wordmark: 'HUNGMESS',
@@ -178,6 +174,7 @@ const BRAND_PAGE_CONFIG: Record<BrandKey, BrandPageConfig> = {
     wordmarkStyle: 'font-black italic',
     taglineColor: MUTED,
     layout: 'editorial-gallery',
+    sectionTitle: 'Shop the Edit',
   },
   superhung: {
     wordmark: 'SUPERHUNG',
@@ -189,6 +186,7 @@ const BRAND_PAGE_CONFIG: Record<BrandKey, BrandPageConfig> = {
     taglineColor: '#FFFFFF',
     layout: 'limited-drop',
     isLimitedDrop: true,
+    sectionTitle: 'The Drop',
   },
   superraw: {
     wordmark: 'SUPERRAW',
@@ -200,6 +198,7 @@ const BRAND_PAGE_CONFIG: Record<BrandKey, BrandPageConfig> = {
     taglineColor: MUTED,
     layout: 'limited-drop',
     isLimitedDrop: true,
+    sectionTitle: 'The Drop',
   },
   hotmessRadio: {
     wordmark: 'HOTMESS RADIO',
@@ -246,6 +245,7 @@ const BRAND_PAGE_CONFIG: Record<BrandKey, BrandPageConfig> = {
     wordmarkStyle: 'font-black',
     taglineColor: HNH_PLUM,
     layout: 'hnh',
+    sectionTitle: 'The Range',
   },
 };
 
@@ -278,10 +278,60 @@ const wordmarkVariants = {
 };
 
 // =============================================================================
-// PRODUCT CARD — renders real Shopify/Preloved product data
+// SKELETON LOADERS
 // =============================================================================
 
-function RealProductCard({
+function ProductCardSkeleton() {
+  return (
+    <div className="bg-[#1C1C1E] rounded-2xl overflow-hidden border border-white/[0.08] animate-pulse">
+      <div className="w-full aspect-square bg-white/[0.06]" />
+      <div className="p-3 space-y-2">
+        <div className="h-4 w-4/5 rounded-md bg-white/[0.06]" />
+        <div className="h-5 w-1/3 rounded-md bg-white/[0.06]" />
+      </div>
+    </div>
+  );
+}
+
+function SkeletonGrid() {
+  return (
+    <div className="grid grid-cols-2 gap-3 px-4 pt-4">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <ProductCardSkeleton key={i} />
+      ))}
+    </div>
+  );
+}
+
+// =============================================================================
+// EMPTY STATE
+// =============================================================================
+
+function EmptyProducts({ brandName }: { brandName: string }) {
+  return (
+    <motion.div
+      variants={itemVariants}
+      className="flex flex-col items-center justify-center py-16 px-8 text-center"
+    >
+      <div
+        className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+        style={{ backgroundColor: 'rgba(200, 150, 44, 0.1)' }}
+      >
+        <ShoppingBag className="w-7 h-7 text-[#C8962C]/50" />
+      </div>
+      <p className="text-white font-bold text-base">No products yet</p>
+      <p className="text-[#8E8E93] text-sm mt-1">
+        {brandName} products are coming soon.
+      </p>
+    </motion.div>
+  );
+}
+
+// =============================================================================
+// SHOPIFY PRODUCT CARD (2-col grid) — uses real Product data
+// =============================================================================
+
+function ShopifyProductCard({
   product,
   index,
   onTap,
@@ -292,11 +342,10 @@ function RealProductCard({
   onTap: () => void;
   isLimitedDrop?: boolean;
 }) {
-  const symbol = product.currency === 'GBP' ? '\u00a3' : '$';
   const isSoldOut = !product.available;
-  const hasScarcity = isLimitedDrop && product.available && (product.quantity ?? 99) <= 5;
-  const scarcityLabel =
-    (product.quantity ?? 0) === 1 ? 'LAST ONE' : `${product.quantity ?? '?'} LEFT`;
+  const symbol = product.currency === 'GBP' ? '\u00a3' : '$';
+  const imageUrl = product.images[0] || '';
+  const hasCompareAt = product.compareAtPrice && product.compareAtPrice > product.price;
 
   return (
     <motion.button
@@ -310,16 +359,16 @@ function RealProductCard({
       aria-label={isSoldOut ? `${product.title} - Sold out` : `View ${product.title}`}
     >
       <div className="relative w-full aspect-square bg-white/[0.03] overflow-hidden">
-        {product.images[0] ? (
+        {imageUrl ? (
           <img
-            src={product.images[0]}
+            src={imageUrl}
             alt={product.title}
             className={`w-full h-full object-cover ${isSoldOut ? 'grayscale' : ''}`}
             loading="lazy"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <ShoppingBag className="w-10 h-10 text-white/[0.08]" />
+            <ShoppingBag className="w-10 h-10 text-white/10" />
           </div>
         )}
 
@@ -337,34 +386,29 @@ function RealProductCard({
           </div>
         )}
 
-        {/* Scarcity pill for limited drops */}
-        {hasScarcity && (
-          <div className="absolute top-2 right-2 px-2.5 py-1 rounded-full bg-[#C8962C]">
-            <span className="text-[10px] font-black text-white uppercase tracking-wider">
-              {scarcityLabel}
+        {/* Source badge */}
+        {product.source === 'preloved' && (
+          <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm border border-white/20">
+            <span className="text-[9px] font-bold text-[#8E8E93] uppercase tracking-wider">
+              Preloved
             </span>
           </div>
         )}
 
-        {/* Source badge */}
-        {product.source === 'preloved' && (
-          <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-[rgba(158,125,71,0.85)] text-white backdrop-blur-sm">
-            Preloved
-          </span>
-        )}
-
         {/* Sale badge */}
-        {product.compareAtPrice != null && product.compareAtPrice > product.price && (
-          <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-[#FF3B30] rounded-full text-[9px] font-bold text-white uppercase tracking-wider">
-            Sale
-          </span>
+        {hasCompareAt && !isSoldOut && (
+          <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-[#FF3B30]">
+            <span className="text-[9px] font-black text-white uppercase tracking-wider">
+              SALE
+            </span>
+          </div>
         )}
       </div>
       <div className="p-3">
         <h3 className="text-sm font-bold text-white leading-tight line-clamp-1">
           {product.title}
         </h3>
-        <div className="flex items-baseline gap-1.5 mt-1">
+        <div className="flex items-center gap-2 mt-1">
           <span
             className={`font-extrabold text-base leading-none ${
               isSoldOut ? 'text-[#8E8E93] line-through' : 'text-[#C8962C]'
@@ -372,9 +416,9 @@ function RealProductCard({
           >
             {symbol}{product.price.toFixed(2)}
           </span>
-          {product.compareAtPrice != null && product.compareAtPrice > product.price && (
-            <span className="text-white/30 text-xs line-through">
-              {symbol}{product.compareAtPrice.toFixed(2)}
+          {hasCompareAt && !isSoldOut && (
+            <span className="text-[#8E8E93] text-xs line-through">
+              {symbol}{product.compareAtPrice!.toFixed(2)}
             </span>
           )}
         </div>
@@ -387,7 +431,7 @@ function RealProductCard({
 // EDITORIAL PRODUCT CARD (1-col, HIGH brand)
 // =============================================================================
 
-function EditorialRealProductCard({
+function EditorialShopifyCard({
   product,
   index,
   onTap,
@@ -397,6 +441,7 @@ function EditorialRealProductCard({
   onTap: () => void;
 }) {
   const symbol = product.currency === 'GBP' ? '\u00a3' : '$';
+  const imageUrl = product.images[0] || '';
 
   return (
     <motion.button
@@ -407,16 +452,16 @@ function EditorialRealProductCard({
       aria-label={`View ${product.title}`}
     >
       <div className="relative w-full aspect-[3/4] bg-white/[0.03] overflow-hidden">
-        {product.images[0] ? (
+        {imageUrl ? (
           <img
-            src={product.images[0]}
+            src={imageUrl}
             alt={product.title}
             className="w-full h-full object-cover"
             loading="lazy"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <ShoppingBag className="w-10 h-10 text-white/[0.08]" />
+            <ShoppingBag className="w-12 h-12 text-white/10" />
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -434,43 +479,7 @@ function EditorialRealProductCard({
 }
 
 // =============================================================================
-// PRODUCT GRID SKELETON
-// =============================================================================
-
-function ProductGridSkeleton({ count = 4 }: { count?: number }) {
-  return (
-    <div className="grid grid-cols-2 gap-3 px-4 pb-8">
-      {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="bg-[#1C1C1E] rounded-2xl overflow-hidden border border-white/[0.08]">
-          <div className="w-full aspect-square animate-pulse bg-white/[0.06]" />
-          <div className="p-3 space-y-2">
-            <div className="h-4 w-4/5 rounded-md animate-pulse bg-white/[0.06]" />
-            <div className="h-5 w-1/3 rounded-md animate-pulse bg-white/[0.06]" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// =============================================================================
-// EMPTY PRODUCTS STATE
-// =============================================================================
-
-function EmptyProductsState({ brandName }: { brandName: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 px-8">
-      <ShoppingBag className="w-12 h-12 mb-3 text-white/10" />
-      <h3 className="text-base font-bold text-white mb-1">Coming soon</h3>
-      <p className="text-sm text-center text-[#8E8E93]">
-        {brandName} products are on the way. Check back soon.
-      </p>
-    </div>
-  );
-}
-
-// =============================================================================
-// SUPERHUNG BANNER
+// SUPERHUNG BANNER (shown on raw brand page)
 // =============================================================================
 
 function SuperhungBanner() {
@@ -483,10 +492,7 @@ function SuperhungBanner() {
       <div className="p-5">
         <div className="flex items-center gap-2 mb-2">
           <Flame className="w-5 h-5 text-[#C8962C]" />
-          <span
-            className="text-sm font-black uppercase tracking-[0.2em]"
-            style={{ color: AMBER }}
-          >
+          <span className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: AMBER }}>
             SUPERHUNG
           </span>
         </div>
@@ -494,13 +500,11 @@ function SuperhungBanner() {
         <p className="text-[#8E8E93] text-sm mb-4">
           Exclusive statement pieces. Once they are gone, they are gone.
         </p>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#C8962C]/15 border border-[#C8962C]/20">
-            <div className="w-2 h-2 rounded-full bg-[#C8962C] animate-pulse" />
-            <span className="text-[#C8962C] text-xs font-bold uppercase tracking-wider">
-              Dropping soon
-            </span>
-          </div>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#C8962C]/15 border border-[#C8962C]/20 w-fit">
+          <div className="w-2 h-2 rounded-full bg-[#C8962C] animate-pulse" />
+          <span className="text-[#C8962C] text-xs font-bold uppercase tracking-wider">
+            Dropping soon
+          </span>
         </div>
       </div>
     </motion.div>
@@ -508,7 +512,7 @@ function SuperhungBanner() {
 }
 
 // =============================================================================
-// SUPERRAW BANNER
+// SUPERRAW BANNER (shown on raw brand page)
 // =============================================================================
 
 function SuperrawBanner() {
@@ -535,33 +539,7 @@ function SuperrawBanner() {
 }
 
 // =============================================================================
-// EDITORIAL GALLERY (HUNGMESS brand only)
-// =============================================================================
-
-function EditorialGallery() {
-  return (
-    <div className="px-4 space-y-4 mt-6">
-      {EDITORIAL_IMAGES.map((src, i) => (
-        <motion.div
-          key={src}
-          custom={i}
-          variants={itemVariants}
-          className="w-full rounded-2xl overflow-hidden border border-white/[0.06] bg-[#1C1C1E]"
-        >
-          <img
-            src={src}
-            alt={`Editorial drop ${i + 1}`}
-            className="w-full object-cover"
-            loading="lazy"
-          />
-        </motion.div>
-      ))}
-    </div>
-  );
-}
-
-// =============================================================================
-// COUNTDOWN BAR (limited-drop pages)
+// COUNTDOWN BAR (SUPERHUNG / SUPERRAW limited-drop pages)
 // =============================================================================
 
 function CountdownBar() {
@@ -592,10 +570,7 @@ function CountdownBar() {
   const pad = (n: number) => String(n).padStart(2, '0');
 
   return (
-    <motion.div
-      variants={itemVariants}
-      className="mx-4 mt-4 mb-2"
-    >
+    <motion.div variants={itemVariants} className="mx-4 mt-4 mb-2">
       <div
         className="flex items-center justify-center gap-3 h-12 rounded-xl animate-pulse"
         style={{ backgroundColor: AMBER }}
@@ -625,9 +600,7 @@ function RadioShowCard({ show, index }: { show: RadioShow; index: number }) {
     >
       <div className="w-1 flex-shrink-0" style={{ backgroundColor: AMBER }} />
       <div className="flex-1 p-4">
-        <h3 className="text-white font-bold text-base leading-tight">
-          {show.title}
-        </h3>
+        <h3 className="text-white font-bold text-base leading-tight">{show.title}</h3>
         <div className="flex items-center gap-2 mt-1.5">
           <span className="text-[#8E8E93] text-sm">{show.host}</span>
           <span className="text-white/20">|</span>
@@ -638,11 +611,7 @@ function RadioShowCard({ show, index }: { show: RadioShow; index: number }) {
         <div className="mt-2">
           <span
             className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border"
-            style={{
-              color: AMBER,
-              borderColor: 'rgba(200, 150, 44, 0.3)',
-              backgroundColor: 'rgba(200, 150, 44, 0.1)',
-            }}
+            style={{ color: AMBER, borderColor: 'rgba(200, 150, 44, 0.3)', backgroundColor: 'rgba(200, 150, 44, 0.1)' }}
           >
             {show.genre}
           </span>
@@ -656,29 +625,15 @@ function RadioShowCard({ show, index }: { show: RadioShow; index: number }) {
 // RAW CONVICT RECORDS — RELEASE CARD
 // =============================================================================
 
-function ReleaseCardComponent({
-  release,
-  index,
-}: {
-  release: ReleaseCard;
-  index: number;
-}) {
+function ReleaseCardComponent({ release, index }: { release: ReleaseCard; index: number }) {
   return (
-    <motion.div
-      custom={index}
-      variants={itemVariants}
-      className="bg-[#1C1C1E] rounded-2xl overflow-hidden border border-white/[0.06]"
-    >
+    <motion.div custom={index} variants={itemVariants} className="bg-[#1C1C1E] rounded-2xl overflow-hidden border border-white/[0.06]">
       <div className="w-full aspect-square bg-gradient-to-br from-[#C8962C]/20 via-[#1C1C1E] to-black/80 flex items-center justify-center">
         <Disc3 className="w-16 h-16 text-[#C8962C]/30" />
       </div>
       <div className="p-4">
-        <p className="text-[#C8962C] text-xs font-bold uppercase tracking-wider">
-          {release.artist}
-        </p>
-        <h3 className="text-white font-bold text-base leading-tight mt-1">
-          {release.title}
-        </h3>
+        <p className="text-[#C8962C] text-xs font-bold uppercase tracking-wider">{release.artist}</p>
+        <h3 className="text-white font-bold text-base leading-tight mt-1">{release.title}</h3>
         <div className="flex items-center justify-between mt-3">
           <span className="text-[#8E8E93] text-xs">{release.year}</span>
           <button
@@ -694,51 +649,26 @@ function ReleaseCardComponent({
 }
 
 // =============================================================================
-// SMASH DADDYS — PRODUCER CARD
+// SMASH DADDYS — PRODUCER + BEAT CARDS
 // =============================================================================
 
-function ProducerCard({
-  producer,
-  index,
-}: {
-  producer: ProducerProfile;
-  index: number;
-}) {
+function ProducerCard({ producer, index }: { producer: ProducerProfile; index: number }) {
   return (
-    <motion.div
-      custom={index}
-      variants={itemVariants}
-      className="flex items-center gap-4 bg-[#1C1C1E] rounded-2xl p-4 border border-white/[0.06]"
-    >
-      <div
-        className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center"
-        style={{ backgroundColor: 'rgba(200, 150, 44, 0.15)' }}
-      >
+    <motion.div custom={index} variants={itemVariants} className="flex items-center gap-4 bg-[#1C1C1E] rounded-2xl p-4 border border-white/[0.06]">
+      <div className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: 'rgba(200, 150, 44, 0.15)' }}>
         <Music className="w-5 h-5 text-[#C8962C]" />
       </div>
       <div className="flex-1 min-w-0">
-        <h3 className="text-white font-bold text-base leading-tight truncate">
-          {producer.name}
-        </h3>
-        <p className="text-[#8E8E93] text-sm mt-0.5">
-          {producer.credits} tracks produced
-        </p>
+        <h3 className="text-white font-bold text-base leading-tight truncate">{producer.name}</h3>
+        <p className="text-[#8E8E93] text-sm mt-0.5">{producer.credits} tracks produced</p>
       </div>
     </motion.div>
   );
 }
 
-// =============================================================================
-// SMASH DADDYS — BEAT CARD
-// =============================================================================
-
 function BeatCard({ beat, index }: { beat: BeatShowcase; index: number }) {
   return (
-    <motion.div
-      custom={index}
-      variants={itemVariants}
-      className="flex items-center gap-3 bg-[#1C1C1E] rounded-2xl p-4 border border-white/[0.06]"
-    >
+    <motion.div custom={index} variants={itemVariants} className="flex items-center gap-3 bg-[#1C1C1E] rounded-2xl p-4 border border-white/[0.06]">
       <button
         className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center active:scale-90 transition-transform"
         style={{ backgroundColor: AMBER }}
@@ -747,9 +677,7 @@ function BeatCard({ beat, index }: { beat: BeatShowcase; index: number }) {
         <Play className="w-4 h-4 text-white ml-0.5" fill="white" />
       </button>
       <div className="flex-1 min-w-0">
-        <h3 className="text-white font-bold text-sm leading-tight truncate">
-          {beat.title}
-        </h3>
+        <h3 className="text-white font-bold text-sm leading-tight truncate">{beat.title}</h3>
         <div className="flex items-center gap-2 mt-0.5">
           <span className="text-[#8E8E93] text-xs">{beat.producer}</span>
           <span className="text-white/20">|</span>
@@ -763,7 +691,7 @@ function BeatCard({ beat, index }: { beat: BeatShowcase; index: number }) {
 }
 
 // =============================================================================
-// BRAND ICON SELECTOR
+// BRAND ICON + WORDMARK HELPERS
 // =============================================================================
 
 function getBrandIcon(brand: BrandKey) {
@@ -789,10 +717,6 @@ function getBrandIcon(brand: BrandKey) {
   }
 }
 
-// =============================================================================
-// WORDMARK SIZE HELPER
-// =============================================================================
-
 function getWordmarkSize(brand: BrandKey): string {
   switch (brand) {
     case 'rawConvictRecords':
@@ -815,98 +739,57 @@ function getWordmarkTracking(brand: BrandKey): string {
   return brand === 'high' ? 'tracking-[0.5em]' : 'tracking-[0.15em]';
 }
 
-// Brands that show product grids (have shopifyCollection or are P2P)
-const PRODUCT_BRANDS: BrandKey[] = [
-  'raw', 'hung', 'high', 'hungmess', 'superhung', 'superraw', 'hnhMess',
-];
-
 // =============================================================================
-// PRODUCT GRID SECTION — shared by all product-bearing brands
+// PRODUCT GRID — renders real Shopify products
 // =============================================================================
 
-function ProductGridSection({
-  brand,
+function ProductGrid({
   products,
-  isLoading,
+  loading,
+  brandName,
+  layout,
   isLimitedDrop,
-  isEditorial,
-  sectionTitle,
   onProductTap,
 }: {
-  brand: BrandKey;
   products: Product[];
-  isLoading: boolean;
+  loading: boolean;
+  brandName: string;
+  layout: BrandDisplayConfig['layout'];
   isLimitedDrop?: boolean;
-  isEditorial?: boolean;
-  sectionTitle: string;
   onProductTap: (product: Product) => void;
 }) {
-  if (isLoading) {
+  if (loading) return <SkeletonGrid />;
+  if (products.length === 0) return <EmptyProducts brandName={brandName} />;
+
+  // Editorial layout (HIGH) — 1-col
+  if (layout === 'editorial') {
     return (
-      <>
-        <motion.div variants={itemVariants} className="px-4 pt-4 pb-2">
-          <h2 className={`font-bold text-sm uppercase tracking-wider ${
-            isEditorial ? 'text-white/40 font-light text-xs tracking-[0.4em]' : 'text-white'
-          }`}>
-            {sectionTitle}
-          </h2>
-        </motion.div>
-        <ProductGridSkeleton count={4} />
-      </>
-    );
-  }
-
-  if (products.length === 0) {
-    return <EmptyProductsState brandName={BRAND_PAGE_CONFIG[brand].wordmark} />;
-  }
-
-  if (isEditorial) {
-    return (
-      <>
-        <motion.div variants={itemVariants} className="px-4 pt-2 pb-2">
-          <h2 className="text-white/40 font-light text-xs uppercase tracking-[0.4em]">
-            {sectionTitle}
-          </h2>
-        </motion.div>
-        <motion.div
-          variants={containerVariants}
-          className="px-4 space-y-4 pb-8"
-        >
-          {products.map((product, i) => (
-            <EditorialRealProductCard
-              key={product.id}
-              product={product}
-              index={i}
-              onTap={() => onProductTap(product)}
-            />
-          ))}
-        </motion.div>
-      </>
-    );
-  }
-
-  return (
-    <>
-      <motion.div variants={itemVariants} className="px-4 pt-4 pb-2">
-        <h2 className="text-white font-bold text-sm uppercase tracking-wider">
-          {sectionTitle}
-        </h2>
-      </motion.div>
-      <motion.div
-        variants={containerVariants}
-        className="grid grid-cols-2 gap-3 px-4 pb-8"
-      >
+      <motion.div variants={containerVariants} className="px-4 space-y-4 pb-8">
         {products.map((product, i) => (
-          <RealProductCard
+          <EditorialShopifyCard
             key={product.id}
             product={product}
             index={i}
             onTap={() => onProductTap(product)}
-            isLimitedDrop={isLimitedDrop}
           />
         ))}
       </motion.div>
-    </>
+    );
+  }
+
+  // Default — 2-col grid
+  return (
+    <motion.div variants={containerVariants} className="grid grid-cols-2 gap-3 px-4 pb-8">
+      {products.map((product, i) => (
+        <ShopifyProductCard
+          key={product.id}
+          product={product}
+          index={i}
+          onTap={() => onProductTap(product)}
+          isLimitedDrop={isLimitedDrop}
+        />
+      ))}
+    </motion.div>
   );
 }
 
@@ -916,31 +799,41 @@ function ProductGridSection({
 
 export default function L2BrandSheet({ brand = 'raw' }: L2BrandSheetProps) {
   const { closeSheet, openSheet } = useSheet();
-  const config = BRAND_PAGE_CONFIG[brand] || BRAND_PAGE_CONFIG.raw;
+  const config = BRAND_DISPLAY[brand] || BRAND_DISPLAY.raw;
   const productsRef = useRef<HTMLDivElement>(null);
 
-  // Determine if this brand should show products
-  const hasProductGrid = PRODUCT_BRANDS.includes(brand);
-  const brandRegistry = BRAND_REGISTRY[brand];
-  const hasShopifyCollection = !!brandRegistry?.shopifyCollection;
+  // ---- Shopify product state ----
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const isShopifyBrand = SHOPIFY_BRANDS.includes(brand);
 
-  // Fetch real products from Shopify + Preloved
-  const {
-    data: products = [],
-    isLoading: productsLoading,
-  } = useQuery<Product[]>({
-    queryKey: ['brand-products', brand],
-    queryFn: () => getProductsByBrand(brand),
-    staleTime: 2 * 60 * 1000,
-    enabled: hasProductGrid,
-  });
+  useEffect(() => {
+    if (!isShopifyBrand) return;
 
-  const handleCtaClick = useCallback(() => {
+    let cancelled = false;
+    setLoading(true);
+
+    getProductsByBrand(brand).then((data) => {
+      if (!cancelled) {
+        setProducts(data);
+        setLoading(false);
+      }
+    }).catch(() => {
+      if (!cancelled) {
+        setProducts([]);
+        setLoading(false);
+      }
+    });
+
+    return () => { cancelled = true; };
+  }, [brand, isShopifyBrand]);
+
+  const handleShopNow = useCallback(() => {
     if (config.ctaAction === 'external' && config.ctaUrl) {
       window.open(config.ctaUrl, '_blank', 'noopener,noreferrer');
-    } else if (productsRef.current) {
-      // Scroll to the products section
-      productsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      // Scroll to products section
+      productsRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [config.ctaAction, config.ctaUrl]);
 
@@ -955,25 +848,9 @@ export default function L2BrandSheet({ brand = 'raw' }: L2BrandSheetProps) {
   const wordmarkTracking = getWordmarkTracking(brand);
   const BrandIcon = getBrandIcon(brand);
 
-  // Section title per brand layout
-  const getSectionTitle = () => {
-    switch (brand) {
-      case 'raw': return 'The Collection';
-      case 'hung': return 'Statement Pieces';
-      case 'high': return 'The Edit';
-      case 'hungmess': return 'Shop the Edit';
-      case 'superhung': return 'The Drop';
-      case 'superraw': return 'The Drop';
-      case 'hnhMess': return 'The Range';
-      default: return 'Products';
-    }
-  };
-
   return (
     <div className="h-full flex flex-col" style={{ backgroundColor: config.headerBg }}>
-      {/* ================================================================== */}
-      {/* BACK BUTTON (absolute, overlays header)                             */}
-      {/* ================================================================== */}
+      {/* BACK BUTTON */}
       <button
         onClick={closeSheet}
         className="absolute top-4 left-4 z-10 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform focus:outline-none focus:ring-2 focus:ring-[#C8962C]"
@@ -982,53 +859,32 @@ export default function L2BrandSheet({ brand = 'raw' }: L2BrandSheetProps) {
         <ChevronLeft className="w-5 h-5 text-white" />
       </button>
 
-      {/* ================================================================== */}
-      {/* SCROLLABLE CONTENT                                                  */}
-      {/* ================================================================== */}
+      {/* SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto overscroll-y-contain">
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={containerVariants}
-        >
-          {/* ---- RADIO HERO (hotmessRadio gets a full-bleed hero) ---------- */}
+        <motion.div initial="hidden" animate="visible" variants={containerVariants}>
+          {/* ---- RADIO HERO ---- */}
           {brand === 'hotmessRadio' && (
-            <motion.div
-              variants={wordmarkVariants}
-              className="relative w-full"
-              style={{ height: '60vh' }}
-            >
+            <motion.div variants={wordmarkVariants} className="relative w-full" style={{ height: '60vh' }}>
               <div className="absolute inset-0 bg-gradient-to-b from-[#C8962C]/30 via-[#0D0D0D] to-black" />
               <div className="absolute inset-0 flex flex-col items-center justify-end pb-10 px-6 text-center">
                 <Radio className="w-12 h-12 text-[#C8962C] mb-4" />
-                <h1
-                  className={`${wordmarkSize} font-black ${wordmarkTracking} leading-none select-none text-white`}
-                >
+                <h1 className={`${wordmarkSize} font-black ${wordmarkTracking} leading-none select-none text-white`}>
                   {config.wordmark}
                 </h1>
-                <p
-                  className="text-xs font-bold uppercase tracking-[0.3em] mt-4"
-                  style={{ color: AMBER }}
-                >
+                <p className="text-xs font-bold uppercase tracking-[0.3em] mt-4" style={{ color: AMBER }}>
                   {config.tagline}
                 </p>
               </div>
             </motion.div>
           )}
 
-          {/* ---- STANDARD BRAND HEADER (all non-radio brands) -------------- */}
+          {/* ---- STANDARD BRAND HEADER ---- */}
           {brand !== 'hotmessRadio' && (
-            <motion.div
-              variants={wordmarkVariants}
-              className="pt-16 pb-6 px-6 flex flex-col items-center text-center"
-            >
+            <motion.div variants={wordmarkVariants} className="pt-16 pb-6 px-6 flex flex-col items-center text-center">
               {BrandIcon && (
                 <BrandIcon
                   className="w-8 h-8 mb-3"
-                  style={{
-                    color:
-                      config.wordmarkColor === AMBER ? AMBER : 'rgba(255,255,255,0.3)',
-                  }}
+                  style={{ color: config.wordmarkColor === AMBER ? AMBER : 'rgba(255,255,255,0.3)' }}
                 />
               )}
               <h1
@@ -1037,10 +893,7 @@ export default function L2BrandSheet({ brand = 'raw' }: L2BrandSheetProps) {
               >
                 {config.wordmark}
               </h1>
-              <p
-                className="text-xs font-bold uppercase tracking-[0.3em] mt-4"
-                style={{ color: config.taglineColor }}
-              >
+              <p className="text-xs font-bold uppercase tracking-[0.3em] mt-4" style={{ color: config.taglineColor }}>
                 {config.tagline}
               </p>
             </motion.div>
@@ -1050,121 +903,150 @@ export default function L2BrandSheet({ brand = 'raw' }: L2BrandSheetProps) {
           {/* BRAND-SPECIFIC SECTIONS                                          */}
           {/* ================================================================ */}
 
-          {/* ---- RAW: SUPERRAW banner + product grid ----------------------- */}
+          {/* ---- RAW: SUPERRAW banner + real products ---- */}
           {brand === 'raw' && (
-            <div ref={productsRef}>
-              <SuperrawBanner />
-              <ProductGridSection
-                brand={brand}
-                products={products}
-                isLoading={productsLoading}
-                sectionTitle={getSectionTitle()}
-                onProductTap={handleProductTap}
-              />
-            </div>
-          )}
-
-          {/* ---- HUNG: SUPERHUNG banner + product grid --------------------- */}
-          {brand === 'hung' && (
-            <div ref={productsRef}>
-              <SuperhungBanner />
-              <ProductGridSection
-                brand={brand}
-                products={products}
-                isLoading={productsLoading}
-                sectionTitle={getSectionTitle()}
-                onProductTap={handleProductTap}
-              />
-            </div>
-          )}
-
-          {/* ---- HIGH: editorial 1-col cards ------------------------------- */}
-          {brand === 'high' && (
-            <div ref={productsRef}>
-              <ProductGridSection
-                brand={brand}
-                products={products}
-                isLoading={productsLoading}
-                isEditorial
-                sectionTitle={getSectionTitle()}
-                onProductTap={handleProductTap}
-              />
-            </div>
-          )}
-
-          {/* ---- HUNGMESS: editorial gallery + product grid ---------------- */}
-          {brand === 'hungmess' && (
             <>
-              <motion.div variants={itemVariants} className="px-4 pt-2 pb-2">
-                <h2 className="text-white/40 font-light text-xs uppercase tracking-[0.4em]">
-                  Lookbook
-                </h2>
-              </motion.div>
-              <EditorialGallery />
+              <SuperrawBanner />
               <div ref={productsRef}>
-                <ProductGridSection
-                  brand={brand}
+                <motion.div variants={itemVariants} className="px-4 pt-4 pb-2">
+                  <h2 className="text-white font-bold text-sm uppercase tracking-wider">
+                    {config.sectionTitle}
+                  </h2>
+                </motion.div>
+                <ProductGrid
                   products={products}
-                  isLoading={productsLoading}
-                  sectionTitle={getSectionTitle()}
+                  loading={loading}
+                  brandName={config.wordmark}
+                  layout={config.layout}
                   onProductTap={handleProductTap}
                 />
               </div>
             </>
           )}
 
-          {/* ---- SUPERHUNG: limited-drop grid ------------------------------ */}
+          {/* ---- HUNG: SUPERHUNG banner + real products ---- */}
+          {brand === 'hung' && (
+            <>
+              <SuperhungBanner />
+              <div ref={productsRef}>
+                <motion.div variants={itemVariants} className="px-4 pt-4 pb-2">
+                  <h2 className="text-white font-bold text-sm uppercase tracking-wider">
+                    {config.sectionTitle}
+                  </h2>
+                </motion.div>
+                <ProductGrid
+                  products={products}
+                  loading={loading}
+                  brandName={config.wordmark}
+                  layout={config.layout}
+                  onProductTap={handleProductTap}
+                />
+              </div>
+            </>
+          )}
+
+          {/* ---- HIGH: editorial 1-col cards ---- */}
+          {brand === 'high' && (
+            <div ref={productsRef}>
+              <motion.div variants={itemVariants} className="px-4 pt-2 pb-2">
+                <h2 className="text-white/40 font-light text-xs uppercase tracking-[0.4em]">
+                  {config.sectionTitle}
+                </h2>
+              </motion.div>
+              <ProductGrid
+                products={products}
+                loading={loading}
+                brandName={config.wordmark}
+                layout={config.layout}
+                onProductTap={handleProductTap}
+              />
+            </div>
+          )}
+
+          {/* ---- HUNGMESS: editorial + real products ---- */}
+          {brand === 'hungmess' && (
+            <div ref={productsRef}>
+              <motion.div variants={itemVariants} className="px-4 pt-2 pb-2">
+                <h2 className="text-white/40 font-light text-xs uppercase tracking-[0.4em]">
+                  Lookbook
+                </h2>
+              </motion.div>
+              <motion.div variants={itemVariants} className="px-4 pt-6 pb-2">
+                <h2 className="text-white font-bold text-sm uppercase tracking-wider">
+                  {config.sectionTitle}
+                </h2>
+              </motion.div>
+              <ProductGrid
+                products={products}
+                loading={loading}
+                brandName={config.wordmark}
+                layout="grid"
+                onProductTap={handleProductTap}
+              />
+            </div>
+          )}
+
+          {/* ---- SUPERHUNG: countdown + limited-drop real products ---- */}
           {brand === 'superhung' && (
-            <div ref={productsRef}>
+            <>
               <CountdownBar />
               <motion.div variants={itemVariants} className="px-4 mt-2 mb-4">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-white/30 text-center font-bold">
                   ONCE GONE, GONE FOREVER
                 </p>
               </motion.div>
-              <ProductGridSection
-                brand={brand}
-                products={products}
-                isLoading={productsLoading}
-                isLimitedDrop
-                sectionTitle={getSectionTitle()}
-                onProductTap={handleProductTap}
-              />
-            </div>
+              <div ref={productsRef}>
+                <motion.div variants={itemVariants} className="px-4 pb-2">
+                  <h2 className="text-white font-bold text-sm uppercase tracking-wider">
+                    {config.sectionTitle}
+                  </h2>
+                </motion.div>
+                <ProductGrid
+                  products={products}
+                  loading={loading}
+                  brandName={config.wordmark}
+                  layout="grid"
+                  isLimitedDrop
+                  onProductTap={handleProductTap}
+                />
+              </div>
+            </>
           )}
 
-          {/* ---- SUPERRAW: limited-drop grid ------------------------------- */}
+          {/* ---- SUPERRAW: countdown + limited-drop real products ---- */}
           {brand === 'superraw' && (
-            <div ref={productsRef}>
+            <>
               <CountdownBar />
               <motion.div variants={itemVariants} className="px-4 mt-2 mb-4">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-white/30 text-center font-bold">
                   ONCE GONE, GONE FOREVER
                 </p>
               </motion.div>
-              <ProductGridSection
-                brand={brand}
-                products={products}
-                isLoading={productsLoading}
-                isLimitedDrop
-                sectionTitle={getSectionTitle()}
-                onProductTap={handleProductTap}
-              />
-            </div>
+              <div ref={productsRef}>
+                <motion.div variants={itemVariants} className="px-4 pb-2">
+                  <h2 className="text-white font-bold text-sm uppercase tracking-wider">
+                    {config.sectionTitle}
+                  </h2>
+                </motion.div>
+                <ProductGrid
+                  products={products}
+                  loading={loading}
+                  brandName={config.wordmark}
+                  layout="grid"
+                  isLimitedDrop
+                  onProductTap={handleProductTap}
+                />
+              </div>
+            </>
           )}
 
-          {/* ---- HOTMESS RADIO: show schedule ------------------------------ */}
+          {/* ---- HOTMESS RADIO: show schedule ---- */}
           {brand === 'hotmessRadio' && (
             <>
               <motion.div variants={itemVariants} className="px-4 pt-6 pb-3">
-                <h2 className="text-white font-bold text-sm uppercase tracking-wider">
-                  The Shows
-                </h2>
+                <h2 className="text-white font-bold text-sm uppercase tracking-wider">The Shows</h2>
               </motion.div>
-              <motion.div
-                variants={containerVariants}
-                className="px-4 space-y-3 pb-8"
-              >
+              <motion.div variants={containerVariants} className="px-4 space-y-3 pb-8">
                 {RADIO_SHOWS.map((show, i) => (
                   <RadioShowCard key={show.title} show={show} index={i} />
                 ))}
@@ -1172,59 +1054,35 @@ export default function L2BrandSheet({ brand = 'raw' }: L2BrandSheetProps) {
             </>
           )}
 
-          {/* ---- RAW CONVICT RECORDS: editorial releases ------------------- */}
+          {/* ---- RAW CONVICT RECORDS: editorial releases ---- */}
           {brand === 'rawConvictRecords' && (
             <>
               <motion.div variants={itemVariants} className="px-4 pt-2 pb-3">
-                <h2 className="text-white font-bold text-sm uppercase tracking-wider">
-                  Latest Releases
-                </h2>
+                <h2 className="text-white font-bold text-sm uppercase tracking-wider">Latest Releases</h2>
               </motion.div>
-              <motion.div
-                variants={containerVariants}
-                className="px-4 space-y-4 pb-8"
-              >
+              <motion.div variants={containerVariants} className="px-4 space-y-4 pb-8">
                 {RCR_RELEASES.map((release, i) => (
-                  <ReleaseCardComponent
-                    key={release.id}
-                    release={release}
-                    index={i}
-                  />
+                  <ReleaseCardComponent key={release.id} release={release} index={i} />
                 ))}
               </motion.div>
             </>
           )}
 
-          {/* ---- SMASH DADDYS: producers + beat showcase ------------------- */}
+          {/* ---- SMASH DADDYS: producers + beat showcase ---- */}
           {brand === 'smashDaddys' && (
             <>
               <motion.div variants={itemVariants} className="px-4 pt-2 pb-3">
-                <h2 className="text-white font-bold text-sm uppercase tracking-wider">
-                  Producers
-                </h2>
+                <h2 className="text-white font-bold text-sm uppercase tracking-wider">Producers</h2>
               </motion.div>
-              <motion.div
-                variants={containerVariants}
-                className="px-4 space-y-3 pb-4"
-              >
+              <motion.div variants={containerVariants} className="px-4 space-y-3 pb-4">
                 {SD_PRODUCERS.map((producer, i) => (
-                  <ProducerCard
-                    key={producer.name}
-                    producer={producer}
-                    index={i}
-                  />
+                  <ProducerCard key={producer.name} producer={producer} index={i} />
                 ))}
               </motion.div>
-
               <motion.div variants={itemVariants} className="px-4 pt-4 pb-3">
-                <h2 className="text-white font-bold text-sm uppercase tracking-wider">
-                  Beat Showcase
-                </h2>
+                <h2 className="text-white font-bold text-sm uppercase tracking-wider">Beat Showcase</h2>
               </motion.div>
-              <motion.div
-                variants={containerVariants}
-                className="px-4 space-y-3 pb-8"
-              >
+              <motion.div variants={containerVariants} className="px-4 space-y-3 pb-8">
                 {SD_BEATS.map((beat, i) => (
                   <BeatCard key={beat.id} beat={beat} index={i} />
                 ))}
@@ -1232,7 +1090,7 @@ export default function L2BrandSheet({ brand = 'raw' }: L2BrandSheetProps) {
             </>
           )}
 
-          {/* ---- HNH MESS: manifesto + Hand N Hand anchor + product grid --- */}
+          {/* ---- HNH MESS: manifesto + Hand N Hand anchor + real products ---- */}
           {brand === 'hnhMess' && (
             <>
               {/* Manifesto block */}
@@ -1244,10 +1102,7 @@ export default function L2BrandSheet({ brand = 'raw' }: L2BrandSheetProps) {
                   borderColor: `rgba(139,92,246,0.25)`,
                 }}
               >
-                <p
-                  className="text-[10px] font-black uppercase tracking-[0.3em] mb-3"
-                  style={{ color: HNH_PLUM }}
-                >
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-3" style={{ color: HNH_PLUM }}>
                   The Story
                 </p>
                 <p className="text-white font-bold text-[15px] leading-snug mb-2">
@@ -1259,10 +1114,7 @@ export default function L2BrandSheet({ brand = 'raw' }: L2BrandSheetProps) {
                 <p className="text-[#8E8E93] text-[12px] leading-relaxed mt-2">
                   Here, HNH means Hand N Hand. After the night. After the chaos. After the music fades — someone should still be there to land with.
                 </p>
-                <p
-                  className="text-[12px] font-bold italic mt-3"
-                  style={{ color: HNH_PLUM }}
-                >
+                <p className="text-[12px] font-bold italic mt-3" style={{ color: HNH_PLUM }}>
                   "Hand N Hand is the only place to land."
                 </p>
               </motion.div>
@@ -1272,15 +1124,9 @@ export default function L2BrandSheet({ brand = 'raw' }: L2BrandSheetProps) {
                 <button
                   onClick={() => openSheet('schedule', {})}
                   className="w-full flex items-center gap-3 rounded-2xl p-4 border text-left active:scale-[0.98] transition-transform"
-                  style={{
-                    background: 'rgba(139,92,246,0.08)',
-                    borderColor: 'rgba(139,92,246,0.2)',
-                  }}
+                  style={{ background: 'rgba(139,92,246,0.08)', borderColor: 'rgba(139,92,246,0.2)' }}
                 >
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: 'rgba(139,92,246,0.2)' }}
-                  >
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(139,92,246,0.2)' }}>
                     <Radio className="w-5 h-5" style={{ color: HNH_PLUM }} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -1301,10 +1147,7 @@ export default function L2BrandSheet({ brand = 'raw' }: L2BrandSheetProps) {
                   <div
                     key={item.label}
                     className="rounded-xl p-3 text-center border"
-                    style={{
-                      background: 'rgba(139,92,246,0.06)',
-                      borderColor: 'rgba(139,92,246,0.15)',
-                    }}
+                    style={{ background: 'rgba(139,92,246,0.06)', borderColor: 'rgba(139,92,246,0.15)' }}
                   >
                     <p className="text-white font-bold text-[11px]">{item.label}</p>
                     <p className="text-[#8E8E93] text-[9px] mt-0.5">{item.sub}</p>
@@ -1312,51 +1155,34 @@ export default function L2BrandSheet({ brand = 'raw' }: L2BrandSheetProps) {
                 ))}
               </motion.div>
 
-              {/* Product range — real products from HNH MESS Shopify collection */}
+              {/* Real product range */}
               <div ref={productsRef}>
                 <motion.div variants={itemVariants} className="px-4 pt-6 pb-2 flex items-center justify-between">
                   <h2 className="text-white font-bold text-sm uppercase tracking-wider">
-                    The Range
+                    {config.sectionTitle}
                   </h2>
                   <p className="text-[#8E8E93] text-[10px]">Pleasure with care</p>
                 </motion.div>
-                {productsLoading ? (
-                  <ProductGridSkeleton count={4} />
-                ) : products.length > 0 ? (
-                  <motion.div
-                    variants={containerVariants}
-                    className="grid grid-cols-2 gap-3 px-4 pb-8"
-                  >
-                    {products.map((product, i) => (
-                      <RealProductCard
-                        key={product.id}
-                        product={product}
-                        index={i}
-                        onTap={() => handleProductTap(product)}
-                      />
-                    ))}
-                  </motion.div>
-                ) : (
-                  <EmptyProductsState brandName="HNH MESS" />
-                )}
+                <ProductGrid
+                  products={products}
+                  loading={loading}
+                  brandName={config.wordmark}
+                  layout="grid"
+                  onProductTap={handleProductTap}
+                />
               </div>
             </>
           )}
         </motion.div>
       </div>
 
-      {/* ================================================================== */}
-      {/* STICKY ACTION BAR                                                   */}
-      {/* ================================================================== */}
+      {/* STICKY ACTION BAR */}
       <div
         className="flex-shrink-0 px-6 py-3 border-t border-white/10"
-        style={{
-          paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
-          backgroundColor: config.headerBg,
-        }}
+        style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))', backgroundColor: config.headerBg }}
       >
         <button
-          onClick={handleCtaClick}
+          onClick={handleShopNow}
           className="w-full h-12 rounded-xl font-bold text-sm uppercase tracking-wider text-white active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-[#C8962C] focus:ring-offset-2 focus:ring-offset-black"
           style={{ backgroundColor: AMBER }}
           aria-label={config.ctaLabel}

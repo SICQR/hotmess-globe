@@ -552,6 +552,107 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: false,
     deepLinkParams: ['lat', 'lng'],
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // AUTH — MORE SIGN-IN METHODS
+  // ─────────────────────────────────────────────────────────────────────────
+  'more-auth-methods': {
+    id: 'more-auth-methods',
+    title: 'More ways to sign in',
+    height: 'small',
+    auth: false,
+    deepLinkParams: [],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // QUICK ACTIONS / NOW HAPPENING / CARD ACTIONS
+  // ─────────────────────────────────────────────────────────────────────────
+  'quick-actions': {
+    id: 'quick-actions',
+    title: 'Quick Actions',
+    height: 'small',
+    auth: false,
+    deepLinkParams: ['tabOrigin'],
+  },
+  'now-happening': {
+    id: 'now-happening',
+    title: 'Now Happening',
+    height: 'small',
+    auth: false,
+    deepLinkParams: [],
+  },
+  'card-actions': {
+    id: 'card-actions',
+    title: 'Actions',
+    height: 'mini',
+    auth: false,
+    deepLinkParams: ['itemType', 'itemId'],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SUPPORT TICKET
+  // ─────────────────────────────────────────────────────────────────────────
+  'support': {
+    id: 'support',
+    title: 'Contact Support',
+    height: 'medium',
+    auth: false,
+    deepLinkParams: [],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PREMIUM GATE
+  // ─────────────────────────────────────────────────────────────────────────
+  'premium-gate': {
+    id: 'premium-gate',
+    title: 'Go Premium',
+    height: 'medium',
+    auth: true,
+    deepLinkParams: ['origin'],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // EDIT LISTING
+  // ─────────────────────────────────────────────────────────────────────────
+  'edit-listing': {
+    id: 'edit-listing',
+    title: 'Edit Listing',
+    height: 'full',
+    auth: true,
+    deepLinkParams: ['listingId'],
+  },
+
+  // ─────────���────────��────────────────────────────────��─────────────────────
+  // LEGAL / ACCESSIBILITY / DATA EXPORT / REPORT
+  // ────────���───────────────────��────────────────────────────────────────────
+  'legal': {
+    id: 'legal',
+    title: 'Legal & Terms',
+    height: 'large',
+    auth: false,
+    deepLinkParams: [],
+  },
+  'accessibility': {
+    id: 'accessibility',
+    title: 'Accessibility',
+    height: 'small',
+    auth: false,
+    deepLinkParams: [],
+  },
+  'data-export': {
+    id: 'data-export',
+    title: 'Data Export',
+    height: 'medium',
+    auth: true,
+    deepLinkParams: [],
+  },
+  'report': {
+    id: 'report',
+    title: 'Report',
+    height: 'medium',
+    auth: true,
+    deepLinkParams: ['targetType', 'targetId'],
+  },
 } as const;
 
 /**

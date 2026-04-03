@@ -4,7 +4,8 @@
  */
 import { useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, Phone, Shield, Wind } from 'lucide-react';
+import { ArrowLeft, Heart, Phone, Shield, Wind, Send } from 'lucide-react';
+import { useSheet } from '@/contexts/SheetContext';
 import { motion } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
@@ -27,6 +28,7 @@ const RESOURCES = [
 
 export default function CarePage() {
   const navigate = useNavigate();
+  const { openSheet } = useSheet();
   const queryClient = useQueryClient();
   const scrollRef = useRef(null);
   const handleRefresh = useCallback(async () => {
@@ -131,6 +133,15 @@ export default function CarePage() {
           </p>
           <p className="text-xs text-white/30">This activates your parasympathetic nervous system and helps you calm down.</p>
         </div>
+
+        {/* Contact support */}
+        <button
+          onClick={() => openSheet('support')}
+          className="w-full py-4 rounded-2xl font-bold text-sm active:scale-95 transition-transform border border-white/15 text-white/70 flex items-center justify-center gap-2"
+        >
+          <Send className="w-4 h-4" />
+          Contact Support
+        </button>
 
         {/* Safety link */}
         <button

@@ -36,6 +36,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { supabase } from '@/components/utils/supabaseClient';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
@@ -57,6 +58,7 @@ import { useBootGuard } from '@/contexts/BootGuardContext';
 import { isBrandVisible, BRAND_CONFIG } from '@/config/brands';
 import { AppBanner } from '@/components/banners/AppBanner';
 import { HNHMarketHero } from '@/components/home/HNHMarketHero';
+import { CardMoreButton } from '@/components/ui/CardMoreButton';
 import {
   getAllProducts,
   getProductsByBrand,
@@ -65,7 +67,7 @@ import {
   type ProductFilters,
 } from '@/lib/data/market';
 
-// Safe cart item count hook — counts BOTH Shopify + preloved items
+// Safe cart item count hook — counts BOTH Shopify + preloved (Supabase) items
 function useCartItemCount(): number {
   const { cart } = useShopCart();
   // Shopify cart lines are edges in a connection
@@ -75,12 +77,23 @@ function useCartItemCount(): number {
     if (Array.isArray(lines)) shopifyCount = lines.length;
     else if (lines.edges && Array.isArray(lines.edges)) shopifyCount = lines.edges.length;
   }
-  // Preloved items from localStorage
-  let prelovedCount = 0;
-  try {
-    const preloved = JSON.parse(localStorage.getItem('hm_cart') || '[]');
-    prelovedCount = Array.isArray(preloved) ? preloved.length : 0;
-  } catch { /* ignore */ }
+  // Preloved items from Supabase cart_items table
+  const [prelovedCount, setPrelovedCount] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (cancelled || !session?.user) return;
+      supabase
+        .from('cart_items')
+        .select('id', { count: 'exact', head: true })
+        .eq('auth_user_id', session.user.id)
+        .eq('source', 'preloved')
+        .then(({ count }) => {
+          if (!cancelled) setPrelovedCount(count || 0);
+        });
+    });
+    return () => { cancelled = true; };
+  }, []);
   return shopifyCount + prelovedCount;
 }
 
@@ -291,10 +304,19 @@ function ProductCard({ product, index, onTap }: ProductCardProps) {
 
         {/* Condition badge -- top-right (preloved only) */}
         {product.source === 'preloved' && product.condition && (
-          <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-black/60 backdrop-blur-sm border border-white/20 text-white/80">
+          <span className="absolute top-2 right-10 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-black/60 backdrop-blur-sm border border-white/20 text-white/80">
             {getConditionLabel(product.condition)}
           </span>
         )}
+
+        {/* More actions -- top-right */}
+        <CardMoreButton
+          itemType="product"
+          itemId={product.id}
+          title={product.title}
+          profileId={product.sellerId}
+          className="absolute top-2 right-2"
+        />
 
         {/* Category chip -- bottom-left */}
         {product.category && (
@@ -472,22 +494,39 @@ function EmptyState({ onClear, hasFilters }: EmptyStateProps) {
       variants={fadeVariants}
       className="flex flex-col items-center justify-center py-24 px-8"
     >
-      <ShoppingBag className="w-16 h-16 mb-4" style={{ color: MUTED }} />
-      <h3 className="text-xl font-bold text-white mb-2">No drops found</h3>
-      <p className="text-sm text-center mb-6" style={{ color: MUTED }}>
+      <div className="w-16 h-16 rounded-2xl bg-[#1C1C1E] flex items-center justify-center mb-4">
+        <ShoppingBag className="w-8 h-8 text-white/10" />
+      </div>
+      <h3 className="text-lg font-bold text-white mb-1">Nothing here yet</h3>
+      <p className="text-sm text-center mb-6 text-white/40">
         {hasFilters
-          ? 'Try adjusting your filters or search to find what you need.'
-          : 'Nothing here yet. Check back soon for new drops.'}
+          ? 'No products match your current filters. Broaden your search or start fresh.'
+          : 'New drops land all the time. Check back soon.'}
       </p>
-      {hasFilters && (
+      <div className="flex gap-3">
+        {hasFilters && (
+          <button
+            onClick={onClear}
+            className="h-11 px-6 rounded-xl font-bold text-sm text-black active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-[#C8962C]"
+            style={{ backgroundColor: AMBER }}
+          >
+            Clear filters
+          </button>
+        )}
         <button
-          onClick={onClear}
-          className="h-12 px-8 rounded-xl font-semibold text-white active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-[#C8962C]"
-          style={{ backgroundColor: AMBER }}
+          onClick={() => {
+            onClear();
+          }}
+          className={`h-11 px-6 rounded-xl font-bold text-sm active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-[#C8962C] ${
+            hasFilters
+              ? 'border border-white/15 text-white/70'
+              : 'text-black'
+          }`}
+          style={hasFilters ? {} : { backgroundColor: AMBER }}
         >
-          Clear filters
+          Browse all
         </button>
-      )}
+      </div>
     </motion.div>
   );
 }
@@ -547,6 +586,17 @@ export function MarketMode({ className = '' }: MarketModeProps) {
 
   // Cart item count for badge
   const cartItemCount = useCartItemCount();
+
+  // Post-purchase success flow
+  const purchaseSuccess = searchParams.get('purchase') === 'success';
+  const purchaseListingId = searchParams.get('listing');
+  const handleDismissPurchase = useCallback(() => {
+    setSearchParams((prev) => {
+      prev.delete('purchase');
+      prev.delete('listing');
+      return prev;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   // ---- Filter state (synced to URL params) --------------------------------
   const [searchInput, setSearchInput] = useState(searchParams.get('q') ?? '');
@@ -718,6 +768,59 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   }, []);
 
   // ---- Render ---------------------------------------------------------------
+
+  // Post-purchase success screen
+  if (purchaseSuccess) {
+    return (
+      <div
+        className={`h-full w-full flex flex-col items-center justify-center px-6 text-center ${className}`}
+        style={{ backgroundColor: ROOT_BG }}
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+          className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
+          style={{ backgroundColor: 'rgba(200,150,44,0.2)', border: '2px solid #C8962C' }}
+        >
+          <svg className="w-10 h-10 text-[#C8962C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+          </svg>
+        </motion.div>
+        <h2 className="text-white font-black text-xl mb-2">You got it</h2>
+        <p className="text-white/50 text-sm mb-6">Your order is confirmed. Check your Vault for details.</p>
+        <div className="flex flex-col gap-3 w-full max-w-xs">
+          <button
+            onClick={() => { handleDismissPurchase(); window.location.href = '/more/vault'; }}
+            className="w-full h-12 rounded-xl font-black text-sm active:scale-95 transition-transform"
+            style={{ backgroundColor: '#C8962C', color: '#000' }}
+          >
+            View in Vault
+          </button>
+          <button
+            onClick={handleDismissPurchase}
+            className="w-full h-12 rounded-xl font-bold text-sm active:scale-95 transition-transform border"
+            style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)' }}
+          >
+            Browse more
+          </button>
+          {purchaseListingId && (
+            <button
+              onClick={() => {
+                handleDismissPurchase();
+                openSheet('chat', { recipientId: purchaseListingId });
+              }}
+              className="w-full h-12 rounded-xl font-bold text-sm active:scale-95 transition-transform border"
+              style={{ borderColor: 'rgba(200,150,44,0.3)', color: '#C8962C' }}
+            >
+              Contact seller
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`h-full w-full flex flex-col ${className}`}

@@ -100,7 +100,7 @@ export default function MeetpointCard({ title, address, lat, lng, distanceM, eta
       });
 
       const shareData = {
-        title: `${currentUser?.user_metadata?.display_name || 'Someone'} is on the way`,
+        title: `Someone is on the way`,
         text: `Arriving at ${title} in ${etaMin} min`,
         url: mapsUrl,
       };

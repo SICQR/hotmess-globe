@@ -8,6 +8,7 @@ import RightNowModal from './RightNowModal';
 import RightNowIndicator from './RightNowIndicator';
 import RightNowHistory from './RightNowHistory';
 import { toast } from 'sonner';
+import { nudgeAfterLateGoLive } from '@/lib/careNudges';
 
 export default function RightNowManager({ currentUser }) {
   const [showModal, setShowModal] = useState(false);
@@ -40,6 +41,7 @@ export default function RightNowManager({ currentUser }) {
       queryClient.invalidateQueries(['right-now-status']);
       queryClient.invalidateQueries(['right-now-history']);
       toast.success('Right Now status ended');
+      nudgeAfterLateGoLive();
     }
   });
 

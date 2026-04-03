@@ -9,12 +9,15 @@ import { useState, useEffect } from 'react';
 import { nanoid } from 'nanoid';
 import {
   MapPin, Clock, Radio, Loader2, Navigation, ExternalLink,
-  CheckCircle, ChevronRight, ChevronLeft,
+  CheckCircle, ChevronRight, ChevronLeft, Zap,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { usePowerups } from '@/hooks/usePowerups';
+
+const BEACON_DAILY_LIMIT = 3; // default daily beacon limit per user
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BEACON TYPE CONFIG
@@ -53,8 +56,39 @@ function BeaconCreator({ onSuccess }) {
   const [locating, setLocating] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [beaconCount, setBeaconCount] = useState(0);
+  const [limitChecked, setLimitChecked] = useState(false);
+  const { isActive: isBoostActive } = usePowerups();
+  const { openSheet } = useSheet();
 
   const set = (key, value) => setFormData(f => ({ ...f, [key]: value }));
+
+  // Check how many beacons user has created today
+  useEffect(() => {
+    const checkLimit = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const { count } = await supabase
+          .from('beacons')
+          .select('*', { count: 'exact', head: true })
+          .eq('owner_id', user.id)
+          .gte('starts_at', todayStart.toISOString());
+        setBeaconCount(count ?? 0);
+      } catch {
+        // Non-fatal
+      }
+      setLimitChecked(true);
+    };
+    checkLimit();
+  }, []);
+
+  // Calculate effective limit (base + extra beacon drops)
+  const extraBeacons = isBoostActive('extra_beacon_drop') ? 1 : 0;
+  const effectiveLimit = BEACON_DAILY_LIMIT + extraBeacons;
+  const atLimit = beaconCount >= effectiveLimit;
 
   // Step 3: auto-fetch location when arriving
   useEffect(() => {
@@ -142,10 +176,39 @@ function BeaconCreator({ onSuccess }) {
 
   // ── Step 1 — Type selector ────────────────────────────────────────────────
   if (step === 1) {
+    // Beacon limit reached
+    if (limitChecked && atLimit) {
+      return (
+        <div className="flex flex-col h-full px-4 py-4 items-center justify-center text-center">
+          <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+            <MapPin className="w-8 h-8 text-white/30" />
+          </div>
+          <h2 className="text-white font-black text-xl mb-2">Beacon Limit Reached</h2>
+          <p className="text-white/40 text-sm mb-6 max-w-[260px]">
+            You've used {beaconCount}/{effectiveLimit} beacons today.
+            {!isBoostActive('extra_beacon_drop') && ' Get an Extra Beacon Drop to drop one more.'}
+          </p>
+          {!isBoostActive('extra_beacon_drop') && (
+            <button
+              onClick={() => openSheet('boost-shop', {})}
+              className="h-12 px-6 rounded-2xl flex items-center gap-2 font-bold text-sm text-black active:scale-95 transition-transform"
+              style={{ backgroundColor: '#C8962C' }}
+            >
+              <Zap className="w-4 h-4" />
+              Get Extra Beacon
+            </button>
+          )}
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col h-full px-4 py-4">
         <h2 className="text-white font-black text-xl mb-1">Drop a Beacon</h2>
-        <p className="text-white/40 text-sm mb-5">What kind of beacon is this?</p>
+        <p className="text-white/40 text-sm mb-5">
+          What kind of beacon is this?
+          {limitChecked && <span className="ml-2 text-white/20">({beaconCount}/{effectiveLimit} today)</span>}
+        </p>
 
         <div className="grid grid-cols-2 gap-3 flex-1">
           {BEACON_TYPES.map((t) => (

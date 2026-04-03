@@ -13,7 +13,6 @@ import BootRouter from '@/components/shell/BootRouter';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { createPageUrl } from './utils';
 import { ShopCartProvider } from '@/features/shop/cart/ShopCartContext';
-import Shop from '@/pages/Shop';
 import ShopCollection from '@/pages/ShopCollection';
 import ShopProduct from '@/pages/ShopProduct';
 import ShopCart from '@/pages/ShopCart';
@@ -36,6 +35,7 @@ import SheetRouter from '@/components/sheets/SheetRouter';
 import { SOSProvider, useSOSContext } from '@/contexts/SOSContext';
 import { SOSButton } from '@/components/sos/SOSButton';
 import SOSOverlay from '@/components/interrupts/SOSOverlay';
+import SafetyRecoveryScreen from '@/components/safety/SafetyRecoveryScreen';
 import ShakeSOS from '@/components/sos/ShakeSOS';
 import IncomingCallBanner from '@/components/calls/IncomingCallBanner';
 import { useViewportHeight } from '@/hooks/useMobileDynamics';
@@ -258,10 +258,6 @@ const ShopCollectionRoute = () => {
   );
 };
 
-const CreatorsMarketRoute = () => {
-  return <PageRoute pageKey="Marketplace" />;
-};
-
 const CreatorsProductRoute = () => {
   const { id } = useParams();
   const target = `${createPageUrl('ProductDetail')}?id=${encodeURIComponent(id ?? '')}`;
@@ -296,14 +292,6 @@ const ShopProductRoute = () => {
   return (
     <LayoutWrapper currentPageName="Marketplace">
       <ShopProduct />
-    </LayoutWrapper>
-  );
-};
-
-const ShopHomeRoute = () => {
-  return (
-    <LayoutWrapper currentPageName="Marketplace">
-      <Shop />
     </LayoutWrapper>
   );
 };
@@ -484,7 +472,7 @@ const AuthenticatedApp = () => {
       <Route path="/p/:handle" element={<ShopProductRoute />} />
       <Route path="/cart" element={<ShopCartRoute />} />
       <Route path="/checkout/start" element={<ShopCheckoutStartRoute />} />
-      <Route path="/checkout" element={<PageRoute pageKey="Checkout" />} />
+      <Route path="/checkout" element={<Navigate to="/market" replace />} />
 
       {/* Features / USP Pages */}
       <Route path="/features" element={<PageRoute pageKey="Features" />} />
@@ -711,7 +699,7 @@ function OSArchitecture() {
   usePresenceHeartbeat();
   // iOS-style edge swipe to go back
   useSwipeBack();
-  const { sosActive, triggerSOS, clearSOS } = useSOSContext();
+  const { sosActive, showRecovery, triggerSOS, clearSOS, dismissRecovery } = useSOSContext();
   const { isAuthenticated } = useBootGuard();
   const location = useLocation();
   const { closeSheet, sheetStack } = useSheet();
@@ -827,6 +815,9 @@ function OSArchitecture() {
 
       {/* L3: SOS Overlay — blocks entire OS, stops all sharing (Z-200) */}
       {sosActive && <SOSOverlay onClose={clearSOS} />}
+
+      {/* Post-safety recovery screen — z-[205], shown after SOS dismissed */}
+      {showRecovery && <SafetyRecoveryScreen />}
 
       {/* Incoming call banner — auth only */}
       {isAuthenticated && <IncomingCallBanner />}
