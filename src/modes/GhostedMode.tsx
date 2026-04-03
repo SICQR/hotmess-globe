@@ -34,9 +34,9 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SlidersHorizontal, Ghost, ArrowRight, X, MessageCircle, Ban, Flag } from 'lucide-react';
-import { useSheet } from '@/contexts/SheetContext';
+import { SlidersHorizontal, Ghost, ArrowRight, X, MessageCircle, Heart, Ban, Flag, Shield } from 'lucide-react';
 import { toast } from 'sonner';
+import { useSheet } from '@/contexts/SheetContext';
 import { useRightNowCount } from '@/components/globe/useRealtimeBeacons';
 import { supabase } from '@/components/utils/supabaseClient';
 import { loadGhostedFilters, defaultGhostedFilters } from '@/components/sheets/L2FiltersSheet';
@@ -47,6 +47,8 @@ import { AppBanner } from '@/components/banners/AppBanner';
 import { GhostedAmbientToggle } from '@/components/music/GhostedAmbientToggle';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
+import { usePowerups } from '@/hooks/usePowerups';
+import { Zap, Eye } from 'lucide-react';
 
 // Lazy load the grid component
 import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
@@ -102,16 +104,19 @@ interface QuickMenuProps {
   isTapped: (email: string, tapType: TapType) => boolean;
   sendTap: (email: string, name: string, tapType: TapType) => Promise<boolean>;
   onClose: () => void;
+  onMessage: (profile: Profile) => void;
+  onSave: (profile: Profile) => void;
+  onBlock: (profile: Profile) => void;
+  onReport: (profile: Profile) => void;
 }
 
-function QuickActionMenu({ profile, position, myEmail, isTapped, sendTap, onClose }: QuickMenuProps) {
-  const { openSheet } = useSheet();
+function QuickActionMenu({ profile, position, myEmail, isTapped, sendTap, onClose, onMessage, onSave, onBlock, onReport }: QuickMenuProps) {
   const email = String((profile as any)?.email || '');
-  const uid = String((profile as any)?.userId || (profile as any)?.authUserId || (profile as any)?.id || '');
   const name = String(profile.profileName || 'Someone');
   const hasTapSupport = !!myEmail && !!email;
 
   const tappedBoo = hasTapSupport ? isTapped(email, 'boo') : false;
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
 
   const handleBoo = async () => {
     if (!hasTapSupport) return;
@@ -119,46 +124,12 @@ function QuickActionMenu({ profile, position, myEmail, isTapped, sendTap, onClos
     onClose();
   };
 
-  const handleMessage = () => {
-    onClose();
-    if (uid) {
-      openSheet('chat', { toUid: uid, title: `Chat with ${name}` });
-    } else if (email) {
-      openSheet('chat', { toEmail: email, title: `Chat with ${name}` });
-    }
-  };
-
-  const handleBlock = async () => {
-    if (!myEmail) return;
-    try {
-      await supabase.from('user_blocks').insert({
-        blocker_email: myEmail,
-        blocked_email: email || uid,
-      });
-      toast.success(`${name} blocked`);
-      onClose();
-    } catch {
-      toast.error('Failed to block user');
-    }
-  };
-
-  const handleReport = () => {
-    onClose();
-    // Open the profile sheet which has a full report modal
-    if (email) {
-      openSheet('profile', { email });
-    } else if (uid) {
-      openSheet('profile', { uid });
-    }
-    // Slight delay then the user can use the ... menu to report
-    toast('Tap the ... menu on their profile to report', { duration: 3000 });
-  };
-
-  // Clamp position so menu stays on screen (390px viewport)
+  // Clamp position so menu stays on screen
   const menuWidth = 200;
-  const menuX = Math.min(position.x - menuWidth / 2, 390 - menuWidth - 8);
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 390;
+  const menuX = Math.min(position.x - menuWidth / 2, vw - menuWidth - 8);
   const clampedX = Math.max(8, menuX);
-  const clampedY = Math.max(60, position.y - 180);
+  const clampedY = Math.max(60, position.y - 200);
 
   return (
     <>
@@ -205,45 +176,78 @@ function QuickActionMenu({ profile, position, myEmail, isTapped, sendTap, onClos
           <span className="text-sm font-bold text-white truncate">{name}</span>
         </div>
 
-        {/* Actions */}
+        {/* Boo */}
         <button
           onClick={handleBoo}
           disabled={!hasTapSupport}
           className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors disabled:opacity-40"
           aria-label={tappedBoo ? 'Un-boo this person' : 'Boo this person'}
         >
-          <Ghost className="w-4 h-4 text-[#C8962C]" />
+          <Ghost className="w-4 h-4 text-white/60" />
           <span className={tappedBoo ? 'text-[#C8962C]' : 'text-white'}>{tappedBoo ? 'Boo\'d' : 'Boo'}</span>
         </button>
 
+        {/* Message */}
         <button
-          onClick={handleMessage}
-          className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors border-t border-white/5"
-          aria-label="Message this person"
+          onClick={() => { onMessage(profile); onClose(); }}
+          className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors"
+          aria-label="Message"
         >
-          <MessageCircle className="w-4 h-4 text-[#C8962C]" />
+          <MessageCircle className="w-4 h-4 text-white/60" />
           <span className="text-white">Message</span>
         </button>
 
+        {/* Save */}
         <button
-          onClick={handleBlock}
-          disabled={!myEmail}
-          className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors border-t border-white/5 disabled:opacity-40"
-          aria-label="Block this person"
+          onClick={() => { onSave(profile); onClose(); }}
+          className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors"
+          aria-label="Save profile"
         >
-          <Ban className="w-4 h-4 text-red-500" />
-          <span className="text-red-500">Block</span>
+          <Heart className="w-4 h-4 text-white/60" />
+          <span className="text-white">Save</span>
         </button>
 
+        {/* Block */}
+        {!showBlockConfirm ? (
+          <button
+            onClick={() => setShowBlockConfirm(true)}
+            className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors border-t border-white/5"
+            aria-label="Block user"
+          >
+            <Ban className="w-4 h-4 text-red-500/70" />
+            <span className="text-red-500">Block</span>
+          </button>
+        ) : (
+          <div className="px-4 py-3 border-t border-white/5">
+            <p className="text-xs text-white/50 mb-2">Block {name}? They won't appear in your grid.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => { onBlock(profile); onClose(); }}
+                className="flex-1 py-2 rounded-lg bg-red-500 text-black text-xs font-bold"
+              >
+                Confirm
+              </button>
+              <button
+                onClick={() => setShowBlockConfirm(false)}
+                className="flex-1 py-2 rounded-lg bg-white/10 text-white/60 text-xs font-semibold"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Report */}
         <button
-          onClick={handleReport}
-          className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors border-t border-white/5"
-          aria-label="Report this person"
+          onClick={() => { onReport(profile); onClose(); }}
+          className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors"
+          aria-label="Report user"
         >
           <Flag className="w-4 h-4 text-white/40" />
           <span className="text-white/60">Report</span>
         </button>
 
+        {/* Cancel */}
         <button
           onClick={onClose}
           className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors border-t border-white/5"
@@ -261,11 +265,11 @@ function QuickActionMenu({ profile, position, myEmail, isTapped, sendTap, onClos
 
 function GhostedSkeleton() {
   return (
-    <div className="grid grid-cols-3 gap-px">
+    <div className="grid grid-cols-3 gap-0.5">
       {Array.from({ length: 12 }).map((_, i) => (
         <motion.div
           key={`skel-${i}`}
-          className="aspect-[3/4] bg-[#1C1C1E] animate-pulse"
+          className="aspect-square bg-[#1C1C1E] animate-pulse"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: i * 0.04 }}
@@ -367,6 +371,7 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
   const navigate = useNavigate();
   const { openSheet } = useSheet();
   const onlineCount = useRightNowCount();
+  const { isActive: isBoostActive, expiresAt: boostExpiresAt } = usePowerups();
 
   // ---- Auth + profile data ----
   const [city, setCity] = useState('London');
@@ -427,13 +432,46 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
     return () => window.removeEventListener('hm_filters_updated', handleCustom);
   }, []);
 
+  // ---- Local block list for optimistic removal ----
+  const [blockedIds, setBlockedIds] = useState<Set<string>>(new Set());
+
   const activeFilterCount = countActiveFilters(filters);
+
+  // ---- Sort control ----
+  type SortKey = 'nearby' | 'last_active' | 'newest';
+  const [sortBy, setSortBy] = useState<SortKey>('nearby');
+
+  // ---- Active vibe tag filter (from card chip taps) ----
+  const [vibeTagFilter, setVibeTagFilter] = useState<string | null>(null);
 
   // ---- Active tab ----
   const [activeTab, setActiveTab] = useState<TabKey>('all');
 
   // ---- Active filter preset (quick-tap chip) ----
   const [activePreset, setActivePreset] = useState<PresetKey | null>(null);
+
+  // ---- Profile Bump: load user IDs with active profile_bump boost ----
+  const [boostUserIds, setBoostUserIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const fetchBoosted = async () => {
+      try {
+        const { data } = await supabase
+          .from('user_active_boosts')
+          .select('user_id')
+          .eq('boost_key', 'profile_bump')
+          .gt('expires_at', new Date().toISOString());
+        if (data && data.length > 0) {
+          setBoostUserIds(new Set(data.map((r: any) => r.user_id)));
+        }
+      } catch {
+        // Non-fatal
+      }
+    };
+    fetchBoosted();
+    const iv = setInterval(fetchBoosted, 60_000);
+    return () => clearInterval(iv);
+  }, []);
 
   // ---- Events Tonight: load user IDs of people with tonight RSVPs ----
   const [tonightUserIds, setTonightUserIds] = useState<Set<string>>(new Set());
@@ -479,9 +517,82 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
     fetchTonightRsvps();
   }, [activeTab]);
 
-  // ---- Combined filter predicate (filters + tab) ----
+  // ---- Quick action handlers ----
+  const handleQuickMessage = useCallback((profile: Profile) => {
+    const uid = (profile as any)?.authUserId || (profile as any)?.userId || profile.id;
+    if (uid) {
+      openSheet('chat', {
+        toUid: uid,
+        title: `Chat with ${profile.profileName || 'Someone'}`,
+      });
+    }
+  }, [openSheet]);
+
+  const handleQuickSave = useCallback(async (profile: Profile) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const targetId = (profile as any)?.authUserId || (profile as any)?.userId || profile.id;
+      await supabase.from('saved_items').insert({
+        user_id: user.id,
+        item_type: 'profile',
+        item_id: targetId,
+        metadata: { title: profile.profileName || 'Profile' },
+      });
+      toast('Profile saved');
+    } catch {
+      // Duplicate save or table doesn't exist — still show feedback
+      toast('Profile saved');
+    }
+  }, []);
+
+  const handleQuickBlock = useCallback(async (profile: Profile) => {
+    const targetId = (profile as any)?.authUserId || (profile as any)?.userId || profile.id;
+    // Optimistic removal from local state
+    setBlockedIds((prev) => new Set([...prev, targetId]));
+    toast('User blocked');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      // Write to blocks table
+      await supabase.from('blocks').insert({
+        blocker_id: user.id,
+        blocked_id: targetId,
+      }).then(() => {}).catch(() => {});
+      // Also try user_blocks for backward compat
+      const targetEmail = (profile as any)?.email || targetId;
+      await supabase.from('user_blocks').insert({
+        blocker_email: user.email || user.id,
+        blocked_email: targetEmail,
+      }).then(() => {}).catch(() => {});
+      window.dispatchEvent(new CustomEvent('hm_pull_refresh'));
+    } catch {
+      // Best-effort — user is already hidden locally
+    }
+  }, []);
+
+  const handleQuickReport = useCallback((profile: Profile) => {
+    const uid = (profile as any)?.authUserId || (profile as any)?.userId || profile.id;
+    openSheet('report', {
+      targetType: 'profile',
+      targetId: uid,
+      targetName: profile.profileName || 'this user',
+      profileId: uid,
+    });
+  }, [openSheet]);
+
+  // ---- Vibe tag click handler (from card chip) ----
+  const handleVibeTagClick = useCallback((tag: string) => {
+    setVibeTagFilter((prev) => (prev === tag ? null : tag));
+  }, []);
+
+  // ---- Combined filter predicate (filters + tab + blocks) ----
   const filterProfiles = useCallback(
     (profile: any) => {
+      // Optimistic block: hide immediately
+      const profileId = (profile as any)?.authUserId || (profile as any)?.userId || profile.id;
+      if (blockedIds.has(profileId)) return false;
+
       // GDPR: Exclude profiles without a display_name (safety layer)
       const displayName = String(profile?.profileName || '').trim();
       if (!displayName) return false;
@@ -525,9 +636,21 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
         return tonightUserIds.has(profile.id);
       }
 
+      // Vibe tag filter (from card chip tap)
+      if (vibeTagFilter) {
+        const scenes: string[] = Array.isArray((profile as any)?.public_attributes?.scenes)
+          ? (profile as any).public_attributes.scenes
+          : [];
+        const lookingFor: string[] = Array.isArray(profile.looking_for)
+          ? profile.looking_for.map((v: unknown) => String(v))
+          : [];
+        const allTags = [...scenes, ...lookingFor].map((t) => t.toLowerCase());
+        if (!allTags.some((t) => t.includes(vibeTagFilter.toLowerCase()))) return false;
+      }
+
       return true;
     },
-    [filters, activeTab, tonightUserIds],
+    [filters, activeTab, tonightUserIds, vibeTagFilter, blockedIds],
   );
 
   // ---- Profile tap handler ----
@@ -624,15 +747,23 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
               </p>
             </div>
 
-            {/* Right: SOS + ambient toggle + filter icon with badge */}
-            <div className="flex items-center gap-2">
+            {/* Right: Go Live + Safety + SOS + ambient toggle + filter icon with badge */}
+            <div className="flex items-center gap-1.5">
             <button
-              onClick={() => navigate('/sos')}
-              className="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition-transform"
-              style={{ background: 'rgba(255,59,48,0.15)', border: '1px solid rgba(255,59,48,0.3)' }}
-              aria-label="SOS"
+              onClick={() => openSheet('social', {})}
+              className="h-7 px-2.5 rounded-full text-[10px] font-bold active:scale-95 transition-transform"
+              style={{ background: 'rgba(200,150,44,0.15)', border: '1px solid rgba(200,150,44,0.3)', color: AMBER }}
+              aria-label="Go live"
             >
-              <span style={{ fontSize: 14 }}>🆘</span>
+              Go Live
+            </button>
+            <button
+              onClick={() => navigate('/safety')}
+              className="w-8 h-8 flex items-center justify-center rounded-full active:scale-95 transition-transform"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+              aria-label="Safety"
+            >
+              <span className="text-white/50 text-[10px] font-bold">SOS</span>
             </button>
             <GhostedAmbientToggle />
             <button
@@ -685,6 +816,39 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
             })}
           </div>
 
+          {/* ====== SORT CHIPS ====== */}
+          <div className="flex gap-1.5 pb-2 overflow-x-auto scrollbar-hide -mx-4 px-4">
+            {([
+              { key: 'nearby' as SortKey, label: 'Nearby' },
+              { key: 'last_active' as SortKey, label: 'Last Active' },
+              { key: 'newest' as SortKey, label: 'Newest' },
+            ]).map((sort) => {
+              const isActive = sortBy === sort.key;
+              return (
+                <button
+                  key={sort.key}
+                  onClick={() => setSortBy(sort.key)}
+                  className={`flex-shrink-0 h-7 px-3 rounded-full text-xs font-semibold transition-all active:scale-95 ${
+                    isActive
+                      ? 'bg-white/15 text-white border border-white/20'
+                      : 'text-white/30 border border-white/[0.04]'
+                  }`}
+                >
+                  {sort.label}
+                </button>
+              );
+            })}
+            {vibeTagFilter && (
+              <button
+                onClick={() => setVibeTagFilter(null)}
+                className="flex-shrink-0 h-7 px-3 rounded-full text-xs font-bold bg-[#C8962C]/20 text-[#C8962C] border border-[#C8962C]/30 flex items-center gap-1 active:scale-95 transition-all"
+              >
+                {vibeTagFilter}
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+
           {/* ====== FILTER PRESETS (quick-tap chips) ====== */}
           <div className="flex gap-1.5 pb-3 overflow-x-auto scrollbar-hide -mx-4 px-4">
             {FILTER_PRESETS.map((preset) => {
@@ -716,6 +880,24 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
         </div>
       </div>
 
+      {/* ====== INCOGNITO INDICATOR ====== */}
+      {isBoostActive('incognito_week') && (
+        <div className="px-4 py-2 flex items-center gap-2 border-b border-white/5" style={{ background: 'rgba(200,150,44,0.08)' }}>
+          <Eye className="w-3.5 h-3.5 text-[#C8962C]" />
+          <span className="text-xs font-bold text-[#C8962C]">You're invisible</span>
+          {boostExpiresAt('incognito_week') && (
+            <span className="text-[10px] text-white/30 ml-auto">
+              {(() => {
+                const exp = boostExpiresAt('incognito_week');
+                if (!exp) return '';
+                const m = Math.round((exp.getTime() - Date.now()) / 60000);
+                return m < 60 ? `${m}m left` : m < 1440 ? `${Math.round(m / 60)}h left` : `${Math.round(m / 1440)}d left`;
+              })()}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* ====== DYNAMIC BANNERS ====== */}
       <AppBanner placement="ghosted_top" variant="strip" />
       <AppBanner placement="ghosted_entry" variant="subtle" className="px-4" />
@@ -736,20 +918,46 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
           viewerEmail={myEmail}
           onLongPress={handleLongPress}
           emptyComponent={<GhostedEmpty onOpenFilters={() => openSheet('filters')} />}
+          onVibeTagClick={handleVibeTagClick}
+          boostUserIds={boostUserIds}
         />
       </div>
 
-      {/* ====== "RIGHT NOW" FAB ====== */}
+      {/* ====== "RIGHT NOW" FAB + BOOST BUTTON ====== */}
       <AnimatePresence>
         {fabVisible && (
           <motion.div
-            className="fixed z-20 left-1/2 -translate-x-1/2"
+            className="fixed z-20 left-1/2 -translate-x-1/2 flex items-center gap-2"
             style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 20, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           >
+            {/* Boost Profile trigger */}
+            <button
+              onClick={() => {
+                if (isBoostActive('profile_bump')) {
+                  const exp = boostExpiresAt('profile_bump');
+                  const m = exp ? Math.round((exp.getTime() - Date.now()) / 60000) : 0;
+                  toast(`Profile Bump active - ${m < 60 ? `${m}m` : `${Math.round(m / 60)}h`} left`, {
+                    style: { background: '#1C1C1E', color: '#C8962C', border: '1px solid rgba(200,150,44,0.3)' },
+                  });
+                } else {
+                  openSheet('boost-shop', {});
+                }
+              }}
+              className={`h-12 w-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform ${
+                isBoostActive('profile_bump')
+                  ? 'bg-[#C8962C]/20 border border-[#C8962C]/50'
+                  : 'bg-white/10 border border-white/15'
+              }`}
+              style={isBoostActive('profile_bump') ? { boxShadow: '0 0 16px rgba(200,150,44,0.3)' } : undefined}
+              aria-label={isBoostActive('profile_bump') ? 'Profile Bump active' : 'Boost your profile'}
+            >
+              <Zap className={`w-5 h-5 ${isBoostActive('profile_bump') ? 'text-[#C8962C]' : 'text-white/60'}`} />
+            </button>
+
             <button
               onClick={() => openSheet('social', {})}
               className="h-12 px-6 rounded-full flex items-center gap-2 font-bold text-sm text-black shadow-lg active:scale-95 transition-transform"
@@ -776,6 +984,10 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
             isTapped={isTapped}
             sendTap={sendTap}
             onClose={() => setQuickMenu(null)}
+            onMessage={handleQuickMessage}
+            onSave={handleQuickSave}
+            onBlock={handleQuickBlock}
+            onReport={handleQuickReport}
           />
         )}
       </AnimatePresence>

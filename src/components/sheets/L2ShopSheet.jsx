@@ -20,6 +20,7 @@ import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 import ProductReviews from '@/components/marketplace/ProductReviews';
+import { nudgeAfterLatePurchase } from '@/lib/careNudges';
 
 /**
  * Render a full-screen age confirmation modal for 18+ products.
@@ -177,6 +178,7 @@ function InternalProductDetail({ product }) {
       await addItem({ variantId: `gid://shopify/ProductVariant/${shopifyVariantId}`, quantity: 1 });
       setAdded(true);
       toast.success('Added to cart');
+      nudgeAfterLatePurchase();
       setTimeout(() => { setAdded(false); openSheet('cart'); }, 800);
     } catch (err) {
       // Fallback: direct Shopify cart URL
@@ -251,6 +253,13 @@ function InternalProductDetail({ product }) {
         <p className="text-white/50 text-sm leading-relaxed">
           Premium personal care from HNH MESS London. Body-safe, long-lasting formula.
         </p>
+        <button
+          onClick={() => window.location.assign('/care')}
+          className="mt-3 text-xs font-semibold active:opacity-70 transition-opacity"
+          style={{ color: '#C8962C' }}
+        >
+          Self-care matters — visit Hand N Hand
+        </button>
       </SheetSection>
 
       <SheetDivider />

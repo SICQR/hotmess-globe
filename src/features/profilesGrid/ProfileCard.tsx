@@ -24,6 +24,8 @@ type Props = {
   onLongPress?: (profile: Profile, position: { x: number; y: number }) => void;
   /** Active venue check-in data for tonight-vibe badge */
   checkin?: { tonight_intention: string | null; checkin_visibility: string } | null;
+  /** Called when a vibe/scene tag chip is tapped (for grid filtering) */
+  onVibeTagClick?: (tag: string) => void;
 };
 
 const getPhotoUrls = (profile: Profile): string[] => {
@@ -163,6 +165,7 @@ function ProfileCardInner({
   onSendTap,
   onLongPress,
   checkin,
+  onVibeTagClick,
 }: Props) {
   const cardStyle = getProfileCardStyle();
   const useReactBits = cardStyle === 'react-bits';
@@ -550,6 +553,7 @@ function ProfileCardInner({
           isOnline={(profile as any)?.is_online === true}
           sceneTag={Array.isArray((profile as any)?.public_attributes?.scenes) && (profile as any).public_attributes.scenes.length > 0 ? (profile as any).public_attributes.scenes[0] : undefined}
           onClick={openProfile}
+          onVibeTagClick={onVibeTagClick}
           onMessage={
             (profile as any)?.userId || (profile as any)?.authUserId
               ? () => onNavigateUrl(`/social/inbox?user=${encodeURIComponent(String((profile as any).userId || (profile as any).authUserId))}`)

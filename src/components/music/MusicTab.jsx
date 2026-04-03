@@ -20,6 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, ChevronDown, ChevronUp, Disc3, X, Loader2,
   Lock, Crown, FileAudio, Link2, Headphones,
+  Radio as RadioIcon, Calendar,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
@@ -406,7 +407,24 @@ export default function MusicTab() {
   const [selectedRelease, setSelectedRelease] = useState(null);
   const [bannerMap, setBannerMap] = useState({});  // catalog -> banner
   const [showMemberCTA, setShowMemberCTA] = useState(false);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
   const player = useMusicPlayer();
+
+  // Fetch upcoming events for cross-link
+  useEffect(() => {
+    let mounted = true;
+    supabase
+      .from('beacons')
+      .select('id, title, starts_at')
+      .or('type.eq.event,kind.eq.event')
+      .gte('ends_at', new Date().toISOString())
+      .order('starts_at', { ascending: true })
+      .limit(3)
+      .then(({ data }) => {
+        if (mounted && data?.length) setUpcomingEvents(data);
+      });
+    return () => { mounted = false; };
+  }, []);
 
   // Fetch data
   useEffect(() => {
@@ -542,6 +560,44 @@ export default function MusicTab() {
           </div>
         </div>
       )}
+
+      {/* ── Cross-links: Radio + Events ── */}
+      <div className="px-4 mt-2 space-y-2 mb-4">
+        <button
+          onClick={() => navigate('/radio')}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl active:scale-[0.98] transition-all"
+          style={{ background: '#00C2E010', border: '1px solid #00C2E025' }}
+        >
+          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#00C2E020' }}>
+            <RadioIcon className="w-4 h-4" style={{ color: '#00C2E0' }} />
+          </div>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-xs font-bold text-white/80">Live Radio</p>
+            <p className="text-[10px] text-white/40">HOTMESS RADIO -- tune in now</p>
+          </div>
+          <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{ background: '#00C2E020', color: '#00C2E0' }}>
+            LISTEN
+          </span>
+        </button>
+        {upcomingEvents.length > 0 && (
+          <button
+            onClick={() => navigate('/pulse')}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl active:scale-[0.98] transition-all"
+            style={{ background: 'rgba(200,150,44,0.06)', border: '1px solid rgba(200,150,44,0.15)' }}
+          >
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'rgba(200,150,44,0.15)' }}>
+              <Calendar className="w-4 h-4" style={{ color: GOLD }} />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-xs font-bold text-white/80">Upcoming Events</p>
+              <p className="text-[10px] text-white/40">{upcomingEvents.length} event{upcomingEvents.length !== 1 ? 's' : ''} near you</p>
+            </div>
+            <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{ background: 'rgba(200,150,44,0.15)', color: GOLD }}>
+              VIEW
+            </span>
+          </button>
+        )}
+      </div>
 
       {/* ── Releases ── */}
       <div className="px-4 mt-2">

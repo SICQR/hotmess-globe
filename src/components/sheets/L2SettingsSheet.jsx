@@ -7,17 +7,20 @@
 import { useState } from 'react';
 import {
   Shield, Bell, Lock, HelpCircle, Crown, LogOut,
-  ChevronRight, User, Eye, AlertTriangle
+  ChevronRight, User, Eye, AlertTriangle, Zap,
+  FileText, Accessibility, Download,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { usePowerups } from '@/hooks/usePowerups';
 
 export default function L2SettingsSheet() {
   const { openSheet, closeSheet } = useSheet();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const { isActive: isBoostActive, expiresAt: boostExpiresAt } = usePowerups();
 
   const handleSignOut = async () => {
     setSigningOut(true);
@@ -38,12 +41,30 @@ export default function L2SettingsSheet() {
         { icon: Eye, label: 'Privacy', onTap: () => openSheet('privacy') },
         { icon: Bell, label: 'Notifications', onTap: () => openSheet('notifications') },
         { icon: Lock, label: 'Blocked Users', onTap: () => openSheet('blocked') },
+        {
+          icon: Eye,
+          label: isBoostActive('incognito_week') ? 'Incognito Mode (Active)' : 'Go Incognito',
+          onTap: () => {
+            if (isBoostActive('incognito_week')) {
+              const exp = boostExpiresAt('incognito_week');
+              const m = exp ? Math.round((exp.getTime() - Date.now()) / 60000) : 0;
+              const timeLeft = m < 60 ? `${m}m` : m < 1440 ? `${Math.round(m / 60)}h` : `${Math.round(m / 1440)}d`;
+              toast(`Incognito active - ${timeLeft} left`, {
+                style: { background: '#1C1C1E', color: '#C8962C', border: '1px solid rgba(200,150,44,0.3)' },
+              });
+            } else {
+              openSheet('boost-shop');
+            }
+          },
+          highlight: isBoostActive('incognito_week'),
+        },
       ],
     },
     {
       title: 'Membership',
       rows: [
         { icon: Crown, label: 'Upgrade to Premium', onTap: () => openSheet('membership'), highlight: true },
+        { icon: Zap, label: 'Power-Ups', onTap: () => openSheet('boost-shop'), highlight: true },
       ],
     },
     {
@@ -51,6 +72,14 @@ export default function L2SettingsSheet() {
       rows: [
         { icon: Shield, label: 'Safety Center', onTap: () => openSheet('safety') },
         { icon: HelpCircle, label: 'Help & Support', onTap: () => openSheet('help') },
+      ],
+    },
+    {
+      title: 'Legal & Data',
+      rows: [
+        { icon: FileText, label: 'Legal & Terms', onTap: () => openSheet('legal') },
+        { icon: Accessibility, label: 'Accessibility', onTap: () => openSheet('accessibility') },
+        { icon: Download, label: 'Data Export', onTap: () => openSheet('data-export') },
       ],
     },
   ];

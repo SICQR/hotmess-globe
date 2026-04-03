@@ -30,6 +30,7 @@ interface SimpleProfileCardProps {
   tonightVibe?: string; // hookup | hang | explore
   onClick?: () => void;
   onMessage?: () => void;
+  onVibeTagClick?: (tag: string) => void;
 }
 
 const INTENT_RING: Record<string, string> = {
@@ -46,11 +47,13 @@ export function SimpleProfileCard({
   isVerified,
   position,
   age,
+  lastSeen,
   distanceKm,
   isOnline,
   sceneTag,
   tonightVibe,
   onClick,
+  onVibeTagClick,
 }: SimpleProfileCardProps) {
   const initials = name
     .split(' ')
@@ -59,8 +62,21 @@ export function SimpleProfileCard({
     .slice(0, 2)
     .toUpperCase() || 'HM';
 
-  const showOnlineDot = isOnline || status === 'online';
-  const showAwayDot = !showOnlineDot && status === 'away';
+  // Presence: online (green), away (amber), offline (grey)
+  // status prop is already computed by ProfileCard from last_seen timestamps
+  const computedStatus: 'online' | 'away' | 'offline' = (() => {
+    if (isOnline || status === 'online') return 'online';
+    if (status === 'away') return 'away';
+    return 'offline';
+  })();
+
+  const PRESENCE_DOT: Record<string, { color: string; glow?: string }> = {
+    online: { color: '#30D158', glow: '0 0 4px #30D158' },
+    away: { color: '#EAB308' },
+    offline: { color: '#8E8E93' },
+  };
+
+  const showPresenceDot = computedStatus !== 'offline';
 
   // Distance label with color coding
   const distLabel = distanceKm !== undefined && distanceKm !== null
@@ -85,7 +101,7 @@ export function SimpleProfileCard({
 
   return (
     <motion.div
-      className={`relative w-full h-full overflow-hidden rounded-sm bg-[#1C1C1E] cursor-pointer ${ringClass ? `ring-2 ${ringClass}` : ''}`}
+      className={`relative w-full overflow-hidden rounded-xl bg-[#1C1C1E] cursor-pointer ${ringClass ? `ring-2 ${ringClass}` : ''}`}
       style={{ aspectRatio: '3/4' }}
       onClick={onClick}
       whileTap={{ scale: 0.97 }}
@@ -109,15 +125,16 @@ export function SimpleProfileCard({
       {/* Bottom gradient — subtle, just enough for text */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
 
-      {/* TOP-LEFT: Online / Away dot */}
-      {showOnlineDot && (
+      {/* TOP-LEFT: Presence dot (green=online, amber=away, hidden=offline) */}
+      {showPresenceDot && (
         <div className="absolute top-2 left-2 z-10">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#30D158] ring-2 ring-black/50" />
-        </div>
-      )}
-      {showAwayDot && (
-        <div className="absolute top-2 left-2 z-10">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#FFCC00] ring-2 ring-black/50" />
+          <div
+            className="w-2.5 h-2.5 rounded-full ring-2 ring-black/50"
+            style={{
+              background: PRESENCE_DOT[computedStatus].color,
+              boxShadow: PRESENCE_DOT[computedStatus].glow,
+            }}
+          />
         </div>
       )}
 
@@ -157,16 +174,23 @@ export function SimpleProfileCard({
               </span>
             )}
             {sceneTag && (
-              <span className="px-1.5 py-[1px] bg-white/8 text-white/45 text-[8px] font-semibold rounded-full leading-none truncate max-w-[60px]">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onVibeTagClick?.(sceneTag);
+                }}
+                className="px-1.5 py-[1px] bg-white/8 text-white/45 text-[8px] font-semibold rounded-full leading-none truncate max-w-[60px] active:bg-[#C8962C]/30 active:text-[#C8962C] transition-colors"
+              >
                 {sceneTag}
-              </span>
+              </button>
             )}
           </div>
         )}
       </div>
 
       {/* Hover glow */}
-      <div className="absolute inset-0 rounded-sm border border-transparent group-hover:border-[#C8962C]/40 transition-colors pointer-events-none" />
+      <div className="absolute inset-0 rounded-xl border border-transparent group-hover:border-[#C8962C]/40 transition-colors pointer-events-none" />
     </motion.div>
   );
 }
