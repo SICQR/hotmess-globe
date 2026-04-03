@@ -3,7 +3,7 @@
  * Handles: Push notifications, caching, offline support, background sync
  */
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `hotmess-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `hotmess-dynamic-${CACHE_VERSION}`;
 const API_CACHE = `hotmess-api-${CACHE_VERSION}`;
@@ -98,8 +98,15 @@ function getCachingStrategy(request) {
     return { strategy: 'network-only' };
   }
   
-  // Static assets - cache first
-  if (STATIC_ASSETS.includes(url.pathname)) {
+  // Navigation requests (HTML pages) — ALWAYS network-first so new deploys
+  // serve the latest index.html with correct JS/CSS hashes.
+  // Cache-first for HTML causes black-screen after deploys.
+  if (request.mode === 'navigate') {
+    return { strategy: 'network-first', cacheName: STATIC_CACHE };
+  }
+
+  // Hashed static assets (JS/CSS with content hashes) — cache first is safe
+  if (url.pathname.startsWith('/assets/')) {
     return { strategy: 'cache-first', cacheName: STATIC_CACHE };
   }
   
