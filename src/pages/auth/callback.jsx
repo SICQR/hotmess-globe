@@ -23,23 +23,28 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Gracefully handle bot/scraper 400s — wrong verification type, stale links etc.
+        // Check both URL search params AND hash fragment for errors.
+        // Supabase sometimes returns OAuth errors in the hash fragment.
         const errorParam = searchParams.get('error');
         const errorDescription = searchParams.get('error_description');
 
+        // Also check hash fragment (Supabase auth errors sometimes land here)
+        const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
+        const hashError = hashParams.get('error') || hashParams.get('error_code');
+        const hashErrorDesc = hashParams.get('error_description');
+
+        if (!errorParam && (hashError || hashErrorDesc)) {
+          logger.error('OAuth error from hash fragment', { error: hashError, description: hashErrorDesc });
+          navigate('/', { replace: true });
+          return;
+        }
+
         if (errorParam) {
           logger.error('OAuth error from provider', { error: errorParam, description: errorDescription });
-          // Invalid email verification type (bot hit) → silently redirect to /
-          if (
-            errorParam === 'access_denied' ||
-            errorDescription?.includes('Invalid') ||
-            errorDescription?.includes('expired')
-          ) {
-            navigate('/', { replace: true });
-            return;
-          }
-          setError(errorDescription || errorParam);
-          setStatus('error');
+          // All auth errors → redirect back to splash after brief flash
+          // so the user can try again via the normal auth chooser.
+          // Covers: access_denied, invalid token, expired link, code exchange failure.
+          navigate('/', { replace: true });
           return;
         }
 
@@ -48,8 +53,8 @@ export default function AuthCallback() {
 
         if (sessionError) {
           logger.error('Session error during callback', { error: sessionError.message });
-          setError(sessionError.message);
-          setStatus('error');
+          // Redirect to splash — user can retry from the auth chooser
+          navigate('/', { replace: true });
           return;
         }
 
@@ -65,8 +70,8 @@ export default function AuthCallback() {
           if (retryData?.session?.user?.id) {
             await routeAfterAuth(retryData.session.user.id, navigate);
           } else {
-            setError('Authentication timed out. Please try again.');
-            setStatus('error');
+            // Timed out — send back to splash
+            navigate('/', { replace: true });
           }
         }, 2000);
       } catch (err) {
