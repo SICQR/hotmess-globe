@@ -164,8 +164,19 @@ export function RadioProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+const NOOP_RADIO: RadioContextValue = {
+  isPlaying: false,
+  currentShowName: '',
+  togglePlay: () => {},
+  setCurrentShowName: () => {},
+  audioRef: { current: null },
+  pauseForSheet: () => {},
+  resumeFromSheet: () => {},
+};
+
 export function useRadio(): RadioContextValue {
   const ctx = useContext(RadioContext);
-  if (!ctx) throw new Error('useRadio must be used within RadioProvider');
+  // Return no-op if called outside RadioProvider (e.g. SheetRouter)
+  if (!ctx) return NOOP_RADIO;
   return ctx;
 }
