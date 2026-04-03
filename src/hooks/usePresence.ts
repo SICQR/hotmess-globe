@@ -125,7 +125,7 @@ export function useUserPresence(userId: string | null) {
       const { data } = await supabase
         .from('profiles')
         .select('is_online, last_loc_ts')
-        .eq('auth_user_id', userId)
+        .eq('id', userId)
         .single();
 
       if (data) {
@@ -144,7 +144,7 @@ export function useUserPresence(userId: string | null) {
           event: 'UPDATE',
           schema: 'public',
           table: 'profiles',
-          filter: `auth_user_id=eq.${userId}`,
+          filter: `id=eq.${userId}`,
         },
         (payload: any) => {
           if (payload.new) {
@@ -180,7 +180,7 @@ export function useHeartbeat(userId: string | null, intervalMs: number = 30000) 
       await supabase
         .from('profiles')
         .update({ is_online: true, last_loc_ts: new Date().toISOString() })
-        .eq('auth_user_id', userId);
+        .eq('id', userId);
     };
 
     updatePresence();
@@ -188,7 +188,7 @@ export function useHeartbeat(userId: string | null, intervalMs: number = 30000) 
 
     const handleBeforeUnload = () => {
       // sendBeacon with Supabase REST API — must include apikey + auth headers
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/profiles?auth_user_id=eq.${userId}`;
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`;
       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
       const session = JSON.parse(localStorage.getItem('sb-klsywpvncqqglhnhrjbh-auth-token') ?? '{}');
       const accessToken = session?.access_token ?? anonKey;
@@ -217,7 +217,7 @@ export function useHeartbeat(userId: string | null, intervalMs: number = 30000) 
       supabase
         .from('profiles')
         .update({ is_online: false, last_loc_ts: new Date().toISOString() })
-        .eq('auth_user_id', userId);
+        .eq('id', userId);
     };
   }, [userId, intervalMs]);
 }

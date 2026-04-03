@@ -33,7 +33,7 @@ export default async function handler(req, res) {
   }
 
   const { data: profile, error: profileError } = await serviceClient
-    .from('User')
+    .from('profiles')
     .select('email, role')
     .eq('email', user.email)
     .maybeSingle();

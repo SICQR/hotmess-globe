@@ -42,9 +42,9 @@ export default async function handler(req, res) {
   try {
     // Get user's subscription ID
     const { data: userData } = await supabase
-      .from('User')
+      .from('profiles')
       .select('stripe_subscription_id')
-      .eq('auth_user_id', user.id)
+      .eq('id', user.id)
       .single();
 
     if (!userData?.stripe_subscription_id) {
@@ -59,12 +59,12 @@ export default async function handler(req, res) {
 
     // Update user record
     await supabase
-      .from('User')
+      .from('profiles')
       .update({
         subscription_status: 'canceling',
         subscription_ends_at: new Date(subscription.current_period_end * 1000).toISOString(),
       })
-      .eq('auth_user_id', user.id);
+      .eq('id', user.id);
 
     return res.status(200).json({
       success: true,

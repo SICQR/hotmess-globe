@@ -119,9 +119,9 @@ export default async function handler(req, res) {
 
     // Get user's profile
     const { data: userProfile, error: profileErr } = await serviceClient
-      .from('User')
+      .from('profiles')
       .select('id, bio')
-      .eq('auth_user_id', authUser.id)
+      .eq('id', authUser.id)
       .single();
 
     if (profileErr || !userProfile) {

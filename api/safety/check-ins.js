@@ -168,7 +168,7 @@ export default async function handler(req, res) {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
       
       const { data: lateNightUsers } = await supabase
-        .from('User')
+        .from('profiles')
         .select('email, display_name')
         .gt('last_active', fiveMinutesAgo)
         .limit(100);

@@ -369,7 +369,7 @@ async function getUserStats(args, userContext) {
   }
 
   const { data, error } = await getSupabase()
-    .from('User')
+    .from('profiles')
     .select('xp_balance, subscription_tier, current_streak, achievements, level')
     .eq('email', userContext.email)
     .single();

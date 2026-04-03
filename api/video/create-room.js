@@ -61,7 +61,7 @@ export default async function handler(req, res) {
 
     // Check user's tier for call limits (optional)
     const { data: callerData } = await supabase
-      .from('User')
+      .from('profiles')
       .select('tier')
       .eq('id', callerId)
       .single();
@@ -106,7 +106,7 @@ export default async function handler(req, res) {
 
     // Get caller info for notification
     const { data: caller } = await supabase
-      .from('User')
+      .from('profiles')
       .select('display_name, photo_url')
       .eq('id', callerId)
       .single();

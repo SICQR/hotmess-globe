@@ -253,9 +253,9 @@ export default async function handler(req, res) {
     if (authUser?.id) {
       // Get viewer's public profile
       const { data: viewerData } = await serviceClient
-        .from('User')
+        .from('profiles')
         .select('*')
-        .eq('auth_user_id', authUser.id)
+        .eq('id', authUser.id)
         .single();
       viewerProfile = viewerData;
 
@@ -291,7 +291,7 @@ export default async function handler(req, res) {
     }
 
     const { data: profiles, error: profilesErr } = await serviceClient
-      .from('User')
+      .from('profiles')
       .select('*')
       .order(orderBy, { ascending, nullsFirst: false })
       .range(offset, offset + limit - 1);
@@ -305,7 +305,7 @@ export default async function handler(req, res) {
     // Filter out viewer's own profile and invalid profiles
     const validProfiles = rows.filter((row) => {
       if (!row) return false;
-      if (authUser?.id && row.auth_user_id === authUser.id) return false;
+      if (authUser?.id && row.id === authUser.id) return false;
       
       const lat = Number(row?.last_lat ?? row?.lat);
       const lng = Number(row?.last_lng ?? row?.lng);
@@ -319,7 +319,7 @@ export default async function handler(req, res) {
 
     // Batch fetch private profiles for candidates
     const authUserIds = validProfiles
-      .map((p) => p.auth_user_id)
+      .map((p) => p.id)
       .filter(Boolean);
 
     let privateProfilesMap = new Map();
@@ -378,7 +378,7 @@ export default async function handler(req, res) {
     const scoredProfiles = validProfiles.map((row) => {
       const lat = Number(row.last_lat ?? row.lat);
       const lng = Number(row.last_lng ?? row.lng);
-      const matchPrivateProfile = privateProfilesMap.get(row.auth_user_id) || null;
+      const matchPrivateProfile = privateProfilesMap.get(row.id) || null;
       const matchEmbedding = embeddingsMap.get(row.id) || null;
 
       // Calculate travel time
@@ -416,8 +416,8 @@ export default async function handler(req, res) {
       const profileType = row.profile_type ? String(row.profile_type).trim() : null;
 
       return {
-        id: `profile_${row.auth_user_id || fullName}`,
-        authUserId: row.auth_user_id || undefined,
+        id: `profile_${row.id || fullName}`,
+        authUserId: row.id || undefined,
         profileName: fullName,
         title: toShortHeadline(bio, 'Member'),
         locationLabel: city || 'Nearby',

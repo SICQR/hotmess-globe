@@ -74,7 +74,7 @@ const linkTelegramAccount = async (telegramUser) => {
         telegram_photo_url: telegramUser.photo_url,
         updated_at: new Date().toISOString(),
       })
-      .eq('auth_user_id', user.id);
+      .eq('id', user.id);
     
     if (error) throw error;
     return { linked: true, user };

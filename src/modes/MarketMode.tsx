@@ -54,11 +54,12 @@ import {
 import { useSheet } from '@/contexts/SheetContext';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import { useBootGuard } from '@/contexts/BootGuardContext';
-import { isBrandVisible } from '@/config/brands';
+import { isBrandVisible, BRAND_CONFIG } from '@/config/brands';
 import { AppBanner } from '@/components/banners/AppBanner';
 import { HNHMarketHero } from '@/components/home/HNHMarketHero';
 import {
   getAllProducts,
+  getProductsByBrand,
   getCategories,
   type Product,
   type ProductFilters,
@@ -554,6 +555,9 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   const [categoryFilter, setCategoryFilter] = useState<string | null>(
     searchParams.get('category'),
   );
+  const [brandFilter, setBrandFilter] = useState<string | null>(
+    searchParams.get('brand'),
+  );
 
   // Pagination
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -583,11 +587,16 @@ export function MarketMode({ className = '' }: MarketModeProps) {
         } else {
           prev.delete('category');
         }
+        if (brandFilter) {
+          prev.set('brand', brandFilter);
+        } else {
+          prev.delete('brand');
+        }
         return prev;
       },
       { replace: true },
     );
-  }, [debouncedSearch, categoryFilter, setSearchParams]);
+  }, [debouncedSearch, categoryFilter, brandFilter, setSearchParams]);
 
   // ---- Data fetching with TanStack Query ----------------------------------
   const filters: ProductFilters = useMemo(
@@ -599,14 +608,22 @@ export function MarketMode({ className = '' }: MarketModeProps) {
     [sourceFilter, categoryFilter, debouncedSearch],
   );
 
+  // When brand filter is active, fetch brand-specific products
   const {
     data: products = [],
     isLoading,
     isError,
     refetch,
   } = useQuery<Product[]>({
-    queryKey: ['market-products', filters],
-    queryFn: () => getAllProducts(filters),
+    queryKey: brandFilter
+      ? ['market-brand-products', brandFilter, debouncedSearch]
+      : ['market-products', filters],
+    queryFn: () => {
+      if (brandFilter) {
+        return getProductsByBrand(brandFilter);
+      }
+      return getAllProducts(filters);
+    },
     staleTime: 2 * 60 * 1000,
   });
 
@@ -636,9 +653,9 @@ export function MarketMode({ className = '' }: MarketModeProps) {
 
   const featuredProduct = useMemo(() => {
     // Only show featured when no active filters
-    if (debouncedSearch || categoryFilter || sourceFilter !== 'all') return null;
+    if (debouncedSearch || categoryFilter || sourceFilter !== 'all' || brandFilter) return null;
     return products[0] ?? null;
-  }, [products, debouncedSearch, categoryFilter, sourceFilter]);
+  }, [products, debouncedSearch, categoryFilter, sourceFilter, brandFilter]);
 
   // Grid products exclude the featured item to avoid duplication
   const gridProducts = useMemo(() => {
@@ -646,7 +663,10 @@ export function MarketMode({ className = '' }: MarketModeProps) {
     return visibleProducts.filter((p) => p.id !== featuredProduct.id);
   }, [visibleProducts, featuredProduct]);
 
-  const hasFilters = !!(debouncedSearch || categoryFilter || sourceFilter !== 'all');
+  const hasFilters = !!(debouncedSearch || categoryFilter || sourceFilter !== 'all' || brandFilter);
+
+  // Brand display name for the active brand filter
+  const activeBrandName = brandFilter ? (BRAND_CONFIG[brandFilter]?.name ?? brandFilter.toUpperCase()) : null;
 
   // ---- Infinite scroll via scroll listener ---------------------------------
   const handleScroll = useCallback(() => {
@@ -672,7 +692,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   // Reset visible count when filters change
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [filters]);
+  }, [filters, brandFilter]);
 
   // ---- Handlers -------------------------------------------------------------
   const handleProductTap = useCallback(
@@ -686,6 +706,11 @@ export function MarketMode({ className = '' }: MarketModeProps) {
     setSearchInput('');
     setSourceFilter('all');
     setCategoryFilter(null);
+    setBrandFilter(null);
+  }, []);
+
+  const handleBrandTap = useCallback((brandKey: string) => {
+    setBrandFilter((prev) => (prev === brandKey ? null : brandKey));
   }, []);
 
   const handleCategoryTap = useCallback((cat: string | null) => {
@@ -887,7 +912,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
                 />
               )}
 
-              {/* Brand pills */}
+              {/* Brand pills — tap to filter grid, long-press to open brand page */}
               {sourceFilter === 'all' && !debouncedSearch && !categoryFilter && (
                 <div className="px-4 pt-4 pb-1">
                   <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
@@ -904,24 +929,47 @@ export function MarketMode({ className = '' }: MarketModeProps) {
                         { key: 'smashDaddys', label: 'SMASH DADDYS' },
                         { key: 'hnhMess', label: 'HNH MESS' },
                       ] as const
-                    ).filter((b) => isBrandVisible(b.key)).map((b) => (
-                      <button
-                        key={b.key}
-                        onClick={() => openSheet('brand', { brand: b.key })}
-                        className="h-9 px-4 rounded-full text-xs font-black uppercase tracking-wider bg-[#1C1C1E] border border-white/10 text-white whitespace-nowrap active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-[#C8962C]"
-                        aria-label={`${b.label} brand page`}
-                      >
-                        {b.label}
-                      </button>
-                    ))}
+                    ).filter((b) => isBrandVisible(b.key)).map((b) => {
+                      const isActive = brandFilter === b.key;
+                      return (
+                        <button
+                          key={b.key}
+                          onClick={() => handleBrandTap(b.key)}
+                          onContextMenu={(e) => {
+                            e.preventDefault();
+                            openSheet('brand', { brand: b.key });
+                          }}
+                          className={`h-9 px-4 rounded-full text-xs font-black uppercase tracking-wider whitespace-nowrap active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-[#C8962C] ${
+                            isActive
+                              ? 'text-black border border-[#C8962C]'
+                              : 'bg-[#1C1C1E] border border-white/10 text-white'
+                          }`}
+                          style={isActive ? { backgroundColor: AMBER } : undefined}
+                          aria-label={`${isActive ? 'Clear' : 'Filter by'} ${b.label}`}
+                          aria-pressed={isActive}
+                        >
+                          {b.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
 
               {/* Section header */}
               {sourceFilter === 'all' && !debouncedSearch && !categoryFilter && (
-                <div className="px-4 pt-4 pb-1">
-                  <h2 className="text-white font-bold text-base">Just dropped</h2>
+                <div className="px-4 pt-4 pb-1 flex items-center justify-between">
+                  <h2 className="text-white font-bold text-base">
+                    {brandFilter ? activeBrandName : 'Just dropped'}
+                  </h2>
+                  {brandFilter && (
+                    <button
+                      onClick={() => setBrandFilter(null)}
+                      className="flex items-center gap-1 text-xs font-semibold text-[#C8962C] active:scale-95 transition-transform"
+                    >
+                      Clear <X className="w-3 h-3" />
+                    </button>
+                  )}
                 </div>
               )}
 

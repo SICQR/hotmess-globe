@@ -28,9 +28,9 @@ async function verifyAdmin(req) {
   
   // Check if user has admin role
   const { data: profile } = await supabase
-    .from('User')
+    .from('profiles')
     .select('id, email, is_admin, roles')
-    .eq('auth_user_id', user.id)
+    .eq('id', user.id)
     .single();
     
   if (!profile?.is_admin && !profile?.roles?.includes('admin')) {

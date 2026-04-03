@@ -34,8 +34,9 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SlidersHorizontal, Ghost, ArrowRight, X } from 'lucide-react';
+import { SlidersHorizontal, Ghost, ArrowRight, X, MessageCircle, Ban, Flag } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
+import { toast } from 'sonner';
 import { useRightNowCount } from '@/components/globe/useRealtimeBeacons';
 import { supabase } from '@/components/utils/supabaseClient';
 import { loadGhostedFilters, defaultGhostedFilters } from '@/components/sheets/L2FiltersSheet';
@@ -104,7 +105,9 @@ interface QuickMenuProps {
 }
 
 function QuickActionMenu({ profile, position, myEmail, isTapped, sendTap, onClose }: QuickMenuProps) {
+  const { openSheet } = useSheet();
   const email = String((profile as any)?.email || '');
+  const uid = String((profile as any)?.userId || (profile as any)?.authUserId || (profile as any)?.id || '');
   const name = String(profile.profileName || 'Someone');
   const hasTapSupport = !!myEmail && !!email;
 
@@ -116,11 +119,46 @@ function QuickActionMenu({ profile, position, myEmail, isTapped, sendTap, onClos
     onClose();
   };
 
+  const handleMessage = () => {
+    onClose();
+    if (uid) {
+      openSheet('chat', { toUid: uid, title: `Chat with ${name}` });
+    } else if (email) {
+      openSheet('chat', { toEmail: email, title: `Chat with ${name}` });
+    }
+  };
+
+  const handleBlock = async () => {
+    if (!myEmail) return;
+    try {
+      await supabase.from('user_blocks').insert({
+        blocker_email: myEmail,
+        blocked_email: email || uid,
+      });
+      toast.success(`${name} blocked`);
+      onClose();
+    } catch {
+      toast.error('Failed to block user');
+    }
+  };
+
+  const handleReport = () => {
+    onClose();
+    // Open the profile sheet which has a full report modal
+    if (email) {
+      openSheet('profile', { email });
+    } else if (uid) {
+      openSheet('profile', { uid });
+    }
+    // Slight delay then the user can use the ... menu to report
+    toast('Tap the ... menu on their profile to report', { duration: 3000 });
+  };
+
   // Clamp position so menu stays on screen (390px viewport)
-  const menuWidth = 180;
+  const menuWidth = 200;
   const menuX = Math.min(position.x - menuWidth / 2, 390 - menuWidth - 8);
   const clampedX = Math.max(8, menuX);
-  const clampedY = Math.max(60, position.y - 130);
+  const clampedY = Math.max(60, position.y - 180);
 
   return (
     <>
@@ -174,8 +212,36 @@ function QuickActionMenu({ profile, position, myEmail, isTapped, sendTap, onClos
           className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors disabled:opacity-40"
           aria-label={tappedBoo ? 'Un-boo this person' : 'Boo this person'}
         >
-          <span className="text-base">👻</span>
+          <Ghost className="w-4 h-4 text-[#C8962C]" />
           <span className={tappedBoo ? 'text-[#C8962C]' : 'text-white'}>{tappedBoo ? 'Boo\'d' : 'Boo'}</span>
+        </button>
+
+        <button
+          onClick={handleMessage}
+          className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors border-t border-white/5"
+          aria-label="Message this person"
+        >
+          <MessageCircle className="w-4 h-4 text-[#C8962C]" />
+          <span className="text-white">Message</span>
+        </button>
+
+        <button
+          onClick={handleBlock}
+          disabled={!myEmail}
+          className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors border-t border-white/5 disabled:opacity-40"
+          aria-label="Block this person"
+        >
+          <Ban className="w-4 h-4 text-red-500" />
+          <span className="text-red-500">Block</span>
+        </button>
+
+        <button
+          onClick={handleReport}
+          className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors border-t border-white/5"
+          aria-label="Report this person"
+        >
+          <Flag className="w-4 h-4 text-white/40" />
+          <span className="text-white/60">Report</span>
         </button>
 
         <button
@@ -195,11 +261,11 @@ function QuickActionMenu({ profile, position, myEmail, isTapped, sendTap, onClos
 
 function GhostedSkeleton() {
   return (
-    <div className="grid grid-cols-3 gap-0.5">
+    <div className="grid grid-cols-3 gap-px">
       {Array.from({ length: 12 }).map((_, i) => (
         <motion.div
           key={`skel-${i}`}
-          className="aspect-square bg-[#1C1C1E] animate-pulse"
+          className="aspect-[3/4] bg-[#1C1C1E] animate-pulse"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: i * 0.04 }}

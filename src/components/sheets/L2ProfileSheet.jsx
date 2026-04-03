@@ -8,14 +8,14 @@
  *   - Bottom actions: Message + more menu
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
 import {
   MessageCircle, MapPin, Shield, Plane,
   Loader2, MoreVertical, Flag, Ban, X, ChevronLeft, Ghost,
-  Footprints, Bike, Car,
+  Footprints, Bike, Car, Video, Heart,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
@@ -338,6 +338,81 @@ export default function L2ProfileSheet({ email, uid, id }) {
     }
   };
 
+  // ── Photo carousel state (must be before early returns) ───────────────
+  const [activePhotoIdx, setActivePhotoIdx] = useState(0);
+  const carouselRef = useRef(null);
+  const [isFavorited, setIsFavorited] = useState(false);
+
+  // Scroll observer for snap-scroll carousel
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const scrollLeft = el.scrollLeft;
+        const width = el.clientWidth;
+        const idx = Math.round(scrollLeft / width);
+        setActivePhotoIdx(idx);
+        ticking = false;
+      });
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Favorite toggle
+  const handleFavorite = useCallback(async () => {
+    setIsFavorited(prev => !prev);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !profileUser?.id) return;
+      if (!isFavorited) {
+        await supabase.from('taps').upsert({
+          tapper_email: user.email,
+          tapped_email: profileUser?.email || profileUser?.id,
+          tap_type: 'favorite',
+        }, { onConflict: 'tapper_email,tapped_email,tap_type' });
+      } else {
+        await supabase.from('taps')
+          .delete()
+          .eq('tapper_email', user.email)
+          .eq('tapped_email', profileUser?.email || profileUser?.id)
+          .eq('tap_type', 'favorite');
+      }
+    } catch {
+      setIsFavorited(prev => !prev);
+    }
+  }, [isFavorited, profileUser?.id, profileUser?.email]);
+
+  // Check if already favorited on mount
+  useEffect(() => {
+    if (!profileUser?.id) return;
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data } = await supabase.from('taps')
+          .select('id')
+          .eq('tapper_email', user.email)
+          .eq('tapped_email', profileUser?.email || profileUser?.id)
+          .eq('tap_type', 'favorite')
+          .maybeSingle();
+        if (data) setIsFavorited(true);
+      } catch {}
+    })();
+  }, [profileUser?.id, profileUser?.email]);
+
+  const handleVideoCall = useCallback(() => {
+    if (!profileUser?.auth_user_id && !profileUser?.id) return;
+    openSheet('video-call', {
+      toUid: profileUser?.auth_user_id || profileUser?.id,
+      title: `Video call with ${profileUser?.username || profileUser?.profileName || profileUser?.display_name || 'Anonymous'}`,
+    });
+  }, [profileUser?.auth_user_id, profileUser?.id, profileUser?.username, profileUser?.profileName, profileUser?.display_name, openSheet]);
+
   // ── Loading / empty states ──────────────────────────────────────────────
 
   if (isLoading) {
@@ -362,7 +437,29 @@ export default function L2ProfileSheet({ email, uid, id }) {
 
   // IDENTITY MODEL: username is the public handle — never expose real name to other users
   const name = profileUser.username || profileUser.profileName || profileUser.display_name || 'Anonymous';
-  const avatarUrl = profileUser.avatar_url || profileUser.photos?.[0];
+  // Collect all photos: avatar + photos array, deduplicated
+  const allPhotos = (() => {
+    const urls = [];
+    const seen = new Set();
+    const push = (v) => {
+      const url = typeof v === 'string' ? v.trim() : (v?.url || v?.file_url || '');
+      if (!url || seen.has(url)) return;
+      seen.add(url);
+      urls.push(url);
+    };
+    push(profileUser.avatar_url);
+    if (Array.isArray(profileUser.photos)) {
+      for (const p of profileUser.photos) push(p);
+    }
+    if (Array.isArray(profileUser.photo_urls)) {
+      for (const p of profileUser.photo_urls) push(p);
+    }
+    if (Array.isArray(profileUser.images)) {
+      for (const p of profileUser.images) push(p);
+    }
+    return urls.slice(0, 6);
+  })();
+  const avatarUrl = allPhotos[0] || null;
   const isTravel = profileUser.persona === 'TRAVEL' || profileUser.persona === 'travel';
   const visitingCity = profileUser.city || profileUser.visiting_city;
   const distance = profileUser.distance_km || profileUser.distance;
@@ -375,9 +472,52 @@ export default function L2ProfileSheet({ email, uid, id }) {
 
   return (
     <div className="pb-20 -mt-4">
-      {/* ── Hero photo (full-bleed, 45vh) ─────────────────────────────── */}
+      {/* ── Hero photo carousel (full-bleed, 45vh) ────────────────────── */}
       <div className="relative" style={{ height: '45vh', minHeight: 280 }}>
-        {avatarUrl ? (
+        {allPhotos.length > 1 ? (
+          <>
+            <div
+              ref={carouselRef}
+              className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
+              {allPhotos.map((url, i) => (
+                <div key={url} className="w-full h-full flex-shrink-0 snap-center">
+                  <img
+                    src={url}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    draggable={false}
+                    loading={i === 0 ? 'eager' : 'lazy'}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Photo count badge — top-right */}
+            <div
+              className="absolute top-4 right-14 z-10 px-2 py-1 rounded-full text-[11px] font-bold text-white"
+              style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', marginTop: 'env(safe-area-inset-top, 0px)' }}
+            >
+              {activePhotoIdx + 1}/{allPhotos.length}
+            </div>
+
+            {/* Dot indicators */}
+            <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
+              {allPhotos.map((_, i) => (
+                <div
+                  key={i}
+                  className="rounded-full transition-all duration-200"
+                  style={{
+                    width: i === activePhotoIdx ? 16 : 6,
+                    height: 6,
+                    background: i === activePhotoIdx ? '#C8962C' : 'rgba(255,255,255,0.4)',
+                  }}
+                />
+              ))}
+            </div>
+          </>
+        ) : avatarUrl ? (
           <img
             src={avatarUrl}
             alt=""
@@ -391,7 +531,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
 
         {/* Gradient overlay at bottom */}
         <div
-          className="absolute inset-x-0 bottom-0 h-2/3"
+          className="absolute inset-x-0 bottom-0 h-2/3 pointer-events-none"
           style={{ background: 'linear-gradient(to top, #050507 0%, transparent 100%)' }}
         />
 
@@ -427,7 +567,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
               return (isOn || isAway) ? (
                 <span
                   className="w-3 h-3 rounded-full flex-shrink-0"
-                  style={{ background: isOn ? '#30D158' : '#FFEB3B', boxShadow: isOn ? '0 0 6px #30D158' : undefined }}
+                  style={{ background: isOn ? '#30D158' : '#FFCC00', boxShadow: isOn ? '0 0 6px #30D158' : '0 0 6px #FFCC00' }}
                 />
               ) : null;
             })()}
@@ -619,9 +759,9 @@ export default function L2ProfileSheet({ email, uid, id }) {
         )}
       </div>
 
-      {/* ── Bottom action bar ──────────────────────────────────────────── */}
+      {/* ── Bottom action bar — 4 actions ──────────────────────────────── */}
       <div
-        className="fixed bottom-0 left-0 right-0 px-4 py-3 z-10 flex gap-3"
+        className="fixed bottom-0 left-0 right-0 px-4 py-3 z-10 flex items-center gap-2"
         style={{
           background: 'rgba(5,5,7,0.95)',
           backdropFilter: 'blur(16px)',
@@ -629,23 +769,49 @@ export default function L2ProfileSheet({ email, uid, id }) {
           borderTop: '1px solid rgba(255,255,255,0.06)',
         }}
       >
-        {/* Boo button — ghost-themed quick action */}
+        {/* Boo */}
         <button
           onClick={() => {
             const targetEmail = profileUser.email || profileUser.userId;
             if (targetEmail) sendTap(targetEmail, name, 'boo');
           }}
-          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+          className={`flex flex-col items-center justify-center w-14 h-14 rounded-xl transition-all ${
             (profileUser.email || profileUser.userId) && isTapped(profileUser.email || profileUser.userId, 'boo')
               ? 'bg-[#C8962C] text-black' : 'bg-white/10 text-white/60 hover:bg-white/15'
           }`}
           title="Boo"
         >
           <Ghost className="w-5 h-5" />
+          <span className="text-[9px] font-semibold mt-0.5">Boo</span>
         </button>
+
+        {/* Favorite */}
+        <button
+          onClick={handleFavorite}
+          className={`flex flex-col items-center justify-center w-14 h-14 rounded-xl transition-all ${
+            isFavorited
+              ? 'bg-red-500/20 text-red-500' : 'bg-white/10 text-white/60 hover:bg-white/15'
+          }`}
+          title="Favorite"
+        >
+          <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
+          <span className="text-[9px] font-semibold mt-0.5">{isFavorited ? 'Saved' : 'Save'}</span>
+        </button>
+
+        {/* Video Call */}
+        <button
+          onClick={handleVideoCall}
+          className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-white/10 text-white/60 hover:bg-white/15 transition-all"
+          title="Video Call"
+        >
+          <Video className="w-5 h-5" />
+          <span className="text-[9px] font-semibold mt-0.5">Video</span>
+        </button>
+
+        {/* Message — primary CTA */}
         <Button
           onClick={handleMessage}
-          className="flex-1 h-12 bg-[#C8962C] hover:bg-[#C8962C]/90 rounded-xl font-bold"
+          className="flex-1 h-14 bg-[#C8962C] hover:bg-[#C8962C]/90 rounded-xl font-bold text-sm"
         >
           <MessageCircle className="w-5 h-5 mr-2" />
           Message

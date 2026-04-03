@@ -65,7 +65,7 @@ export default async function handler(req, res) {
 
     // Check if creator exists
     const { data: creator, error: creatorError } = await supabase
-      .from('User')
+      .from('profiles')
       .select('email, xp, full_name')
       .eq('email', creator_email)
       .single();
@@ -76,7 +76,7 @@ export default async function handler(req, res) {
 
     // Get subscriber's current XP
     const { data: subscriber, error: subscriberError } = await supabase
-      .from('User')
+      .from('profiles')
       .select('email, xp')
       .eq('email', subscriberEmail)
       .single();
@@ -112,7 +112,7 @@ export default async function handler(req, res) {
 
     // Deduct XP from subscriber
     const { error: deductError } = await supabase
-      .from('User')
+      .from('profiles')
       .update({ xp: (subscriber.xp || 0) - price_xp })
       .eq('email', subscriberEmail);
 
@@ -122,7 +122,7 @@ export default async function handler(req, res) {
 
     // Credit XP to creator
     await supabase
-      .from('User')
+      .from('profiles')
       .update({ xp: (creator.xp || 0) + creatorEarnings })
       .eq('email', creator_email);
 
@@ -150,7 +150,7 @@ export default async function handler(req, res) {
       if (updateError) {
         // Refund XP
         await supabase
-          .from('User')
+          .from('profiles')
           .update({ xp: subscriber.xp })
           .eq('email', subscriberEmail);
         return res.status(500).json({ error: 'Failed to create subscription' });
@@ -175,7 +175,7 @@ export default async function handler(req, res) {
       if (insertError) {
         // Refund XP
         await supabase
-          .from('User')
+          .from('profiles')
           .update({ xp: subscriber.xp })
           .eq('email', subscriberEmail);
         return res.status(500).json({ error: 'Failed to create subscription' });

@@ -375,12 +375,12 @@ export default function ProfilesGrid({
           </div>
         ) : (
           <div className={cols === 3
-            ? 'grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-0.5'
+            ? 'grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-px'
             : 'grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4'
           }>
             {displayItems.map((profile) => (
               cols === 3 ? (
-                <div key={profile.id} className="aspect-square overflow-hidden">
+                <div key={profile.id} className="aspect-[3/4] overflow-hidden">
                   <ProfileCard
                     profile={profile}
                     viewerLocation={viewerLocation}

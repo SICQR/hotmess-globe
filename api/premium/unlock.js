@@ -70,7 +70,7 @@ export default async function handler(req, res) {
 
     // Get buyer's current XP
     const { data: buyer, error: buyerError } = await supabase
-      .from('User')
+      .from('profiles')
       .select('email, xp')
       .eq('email', buyerEmail)
       .single();
@@ -111,7 +111,7 @@ export default async function handler(req, res) {
     
     // Start transaction: deduct XP from buyer
     const { error: deductError } = await supabase
-      .from('User')
+      .from('profiles')
       .update({ xp: originalBuyerXp - price_xp })
       .eq('email', buyerEmail);
 
@@ -121,7 +121,7 @@ export default async function handler(req, res) {
 
     // Credit XP to content owner
     const { data: owner, error: ownerError } = await supabase
-      .from('User')
+      .from('profiles')
       .select('email, xp')
       .eq('email', owner_email)
       .single();
@@ -131,7 +131,7 @@ export default async function handler(req, res) {
     
     if (!ownerError && owner) {
       const { error: creditError } = await supabase
-        .from('User')
+        .from('profiles')
         .update({ xp: originalOwnerXp + creatorEarnings })
         .eq('email', owner_email);
       
@@ -157,14 +157,14 @@ export default async function handler(req, res) {
     if (unlockError) {
       // ROLLBACK: Refund buyer XP
       await supabase
-        .from('User')
+        .from('profiles')
         .update({ xp: originalBuyerXp })
         .eq('email', buyerEmail);
       
       // ROLLBACK: Remove owner credit if applied
       if (ownerCredited) {
         await supabase
-          .from('User')
+          .from('profiles')
           .update({ xp: originalOwnerXp })
           .eq('email', owner_email);
       }

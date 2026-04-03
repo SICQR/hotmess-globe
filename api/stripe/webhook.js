@@ -128,14 +128,14 @@ export default async function handler(req, res) {
           const status = subscription.cancel_at_period_end ? 'canceling' : subscription.status;
 
           const { error } = await supabase
-            .from('User')
+            .from('profiles')
             .update({
               subscription_status: status,
               subscription_ends_at: subscription.cancel_at_period_end
                 ? new Date(subscription.current_period_end * 1000).toISOString()
                 : null,
             })
-            .eq('auth_user_id', userId);
+            .eq('id', userId);
 
           if (error) {
             console.error('[Stripe webhook] customer.subscription.updated DB error:', error.message, { userId, status });
@@ -150,14 +150,14 @@ export default async function handler(req, res) {
 
         if (userId) {
           const { error } = await supabase
-            .from('User')
+            .from('profiles')
             .update({
               membership_tier: 'basic',
               stripe_subscription_id: null,
               subscription_status: 'canceled',
               subscription_ends_at: null,
             })
-            .eq('auth_user_id', userId);
+            .eq('id', userId);
 
           if (error) {
             console.error('[Stripe webhook] customer.subscription.deleted DB error:', error.message, { userId });
@@ -175,9 +175,9 @@ export default async function handler(req, res) {
 
           if (userId) {
             const { error } = await supabase
-              .from('User')
+              .from('profiles')
               .update({ subscription_status: 'past_due' })
-              .eq('auth_user_id', userId);
+              .eq('id', userId);
 
             if (error) {
               console.error('[Stripe webhook] invoice.payment_failed DB error:', error.message, { userId });
@@ -196,9 +196,9 @@ export default async function handler(req, res) {
 
           if (userId) {
             const { error } = await supabase
-              .from('User')
+              .from('profiles')
               .update({ subscription_status: 'active' })
-              .eq('auth_user_id', userId);
+              .eq('id', userId);
 
             if (error) {
               console.error('[Stripe webhook] invoice.paid DB error:', error.message, { userId });

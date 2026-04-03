@@ -60,6 +60,7 @@ export function SimpleProfileCard({
     .toUpperCase() || 'HM';
 
   const showOnlineDot = isOnline || status === 'online';
+  const showAwayDot = !showOnlineDot && status === 'away';
 
   // Distance label with color coding
   const distLabel = distanceKm !== undefined && distanceKm !== null
@@ -84,7 +85,7 @@ export function SimpleProfileCard({
 
   return (
     <motion.div
-      className={`relative w-full overflow-hidden rounded-xl bg-[#1C1C1E] cursor-pointer ${ringClass ? `ring-2 ${ringClass}` : ''}`}
+      className={`relative w-full h-full overflow-hidden rounded-sm bg-[#1C1C1E] cursor-pointer ${ringClass ? `ring-2 ${ringClass}` : ''}`}
       style={{ aspectRatio: '3/4' }}
       onClick={onClick}
       whileTap={{ scale: 0.97 }}
@@ -108,10 +109,15 @@ export function SimpleProfileCard({
       {/* Bottom gradient — subtle, just enough for text */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
 
-      {/* TOP-LEFT: Online dot */}
+      {/* TOP-LEFT: Online / Away dot */}
       {showOnlineDot && (
         <div className="absolute top-2 left-2 z-10">
           <div className="w-2.5 h-2.5 rounded-full bg-[#30D158] ring-2 ring-black/50" />
+        </div>
+      )}
+      {showAwayDot && (
+        <div className="absolute top-2 left-2 z-10">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#FFCC00] ring-2 ring-black/50" />
         </div>
       )}
 
@@ -160,7 +166,7 @@ export function SimpleProfileCard({
       </div>
 
       {/* Hover glow */}
-      <div className="absolute inset-0 rounded-xl border border-transparent group-hover:border-[#C8962C]/40 transition-colors pointer-events-none" />
+      <div className="absolute inset-0 rounded-sm border border-transparent group-hover:border-[#C8962C]/40 transition-colors pointer-events-none" />
     </motion.div>
   );
 }

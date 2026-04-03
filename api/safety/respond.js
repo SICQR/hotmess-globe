@@ -75,7 +75,7 @@ export default async function handler(req, res) {
       case 'all_good':
         // Award XP for responding
         await supabase
-          .from('User')
+          .from('profiles')
           .update({ 
             xp_balance: supabase.rpc('increment_xp', { amount: 5 })
           })

@@ -52,9 +52,9 @@ export default async function handler(req, res) {
   try {
     // Get user's profile ID
     const { data: userProfile, error: profileErr } = await serviceClient
-      .from('User')
+      .from('profiles')
       .select('id')
-      .eq('auth_user_id', authUser.id)
+      .eq('id', authUser.id)
       .single();
 
     if (profileErr || !userProfile?.id) {
@@ -75,7 +75,7 @@ export default async function handler(req, res) {
     if (bio === undefined || turnOns === undefined || turnOffs === undefined) {
       // Fetch existing values from database
       const [{ data: publicProfile }, { data: privateProfile }] = await Promise.all([
-        serviceClient.from('User').select('bio').eq('id', userProfile.id).single(),
+        serviceClient.from('profiles').select('bio').eq('id', userProfile.id).single(),
         serviceClient.from('user_private_profile').select('turn_ons, turn_offs').eq('auth_user_id', authUser.id).single(),
       ]);
 

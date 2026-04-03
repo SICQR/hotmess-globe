@@ -21,9 +21,9 @@ export async function verifyAdmin(req) {
   if (authError || !user) return { error: 'Invalid token', user: null };
 
   const { data: profile } = await supabase
-    .from('User')
+    .from('profiles')
     .select('id, is_admin, role')
-    .eq('auth_user_id', user.id)
+    .eq('id', user.id)
     .maybeSingle();
 
   if (!profile?.is_admin && profile?.role !== 'admin') {
