@@ -248,9 +248,29 @@ export default function OnboardingRouter() {
     goTo(SCREENS.SIGNIN);
   };
 
-  const handleAgeGateComplete = () => {
-    goTo(SCREENS.SIGNUP);
-  };
+  const handleAgeGateComplete = useCallback(async () => {
+    const {
+      data: { session: currentSession },
+    } = await supabase.auth.getSession();
+
+    if (currentSession?.user) {
+      // Already authenticated — write age_verified directly, skip Signup
+      await supabase
+        .from('profiles')
+        .update({
+          age_verified: true,
+          onboarding_stage: 'signed_up',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', currentSession.user.id);
+      localStorage.removeItem('hm_age_gate_passed');
+      localStorage.removeItem('hm_age_gate_year');
+      goTo(SCREENS.QUICK_SETUP);
+    } else {
+      // Not authenticated — proceed to signup as normal
+      goTo(SCREENS.SIGNUP);
+    }
+  }, [goTo]);
 
   const handleQuickSetupComplete = async () => {
     // Refetch profile so BootGuardContext sees onboarding_completed = true
