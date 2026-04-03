@@ -404,7 +404,7 @@ export default function Checkout() {
       navigate(createPageUrl('OrderHistory'));
     },
     onError: (error) => {
-      toast.error(error.message || 'Checkout failed');
+      toast.error('Checkout failed. Please try again or contact support.');
     }
   });
 
@@ -458,7 +458,7 @@ export default function Checkout() {
       setIsShopifyCheckoutOpen(true);
     },
     onError: (error) => {
-      toast.error(error?.message || 'Shopify checkout failed');
+      toast.error('Couldn\'t start checkout. Please try again.');
       // Keep a breadcrumb in DevTools for debugging 500s in prod.
       console.error('[Checkout] Shopify checkout failed', {
         status: error?.status,

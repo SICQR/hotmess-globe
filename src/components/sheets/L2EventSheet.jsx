@@ -133,7 +133,7 @@ export default function L2EventSheet({ id }) {
       }
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to update RSVP');
+      toast.error('Couldn\'t update your RSVP. Try again.');
     },
   });
 
@@ -212,11 +212,21 @@ export default function L2EventSheet({ id }) {
 
   if (error || !event) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-center px-4">
-        <p className="text-white/60 mb-4">Event not found</p>
-        <Button variant="outline" onClick={closeSheet}>
-          Close
-        </Button>
+      <div className="flex flex-col items-center justify-center h-64 text-center px-6">
+        <div className="w-14 h-14 rounded-2xl bg-[#1C1C1E] flex items-center justify-center mb-4">
+          <Calendar className="w-7 h-7 text-white/10" />
+        </div>
+        <p className="text-white font-bold text-base mb-1">This event is no longer available</p>
+        <p className="text-white/40 text-sm mb-5">It may have ended or been removed.</p>
+        <div className="flex gap-3">
+          <Button
+            className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-bold"
+            onClick={() => { closeSheet(); openSheet('events'); }}
+          >
+            Browse events
+          </Button>
+          <Button variant="outline" onClick={closeSheet}>Go back</Button>
+        </div>
       </div>
     );
   }

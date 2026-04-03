@@ -700,8 +700,8 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
           </div>
         ) : error ? (
           <div className="text-center py-8 px-4">
-            <p className="text-red-400 font-bold">Failed to load shop</p>
-            <p className="text-white/40 text-sm mt-1">{error.message}</p>
+            <p className="text-white font-bold">Something went wrong</p>
+            <p className="text-white/40 text-sm mt-1">Couldn't load products right now. Try again shortly.</p>
           </div>
         ) : products.length === 0 ? (
           <div className="text-center py-8 px-4">

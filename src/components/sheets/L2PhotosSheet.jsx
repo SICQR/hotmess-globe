@@ -4,16 +4,18 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { Camera, X, Plus, Loader2, Image, Star } from 'lucide-react';
+import { Camera, X, Plus, Loader2, Image, Star, RefreshCw, ImagePlus } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { uploadToStorage } from '@/lib/uploadToStorage';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { humanizeError } from '@/lib/errorUtils';
 
 export default function L2PhotosSheet() {
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null); // { file, message }
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -36,6 +38,7 @@ export default function L2PhotosSheet() {
 
   const handleUpload = async (file) => {
     setUploading(true);
+    setUploadError(null);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not logged in');
@@ -53,10 +56,23 @@ export default function L2PhotosSheet() {
       await loadPhotos();
       toast.success('Photo added');
     } catch (err) {
-      toast.error(err.message || 'Upload failed');
+      // Keep file reference for retry — don't clear it
+      setUploadError({ file, message: humanizeError(err, 'Couldn\'t upload photo. Try again or pick another.') });
+      toast.error('Couldn\'t upload photo. Try again or pick another.');
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleRetryUpload = () => {
+    if (uploadError?.file) {
+      handleUpload(uploadError.file);
+    }
+  };
+
+  const handleChooseAnother = () => {
+    setUploadError(null);
+    inputRef.current?.click();
   };
 
   const handleDelete = async (id) => {
@@ -65,7 +81,7 @@ export default function L2PhotosSheet() {
       setPhotos(prev => prev.filter(p => p.id !== id));
       toast.success('Photo removed');
     } catch {
-      toast.error('Failed to remove photo');
+      toast.error('Couldn\'t remove photo. Try again.');
     }
   };
 
@@ -77,7 +93,7 @@ export default function L2PhotosSheet() {
       setPhotos(prev => prev.map(p => ({ ...p, is_primary: p.id === id })));
       toast.success('Cover photo updated');
     } catch {
-      toast.error('Failed to update cover photo');
+      toast.error('Couldn\'t update cover photo. Try again.');
     }
   };
 
@@ -93,11 +109,34 @@ export default function L2PhotosSheet() {
     <div className="flex flex-col h-full">
       <div className="px-4 pt-4 pb-2">
         <p className="text-white/40 text-xs">
-          {photos.length}/6 photos · Tap ⭐ to set cover
+          {photos.length}/6 photos · Tap star to set cover
         </p>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-2">
+        {/* Upload error recovery banner */}
+        {uploadError && (
+          <div className="mb-3 p-3 rounded-xl bg-[#FF3B30]/10 border border-[#FF3B30]/20">
+            <p className="text-white/80 text-xs font-bold mb-2">{uploadError.message}</p>
+            <div className="flex gap-2">
+              <button
+                onClick={handleRetryUpload}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#C8962C] text-black text-xs font-bold active:scale-95 transition-transform"
+              >
+                <RefreshCw className="w-3 h-3" />
+                Retry
+              </button>
+              <button
+                onClick={handleChooseAnother}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/15 text-white/70 text-xs font-bold active:scale-95 transition-transform"
+              >
+                <ImagePlus className="w-3 h-3" />
+                Choose another
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-3 gap-2">
           {photos.map(photo => (
             <div key={photo.id} className="relative aspect-square rounded-xl overflow-hidden bg-[#1C1C1E]">

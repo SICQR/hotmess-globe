@@ -199,18 +199,24 @@ export default function VaultMode() {
             <div className="w-16 h-16 rounded-2xl bg-[#1C1C1E] flex items-center justify-center mb-4">
               <Lock className="w-8 h-8 text-white/10" />
             </div>
-            <p className="text-white/60 font-bold text-sm">Nothing here yet</p>
-            <p className="text-white/30 text-xs mt-1">
-              {tab === 'tickets' ? 'RSVP to events to see your tickets' : 'Start shopping to fill your vault'}
+            <p className="text-white font-bold text-base">Your archive starts here</p>
+            <p className="text-white/40 text-sm mt-1.5 max-w-[260px]">
+              Orders, event tickets, and sold items all end up in your Vault. Start exploring to build your collection.
             </p>
-            {tab !== 'listings' && (
+            <div className="flex gap-3 mt-5">
               <button
-                onClick={() => openSheet(tab === 'tickets' ? 'events' : 'shop')}
-                className="mt-4 bg-[#C8962C] text-black font-black text-xs rounded-full px-5 py-2"
+                onClick={() => openSheet('shop')}
+                className="h-10 px-5 rounded-xl bg-[#C8962C] text-black font-bold text-xs active:scale-95 transition-transform"
               >
-                {tab === 'tickets' ? 'Browse Events' : 'Go Shopping'}
+                Go shopping
               </button>
-            )}
+              <button
+                onClick={() => openSheet('schedule')}
+                className="h-10 px-5 rounded-xl border border-white/15 text-white/70 font-bold text-xs active:scale-95 transition-transform"
+              >
+                Explore music
+              </button>
+            </div>
           </div>
         ) : (
           <div className="divide-y divide-white/5 pb-24">

@@ -4,7 +4,8 @@
  */
 
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, MessageCircle, Mail, ExternalLink } from 'lucide-react';
+import { ChevronDown, ChevronUp, MessageCircle, Mail, ExternalLink, Send } from 'lucide-react';
+import { useSheet } from '@/contexts/SheetContext';
 
 const FAQ = [
   {
@@ -60,17 +61,32 @@ function FAQItem({ item }) {
 }
 
 export default function L2HelpSheet() {
+  const { openSheet } = useSheet();
+
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       {/* Contact options */}
       <div className="px-4 pt-4 pb-4 space-y-2">
         <p className="text-xs uppercase tracking-widest text-white/30 font-black mb-3">Contact Us</p>
+        <button
+          onClick={() => openSheet('support')}
+          className="w-full bg-[#1C1C1E] rounded-2xl p-4 flex items-center gap-3 hover:bg-white/5 transition-colors text-left"
+        >
+          <div className="w-9 h-9 rounded-xl bg-[#C8962C]/20 flex items-center justify-center flex-shrink-0">
+            <Send className="w-4 h-4 text-[#C8962C]" />
+          </div>
+          <div className="flex-1">
+            <p className="text-white font-bold text-sm">Contact Support</p>
+            <p className="text-white/40 text-xs">Submit a ticket for bugs, questions, or safety</p>
+          </div>
+          <ExternalLink className="w-4 h-4 text-white/20" />
+        </button>
         <a
           href="mailto:support@hotmess.app"
           className="w-full bg-[#1C1C1E] rounded-2xl p-4 flex items-center gap-3 hover:bg-white/5 transition-colors"
         >
-          <div className="w-9 h-9 rounded-xl bg-[#C8962C]/20 flex items-center justify-center flex-shrink-0">
-            <Mail className="w-4 h-4 text-[#C8962C]" />
+          <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+            <Mail className="w-4 h-4 text-white/60" />
           </div>
           <div className="flex-1">
             <p className="text-white font-bold text-sm">Email Support</p>
