@@ -1,0 +1,1 @@
+{"city":"barcelona","zones":[{"id":"eixample","category":"historic_core","energy":"social_nightlife"},{"id":"sitges","category":"beach","energy":"summer_intensity"}],"behaviour":{"peak_windows":{"eixample":["22:00-03:00"]}}}

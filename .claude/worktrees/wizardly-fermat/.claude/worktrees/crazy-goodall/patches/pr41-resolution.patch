@@ -1,0 +1,14 @@
+commit 6133e8f87a36e87936675b5752f402866eb9e06c
+Merge: 39873c02 4a594ae8
+Author: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>
+Date:   Wed Jan 28 11:15:48 2026 +0000
+
+    chore: resolve security.yml conflict - keep PR #41's comprehensive dependency review handling
+    
+    PR #41 includes better error handling with:
+    - ID on the dependency-review step for outcome checking
+    - Comprehensive note explaining possible failure reasons
+    - Clear guidance for repository admins
+    
+    Resolution: Accept PR #41's version which provides better user feedback
+

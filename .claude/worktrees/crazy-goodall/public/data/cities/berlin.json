@@ -1,0 +1,18 @@
+{
+  "city": "berlin",
+  "timezone": "Europe/Berlin",
+  "zones": [
+    { "id": "kreuzberg", "name": "Kreuzberg", "category": "nightlife", "energy": 0.92 },
+    { "id": "friedrichshain", "name": "Friedrichshain", "category": "nightlife", "energy": 0.88 },
+    { "id": "neukölln", "name": "Neukölln", "category": "nightlife", "energy": 0.82 },
+    { "id": "mitte", "name": "Mitte", "category": "culture", "energy": 0.75 },
+    { "id": "prenzlauer-berg", "name": "Prenzlauer Berg", "category": "dining", "energy": 0.65 },
+    { "id": "schöneberg", "name": "Schöneberg", "category": "nightlife", "energy": 0.78 }
+  ],
+  "behaviour": {
+    "peak_windows": {
+      "kreuzberg": ["saturday 00:00–08:00", "sunday 00:00–12:00"],
+      "friedrichshain": ["friday 23:00–07:00", "saturday 00:00–10:00"]
+    }
+  }
+}
