@@ -621,6 +621,38 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: true,
     deepLinkParams: ['listingId'],
   },
+
+  // ─────────���────────��────────────────────────────────��─────────────────────
+  // LEGAL / ACCESSIBILITY / DATA EXPORT / REPORT
+  // ────────���───────────────────��────────────────────────────────────────────
+  'legal': {
+    id: 'legal',
+    title: 'Legal & Terms',
+    height: 'large',
+    auth: false,
+    deepLinkParams: [],
+  },
+  'accessibility': {
+    id: 'accessibility',
+    title: 'Accessibility',
+    height: 'small',
+    auth: false,
+    deepLinkParams: [],
+  },
+  'data-export': {
+    id: 'data-export',
+    title: 'Data Export',
+    height: 'medium',
+    auth: true,
+    deepLinkParams: [],
+  },
+  'report': {
+    id: 'report',
+    title: 'Report',
+    height: 'medium',
+    auth: true,
+    deepLinkParams: ['targetType', 'targetId'],
+  },
 } as const;
 
 /**
