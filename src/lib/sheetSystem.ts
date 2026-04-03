@@ -563,6 +563,42 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: false,
     deepLinkParams: [],
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // QUICK ACTIONS / NOW HAPPENING / CARD ACTIONS
+  // ─────────────────────────────────────────────────────────────────────────
+  'quick-actions': {
+    id: 'quick-actions',
+    title: 'Quick Actions',
+    height: 'small',
+    auth: false,
+    deepLinkParams: ['tabOrigin'],
+  },
+  'now-happening': {
+    id: 'now-happening',
+    title: 'Now Happening',
+    height: 'small',
+    auth: false,
+    deepLinkParams: [],
+  },
+  'card-actions': {
+    id: 'card-actions',
+    title: 'Actions',
+    height: 'mini',
+    auth: false,
+    deepLinkParams: ['itemType', 'itemId'],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SUPPORT TICKET
+  // ─────────────────────────────────────────────────────────────────────────
+  'support': {
+    id: 'support',
+    title: 'Contact Support',
+    height: 'medium',
+    auth: false,
+    deepLinkParams: [],
+  },
 } as const;
 
 /**

@@ -71,6 +71,10 @@ const L2AchievementsSheet = lazy(() => import('./L2AchievementsSheet'));
 const L2SquadsSheet = lazy(() => import('./L2SquadsSheet'));
 const L2SweatCoinsSheet = lazy(() => import('./L2SweatCoinsSheet'));
 const L2AuthMethodsSheet = lazy(() => import('./L2AuthMethodsSheet'));
+const L2QuickActionsSheet = lazy(() => import('./L2QuickActionsSheet'));
+const L2NowHappeningSheet = lazy(() => import('./L2NowHappeningSheet'));
+const L2CardActionsSheet = lazy(() => import('./L2CardActionsSheet'));
+const L2SupportSheet = lazy(() => import('./L2SupportSheet'));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PLACEHOLDER FOR UNIMPLEMENTED SHEETS
@@ -184,6 +188,12 @@ const SHEET_COMPONENTS = {
   'sweat-coins': L2SweatCoinsSheet,
   // Auth — more sign-in methods
   'more-auth-methods': L2AuthMethodsSheet,
+  // Quick actions / Now happening / Card actions
+  'quick-actions': L2QuickActionsSheet,
+  'now-happening': L2NowHappeningSheet,
+  'card-actions': L2CardActionsSheet,
+  // Support ticket
+  'support': L2SupportSheet,
 };
 
 
