@@ -13,9 +13,9 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
 import {
-  MessageCircle, Shield, Plane,
+  MessageCircle, MapPin, Shield, Plane,
   Loader2, MoreVertical, Flag, Ban, X, ChevronLeft, Ghost,
-  Footprints, Bike, Car, Heart, Video, Share2, ShoppingBag, Music,
+  Footprints, Bike, Car, Heart, Video,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
@@ -367,57 +367,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
     enabled: !!profileUser?.auth_user_id,
   });
 
-  // Fetch artist match (does this user have label_artists entry?)
-  const { data: artistRecord } = useQuery({
-    queryKey: ['profile-artist', profileUser?.auth_user_id],
-    queryFn: async () => {
-      if (!profileUser?.auth_user_id) return null;
-      const { data } = await supabase
-        .from('label_artists')
-        .select('id, artist_name')
-        .eq('user_id', profileUser.auth_user_id)
-        .maybeSingle();
-      return data || null;
-    },
-    enabled: !!profileUser?.auth_user_id,
-  });
-
-  // Total preloved listing count (for cross-link)
-  const { data: totalListingCount } = useQuery({
-    queryKey: ['profile-listing-count', profileUser?.id],
-    queryFn: async () => {
-      if (!profileUser?.id) return 0;
-      const { count } = await supabase
-        .from('preloved_listings')
-        .select('id', { count: 'exact', head: true })
-        .eq('seller_id', profileUser.id)
-        .eq('status', 'active');
-      return count || 0;
-    },
-    enabled: !!profileUser?.id,
-  });
-
   // ── Handlers ────────────────────────────────────────────────────────────
-
-  const handleShare = async () => {
-    const handle = profileUser?.username || profileUser?.display_name || 'someone';
-    const shareUrl = `https://hotmessldn.com/ghosted?profile=${encodeURIComponent(profileUser?.auth_user_id || profileUser?.id || '')}`;
-    const shareData = {
-      title: `${handle} on HOTMESS`,
-      text: `Check out ${handle} on HOTMESS`,
-      url: shareUrl,
-    };
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(shareUrl);
-        toast.success('Link copied to clipboard');
-      }
-    } catch {
-      // User cancelled share
-    }
-  };
 
   const handleSaveToggle = async () => {
     if (isSaving) return;
@@ -445,7 +395,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
         toast.success('Profile saved');
       }
     } catch {
-      toast.error('Couldn\'t save. Try again.');
+      toast.error('Failed to save');
     } finally {
       setIsSaving(false);
     }
@@ -499,7 +449,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
       setShowMoreMenu(false);
       closeSheet();
     } catch {
-      toast.error('Couldn\'t block this user. Try again.');
+      toast.error('Failed to block user');
     } finally {
       setIsBlocking(false);
     }
@@ -525,7 +475,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
       setReportReason('');
       setShowMoreMenu(false);
     } catch {
-      toast.error('Couldn\'t submit report. Try again.');
+      toast.error('Failed to submit report');
     } finally {
       setIsReporting(false);
     }
@@ -542,77 +492,11 @@ export default function L2ProfileSheet({ email, uid, id }) {
   }
 
   if (!profileUser) {
-    // Determine error type for differentiated states
-    const isNetworkError = !navigator.onLine ||
-      (typeof profileUser === 'undefined' && !email && !resolvedUid);
-
-    // Deleted profile: we got a response but profile is null (404 equivalent)
-    const isDeleted = profileUser === null && (email || resolvedUid);
-
-    if (isNetworkError) {
-      return (
-        <div className="flex flex-col items-center justify-center h-64 text-center px-6">
-          <div className="w-14 h-14 rounded-2xl bg-[#1C1C1E] flex items-center justify-center mb-4">
-            <Ghost className="w-7 h-7 text-white/10" />
-          </div>
-          <p className="text-white font-bold text-base mb-1">Couldn't load this profile</p>
-          <p className="text-white/40 text-sm mb-5">Check your connection and try again.</p>
-          <div className="flex gap-3">
-            <Button
-              className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-bold"
-              onClick={() => window.location.reload()}
-            >
-              Try again
-            </Button>
-            <Button variant="outline" onClick={closeSheet}>Back</Button>
-          </div>
-        </div>
-      );
-    }
-
-    if (isDeleted) {
-      return (
-        <div className="flex flex-col items-center justify-center h-64 text-center px-6">
-          <div className="w-14 h-14 rounded-2xl bg-[#1C1C1E] flex items-center justify-center mb-4">
-            <Ghost className="w-7 h-7 text-white/10" />
-          </div>
-          <p className="text-white font-bold text-base mb-1">This profile is no longer available</p>
-          <p className="text-white/40 text-sm mb-5">It may have been removed or deactivated.</p>
-          <div className="flex gap-3">
-            <Button
-              className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-bold"
-              onClick={() => { closeSheet(); navigate('/ghosted'); }}
-            >
-              Browse others
-            </Button>
-            <Button variant="outline" onClick={closeSheet}>Back</Button>
-          </div>
-        </div>
-      );
-    }
-
-    // Generic fallback
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-center px-6">
-        <div className="w-14 h-14 rounded-2xl bg-[#1C1C1E] flex items-center justify-center mb-4">
-          <Ghost className="w-7 h-7 text-white/10" />
-        </div>
-        <p className="text-white font-bold text-base mb-1">Something went wrong</p>
-        <p className="text-white/40 text-sm mb-5">We couldn't load this profile right now.</p>
-        <div className="flex gap-3">
-          <Button
-            className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-bold"
-            onClick={() => window.location.reload()}
-          >
-            Try again
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => openSheet('help')}
-          >
-            Report issue
-          </Button>
-        </div>
+      <div className="flex flex-col items-center justify-center h-64 text-center px-4">
+        <MapPin className="w-12 h-12 text-white/20 mb-4" />
+        <p className="text-white/60 mb-4">Profile not found</p>
+        <Button variant="outline" onClick={closeSheet}>Close</Button>
       </div>
     );
   }
@@ -663,27 +547,16 @@ export default function L2ProfileSheet({ email, uid, id }) {
           <ChevronLeft className="w-5 h-5 text-white" />
         </button>
 
-        {/* Top-right actions: share + more */}
-        <div
-          className="absolute top-4 right-4 flex items-center gap-2 z-20"
-          style={{ marginTop: 'env(safe-area-inset-top, 0px)' }}
-        >
+        {/* More menu button */}
+        {!isOwnProfile && (
           <button
-            onClick={handleShare}
-            className="w-9 h-9 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm active:bg-black/70"
-            aria-label="Share profile"
+            onClick={() => setShowMoreMenu(!showMoreMenu)}
+            className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm active:bg-black/70 z-20"
+            style={{ marginTop: 'env(safe-area-inset-top, 0px)' }}
           >
-            <Share2 className="w-4.5 h-4.5 text-white" />
+            <MoreVertical className="w-5 h-5 text-white" />
           </button>
-          {!isOwnProfile && (
-            <button
-              onClick={() => setShowMoreMenu(!showMoreMenu)}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm active:bg-black/70"
-            >
-              <MoreVertical className="w-5 h-5 text-white" />
-            </button>
-          )}
-        </div>
+        )}
 
         {/* Views badge */}
         {viewCount > 0 && (
@@ -916,43 +789,6 @@ export default function L2ProfileSheet({ email, uid, id }) {
           </div>
         )}
       </div>
-
-      {/* ── Cross-links (listings / music) ─────────────────────────────── */}
-      {(totalListingCount > 0 || artistRecord) && (
-        <div className="px-4 py-3 space-y-2">
-          <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold">More from {name.split(' ')[0]}</p>
-          {totalListingCount > 0 && (
-            <button
-              onClick={() => {
-                closeSheet();
-                navigate(`/market?seller_id=${encodeURIComponent(profileUser.auth_user_id || profileUser.id)}`);
-              }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/8 active:bg-white/10 transition-colors"
-            >
-              <ShoppingBag className="w-5 h-5 text-[#C8962C]" />
-              <div className="text-left flex-1">
-                <span className="text-white text-sm font-semibold">View listings</span>
-                <span className="text-white/40 text-xs ml-2">{totalListingCount} item{totalListingCount !== 1 ? 's' : ''}</span>
-              </div>
-            </button>
-          )}
-          {artistRecord && (
-            <button
-              onClick={() => {
-                closeSheet();
-                navigate(`/music?artist=${encodeURIComponent(artistRecord.id)}`);
-              }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/8 active:bg-white/10 transition-colors"
-            >
-              <Music className="w-5 h-5 text-[#00C2E0]" />
-              <div className="text-left flex-1">
-                <span className="text-white text-sm font-semibold">View music</span>
-                <span className="text-white/40 text-xs ml-2">{artistRecord.artist_name}</span>
-              </div>
-            </button>
-          )}
-        </div>
-      )}
 
       {/* ── Bottom action bar ──────────────────────────────────────────── */}
       <div
