@@ -57,12 +57,12 @@ export default function Safety() {
   }, []);
 
   const { data: trustedContacts = [] } = useQuery({
-    queryKey: ['trusted-contacts', currentUser?.email],
+    queryKey: ['trusted-contacts', currentUser?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('trusted_contacts')
         .select('*')
-        .eq('user_email', currentUser.email);
+        .eq('user_id', currentUser.id);
       if (error) throw error;
       return data || [];
     },
@@ -70,12 +70,12 @@ export default function Safety() {
   });
 
   const { data: activeCheckIn } = useQuery({
-    queryKey: ['active-safety-checkin', currentUser?.email],
+    queryKey: ['active-safety-checkin', currentUser?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('safety_checkins')
         .select('*')
-        .eq('user_email', currentUser.email)
+        .eq('user_id', currentUser.id)
         .eq('status', 'active')
         .limit(1)
         .maybeSingle();
@@ -89,7 +89,7 @@ export default function Safety() {
   const addContactMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from('trusted_contacts').insert({
-        user_email: currentUser.email,
+        user_id: currentUser.id,
         contact_name: contactName,
         contact_phone: contactPhone,
         contact_email: contactEmail,
@@ -128,7 +128,7 @@ export default function Safety() {
       }
 
       const { error } = await supabase.from('safety_checkins').insert({
-        user_email: currentUser.email,
+        user_id: currentUser.id,
         check_in_time: new Date().toISOString(),
         expected_check_out: checkOutTime,
         location,

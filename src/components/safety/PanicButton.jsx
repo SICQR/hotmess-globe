@@ -47,7 +47,7 @@ export default function PanicButton() {
       const { data: contacts, error: contactsError } = await supabase
         .from('trusted_contacts')
         .select('*')
-        .eq('user_email', user.email)
+        .eq('user_id', user.id)
         .eq('notify_on_sos', true);
 
       if (contactsError) {
@@ -66,8 +66,8 @@ export default function PanicButton() {
       }
 
       // Log SOS event
-      await supabase.from('safety_check_ins').insert({
-        user_email: user.email,
+      await supabase.from('safety_checkins').insert({
+        user_id: user.id,
         check_in_time: new Date().toISOString(),
         expected_check_out: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         location: locationData,

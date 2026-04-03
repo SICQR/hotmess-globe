@@ -20,7 +20,7 @@ export default function L2EmergencyContactSheet() {
   const [deleting, setDeleting] = useState(null);
   const [error, setError] = useState('');
 
-  const [form, setForm] = useState({ name: '', phone: '', relation: 'Friend' });
+  const [form, setForm] = useState({ contact_name: '', contact_phone: '', relationship: 'Friend' });
 
   // ─── Load contacts ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -47,8 +47,8 @@ export default function L2EmergencyContactSheet() {
     e.preventDefault();
     setError('');
 
-    if (!form.name.trim()) { setError('Name is required.'); return; }
-    if (!form.phone.trim()) { setError('Phone number is required.'); return; }
+    if (!form.contact_name.trim()) { setError('Name is required.'); return; }
+    if (!form.contact_phone.trim()) { setError('Phone number is required.'); return; }
 
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
@@ -56,7 +56,7 @@ export default function L2EmergencyContactSheet() {
 
     const { error: insertError } = await supabase
       .from('trusted_contacts')
-      .insert({ user_id: user.id, name: form.name.trim(), phone: form.phone.trim(), relation: form.relation });
+      .insert({ user_id: user.id, contact_name: form.contact_name.trim(), contact_phone: form.contact_phone.trim(), relationship: form.relationship });
 
     setSaving(false);
 
@@ -69,7 +69,7 @@ export default function L2EmergencyContactSheet() {
       return;
     }
 
-    setForm({ name: '', phone: '', relation: 'Friend' });
+    setForm({ contact_name: '', contact_phone: '', relationship: 'Friend' });
     setShowForm(false);
     loadContacts();
   }
@@ -131,14 +131,14 @@ export default function L2EmergencyContactSheet() {
                   <User className="w-4 h-4 text-[#C8962C]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white font-bold text-sm truncate">{contact.name}</p>
-                  <p className="text-white/50 text-xs">{contact.phone} · {contact.relation}</p>
+                  <p className="text-white font-bold text-sm truncate">{contact.contact_name}</p>
+                  <p className="text-white/50 text-xs">{contact.contact_phone} · {contact.relationship}</p>
                 </div>
                 <button
                   onClick={() => handleDelete(contact.id)}
                   disabled={deleting === contact.id}
                   className="w-8 h-8 rounded-xl bg-red-500/10 flex items-center justify-center flex-shrink-0 active:bg-red-500/20 transition-colors"
-                  aria-label={`Remove ${contact.name}`}
+                  aria-label={`Remove ${contact.contact_name}`}
                 >
                   {deleting === contact.id
                     ? <Loader2 className="w-4 h-4 text-red-400 animate-spin" />
@@ -170,8 +170,8 @@ export default function L2EmergencyContactSheet() {
                 <input
                   type="text"
                   placeholder="Full name"
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  value={form.contact_name}
+                  onChange={e => setForm(f => ({ ...f, contact_name: e.target.value }))}
                   className="w-full bg-white/5 rounded-xl pl-9 pr-4 py-3 text-white text-sm placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-[#C8962C]/50"
                 />
               </div>
@@ -182,16 +182,16 @@ export default function L2EmergencyContactSheet() {
                 <input
                   type="tel"
                   placeholder="Phone number"
-                  value={form.phone}
-                  onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                  value={form.contact_phone}
+                  onChange={e => setForm(f => ({ ...f, contact_phone: e.target.value }))}
                   className="w-full bg-white/5 rounded-xl pl-9 pr-4 py-3 text-white text-sm placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-[#C8962C]/50"
                 />
               </div>
 
               {/* Relation */}
               <select
-                value={form.relation}
-                onChange={e => setForm(f => ({ ...f, relation: e.target.value }))}
+                value={form.relationship}
+                onChange={e => setForm(f => ({ ...f, relationship: e.target.value }))}
                 className="w-full bg-white/5 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-1 focus:ring-[#C8962C]/50 appearance-none"
               >
                 {RELATIONS.map(r => (
@@ -208,7 +208,7 @@ export default function L2EmergencyContactSheet() {
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"
-                  onClick={() => { setShowForm(false); setError(''); setForm({ name: '', phone: '', relation: 'Friend' }); }}
+                  onClick={() => { setShowForm(false); setError(''); setForm({ contact_name: '', contact_phone: '', relationship: 'Friend' }); }}
                   className="flex-1 py-3 bg-white/5 rounded-xl text-white/60 font-bold text-sm"
                 >
                   Cancel

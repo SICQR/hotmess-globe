@@ -36,6 +36,7 @@ import SheetRouter from '@/components/sheets/SheetRouter';
 import { SOSProvider, useSOSContext } from '@/contexts/SOSContext';
 import { SOSButton } from '@/components/sos/SOSButton';
 import SOSOverlay from '@/components/interrupts/SOSOverlay';
+import SafetyRecoveryScreen from '@/components/safety/SafetyRecoveryScreen';
 import ShakeSOS from '@/components/sos/ShakeSOS';
 import IncomingCallBanner from '@/components/calls/IncomingCallBanner';
 import { useViewportHeight } from '@/hooks/useMobileDynamics';
@@ -711,7 +712,7 @@ function OSArchitecture() {
   usePresenceHeartbeat();
   // iOS-style edge swipe to go back
   useSwipeBack();
-  const { sosActive, triggerSOS, clearSOS } = useSOSContext();
+  const { sosActive, showRecovery, triggerSOS, clearSOS, dismissRecovery } = useSOSContext();
   const { isAuthenticated } = useBootGuard();
   const location = useLocation();
   const { closeSheet, sheetStack } = useSheet();
@@ -827,6 +828,9 @@ function OSArchitecture() {
 
       {/* L3: SOS Overlay — blocks entire OS, stops all sharing (Z-200) */}
       {sosActive && <SOSOverlay onClose={clearSOS} />}
+
+      {/* Post-safety recovery screen — z-[205], shown after SOS dismissed */}
+      {showRecovery && <SafetyRecoveryScreen />}
 
       {/* Incoming call banner — auth only */}
       {isAuthenticated && <IncomingCallBanner />}

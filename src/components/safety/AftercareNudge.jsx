@@ -85,10 +85,10 @@ export default function AftercareNudge({
 
     // Server-side: insert into safety_check_ins as an aftercare record
     supabase.auth.getSession().then(({ data }) => {
-      const email = data?.session?.user?.email;
-      if (!email) return;
-      supabase.from('safety_check_ins').insert({
-        user_email: email,
+      const userId = data?.session?.user?.id;
+      if (!userId) return;
+      supabase.from('safety_checkins').insert({
+        user_id: userId,
         check_in_time: ts,
         expected_check_out: ts,
         status: 'aftercare_response',

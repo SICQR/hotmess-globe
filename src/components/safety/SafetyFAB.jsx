@@ -8,7 +8,7 @@
  * - Fake call trigger
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield,
@@ -65,7 +65,7 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
           const { data: contacts, error } = await supabase
             .from('trusted_contacts')
             .select('*')
-            .eq('user_email', user.email)
+            .eq('user_id', user.id)
             .eq('notify_on_sos', true);
           if (error) {
             console.warn('Failed to fetch trusted_contacts:', error);
@@ -100,7 +100,7 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
       const { data: contacts, error: contactsError } = await supabase
         .from('trusted_contacts')
         .select('*')
-        .eq('user_email', user.email)
+        .eq('user_id', user.id)
         .eq('notify_on_sos', true);
 
       if (contactsError) {
@@ -118,8 +118,8 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
       }
 
       // Log SOS event
-      await supabase.from('safety_check_ins').insert({
-        user_email: user.email,
+      await supabase.from('safety_checkins').insert({
+        user_id: user.id,
         check_in_time: new Date().toISOString(),
         expected_check_out: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         location: location ? { lat: location.lat, lng: location.lng, address: locationStr } : null,
@@ -272,6 +272,46 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
 /**
  * SafetyFAB - The floating safety button
  */
+/**
+ * SOS Progress Ring — SVG circle that fills over 3 seconds during long-press.
+ * radius=31, circumference=2*PI*31~194.78
+ */
+function SOSProgressRing({ progress }) {
+  const radius = 31;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (progress / 100) * circumference;
+
+  return (
+    <svg
+      className="absolute inset-0 -rotate-90 pointer-events-none"
+      width="56"
+      height="56"
+      viewBox="0 0 64 64"
+    >
+      <circle
+        cx="32"
+        cy="32"
+        r={radius}
+        fill="none"
+        stroke="rgba(255, 59, 48, 0.25)"
+        strokeWidth="3"
+      />
+      <circle
+        cx="32"
+        cy="32"
+        r={radius}
+        fill="none"
+        stroke="#FF3B30"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        style={{ transition: 'stroke-dashoffset 30ms linear' }}
+      />
+    </svg>
+  );
+}
+
 export default function SafetyFAB() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showEmergencyMode, setShowEmergencyMode] = useState(false);
@@ -284,6 +324,64 @@ export default function SafetyFAB() {
 
   // More prominent during Tonight hours
   const isTonight = tonightMode?.isTonight ?? false;
+
+  // ── Long-press SOS (3 seconds) ──────────────────────────────────────────────
+  const SOS_HOLD_MS = 3000;
+  const [holdProgress, setHoldProgress] = useState(0);
+  const [isHolding, setIsHolding] = useState(false);
+  const holdStartRef = useRef(null);
+  const rafRef = useRef(null);
+  const sosTriggeredRef = useRef(false);
+
+  const startHold = useCallback((e) => {
+    // Prevent default to avoid context menu on mobile long-press
+    if (e.type === 'touchstart') e.preventDefault();
+    holdStartRef.current = performance.now();
+    sosTriggeredRef.current = false;
+    setIsHolding(true);
+    setHoldProgress(0);
+
+    const tick = () => {
+      if (!holdStartRef.current) return;
+      const elapsed = performance.now() - holdStartRef.current;
+      const pct = Math.min((elapsed / SOS_HOLD_MS) * 100, 100);
+      setHoldProgress(pct);
+
+      if (pct >= 100 && !sosTriggeredRef.current) {
+        sosTriggeredRef.current = true;
+        setIsHolding(false);
+        setHoldProgress(0);
+        holdStartRef.current = null;
+        if (navigator?.vibrate) navigator.vibrate([200, 100, 200]);
+        triggerSOS();
+        return;
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+  }, [triggerSOS]);
+
+  const cancelHold = useCallback(() => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    const wasHolding = isHolding;
+    const elapsed = holdStartRef.current ? performance.now() - holdStartRef.current : 0;
+    holdStartRef.current = null;
+    setIsHolding(false);
+    setHoldProgress(0);
+
+    // If released before 3s and it was a short tap (< 300ms), toggle menu
+    if (wasHolding && !sosTriggeredRef.current && elapsed < 300) {
+      setIsExpanded((prev) => !prev);
+    }
+    // If released between 300ms and 3s, do nothing (aborted hold)
+  }, [isHolding]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
 
   return (
     <>
@@ -362,7 +460,7 @@ export default function SafetyFAB() {
 
         <div className="relative">
           {/* Active timer ring */}
-          {timerActive && (
+          {timerActive && !isHolding && (
             <motion.div
               className="absolute inset-0 rounded-full pointer-events-none"
               style={{ border: '2px solid #00C2E0' }}
@@ -370,17 +468,35 @@ export default function SafetyFAB() {
               transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
             />
           )}
+          {/* SOS hold progress ring */}
+          {isHolding && holdProgress > 0 && (
+            <SOSProgressRing progress={holdProgress} />
+          )}
           <Button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className={`rounded-full w-14 h-14 shadow-lg transition-all ${
-              isTonight
+            onMouseDown={startHold}
+            onMouseUp={cancelHold}
+            onMouseLeave={cancelHold}
+            onTouchStart={startHold}
+            onTouchEnd={cancelHold}
+            className={`rounded-full w-14 h-14 shadow-lg transition-all select-none ${
+              isHolding
+                ? 'bg-red-500/30 border-2 border-red-500 scale-110'
+                : isTonight
                 ? 'bg-red-500 hover:bg-red-600 animate-pulse'
                 : timerActive
                 ? 'bg-[#00C2E0]/20 hover:bg-[#00C2E0]/30 border border-[#00C2E0]'
                 : 'bg-white/10 hover:bg-white/20 border border-white/20'
             }`}
           >
-            <Shield className={`w-6 h-6 ${isTonight ? 'text-white' : timerActive ? 'text-[#00C2E0]' : 'text-white/80'}`} />
+            <Shield className={`w-6 h-6 ${
+              isHolding
+                ? 'text-red-400'
+                : isTonight
+                ? 'text-white'
+                : timerActive
+                ? 'text-[#00C2E0]'
+                : 'text-white/80'
+            }`} />
           </Button>
         </div>
       </div>

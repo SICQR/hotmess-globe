@@ -17,12 +17,12 @@ export function useSafety() {
   // Fetch trusted contacts
   useEffect(() => {
     async function fetchTrustedContacts() {
-      if (!email) return;
+      if (!user?.id) return;
 
       const { data, error } = await supabase
         .from('trusted_contacts')
         .select('*')
-        .eq('user_email', email)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: true });
 
       if (!error && data) {
@@ -31,17 +31,17 @@ export function useSafety() {
     }
 
     fetchTrustedContacts();
-  }, [email]);
+  }, [user?.id]);
 
   // Fetch active check-in
   useEffect(() => {
     async function fetchActiveCheckIn() {
-      if (!email) return;
+      if (!user?.id) return;
 
       const { data, error } = await supabase
         .from('safety_checkins')
         .select('*')
-        .eq('user_email', email)
+        .eq('user_id', user.id)
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
         .limit(1)
@@ -53,16 +53,16 @@ export function useSafety() {
     }
 
     fetchActiveCheckIn();
-  }, [email]);
+  }, [user?.id]);
 
   // Add trusted contact
   const addTrustedContact = useCallback(async (contact) => {
-    if (!email) return { error: 'Not logged in' };
+    if (!user?.id) return { error: 'Not logged in' };
 
     const { data, error } = await supabase
       .from('trusted_contacts')
       .insert({
-        user_email: email,
+        user_id: user.id,
         contact_name: contact.name,
         contact_phone: contact.phone,
         contact_email: contact.email,
@@ -77,7 +77,7 @@ export function useSafety() {
     }
 
     return { data, error };
-  }, [email]);
+  }, [user?.id]);
 
   // Remove trusted contact
   const removeTrustedContact = useCallback(async (contactId) => {
@@ -95,14 +95,14 @@ export function useSafety() {
 
   // Start a safety check-in timer
   const startCheckIn = useCallback(async (durationMinutes = 60, note = '') => {
-    if (!email) return { error: 'Not logged in' };
+    if (!user?.id) return { error: 'Not logged in' };
 
     const expiresAt = new Date(Date.now() + durationMinutes * 60 * 1000);
 
     const { data, error } = await supabase
       .from('safety_checkins')
       .insert({
-        user_email: email,
+        user_id: user.id,
         status: 'active',
         expected_end: expiresAt.toISOString(),
         note,
@@ -116,7 +116,7 @@ export function useSafety() {
     }
 
     return { data, error };
-  }, [email]);
+  }, [user?.id]);
 
   // End/respond to check-in
   const respondToCheckIn = useCallback(async (checkInId, response) => {
@@ -166,7 +166,7 @@ export function useSafety() {
 
   // Trigger panic button
   const triggerPanic = useCallback(async (location = null) => {
-    if (!email) return { error: 'Not logged in' };
+    if (!user?.id) return { error: 'Not logged in' };
 
     setLoading(true);
 
@@ -175,7 +175,7 @@ export function useSafety() {
       await supabase
         .from('safety_checkins')
         .insert({
-          user_email: email,
+          user_id: user.id,
           status: 'panic',
           trigger_type: 'panic_button',
           note: 'Panic button activated',
@@ -189,11 +189,11 @@ export function useSafety() {
       await supabase
         .from('notification_outbox')
         .insert({
-          user_email: 'admin',
+          user_id: user.id,
           notification_type: 'panic_alert',
           title: 'Panic Button Triggered',
-          message: `User ${email} triggered panic button`,
-          metadata: { user_email: email, location }
+          message: `User ${user.id} triggered panic button`,
+          metadata: { user_id: user.id, location }
         });
 
       return { success: true };
@@ -203,7 +203,7 @@ export function useSafety() {
     } finally {
       setLoading(false);
     }
-  }, [email]);
+  }, [user?.id]);
 
   // Notify trusted contacts
   const notifyTrustedContacts = useCallback(async (type, data = {}) => {
