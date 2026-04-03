@@ -31,7 +31,7 @@ const SIZE_MAP: Record<Size, string> = {
 };
 
 const LETTERS = ['H', 'O', 'T', 'M', 'E', 'S', 'S'];
-const SS_INDICES = [5, 6]; // The two S letters
+const MESS_INDICES = [3, 4, 5, 6]; // MESS in gold, HOT in white
 
 export function HotmessWordmark({
   size = 'lg',
@@ -54,12 +54,13 @@ export function HotmessWordmark({
       {/* Letters */}
       <span className={`inline-flex font-black italic leading-none ${SIZE_MAP[size]}`}>
         {LETTERS.map((letter, i) => {
-          const isSS = SS_INDICES.includes(i);
+          const isMess = MESS_INDICES.includes(i);
+          const isSS = i === 5 || i === 6;
           return (
             <span
               key={i}
               style={{
-                color: isSS ? accentColor : color,
+                color: isMess ? accentColor : color,
                 opacity: mounted ? 1 : 0,
                 transform: mounted ? 'translateY(0)' : 'translateY(0.3em)',
                 transition: animate

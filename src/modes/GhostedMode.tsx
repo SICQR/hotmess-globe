@@ -48,6 +48,8 @@ import { GhostedAmbientToggle } from '@/components/music/GhostedAmbientToggle';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { usePowerups } from '@/hooks/usePowerups';
+import { useGPS } from '@/hooks/useGPS';
+import { calculateDistance } from '@/lib/locationUtils';
 import { Zap, Eye } from 'lucide-react';
 
 // Lazy load the grid component
@@ -372,6 +374,7 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
   const { openSheet } = useSheet();
   const onlineCount = useRightNowCount();
   const { isActive: isBoostActive, expiresAt: boostExpiresAt } = usePowerups();
+  const { position: myPosition } = useGPS();
 
   // ---- Auth + profile data ----
   const [city, setCity] = useState('London');
@@ -597,6 +600,16 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
       const displayName = String(profile?.profileName || '').trim();
       if (!displayName) return false;
 
+      // Distance filter — uses Haversine against viewer GPS
+      if (myPosition && filters.distanceKm < 100) {
+        const pLat = (profile as any)?.geoLat;
+        const pLng = (profile as any)?.geoLng;
+        if (typeof pLat === 'number' && typeof pLng === 'number') {
+          const distM = calculateDistance(myPosition.lat, myPosition.lng, pLat, pLng);
+          if (distM > filters.distanceKm * 1000) return false;
+        }
+      }
+
       // Sheet filters first
       if (filters.onlineOnly && !profile.is_online && !profile.onlineNow) return false;
 
@@ -650,7 +663,7 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
 
       return true;
     },
-    [filters, activeTab, tonightUserIds, vibeTagFilter, blockedIds],
+    [filters, activeTab, tonightUserIds, vibeTagFilter, blockedIds, myPosition],
   );
 
   // ---- Profile tap handler ----

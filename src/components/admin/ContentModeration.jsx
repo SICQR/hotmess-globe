@@ -46,8 +46,8 @@ export default function ContentModeration() {
         reason: p.moderation_reason,
         sentiment: p.ai_sentiment
       }));
-      const summary = await null /* InvokeLLM disabled */;
-      setAiSummary(summary);
+      /* LLM summary disabled */
+      setAiSummary({ summary: 'AI moderation summary unavailable — LLM endpoint not configured.', patterns: [], recommendations: [] });
     } catch (error) {
       toast.error('Failed to generate AI summary');
     } finally {

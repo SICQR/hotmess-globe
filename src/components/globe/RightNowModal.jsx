@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useGlobe } from '@/contexts/GlobeContext';
 import { usePowerups } from '@/hooks/usePowerups';
 import { useSheet } from '@/contexts/SheetContext';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 
 const DURATIONS = [
   { value: 60,   label: '1 hour' },
@@ -137,15 +138,7 @@ export default function RightNowModal({ isOpen, onClose, intent: intentProp = 'e
       let photoUrl = null;
       if (photoFile) {
         try {
-          const ext = photoFile.name.split('.').pop() || 'jpg';
-          const path = `right-now/${user.id}-${Date.now()}.${ext}`;
-          const { error: uploadErr } = await supabase.storage
-            .from('uploads')
-            .upload(path, photoFile, { contentType: photoFile.type });
-          if (!uploadErr) {
-            const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(path);
-            photoUrl = publicUrl;
-          }
+          photoUrl = await uploadToStorage(photoFile, 'uploads', user.id);
         } catch {
           // Photo upload failed — continue without it
         }

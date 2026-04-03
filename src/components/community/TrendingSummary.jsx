@@ -9,22 +9,8 @@ export default function TrendingSummary({ posts }) {
     if (!posts || posts.length === 0) return;
     setLoading(true);
     try {
-      const topPosts = posts
-        .sort((a, b) => {
-          const scoreA = (a.likes_count || 0) * 2 + (a.comments_count || 0) * 3;
-          const scoreB = (b.likes_count || 0) * 2 + (b.comments_count || 0) * 3;
-          return scoreB - scoreA;
-        })
-        .slice(0, 10);
-      const prompt = `Analyze these trending community posts from HOTMESS LONDON and create a brief, engaging summary of what's happening:
-${topPosts.map((p, i) => `${i + 1}. ${p.content} (${p.likes_count || 0} likes, ${p.comments_count || 0} comments) [${p.category}]`).join('\n')}
-Create a 2-3 sentence summary highlighting:
-- Main themes/topics people are discussing
-- Most popular categories
-- Overall community vibe/sentiment
-Use a fun, energetic tone that matches HOTMESS LONDON's nightlife culture.`;
-      const response = await null /* InvokeLLM disabled */;
-      setSummary(response);
+      /* LLM trending summary disabled — skip */
+      setSummary(null);
     } catch (error) {
       console.error('Failed to generate summary:', error);
     } finally {

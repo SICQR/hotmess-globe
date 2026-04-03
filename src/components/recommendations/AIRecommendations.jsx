@@ -47,12 +47,11 @@ Based on the user's profile and past behavior, recommend the top ${limit} beacon
 1. Their preferred event types (${topInteractions.join(', ')})
 2. Event intensity and variety
 Return ONLY an array of beacon IDs in order of recommendation strength.`;
-        const response = await null /* InvokeLLM disabled */;
-        const recommendedIds = response.recommendations?.slice(0, limit) || [];
-        const recommendedBeacons = recommendedIds
-          .map(id => availableBeacons.find(b => b.id === id))
-          .filter(Boolean);
-        setRecommendations(recommendedBeacons);
+        // AI recommendations disabled — fall back to shuffled beacons
+        const fallbackBeacons = availableBeacons
+          .sort(() => Math.random() - 0.5)
+          .slice(0, limit);
+        setRecommendations(fallbackBeacons);
       } catch (error) {
         console.error('Failed to generate recommendations:', error);
         // Fallback to simple recommendation

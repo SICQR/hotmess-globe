@@ -15,28 +15,13 @@ export default function NightlifeResearcher({ currentUser, onVenuesFound }) {
     }
     setLoading(true);
     try {
-      const userProfile = `
-Location: ${currentUser.city || 'London'}
-Interests: ${(currentUser.event_preferences || []).join(', ')}
-Music Taste: ${(currentUser.music_taste || []).join(', ')}
-Bio: ${currentUser.bio || 'No bio'}
-`;
-      const prompt = `You are a specialist nightlife and LGBT venue researcher. For the query "${query}", provide recommendations for LGBT-focused nightlife options.
-User Profile:
-${userProfile}
-For each recommendation provide:
-• Name of venue, event or party
-• Location and address
-• Typical opening hours or event schedule
-• A brief description of the venue or event experience
-• Why it matches the user's interests
-Focus exclusively on LGBT venues and events. Prioritise accuracy by cross-checking sources. Use recent information.`;
-      const response = await null /* InvokeLLM disabled */;
+      /* LLM venue search disabled */
+      const response = { venues: [], summary: '' };
       setResults(response);
       if (onVenuesFound) {
-        onVenuesFound(response.venues);
+        onVenuesFound([]);
       }
-      toast.success(`Found ${response.venues?.length || 0} venues`);
+      toast.info('AI venue search is not yet available');
     } catch (error) {
       console.error('Failed to search:', error);
       toast.error('Search failed');

@@ -118,6 +118,18 @@ export default async function handler(req, res) {
             console.error('[Stripe webhook] vault_items insert error:', err?.message);
           });
 
+          // Update orders table so VaultMode/MyOrders reflect payment
+          const orderId = session.metadata?.order_id;
+          if (orderId) {
+            await supabase.from('orders').update({
+              status: 'paid',
+              paid_at: new Date().toISOString(),
+              stripe_session_id: session.id,
+            }).eq('id', orderId).catch((err) => {
+              console.error('[Stripe webhook] orders update error:', err?.message);
+            });
+          }
+
           break;
         }
 
@@ -334,6 +346,15 @@ export default async function handler(req, res) {
             title: 'Preloved Item',
             metadata: { stripe_session_id: session.id, listing_id: asyncListingId, paid_at: new Date().toISOString() },
           }).catch(() => {});
+
+          const asyncOrderId = session.metadata?.order_id;
+          if (asyncOrderId) {
+            await supabase.from('orders').update({
+              status: 'paid',
+              paid_at: new Date().toISOString(),
+              stripe_session_id: session.id,
+            }).eq('id', asyncOrderId).catch(() => {});
+          }
           break;
         }
 
