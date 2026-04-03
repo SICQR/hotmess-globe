@@ -7,15 +7,17 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingBag, ShoppingCart, Loader2,
-  ChevronRight, Tag, Share2, MessageCircle, HandCoins,
+  ChevronRight, ChevronDown, Tag, Share2, MessageCircle, HandCoins,
+  Truck, RotateCcw, Flag,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SheetSection, SheetActions, SheetDivider } from './L2SheetContainer';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
+import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 import ProductReviews from '@/components/marketplace/ProductReviews';
 
@@ -276,6 +278,55 @@ function InternalProductDetail({ product }) {
 }
 
 /**
+ * Shipping & Returns expandable accordion for Shopify product detail.
+ */
+function ShippingAccordion() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mb-4 border border-white/10 rounded-xl overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3 text-left"
+      >
+        <div className="flex items-center gap-2">
+          <Truck className="w-4 h-4 text-[#C8962C]" />
+          <span className="text-white text-sm font-bold">Shipping & Returns</span>
+        </div>
+        <ChevronDown className={`w-4 h-4 text-white/40 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 space-y-3 border-t border-white/5 pt-3">
+              <div className="flex items-start gap-2.5">
+                <Truck className="w-3.5 h-3.5 text-white/40 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-white text-xs font-semibold">Free UK delivery</p>
+                  <p className="text-white/40 text-[11px]">Standard 3-5 working days. Express available at checkout.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <RotateCcw className="w-3.5 h-3.5 text-white/40 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-white text-xs font-semibold">14-day returns</p>
+                  <p className="text-white/40 text-[11px]">Unworn items with tags. Contact support to start a return.</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/**
  * Renders the shop sheet overlay that displays featured products, a single Shopify product, preloved product details, or an internal product detail depending on props and state.
  *
  * @param {Object} props - Component props.
@@ -371,9 +422,36 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
 
         <SheetDivider />
 
-        {/* Seller info */}
+        {/* Condition detail */}
+        {product.condition && (
+          <>
+            <SheetSection title="Condition">
+              <div className="bg-[#1C1C1E] rounded-xl p-3">
+                <p className="text-white font-bold text-sm">
+                  {conditionLabels[product.condition] || product.condition}
+                </p>
+                <p className="text-white/40 text-xs mt-1">
+                  {product.condition === 'new' && 'Brand new, unused item with original tags and packaging.'}
+                  {product.condition === 'like_new' && 'Worn once or twice. No visible signs of wear.'}
+                  {product.condition === 'good' && 'Worn a few times. Minor signs of wear, still in great shape.'}
+                  {product.condition === 'fair' && 'Visible wear. Fully functional, priced to reflect condition.'}
+                </p>
+              </div>
+            </SheetSection>
+            <SheetDivider />
+          </>
+        )}
+
+        {/* Seller info — tappable to open profile */}
         <SheetSection title="Seller">
-          <div className="flex items-center gap-3 p-3 bg-[#1C1C1E] rounded-xl">
+          <button
+            onClick={() => {
+              if (product.seller_id) {
+                openSheet('profile', { id: product.seller_id });
+              }
+            }}
+            className="w-full flex items-center gap-3 p-3 bg-[#1C1C1E] rounded-xl active:scale-[0.98] transition-transform text-left"
+          >
             <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white/60 font-bold text-sm">
               {(seller?.name || 'S').charAt(0).toUpperCase()}
             </div>
@@ -381,7 +459,8 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
               <p className="text-white font-bold text-sm">{seller?.name || 'HOTMESS Seller'}</p>
               <p className="text-white/40 text-xs">Verified seller</p>
             </div>
-          </div>
+            <ChevronRight className="w-4 h-4 text-white/20" />
+          </button>
         </SheetSection>
 
         <SheetDivider />
@@ -389,6 +468,22 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
         {/* Reviews */}
         <SheetSection title="">
           <ProductReviews productId={product.id} />
+        </SheetSection>
+
+        <SheetDivider />
+
+        {/* Report listing */}
+        <SheetSection>
+          <button
+            onClick={() => {
+              openSheet('support', { subject: `Report listing: ${product.title}`, listingId: product.id });
+              toast('Report submitted. We will review this listing.', { duration: 3000 });
+            }}
+            className="w-full flex items-center justify-center gap-2 py-3 text-white/30 text-xs hover:text-white/50 transition-colors"
+          >
+            <Flag className="w-3 h-3" />
+            Report this listing
+          </button>
         </SheetSection>
 
         <SheetDivider />
@@ -437,24 +532,34 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
             Offer
           </Button>
           <Button
-            onClick={() => {
+            onClick={async () => {
               try {
-                const existing = JSON.parse(localStorage.getItem('hm_cart') || '[]');
-                const already = existing.find((i) => i.id === product.id);
-                if (already) {
-                  already.qty = (already.qty || 1) + 1;
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session?.user) { toast.error('Please log in first'); return; }
+                // Check if already in cart
+                const { data: existing } = await supabase
+                  .from('cart_items')
+                  .select('id, quantity')
+                  .eq('auth_user_id', session.user.id)
+                  .eq('product_id', product.id)
+                  .eq('source', 'preloved')
+                  .maybeSingle();
+                if (existing) {
+                  await supabase.from('cart_items').update({ quantity: (existing.quantity || 1) + 1 }).eq('id', existing.id);
                 } else {
-                  existing.push({
-                    id: product.id,
-                    title: product.title,
-                    price: parseFloat(product.price || 0),
-                    image: allImages[0],
-                    seller_id: product.seller_id,
+                  await supabase.from('cart_items').insert({
+                    auth_user_id: session.user.id,
+                    product_id: product.id,
+                    quantity: 1,
                     source: 'preloved',
-                    qty: 1,
+                    metadata: {
+                      title: product.title,
+                      price: parseFloat(product.price || 0),
+                      image: allImages[0] || null,
+                      seller_id: product.seller_id,
+                    },
                   });
                 }
-                localStorage.setItem('hm_cart', JSON.stringify(existing));
                 toast.success('Added to cart');
                 openSheet('cart');
               } catch {
@@ -612,6 +717,9 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
               </div>
             </div>
           )}
+
+          {/* Shipping & Returns accordion */}
+          <ShippingAccordion />
 
           {/* Tags — horizontal scroll */}
           {displayProduct.tags?.length > 0 && (

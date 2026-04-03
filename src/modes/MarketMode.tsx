@@ -36,6 +36,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { supabase } from '@/components/utils/supabaseClient';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
@@ -66,7 +67,7 @@ import {
   type ProductFilters,
 } from '@/lib/data/market';
 
-// Safe cart item count hook — counts BOTH Shopify + preloved items
+// Safe cart item count hook — counts BOTH Shopify + preloved (Supabase) items
 function useCartItemCount(): number {
   const { cart } = useShopCart();
   // Shopify cart lines are edges in a connection
@@ -76,12 +77,23 @@ function useCartItemCount(): number {
     if (Array.isArray(lines)) shopifyCount = lines.length;
     else if (lines.edges && Array.isArray(lines.edges)) shopifyCount = lines.edges.length;
   }
-  // Preloved items from localStorage
-  let prelovedCount = 0;
-  try {
-    const preloved = JSON.parse(localStorage.getItem('hm_cart') || '[]');
-    prelovedCount = Array.isArray(preloved) ? preloved.length : 0;
-  } catch { /* ignore */ }
+  // Preloved items from Supabase cart_items table
+  const [prelovedCount, setPrelovedCount] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (cancelled || !session?.user) return;
+      supabase
+        .from('cart_items')
+        .select('id', { count: 'exact', head: true })
+        .eq('auth_user_id', session.user.id)
+        .eq('source', 'preloved')
+        .then(({ count }) => {
+          if (!cancelled) setPrelovedCount(count || 0);
+        });
+    });
+    return () => { cancelled = true; };
+  }, []);
   return shopifyCount + prelovedCount;
 }
 
@@ -575,6 +587,17 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   // Cart item count for badge
   const cartItemCount = useCartItemCount();
 
+  // Post-purchase success flow
+  const purchaseSuccess = searchParams.get('purchase') === 'success';
+  const purchaseListingId = searchParams.get('listing');
+  const handleDismissPurchase = useCallback(() => {
+    setSearchParams((prev) => {
+      prev.delete('purchase');
+      prev.delete('listing');
+      return prev;
+    }, { replace: true });
+  }, [setSearchParams]);
+
   // ---- Filter state (synced to URL params) --------------------------------
   const [searchInput, setSearchInput] = useState(searchParams.get('q') ?? '');
   const debouncedSearch = useDebouncedValue(searchInput, 300);
@@ -745,6 +768,59 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   }, []);
 
   // ---- Render ---------------------------------------------------------------
+
+  // Post-purchase success screen
+  if (purchaseSuccess) {
+    return (
+      <div
+        className={`h-full w-full flex flex-col items-center justify-center px-6 text-center ${className}`}
+        style={{ backgroundColor: ROOT_BG }}
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+          className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
+          style={{ backgroundColor: 'rgba(200,150,44,0.2)', border: '2px solid #C8962C' }}
+        >
+          <svg className="w-10 h-10 text-[#C8962C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+          </svg>
+        </motion.div>
+        <h2 className="text-white font-black text-xl mb-2">You got it</h2>
+        <p className="text-white/50 text-sm mb-6">Your order is confirmed. Check your Vault for details.</p>
+        <div className="flex flex-col gap-3 w-full max-w-xs">
+          <button
+            onClick={() => { handleDismissPurchase(); window.location.href = '/more/vault'; }}
+            className="w-full h-12 rounded-xl font-black text-sm active:scale-95 transition-transform"
+            style={{ backgroundColor: '#C8962C', color: '#000' }}
+          >
+            View in Vault
+          </button>
+          <button
+            onClick={handleDismissPurchase}
+            className="w-full h-12 rounded-xl font-bold text-sm active:scale-95 transition-transform border"
+            style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)' }}
+          >
+            Browse more
+          </button>
+          {purchaseListingId && (
+            <button
+              onClick={() => {
+                handleDismissPurchase();
+                openSheet('chat', { recipientId: purchaseListingId });
+              }}
+              className="w-full h-12 rounded-xl font-bold text-sm active:scale-95 transition-transform border"
+              style={{ borderColor: 'rgba(200,150,44,0.3)', color: '#C8962C' }}
+            >
+              Contact seller
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`h-full w-full flex flex-col ${className}`}

@@ -56,7 +56,73 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const { tierId } = req.body || {};
+  const body = req.body || {};
+  const { type } = body;
+
+  // Resolve origin for redirect URLs
+  const origin =
+    process.env.VITE_PUBLIC_URL ||
+    (req.headers.origin?.startsWith('http') ? req.headers.origin : null) ||
+    'https://hotmessldn.com';
+
+  // Fetch display_name for the Stripe customer description
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('display_name')
+    .eq('id', user.id)
+    .single();
+
+  // ── Preloved order checkout ──────────────────────────────────────────────
+  if (type === 'preloved_order') {
+    const { listing_id, price_gbp, title } = body;
+    if (!listing_id || !price_gbp) {
+      return res.status(400).json({ error: 'listing_id and price_gbp required' });
+    }
+
+    const amountInPence = Math.round(Number(price_gbp) * 100);
+    if (!amountInPence || amountInPence <= 0) {
+      return res.status(400).json({ error: 'Invalid price' });
+    }
+
+    try {
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        mode: 'payment',
+        customer_email: user.email,
+        line_items: [
+          {
+            price_data: {
+              currency: 'gbp',
+              unit_amount: amountInPence,
+              product_data: {
+                name: title || 'Preloved Item',
+                description: 'Preloved item from HOTMESS Market',
+              },
+            },
+            quantity: 1,
+          },
+        ],
+        metadata: {
+          user_id: user.id,
+          user_email: user.email ?? '',
+          user_name: profile?.display_name ?? '',
+          type: 'preloved_order',
+          listing_id: String(listing_id),
+        },
+        success_url: `${origin}/market?purchase=success&listing=${encodeURIComponent(listing_id)}`,
+        cancel_url: `${origin}/market`,
+        allow_promotion_codes: false,
+      });
+
+      return res.status(200).json({ url: session.url });
+    } catch (err) {
+      console.error('[preloved-checkout] Stripe error:', err?.message);
+      return res.status(500).json({ error: 'Failed to create checkout session', detail: err?.message });
+    }
+  }
+
+  // ── Membership checkout (default) ────────────────────────────────────────
+  const { tierId } = body;
   if (!tierId) {
     return res.status(400).json({ error: 'tierId required' });
   }
@@ -76,19 +142,6 @@ export default async function handler(req, res) {
   if (!priceInPence || priceInPence <= 0) {
     return res.status(400).json({ error: 'Free tier — no checkout needed' });
   }
-
-  // Resolve origin for redirect URLs
-  const origin =
-    process.env.VITE_PUBLIC_URL ||
-    (req.headers.origin?.startsWith('http') ? req.headers.origin : null) ||
-    'https://hotmessldn.com';
-
-  // Fetch display_name for the Stripe customer description
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('display_name')
-    .eq('id', user.id)
-    .single();
 
   try {
     const session = await stripe.checkout.sessions.create({

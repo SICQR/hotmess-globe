@@ -13,7 +13,6 @@ import BootRouter from '@/components/shell/BootRouter';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { createPageUrl } from './utils';
 import { ShopCartProvider } from '@/features/shop/cart/ShopCartContext';
-import Shop from '@/pages/Shop';
 import ShopCollection from '@/pages/ShopCollection';
 import ShopProduct from '@/pages/ShopProduct';
 import ShopCart from '@/pages/ShopCart';
@@ -259,10 +258,6 @@ const ShopCollectionRoute = () => {
   );
 };
 
-const CreatorsMarketRoute = () => {
-  return <PageRoute pageKey="Marketplace" />;
-};
-
 const CreatorsProductRoute = () => {
   const { id } = useParams();
   const target = `${createPageUrl('ProductDetail')}?id=${encodeURIComponent(id ?? '')}`;
@@ -297,14 +292,6 @@ const ShopProductRoute = () => {
   return (
     <LayoutWrapper currentPageName="Marketplace">
       <ShopProduct />
-    </LayoutWrapper>
-  );
-};
-
-const ShopHomeRoute = () => {
-  return (
-    <LayoutWrapper currentPageName="Marketplace">
-      <Shop />
     </LayoutWrapper>
   );
 };
@@ -485,7 +472,7 @@ const AuthenticatedApp = () => {
       <Route path="/p/:handle" element={<ShopProductRoute />} />
       <Route path="/cart" element={<ShopCartRoute />} />
       <Route path="/checkout/start" element={<ShopCheckoutStartRoute />} />
-      <Route path="/checkout" element={<PageRoute pageKey="Checkout" />} />
+      <Route path="/checkout" element={<Navigate to="/market" replace />} />
 
       {/* Features / USP Pages */}
       <Route path="/features" element={<PageRoute pageKey="Features" />} />
