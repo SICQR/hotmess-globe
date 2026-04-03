@@ -94,11 +94,11 @@ Available Events/Beacons:
 ${beacons.slice(0, 30).map(b => `- ID: ${b.id}, Title: ${b.title}, Type: ${b.kind}, Mode: ${b.mode}, City: ${b.city}, Intensity: ${Math.round((b.intensity || 0.5) * 100)}%, Description: ${b.description || 'N/A'}`).join('\n')}
 User Query: "${queryText}"
 Respond in a friendly, conversational tone. If recommending specific beacons, include their IDs in your response like [BEACON:id]. Be helpful, engaging, and use inclusive language. Keep responses concise but informative.`;
-      const response = await null /* InvokeLLM disabled */;
+      // AI chat disabled — return a static fallback message
       const assistantMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response,
+        content: "I can't make personalised recommendations right now, but check out the Pulse tab to see what's happening near you!",
         timestamp: new Date()
       };
       setMessages(prev => [...prev, assistantMessage]);

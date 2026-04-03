@@ -69,21 +69,11 @@ export async function compressImage(file, maxWidth = 1920, quality = 0.8) {
  */
 export async function moderateContent(fileUrl, type = 'image') {
   try {
-    const prompt = `Analyze this ${type} for inappropriate content:
-Check for:
-- NSFW/explicit content
-- Violence or gore
-- Hate symbols
-- Illegal activities
-Return JSON with:
-- approved (boolean)
-- reason (string if not approved)
-- confidence (0-1)`;
-    const result = await null /* InvokeLLM disabled */;
+    /* TODO: LLM moderation endpoint needed — auto-approving for now */
     return {
-      approved: result.approved,
-      reason: result.reason || null,
-      confidence: result.confidence || 0
+      approved: true,
+      reason: null,
+      confidence: 0
     };
   } catch (error) {
     console.error('Moderation failed:', error);

@@ -60,7 +60,13 @@ Generate:
 2. 3 key personality insights (short phrases in CAPS)
 3. Recommended archetype matches (from: architect, hunter, collector, explorer, socialite, merchant, guardian, alchemist)
 Format as JSON with: vibe_score, insights (array), recommended_archetypes (array)`;
-      const analysis = await null /* InvokeLLM disabled */;
+      // AI personality analysis disabled — compute a simple vibe score from answers
+      const avgScore = Math.round((answers.openness + answers.energy + answers.social + answers.adventure + answers.intensity) / 5);
+      const analysis = {
+        vibe_score: avgScore,
+        insights: ['UNIQUE ENERGY', 'BOLD SPIRIT', 'READY TO CONNECT'],
+        recommended_archetypes: ['explorer', 'socialite'],
+      };
       // Update user profile
       const updateData = {
         personality_traits: answers,

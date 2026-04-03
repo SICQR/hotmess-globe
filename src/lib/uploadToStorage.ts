@@ -17,6 +17,8 @@ const BUCKET_MAP: Record<string, string> = {
   avatars:          'avatars',
   // Preloved listing images
   'listing-images': 'messmarket-images',
+  // General uploads (Go Live photos, beacon images, product form, disputes)
+  uploads:          'messmarket-images',
 };
 
 /**

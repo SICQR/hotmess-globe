@@ -75,9 +75,8 @@ Recommend 6 product IDs that best match this user's interests. Consider:
 3. Popular items in categories they like
 4. Price range similar to their purchases
 Return ONLY a JSON array of product IDs, like: ["id1", "id2", "id3", "id4", "id5", "id6"]`;
-      const response = await null /* InvokeLLM disabled */;
-      const recommendedIds = response.product_ids || [];
-      const recommendedProducts = availableProducts.filter(p => recommendedIds.includes(p.id)).slice(0, 6);
+      // AI recommendations disabled — fall back to recent products
+      const recommendedProducts = availableProducts.slice(0, 6);
       setRecommendations(recommendedProducts);
     } catch (error) {
       console.error('Failed to generate recommendations:', error);

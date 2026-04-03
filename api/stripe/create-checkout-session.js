@@ -74,7 +74,7 @@ export default async function handler(req, res) {
 
   // ── Preloved order checkout ──────────────────────────────────────────────
   if (type === 'preloved_order') {
-    const { listing_id, price_gbp, title } = body;
+    const { listing_id, price_gbp, title, order_id } = body;
     if (!listing_id || !price_gbp) {
       return res.status(400).json({ error: 'listing_id and price_gbp required' });
     }
@@ -108,6 +108,7 @@ export default async function handler(req, res) {
           user_name: profile?.display_name ?? '',
           type: 'preloved_order',
           listing_id: String(listing_id),
+          order_id: order_id ? String(order_id) : '',
         },
         success_url: `${origin}/market?purchase=success&listing=${encodeURIComponent(listing_id)}`,
         cancel_url: `${origin}/market`,

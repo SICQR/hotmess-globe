@@ -89,9 +89,9 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
     setGeneratingDescription(true);
     try {
       const prompt = `Generate a compelling, detailed product description for a ${formData.product_type} product called "${formData.name}"${formData.category ? ` in the ${formData.category} category` : ''}. Make it engaging, highlight key features and benefits, and use a tone that appeals to the HOTMESS LONDON audience (nightlife, creative, urban culture). Keep it 2-3 sentences.`;
-      const response = await null /* InvokeLLM disabled */;
-      setFormData(prev => ({ ...prev, description: response }));
-      toast.success('Description generated!');
+      // AI description generation disabled — skip silently
+      toast.error('AI description generation is not available yet');
+      return;
     } catch (error) {
       console.error('Failed to generate description:', error);
       toast.error('Failed to generate description');
@@ -107,13 +107,9 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
     setGeneratingTags(true);
     try {
       const prompt = `Based on this product: "${formData.name}" - ${formData.description}. Suggest 5-8 relevant, searchable tags that would help users find this product. Return ONLY the tags as a comma-separated list, no explanations.`;
-      const response = await null /* InvokeLLM disabled */;
-      const tags = response.split(',').map(tag => tag.trim()).filter(tag => tag && !formData.tags.includes(tag));
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, ...tags]
-      }));
-      toast.success(`${tags.length} tags suggested!`);
+      // AI tag suggestions disabled — skip silently
+      toast.error('AI tag suggestions are not available yet');
+      return;
     } catch (error) {
       console.error('Failed to generate tags:', error);
       toast.error('Failed to generate tags');
@@ -129,9 +125,9 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
     setGeneratingMarketing(true);
     try {
       const prompt = `Create compelling marketing copy for a featured product listing: "${formData.name}" - ${formData.description}. Price: £${formData.price_gbp || formData.price_xp}. Write a short, punchy promotional message (1-2 sentences) that creates urgency and excitement. Use emojis and caps lock strategically for emphasis. Think Instagram/social media style.`;
-      const response = await null /* InvokeLLM disabled */;
-      setMarketingCopy(response);
-      toast.success('Marketing copy generated!');
+      // AI marketing copy disabled — skip silently
+      toast.error('AI marketing copy is not available yet');
+      return;
     } catch (error) {
       console.error('Failed to generate marketing copy:', error);
       toast.error('Failed to generate marketing copy');

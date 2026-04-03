@@ -161,6 +161,7 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
           listing_id: firstItem?.id || id,
           price_gbp: orderTotal,
           title: firstItem?.title || 'Preloved Item',
+          order_id: order.id,
         }),
       });
 

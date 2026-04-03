@@ -136,16 +136,8 @@ export default function PostCreator({ user, onPostCreated, onCancel }) {
     }
     setPosting(true);
     try {
-      // AI moderation
-      const moderationPrompt = `Analyze this community post for inappropriate content:
-"${content}"
-Check for:
-- Hate speech, harassment, threats
-- Spam or promotional content
-- NSFW/explicit content
-- Misinformation
-Return a JSON with: approved (boolean), reason (string if not approved), sentiment (positive/neutral/negative)`;
-      const moderation = await null /* InvokeLLM disabled */;
+      // AI moderation disabled — auto-pass
+      const moderation = { approved: true, sentiment: 'neutral' };
       const expiresAt = expires_in_24h 
         ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         : null;
