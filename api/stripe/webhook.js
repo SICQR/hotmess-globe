@@ -57,6 +57,14 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Idempotency check — skip already-processed events
+    const { data: existing } = await supabase
+      .from('stripe_events_log')
+      .select('id')
+      .eq('stripe_event_id', event.id)
+      .maybeSingle();
+    if (existing) return res.status(200).json({ received: true, deduplicated: true });
+
     switch (event.type) {
 
       case 'checkout.session.completed': {
@@ -105,6 +113,17 @@ export default async function handler(req, res) {
           if (memberErr) {
             console.error('[Stripe webhook] membership upsert error:', memberErr.message, { userId, tierId });
           }
+
+          // Write vault item for membership
+          await supabase.from('vault_items').upsert({
+            user_id: userId,
+            item_type: 'membership',
+            source_system: 'stripe',
+            source_ref: session.id,
+            status: 'active',
+            title: tierName || tierId,
+            metadata: { stripe_session_id: session.id, tier: tierId },
+          }, { onConflict: 'user_id,item_type,source_ref' }).catch(() => {});
         } else if (userId && !type) {
           // Legacy path: session without type metadata — treat as subscription update
           const tierId_ = session.metadata?.tier_id;
@@ -250,10 +269,102 @@ export default async function handler(req, res) {
         break;
       }
 
+      // Delayed payment methods (bank debits, etc.) — same logic as checkout.session.completed
+      case 'checkout.session.async_payment_succeeded': {
+        const session = event.data.object;
+        const userId = session.metadata?.user_id || session.metadata?.supabase_user_id;
+        const tierId = session.metadata?.tier_id;
+        const tierName = session.metadata?.tier_name;
+        const type = session.metadata?.type;
+
+        const boostKey = session.metadata?.boost_key;
+        const sessionUserId = session.metadata?.user_id;
+        if (boostKey && sessionUserId) {
+          const { error: boostError } = await supabase.rpc('activate_user_boost', {
+            p_user_id: sessionUserId,
+            p_boost_key: boostKey,
+            p_payment_intent_id: session.payment_intent || null,
+          });
+          if (boostError) console.error('activate_user_boost error:', boostError.message);
+          return res.json({ received: true });
+        }
+
+        if (userId && type === 'membership' && tierId) {
+          const { error: memberErr } = await supabase
+            .from('memberships')
+            .upsert(
+              {
+                user_id: userId,
+                tier: tierName || tierId,
+                status: 'active',
+                started_at: new Date().toISOString(),
+                ends_at: null,
+                metadata: {
+                  stripe_session_id: session.id,
+                  stripe_customer_id: session.customer,
+                  tier_id: tierId,
+                  paid_at: new Date().toISOString(),
+                },
+              },
+              { onConflict: 'user_id' }
+            );
+
+          if (memberErr) {
+            console.error('[Stripe webhook] async_payment membership upsert error:', memberErr.message, { userId, tierId });
+          }
+
+          await supabase.from('vault_items').upsert({
+            user_id: userId,
+            item_type: 'membership',
+            source_system: 'stripe',
+            source_ref: session.id,
+            status: 'active',
+            title: tierName || tierId,
+            metadata: { stripe_session_id: session.id, tier: tierId },
+          }, { onConflict: 'user_id,item_type,source_ref' }).catch(() => {});
+        } else if (userId && !type) {
+          const tierId_ = session.metadata?.tier_id;
+          if (tierId_) {
+            await supabase
+              .from('memberships')
+              .upsert(
+                { user_id: userId, tier: tierId_, status: 'active', started_at: new Date().toISOString(), ends_at: null, metadata: { stripe_session_id: session.id } },
+                { onConflict: 'user_id' }
+              );
+          }
+        }
+        break;
+      }
+
+      case 'charge.refunded': {
+        const charge = event.data.object;
+        const userId = charge.metadata?.user_id || charge.metadata?.supabase_user_id;
+        if (userId) {
+          // Update memberships if this was a membership charge
+          await supabase.from('memberships').update({ status: 'refunded' }).eq('user_id', userId).eq('status', 'active');
+        }
+        // Update vault items if order_id exists
+        const orderId = charge.metadata?.order_id;
+        if (orderId) {
+          await supabase.from('vault_items').update({ status: 'refunded' }).eq('source_ref', orderId);
+        }
+        break;
+      }
+
       default:
         // Unhandled event type — not an error, just not subscribed
         break;
     }
+
+    // Log processed event for idempotency
+    await supabase.from('stripe_events_log').insert({
+      stripe_event_id: event.id,
+      event_type: event.type,
+      object_id: event.data?.object?.id,
+      processed: true,
+      processed_at: new Date().toISOString(),
+      payload: event.data?.object ? { id: event.data.object.id } : {},
+    }).catch(() => {}); // Non-fatal if log insert fails
 
     return res.status(200).json({ received: true });
   } catch (error) {

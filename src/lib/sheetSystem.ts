@@ -552,6 +552,17 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: false,
     deepLinkParams: ['lat', 'lng'],
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // AUTH — MORE SIGN-IN METHODS
+  // ─────────────────────────────────────────────────────────────────────────
+  'more-auth-methods': {
+    id: 'more-auth-methods',
+    title: 'More ways to sign in',
+    height: 'small',
+    auth: false,
+    deepLinkParams: [],
+  },
 } as const;
 
 /**

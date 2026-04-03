@@ -70,6 +70,7 @@ const L2CityPickerSheet = lazy(() => import('./L2CityPickerSheet'));
 const L2AchievementsSheet = lazy(() => import('./L2AchievementsSheet'));
 const L2SquadsSheet = lazy(() => import('./L2SquadsSheet'));
 const L2SweatCoinsSheet = lazy(() => import('./L2SweatCoinsSheet'));
+const L2AuthMethodsSheet = lazy(() => import('./L2AuthMethodsSheet'));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PLACEHOLDER FOR UNIMPLEMENTED SHEETS
@@ -181,6 +182,8 @@ const SHEET_COMPONENTS = {
   'achievements': L2AchievementsSheet,
   'squads': L2SquadsSheet,
   'sweat-coins': L2SweatCoinsSheet,
+  // Auth — more sign-in methods
+  'more-auth-methods': L2AuthMethodsSheet,
 };
 
 
