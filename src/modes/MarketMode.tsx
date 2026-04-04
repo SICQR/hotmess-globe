@@ -1,84 +1,79 @@
 /**
- * MarketMode - Unified Commerce Engine (/market)
+ * MarketMode - Three-Engine Commerce Shell (/market)
  *
- * Brand visibility is controlled by src/config/brands.ts — hidden brands
- * are excluded from navigation and collections automatically.
+ * Routes between three distinct behavior engines:
+ *   1. Shop (/market)          — HNH MESS + merch. Direct checkout. Amber #C8962C.
+ *   2. Drops (/market/drops)   — Limited brand drops. Urgency/scarcity. Orange #CF3A10.
+ *   3. Preloved (/market/preloved) — Person-to-person. Chat-first. Brown #9E7D47.
  *
- * Three commerce streams merged into one premium dark marketplace:
- *   1. Shop (Shopify headless) -- official HOTMESS merch
- *   2. Preloved (Supabase)     -- user-to-user listings
- *   3. Creator drops           -- tagged radio host merch
+ * Each engine has its own:
+ *   - Visual treatment (colors, card CTAs)
+ *   - Data source (Shopify, internal products, preloved_listings)
+ *   - Transaction model (cart, buy-now, message seller)
  *
- * Layout (top to bottom):
- *   - Fixed top bar: MARKET wordmark + cart badge + filter + search + source tabs + category chips
- *   - Featured banner (only when no filters active)
- *   - 2-column product grid with infinite scroll
- *   - Sell FAB (bottom-right)
+ * The shell provides: top bar, search, engine tabs, sell FAB.
  *
- * Data: TanStack Query (useQuery + useInfiniteQuery pattern via manual pagination)
- * Animation: Framer Motion staggered grid items + layout transitions
- * Loading: Custom skeleton loaders
+ * Brand visibility is controlled by src/config/brands.ts.
  *
  * Wireframe:
  * ┌─────────────────────────────────────────┐
  * │  MARKET              [bag(n)]  [filter] │  Fixed top bar
- * │  [Q] Search drops, merch, preloved...   │  Search input
- * │  [All] [Shop] [Preloved]                │  Source tabs
- * │  [All][Clothing][Accessories][Art]...→  │  Category chips
+ * │  [Q] Search...                          │  Shared search
+ * │  [Shop] [Drops] [Preloved]              │  Engine tabs
  * ├─────────────────────────────────────────┤
- * │  [Featured banner 180px]                │  Only when unfiltered
- * │  ┌──────────┐  ┌──────────┐             │  2-col product grid
- * │  │ Product  │  │ Product  │             │  Infinite scroll
- * │  └──────────┘  └──────────┘             │
+ * │  <ShopEngine /> | <DropsEngine /> |     │  Active engine
+ * │  <PrelovedEngine />                     │
  * ├─────────────────────────────────────────┤
  * │                              [+ Sell]   │  FAB, z-40
  * └─────────────────────────────────────────┘
  */
 
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { supabase } from '@/components/utils/supabaseClient';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
-import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { useSearchParams } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
   SlidersHorizontal,
   ShoppingBag,
-  Heart,
   Plus,
   X,
-  Package,
-  RefreshCw,
+  Flame,
+  MessageCircle,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import { useBootGuard } from '@/contexts/BootGuardContext';
-import { isBrandVisible, BRAND_CONFIG } from '@/config/brands';
-import { AppBanner } from '@/components/banners/AppBanner';
-import { HNHMarketHero } from '@/components/home/HNHMarketHero';
-import { HNHMessStrip } from '@/components/home/HNHMessStrip';
-import { CardMoreButton } from '@/components/ui/CardMoreButton';
-import {
-  getAllProducts,
-  getProductsByBrand,
-  getCategories,
-  type Product,
-  type ProductFilters,
-} from '@/lib/data/market';
+import { supabase } from '@/components/utils/supabaseClient';
 
-// Safe cart item count hook — counts BOTH Shopify + preloved (Supabase) items
+import { ShopEngine } from '@/modes/market/ShopEngine';
+import { DropsEngine } from '@/modes/market/DropsEngine';
+import { PrelovedEngine } from '@/modes/market/PrelovedEngine';
+
+// ---- Types ------------------------------------------------------------------
+
+type MarketEngine = 'shop' | 'drops' | 'preloved';
+
+const ENGINE_TABS: { key: MarketEngine; label: string; icon: React.FC<{ className?: string }>; color: string; path: string }[] = [
+  { key: 'shop', label: 'Shop', icon: ShoppingBag, color: '#C8962C', path: '/market' },
+  { key: 'drops', label: 'Drops', icon: Flame, color: '#CF3A10', path: '/market/drops' },
+  { key: 'preloved', label: 'Preloved', icon: MessageCircle, color: '#9E7D47', path: '/market/preloved' },
+];
+
+// ---- Constants --------------------------------------------------------------
+
+const AMBER = '#C8962C';
+const ROOT_BG = '#050507';
+
+// ---- Hooks ------------------------------------------------------------------
+
 function useCartItemCount(): number {
   const { cart } = useShopCart();
-  // Shopify cart lines are edges in a connection
   const lines = cart?.lines;
   let shopifyCount = 0;
   if (lines) {
     if (Array.isArray(lines)) shopifyCount = lines.length;
     else if (lines.edges && Array.isArray(lines.edges)) shopifyCount = lines.edges.length;
   }
-  // Preloved items from Supabase cart_items table
   const [prelovedCount, setPrelovedCount] = useState(0);
   useEffect(() => {
     let cancelled = false;
@@ -98,497 +93,109 @@ function useCartItemCount(): number {
   return shopifyCount + prelovedCount;
 }
 
-// ---- Brand constants --------------------------------------------------------
-const AMBER = '#C8962C';
-const CARD_BG = '#1C1C1E';
-const ROOT_BG = '#050507';
-const MUTED = '#8E8E93';
-const PAGE_SIZE = 20;
-
-// ---- Source tab config ------------------------------------------------------
-type SourceFilter = 'all' | 'shopify' | 'preloved';
-
-const SOURCE_TABS: { key: SourceFilter; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'shopify', label: 'Shop' },
-  { key: 'preloved', label: 'Preloved' },
-];
-
-// ---- Static category list (merged from Shopify + Preloved) ------------------
-const STATIC_CATEGORIES = [
-  'Clothing',
-  'Accessories',
-  'Art',
-  'Equipment',
-  'Other',
-];
-
-// ---- Animation variants -----------------------------------------------------
-const gridItemVariants: Variants = {
-  hidden: { opacity: 0, y: 16 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.03, duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] },
-  }),
-};
-
-const fadeVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.25 } },
-  exit: { opacity: 0, transition: { duration: 0.15 } },
-};
-
-// ---- Skeleton primitives ----------------------------------------------------
-function ShimmerBox({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse rounded-xl bg-white/[0.06] ${className}`} />;
-}
-
-function ProductCardSkeleton() {
-  return (
-    <div className="bg-[#1C1C1E] rounded-2xl overflow-hidden border border-white/[0.08]">
-      <ShimmerBox className="w-full aspect-square !rounded-none" />
-      <div className="p-3 space-y-2">
-        <ShimmerBox className="h-4 w-4/5 !rounded-md" />
-        <ShimmerBox className="h-5 w-1/3 !rounded-md" />
-      </div>
-    </div>
-  );
-}
-
-function FeaturedBannerSkeleton() {
-  return (
-    <div className="mx-4 mt-4 mb-2">
-      <ShimmerBox className="w-full h-[180px] !rounded-2xl" />
-    </div>
-  );
-}
-
-function SkeletonGrid() {
-  return (
-    <div className="grid grid-cols-2 gap-3 px-4 pt-4">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <motion.div
-          key={i}
-          custom={i}
-          initial="hidden"
-          animate="visible"
-          variants={gridItemVariants}
-        >
-          <ProductCardSkeleton />
-        </motion.div>
-      ))}
-    </div>
-  );
-}
-
-// ---- Debounce hook ----------------------------------------------------------
 function useDebouncedValue<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
-
   useEffect(() => {
     const timer = setTimeout(() => setDebounced(value), delay);
     return () => clearTimeout(timer);
   }, [value, delay]);
-
   return debounced;
 }
 
-// ---- Source badge colors ----------------------------------------------------
-function getSourceBadgeStyle(source: Product['source']): string {
-  switch (source) {
-    case 'shopify':
-      return 'border-[#C8962C]/60 text-[#C8962C]';
-    case 'preloved':
-      return 'border-white/20 text-[#8E8E93]';
-    case 'creator':
-      return 'border-[#7C3AED]/60 text-[#7C3AED]';
-    default:
-      return 'border-white/20 text-[#8E8E93]';
-  }
+/** Derive the active engine from URL path */
+function deriveEngine(pathname: string): MarketEngine {
+  if (pathname.startsWith('/market/drops')) return 'drops';
+  if (pathname.startsWith('/market/preloved')) return 'preloved';
+  return 'shop';
 }
 
-function getSourceLabel(source: Product['source']): string {
-  switch (source) {
-    case 'shopify':
-      return 'Shop';
-    case 'preloved':
-      return 'Preloved';
-    case 'creator':
-      return 'Creator';
-    default:
-      return source;
-  }
-}
+// ---- Post-purchase screen ---------------------------------------------------
 
-function getConditionLabel(condition: Product['condition']): string {
-  switch (condition) {
-    case 'like_new':
-      return 'Like New';
-    case 'good':
-      return 'Good';
-    case 'fair':
-      return 'Fair';
-    case 'new':
-      return 'New';
-    default:
-      return '';
-  }
-}
-
-// =============================================================================
-// PRODUCT CARD
-// =============================================================================
-
-interface ProductCardProps {
-  product: Product;
-  index: number;
-  onTap: () => void;
-}
-
-function ProductCard({ product, index, onTap }: ProductCardProps) {
-  const [isFavorite, setIsFavorite] = useState(false);
-  const symbol = product.currency === 'GBP' ? '\u00a3' : '$';
-
-  const handleFavoriteToggle = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      setIsFavorite((prev) => !prev);
-    },
-    [],
-  );
-
+function PurchaseSuccessScreen({ onDismiss, listingId, openSheet }: {
+  onDismiss: () => void;
+  listingId: string | null;
+  openSheet: (type: string, props: Record<string, unknown>) => void;
+}) {
   return (
-    <motion.div
-      custom={index}
-      initial="hidden"
-      animate="visible"
-      variants={gridItemVariants}
-      layout
-      className="relative bg-[#1C1C1E] rounded-xl overflow-hidden border border-white/[0.06] group"
-    >
-      {/* Image area -- tap opens product sheet */}
-      <button
-        onClick={onTap}
-        className="relative block w-full aspect-[3/4] bg-white/[0.03] overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#C8962C] focus:ring-offset-1 focus:ring-offset-[#1C1C1E]"
-        aria-label={`View ${product.title}`}
+    <div className="h-full w-full flex flex-col items-center justify-center px-6 text-center" style={{ backgroundColor: ROOT_BG }}>
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+        className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
+        style={{ backgroundColor: 'rgba(200,150,44,0.2)', border: '2px solid #C8962C' }}
       >
-        {product.images[0] ? (
-          <img
-            src={product.images[0]}
-            alt={product.title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <ShoppingBag className="w-10 h-10 text-white/[0.08]" />
-          </div>
-        )}
-
-        {/* Bottom gradient for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
-        {/* Source badge -- top-left pill */}
-        <span
-          className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider backdrop-blur-sm"
-          style={
-            product.source === 'shopify'
-              ? { background: 'rgba(200,150,44,0.85)', color: '#000' }
-              : product.source === 'preloved'
-              ? { background: 'rgba(158,125,71,0.85)', color: '#fff' }
-              : { background: 'rgba(124,58,237,0.85)', color: '#fff' }
-          }
+        <svg className="w-10 h-10 text-[#C8962C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+        </svg>
+      </motion.div>
+      <h2 className="text-white font-black text-xl mb-2">You got it</h2>
+      <p className="text-white/50 text-sm mb-6">Your order is confirmed. Check your Vault for details.</p>
+      <div className="flex flex-col gap-3 w-full max-w-xs">
+        <button
+          onClick={() => { onDismiss(); window.location.href = '/more/vault'; }}
+          className="w-full h-12 rounded-xl font-black text-sm active:scale-95 transition-transform"
+          style={{ backgroundColor: '#C8962C', color: '#000' }}
         >
-          {getSourceLabel(product.source)}
-        </span>
-
-        {/* Condition badge -- top-right (preloved only) */}
-        {product.source === 'preloved' && product.condition && (
-          <span className="absolute top-2 right-10 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-black/60 backdrop-blur-sm border border-white/20 text-white/80">
-            {getConditionLabel(product.condition)}
-          </span>
-        )}
-
-        {/* More actions -- top-right */}
-        <CardMoreButton
-          itemType="product"
-          itemId={product.id}
-          title={product.title}
-          profileId={product.sellerId}
-          className="absolute top-2 right-2"
-        />
-
-        {/* Category chip -- bottom-left */}
-        {product.category && (
-          <span className="absolute bottom-10 left-2 px-2 py-0.5 rounded-full text-[9px] font-medium uppercase tracking-wider bg-black/50 backdrop-blur-sm text-white/60 border border-white/10">
-            {product.category}
-          </span>
-        )}
-
-        {/* Sale badge */}
-        {product.compareAtPrice != null &&
-          product.compareAtPrice > product.price && (
-            <span className="absolute bottom-10 right-2 px-2 py-0.5 bg-[#FF3B30] rounded-full text-[9px] font-bold text-white uppercase tracking-wider">
-              Sale
-            </span>
-          )}
-
-        {/* Favorite heart -- bottom-right of image */}
-        <span
-          role="button"
-          tabIndex={0}
-          onClick={handleFavoriteToggle}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              handleFavoriteToggle(e as unknown as React.MouseEvent);
-            }
-          }}
-          aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-          className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
+          View in Vault
+        </button>
+        <button
+          onClick={onDismiss}
+          className="w-full h-12 rounded-xl font-bold text-sm active:scale-95 transition-transform border"
+          style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)' }}
         >
-          <Heart
-            className={`w-4 h-4 transition-colors ${
-              isFavorite ? 'fill-red-500 text-red-500' : 'text-white/40'
-            }`}
-          />
-        </span>
-      </button>
-
-      {/* Info row below image */}
-      <button
-        onClick={onTap}
-        className="w-full text-left p-3 focus:outline-none"
-        aria-label={`${product.title} ${symbol}${product.price.toFixed(2)}`}
-      >
-        {/* Seller avatar + name for preloved */}
-        {product.source === 'preloved' && product.sellerName && (
-          <div className="flex items-center gap-1.5 mb-1.5">
-            {product.sellerAvatar ? (
-              <img
-                src={product.sellerAvatar}
-                alt={product.sellerName}
-                className="w-5 h-5 rounded-full object-cover border border-white/10"
-              />
-            ) : (
-              <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[8px] font-bold text-white/40">
-                {product.sellerName.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <span className="text-[11px] text-white/50 font-medium truncate">{product.sellerName}</span>
-          </div>
-        )}
-        <h3 className="text-sm font-bold text-white leading-tight line-clamp-1">
-          {product.title}
-        </h3>
-        <div className="flex items-baseline gap-1.5 mt-1">
-          <span className="font-black text-base leading-none" style={{ color: '#C8962C' }}>
-            {symbol}
-            {product.price.toFixed(2)}
-          </span>
-          {product.compareAtPrice != null &&
-            product.compareAtPrice > product.price && (
-              <span className="text-white/30 text-xs line-through">
-                {symbol}
-                {product.compareAtPrice.toFixed(2)}
-              </span>
-            )}
-        </div>
-      </button>
-    </motion.div>
-  );
-}
-
-// =============================================================================
-// FEATURED BANNER
-// =============================================================================
-
-interface FeaturedBannerProps {
-  product: Product;
-  onTap: () => void;
-}
-
-function FeaturedBanner({ product, onTap }: FeaturedBannerProps) {
-  const symbol = product.currency === 'GBP' ? '\u00a3' : '$';
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="mx-4 mt-4 mb-2"
-    >
-      <button
-        onClick={onTap}
-        className="relative w-full h-[180px] rounded-2xl overflow-hidden bg-[#1C1C1E] block text-left focus:outline-none focus:ring-2 focus:ring-[#C8962C]"
-        aria-label={`Featured: ${product.title}`}
-      >
-        {product.images[0] ? (
-          <img
-            src={product.images[0]}
-            alt={product.title}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-white/[0.03]">
-            <Package className="w-16 h-16 text-white/[0.08]" />
-          </div>
-        )}
-
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-        {/* Featured badge */}
-        <span
-          className="absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
-          style={{ backgroundColor: AMBER, color: '#000' }}
-        >
-          Featured drop
-        </span>
-
-        {/* Category pill */}
-        {product.category && (
-          <span className="absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-white/10 backdrop-blur-sm text-white/70 border border-white/10">
-            {product.category}
-          </span>
-        )}
-
-        {/* Bottom info */}
-        <div className="absolute bottom-0 left-0 right-0 p-4">
-          <h3 className="text-white font-bold text-lg leading-tight line-clamp-1">
-            {product.title}
-          </h3>
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-[#C8962C] font-extrabold text-xl">
-              {symbol}
-              {product.price.toFixed(2)}
-            </span>
-            {product.compareAtPrice != null &&
-              product.compareAtPrice > product.price && (
-                <span className="text-white/40 text-sm line-through">
-                  {symbol}
-                  {product.compareAtPrice.toFixed(2)}
-                </span>
-              )}
-          </div>
-        </div>
-      </button>
-    </motion.div>
-  );
-}
-
-// =============================================================================
-// EMPTY STATE
-// =============================================================================
-
-interface EmptyStateProps {
-  onClear: () => void;
-  hasFilters: boolean;
-}
-
-function EmptyState({ onClear, hasFilters }: EmptyStateProps) {
-  return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={fadeVariants}
-      className="flex flex-col items-center justify-center py-24 px-8"
-    >
-      <div className="w-16 h-16 rounded-2xl bg-[#1C1C1E] flex items-center justify-center mb-4">
-        <ShoppingBag className="w-8 h-8 text-white/10" />
-      </div>
-      <h3 className="text-lg font-bold text-white mb-1">Nothing here yet</h3>
-      <p className="text-sm text-center mb-6 text-white/40">
-        {hasFilters
-          ? 'No products match your current filters. Broaden your search or start fresh.'
-          : 'New drops land all the time. Check back soon.'}
-      </p>
-      <div className="flex gap-3">
-        {hasFilters && (
+          Browse more
+        </button>
+        {listingId && (
           <button
-            onClick={onClear}
-            className="h-11 px-6 rounded-xl font-bold text-sm text-black active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-[#C8962C]"
-            style={{ backgroundColor: AMBER }}
+            onClick={() => { onDismiss(); openSheet('chat', { recipientId: listingId }); }}
+            className="w-full h-12 rounded-xl font-bold text-sm active:scale-95 transition-transform border"
+            style={{ borderColor: 'rgba(200,150,44,0.3)', color: '#C8962C' }}
           >
-            Clear filters
+            Contact seller
           </button>
         )}
-        <button
-          onClick={() => {
-            onClear();
-          }}
-          className={`h-11 px-6 rounded-xl font-bold text-sm active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-[#C8962C] ${
-            hasFilters
-              ? 'border border-white/15 text-white/70'
-              : 'text-black'
-          }`}
-          style={hasFilters ? {} : { backgroundColor: AMBER }}
-        >
-          Browse all
-        </button>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
 // =============================================================================
-// ERROR STATE
-// =============================================================================
-
-interface ErrorStateProps {
-  onRetry: () => void;
-}
-
-function ErrorState({ onRetry }: ErrorStateProps) {
-  return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={fadeVariants}
-      className="flex flex-col items-center justify-center py-24 px-8"
-    >
-      <RefreshCw className="w-16 h-16 mb-4" style={{ color: MUTED }} />
-      <h3 className="text-xl font-bold text-white mb-2">Something went wrong</h3>
-      <p className="text-sm text-center mb-6" style={{ color: MUTED }}>
-        Could not load products. Check your connection and try again.
-      </p>
-      <button
-        onClick={onRetry}
-        className="h-12 px-8 rounded-xl font-semibold text-white active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-[#C8962C]"
-        style={{ backgroundColor: AMBER }}
-      >
-        Retry
-      </button>
-    </motion.div>
-  );
-}
-
-// =============================================================================
-// MAIN: MarketMode
+// MAIN: MarketMode Shell
 // =============================================================================
 
 interface MarketModeProps {
   className?: string;
 }
 
-/**
- * Renders the unified "Market" interface that merges Shopify merch, preloved listings, and creator drops into a single scrollable marketplace with URL-synced filters, category and source chips, debounced search, infinite-scroll pagination, and contextual actions (cart, filters, brand pages).
- *
- * The component displays a featured banner when no filters are active, a responsive product grid, loading/error/empty states, and a sell floating action button that is shown only for authenticated users.
- *
- * @param className - Optional additional container CSS classes to apply to the root element
- * @returns A React element representing the marketplace UI
- */
 export function MarketMode({ className = '' }: MarketModeProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { openSheet } = useSheet();
   const { isAuthenticated } = useBootGuard();
-
-  // Cart item count for badge
   const cartItemCount = useCartItemCount();
 
-  // Post-purchase success flow
+  // Engine routing
+  const activeEngine = deriveEngine(location.pathname);
+
+  // Search state (shared across engines)
+  const [searchInput, setSearchInput] = useState(searchParams.get('q') ?? '');
+  const debouncedSearch = useDebouncedValue(searchInput, 300);
+
+  // Sync search to URL
+  useEffect(() => {
+    setSearchParams(
+      (prev) => {
+        if (debouncedSearch) prev.set('q', debouncedSearch);
+        else prev.delete('q');
+        return prev;
+      },
+      { replace: true },
+    );
+  }, [debouncedSearch, setSearchParams]);
+
+  // Post-purchase flow
   const purchaseSuccess = searchParams.get('purchase') === 'success';
   const purchaseListingId = searchParams.get('listing');
   const handleDismissPurchase = useCallback(() => {
@@ -599,226 +206,23 @@ export function MarketMode({ className = '' }: MarketModeProps) {
     }, { replace: true });
   }, [setSearchParams]);
 
-  // ---- Filter state (synced to URL params) --------------------------------
-  const [searchInput, setSearchInput] = useState(searchParams.get('q') ?? '');
-  const debouncedSearch = useDebouncedValue(searchInput, 300);
-  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(
-    searchParams.get('category'),
-  );
-  const [brandFilter, setBrandFilter] = useState<string | null>(
-    searchParams.get('brand'),
-  );
+  const handleEngineSwitch = useCallback((engine: MarketEngine) => {
+    const tab = ENGINE_TABS.find(t => t.key === engine);
+    if (tab) navigate(tab.path, { replace: true });
+  }, [navigate]);
 
-  // Pagination
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const queryClient = useQueryClient();
-
-  // ---- Pull-to-refresh -------------------------------------------------------
-  const handleRefresh = useCallback(async () => {
-    await queryClient.invalidateQueries();
-  }, [queryClient]);
-  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
-    onRefresh: handleRefresh,
-    scrollRef: scrollContainerRef,
-  });
-
-  // Sync search to URL
-  useEffect(() => {
-    setSearchParams(
-      (prev) => {
-        if (debouncedSearch) {
-          prev.set('q', debouncedSearch);
-        } else {
-          prev.delete('q');
-        }
-        if (categoryFilter) {
-          prev.set('category', categoryFilter);
-        } else {
-          prev.delete('category');
-        }
-        if (brandFilter) {
-          prev.set('brand', brandFilter);
-        } else {
-          prev.delete('brand');
-        }
-        return prev;
-      },
-      { replace: true },
-    );
-  }, [debouncedSearch, categoryFilter, brandFilter, setSearchParams]);
-
-  // ---- Data fetching with TanStack Query ----------------------------------
-  const filters: ProductFilters = useMemo(
-    () => ({
-      source: sourceFilter === 'all' ? undefined : sourceFilter,
-      category: categoryFilter ?? undefined,
-      search: debouncedSearch || undefined,
-    }),
-    [sourceFilter, categoryFilter, debouncedSearch],
-  );
-
-  // When brand filter is active, fetch brand-specific products
-  const {
-    data: products = [],
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery<Product[]>({
-    queryKey: brandFilter
-      ? ['market-brand-products', brandFilter, debouncedSearch]
-      : ['market-products', filters],
-    queryFn: () => {
-      if (brandFilter) {
-        return getProductsByBrand(brandFilter);
-      }
-      return getAllProducts(filters);
-    },
-    staleTime: 2 * 60 * 1000,
-  });
-
-  const { data: dynamicCategories = [] } = useQuery<string[]>({
-    queryKey: ['market-categories'],
-    queryFn: getCategories,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  // Merge static + dynamic categories, deduplicate
-  const allCategories = useMemo(() => {
-    const merged = new Set([...STATIC_CATEGORIES]);
-    dynamicCategories.forEach((c) => {
-      // Capitalize first letter for display consistency
-      if (c) merged.add(c.charAt(0).toUpperCase() + c.slice(1).toLowerCase());
-    });
-    return Array.from(merged);
-  }, [dynamicCategories]);
-
-  // ---- Derived data --------------------------------------------------------
-  const visibleProducts = useMemo(
-    () => products.slice(0, visibleCount),
-    [products, visibleCount],
-  );
-
-  const hasMoreProducts = visibleCount < products.length;
-
-  const featuredProduct = useMemo(() => {
-    // Only show featured when no active filters
-    if (debouncedSearch || categoryFilter || sourceFilter !== 'all' || brandFilter) return null;
-    return products[0] ?? null;
-  }, [products, debouncedSearch, categoryFilter, sourceFilter, brandFilter]);
-
-  // Grid products exclude the featured item to avoid duplication
-  const gridProducts = useMemo(() => {
-    if (!featuredProduct) return visibleProducts;
-    return visibleProducts.filter((p) => p.id !== featuredProduct.id);
-  }, [visibleProducts, featuredProduct]);
-
-  const hasFilters = !!(debouncedSearch || categoryFilter || sourceFilter !== 'all' || brandFilter);
-
-  // Brand display name for the active brand filter
-  const activeBrandName = brandFilter ? (BRAND_CONFIG[brandFilter]?.name ?? brandFilter.toUpperCase()) : null;
-
-  // ---- Infinite scroll via scroll listener ---------------------------------
-  const handleScroll = useCallback(() => {
-    const container = scrollContainerRef.current;
-    if (!container || !hasMoreProducts) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = container;
-    const scrollPercent = (scrollTop + clientHeight) / scrollHeight;
-
-    if (scrollPercent > 0.8) {
-      setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, products.length));
-    }
-  }, [hasMoreProducts, products.length]);
-
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
-
-  // Reset visible count when filters change
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [filters, brandFilter]);
-
-  // ---- Handlers -------------------------------------------------------------
-  const handleProductTap = useCallback(
-    (product: Product) => {
-      openSheet('product', { product, source: product.source });
-    },
-    [openSheet],
-  );
-
-  const handleClearFilters = useCallback(() => {
-    setSearchInput('');
-    setSourceFilter('all');
-    setCategoryFilter(null);
-    setBrandFilter(null);
-  }, []);
-
-  const handleBrandTap = useCallback((brandKey: string) => {
-    setBrandFilter((prev) => (prev === brandKey ? null : brandKey));
-  }, []);
-
-  const handleCategoryTap = useCallback((cat: string | null) => {
-    setCategoryFilter((prev) => (prev === cat ? null : cat));
-  }, []);
+  // Active engine color
+  const activeColor = ENGINE_TABS.find(t => t.key === activeEngine)?.color ?? AMBER;
 
   // ---- Render ---------------------------------------------------------------
 
-  // Post-purchase success screen
   if (purchaseSuccess) {
     return (
-      <div
-        className={`h-full w-full flex flex-col items-center justify-center px-6 text-center ${className}`}
-        style={{ backgroundColor: ROOT_BG }}
-      >
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-          className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
-          style={{ backgroundColor: 'rgba(200,150,44,0.2)', border: '2px solid #C8962C' }}
-        >
-          <svg className="w-10 h-10 text-[#C8962C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-          </svg>
-        </motion.div>
-        <h2 className="text-white font-black text-xl mb-2">You got it</h2>
-        <p className="text-white/50 text-sm mb-6">Your order is confirmed. Check your Vault for details.</p>
-        <div className="flex flex-col gap-3 w-full max-w-xs">
-          <button
-            onClick={() => { handleDismissPurchase(); window.location.href = '/more/vault'; }}
-            className="w-full h-12 rounded-xl font-black text-sm active:scale-95 transition-transform"
-            style={{ backgroundColor: '#C8962C', color: '#000' }}
-          >
-            View in Vault
-          </button>
-          <button
-            onClick={handleDismissPurchase}
-            className="w-full h-12 rounded-xl font-bold text-sm active:scale-95 transition-transform border"
-            style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)' }}
-          >
-            Browse more
-          </button>
-          {purchaseListingId && (
-            <button
-              onClick={() => {
-                handleDismissPurchase();
-                openSheet('chat', { recipientId: purchaseListingId });
-              }}
-              className="w-full h-12 rounded-xl font-bold text-sm active:scale-95 transition-transform border"
-              style={{ borderColor: 'rgba(200,150,44,0.3)', color: '#C8962C' }}
-            >
-              Contact seller
-            </button>
-          )}
-        </div>
-      </div>
+      <PurchaseSuccessScreen
+        onDismiss={handleDismissPurchase}
+        listingId={purchaseListingId}
+        openSheet={openSheet}
+      />
     );
   }
 
@@ -830,41 +234,40 @@ export function MarketMode({ className = '' }: MarketModeProps) {
       {/* ================================================================== */}
       {/* FIXED TOP BAR                                                       */}
       {/* ================================================================== */}
-      <div
-        className="flex-shrink-0 z-40 border-b border-white/10"
-        style={{ backgroundColor: '#0D0D0D' }}
-      >
+      <div className="flex-shrink-0 z-40 border-b border-white/10" style={{ backgroundColor: '#0D0D0D' }}>
         {/* Title row */}
         <div className="h-14 px-4 flex items-center justify-between">
           <h1
             className="text-xl font-extrabold tracking-wider uppercase"
-            style={{ color: AMBER }}
+            style={{ color: activeColor }}
           >
             Market
           </h1>
 
           <div className="flex items-center gap-2">
-            {/* Cart button with badge */}
-            <button
-              onClick={() => openSheet('cart', {})}
-              className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.06] active:scale-90 transition-transform focus:outline-none focus:ring-2 focus:ring-[#C8962C]"
-              aria-label={`Shopping bag${cartItemCount > 0 ? `, ${cartItemCount} items` : ''}`}
-            >
-              <ShoppingBag className="w-5 h-5 text-white/70" />
-              {cartItemCount > 0 && (
-                <span
-                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-bold text-black px-1"
-                  style={{ backgroundColor: AMBER }}
-                >
-                  {cartItemCount > 99 ? '99+' : cartItemCount}
-                </span>
-              )}
-            </button>
+            {/* Cart — only show on shop engine */}
+            {activeEngine === 'shop' && (
+              <button
+                onClick={() => openSheet('cart', {})}
+                className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.06] active:scale-90 transition-transform"
+                aria-label={`Shopping bag${cartItemCount > 0 ? `, ${cartItemCount} items` : ''}`}
+              >
+                <ShoppingBag className="w-5 h-5 text-white/70" />
+                {cartItemCount > 0 && (
+                  <span
+                    className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-bold text-black px-1"
+                    style={{ backgroundColor: AMBER }}
+                  >
+                    {cartItemCount > 99 ? '99+' : cartItemCount}
+                  </span>
+                )}
+              </button>
+            )}
 
-            {/* Filter button */}
+            {/* Filter */}
             <button
               onClick={() => openSheet('filters', { mode: 'market' })}
-              className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.06] active:scale-90 transition-transform focus:outline-none focus:ring-2 focus:ring-[#C8962C]"
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.06] active:scale-90 transition-transform"
               aria-label="Open filters"
             >
               <SlidersHorizontal className="w-5 h-5 text-white/70" />
@@ -880,9 +283,13 @@ export function MarketMode({ className = '' }: MarketModeProps) {
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search drops, merch, preloved..."
-              className="w-full h-10 pl-10 pr-10 bg-white/[0.06] rounded-xl text-white text-sm placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#C8962C] border-0"
-              style={{ fontSize: '16px' /* prevent iOS zoom */ }}
+              placeholder={
+                activeEngine === 'shop' ? 'Search merch, HNH MESS...'
+                : activeEngine === 'drops' ? 'Search drops...'
+                : 'Search preloved listings...'
+              }
+              className="w-full h-10 pl-10 pr-10 bg-white/[0.06] rounded-xl text-white text-sm placeholder:text-white/30 focus:outline-none focus:ring-2 border-0"
+              style={{ fontSize: '16px', ['--tw-ring-color' as string]: activeColor }}
             />
             {searchInput && (
               <button
@@ -896,226 +303,85 @@ export function MarketMode({ className = '' }: MarketModeProps) {
           </div>
         </div>
 
-        {/* Source tabs */}
+        {/* Engine tabs */}
         <div className="px-4 pb-3 flex items-center gap-2">
-          {SOURCE_TABS.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setSourceFilter(tab.key)}
-              className={`h-9 px-4 rounded-full text-xs font-bold uppercase tracking-wider transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#C8962C] ${
-                sourceFilter === tab.key
-                  ? 'text-black'
-                  : 'text-[#8E8E93] border border-white/10'
-              }`}
-              style={
-                sourceFilter === tab.key
-                  ? { backgroundColor: AMBER }
-                  : { backgroundColor: CARD_BG }
-              }
-              aria-pressed={sourceFilter === tab.key}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Category chips */}
-        <div className="px-4 pb-3 overflow-x-auto scrollbar-hide">
-          <div className="flex items-center gap-2 min-w-max">
-            {/* "All" chip */}
-            <button
-              onClick={() => setCategoryFilter(null)}
-              className={`h-8 px-3 rounded-full text-xs font-semibold transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#C8962C] whitespace-nowrap ${
-                !categoryFilter
-                  ? 'text-[#C8962C] border border-[#C8962C]'
-                  : 'text-[#8E8E93]'
-              }`}
-              style={{
-                backgroundColor: !categoryFilter
-                  ? 'rgba(200,150,44,0.15)'
-                  : CARD_BG,
-              }}
-              aria-pressed={!categoryFilter}
-            >
-              All
-            </button>
-
-            {allCategories.map((cat) => (
+          {ENGINE_TABS.map((tab) => {
+            const isActive = activeEngine === tab.key;
+            const Icon = tab.icon;
+            return (
               <button
-                key={cat}
-                onClick={() => handleCategoryTap(cat)}
-                className={`h-8 px-3 rounded-full text-xs font-semibold transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#C8962C] whitespace-nowrap ${
-                  categoryFilter === cat
-                    ? 'text-[#C8962C] border border-[#C8962C]'
-                    : 'text-[#8E8E93]'
+                key={tab.key}
+                onClick={() => handleEngineSwitch(tab.key)}
+                className={`h-9 px-4 rounded-full text-xs font-bold uppercase tracking-wider transition-all active:scale-95 flex items-center gap-1.5 ${
+                  isActive ? 'text-black' : 'text-[#8E8E93] border border-white/10'
                 }`}
-                style={{
-                  backgroundColor:
-                    categoryFilter === cat
-                      ? 'rgba(200,150,44,0.15)'
-                      : CARD_BG,
-                }}
-                aria-pressed={categoryFilter === cat}
+                style={
+                  isActive
+                    ? { backgroundColor: tab.color }
+                    : { backgroundColor: '#1C1C1E' }
+                }
+                aria-pressed={isActive}
               >
-                {cat}
+                <Icon className="w-3.5 h-3.5" />
+                {tab.label}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
 
       {/* ================================================================== */}
-      {/* Dynamic Market Banners */}
-      <AppBanner placement="market_top" variant="strip" />
-
-      {/* SCROLLABLE CONTENT                                                   */}
+      {/* ENGINE CONTENT                                                       */}
       {/* ================================================================== */}
-      <div
-        ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto scroll-momentum pb-32"
-        {...pullHandlers}
-      >
-        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
-        {/* HNH MESS product cards */}
-        <HNHMarketHero />
-
-        {/* HNH MESS persistent strip (46px, "from £10") */}
-        <HNHMessStrip className="mt-2" />
-
-        {/* HNH Lube banner (fallback / additional) */}
-        <AppBanner placement="market_lube" variant="card" className="mx-4 mt-2" />
-
-        <AnimatePresence mode="wait">
-          {/* LOADING STATE */}
-          {isLoading && (
-            <motion.div key="loading" initial="hidden" animate="visible" exit="exit" variants={fadeVariants}>
-              <FeaturedBannerSkeleton />
-              <SkeletonGrid />
-            </motion.div>
-          )}
-
-          {/* ERROR STATE */}
-          {!isLoading && isError && (
-            <motion.div key="error" initial="hidden" animate="visible" exit="exit" variants={fadeVariants}>
-              <ErrorState onRetry={handleRefresh} />
-            </motion.div>
-          )}
-
-          {/* EMPTY STATE */}
-          {!isLoading && !isError && products.length === 0 && (
-            <motion.div key="empty" initial="hidden" animate="visible" exit="exit" variants={fadeVariants}>
-              <EmptyState onClear={handleClearFilters} hasFilters={hasFilters} />
-            </motion.div>
-          )}
-
-          {/* SUCCESS STATE */}
-          {!isLoading && !isError && products.length > 0 && (
-            <motion.div key="content" initial="hidden" animate="visible" exit="exit" variants={fadeVariants}>
-              {/* Featured banner */}
-              {featuredProduct && (
-                <FeaturedBanner
-                  product={featuredProduct}
-                  onTap={() => handleProductTap(featuredProduct)}
-                />
-              )}
-
-              {/* Brand pills — tap to filter grid, long-press to open brand page */}
-              {sourceFilter === 'all' && !debouncedSearch && !categoryFilter && (
-                <div className="px-4 pt-4 pb-1">
-                  <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-                    {(
-                      [
-                        { key: 'raw', label: 'RAW' },
-                        { key: 'hung', label: 'HUNG' },
-                        { key: 'high', label: 'HIGH' },
-                        { key: 'hungmess', label: 'HUNGMESS' },
-                        { key: 'superhung', label: 'SUPERHUNG' },
-                        { key: 'superraw', label: 'SUPERRAW' },
-                        { key: 'hotmessRadio', label: 'HOTMESS RADIO' },
-                        { key: 'rawConvictRecords', label: 'RAW CONVICT' },
-                        { key: 'smashDaddys', label: 'SMASH DADDYS' },
-                        { key: 'hnhMess', label: 'HNH MESS' },
-                      ] as const
-                    ).filter((b) => isBrandVisible(b.key)).map((b) => {
-                      const isActive = brandFilter === b.key;
-                      return (
-                        <button
-                          key={b.key}
-                          onClick={() => handleBrandTap(b.key)}
-                          onContextMenu={(e) => {
-                            e.preventDefault();
-                            openSheet('brand', { brand: b.key });
-                          }}
-                          className={`h-9 px-4 rounded-full text-xs font-black uppercase tracking-wider whitespace-nowrap active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-[#C8962C] ${
-                            isActive
-                              ? 'text-black border border-[#C8962C]'
-                              : 'bg-[#1C1C1E] border border-white/10 text-white'
-                          }`}
-                          style={isActive ? { backgroundColor: AMBER } : undefined}
-                          aria-label={`${isActive ? 'Clear' : 'Filter by'} ${b.label}`}
-                          aria-pressed={isActive}
-                        >
-                          {b.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Section header */}
-              {sourceFilter === 'all' && !debouncedSearch && !categoryFilter && (
-                <div className="px-4 pt-4 pb-1 flex items-center justify-between">
-                  <h2 className="text-white font-bold text-base">
-                    {brandFilter ? activeBrandName : 'Just dropped'}
-                  </h2>
-                  {brandFilter && (
-                    <button
-                      onClick={() => setBrandFilter(null)}
-                      className="flex items-center gap-1 text-xs font-semibold text-[#C8962C] active:scale-95 transition-transform"
-                    >
-                      Clear <X className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Product grid */}
-              <div className="grid grid-cols-2 gap-3 px-4 pt-3">
-                {gridProducts.map((product, i) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    index={i}
-                    onTap={() => handleProductTap(product)}
-                  />
-                ))}
-              </div>
-
-              {/* Load more indicator */}
-              {hasMoreProducts && (
-                <div className="flex items-center justify-center py-8">
-                  <div
-                    className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
-                    style={{ borderColor: `${AMBER} transparent ${AMBER} ${AMBER}` }}
-                  />
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      <AnimatePresence mode="wait">
+        {activeEngine === 'shop' && (
+          <motion.div
+            key="shop"
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 8 }}
+            transition={{ duration: 0.2 }}
+            className="flex-1 flex flex-col min-h-0"
+          >
+            <ShopEngine search={debouncedSearch} />
+          </motion.div>
+        )}
+        {activeEngine === 'drops' && (
+          <motion.div
+            key="drops"
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 8 }}
+            transition={{ duration: 0.2 }}
+            className="flex-1 flex flex-col min-h-0"
+          >
+            <DropsEngine search={debouncedSearch} />
+          </motion.div>
+        )}
+        {activeEngine === 'preloved' && (
+          <motion.div
+            key="preloved"
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 8 }}
+            transition={{ duration: 0.2 }}
+            className="flex-1 flex flex-col min-h-0"
+          >
+            <PrelovedEngine search={debouncedSearch} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ================================================================== */}
-      {/* SELL FAB — auth only                                                */}
+      {/* SELL FAB — shows on preloved engine or all engines for auth users   */}
       {/* ================================================================== */}
       {isAuthenticated && (
         <button
           onClick={() => openSheet('sell', {})}
-          className="fixed bottom-24 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform focus:outline-none focus:ring-2 focus:ring-[#C8962C] focus:ring-offset-2 focus:ring-offset-[#050507]"
+          className="fixed bottom-24 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform"
           style={{
-            backgroundColor: AMBER,
-            boxShadow: `0 8px 24px rgba(200, 150, 44, 0.35)`,
+            backgroundColor: activeEngine === 'preloved' ? '#9E7D47' : AMBER,
+            boxShadow: `0 8px 24px ${activeEngine === 'preloved' ? 'rgba(158,125,71,0.35)' : 'rgba(200,150,44,0.35)'}`,
           }}
           aria-label="Sell an item"
         >

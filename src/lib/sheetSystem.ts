@@ -345,6 +345,20 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: true,
     deepLinkParams: [],
   },
+  'preloved-terms': {
+    id: 'preloved-terms',
+    title: 'Preloved Terms',
+    height: 'large',
+    auth: false,
+    deepLinkParams: [],
+  },
+  'report-listing': {
+    id: 'report-listing',
+    title: 'Report Listing',
+    height: 'medium',
+    auth: true,
+    deepLinkParams: ['listingId'],
+  },
   'seller-onboarding': {
     id: 'seller-onboarding',
     title: 'Start Selling',

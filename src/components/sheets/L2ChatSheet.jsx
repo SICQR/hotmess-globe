@@ -14,7 +14,7 @@ import {
   MessageCircle, Send, ArrowLeft,
   Loader2, Search, ChevronRight,
   Camera, Mic, Video, Navigation,
-  Sparkles, X,
+  Sparkles, X, Flag,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -375,9 +375,9 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         .insert({
           thread_id: thread.id,
           sender_email: currentUser.email,
-          content: optimisticMsg.content,
+          content: isHighlighted ? JSON.stringify({ text, is_highlighted: true }) : optimisticMsg.content,
           message_type: 'text',
-          created_date: now,
+          created_date: new Date().toISOString(),
         });
       if (msgError) throw msgError;
       // Consume the highlight toggle after sending
@@ -859,6 +859,16 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                     : 'Tap to view profile'}
             </p>
           </div>
+        </button>
+
+        {/* Report user */}
+        <button
+          onClick={() => openSheet('report', { userId: otherProfile?.id, userName: otherName })}
+          className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-white/5 active:bg-white/10 transition-colors"
+          title="Report this user"
+          aria-label="Report user"
+        >
+          <Flag className="w-3.5 h-3.5 text-white/30" />
         </button>
       </div>
 

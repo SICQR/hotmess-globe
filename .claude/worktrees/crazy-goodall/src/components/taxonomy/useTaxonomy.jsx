@@ -1,1 +1,0 @@
-export { useTaxonomy } from "./provider";

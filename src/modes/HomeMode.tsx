@@ -53,6 +53,9 @@ import { format, isToday, isTomorrow } from 'date-fns';
 import RightNowModal from '@/components/globe/RightNowModal';
 import { CardMoreButton } from '@/components/ui/CardMoreButton';
 import { trackEvent } from '@/components/utils/analytics';
+import { HNHMessHero } from '@/components/home/HNHMessHero';
+import { HNHMessStrip } from '@/components/home/HNHMessStrip';
+import { AppBanner } from '@/components/banners/AppBanner';
 import '@/styles/radio-waveform.css';
 
 interface HomeModeProps {
@@ -817,22 +820,23 @@ export function HomeMode({ className = '' }: HomeModeProps) {
         <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
         <div className="pb-36 space-y-6">
 
-          {/* ============================================================== */}
-          {/* 1. HERO -- Atmospheric noir with HOTMESS LONDON identity       */}
-          {/* ============================================================== */}
+          {/* ── Section 1: Hero Banner — atmospheric noir with radial gold glow ── */}
           <div className="relative w-full h-56 overflow-hidden">
             <img
               src="/assets/hero-storm.jpg"
               alt="HOTMESS London"
-              className="w-full h-full object-cover opacity-50"
+              className="w-full h-full object-cover opacity-60"
             />
+            {/* Radial gold glow overlay */}
             <div
               className="absolute inset-0"
               style={{
                 background: `radial-gradient(ellipse 70% 60% at 50% 70%, rgba(200,150,44,0.15) 0%, transparent 70%)`,
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/60 to-[#050507]/10" />
+            {/* Bottom fade to root bg */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/50 to-[#050507]/20" />
+            {/* Noise texture overlay for cinematic grain */}
             <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\' opacity=\'0.5\'/%3E%3C/svg%3E")', backgroundSize: '128px 128px' }} />
             <div className="absolute bottom-5 left-5 right-5">
               <h2 className="font-black text-3xl tracking-[0.15em] uppercase leading-none drop-shadow-lg">
@@ -893,11 +897,18 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             </div>
           )}
 
+          {/* ── HNH MESS Hero (primary revenue product) ── */}
+          <HNHMessHero />
+
+          {/* ── HNH MESS Strip ── */}
+          <HNHMessStrip />
+
+          {/* ── Dynamic Home Strip Banner ── */}
+          <AppBanner placement="home_strip" variant="strip" />
+
           <div className="px-5 space-y-6">
 
-          {/* ============================================================== */}
-          {/* 2. CORE LANES -- 2x2 nav grid                                  */}
-          {/* ============================================================== */}
+          {/* ── Core Lanes + Right Now ── */}
           <AnimatedSection index={0}>
             <CoreLanes onNavigate={(route) => navigate(route)} signals={laneSignals} tone={tone} />
           </AnimatedSection>
@@ -963,9 +974,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             </AnimatedSection>
           )}
 
-          {/* ============================================================== */}
-          {/* 5. MARKET FEATURE -- Single HNH MESS card                      */}
-          {/* ============================================================== */}
+          {/* ── Section 5: Market Feature ── */}
           <AnimatedSection index={3}>
             <SectionHeader
               title="HNH MESS"
@@ -975,9 +984,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             <MarketFeature onNavigate={() => { trackEvent('home_cta_tap', { cta: 'market_feature', tone }); navigate('/market'); }} />
           </AnimatedSection>
 
-          {/* ============================================================== */}
-          {/* 6. DROPS -- Fashion brand carousel                             */}
-          {/* ============================================================== */}
+          {/* ── Section 6: Drops ── */}
           <AnimatedSection index={4}>
             <SectionHeader
               title="Drops"
@@ -987,16 +994,12 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             <DropsCarousel onNavigate={() => { trackEvent('home_cta_tap', { cta: 'drops', tone }); navigate('/market'); }} />
           </AnimatedSection>
 
-          {/* ============================================================== */}
-          {/* 7. MUSIC / RADIO                                               */}
-          {/* ============================================================== */}
+          {/* ── Section 7: Radio ── */}
           <AnimatedSection index={5}>
             <RadioBanner onNavigate={() => navigate('/radio')} />
           </AnimatedSection>
 
-          {/* ============================================================== */}
-          {/* 8. COMMUNITY -- Only if posts exist                            */}
-          {/* ============================================================== */}
+          {/* ── Section 8: Community ── */}
           {communityPosts.length > 0 && (
             <AnimatedSection index={6}>
               <SectionHeader
@@ -1041,6 +1044,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
               </div>
             </AnimatedSection>
           )}
+
 
           </div>{/* end px-5 */}
         </div>
