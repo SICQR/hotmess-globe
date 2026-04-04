@@ -15,7 +15,8 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
   : null;
 
 interface PushPayload {
-  emails: string[];
+  emails?: string[];
+  userIds?: string[];
   title: string;
   body: string;
   tag?: string;
@@ -24,12 +25,12 @@ interface PushPayload {
 }
 
 /**
- * Send a push notification to one or more users by email.
+ * Send a push notification to one or more users by email or user ID.
  * Fire-and-forget — never throws, never blocks the UI.
  */
 export async function pushNotify(payload: PushPayload): Promise<void> {
   try {
-    if (!payload.emails?.length || !payload.title || !payload.body) return;
+    if ((!payload.emails?.length && !payload.userIds?.length) || !payload.title || !payload.body) return;
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) return;
@@ -50,7 +51,8 @@ export async function pushNotify(payload: PushPayload): Promise<void> {
         Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({
-        emails: payload.emails,
+        emails: payload.emails?.length ? payload.emails : undefined,
+        user_ids: payload.userIds?.length ? payload.userIds : undefined,
         title: payload.title,
         body: payload.body,
         tag: payload.tag ?? 'hotmess',
