@@ -3,6 +3,22 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Auth check: require a valid Supabase session via Bearer token
+  const authHeader = req.headers?.authorization || '';
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  if (!token) {
+    return res.status(401).json({ error: 'Missing authorization token' });
+  }
+  try {
+    const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+    if (authErr || !user) {
+      return res.status(401).json({ error: 'Invalid or expired session' });
+    }
+  } catch {
+    return res.status(401).json({ error: 'Auth verification failed' });
+  }
+
   const { city, zoom } = req.query;
   try {
     let tilesQuery = supabase.from('globe_heat_tiles').select('city, tile_id, intensity, sources, window_end').eq('k_threshold_met', true).order('window_end', { ascending: false });

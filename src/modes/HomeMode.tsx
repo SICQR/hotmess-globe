@@ -875,40 +875,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
         <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
         <div className="pb-36 space-y-6">
 
-          {/* ── HNH MESS Hero ── */}
-          <HNHMessHero />
-
-          {/* ── HNH MESS Strip ── */}
-          <HNHMessStrip />
-
-          {/* ── Dynamic Home Strip Banner ── */}
-          <AppBanner placement="home_strip" variant="strip" />
-
-          {/* ── Profile nudge banner (post-onboarding, session-dismissible) ── */}
-          {showProfileNudge && (
-            <div
-              className="mx-4 flex items-center justify-between gap-3 rounded-xl px-4 py-3"
-              style={{ background: 'rgba(200,150,44,0.12)', border: '1px solid rgba(200,150,44,0.2)' }}
-            >
-              <span className="text-white/70 text-sm flex-1">Add a photo and bio to get more matches</span>
-              <button
-                onClick={() => navigate('/profile')}
-                className="text-xs font-bold flex-shrink-0 px-3 py-1.5 rounded-lg"
-                style={{ background: AMBER, color: '#000' }}
-              >
-                Complete profile
-              </button>
-              <button
-                onClick={dismissNudge}
-                className="text-white/30 text-base leading-none flex-shrink-0"
-                aria-label="Dismiss"
-              >
-                ✕
-              </button>
-            </div>
-          )}
-
-          {/* ── Hero Banner — atmospheric noir with radial gold glow ── */}
+          {/* ── Section 1: Hero Banner — atmospheric noir with radial gold glow ── */}
           <div className="relative w-full h-48 overflow-hidden">
             <img
               src="/assets/hero-storm.jpg"
@@ -934,9 +901,42 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             </div>
           </div>
 
+          {/* ── Profile nudge banner (post-onboarding, session-dismissible) ── */}
+          {showProfileNudge && (
+            <div
+              className="mx-4 flex items-center justify-between gap-3 rounded-xl px-4 py-3"
+              style={{ background: 'rgba(200,150,44,0.12)', border: '1px solid rgba(200,150,44,0.2)' }}
+            >
+              <span className="text-white/70 text-sm flex-1">Add a photo and bio to get more matches</span>
+              <button
+                onClick={() => navigate('/profile')}
+                className="text-xs font-bold flex-shrink-0 px-3 py-1.5 rounded-lg"
+                style={{ background: AMBER, color: '#000' }}
+              >
+                Complete profile
+              </button>
+              <button
+                onClick={dismissNudge}
+                className="text-white/30 text-base leading-none flex-shrink-0"
+                aria-label="Dismiss"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* ── Section 3: HNH MESS Hero (primary revenue product) ── */}
+          <HNHMessHero />
+
+          {/* ── HNH MESS Strip ── */}
+          <HNHMessStrip />
+
+          {/* ── Dynamic Home Strip Banner ── */}
+          <AppBanner placement="home_strip" variant="strip" />
+
           <div className="px-5 space-y-6">
 
-          {/* ── Section 1: Right Now ── */}
+          {/* ── Section 4: Who's Out Right Now ── */}
           <AnimatedSection index={0}>
             <SectionHeader
               title="Right Now"
@@ -982,68 +982,9 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             <ChevronRight className="w-4 h-4 text-white/20 ml-auto" />
           </button>
 
-          {/* ── Section 2: Community ── */}
-          <AnimatedSection index={1}>
-            <SectionHeader
-              title="Community"
-              linkLabel="See all"
-              onLink={() => openSheet('community', {})}
-            />
-            {communityLoading ? (
-              <div className="space-y-2">
-                {[0, 1, 2].map(i => <ShimmerBox key={i} className="w-full h-16" />)}
-              </div>
-            ) : communityPosts.length === 0 ? (
-              <button
-                onClick={() => openSheet('community', {})}
-                className="w-full rounded-2xl border border-dashed border-white/10 p-5 flex flex-col items-center gap-2 text-center active:bg-white/5"
-                style={{ background: `${CARD_BG}80` }}
-              >
-                <MessageSquare className="w-8 h-8" style={{ color: MUTED }} />
-                <p className="text-white text-sm font-semibold">Nothing posted yet — be first</p>
-              </button>
-            ) : (
-              <div className="rounded-2xl overflow-hidden border border-white/5 divide-y divide-white/5" style={{ background: CARD_BG }}>
-                {communityPosts.map((post: Record<string, unknown>) => (
-                  <button
-                    key={post.id as string}
-                    onClick={() => openSheet('community', {})}
-                    className="w-full flex items-start gap-3 px-4 py-3 text-left active:bg-white/5 transition-colors"
-                  >
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                      style={{ background: `${AMBER}20` }}>
-                      <span className="text-[11px] font-black" style={{ color: AMBER }}>
-                        {((post.user_name as string) || 'A')[0].toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white/90 text-sm leading-snug line-clamp-2">{post.content as string}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs" style={{ color: MUTED }}>{post.user_name as string || 'Anonymous'}</span>
-                        {(post.like_count as number) > 0 && (
-                          <span className="flex items-center gap-0.5 text-xs" style={{ color: MUTED }}>
-                            <Heart className="w-3 h-3" />{post.like_count as number}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-                <button
-                  onClick={() => openSheet('community', {})}
-                  className="w-full px-4 py-3 text-left text-xs font-semibold active:bg-white/5 transition-colors flex items-center justify-between"
-                  style={{ color: AMBER }}
-                >
-                  View all posts
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-          </AnimatedSection>
-
-          {/* ── Section 4: Nearby Events ── */}
+          {/* ── Section 5: Nearby Events ── */}
           {(eventsLoading || nearbyEvents.length > 0) && (
-            <AnimatedSection index={2}>
+            <AnimatedSection index={1}>
               <SectionHeader
                 title="Happening near you"
                 linkLabel="See all"
@@ -1072,9 +1013,66 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             </AnimatedSection>
           )}
 
-          {/* ── Section 5: Active Beacons ── */}
-          {(beaconsLoading || activeBeacons.length > 0) && (
+          {/* ── Section 6: Radio Banner ── */}
+          <AnimatedSection index={2}>
+            <RadioBanner onNavigate={() => navigate('/radio')} />
+          </AnimatedSection>
+
+          {/* ── Section 7: Community ── */}
+          {(communityLoading || communityPosts.length > 0) && (
             <AnimatedSection index={3}>
+              <SectionHeader
+                title="Community"
+                linkLabel="See all"
+                onLink={() => openSheet('community', {})}
+              />
+              {communityLoading ? (
+                <div className="space-y-2">
+                  {[0, 1, 2].map(i => <ShimmerBox key={i} className="w-full h-16" />)}
+                </div>
+              ) : (
+                <div className="rounded-2xl overflow-hidden border border-white/5 divide-y divide-white/5" style={{ background: CARD_BG }}>
+                  {communityPosts.map((post: Record<string, unknown>) => (
+                    <button
+                      key={post.id as string}
+                      onClick={() => openSheet('community', {})}
+                      className="w-full flex items-start gap-3 px-4 py-3 text-left active:bg-white/5 transition-colors"
+                    >
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                        style={{ background: `${AMBER}20` }}>
+                        <span className="text-[11px] font-black" style={{ color: AMBER }}>
+                          {((post.user_name as string) || 'A')[0].toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white/90 text-sm leading-snug line-clamp-2">{post.content as string}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs" style={{ color: MUTED }}>{post.user_name as string || 'Anonymous'}</span>
+                          {(post.like_count as number) > 0 && (
+                            <span className="flex items-center gap-0.5 text-xs" style={{ color: MUTED }}>
+                              <Heart className="w-3 h-3" />{post.like_count as number}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => openSheet('community', {})}
+                    className="w-full px-4 py-3 text-left text-xs font-semibold active:bg-white/5 transition-colors flex items-center justify-between"
+                    style={{ color: AMBER }}
+                  >
+                    View all posts
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </AnimatedSection>
+          )}
+
+          {/* ── Section 8: Active Beacons ── */}
+          {(beaconsLoading || activeBeacons.length > 0) && (
+            <AnimatedSection index={4}>
               <SectionHeader title="Active Beacons" />
               <div className="rounded-2xl overflow-hidden border border-white/5" style={{ background: CARD_BG }}>
                 {beaconsLoading ? (
@@ -1099,9 +1097,9 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             </AnimatedSection>
           )}
 
-          {/* ── Section 6: From the Market ── */}
+          {/* ── Section 9: From the Market ── */}
           {(marketLoading || marketListings.length > 0) && (
-            <AnimatedSection index={4}>
+            <AnimatedSection index={5}>
               <SectionHeader
                 title="Fresh drops"
                 linkLabel="Browse market"
@@ -1131,9 +1129,9 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             </AnimatedSection>
           )}
 
-          {/* ── Section 7: Scene Scout (Tonight's Picks) ── */}
+          {/* ── Section 10: Scene Scout (Tonight's Picks) ── */}
           {nearbyEvents.length > 0 && (
-            <AnimatedSection index={5}>
+            <AnimatedSection index={6}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4" style={{ color: AMBER }} />
@@ -1180,11 +1178,6 @@ export function HomeMode({ className = '' }: HomeModeProps) {
               </div>
             </AnimatedSection>
           )}
-
-          {/* ── Section 8: Radio Banner ── */}
-          <AnimatedSection index={6}>
-            <RadioBanner onNavigate={() => navigate('/radio')} />
-          </AnimatedSection>
 
           </div>{/* end px-5 */}
         </div>
