@@ -51,9 +51,9 @@ const STAGE_TO_SCREEN = {
   age_verified: SCREENS.SIGNUP,    // explicit age_verified stage
   signed_up: SCREENS.QUICK_SETUP,  // signed up, quick setup not yet done
   quick_setup: SCREENS.PROFILE,    // ProfileScreen
-  profile_complete: SCREENS.QUICK_SETUP,  // VibeScreen (in QuickSetupScreen)
-  vibe_complete: SCREENS.PIN_SETUP,  // PinSetupScreen
-  pin_complete: SCREENS.QUICK_SETUP,  // Location/onboard finish
+  profile_complete: SCREENS.PIN_SETUP,  // PinSetupScreen
+  vibe_complete: SCREENS.PIN_SETUP,  // PinSetupScreen (legacy stage)
+  pin_complete: null,  // should not reach OnboardingRouter (onboarding_completed=true)
   // Legacy stages → QuickSetup (new minimum to unlock)
   signup: SCREENS.QUICK_SETUP,
   profile: SCREENS.QUICK_SETUP,
@@ -272,8 +272,18 @@ export default function OnboardingRouter() {
     }
   }, [goTo]);
 
-  const handleQuickSetupComplete = async () => {
-    // Refetch profile so BootGuardContext sees onboarding_completed = true
+  const handleQuickSetupComplete = () => {
+    // QuickSetup done → advance to Profile details screen
+    goTo(SCREENS.PROFILE);
+  };
+
+  const handleProfileComplete = () => {
+    // Profile details done → advance to PIN setup
+    goTo(SCREENS.PIN_SETUP);
+  };
+
+  const handlePinComplete = async () => {
+    // PIN is the final step — onboarding_completed is now true in DB
     if (refetchProfile) {
       await refetchProfile();
     }
@@ -340,16 +350,16 @@ export default function OnboardingRouter() {
     case SCREENS.PROFILE:
       return (
         <ProfileScreen
-          onNext={() => goTo(SCREENS.QUICK_SETUP)}
-          onSkip={() => goTo(SCREENS.QUICK_SETUP)}
+          onNext={handleProfileComplete}
+          onSkip={handleProfileComplete}
         />
       );
 
     case SCREENS.PIN_SETUP:
       return (
         <PinSetupScreen
-          onNext={() => goTo(SCREENS.QUICK_SETUP)}
-          onSkip={() => goTo(SCREENS.QUICK_SETUP)}
+          onNext={handlePinComplete}
+          onSkip={handlePinComplete}
         />
       );
 
