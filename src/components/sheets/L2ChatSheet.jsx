@@ -328,7 +328,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         if (!realtimeRef.current) openThread(thread);
       }
     } catch (err) {
-      toast.error(err.message || 'Failed to send message');
+      toast.error("Couldn't send. Try again.");
       setNewMessage(text);
     } finally {
       setSending(false);
@@ -380,7 +380,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         .order('created_date', { ascending: true });
       if (msgs) setMessages(msgs);
     } catch (err) {
-      toast.error(err.message || 'Failed to send');
+      toast.error("Couldn't send. Try again.");
     } finally {
       setSending(false);
     }
@@ -512,7 +512,72 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         metadata: { url: publicUrl },
       });
     } catch (err) {
-      toast.error(err.message || 'Failed to send photo');
+      toast.error("Couldn't send photo. Try again.");
+    }
+  };
+
+  // ── Share approximate location as a chat card ──────────────────────────────
+  const handleShareLocation = async () => {
+    if (!currentUser?.email || sending) return;
+    setSending(true);
+    try {
+      const pos = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: false, // coarse = intentional
+          timeout: 10000,
+        });
+      });
+
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      // Round to ~100m precision (3 decimal places) — never expose exact
+      const approxLat = Math.round(lat * 1000) / 1000;
+      const approxLng = Math.round(lng * 1000) / 1000;
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+
+      // Calculate approximate distance to the other user if we have their location
+      let distanceLabel = '';
+      if (otherProfile?.geoLat && otherProfile?.geoLng) {
+        const R = 6371;
+        const dLat = (otherProfile.geoLat - lat) * Math.PI / 180;
+        const dLng = (otherProfile.geoLng - lng) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat * Math.PI / 180) * Math.cos(otherProfile.geoLat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+        const km = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        if (km < 1) distanceLabel = '<1 km away';
+        else if (km < 5) distanceLabel = `~${Math.round(km)} km away`;
+        else distanceLabel = `~${Math.round(km / 5) * 5} km away`;
+      }
+
+      const locationContent = JSON.stringify({
+        type: 'location',
+        approxLat,
+        approxLng,
+        distanceLabel,
+        expiresAt,
+      });
+
+      await handleSendSpecial({
+        content: `📍 My Location${distanceLabel ? ' — ' + distanceLabel : ''}`,
+        message_type: 'location',
+        metadata: {},
+      });
+
+      // Write to location_shares with expiry
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        await supabase.from('location_shares').insert({
+          user_id: session.user.id,
+          current_lat: approxLat,
+          current_lng: approxLng,
+          active: true,
+        }).catch(() => {}); // best-effort
+      }
+
+      toast.success('Location shared (expires in 1 hour)');
+    } catch {
+      toast.error("Couldn't get your location. Check permissions.");
+    } finally {
+      setSending(false);
     }
   };
 
@@ -679,9 +744,11 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
               }
             }
 
-            // Read receipt: show ✓✓ on my sent messages if recipient has 0 unread
+            // Message status: Sent → Delivered → Seen
             const recipientUnread = selectedThread?.unread_count?.[otherEmail];
             const isReadByRecipient = isMe && recipientUnread === 0;
+            const isLastFromMe = isMe && (i === messages.length - 1 || messages.slice(i + 1).every(m => m.sender_email === currentUser?.email));
+            const messageStatus = !isMe ? null : isReadByRecipient ? 'Seen' : msg.id ? 'Delivered' : 'Sent';
 
             return (
               <React.Fragment key={msg.id || i}>
@@ -691,7 +758,21 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                 animate={{ opacity: 1, y: 0 }}
                 className={cn('flex', isMe ? 'justify-end' : 'justify-start')}
               >
-                {isMeetpoint && msg.metadata ? (
+                {msg.message_type === 'location' ? (
+                  <div className={cn('max-w-[80%] px-4 py-3 rounded-2xl border', isMe ? 'bg-[#C8962C]/15 border-[#C8962C]/30' : 'bg-[#1C1C1E] border-white/10')}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-lg">📍</span>
+                      <span className="text-sm font-bold text-white">{isMe ? 'My Location' : 'Their Location'}</span>
+                    </div>
+                    <p className="text-xs text-white/50">{msg.content?.replace('📍 My Location', '').replace(' — ', '') || 'Approximate'}</p>
+                    {msg.created_date && (
+                      <p className="text-[10px] mt-2 text-white/30">
+                        {formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
+                        {' · Expires after 1 hour'}
+                      </p>
+                    )}
+                  </div>
+                ) : isMeetpoint && msg.metadata ? (
                   <MeetpointCard {...msg.metadata} />
                 ) : isPhoto ? (
                   <div className={cn('max-w-[80%]', isMe ? 'items-end flex flex-col' : 'items-start flex flex-col')}>
@@ -704,7 +785,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                     {msg.created_date && (
                       <p className="text-[10px] mt-1 opacity-40 text-white flex items-center gap-0.5">
                         {formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
-                        {isReadByRecipient && <span className="text-[10px] text-white/50 ml-1">✓✓</span>}
+                        {isMe && messageStatus && <span className={`text-[10px] ml-1 ${messageStatus === 'Seen' ? 'text-[#C8962C]' : 'text-white/40'}`}>{messageStatus}</span>}
                       </p>
                     )}
                   </div>
@@ -729,7 +810,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                     {msg.created_date && (
                       <p className="text-[10px] mt-1 opacity-50 flex items-center gap-0.5">
                         {formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
-                        {isReadByRecipient && <span className="text-[10px] text-white/50 ml-1">✓✓</span>}
+                        {isMe && messageStatus && <span className={`text-[10px] ml-1 ${messageStatus === 'Seen' ? 'text-[#C8962C]' : 'text-white/40'}`}>{messageStatus}</span>}
                       </p>
                     )}
                   </div>
@@ -838,7 +919,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           <button
             onClick={() => {
               if (!otherProfile?.id) {
-                toast.error('Cannot start call: profile not loaded');
+                toast.error('Profile not ready yet. Try again in a moment.');
                 return;
               }
               setShowVideoModal(true);
@@ -849,11 +930,12 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
             <Video className="w-4 h-4 text-[#C8962C]" />
           </button>
 
-          {/* Travel / meetpoint */}
+          {/* Share location */}
           <button
-            onClick={() => setShowTravelModal(true)}
-            className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white/5 border border-white/10"
-            title="Share location"
+            onClick={handleShareLocation}
+            disabled={sending}
+            className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white/5 border border-white/10 active:scale-95 transition-transform"
+            title="Share approximate location"
           >
             <Navigation className="w-4 h-4 text-[#C8962C]" />
           </button>
