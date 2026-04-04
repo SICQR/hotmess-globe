@@ -12,7 +12,7 @@
 import React, { useState, useRef } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { uploadToStorage } from '@/lib/uploadToStorage';
-import { Loader2, Camera, MapPin, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Loader2, Camera, MapPin, ToggleLeft, ToggleRight, Check } from 'lucide-react';
 import OnboardingBackButton from '../OnboardingBackButton';
 
 const GOLD = '#C8962C';
@@ -24,6 +24,7 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoUploaded, setPhotoUploaded] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
 
@@ -32,7 +33,7 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
 
   const canContinue = displayName.trim().length > 0 && !loading;
 
-  const handlePhotoSelect = (e) => {
+  const handlePhotoSelect = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
@@ -41,7 +42,29 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
     }
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
+    setPhotoUploaded(false);
     setError('');
+
+    // Upload immediately so user gets instant feedback
+    if (userId) {
+      setUploadingPhoto(true);
+      try {
+        const url = await uploadToStorage(file, 'avatars', userId);
+        setPhotoFile(url); // store the URL instead of File for submit
+        setPhotoUploaded(true);
+        // Also write to profile_photos table (canonical multi-photo store)
+        await supabase.from('profile_photos').upsert(
+          { profile_id: userId, url, position: 0, is_primary: true },
+          { onConflict: 'profile_id,position' }
+        ).then(() => {}).catch(() => {});
+      } catch (err) {
+        console.warn('[QuickSetup] avatar upload failed:', err);
+        setError('Photo upload failed — you can retry or continue without');
+        setPhotoFile(file); // keep original file for retry on submit
+      } finally {
+        setUploadingPhoto(false);
+      }
+    }
   };
 
   const handleSubmit = async () => {
@@ -50,12 +73,22 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
     setError('');
 
     try {
-      // 1. Upload avatar if provided
+      // 1. Avatar — already uploaded on select, or retry if File still present
       let avatarUrl = null;
-      if (photoFile) {
+      if (typeof photoFile === 'string') {
+        // Already uploaded URL
+        avatarUrl = photoFile;
+      } else if (photoFile instanceof File) {
+        // Upload failed earlier, retry now
         setUploadingPhoto(true);
         try {
           avatarUrl = await uploadToStorage(photoFile, 'avatars', userId);
+          setPhotoUploaded(true);
+          // Write to profile_photos on retry success
+          await supabase.from('profile_photos').upsert(
+            { profile_id: userId, url: avatarUrl, position: 0, is_primary: true },
+            { onConflict: 'profile_id,position' }
+          ).then(() => {}).catch(() => {});
         } catch (uploadErr) {
           console.warn('[QuickSetup] avatar upload failed:', uploadErr);
         } finally {
@@ -166,9 +199,14 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
                 <Loader2 className="w-5 h-5 animate-spin text-white" />
               </div>
             )}
+            {photoUploaded && !uploadingPhoto && (
+              <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: GOLD }}>
+                <Check className="w-3.5 h-3.5 text-black" />
+              </div>
+            )}
           </button>
-          <p className="text-center text-white/30 text-xs mt-2">
-            {photoPreview ? 'Tap to change' : 'Add a photo (optional)'}
+          <p className="text-center text-xs mt-2" style={{ color: photoUploaded ? GOLD : 'rgba(255,255,255,0.3)' }}>
+            {uploadingPhoto ? 'Uploading…' : photoUploaded ? 'Photo saved' : photoPreview ? 'Tap to change' : 'Add a photo (optional)'}
           </p>
           <input
             ref={fileInputRef}

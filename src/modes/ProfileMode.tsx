@@ -432,6 +432,7 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
       items: [
         { icon: Edit3, label: 'Edit Profile', action: () => openSheet('edit-profile', {}) },
         { icon: Camera, label: 'Photos', action: () => openSheet('photos', {}) },
+        ...(!profile?.is_verified ? [{ icon: Shield, label: 'Get Verified', badge: 'NEW', action: () => openSheet('verification', {}), iconColor: AMBER }] : []),
         { icon: MapPin, label: 'Location Settings', action: () => openSheet('location', {}) },
         { icon: Users, label: 'Personas', action: () => setShowSwitcher(true) },
       ],

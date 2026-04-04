@@ -43,7 +43,7 @@ export default function L2PhotosSheet() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not logged in');
 
-      const publicUrl = await uploadToStorage(file, 'media', user.id);
+      const publicUrl = await uploadToStorage(file, 'avatars', user.id);
 
       const { error: dbError } = await supabase.from('profile_photos').insert({
         profile_id: user.id,
@@ -52,6 +52,11 @@ export default function L2PhotosSheet() {
         is_primary: photos.length === 0,
       });
       if (dbError) throw dbError;
+
+      // If this is the first photo (or primary), sync to profiles.avatar_url
+      if (photos.length === 0) {
+        await supabase.from('profiles').update({ avatar_url: publicUrl, updated_at: new Date().toISOString() }).eq('id', user.id);
+      }
 
       await loadPhotos();
       toast.success('Photo added');
@@ -90,6 +95,11 @@ export default function L2PhotosSheet() {
       const { data: { user } } = await supabase.auth.getUser();
       await supabase.from('profile_photos').update({ is_primary: false }).eq('profile_id', user.id);
       await supabase.from('profile_photos').update({ is_primary: true }).eq('id', id);
+      // Sync avatar_url on profiles table so grid API fallback works
+      const primary = photos.find(p => p.id === id);
+      if (primary?.url) {
+        await supabase.from('profiles').update({ avatar_url: primary.url, updated_at: new Date().toISOString() }).eq('id', user.id);
+      }
       setPhotos(prev => prev.map(p => ({ ...p, is_primary: p.id === id })));
       toast.success('Cover photo updated');
     } catch {
