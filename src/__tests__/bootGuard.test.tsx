@@ -242,7 +242,7 @@ describe('BootGuardContext — boot state machine', () => {
     }, { timeout: BOOT_STATE_TIMEOUT });
   });
 
-  it('6. Profile onboarding_completed=true but display_name empty → NEEDS_ONBOARDING', async () => {
+  it('6. Profile onboarding_completed=true but display_name empty → READY (display_name no longer gates)', async () => {
     setupAuthWithProfile(makeProfile({
       age_verified: true,
       onboarding_completed: true,
@@ -257,11 +257,11 @@ describe('BootGuardContext — boot state machine', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('boot-state').textContent).toBe(BOOT_STATES.NEEDS_ONBOARDING);
+      expect(screen.getByTestId('boot-state').textContent).toBe(BOOT_STATES.READY);
     }, { timeout: BOOT_STATE_TIMEOUT });
   });
 
-  it('7. Profile complete but no community_attested_at and no localStorage → NEEDS_COMMUNITY_GATE', async () => {
+  it('7. Profile complete but no community_attested_at → READY (community gate removed)', async () => {
     setupAuthWithProfile(makeProfile({
       age_verified: true,
       onboarding_completed: true,
@@ -276,7 +276,7 @@ describe('BootGuardContext — boot state machine', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('boot-state').textContent).toBe(BOOT_STATES.NEEDS_COMMUNITY_GATE);
+      expect(screen.getByTestId('boot-state').textContent).toBe(BOOT_STATES.READY);
     }, { timeout: BOOT_STATE_TIMEOUT });
   });
 
