@@ -670,12 +670,9 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
   // ---- Profile tap handler ----
   const handleProfileTap = useCallback(
     (profile: Profile) => {
-      const email = (profile as any)?.email;
-      if (email) {
-        openSheet('profile', { email });
-      } else {
-        openSheet('profile', { id: profile.id });
-      }
+      // Use userId/authUserId (raw UUID) — profile.id has a "profile_" prefix from API
+      const uid = String((profile as any)?.userId || (profile as any)?.authUserId || profile.id);
+      openSheet('profile', { uid });
     },
     [openSheet],
   );
