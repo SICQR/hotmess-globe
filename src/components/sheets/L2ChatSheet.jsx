@@ -298,6 +298,17 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           markRead(thread.id, currentUser?.email);
         }
       )
+      // Cross-device read sync: when recipient reads, their unread_count zeroes →
+      // sender's "Seen" indicator updates in real time (no refresh needed)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'chat_threads', filter: `id=eq.${thread.id}` },
+        (payload) => {
+          if (payload.new?.unread_count) {
+            setSelectedThread(prev => prev ? { ...prev, unread_count: payload.new.unread_count } : prev);
+          }
+        }
+      )
       .subscribe();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.email]);
