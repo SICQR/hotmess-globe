@@ -14,8 +14,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/components/utils/supabaseClient';
 import { uploadToStorage } from '@/lib/uploadToStorage';
 import {
-  Camera, X, Loader2, CheckCircle, ChevronLeft, ChevronDown,
-  ShieldCheck, MapPin, Truck, PackageCheck, Eye, AlertTriangle,
+  Camera, X, Loader2, CheckCircle, ChevronLeft,
+  ShieldCheck, MapPin, Truck, PackageCheck, AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSheet } from '@/contexts/SheetContext';
