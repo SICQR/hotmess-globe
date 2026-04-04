@@ -485,8 +485,7 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
         <SheetSection>
           <button
             onClick={() => {
-              openSheet('support', { subject: `Report listing: ${product.title}`, listingId: product.id });
-              toast('Report submitted. We will review this listing.', { duration: 3000 });
+              openSheet('report-listing', { listingId: product.id, listingTitle: product.title });
             }}
             className="w-full flex items-center justify-center gap-2 py-3 text-white/30 text-xs hover:text-white/50 transition-colors"
           >
