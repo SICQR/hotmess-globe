@@ -1,0 +1,18 @@
+{
+  "city": "paris",
+  "timezone": "Europe/Paris",
+  "zones": [
+    { "id": "marais", "name": "Le Marais", "category": "nightlife", "energy": 0.85 },
+    { "id": "pigalle", "name": "Pigalle", "category": "nightlife", "energy": 0.88 },
+    { "id": "oberkampf", "name": "Oberkampf", "category": "nightlife", "energy": 0.8 },
+    { "id": "bastille", "name": "Bastille", "category": "nightlife", "energy": 0.75 },
+    { "id": "saint-germain", "name": "Saint-Germain", "category": "dining", "energy": 0.7 },
+    { "id": "montmartre", "name": "Montmartre", "category": "culture", "energy": 0.72 }
+  ],
+  "behaviour": {
+    "peak_windows": {
+      "marais": ["friday 22:00–03:00", "saturday 22:00–04:00"],
+      "pigalle": ["friday 23:00–05:00", "saturday 23:00–06:00"]
+    }
+  }
+}

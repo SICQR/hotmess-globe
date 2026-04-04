@@ -1,0 +1,13 @@
+commit 091b64259eed78fc3de4b1b1d303a53567ffbe45
+Merge: 02792c83 4a594ae8
+Author: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>
+Date:   Wed Jan 28 11:15:03 2026 +0000
+
+    chore: resolve merge conflict in vercel.json - use rewrites syntax from main
+    
+    The main branch has updated vercel.json to use the 'rewrites' syntax
+    which is the current Vercel standard. This replaces the older 'routes'
+    syntax with 'handle: filesystem'.
+    
+    Resolution: Accept main's version with rewrites configuration.
+
