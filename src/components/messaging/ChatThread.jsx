@@ -113,7 +113,6 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
         sender_email: currentUser.email,
         content: data.content,
         message_type: data.message_type || 'text',
-        metadata: data.metadata || {},
         read_by: [currentUser.email],
       });
 
@@ -289,25 +288,8 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
     const message = messages.find(m => m.id === messageId);
     if (!message) return;
 
-    const reactions = message.metadata?.reactions || {};
-    const userReactions = reactions[currentUser.email] || [];
-    
-    let newUserReactions;
-    if (userReactions.includes(emoji)) {
-      newUserReactions = userReactions.filter(r => r !== emoji);
-    } else {
-      newUserReactions = [...userReactions, emoji];
-    }
-
-    const newReactions = {
-      ...reactions,
-      [currentUser.email]: newUserReactions
-    };
-
-    await supabase.from('chat_messages').update({
-      metadata: { ...message.metadata, reactions: newReactions }
-    });
-
+    // Reactions disabled — chat_messages has no metadata column
+    // TODO: add a dedicated reactions table or column if needed
     queryClient.invalidateQueries(['messages', thread.id]);
     setShowReactions(null);
   };

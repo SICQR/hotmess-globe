@@ -50,7 +50,6 @@ describe('Chat: message insertion', () => {
       .insert({
         thread_id: testThreadId,
         sender_email: TEST_USERS.phil.email,
-        sender_name: 'test_phil_username',
         content: 'Hey Glen, testing realtime!',
         message_type: 'text',
         read_by: [TEST_USERS.phil.email],
@@ -73,7 +72,6 @@ describe('Chat: message insertion', () => {
       .insert({
         thread_id: testThreadId,
         sender_email: TEST_USERS.glen.email,
-        sender_name: 'test_glen_username',
         content: 'Yo Phil, got it!',
         message_type: 'text',
         read_by: [TEST_USERS.glen.email],
@@ -91,7 +89,6 @@ describe('Chat: message insertion', () => {
       .insert({
         thread_id: testThreadId,
         sender_email: TEST_USERS.phil.email,
-        sender_name: 'test_phil_username',
         content: null,
         message_type: 'image',
         media_urls: ['https://example.com/test-image.jpg'],
@@ -211,7 +208,6 @@ describe('Chat: read_at timestamp', () => {
       .insert({
         thread_id: testThreadId,
         sender_email: TEST_USERS.glen.email,
-        sender_name: 'test_glen',
         content: 'Fresh message for read_at test',
         message_type: 'text',
         read_by: [TEST_USERS.glen.email],
@@ -250,7 +246,6 @@ describe('Chat: expires_at (ephemeral messages)', () => {
       .insert({
         thread_id: testThreadId,
         sender_email: TEST_USERS.phil.email,
-        sender_name: 'test_phil',
         content: 'This message self-destructs!',
         message_type: 'text',
         read_by: [TEST_USERS.phil.email],
@@ -272,22 +267,17 @@ describe('Chat: message types', () => {
       .insert({
         thread_id: testThreadId,
         sender_email: TEST_USERS.phil.email,
-        sender_name: 'test_phil',
-        content: 'Meet me here',
+        content: JSON.stringify({ text: 'Meet me here', lat: 51.5134, lng: -0.1340, address: 'Soho Square, London' }),
         message_type: 'meetpoint',
-        metadata: {
-          lat: 51.5134,
-          lng: -0.1340,
-          address: 'Soho Square, London',
-        },
         read_by: [TEST_USERS.phil.email],
       })
-      .select('id, message_type, metadata')
+      .select('id, message_type, content')
       .single();
 
     expect(error).toBeNull();
     expect(data!.message_type).toBe('meetpoint');
-    expect((data!.metadata as any).lat).toBe(51.5134);
+    const parsed = JSON.parse(data!.content as string);
+    expect(parsed.lat).toBe(51.5134);
     messageIds.push(data!.id);
   });
 });

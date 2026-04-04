@@ -25,10 +25,12 @@ export interface ChatMessage {
   id: string;
   thread_id: string;
   sender_email: string;
-  sender_name: string | null;
+  /** @deprecated sender_name not a DB column — resolve display name from profiles cache */
+  sender_name?: string | null;
   content: string | null;
   message_type: string;
-  metadata: Record<string, unknown>;
+  /** @deprecated metadata not a DB column on chat_messages */
+  metadata?: Record<string, unknown>;
   media_urls: string[] | null;
   read_by: string[];
   read_at: string | null;
@@ -257,9 +259,6 @@ export function useChat({
     async (content: string, opts?: SendMessageOpts): Promise<ChatMessage | null> => {
       if (!threadId || !userEmail) return null;
 
-      const profile = senderProfileRef.current;
-      const senderName = profile?.username || profile?.display_name || 'Anonymous';
-
       const expiresAt = opts?.ttlSeconds
         ? new Date(Date.now() + opts.ttlSeconds * 1000).toISOString()
         : null;
@@ -267,10 +266,8 @@ export function useChat({
       const row = {
         thread_id: threadId,
         sender_email: userEmail,
-        sender_name: senderName,
         content,
         message_type: opts?.type || 'text',
-        metadata: opts?.metadata || {},
         read_by: [userEmail],
         expires_at: expiresAt,
       };
@@ -303,19 +300,14 @@ export function useChat({
     async (urls: string[], type = 'image'): Promise<ChatMessage | null> => {
       if (!threadId || !userEmail) return null;
 
-      const profile = senderProfileRef.current;
-      const senderName = profile?.username || profile?.display_name || 'Anonymous';
-
       const { data, error: insertErr } = await supabase
         .from('chat_messages')
         .insert({
           thread_id: threadId,
           sender_email: userEmail,
-          sender_name: senderName,
           content: null,
           message_type: type,
           media_urls: urls,
-          metadata: {},
           read_by: [userEmail],
         })
         .select('*')
