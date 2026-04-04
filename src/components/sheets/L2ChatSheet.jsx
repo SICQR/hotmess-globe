@@ -3,7 +3,7 @@
  *
  * Tables:
  *   chat_threads  (id, participant_emails[], last_message, last_message_at)
- *   messages      (id, thread_id, sender_email, sender_name, content, message_type, metadata, created_date)
+ *   messages      (id, thread_id, sender_email, content, message_type, read_by, media_urls, created_at, created_date)
  *   profiles      (id, email, display_name, avatar_url)
  */
 
@@ -323,8 +323,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           thread_id: thread.id,
           sender_email: currentUser.email,
           content: text,
-          message_type: 'text',
-          metadata: isHighlighted ? { is_highlighted: true } : null,
+          message_type: isHighlighted ? 'highlighted' : 'text',
           created_date: new Date().toISOString(),
         });
       if (msgError) throw msgError;
@@ -405,10 +404,8 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       const { error: msgError } = await supabase.from('chat_messages').insert({
         thread_id: thread.id,
         sender_email: currentUser.email,
-        sender_name: profiles[currentUser.email]?.display_name || currentUser.user_metadata?.display_name || 'Anonymous',
-        content,
+        content: metadata ? JSON.stringify(metadata) : content,
         message_type,
-        metadata,
         created_date: new Date().toISOString(),
       });
       if (msgError) throw msgError;
@@ -566,7 +563,6 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       await handleSendSpecial({
         content: publicUrl,
         message_type: 'photo',
-        metadata: { url: publicUrl },
       });
     } catch (err) {
       toast.error(err.message || 'Failed to send photo');
@@ -709,7 +705,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           messages.map((msg, i) => {
             const isMe = msg.sender_email === currentUser?.email;
             const isMeetpoint = msg.message_type === 'meetpoint';
-            const isHighlightedMsg = !!msg.metadata?.is_highlighted;
+            const isHighlightedMsg = msg.message_type === 'highlighted';
             const isPhoto =
               msg.message_type === 'photo' ||
               /\.(jpe?g|png|gif|webp|avif|heic)(\?.*)?$/i.test(msg.content || '');
@@ -748,8 +744,8 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                 animate={{ opacity: 1, y: 0 }}
                 className={cn('flex', isMe ? 'justify-end' : 'justify-start')}
               >
-                {isMeetpoint && msg.metadata ? (
-                  <MeetpointCard {...msg.metadata} />
+                {isMeetpoint && msg.content ? (
+                  <MeetpointCard {...(() => { try { return JSON.parse(msg.content); } catch { return {}; } })()  } />
                 ) : isPhoto ? (
                   <div className={cn('max-w-[80%]', isMe ? 'items-end flex flex-col' : 'items-start flex flex-col')}>
                     <img
