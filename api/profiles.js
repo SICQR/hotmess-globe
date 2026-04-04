@@ -263,7 +263,7 @@ const getAuthMetaMapById = async ({ serviceClient, authUserIds }) => {
 const queryUsersWithFallbackOrder = async ({ serviceClient, offset, limit }) => {
   // profiles is the canonical table (consolidated from "User" in migration 20260310000004).
   // Fall back to updated_at ordering if last_loc_ts isn't populated yet.
-  const base = serviceClient.from('profiles').select('*').neq('is_visible', false);
+  const base = serviceClient.from('profiles').select('*');
 
   const tryOrder = async (column) => {
     return base
@@ -282,6 +282,18 @@ const queryUsersWithFallbackOrder = async ({ serviceClient, offset, limit }) => 
   return first;
 };
 
+/** Haversine distance in metres between two lat/lng points */
+const haversineMetres = (lat1, lng1, lat2, lng2) => {
+  const R = 6_371_000;
+  const toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
@@ -295,6 +307,13 @@ export default async function handler(req, res) {
   const cursorRaw = getQueryParam(req, 'cursor');
   const offset = clampInt(cursorRaw ?? 0, 0, 100000, 0);
   const limit = clampInt(getQueryParam(req, 'limit') ?? 40, 1, 60, 40);
+
+  // Viewer lat/lng for distance sorting (optional)
+  const rawViewerLat = getQueryParam(req, 'lat');
+  const rawViewerLng = getQueryParam(req, 'lng');
+  const viewerLat = Number(rawViewerLat);
+  const viewerLng = Number(rawViewerLng);
+  const hasViewerLocation = Number.isFinite(viewerLat) && Number.isFinite(viewerLng);
 
   const { error: supaErr, serviceClient, anonClient: anonClientFromEnv } = getSupabaseServerClients();
 
@@ -581,16 +600,27 @@ export default async function handler(req, res) {
       })
       .filter(Boolean);
 
-  // Rank-sort: verified + photos + online → higher position
+  // Compute distance + rank score for each profile
   const ranked = mapped.map((p) => {
+    // Distance from viewer (metres), only when viewer sent lat/lng
+    const distance_m = hasViewerLocation
+      ? Math.round(haversineMetres(viewerLat, viewerLng, p.geoLat, p.geoLng))
+      : null;
+
     const verifiedBoost = p.is_verified ? 0.15 : 0;
     const onlineBoost = p.is_online ? 0.15 : 0;
     const photoScore = p.photo_count === 0 ? 0.06 : p.photo_count === 1 ? 0.12 : Math.min(0.2, p.photo_count * 0.05);
     const randomness = Math.random() * 0.1;
     const rankScore = verifiedBoost + onlineBoost + photoScore + randomness + 0.4; // base 0.4
-    return { ...p, rankScore };
+    return { ...p, rankScore, ...(distance_m !== null ? { distance_m } : {}) };
   });
-  ranked.sort((a, b) => b.rankScore - a.rankScore);
+
+  // Sort by distance (nearest first) when viewer location is available, else by rank score
+  if (hasViewerLocation) {
+    ranked.sort((a, b) => (a.distance_m ?? Infinity) - (b.distance_m ?? Infinity));
+  } else {
+    ranked.sort((a, b) => b.rankScore - a.rankScore);
+  }
 
   const items = dedupeItems(ranked);
   const nextCursor = rows.length === limit ? String(offset + limit) : null;
