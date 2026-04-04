@@ -578,8 +578,8 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
 
       const { error } = await supabase.from('location_shares').insert({
         user_id: user.id,
-        lat: position.latitude,
-        lng: position.longitude,
+        current_lat: position.latitude,
+        current_lng: position.longitude,
         active: true,
       });
       if (error) throw error;
@@ -590,26 +590,25 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
       // Push notification to ALL trusted contacts
       const { data: allContacts } = await supabase
         .from('trusted_contacts')
-        .select('contact_email, contact_user_id')
-        .eq('user_id', user.id);
+        .select('contact_email, notify_on_sos')
+        .eq('user_email', user.email);
 
       if (allContacts?.length) {
         const contactEmails = allContacts
+          .filter((c: any) => c.notify_on_sos !== false)
           .map((c: any) => c.contact_email)
           .filter(Boolean);
-        const contactUserIds = allContacts
-          .map((c: any) => c.contact_user_id)
-          .filter(Boolean);
 
-        pushNotify({
-          emails: contactEmails,
-          userIds: contactUserIds,
-          title: 'SOS ALERT',
-          body: 'Someone you trust triggered an emergency alert. Check their location now.',
-          tag: 'sos-alert',
-          url: '/safety',
-          icon: '/icons/icon-192.png',
-        });
+        if (contactEmails.length) {
+          pushNotify({
+            emails: contactEmails,
+            title: 'SOS ALERT',
+            body: 'Someone you trust triggered an emergency alert. Check their location now.',
+            tag: 'sos-alert',
+            url: '/safety',
+            icon: '/icons/icon-192.png',
+          });
+        }
       }
 
       // Start continuous location tracking
@@ -618,8 +617,8 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
           async (pos) => {
             await supabase.from('location_shares').upsert({
               user_id: user.id,
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude,
+              current_lat: pos.coords.latitude,
+              current_lng: pos.coords.longitude,
               active: true,
             }, { onConflict: 'user_id' });
           },
@@ -628,14 +627,14 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
         );
       }
 
-      if (user.email) {
+      if (user.id) {
         await supabase.from('right_now_status').upsert({
-          user_email: user.email,
-          user_id: user.id ?? null,
-          status: 'sos',
-          active: true,
+          user_id: user.id,
+          intent: 'sos',
+          text: 'Emergency SOS active',
+          show_on_globe: false,
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        }, { onConflict: 'user_email' });
+        }, { onConflict: 'user_id' });
 
         // Signal the Globe — safety pulse
         emitPulse?.({ type: 'sos', metadata: { userId: user.id } });
