@@ -23,6 +23,7 @@ import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import { pushNotify } from '@/lib/pushNotify';
 import MeetpointCard from '@/components/messaging/MeetpointCard';
 import VideoCallModal from '@/components/video/VideoCallModal';
 import TravelModal from '@/components/messaging/TravelModal';
@@ -317,6 +318,19 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         })
         .eq('id', thread.id);
 
+      // Push notification to the other participant(s)
+      const otherEmails = (thread.participant_emails || []).filter(e => e !== currentUser.email);
+      if (otherEmails.length) {
+        const senderName = profiles[currentUser.email]?.display_name || currentUser.email?.split('@')[0] || 'Someone';
+        pushNotify({
+          emails: otherEmails,
+          title: `${senderName}`,
+          body: text.length > 60 ? text.slice(0, 57) + '…' : text,
+          tag: `chat-${thread.id}`,
+          url: '/ghosted',
+        });
+      }
+
       // Refresh messages if no realtime (new thread)
       if (!realtimeRef.current || thread?._new) {
         const { data } = await supabase
@@ -379,6 +393,20 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         last_message: content.slice(0, 80),
         last_message_at: new Date().toISOString(),
       }).eq('id', thread.id);
+
+      // Push notification for special messages
+      const otherEmails = (thread.participant_emails || []).filter(e => e !== currentUser.email);
+      if (otherEmails.length) {
+        const senderName = profiles[currentUser.email]?.display_name || 'Someone';
+        const typeLabel = message_type === 'meetpoint' ? '📍 sent a meetpoint' : message_type === 'travel' ? '🚗 shared travel info' : 'sent a message';
+        pushNotify({
+          emails: otherEmails,
+          title: senderName,
+          body: typeLabel,
+          tag: `chat-${thread.id}`,
+          url: '/ghosted',
+        });
+      }
 
       const { data: msgs } = await supabase
         .from('chat_messages').select('*').eq('thread_id', thread.id)

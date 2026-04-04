@@ -13,7 +13,8 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
  */
 
 interface Payload {
-  emails: string[];
+  emails?: string[];
+  user_ids?: string[];
   title: string;
   body: string;
   tag?: string;
@@ -49,6 +50,7 @@ Deno.serve(async (req: Request) => {
 
   const {
     emails,
+    user_ids,
     title,
     body,
     tag  = "hotmess",
@@ -56,25 +58,31 @@ Deno.serve(async (req: Request) => {
     icon = "/icons/icon-192.png",
   } = payload;
 
-  if (!emails?.length || !title || !body) {
+  if ((!emails?.length && !user_ids?.length) || !title || !body) {
     return new Response("Missing required fields", { status: 400 });
   }
 
   const admin = createClient(supabaseUrl, serviceKey);
 
-  // Resolve emails → user_ids
-  const { data: profiles } = await admin
-    .from("profiles")
-    .select("id, email")
-    .in("email", emails);
+  // Resolve target user IDs from emails and/or direct user_ids
+  const resolvedIds = new Set<string>(user_ids ?? []);
 
-  if (!profiles?.length) {
+  if (emails?.length) {
+    const { data: profiles } = await admin
+      .from("profiles")
+      .select("id, email")
+      .in("email", emails);
+    if (profiles?.length) {
+      for (const p of profiles as { id: string }[]) resolvedIds.add(p.id);
+    }
+  }
+
+  const userIds = [...resolvedIds];
+  if (!userIds.length) {
     return new Response(JSON.stringify({ ok: true, sent: 0 }), {
       headers: { "Content-Type": "application/json" },
     });
   }
-
-  const userIds = (profiles as { id: string }[]).map((p) => p.id);
 
   // Fetch push subscriptions
   const { data: subs } = await admin
