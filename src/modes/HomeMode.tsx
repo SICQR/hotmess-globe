@@ -364,16 +364,39 @@ function RadioBanner({ onNavigate }: { onNavigate: () => void }) {
   );
 }
 
-// ---- Hero headlines (rotate every 6s) ----------------------------------------
-const HERO_HEADLINES = [
-  "Who's out. Who's up. Who's next.",
-  'Find trouble. Or be it.',
-  'Right place. Wrong decisions.',
-  'Stay messy.',
-  'Always too much, yet never enough.',
-] as const;
+// ── Pulse-driven headline pools (tone = f(live state)) ──────────────────────
+// Headlines rotate within the active tone, not randomly across all states.
+const HERO_TONES = {
+  high: [
+    "Who's out. Who's up. Who's next.",
+    'The city is moving. Are you?',
+    "Tonight's already started.",
+    'Find trouble. Or be it.',
+  ],
+  mid: [
+    'Right place. Wrong decisions.',
+    'Stay messy.',
+    'Always too much, yet never enough.',
+    'Something\u2019s brewing.',
+  ],
+  low: [
+    'Quiet night. Make it loud.',
+    'First ones out always win.',
+    'Own the silence.',
+    'Be the reason it gets interesting.',
+  ],
+} as const;
 
-// ---- Right Now empty state urgency variants ---------------------------------
+type PulseTone = keyof typeof HERO_TONES;
+
+/** Derive headline tone from live Pulse state */
+function deriveTone(liveUsers: number, nearbyUsers: number): PulseTone {
+  if (liveUsers > 0) return 'high';
+  if (nearbyUsers > 0) return 'mid';
+  return 'low';
+}
+
+// ── Right Now empty state urgency variants ───────────────────────────────────
 const EMPTY_HEADLINES = [
   "No one's live. Own it.",
   'Quiet\u2026 for now.',
@@ -703,19 +726,26 @@ export function HomeMode({ className = '' }: HomeModeProps) {
     refetchInterval: 60_000,
   });
 
-  // ---- Hero headline rotation (every 6s) ------------------------------------
-  const [heroIdx, setHeroIdx] = useState(() => Math.floor(Math.random() * HERO_HEADLINES.length));
-  useEffect(() => {
-    const t = setInterval(() => setHeroIdx(i => (i + 1) % HERO_HEADLINES.length), 6000);
-    return () => clearInterval(t);
-  }, []);
-
-  // ---- Live signals for Core Lanes ------------------------------------------
+  // ── Pulse state → tone → headline rotation ─────────────────────────────────
   const { isPlaying: radioPlaying } = useRadio();
+  const tone = deriveTone(rightNowUsers.length, nearbyEvents.length);
+  const headlines = HERO_TONES[tone];
+  const [heroIdx, setHeroIdx] = useState(0);
+
+  // Reset index when tone changes so we start from the first headline of the new pool
+  useEffect(() => { setHeroIdx(0); }, [tone]);
+
+  // Rotate within the active tone pool every 6s
+  useEffect(() => {
+    const t = setInterval(() => setHeroIdx(i => (i + 1) % headlines.length), 6000);
+    return () => clearInterval(t);
+  }, [headlines.length]);
+
+  // ── Live signals for Core Lanes (Pulse-driven badges on static structure) ──
   const laneSignals: Record<string, string> = {};
   if (rightNowUsers.length > 0) laneSignals['Pulse'] = `${rightNowUsers.length} nearby`;
-  else laneSignals['Ghosted'] = 'Quiet tonight';
-  if (nearbyEvents.length > 0) laneSignals['Market'] = `${nearbyEvents.length} events`;
+  if (rightNowUsers.length === 0) laneSignals['Ghosted'] = 'Quiet tonight';
+  if (rightNowUsers.length > 3) laneSignals['Ghosted'] = `${rightNowUsers.length} lurking`;
   if (radioPlaying) laneSignals['Music'] = 'Live now';
 
   // ---- Render ---------------------------------------------------------------
@@ -810,14 +840,14 @@ export function HomeMode({ className = '' }: HomeModeProps) {
               </h2>
               <AnimatePresence mode="wait">
                 <motion.p
-                  key={heroIdx}
+                  key={`${tone}-${heroIdx}`}
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.4 }}
                   className="text-white/50 text-xs mt-1.5 tracking-wide"
                 >
-                  {HERO_HEADLINES[heroIdx]}
+                  {headlines[heroIdx]}
                 </motion.p>
               </AnimatePresence>
               <div className="flex gap-3 mt-4">
