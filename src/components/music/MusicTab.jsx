@@ -14,7 +14,7 @@
  * - Banner placements for music_top hero
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -27,6 +27,8 @@ import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { AppBanner } from '@/components/banners/AppBanner';
 import { fetchBannersByPrefix } from '@/services/AppBannerService';
 import { CardMoreButton } from '@/components/ui/CardMoreButton';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 
 const GOLD = '#C8962C';
 const BG = '#050507';
@@ -409,6 +411,8 @@ export default function MusicTab() {
   const [showMemberCTA, setShowMemberCTA] = useState(false);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const player = useMusicPlayer();
+  const scrollRef = useRef(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Fetch upcoming events for cross-link
   useEffect(() => {
@@ -480,7 +484,16 @@ export default function MusicTab() {
 
     load();
     return () => { mounted = false; };
+  }, [reloadKey]);
+
+  const handleRefresh = useCallback(async () => {
+    setReloadKey((k) => k + 1);
   }, []);
+
+  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    scrollRef,
+  });
 
   if (loading) {
     return (
@@ -491,7 +504,8 @@ export default function MusicTab() {
   }
 
   return (
-    <div className="h-full w-full overflow-y-auto overscroll-contain pb-40" style={{ backgroundColor: BG }}>
+    <div ref={scrollRef} className="h-full w-full overflow-y-auto overscroll-contain pb-40" style={{ backgroundColor: BG }} {...pullHandlers}>
+      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
       {/* ── Music Top Banner ── */}
       <AppBanner placement="music_top" variant="hero" className="mx-4 mt-4" />
 
