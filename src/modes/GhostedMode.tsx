@@ -383,16 +383,17 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
   useEffect(() => {
     let cancelled = false;
 
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (cancelled) return;
-      const email = data?.user?.email || null;
+      const user = session?.user;
+      const email = user?.email || null;
       setMyEmail(email);
 
-      if (email) {
+      if (user?.id) {
         supabase
           .from('profiles')
           .select('city')
-          .eq('email', email)
+          .eq('id', user.id)
           .single()
           .then(({ data: profile }) => {
             if (cancelled) return;
