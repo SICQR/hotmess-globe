@@ -263,7 +263,7 @@ const getAuthMetaMapById = async ({ serviceClient, authUserIds }) => {
 const queryUsersWithFallbackOrder = async ({ serviceClient, offset, limit }) => {
   // profiles is the canonical table (consolidated from "User" in migration 20260310000004).
   // Fall back to updated_at ordering if last_loc_ts isn't populated yet.
-  const base = serviceClient.from('profiles').select('*');
+  const base = serviceClient.from('profiles').select('*').neq('is_visible', false);
 
   const tryOrder = async (column) => {
     return base
