@@ -220,10 +220,12 @@ export default function L2ProfileSheet({ email, uid, id }) {
     getViewerCoords();
   }, [profileUser]);
 
+  // profiles.id IS the auth user UUID — no separate auth_user_id column in prod
+  const profileUid = profileUser?.auth_user_id || profileUser?.id;
   const isOwnProfile =
     (!email && !resolvedUid) ||
     (currentUser?.email && profileUser?.email && profileUser.email === currentUser.email) ||
-    (authUid && profileUser?.auth_user_id && authUid === profileUser.auth_user_id);
+    (authUid && profileUid && authUid === profileUid);
 
   // Self-guard: if this sheet opens for the logged-in user, redirect to /profile
   useEffect(() => {
@@ -236,14 +238,13 @@ export default function L2ProfileSheet({ email, uid, id }) {
   // Record profile view when profile loads (fire and forget, dedup: skip if viewed in last 24h)
   // profile_views uses UUID-based viewer_id / viewed_id (references auth.users.id = profiles.id)
   useEffect(() => {
-    if (!profileUser?.auth_user_id || isOwnProfile) return;
+    const viewedUid = profileUser?.auth_user_id || profileUser?.id;
+    if (!viewedUid || isOwnProfile) return;
 
     const recordView = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user?.id) return;
-
-        const viewedUid = profileUser.auth_user_id;
         if (viewedUid === user.id) return; // own profile — belt-and-suspenders check
 
         // Check if already recorded in the last 24h to avoid spam
@@ -267,7 +268,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
     };
 
     recordView();
-  }, [profileUser?.auth_user_id, isOwnProfile]);
+  }, [profileUser?.id, profileUser?.auth_user_id, isOwnProfile]);
 
   // Fetch public profile attributes (body_type, position, looking_for, etc.)
   const { data: profileAttrs } = useQuery({
