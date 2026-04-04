@@ -3,7 +3,7 @@
  *
  * Tables:
  *   chat_threads  (id, participant_emails[], last_message, last_message_at)
- *   messages      (id, thread_id, sender_email, sender_name, content, message_type, metadata, created_date)
+ *   messages      (id, thread_id, sender_email, content, message_type, read_by, media_urls, created_at, created_date)
  *   profiles      (id, email, display_name, avatar_url)
  */
 
@@ -14,7 +14,7 @@ import {
   MessageCircle, Send, ArrowLeft,
   Loader2, Search, ChevronRight,
   Camera, Mic, Video, Navigation,
-  Sparkles, X,
+  Sparkles, X, Flag,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -296,9 +296,8 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         .insert({
           thread_id: thread.id,
           sender_email: currentUser.email,
-          content: text,
+          content: isHighlighted ? JSON.stringify({ text, is_highlighted: true }) : text,
           message_type: 'text',
-          metadata: isHighlighted ? { is_highlighted: true } : null,
           created_date: new Date().toISOString(),
         });
       if (msgError) throw msgError;
@@ -367,10 +366,8 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       const { error: msgError } = await supabase.from('chat_messages').insert({
         thread_id: thread.id,
         sender_email: currentUser.email,
-        sender_name: profiles[currentUser.email]?.display_name || currentUser.user_metadata?.display_name || 'Anonymous',
         content,
         message_type,
-        metadata,
         created_date: new Date().toISOString(),
       });
       if (msgError) throw msgError;
@@ -640,6 +637,16 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
             <p className="text-white font-bold truncate">{otherName}</p>
             <p className="text-[#8E8E93] text-xs">Tap to view profile</p>
           </div>
+        </button>
+
+        {/* Report user */}
+        <button
+          onClick={() => openSheet('report', { userId: otherProfile?.id, userName: otherName })}
+          className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-white/5 active:bg-white/10 transition-colors"
+          title="Report this user"
+          aria-label="Report user"
+        >
+          <Flag className="w-3.5 h-3.5 text-white/30" />
         </button>
       </div>
 
