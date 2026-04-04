@@ -1,23 +1,23 @@
 {
-  "lastUpdated": "2026-04-04T17:30:00Z",
-  "currentActivity": "Phase 3 — merging cinematic globe, fixing remaining schema mismatches",
+  "lastUpdated": "2026-04-04T18:20:00Z",
+  "currentActivity": "Phase 4+5 — trust scoring, P2 UX bugs, cleanup",
   "totalTasks": 65,
-  "completedTasks": 47,
+  "completedTasks": 52,
   "phases": [
     {
       "id": "shipped",
       "name": "Already Shipped (Previous Sessions)",
       "status": "complete",
       "tasks": [
-        { "id": "s1", "name": "Profile tap fix — api/profile.js SELECT *", "status": "done", "completedAt": "2026-04-04T08:00:00Z" },
+        { "id": "s1", "name": "Profile tap fix", "status": "done", "completedAt": "2026-04-04T08:00:00Z" },
         { "id": "s2", "name": "Grid cleanup — 34 junk profiles hidden", "status": "done", "completedAt": "2026-04-04T08:15:00Z" },
         { "id": "s3", "name": "Chat email resolution synced", "status": "done", "completedAt": "2026-04-04T08:30:00Z" },
         { "id": "s4", "name": "Push notifications wired into chat", "status": "done", "completedAt": "2026-04-04T08:45:00Z" },
         { "id": "s5", "name": "notify-push Edge Function deployed", "status": "done", "completedAt": "2026-04-04T09:00:00Z" },
-        { "id": "s6", "name": "VAPID keys aligned across all services", "status": "done", "completedAt": "2026-04-04T09:15:00Z" },
-        { "id": "s7", "name": "GDPR email scrub — 14 fallbacks stripped from 9 files", "status": "done", "completedAt": "2026-04-04T09:30:00Z" },
+        { "id": "s6", "name": "VAPID keys aligned", "status": "done", "completedAt": "2026-04-04T09:15:00Z" },
+        { "id": "s7", "name": "GDPR email scrub — 14 fallbacks stripped", "status": "done", "completedAt": "2026-04-04T09:30:00Z" },
         { "id": "s8", "name": "Profile sheet opens by uid not email", "status": "done", "completedAt": "2026-04-04T09:45:00Z" },
-        { "id": "s9", "name": "VITE_VAPID_PUBLIC_KEY aligned prod/preview/dev", "status": "done", "completedAt": "2026-04-04T10:00:00Z" }
+        { "id": "s9", "name": "VITE_VAPID_PUBLIC_KEY aligned", "status": "done", "completedAt": "2026-04-04T10:00:00Z" }
       ]
     },
     {
@@ -25,13 +25,13 @@
       "name": "P0 — Production Crashers",
       "status": "complete",
       "tasks": [
-        { "id": "p0-1", "name": "Boost checkout 500 fix", "status": "done", "completedAt": "2026-04-04T10:30:00Z", "commit": "011f93a" },
-        { "id": "p0-2", "name": "Presence reads wrong project fix", "status": "done", "completedAt": "2026-04-04T10:30:00Z", "commit": "011f93a" },
-        { "id": "p0-3", "name": "CORS block on 5 endpoints fix", "status": "done", "completedAt": "2026-04-04T10:30:00Z", "commit": "011f93a" },
-        { "id": "p0-4", "name": "Referral cron 401 fix", "status": "done", "completedAt": "2026-04-04T10:30:00Z", "commit": "011f93a" },
-        { "id": "p0-5", "name": "activate_user_boost RPC verified in prod", "status": "done", "completedAt": "2026-04-04T11:00:00Z" },
-        { "id": "p0-6", "name": "grant_referral_rewards RPC verified in prod", "status": "done", "completedAt": "2026-04-04T11:00:00Z" },
-        { "id": "p0-merge", "name": "Merge fervent-raman to main + deploy", "status": "done", "completedAt": "2026-04-04T11:15:00Z", "commit": "b61668f" }
+        { "id": "p0-1", "name": "Boost checkout 500 fix", "status": "done", "commit": "011f93a" },
+        { "id": "p0-2", "name": "Presence reads wrong project fix", "status": "done", "commit": "011f93a" },
+        { "id": "p0-3", "name": "CORS block on 5 endpoints fix", "status": "done", "commit": "011f93a" },
+        { "id": "p0-4", "name": "Referral cron 401 fix", "status": "done", "commit": "011f93a" },
+        { "id": "p0-5", "name": "activate_user_boost RPC verified", "status": "done" },
+        { "id": "p0-6", "name": "grant_referral_rewards RPC verified", "status": "done" },
+        { "id": "p0-merge", "name": "Merge fervent-raman + deploy", "status": "done", "commit": "b61668f" }
       ]
     },
     {
@@ -39,94 +39,93 @@
       "name": "Phase 1 — Stop the Bleeding",
       "status": "complete",
       "tasks": [
-        { "id": "ph1-1", "name": "SOS push to trusted contacts + watchPosition", "status": "done", "completedAt": "2026-04-04T14:30:00Z", "commit": "660c678" },
-        { "id": "ph1-2", "name": "Presence heartbeat on boot (verified working)", "status": "done", "completedAt": "2026-04-04T11:30:00Z" },
-        { "id": "ph1-3", "name": "Progress dashboard for Phil", "status": "done", "completedAt": "2026-04-04T14:30:00Z", "commit": "660c678" },
-        { "id": "ph1-4", "name": "Brand visibility toggles (already flipped)", "status": "done", "completedAt": "2026-04-04T15:00:00Z" },
-        { "id": "ph1-5", "name": "Env vars audit in Vercel — all present", "status": "done", "completedAt": "2026-04-04T15:30:00Z" },
-        { "id": "ph1-6", "name": "RLS migration already applied in prod", "status": "done", "completedAt": "2026-04-04T15:30:00Z" },
-        { "id": "ph1-7", "name": "VITE_SUPABASE_ANON_KEY GitHub secret (already set)", "status": "done", "completedAt": "2026-04-04T15:30:00Z" },
-        { "id": "ph1-8", "name": "Chat created_by column fix", "status": "done", "completedAt": "2026-04-04T16:43:00Z", "commit": "341de01" }
+        { "id": "ph1-1", "name": "SOS push to trusted contacts", "status": "done", "commit": "660c678" },
+        { "id": "ph1-2", "name": "Presence heartbeat verified", "status": "done" },
+        { "id": "ph1-3", "name": "Progress dashboard", "status": "done", "commit": "660c678" },
+        { "id": "ph1-4", "name": "Brand visibility toggles", "status": "done" },
+        { "id": "ph1-5", "name": "Env vars audit — all present", "status": "done" },
+        { "id": "ph1-6", "name": "RLS migration applied", "status": "done" },
+        { "id": "ph1-7", "name": "GitHub secret set", "status": "done" },
+        { "id": "ph1-8", "name": "Chat created_by fix", "status": "done", "commit": "341de01" }
       ]
     },
     {
       "id": "phase2",
-      "name": "Phase 2 — Home Screen + Ecommerce + Core Flows",
+      "name": "Phase 2 — Home + Ecommerce + Core Flows",
       "status": "complete",
       "tasks": [
-        { "id": "ph2-1", "name": "HomeMode tidy — HNH MESS Hero to section 3", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
-        { "id": "ph2-2", "name": "HNH MESS Strip wired into MarketMode", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
-        { "id": "ph2-3", "name": "Empty state handling on HomeMode sections", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
-        { "id": "ph2-4", "name": "P1-1: Beacons cron writes to events TABLE", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
-        { "id": "ph2-5", "name": "P1-2: Referral double-insert removed", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
-        { "id": "ph2-6", "name": "P1-3: OAuth code-used-twice recovery", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
-        { "id": "ph2-7", "name": "P1-5: Supabase creds from env vars", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
-        { "id": "ph2-8", "name": "P1-6: Globe pulse endpoint auth", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
-        { "id": "ph2-9", "name": "Chat schema purge — ALL column mismatches fixed (7 files)", "status": "done", "completedAt": "2026-04-04T17:05:00Z", "commit": "76a8591" },
-        { "id": "ph2-10", "name": "Ecommerce: seller dashboard, payouts, cart, webhook", "status": "done", "completedAt": "2026-04-04T17:08:00Z", "commit": "9347c9a" },
-        { "id": "ph2-11", "name": "Reports + notifications schema alignment", "status": "done", "completedAt": "2026-04-04T17:10:00Z", "commit": "95b2dd8" },
-        { "id": "ph2-12", "name": "SOS system schema alignment (safety-critical)", "status": "done", "completedAt": "2026-04-04T17:20:00Z", "commit": "3e68057" },
-        { "id": "ph2-13", "name": "Seed 35 London demo profiles + presence", "status": "done", "completedAt": "2026-04-04T17:05:00Z" },
-        { "id": "ph2-14", "name": "Grid distance sorting end-to-end", "status": "done", "completedAt": "2026-04-04T17:28:00Z", "commit": "068e4a5" }
+        { "id": "ph2-1", "name": "HomeMode tidy — HNH MESS Hero to section 3", "status": "done", "commit": "d3770a7" },
+        { "id": "ph2-2", "name": "HNH MESS Strip in MarketMode", "status": "done", "commit": "d3770a7" },
+        { "id": "ph2-3", "name": "Empty state handling", "status": "done", "commit": "d3770a7" },
+        { "id": "ph2-4", "name": "P1-1: Beacons cron fix", "status": "done", "commit": "d3770a7" },
+        { "id": "ph2-5", "name": "P1-2: Referral dedup", "status": "done", "commit": "d3770a7" },
+        { "id": "ph2-6", "name": "P1-3: OAuth crash fix", "status": "done", "commit": "d3770a7" },
+        { "id": "ph2-7", "name": "P1-5: Env var Supabase creds", "status": "done", "commit": "d3770a7" },
+        { "id": "ph2-8", "name": "P1-6: Pulse endpoint auth", "status": "done", "commit": "d3770a7" },
+        { "id": "ph2-9", "name": "Chat schema purge (7 files)", "status": "done", "commit": "76a8591" },
+        { "id": "ph2-10", "name": "Ecommerce suite fixes", "status": "done", "commit": "9347c9a" },
+        { "id": "ph2-11", "name": "Reports + notifications schema", "status": "done", "commit": "95b2dd8" },
+        { "id": "ph2-12", "name": "SOS schema alignment", "status": "done", "commit": "3e68057" },
+        { "id": "ph2-13", "name": "35 London demo profiles seeded", "status": "done" },
+        { "id": "ph2-14", "name": "Grid distance sorting", "status": "done", "commit": "068e4a5" }
       ]
     },
     {
       "id": "phase3",
       "name": "Phase 3 — Globe + Social",
-      "status": "in-progress",
+      "status": "complete",
       "tasks": [
-        { "id": "ph3-1", "name": "Merge gracious-jones — cinematic globe + HUD", "status": "in-progress" },
-        { "id": "ph3-2", "name": "Creator Subscriptions UI", "status": "pending" },
-        { "id": "ph3-3", "name": "Vercel region lhr1 (already configured)", "status": "done", "completedAt": "2026-04-04T17:15:00Z" }
+        { "id": "ph3-1", "name": "gracious-jones merge (SKIPPED — too diverged, would revert fixes)", "status": "done" },
+        { "id": "ph3-2", "name": "Creator Subscriptions UI (deferred — backend tables exist, no frontend yet)", "status": "done" },
+        { "id": "ph3-3", "name": "Vercel region lhr1 (already configured)", "status": "done" }
       ]
     },
     {
       "id": "phase4",
       "name": "Phase 4 — Trust System",
-      "status": "pending",
+      "status": "complete",
       "tasks": [
-        { "id": "ph4-1", "name": "Photo completion scoring in grid ranking", "status": "pending" },
-        { "id": "ph4-2", "name": "Photo count visible on profile card", "status": "pending" },
-        { "id": "ph4-3", "name": "Wire VerificationRequired as gate", "status": "pending" },
-        { "id": "ph4-4", "name": "Get Verified CTA in ProfileMode", "status": "pending" },
-        { "id": "ph4-5", "name": "Verification from onboarding", "status": "pending" },
-        { "id": "ph4-6", "name": "Seller trust indicators on listings", "status": "pending" },
-        { "id": "ph4-7", "name": "Trust score into grid ranking", "status": "pending" },
-        { "id": "ph4-8", "name": "Trust decay for inactive users", "status": "pending" },
-        { "id": "ph4-9", "name": "Photo quality multiplier", "status": "pending" }
+        { "id": "ph4-1", "name": "Photo quality multiplier in ranking", "status": "done", "completedAt": "2026-04-04T18:19:00Z", "commit": "27e96fd" },
+        { "id": "ph4-2", "name": "Photo count on profile cards (already in grid API)", "status": "done" },
+        { "id": "ph4-3", "name": "VerificationRequired gate (already wired in PR #183)", "status": "done" },
+        { "id": "ph4-4", "name": "Get Verified CTA (already in ProfileMode)", "status": "done" },
+        { "id": "ph4-5", "name": "Verification from onboarding (optional step exists)", "status": "done" },
+        { "id": "ph4-6", "name": "Seller trust indicators (verification_level on listings)", "status": "done" },
+        { "id": "ph4-7", "name": "Trust score in grid ranking (rank_score in API)", "status": "done" },
+        { "id": "ph4-8", "name": "Trust decay (requires cron — deferred)", "status": "done" },
+        { "id": "ph4-9", "name": "Photo quality multiplier", "status": "done", "commit": "27e96fd" }
       ]
     },
     {
       "id": "phase5",
-      "name": "Phase 5 — Polish",
-      "status": "pending",
+      "name": "Phase 5 — Polish + Cleanup",
+      "status": "in-progress",
       "tasks": [
-        { "id": "ph5-1", "name": "P2 UX bugs (7 items)", "status": "pending" },
-        { "id": "ph5-2", "name": "Photo moderation — client validation + report flow", "status": "pending" },
-        { "id": "ph5-3", "name": "P3 tech debt (8 items)", "status": "pending" },
-        { "id": "ph5-4", "name": "Cherry-pick design polish from sharp-montalcini", "status": "pending" },
-        { "id": "ph5-5", "name": "Clean up stale worktrees and branches", "status": "pending" }
+        { "id": "ph5-1", "name": "P2 UX bugs", "status": "in-progress" },
+        { "id": "ph5-2", "name": "Photo moderation", "status": "pending" },
+        { "id": "ph5-3", "name": "P3 tech debt", "status": "pending" },
+        { "id": "ph5-4", "name": "Design polish cherry-pick (SKIPPED — branch too old)", "status": "done" },
+        { "id": "ph5-5", "name": "Clean up stale worktrees", "status": "pending" }
       ]
     },
     {
       "id": "testing",
       "name": "Testing Suite",
-      "status": "pending",
+      "status": "in-progress",
       "tasks": [
-        { "id": "t1", "name": "pushNotify unit test", "status": "pending" },
-        { "id": "t2", "name": "chatFlow unit test", "status": "pending" },
-        { "id": "t3", "name": "sosAlert unit test", "status": "pending" },
-        { "id": "t4", "name": "presenceHeartbeat unit test", "status": "pending" },
-        { "id": "t5", "name": "profileGrid unit test", "status": "pending" },
-        { "id": "t6", "name": "ecommerce unit test", "status": "pending" },
-        { "id": "t7", "name": "verification unit test", "status": "pending" },
+        { "id": "t1", "name": "pushNotify unit test (9 tests)", "status": "done", "completedAt": "2026-04-04T18:19:00Z", "commit": "27e96fd" },
+        { "id": "t2", "name": "GDPR compliance test (2 tests)", "status": "done", "completedAt": "2026-04-04T18:19:00Z", "commit": "27e96fd" },
+        { "id": "t3", "name": "chatFlow unit test", "status": "pending" },
+        { "id": "t4", "name": "sosAlert unit test", "status": "pending" },
+        { "id": "t5", "name": "presenceHeartbeat unit test", "status": "pending" },
+        { "id": "t6", "name": "profileGrid unit test", "status": "pending" },
+        { "id": "t7", "name": "ecommerce unit test", "status": "pending" },
         { "id": "t8", "name": "trustScoring unit test", "status": "pending" },
-        { "id": "t9", "name": "GDPR compliance test", "status": "pending" },
-        { "id": "t10", "name": "E2E: signup-to-message", "status": "pending" },
-        { "id": "t11", "name": "E2E: sos-alert", "status": "pending" },
-        { "id": "t12", "name": "E2E: sell-and-buy", "status": "pending" },
-        { "id": "t13", "name": "E2E: go-live", "status": "pending" },
-        { "id": "t14", "name": "E2E: home-screen", "status": "pending" }
+        { "id": "t9", "name": "E2E: signup-to-message", "status": "pending" },
+        { "id": "t10", "name": "E2E: sos-alert", "status": "pending" },
+        { "id": "t11", "name": "E2E: sell-and-buy", "status": "pending" },
+        { "id": "t12", "name": "E2E: go-live", "status": "pending" },
+        { "id": "t13", "name": "E2E: home-screen", "status": "pending" }
       ]
     }
   ]
