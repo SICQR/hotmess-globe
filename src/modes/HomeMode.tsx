@@ -52,6 +52,7 @@ import { nanoid } from 'nanoid';
 import { format, isToday, isTomorrow } from 'date-fns';
 import RightNowModal from '@/components/globe/RightNowModal';
 import { CardMoreButton } from '@/components/ui/CardMoreButton';
+import { trackEvent } from '@/components/utils/analytics';
 import '@/styles/radio-waveform.css';
 
 interface HomeModeProps {
@@ -416,9 +417,11 @@ const CORE_LANES = [
 function CoreLanes({
   onNavigate,
   signals,
+  tone,
 }: {
   onNavigate: (route: string) => void;
   signals: Record<string, string>;
+  tone: PulseTone;
 }) {
   return (
     <div className="grid grid-cols-2 gap-3">
@@ -428,7 +431,7 @@ function CoreLanes({
         return (
           <button
             key={lane.label}
-            onClick={() => onNavigate(lane.route)}
+            onClick={() => { trackEvent('home_lane_tap', { lane: lane.label, tone, signal: signal || 'none' }); onNavigate(lane.route); }}
             className="flex flex-col items-start gap-2 rounded-2xl p-4 text-left border border-white/[0.06] active:scale-[0.97] transition-transform"
             style={{ background: CARD_BG }}
             aria-label={`${lane.label}: ${lane.sub}`}
@@ -852,7 +855,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
               </AnimatePresence>
               <div className="flex gap-3 mt-4">
                 <button
-                  onClick={() => navigate('/pulse')}
+                  onClick={() => { trackEvent('home_cta_tap', { cta: 'open_pulse', tone, live_users: rightNowUsers.length }); navigate('/pulse'); }}
                   className="h-11 px-6 rounded-xl font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform"
                   style={{ background: AMBER, color: '#000' }}
                 >
@@ -860,7 +863,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
                   Open Pulse
                 </button>
                 <button
-                  onClick={() => setShowRightNow(true)}
+                  onClick={() => { trackEvent('home_cta_tap', { cta: 'go_live', tone, live_users: rightNowUsers.length }); setShowRightNow(true); }}
                   className="h-11 px-6 rounded-xl font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform border"
                   style={{ borderColor: 'rgba(255,255,255,0.15)', color: '#fff', background: 'rgba(255,255,255,0.06)' }}
                 >
@@ -901,7 +904,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
           {/* 2. CORE LANES -- 2x2 nav grid                                  */}
           {/* ============================================================== */}
           <AnimatedSection index={0}>
-            <CoreLanes onNavigate={(route) => navigate(route)} signals={laneSignals} />
+            <CoreLanes onNavigate={(route) => navigate(route)} signals={laneSignals} tone={tone} />
           </AnimatedSection>
 
           {/* ============================================================== */}
@@ -974,7 +977,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
               linkLabel="Shop"
               onLink={() => navigate('/market')}
             />
-            <MarketFeature onNavigate={() => navigate('/market')} />
+            <MarketFeature onNavigate={() => { trackEvent('home_cta_tap', { cta: 'market_feature', tone }); navigate('/market'); }} />
           </AnimatedSection>
 
           {/* ============================================================== */}
@@ -986,7 +989,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
               linkLabel="Browse Drops"
               onLink={() => navigate('/market')}
             />
-            <DropsCarousel onNavigate={() => navigate('/market')} />
+            <DropsCarousel onNavigate={() => { trackEvent('home_cta_tap', { cta: 'drops', tone }); navigate('/market'); }} />
           </AnimatedSection>
 
           {/* ============================================================== */}
