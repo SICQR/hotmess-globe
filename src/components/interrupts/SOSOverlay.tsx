@@ -35,6 +35,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
 import { useGlobe } from '@/contexts/GlobeContext';
+import { pushNotify } from '@/lib/pushNotify';
 
 // ── Platform detection ─────────────────────────────────────────────────────────
 
@@ -585,6 +586,47 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
 
       setLocationSharingActive(true);
       toast.success('Location shared with emergency contacts');
+
+      // Push notification to ALL trusted contacts
+      const { data: allContacts } = await supabase
+        .from('trusted_contacts')
+        .select('contact_email, contact_user_id')
+        .eq('user_id', user.id);
+
+      if (allContacts?.length) {
+        const contactEmails = allContacts
+          .map((c: any) => c.contact_email)
+          .filter(Boolean);
+        const contactUserIds = allContacts
+          .map((c: any) => c.contact_user_id)
+          .filter(Boolean);
+
+        pushNotify({
+          emails: contactEmails,
+          userIds: contactUserIds,
+          title: 'SOS ALERT',
+          body: 'Someone you trust triggered an emergency alert. Check their location now.',
+          tag: 'sos-alert',
+          url: '/safety',
+          icon: '/icons/icon-192.png',
+        });
+      }
+
+      // Start continuous location tracking
+      if ('geolocation' in navigator) {
+        navigator.geolocation.watchPosition(
+          async (pos) => {
+            await supabase.from('location_shares').upsert({
+              user_id: user.id,
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+              active: true,
+            }, { onConflict: 'user_id' });
+          },
+          () => {},
+          { enableHighAccuracy: true, maximumAge: 10000 }
+        );
+      }
 
       if (user.email) {
         await supabase.from('right_now_status').upsert({
