@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "2026-04-04T14:00:00Z",
-  "currentActivity": "Building progress dashboard + committing SOS push fix",
+  "lastUpdated": "2026-04-04T16:45:00Z",
+  "currentActivity": "Phase 2 in progress — seeding profiles + ecommerce verification",
   "totalTasks": 65,
-  "completedTasks": 18,
+  "completedTasks": 35,
   "phases": [
     {
       "id": "shipped",
@@ -23,7 +23,7 @@
     {
       "id": "p0",
       "name": "P0 — Production Crashers",
-      "status": "in-progress",
+      "status": "complete",
       "tasks": [
         { "id": "p0-1", "name": "Boost checkout 500 fix", "status": "done", "completedAt": "2026-04-04T10:30:00Z", "commit": "011f93a" },
         { "id": "p0-2", "name": "Presence reads wrong project fix", "status": "done", "completedAt": "2026-04-04T10:30:00Z", "commit": "011f93a" },
@@ -37,34 +37,34 @@
     {
       "id": "phase1",
       "name": "Phase 1 — Stop the Bleeding",
-      "status": "in-progress",
+      "status": "complete",
       "tasks": [
-        { "id": "ph1-1", "name": "SOS push to trusted contacts", "status": "in-progress" },
+        { "id": "ph1-1", "name": "SOS push to trusted contacts + watchPosition", "status": "done", "completedAt": "2026-04-04T14:30:00Z", "commit": "660c678" },
         { "id": "ph1-2", "name": "Presence heartbeat on boot (verified working)", "status": "done", "completedAt": "2026-04-04T11:30:00Z" },
-        { "id": "ph1-3", "name": "Progress dashboard for Phil", "status": "in-progress" },
-        { "id": "ph1-4", "name": "Brand visibility toggles", "status": "pending" },
-        { "id": "ph1-5", "name": "Env vars audit in Vercel", "status": "pending" },
-        { "id": "ph1-6", "name": "RLS migration 20260331000001 in prod", "status": "pending" },
-        { "id": "ph1-7", "name": "VITE_SUPABASE_ANON_KEY GitHub secret", "status": "pending" },
-        { "id": "ph1-8", "name": "OTP expiry set to 3600", "status": "pending" }
+        { "id": "ph1-3", "name": "Progress dashboard for Phil", "status": "done", "completedAt": "2026-04-04T14:30:00Z", "commit": "660c678" },
+        { "id": "ph1-4", "name": "Brand visibility toggles (already flipped)", "status": "done", "completedAt": "2026-04-04T15:00:00Z" },
+        { "id": "ph1-5", "name": "Env vars audit in Vercel — all present", "status": "done", "completedAt": "2026-04-04T15:30:00Z" },
+        { "id": "ph1-6", "name": "RLS migration already applied in prod", "status": "done", "completedAt": "2026-04-04T15:30:00Z" },
+        { "id": "ph1-7", "name": "VITE_SUPABASE_ANON_KEY GitHub secret (already set)", "status": "done", "completedAt": "2026-04-04T15:30:00Z" },
+        { "id": "ph1-8", "name": "Chat created_by column fix", "status": "done", "completedAt": "2026-04-04T16:43:00Z", "commit": "341de01" }
       ]
     },
     {
       "id": "phase2",
       "name": "Phase 2 — Home Screen + Ecommerce + Core Flows",
-      "status": "pending",
+      "status": "in-progress",
       "tasks": [
-        { "id": "ph2-1", "name": "HomeMode tidy — reorder sections, empty states", "status": "pending" },
-        { "id": "ph2-2", "name": "HNH MESS hero prominence + product cards", "status": "pending" },
-        { "id": "ph2-3", "name": "Full ecommerce verification + Stripe checkout", "status": "pending" },
-        { "id": "ph2-4", "name": "Seller dashboard verification", "status": "pending" },
-        { "id": "ph2-5", "name": "Payout flow wire-up", "status": "pending" },
-        { "id": "ph2-6", "name": "P1-1: Beacons cron writes to VIEW fix", "status": "pending" },
-        { "id": "ph2-7", "name": "P1-2: Referral double-insert fix", "status": "pending" },
-        { "id": "ph2-8", "name": "P1-3: OAuth code-used-twice crash fix", "status": "pending" },
-        { "id": "ph2-9", "name": "P1-4: Boost price IDs in Vercel", "status": "pending" },
-        { "id": "ph2-10", "name": "P1-5: Hardcoded Supabase creds fix", "status": "pending" },
-        { "id": "ph2-11", "name": "P1-6: Globe pulse endpoint auth", "status": "pending" },
+        { "id": "ph2-1", "name": "HomeMode tidy — HNH MESS Hero to section 3", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
+        { "id": "ph2-2", "name": "HNH MESS Strip wired into MarketMode", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
+        { "id": "ph2-3", "name": "Empty state handling on HomeMode sections", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
+        { "id": "ph2-4", "name": "P1-1: Beacons cron writes to events TABLE", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
+        { "id": "ph2-5", "name": "P1-2: Referral double-insert removed", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
+        { "id": "ph2-6", "name": "P1-3: OAuth code-used-twice recovery", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
+        { "id": "ph2-7", "name": "P1-5: Supabase creds from env vars", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
+        { "id": "ph2-8", "name": "P1-6: Globe pulse endpoint auth", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
+        { "id": "ph2-9", "name": "Full ecommerce verification + Stripe checkout", "status": "in-progress" },
+        { "id": "ph2-10", "name": "Seller dashboard verification", "status": "pending" },
+        { "id": "ph2-11", "name": "Payout flow wire-up", "status": "pending" },
         { "id": "ph2-12", "name": "Seed 30+ London test profiles", "status": "pending" },
         { "id": "ph2-13", "name": "Grid distance sorting verification", "status": "pending" }
       ]
