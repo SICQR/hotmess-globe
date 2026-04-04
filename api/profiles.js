@@ -332,7 +332,12 @@ export default async function handler(req, res) {
     // Demo seed profiles (is_demo = true) are intentionally KEPT — they prevent
     // empty-grid drop-off for new users.
     rows = rows.filter((r) => {
-      if (r?.is_demo === true) return true; // always show demo seed profiles
+      // Demo seed profiles bypass the filter UNLESS they're e2e test accounts
+      if (r?.is_demo === true) {
+        const e = String(r?.email || '').toLowerCase();
+        if (e.startsWith('e2e.') || e.includes('e2e-boot-test')) return false;
+        return true;
+      }
       const email = String(r?.email || '').trim().toLowerCase();
       const uname = String(r?.username || '').trim().toLowerCase();
       const candidates = [email, uname].filter(Boolean);
@@ -460,7 +465,8 @@ export default async function handler(req, res) {
         const rawUsername = String(row?.username || '').trim();
         const username = rawUsername.includes('@') ? '' : rawUsername;
         const rawDisplayName = String(row?.display_name || '').trim();
-        const displayName = username || (rawDisplayName.includes('@') ? '' : rawDisplayName);
+        const rawFullName = String(row?.full_name || '').trim();
+        const displayName = username || (rawDisplayName.includes('@') ? '' : rawDisplayName) || (rawFullName.includes('@') ? '' : rawFullName);
         if (!displayName) return null; // Reject profiles without a valid non-email name
         const uniqueId = row?.id ? String(row.id).trim() : null;
         // profiles.id = auth.uid(); legacy "User" rows may have auth_user_id
