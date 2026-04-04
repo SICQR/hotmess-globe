@@ -9,7 +9,7 @@
  *         preloved_listing_reports, seller_restrictions, profiles
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -18,7 +18,6 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
-  Clock,
   ChevronDown,
   Loader2,
   Flag,

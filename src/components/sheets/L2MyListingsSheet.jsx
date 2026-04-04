@@ -16,7 +16,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
 import {
   Package, Loader2, Edit, Pause, Play, CheckCircle,
-  Trash2, MessageCircle, MoreHorizontal, X, Eye,
+  Trash2, MessageCircle, MoreHorizontal, Eye,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSheet } from '@/contexts/SheetContext';
