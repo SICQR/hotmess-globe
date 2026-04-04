@@ -72,7 +72,6 @@ beforeAll(async () => {
   await admin.from('chat_messages').insert({
     thread_id: testThreadId,
     sender_email: TEST_USERS.phil.email,
-    sender_name: 'test_phil',
     content: 'This is a private RLS test message',
     message_type: 'text',
     read_by: [TEST_USERS.phil.email],
