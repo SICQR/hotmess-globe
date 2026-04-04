@@ -47,6 +47,24 @@ export default function PinSetupScreen({ onNext, onSkip }) {
     } catch { toast.error('Could not save PIN'); } finally { setSaving(false); }
   };
 
+  const handleSkip = async () => {
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from('profiles').update({
+        onboarding_stage: 'complete',
+        onboarding_completed: true,
+        onboarding_completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }).eq('id', user.id);
+      try {
+        localStorage.setItem('hm_age_confirmed_v1', 'true');
+        localStorage.setItem('hm_community_attested_v1', 'true');
+      } catch {}
+      onSkip?.();
+    } catch { toast.error('Could not complete setup'); } finally { setSaving(false); }
+  };
+
   const dots = (val) => [0,1,2,3].map(i => (
     <div key={i} className={`w-3 h-3 rounded-full border-2 transition-all ${
       i < val.length ? 'bg-[#C8962C] border-[#C8962C]' : 'border-white/30'}`} />
@@ -69,7 +87,7 @@ export default function PinSetupScreen({ onNext, onSkip }) {
           >{d}</button>
         ))}
       </div>
-      <button onClick={onSkip} className="mt-8 text-white/30 text-sm">Skip — set PIN later in Safety settings</button>
+      <button onClick={handleSkip} disabled={saving} className="mt-8 text-white/30 text-sm">Skip — set PIN later in Safety settings</button>
     </div>
   );
 }
