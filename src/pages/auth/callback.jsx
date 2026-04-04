@@ -33,6 +33,16 @@ export default function AuthCallback() {
         const hashError = hashParams.get('error') || hashParams.get('error_code');
         const hashErrorDesc = hashParams.get('error_description');
 
+        // Detect expired magic link / OTP
+        const allErrors = [errorParam, errorDescription, hashError, hashErrorDesc].join(' ').toLowerCase();
+        const isExpired = allErrors.includes('expired') || allErrors.includes('otp_expired');
+
+        if (isExpired) {
+          logger.warn('Magic link expired', { error: allErrors });
+          setStatus('expired');
+          return;
+        }
+
         if (!errorParam && (hashError || hashErrorDesc)) {
           logger.error('OAuth error from hash fragment', { error: hashError, description: hashErrorDesc });
           navigate('/', { replace: true });
@@ -113,6 +123,21 @@ export default function AuthCallback() {
           <>
             <div className="text-3xl mb-3">✓</div>
             <p className="text-white/60 text-sm">Done. Taking you in…</p>
+          </>
+        )}
+
+        {status === 'expired' && (
+          <>
+            <div className="text-[#C8962C] text-3xl mb-3">⏱</div>
+            <p className="text-white text-base mb-1">Link expired</p>
+            <p className="text-white/40 text-sm mb-6">Magic links expire after 1 hour. Request a new one.</p>
+            <button
+              onClick={() => navigate('/', { replace: true })}
+              className="px-6 py-3 rounded-xl font-bold text-sm"
+              style={{ backgroundColor: '#C8962C', color: '#000' }}
+            >
+              Resend Link
+            </button>
           </>
         )}
 

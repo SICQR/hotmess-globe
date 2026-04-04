@@ -272,7 +272,6 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           .insert({
             participant_emails: thread.participant_emails,
             active: true,
-            created_by: currentUser.email,
             last_message_at: new Date().toISOString(),
           })
           .select()
@@ -353,7 +352,6 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           .insert({
             participant_emails: thread.participant_emails,
             active: true,
-            created_by: currentUser.email,
             last_message_at: new Date().toISOString(),
           })
           .select().single();

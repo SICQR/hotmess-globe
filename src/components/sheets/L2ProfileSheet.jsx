@@ -486,15 +486,6 @@ export default function L2ProfileSheet({ email, uid, id }) {
 
       if (error && !error.message?.includes('duplicate')) throw error;
 
-      // Also write to profile_blocklist_users (legacy — used by some older queries)
-      await supabase
-        .from('profile_blocklist_users')
-        .insert({
-          profile_id: user.id,
-          viewer_user_id: profileUser.authUserId || profileUser.userId,
-        })
-        .catch(() => {}); // best-effort legacy sync
-
       toast.success(`${profileUser.username || profileUser.display_name || 'User'} blocked`);
       setShowMoreMenu(false);
       closeSheet();

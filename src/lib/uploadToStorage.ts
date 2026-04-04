@@ -44,6 +44,22 @@ export async function uploadToStorage(
   if (!options?.skipValidation && file.type.startsWith('image/')) {
     if (file.size > 5 * 1024 * 1024) throw new Error('File must be under 5MB');
     if (file.size < 1024) throw new Error('File too small — may be corrupt');
+
+    // Dimension validation — min 200×200, reject extreme aspect ratios
+    try {
+      const dims = await new Promise<{ w: number; h: number }>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+        img.onerror = () => reject(new Error('Could not read image dimensions'));
+        img.src = URL.createObjectURL(file);
+      });
+      if (dims.w < 200 || dims.h < 200) throw new Error('Image must be at least 200×200 pixels');
+      const ratio = Math.max(dims.w, dims.h) / Math.min(dims.w, dims.h);
+      if (ratio > 4) throw new Error('Image aspect ratio too extreme — crop closer to square');
+    } catch (e) {
+      if (e instanceof Error && (e.message.includes('200') || e.message.includes('aspect'))) throw e;
+      // If dimension check fails for non-image reasons, allow upload
+    }
   }
 
   const resolvedBucket = resolveBucket(bucket);

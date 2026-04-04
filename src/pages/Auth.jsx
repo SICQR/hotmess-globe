@@ -279,7 +279,7 @@ export default function Auth() {
     setLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: 'https://hotmessldn.com/auth?reset=true',
+        redirectTo: `${window.location.origin}/auth?reset=true`,
       });
       if (error) { toast.error('Couldn\'t send reset link. Check your email and try again.'); setLoading(false); return; }
       setView('reset-sent');
