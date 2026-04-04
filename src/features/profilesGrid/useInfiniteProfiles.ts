@@ -40,7 +40,14 @@ const parseProfilesResponse = (value: unknown): ProfilesResponse => {
   return { items: uniqueItems, nextCursor };
 };
 
-export function useInfiniteProfiles() {
+export type UseInfiniteProfilesOptions = {
+  /** Viewer latitude — enables distance sort on the server */
+  lat?: number | null;
+  /** Viewer longitude — enables distance sort on the server */
+  lng?: number | null;
+};
+
+export function useInfiniteProfiles(options?: UseInfiniteProfilesOptions) {
   const [items, setItems] = useState<Profile[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
@@ -51,15 +58,24 @@ export function useInfiniteProfiles() {
   const hasMoreRef = useRef(true);
   const abortRef = useRef<AbortController | null>(null);
 
+  // Stabilise lat/lng so they don't cause infinite re-fetches on minor float drift
+  const lat = options?.lat ?? null;
+  const lng = options?.lng ?? null;
+
   const fetchPage = useCallback(async (cursor: string | null) => {
-    const params = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+    const qs = new URLSearchParams();
+    if (cursor) qs.set('cursor', cursor);
+    if (lat != null && Number.isFinite(lat)) qs.set('lat', String(lat));
+    if (lng != null && Number.isFinite(lng)) qs.set('lng', String(lng));
+    const qsStr = qs.toString();
+    const url = qsStr ? `/api/profiles?${qsStr}` : '/api/profiles';
     const token = await getAccessToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-    const res = await fetch(`/api/profiles${params}`, { method: 'GET', headers });
+    const res = await fetch(url, { method: 'GET', headers });
     if (!res.ok) throw new Error(`Failed to fetch profiles (${res.status})`);
     const data: unknown = await res.json();
     return parseProfilesResponse(data);
-  }, []);
+  }, [lat, lng]);
 
   const loadInitial = useCallback(async () => {
     abortRef.current?.abort();

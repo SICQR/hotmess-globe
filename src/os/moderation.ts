@@ -247,16 +247,28 @@ export function calculateRankScore(
   const trustScore = trust.reliabilityScore
   const randomness = Math.random() * 2 - 1 // -1 to 1
 
-  // Photo quality: 0 photos = 0.3 (penalty), 1 = 0.6, 3+ = 1.0, verified+3+ = 1.0 (extra via verified weight)
+  // Photo quality multiplier applied to final score:
+  // 0 photos = 0.5x, 1 photo = 1.0x, 3+ photos = 1.2x, verified + 3+ = 1.4x
+  const photoMultiplier =
+    photoCount === 0
+      ? 0.5
+      : photoCount >= 3
+        ? (trust.verified ? 1.4 : 1.2)
+        : 1.0
+
+  // Photo score component (0-1 range for the weighted sum)
   const photoScore = photoCount === 0 ? 0.3 : photoCount === 1 ? 0.6 : Math.min(1, photoCount / 3)
 
-  const score =
+  const rawScore =
     distanceScore * weights.distance +
     onlineScore * weights.online +
     verifiedBoost * weights.verified +
     trustScore * weights.trust +
     photoScore * weights.photo +
     randomness * weights.randomDelta
+
+  // Apply photo quality multiplier to the composite score
+  const score = rawScore * photoMultiplier
 
   return Math.max(0, Math.min(1, score))
 }

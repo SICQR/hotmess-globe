@@ -590,6 +590,35 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
     setVibeTagFilter((prev) => (prev === tag ? null : tag));
   }, []);
 
+  // ---- Sort comparator based on sortBy pill ----
+  const sortProfiles = useCallback(
+    (a: any, b: any) => {
+      if (sortBy === 'nearby') {
+        // API already sorts by distance when lat/lng sent, but we also
+        // sort client-side so local filter/tab changes keep distance order.
+        const aDist = typeof a.distance_m === 'number' ? a.distance_m : Infinity;
+        const bDist = typeof b.distance_m === 'number' ? b.distance_m : Infinity;
+        if (aDist !== bDist) return aDist - bDist;
+        // Equal distance → fall through to rank
+        return (b.rankScore ?? 0) - (a.rankScore ?? 0);
+      }
+      if (sortBy === 'last_active') {
+        const aTime = a.last_seen ? new Date(a.last_seen).getTime() : 0;
+        const bTime = b.last_seen ? new Date(b.last_seen).getTime() : 0;
+        return bTime - aTime; // most recent first
+      }
+      if (sortBy === 'newest') {
+        // Use profile id as a proxy (UUIDs are time-ordered in Supabase)
+        // or created_at if available
+        const aId = String(a.id || '');
+        const bId = String(b.id || '');
+        return bId.localeCompare(aId);
+      }
+      return 0;
+    },
+    [sortBy],
+  );
+
   // ---- Combined filter predicate (filters + tab + blocks) ----
   const filterProfiles = useCallback(
     (profile: any) => {
@@ -926,7 +955,10 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
           cols={3}
           showHeader={false}
           filterProfiles={filterProfiles}
+          sortProfiles={sortProfiles}
           viewerEmail={myEmail}
+          viewerLat={myPosition?.lat}
+          viewerLng={myPosition?.lng}
           onLongPress={handleLongPress}
           emptyComponent={<GhostedEmpty onOpenFilters={() => openSheet('filters')} />}
           onVibeTagClick={handleVibeTagClick}
