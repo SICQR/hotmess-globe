@@ -26,6 +26,8 @@ export type ProfilesGridProps = {
   showTelegramFeedButton?: boolean;
   headerTitle?: string;
   filterProfiles?: (profile: Profile) => boolean;
+  /** Sort profiles after filtering. Applied before boost sort. */
+  sortProfiles?: (a: Profile, b: Profile) => number;
   maxItems?: number;
   hideWhenEmpty?: boolean;
   containerClassName?: string;
@@ -43,6 +45,10 @@ export type ProfilesGridProps = {
   onVibeTagClick?: (tag: string) => void;
   /** User IDs with active profile_bump boost -- sorted to top of grid. */
   boostUserIds?: Set<string>;
+  /** Viewer latitude — passed to API for distance sorting */
+  viewerLat?: number | null;
+  /** Viewer longitude — passed to API for distance sorting */
+  viewerLng?: number | null;
 };
 
 const normalizeEmail = (value: unknown) => String(value || '').trim().toLowerCase();
@@ -79,6 +85,7 @@ export default function ProfilesGrid({
   showTelegramFeedButton = showHeader,
   headerTitle = 'People',
   filterProfiles,
+  sortProfiles,
   maxItems,
   hideWhenEmpty = false,
   containerClassName = 'mx-auto max-w-6xl p-4',
@@ -90,10 +97,15 @@ export default function ProfilesGrid({
   emptyComponent,
   onVibeTagClick,
   boostUserIds,
+  viewerLat,
+  viewerLng,
 }: ProfilesGridProps) {
   const navigate = useNavigate();
   const { openProfile } = useProfileOpener();
-  const { items, nextCursor, isLoadingInitial, isLoadingMore, error, loadMore, reload } = useInfiniteProfiles();
+  const { items, nextCursor, isLoadingInitial, isLoadingMore, error, loadMore, reload } = useInfiniteProfiles({
+    lat: viewerLat,
+    lng: viewerLng,
+  });
 
   // Listen for pull-to-refresh events from parent
   useEffect(() => {
@@ -243,7 +255,11 @@ export default function ProfilesGrid({
     const filtered = typeof filterProfiles === 'function' ? base.filter(filterProfiles) : base;
     // Safety fallback: if filters drop ALL profiles but data exists, show unfiltered
     const safeFiltered = filtered.length === 0 && base.length > 0 ? base : filtered;
-    const prioritized = prioritizeViewerFirst(safeFiltered, viewerEmail);
+
+    // Apply caller-provided sort (e.g. distance, last_active, newest)
+    const sorted = typeof sortProfiles === 'function' ? [...safeFiltered].sort(sortProfiles) : safeFiltered;
+
+    const prioritized = prioritizeViewerFirst(sorted, viewerEmail);
 
     // Sort boosted (profile_bump) users to top of grid
     let result = prioritized;
@@ -259,7 +275,7 @@ export default function ProfilesGrid({
 
     if (typeof maxItems === 'number') return result.slice(0, Math.max(0, maxItems));
     return result;
-  }, [filterProfiles, items, maxItems, viewerEmail, boostUserIds]);
+  }, [filterProfiles, sortProfiles, items, maxItems, viewerEmail, boostUserIds]);
 
   const totalFilteredCount = useMemo(() => {
     if (typeof maxItems !== 'number') return null;
