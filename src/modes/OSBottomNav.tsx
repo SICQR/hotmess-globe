@@ -118,10 +118,11 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
                 {/* Icon — amber circle when active, 44px min touch target */}
                 {isActive ? (
                   <motion.div
-                    className="relative w-9 h-9 rounded-full bg-[#C8962C] flex items-center justify-center"
+                    className="relative w-9 h-9 rounded-full hm-gold-gradient flex items-center justify-center"
+                    style={{ boxShadow: '0 0 12px -2px rgba(200,150,44,0.3)' }}
                     initial={{ scale: 1 }}
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 0.2, type: 'spring', stiffness: 400, damping: 15 }}
+                    animate={{ scale: [1, 1.08, 1] }}
+                    transition={{ duration: 0.25, type: 'spring', stiffness: 400, damping: 15 }}
                     key={`active-${modeId}`}
                   >
                     <Icon className="w-5 h-5 text-black" />
@@ -153,8 +154,8 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
                     )}
                   </motion.div>
                 ) : (
-                  <div className="relative">
-                    <Icon className="w-6 h-6 text-white/40" />
+                  <div className="relative hm-nav-inactive">
+                    <Icon className="w-6 h-6" />
                     {modeId === 'ghosted' && unreadCount > 0 && (
                       <button
                         onClick={(e) => {

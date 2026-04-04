@@ -97,6 +97,17 @@
     --hm-nav:     #0D0D0D;      /* nav / bottom bar */
     --hm-border:  rgba(255,255,255,0.08);
     --hm-ease:    cubic-bezier(0.22, 1, 0.36, 1);
+
+    /* ── Cinematic atmosphere tokens ─────────────────────────────────────── */
+    --hm-gold-start:  #A87C2D;  /* gradient gold: warm anchor */
+    --hm-gold-mid:    #CFAF6A;  /* gradient gold: luminous core */
+    --hm-gold-end:    #F2D38B;  /* gradient gold: light bloom */
+    --hm-gold-glow:   rgba(200,150,44,0.12);  /* soft outer bloom */
+    --hm-gold-glow-strong: rgba(200,150,44,0.22); /* active state bloom */
+    --hm-depth-shadow: 0 4px 20px -4px rgba(0,0,0,0.6), 0 1px 3px rgba(0,0,0,0.3);
+    --hm-depth-glow:  0 4px 20px -4px rgba(0,0,0,0.6), 0 0 16px -4px rgba(200,150,44,0.12);
+    --hm-surface-gradient: linear-gradient(145deg, #1E1E20 0%, #1A1A1C 50%, #161618 100%);
+    --hm-noise-opacity: 0.025;
   }
 
   .dark {
@@ -473,6 +484,138 @@
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.3);
   }
+}
+
+/* ========================================
+   CINEMATIC ATMOSPHERE SYSTEM
+   Controlled luxury + underground energy.
+   Apply via utility classes — no component rewrites needed.
+   ======================================== */
+
+@layer components {
+  /* ── Gold gradient fill (buttons, badges) ── */
+  .hm-gold-gradient {
+    background: linear-gradient(135deg, var(--hm-gold-start) 0%, var(--hm-gold-mid) 50%, var(--hm-gold-end) 100%);
+    color: #000;
+  }
+
+  /* ── Soft bloom glow (active/live states) ── */
+  .hm-bloom {
+    box-shadow: var(--hm-depth-glow);
+    transition: box-shadow 0.3s var(--hm-ease);
+  }
+  .hm-bloom:active, .hm-bloom:focus-visible {
+    box-shadow: 0 4px 24px -4px rgba(0,0,0,0.6), 0 0 24px -4px var(--hm-gold-glow-strong);
+  }
+
+  /* ── Depth card — replaces flat bg with layered surface ── */
+  .hm-depth {
+    background: var(--hm-surface-gradient);
+    box-shadow: var(--hm-depth-shadow);
+    border: 1px solid rgba(255,255,255,0.05);
+    position: relative;
+  }
+  .hm-depth::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 10%, rgba(255,255,255,0.08) 50%, transparent 90%);
+    pointer-events: none;
+  }
+
+  /* ── Cinematic button — gold gradient + soft bloom on tap ── */
+  .hm-btn-cinematic {
+    @apply inline-flex items-center justify-center font-black text-sm uppercase tracking-widest rounded-xl px-6 py-3;
+    background: linear-gradient(135deg, var(--hm-gold-start) 0%, var(--hm-gold-mid) 50%, var(--hm-gold-end) 100%);
+    color: #000;
+    box-shadow: 0 2px 12px -2px rgba(200,150,44,0.2);
+    transition: transform 0.2s var(--hm-ease), box-shadow 0.3s var(--hm-ease);
+  }
+  .hm-btn-cinematic:active {
+    transform: scale(0.97);
+    box-shadow: 0 2px 20px -2px rgba(200,150,44,0.35);
+  }
+
+  /* ── Ghost button — outline + glow on tap ── */
+  .hm-btn-ghost {
+    @apply inline-flex items-center justify-center font-semibold text-sm tracking-wide rounded-xl px-6 py-3 border;
+    color: var(--hm-amber);
+    border-color: rgba(200,150,44,0.2);
+    background: rgba(200,150,44,0.04);
+    transition: all 0.2s var(--hm-ease);
+  }
+  .hm-btn-ghost:active {
+    background: rgba(200,150,44,0.1);
+    box-shadow: 0 0 16px -4px rgba(200,150,44,0.15);
+  }
+
+  /* ── Chat bubble — gold gradient for sent, dark glass for received ── */
+  .hm-bubble-sent {
+    background: linear-gradient(135deg, var(--hm-gold-start) 0%, var(--hm-gold-mid) 100%);
+    color: #000;
+    box-shadow: 0 2px 8px -2px rgba(200,150,44,0.2);
+  }
+  .hm-bubble-received {
+    background: var(--hm-surface-gradient);
+    border: 1px solid rgba(255,255,255,0.06);
+    color: #fff;
+  }
+
+  /* ── Nav active state — gold icon + subtle glow ── */
+  .hm-nav-active {
+    color: var(--hm-amber);
+    filter: drop-shadow(0 0 6px rgba(200,150,44,0.3));
+    transform: scale(1.05);
+    transition: all 0.2s var(--hm-ease);
+  }
+  .hm-nav-inactive {
+    color: rgba(255,255,255,0.35);
+    transition: all 0.2s var(--hm-ease);
+  }
+
+  /* ── Live pulse — slow breathing for active/live elements ── */
+  .hm-live-pulse {
+    animation: hm-breathe 3s ease-in-out infinite;
+  }
+
+  /* ── Textured background — adds subtle noise to any surface ── */
+  .hm-textured {
+    position: relative;
+  }
+  .hm-textured::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+    background-size: 128px;
+    opacity: var(--hm-noise-opacity);
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  /* ── Tap lift — subtle elevation on press ── */
+  .hm-tap-lift {
+    transition: transform 0.2s var(--hm-ease), box-shadow 0.2s var(--hm-ease);
+  }
+  .hm-tap-lift:active {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px -6px rgba(0,0,0,0.5);
+  }
+
+  /* ── Danger glow (SOS/panic) — controlled, not overpowering ── */
+  .hm-danger-glow {
+    box-shadow: 0 0 12px -4px rgba(255,59,48,0.25);
+    transition: box-shadow 0.3s var(--hm-ease);
+  }
+  .hm-danger-glow:active {
+    box-shadow: 0 0 20px -4px rgba(255,59,48,0.4);
+  }
+}
+
+@keyframes hm-breathe {
+  0%, 100% { box-shadow: 0 0 8px -2px var(--hm-gold-glow); }
+  50% { box-shadow: 0 0 16px -2px var(--hm-gold-glow-strong); }
 }
 
 /* ========================================

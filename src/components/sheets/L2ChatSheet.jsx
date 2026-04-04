@@ -946,15 +946,14 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                 ) : (
                   <div
                     className={cn(
-                      'max-w-[80%] px-4 py-2.5 rounded-2xl shadow-lg transition-opacity',
+                      'max-w-[80%] px-4 py-2.5 rounded-2xl transition-opacity',
                       isMe
-                        ? 'text-white rounded-br-sm'
-                        : 'bg-[#1C1C1E] text-white rounded-bl-sm border border-white/[0.06]',
+                        ? 'hm-bubble-sent rounded-br-sm'
+                        : 'hm-bubble-received rounded-bl-sm',
                       isHighlightedMsg && 'ring-2 ring-[#C8962C] ring-offset-1 ring-offset-[#050507]',
                       isFailed && 'ring-1 ring-[#FF3B30]/50',
-                      // opacity handled by parent motion.div animation (0.7 → 1.0 on confirm)
                     )}
-                    style={isMe ? { background: isHighlightedMsg ? 'linear-gradient(135deg, #C8962C 0%, #D4A94E 100%)' : isFailed ? '#1C1C1E' : 'linear-gradient(135deg, #C8962C 0%, #A07722 100%)' } : isHighlightedMsg ? { background: '#1C1C1E', border: '2px solid #C8962C' } : undefined}
+                    style={isMe && isFailed ? { background: '#1C1C1E', color: '#fff' } : isHighlightedMsg && isMe ? { background: 'linear-gradient(135deg, #CFAF6A 0%, #F2D38B 100%)' } : isHighlightedMsg && !isMe ? { background: '#1C1C1E', border: '2px solid #C8962C' } : undefined}
                     onClick={isFailed ? () => {
                       // Remove failed message and retry
                       setMessages(prev => prev.filter(m => m !== msg));

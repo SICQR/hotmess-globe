@@ -275,8 +275,7 @@ function EventCard({
   return (
     <button
       onClick={onTap}
-      className="w-[260px] flex-shrink-0 snap-start text-left active:scale-[0.98] transition-transform rounded-xl overflow-hidden border border-white/[0.08] relative"
-      style={{ background: CARD_BG }}
+      className="hm-depth hm-tap-lift w-[260px] flex-shrink-0 snap-start text-left rounded-xl overflow-hidden relative"
       aria-label={`View event: ${title}`}
     >
       <div className="relative">
@@ -316,8 +315,8 @@ function RadioBanner({ onNavigate }: { onNavigate: () => void }) {
 
   return (
     <div
-      className="rounded-xl border border-[#00C2E0]/20 p-4 flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-transform"
-      style={{ background: 'linear-gradient(135deg, rgba(0,194,224,0.08) 0%, #1C1C1E 60%)', boxShadow: '0 0 24px rgba(0,194,224,0.06)' }}
+      className="hm-depth hm-tap-lift rounded-xl border border-[#00C2E0]/20 p-4 flex items-center gap-4 cursor-pointer"
+      style={{ background: 'linear-gradient(135deg, rgba(0,194,224,0.08) 0%, #1C1C1E 60%)' }}
       onClick={onNavigate}
       role="link"
       aria-label="Open HOTMESS Radio"
@@ -432,8 +431,7 @@ function CoreLanes({
           <button
             key={lane.label}
             onClick={() => { trackEvent('home_lane_tap', { lane: lane.label, tone, signal: signal || 'none' }); onNavigate(lane.route); }}
-            className="flex flex-col items-start gap-2 rounded-2xl p-4 text-left border border-white/[0.06] active:scale-[0.97] transition-transform"
-            style={{ background: CARD_BG }}
+            className="hm-depth hm-tap-lift flex flex-col items-start gap-2 rounded-2xl p-4 text-left"
             aria-label={`${lane.label}: ${lane.sub}`}
           >
             <div className="flex items-center justify-between w-full">
@@ -465,8 +463,7 @@ function MarketFeature({ onNavigate }: { onNavigate: () => void }) {
   return (
     <button
       onClick={onNavigate}
-      className="w-full rounded-2xl overflow-hidden border border-white/[0.06] text-left active:scale-[0.98] transition-transform"
-      style={{ background: CARD_BG }}
+      className="hm-depth hm-tap-lift w-full rounded-2xl overflow-hidden text-left"
       aria-label="Shop HNH MESS lube"
     >
       <div className="relative h-44 overflow-hidden">
@@ -856,16 +853,14 @@ export function HomeMode({ className = '' }: HomeModeProps) {
               <div className="flex gap-3 mt-4">
                 <button
                   onClick={() => { trackEvent('home_cta_tap', { cta: 'open_pulse', tone, live_users: rightNowUsers.length }); navigate('/pulse'); }}
-                  className="h-11 px-6 rounded-xl font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform"
-                  style={{ background: AMBER, color: '#000' }}
+                  className="hm-btn-cinematic h-11 px-6 rounded-xl text-sm flex items-center gap-2"
                 >
                   <Globe className="w-4 h-4" />
                   Open Pulse
                 </button>
                 <button
                   onClick={() => { trackEvent('home_cta_tap', { cta: 'go_live', tone, live_users: rightNowUsers.length }); setShowRightNow(true); }}
-                  className="h-11 px-6 rounded-xl font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform border"
-                  style={{ borderColor: 'rgba(255,255,255,0.15)', color: '#fff', background: 'rgba(255,255,255,0.06)' }}
+                  className="hm-btn-ghost h-11 px-6 rounded-xl text-sm flex items-center gap-2"
                 >
                   <Zap className="w-4 h-4" style={{ color: AMBER }} />
                   Go Live
