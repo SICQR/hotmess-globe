@@ -31,7 +31,7 @@ const GHOSTED_FILTERS_KEY = 'hm_ghosted_filters';
 export const defaultGhostedFilters = () => ({
   ageMin: 18,
   ageMax: 99,
-  distanceKm: 50,
+  distanceKm: 100,
   vibes: /** @type {string[]} */ ([]),
   onlineOnly: false,
 });
