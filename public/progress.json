@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "2026-04-04T17:10:00Z",
-  "currentActivity": "Phase 3 — merging cinematic globe, grid distance sorting",
+  "lastUpdated": "2026-04-04T17:30:00Z",
+  "currentActivity": "Phase 3 — merging cinematic globe, fixing remaining schema mismatches",
   "totalTasks": 65,
-  "completedTasks": 42,
+  "completedTasks": 47,
   "phases": [
     {
       "id": "shipped",
@@ -62,10 +62,12 @@
         { "id": "ph2-6", "name": "P1-3: OAuth code-used-twice recovery", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
         { "id": "ph2-7", "name": "P1-5: Supabase creds from env vars", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
         { "id": "ph2-8", "name": "P1-6: Globe pulse endpoint auth", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
-        { "id": "ph2-9", "name": "Chat schema purge — ALL column mismatches fixed", "status": "done", "completedAt": "2026-04-04T17:05:00Z", "commit": "76a8591" },
+        { "id": "ph2-9", "name": "Chat schema purge — ALL column mismatches fixed (7 files)", "status": "done", "completedAt": "2026-04-04T17:05:00Z", "commit": "76a8591" },
         { "id": "ph2-10", "name": "Ecommerce: seller dashboard, payouts, cart, webhook", "status": "done", "completedAt": "2026-04-04T17:08:00Z", "commit": "9347c9a" },
-        { "id": "ph2-11", "name": "Seed 35 London demo profiles + presence", "status": "done", "completedAt": "2026-04-04T17:05:00Z" },
-        { "id": "ph2-12", "name": "Grid distance sorting verification", "status": "in-progress" }
+        { "id": "ph2-11", "name": "Reports + notifications schema alignment", "status": "done", "completedAt": "2026-04-04T17:10:00Z", "commit": "95b2dd8" },
+        { "id": "ph2-12", "name": "SOS system schema alignment (safety-critical)", "status": "done", "completedAt": "2026-04-04T17:20:00Z", "commit": "3e68057" },
+        { "id": "ph2-13", "name": "Seed 35 London demo profiles + presence", "status": "done", "completedAt": "2026-04-04T17:05:00Z" },
+        { "id": "ph2-14", "name": "Grid distance sorting end-to-end", "status": "done", "completedAt": "2026-04-04T17:28:00Z", "commit": "068e4a5" }
       ]
     },
     {
@@ -73,9 +75,9 @@
       "name": "Phase 3 — Globe + Social",
       "status": "in-progress",
       "tasks": [
-        { "id": "ph3-1", "name": "Merge gracious-jones — cinematic globe + HUD", "status": "pending" },
+        { "id": "ph3-1", "name": "Merge gracious-jones — cinematic globe + HUD", "status": "in-progress" },
         { "id": "ph3-2", "name": "Creator Subscriptions UI", "status": "pending" },
-        { "id": "ph3-3", "name": "Vercel region lhr1 (London)", "status": "pending" }
+        { "id": "ph3-3", "name": "Vercel region lhr1 (already configured)", "status": "done", "completedAt": "2026-04-04T17:15:00Z" }
       ]
     },
     {
