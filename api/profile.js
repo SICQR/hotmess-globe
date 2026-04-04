@@ -230,10 +230,31 @@ export default async function handler(req, res) {
   let sawMissingTable = false;
 
   const respondWithUser = async (row) => {
+    // Fetch profile_photos for this user (canonical multi-photo table)
+    let profilePhotos = [];
+    try {
+      const profileId = row?.id;
+      if (profileId && serviceClient) {
+        const { data: photoRows } = await serviceClient
+          .from('profile_photos')
+          .select('id, url, position, is_primary, created_at')
+          .eq('profile_id', String(profileId))
+          .order('position', { ascending: true });
+        if (Array.isArray(photoRows)) profilePhotos = photoRows;
+      }
+    } catch {
+      // Best-effort
+    }
+
+    const enrichRow = (r) => ({
+      ...r,
+      profile_photos: profilePhotos,
+    });
+
     const authUserId = row?.auth_user_id ? String(row.auth_user_id).trim() : null;
     if (!authUserId || !serviceClient?.auth?.admin?.getUserById) {
       // GDPR: strip email from response — never expose to other users
-      const { email: _email, user_email: _ue, ...safe } = row || {};
+      const { email: _email, user_email: _ue, ...safe } = enrichRow(row) || {};
       return json(res, 200, { user: safe });
     }
 
@@ -242,11 +263,11 @@ export default async function handler(req, res) {
       const meta = error ? null : (data?.user?.user_metadata || null);
       const merged = mergeAuthMeta({ row, meta });
       // GDPR: strip email from response — never expose to other users
-      const { email: _email, user_email: _ue, ...safe } = merged || {};
+      const { email: _email, user_email: _ue, ...safe } = enrichRow(merged) || {};
       return json(res, 200, { user: safe });
     } catch {
       // GDPR: strip email from response — never expose to other users
-      const { email: _email, user_email: _ue, ...safe } = row || {};
+      const { email: _email, user_email: _ue, ...safe } = enrichRow(row) || {};
       return json(res, 200, { user: safe });
     }
   };

@@ -74,7 +74,9 @@ const markRead = (threadId, userEmail) => {
  * @param {string} [props.title] - Fallback title used when the other participant's name is unavailable.
  * @returns {JSX.Element} The chat sheet React element.
  */
-export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmail, userId: initialUserId, title }) {
+export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmail, userId: initialUserId, toUid, title }) {
+  // Accept both prop names — callers may pass userId or legacy toUid
+  const resolvedUserId = initialUserId || toUid;
   const { openSheet, updateSheetProps } = useSheet();
   const { isActive: isBoostActive, refresh: refreshBoosts } = usePowerups();
 
@@ -119,16 +121,16 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   // ── Resolve userId → email internally (GDPR: email never exposed as prop) ──
   const [resolvedToEmail, setResolvedToEmail] = useState(initialToEmail || null);
   useEffect(() => {
-    if (!initialUserId || resolvedToEmail) return;
+    if (!resolvedUserId || resolvedToEmail) return;
     supabase
       .from('profiles')
       .select('email')
-      .eq('id', initialUserId)
+      .eq('id', resolvedUserId)
       .single()
       .then(({ data }) => {
         if (data?.email) setResolvedToEmail(data.email);
       });
-  }, [initialUserId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [resolvedUserId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Load threads when user is ready ───────────────────────────────────────
   useEffect(() => {

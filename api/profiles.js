@@ -392,6 +392,29 @@ export default async function handler(req, res) {
       }
     }
 
+    // Fetch profile_photos for all users (best-effort).
+    // profile_photos table stores up to 6 photos per user with position ordering.
+    let profilePhotosById = new Map();
+    try {
+      const profileIds = rows.map((r) => r?.id).filter(Boolean).map(String);
+      if (profileIds.length) {
+        const { data: photoRows } = await serviceClient
+          .from('profile_photos')
+          .select('profile_id, url, position, is_primary')
+          .in('profile_id', profileIds)
+          .order('position', { ascending: true });
+        if (Array.isArray(photoRows)) {
+          for (const p of photoRows) {
+            const pid = String(p.profile_id);
+            if (!profilePhotosById.has(pid)) profilePhotosById.set(pid, []);
+            profilePhotosById.get(pid).push({ url: p.url, isPrimary: !!p.is_primary });
+          }
+        }
+      }
+    } catch {
+      // Best-effort — grid still works with avatar_url only
+    }
+
     // Attach auth user metadata (best-effort) so the grid can show multi-photo profiles,
     // even when those fields are stored in auth metadata (Base44-style).
     // profiles.id = auth.uid(); older "User" rows may have auth_user_id instead.
@@ -485,7 +508,10 @@ export default async function handler(req, res) {
         if (photoPolicyAck === false) return null;
 
         const rawPhotos = (row && typeof row === 'object' ? row.photos : null) ?? meta?.photos;
-        const photos = normalizePhotos(rawPhotos, avatar);
+        // Merge profile_photos table rows (canonical multi-photo) with legacy sources
+        const dbPhotos = uniqueId ? profilePhotosById.get(String(uniqueId)) : null;
+        const mergedRawPhotos = dbPhotos && dbPhotos.length ? dbPhotos : rawPhotos;
+        const photos = normalizePhotos(mergedRawPhotos, avatar);
 
         const sellerTagline = String(meta?.seller_tagline || '').trim() || undefined;
         const sellerBio = String(meta?.seller_bio || '').trim() || undefined;
@@ -546,11 +572,25 @@ export default async function handler(req, res) {
           pronouns: pubAttrs?.pronouns || row?.pronouns || undefined,
           hosting: pubAttrs?.hosting || undefined,
           age: typeof pubAttrs?.age === 'number' ? pubAttrs.age : (typeof row?.age === 'number' ? row.age : undefined),
+          is_verified: row?.is_verified === true,
+          verification_level: row?.verification_level || 'none',
+          photo_count: photos.length,
         };
       })
       .filter(Boolean);
 
-  const items = dedupeItems(mapped);
+  // Rank-sort: verified + photos + online → higher position
+  const ranked = mapped.map((p) => {
+    const verifiedBoost = p.is_verified ? 0.15 : 0;
+    const onlineBoost = p.is_online ? 0.15 : 0;
+    const photoScore = p.photo_count === 0 ? 0.06 : p.photo_count === 1 ? 0.12 : Math.min(0.2, p.photo_count * 0.05);
+    const randomness = Math.random() * 0.1;
+    const rankScore = verifiedBoost + onlineBoost + photoScore + randomness + 0.4; // base 0.4
+    return { ...p, rankScore };
+  });
+  ranked.sort((a, b) => b.rankScore - a.rankScore);
+
+  const items = dedupeItems(ranked);
   const nextCursor = rows.length === limit ? String(offset + limit) : null;
   return json(res, 200, { items, nextCursor });
 }

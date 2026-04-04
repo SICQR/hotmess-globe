@@ -464,7 +464,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
     // Pass uid instead of email (email is not exposed in profile response for GDPR)
     // ChatSheet will look up the email server-side
     openSheet(SHEET_TYPES.CHAT, {
-      toUid: profileUser.auth_user_id || profileUser.id,
+      userId: profileUser.auth_user_id || profileUser.id,
       title: `Chat with ${profileUser.username || profileUser.profileName || profileUser.display_name || 'Anonymous'}`,
     });
   };
@@ -1026,6 +1026,26 @@ export default function L2ProfileSheet({ email, uid, id }) {
             >
               <Flag className="w-4 h-4 text-[#C8962C]" />
               <span className="text-white text-sm font-medium">Report User</span>
+            </button>
+            <button
+              onClick={async () => {
+                setShowMoreMenu(false);
+                try {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (!user || !profileUser) return;
+                  await supabase.from('photo_moderation_events').insert({
+                    user_id: user.id,
+                    event_type: 'user_reported',
+                    reason: 'Reported from profile sheet',
+                    metadata: { reported_user_id: profileUser.id || profileUser.auth_user_id },
+                  });
+                  toast.success('Photo reported. Our team will review it.');
+                } catch { toast.error('Could not report photo.'); }
+              }}
+              className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 text-left border-t border-white/5"
+            >
+              <Flag className="w-4 h-4 text-amber-500" />
+              <span className="text-white text-sm font-medium">Report Photo</span>
             </button>
             <button
               onClick={handleBlock}
