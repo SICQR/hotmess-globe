@@ -26,7 +26,7 @@ export default function CommentThread({ post, currentUser, onCommentCountChange 
       const comment = await supabase.from('post_comments').insert({
         post_id: post.id,
         user_email: currentUser.email,
-        user_name: currentUser.full_name || currentUser.email,
+        user_name: currentUser.full_name || currentUser.display_name || 'Anonymous',
         content
       });
 

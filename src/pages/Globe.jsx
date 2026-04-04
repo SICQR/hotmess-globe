@@ -371,7 +371,7 @@ export default function GlobePage({ embedded = false }) {
         if (!email) return null;
 
         const updated = profile?.updated_date || profile?.updated_at || null;
-        const title = profile?.full_name || email;
+        const title = profile?.full_name || profile?.display_name || 'Nearby';
 
         return {
           id: `person-${String(candidate.user_id || email)}`,

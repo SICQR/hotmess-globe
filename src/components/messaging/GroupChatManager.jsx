@@ -105,7 +105,7 @@ export default function GroupChatManager({ currentUser, allUsers, eventId = null
                     key={email}
                     className="flex items-center gap-2 px-3 py-1.5 bg-[#C8962C]/20 border border-[#C8962C] rounded-lg"
                   >
-                    <span className="text-sm">{user?.full_name || email}</span>
+                    <span className="text-sm">{user?.full_name || user?.display_name || 'User'}</span>
                     <button onClick={() => toggleUser(email)}>
                       <X className="w-3 h-3" />
                     </button>

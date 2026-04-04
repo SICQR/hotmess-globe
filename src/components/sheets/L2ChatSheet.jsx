@@ -123,14 +123,40 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   const [resolvedToEmail, setResolvedToEmail] = useState(initialToEmail || null);
   useEffect(() => {
     if (!resolvedUserId || resolvedToEmail) return;
-    supabase
-      .from('profiles')
-      .select('email')
-      .eq('id', resolvedUserId)
-      .single()
-      .then(({ data }) => {
-        if (data?.email) setResolvedToEmail(data.email);
-      });
+
+    const resolve = async () => {
+      // 1. Try profiles table first
+      const { data } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', resolvedUserId)
+        .single();
+      if (data?.email) { setResolvedToEmail(data.email); return; }
+
+      // 2. Fallback: fetch from profile API (has service-role access to auth.users)
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        const res = await fetch(`/api/profile?uid=${resolvedUserId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const email = json?.user?.email;
+          if (email) {
+            setResolvedToEmail(email);
+            // Backfill profiles.email so future lookups work
+            supabase.from('profiles').update({ email }).eq('id', resolvedUserId).then(() => {});
+            return;
+          }
+        }
+      } catch {}
+
+      // 3. Last resort: use auth admin lookup (if current user is looking up their own auth)
+      // This won't work for other users, but at least the sender's email is always available
+    };
+
+    resolve();
   }, [resolvedUserId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Load threads when user is ready ───────────────────────────────────────
@@ -321,10 +347,10 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       // Push notification to the other participant(s)
       const otherEmails = (thread.participant_emails || []).filter(e => e !== currentUser.email);
       if (otherEmails.length) {
-        const senderName = profiles[currentUser.email]?.display_name || currentUser.email?.split('@')[0] || 'Someone';
+        const senderName = profiles[currentUser.email]?.display_name || 'Someone';
         pushNotify({
           emails: otherEmails,
-          title: `${senderName}`,
+          title: senderName,
           body: text.length > 60 ? text.slice(0, 57) + '…' : text,
           tag: `chat-${thread.id}`,
           url: '/ghosted',
@@ -436,7 +462,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   // ── Derive other-party info (needed by Wingman + chat view) ───────────────
   const otherEmail = selectedThread ? getOtherEmail(selectedThread) : '';
   const otherProfile = otherEmail ? getProfile(otherEmail) : null;
-  const otherName = otherProfile?.display_name || otherEmail || title || 'Chat';
+  const otherName = otherProfile?.display_name || title || 'Chat';
 
   const handleWingmanTap = useCallback(async () => {
     if (wingmanLoading) return;
@@ -650,7 +676,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         </button>
 
         <button
-          onClick={() => otherEmail && openSheet(SHEET_TYPES.PROFILE, { email: otherEmail })}
+          onClick={() => otherProfile?.id ? openSheet(SHEET_TYPES.PROFILE, { uid: otherProfile.id }) : null}
           className="flex items-center gap-3 flex-1 min-w-0"
         >
           <div className="relative flex-shrink-0">
