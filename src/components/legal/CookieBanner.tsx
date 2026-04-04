@@ -43,7 +43,7 @@ export function CookieBanner({ onConsent }: CookieBannerProps) {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 80, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-          className="fixed bottom-20 left-4 right-4 z-[100] mx-auto max-w-md"
+          className="fixed bottom-28 left-4 right-4 z-[100] mx-auto max-w-md"
         >
           <div className="rounded-2xl bg-[#1C1C1E]/95 backdrop-blur-xl border border-white/8 p-4 shadow-2xl">
             <div className="flex items-start gap-3">
