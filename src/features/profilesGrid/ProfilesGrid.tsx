@@ -160,7 +160,8 @@ export default function ProfilesGrid({
 
     (async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { session } } = await supabase.auth.getSession();
+        const user = session?.user;
         if (!user) {
           if (!cancelled) {
             setViewerEmail(null);
@@ -240,7 +241,9 @@ export default function ProfilesGrid({
   const displayItems = useMemo(() => {
     const base = Array.isArray(items) ? items : [];
     const filtered = typeof filterProfiles === 'function' ? base.filter(filterProfiles) : base;
-    const prioritized = prioritizeViewerFirst(filtered, viewerEmail);
+    // Safety fallback: if filters drop ALL profiles but data exists, show unfiltered
+    const safeFiltered = filtered.length === 0 && base.length > 0 ? base : filtered;
+    const prioritized = prioritizeViewerFirst(safeFiltered, viewerEmail);
 
     // Sort boosted (profile_bump) users to top of grid
     let result = prioritized;
@@ -313,7 +316,7 @@ export default function ProfilesGrid({
 
       // Persist consent in auth metadata (and profile table when available).
       try {
-        const updatePayload = { has_consented_gps: true }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
+        const updatePayload = { has_consented_gps: true }; const { data: { session: s } } = await supabase.auth.getSession(); if (s?.user) { await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", s.user.id); }
       } catch {
         // Non-fatal: location can still work for this session.
       }
