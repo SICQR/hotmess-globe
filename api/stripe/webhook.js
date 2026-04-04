@@ -130,6 +130,24 @@ export default async function handler(req, res) {
             });
           }
 
+          // Notify the seller via notifications table
+          const { data: listing } = await supabase
+            .from('preloved_listings')
+            .select('seller_id, title')
+            .eq('id', listingId)
+            .maybeSingle();
+          if (listing?.seller_id) {
+            await supabase.from('notifications').insert({
+              user_id: listing.seller_id,
+              type: 'preloved_sold',
+              title: 'Item Sold',
+              body: `Your listing "${listing.title || 'Preloved Item'}" has been purchased.`,
+              metadata: { listing_id: listingId, buyer_id: userId, stripe_session_id: session.id },
+            }).catch((err) => {
+              console.error('[Stripe webhook] seller notification error:', err?.message);
+            });
+          }
+
           break;
         }
 

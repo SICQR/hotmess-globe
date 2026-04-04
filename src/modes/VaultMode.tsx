@@ -87,8 +87,8 @@ export default function VaultMode() {
   const { data: user } = useQuery({
     queryKey: ['current-user'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      return user;
+      const { data: { session } } = await supabase.auth.getSession();
+      return session?.user ?? null;
     },
   });
 
