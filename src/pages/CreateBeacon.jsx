@@ -82,9 +82,8 @@ export default function CreateBeacon() {
           user_email: 'admin',
           type: 'shadow_beacon',
           title: 'New Beacon Pending Approval',
-          message: `${user.full_name || user.display_name || 'A user'} submitted "${data.title}" for review.`,
-          link: 'AdminDashboard',
-          metadata: { beacon_id: newBeacon.id }
+          body: `${user.full_name || user.display_name || 'A user'} submitted "${data.title}" for review.`,
+          payload: { beacon_id: newBeacon.id, link: 'AdminDashboard' },
         });
       }
       

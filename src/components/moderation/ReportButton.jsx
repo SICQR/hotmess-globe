@@ -24,20 +24,19 @@ export default function ReportButton({ itemType, itemId, variant = 'ghost' }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
       await supabase.from('reports').insert({
-        reporter_email: user.email,
-        reported_item_type: itemType,
-        reported_item_id: itemId,
+        reporter_id: user.id,
+        target_type: itemType,
+        target_id: itemId,
         reason: data.reason,
-        details: data.details
+        notes: data.details || null,
       });
 
       // Notify admins
       await supabase.from('notifications').insert({
-        user_email: 'admin',
+        user_id: user.id,
         type: 'admin_alert',
         title: 'New Report',
-        message: `${user.full_name || user.display_name || 'A user'} reported a ${itemType}`,
-        link: 'AdminDashboard'
+        body: `${user.full_name || user.display_name || 'A user'} reported a ${itemType}`,
       });
     },
     onSuccess: () => {

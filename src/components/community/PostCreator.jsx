@@ -175,9 +175,8 @@ export default function PostCreator({ user, onPostCreated, onCancel }) {
           user_email: 'admin',
           type: 'flagged_post',
           title: 'Post Flagged by AI',
-          message: `Post by ${user.full_name || user.display_name || 'a user'} flagged: ${moderation.reason}`,
-          link: 'AdminDashboard',
-          metadata: { post_id: post.id }
+          body: `Post by ${user.full_name || user.display_name || 'a user'} flagged: ${moderation.reason}`,
+          payload: { post_id: post.id, link: 'AdminDashboard' },
         });
       }
       if (moderation.approved) {
