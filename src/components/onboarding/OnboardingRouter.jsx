@@ -200,8 +200,11 @@ export default function OnboardingRouter() {
     const targetScreen = STAGE_TO_SCREEN[freshProfile.onboarding_stage];
     if (targetScreen) {
       setScreen(targetScreen);
+    } else if (!freshProfile.onboarding_stage && !freshProfile.age_verified) {
+      // Brand new user (null stage, age not verified) — start from age gate
+      setScreen(SCREENS.AGE_GATE);
     } else {
-      // Unknown or null stage — default to QuickSetup (authenticated but no stage)
+      // Authenticated + age verified but unknown stage — QuickSetup
       setScreen(SCREENS.QUICK_SETUP);
     }
     setSessionReady(true);
