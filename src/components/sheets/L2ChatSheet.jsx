@@ -375,27 +375,48 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       // Mark thread read on send (DB-first via markRead helper)
       markRead(thread.id, currentUser?.email);
 
-      // Push notification to recipient (fire-and-forget, never blocks)
+      // Increment unread_count for recipient + push notification
       const recipientEmail = thread.participant_emails?.find(e => e !== currentUser.email);
       if (recipientEmail) {
-        const senderName = profiles[currentUser.email]?.display_name || 'Someone';
-        pushNotify({
-          emails: [recipientEmail],
-          title: senderName,
-          body: text.length > 60 ? text.slice(0, 57) + '…' : text,
-          tag: `chat-${thread.id}`,
-          url: `/ghosted?sheet=chat&thread=${thread.id}`,
-        });
-      }
+        // Increment unread badge for recipient
+        const currentUnread = thread.unread_count || {};
+        const newUnreadCount = { ...currentUnread, [recipientEmail]: (currentUnread[recipientEmail] || 0) + 1 };
 
-      // Update thread last_message
-      await supabase
-        .from('chat_threads')
-        .update({
-          last_message: text.slice(0, 80),
-          last_message_at: new Date().toISOString(),
-        })
-        .eq('id', thread.id);
+        // Push notification (skip if recipient muted this thread)
+        const mutedBy = thread.muted_by || [];
+        if (!mutedBy.includes(recipientEmail)) {
+          const senderName = profiles[currentUser.email]?.display_name || 'Someone';
+          pushNotify({
+            emails: [recipientEmail],
+            title: senderName,
+            body: text.length > 60 ? text.slice(0, 57) + '…' : text,
+            tag: `chat-${thread.id}`,
+            url: `/ghosted?sheet=chat&thread=${thread.id}`,
+          });
+        }
+
+        // Update thread: last_message + unread_count in one write
+        await supabase
+          .from('chat_threads')
+          .update({
+            last_message: text.slice(0, 80),
+            last_message_at: new Date().toISOString(),
+            unread_count: newUnreadCount,
+          })
+          .eq('id', thread.id);
+
+        // Keep local state in sync
+        setSelectedThread(prev => prev ? { ...prev, unread_count: newUnreadCount } : prev);
+      } else {
+        // No recipient found — still update last_message
+        await supabase
+          .from('chat_threads')
+          .update({
+            last_message: text.slice(0, 80),
+            last_message_at: new Date().toISOString(),
+          })
+          .eq('id', thread.id);
+      }
 
       // Refresh messages if no realtime (new thread)
       if (!realtimeRef.current || thread?._new) {
@@ -455,26 +476,42 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       });
       if (msgError) throw msgError;
 
-      // Push notification with smart fallback for media/location
+      // Increment unread + push notification with smart fallback for media/location
       const recipientEmail = thread.participant_emails?.find(e => e !== currentUser.email);
-      if (recipientEmail) {
-        const senderName = profiles[currentUser.email]?.display_name || 'Someone';
-        const pushBody = message_type === 'location' ? `${senderName} sent a location`
-          : message_type === 'photo' ? `${senderName} sent a photo`
-          : content.length > 60 ? content.slice(0, 57) + '…' : content;
-        pushNotify({
-          emails: [recipientEmail],
-          title: senderName,
-          body: pushBody,
-          tag: `chat-${thread.id}`,
-          url: `/ghosted?sheet=chat&thread=${thread.id}`,
-        });
-      }
+      const lastMsg = message_type === 'location' ? '📍 Location shared' : message_type === 'photo' ? '📷 Photo' : content.slice(0, 80);
 
-      await supabase.from('chat_threads').update({
-        last_message: message_type === 'location' ? '📍 Location shared' : message_type === 'photo' ? '📷 Photo' : content.slice(0, 80),
-        last_message_at: new Date().toISOString(),
-      }).eq('id', thread.id);
+      if (recipientEmail) {
+        const currentUnread = thread.unread_count || {};
+        const newUnreadCount = { ...currentUnread, [recipientEmail]: (currentUnread[recipientEmail] || 0) + 1 };
+
+        const mutedBy = thread.muted_by || [];
+        if (!mutedBy.includes(recipientEmail)) {
+          const senderName = profiles[currentUser.email]?.display_name || 'Someone';
+          const pushBody = message_type === 'location' ? `${senderName} sent a location`
+            : message_type === 'photo' ? `${senderName} sent a photo`
+            : content.length > 60 ? content.slice(0, 57) + '…' : content;
+          pushNotify({
+            emails: [recipientEmail],
+            title: senderName,
+            body: pushBody,
+            tag: `chat-${thread.id}`,
+            url: `/ghosted?sheet=chat&thread=${thread.id}`,
+          });
+        }
+
+        await supabase.from('chat_threads').update({
+          last_message: lastMsg,
+          last_message_at: new Date().toISOString(),
+          unread_count: newUnreadCount,
+        }).eq('id', thread.id);
+
+        setSelectedThread(prev => prev ? { ...prev, unread_count: newUnreadCount } : prev);
+      } else {
+        await supabase.from('chat_threads').update({
+          last_message: lastMsg,
+          last_message_at: new Date().toISOString(),
+        }).eq('id', thread.id);
+      }
 
       const { data: msgs } = await supabase
         .from('chat_messages').select('*').eq('thread_id', thread.id)
