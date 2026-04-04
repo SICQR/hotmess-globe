@@ -52,6 +52,11 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
         const url = await uploadToStorage(file, 'avatars', userId);
         setPhotoFile(url); // store the URL instead of File for submit
         setPhotoUploaded(true);
+        // Also write to profile_photos table (canonical multi-photo store)
+        await supabase.from('profile_photos').upsert(
+          { profile_id: userId, url, position: 0, is_primary: true },
+          { onConflict: 'profile_id,position' }
+        ).then(() => {}).catch(() => {});
       } catch (err) {
         console.warn('[QuickSetup] avatar upload failed:', err);
         setError('Photo upload failed — you can retry or continue without');
@@ -79,6 +84,11 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
         try {
           avatarUrl = await uploadToStorage(photoFile, 'avatars', userId);
           setPhotoUploaded(true);
+          // Write to profile_photos on retry success
+          await supabase.from('profile_photos').upsert(
+            { profile_id: userId, url: avatarUrl, position: 0, is_primary: true },
+            { onConflict: 'profile_id,position' }
+          ).then(() => {}).catch(() => {});
         } catch (uploadErr) {
           console.warn('[QuickSetup] avatar upload failed:', uploadErr);
         } finally {

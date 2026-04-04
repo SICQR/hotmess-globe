@@ -91,30 +91,31 @@ export default function L2SellSheet() {
   const [submitted, setSubmitted] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
-  // Tier gate
+  // Tier gate + verification gate
   const [userTier, setUserTier] = useState(null);
+  const [isVerified, setIsVerified] = useState(false);
+  const [showVerifyGate, setShowVerifyGate] = useState(false);
   const [tierLoading, setTierLoading] = useState(true);
 
   useEffect(() => {
-    const checkTier = async () => {
+    const checkTierAndVerification = async () => {
       try {
-        // Try RPC first
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('membership_tier, is_verified')
+            .eq('id', session.user.id)
+            .single();
+          setUserTier(profile?.membership_tier || 'mess');
+          setIsVerified(profile?.is_verified === true);
+        } else {
+          setUserTier('mess');
+        }
+        // Also try RPC for tier
         const { data, error } = await supabase.rpc('get_user_tier');
         if (!error && data?.tier) {
           setUserTier(data.tier);
-        } else {
-          // Fallback: check profiles.membership_tier or subscriptions
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('membership_tier')
-              .eq('id', session.user.id)
-              .single();
-            setUserTier(profile?.membership_tier || 'mess');
-          } else {
-            setUserTier('mess');
-          }
         }
       } catch {
         setUserTier('mess');
@@ -122,7 +123,7 @@ export default function L2SellSheet() {
         setTierLoading(false);
       }
     };
-    checkTier();
+    checkTierAndVerification();
   }, []);
 
   const [form, setForm] = useState({
@@ -142,6 +143,7 @@ export default function L2SellSheet() {
   };
 
   const handleSubmit = async () => {
+    if (!isVerified) { setShowVerifyGate(true); return; }
     if (!form.title.trim()) return toast.error('Add a title');
     if (!form.price || isNaN(parseFloat(form.price))) return toast.error('Add a price');
     if (!form.category) return toast.error('Choose a category');
@@ -227,6 +229,30 @@ export default function L2SellSheet() {
   // Tier gate
   if (!SELL_TIERS.includes(userTier)) {
     return <TierGate onUpgrade={() => openSheet('membership')} />;
+  }
+
+  // Verification gate — sellers must verify identity
+  if (!isVerified && showVerifyGate) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full px-6 py-12 text-center">
+        <div className="w-16 h-16 rounded-full bg-[#C8962C]/15 flex items-center justify-center mb-6">
+          <ShieldCheck className="w-8 h-8 text-[#C8962C]" />
+        </div>
+        <h2 className="text-white font-bold text-xl mb-2">Verify to Sell</h2>
+        <p className="text-white/50 text-sm mb-6 max-w-xs">
+          For buyer safety, sellers must complete identity verification before listing items.
+        </p>
+        <button
+          onClick={() => openSheet('verification', {})}
+          className="w-full max-w-xs py-4 bg-[#C8962C] text-black font-bold rounded-2xl mb-3"
+        >
+          Start Verification
+        </button>
+        <button onClick={() => closeSheet()} className="text-white/30 text-sm">
+          Maybe later
+        </button>
+      </div>
+    );
   }
 
   if (submitted) {

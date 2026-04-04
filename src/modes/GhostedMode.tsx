@@ -526,7 +526,7 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
     const uid = (profile as any)?.authUserId || (profile as any)?.userId || profile.id;
     if (uid) {
       openSheet('chat', {
-        toUid: uid,
+        userId: uid,
         title: `Chat with ${profile.profileName || 'Someone'}`,
       });
     }

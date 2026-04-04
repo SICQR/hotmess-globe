@@ -38,8 +38,14 @@ export async function uploadToStorage(
   file: File,
   bucket: string,
   userId: string,
-  options?: { upsert?: boolean }
+  options?: { upsert?: boolean; skipValidation?: boolean }
 ): Promise<string> {
+  // Client-side validation for image uploads
+  if (!options?.skipValidation && file.type.startsWith('image/')) {
+    if (file.size > 5 * 1024 * 1024) throw new Error('File must be under 5MB');
+    if (file.size < 1024) throw new Error('File too small — may be corrupt');
+  }
+
   const resolvedBucket = resolveBucket(bucket);
   const ext = file.name.includes('.') ? file.name.split('.').pop() : 'bin';
   const path = `${userId}/${Date.now()}.${ext}`;
