@@ -74,17 +74,20 @@ export default function L2SocialSheet() {
     refetchInterval: 30000,
   });
 
-  // Nearby users
+  // Nearby users — use display_name (public handle), never expose email
   const { data: nearbyUsers = [], isLoading: nearbyLoading } = useQuery({
     queryKey: ['nearby-users'],
     queryFn: async () => {
       try {
         const { data } = await supabase
           .from('profiles')
-          .select('id, full_name, avatar_url, email, city')
+          .select('id, display_name, username, avatar_url, city')
           .eq('is_online', true)
           .limit(20);
-        return data || [];
+        return (data || []).map(u => ({
+          ...u,
+          displayName: u.display_name || u.username || 'Anonymous',
+        }));
       } catch {
         return [];
       }
@@ -190,7 +193,7 @@ export default function L2SocialSheet() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.03 }}
-                  onClick={() => openSheet('profile', { email: user.email })}
+                  onClick={() => openSheet('profile', { uid: user.id })}
                   className="aspect-square relative overflow-hidden bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20"
                 >
                   {user.avatar_url ? (
@@ -198,12 +201,12 @@ export default function L2SocialSheet() {
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <span className="text-2xl font-black text-white/40">
-                        {(user.full_name || '?')[0]}
+                        {(user.displayName || '?')[0]}
                       </span>
                     </div>
                   )}
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-1.5">
-                    <p className="text-[10px] font-bold text-white truncate">{user.full_name}</p>
+                    <p className="text-[10px] font-bold text-white truncate">{user.displayName}</p>
                     <div className="flex items-center gap-1">
                       <span className="w-1.5 h-1.5 bg-[#00FF87] rounded-full" />
                       <span className="text-[9px] text-[#00FF87]">Online</span>
