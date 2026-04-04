@@ -29,6 +29,7 @@ const L2SocialSheet = lazy(() => import('./L2SocialSheet'));
 const L2EventsSheet = lazy(() => import('./L2EventsSheet'));
 const L2MarketplaceSheet = lazy(() => import('./L2MarketplaceSheet'));
 const L2SellSheet = lazy(() => import('./L2SellSheet'));
+const L2PrelovedTermsSheet = lazy(() => import('./L2PrelovedTermsSheet'));
 const L2PayoutsSheet = lazy(() => import('./L2PayoutsSheet'));
 const L2MyOrdersSheet = lazy(() => import('./L2MyOrdersSheet'));
 const L2EditProfileSheet = lazy(() => import('./L2EditProfileSheet'));
@@ -135,6 +136,7 @@ const SHEET_COMPONENTS = {
   // Seller flows
   'sell': L2SellSheet,
   'seller-onboarding': L2SellSheet,
+  'preloved-terms': L2PrelovedTermsSheet,
   'payouts': L2PayoutsSheet,
   'my-orders': L2MyOrdersSheet,
   'my-listings': L2MyOrdersSheet,
