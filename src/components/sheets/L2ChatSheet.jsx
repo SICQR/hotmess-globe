@@ -72,20 +72,29 @@ function LocationCard({ msg, isMe, otherName }) {
   const minsLeft = expiresAt && !isExpired ? Math.max(0, Math.round((expiresAt.getTime() - Date.now()) / 60000)) : 0;
   const distText = (msg.content || '').replace('📍 My Location', '').replace(' — ', '').trim();
 
+  // Pulse settles to static after 6 seconds
+  const [pulseActive, setPulseActive] = useState(!isExpired);
+  useEffect(() => {
+    if (!isExpired && pulseActive) {
+      const t = setTimeout(() => setPulseActive(false), 6000);
+      return () => clearTimeout(t);
+    }
+  }, [isExpired, pulseActive]);
+
   return (
     <motion.div
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       className={cn(
-        'max-w-[80%] px-4 py-3 rounded-2xl border overflow-hidden',
+        'max-w-[80%] px-4 py-3 rounded-2xl border overflow-hidden transition-all duration-300',
         isExpired
           ? 'bg-white/5 border-white/10 opacity-60'
           : isMe ? 'bg-[#C8962C]/15 border-[#C8962C]/30' : 'bg-[#1C1C1E] border-white/10'
       )}
     >
       <div className="flex items-center gap-2">
-        <span className={cn('text-lg', !isExpired && 'animate-pulse')}>📍</span>
+        <span className={cn('text-lg transition-all duration-300', pulseActive && 'animate-pulse')}>📍</span>
         <span className="text-sm font-bold text-white">
           {isExpired ? 'Location expired' : isMe ? 'My Location' : `${otherName}'s Location`}
         </span>
@@ -446,8 +455,24 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       });
       if (msgError) throw msgError;
 
+      // Push notification with smart fallback for media/location
+      const recipientEmail = thread.participant_emails?.find(e => e !== currentUser.email);
+      if (recipientEmail) {
+        const senderName = profiles[currentUser.email]?.display_name || 'Someone';
+        const pushBody = message_type === 'location' ? `${senderName} sent a location`
+          : message_type === 'photo' ? `${senderName} sent a photo`
+          : content.length > 60 ? content.slice(0, 57) + '…' : content;
+        pushNotify({
+          emails: [recipientEmail],
+          title: senderName,
+          body: pushBody,
+          tag: `chat-${thread.id}`,
+          url: `/ghosted?sheet=chat&thread=${thread.id}`,
+        });
+      }
+
       await supabase.from('chat_threads').update({
-        last_message: content.slice(0, 80),
+        last_message: message_type === 'location' ? '📍 Location shared' : message_type === 'photo' ? '📷 Photo' : content.slice(0, 80),
         last_message_at: new Date().toISOString(),
       }).eq('id', thread.id);
 
@@ -846,8 +871,9 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
               <React.Fragment key={msg.id || i}>
               {daySeparator}
               <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: isOptimistic ? 0.7 : 0, y: isOptimistic ? 4 : 8 }}
+                animate={{ opacity: isFailed ? 1 : isOptimistic ? 0.7 : 1, y: 0 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 className={cn('flex', isMe ? 'justify-end' : 'justify-start')}
               >
                 {msg.message_type === 'location' ? (
@@ -865,7 +891,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                     {msg.created_date && (
                       <p className="text-[10px] mt-1 opacity-40 text-white flex items-center gap-0.5">
                         {formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
-                        {isMe && messageStatus && <span className={`text-[10px] ml-1 ${messageStatus === 'Seen' ? 'text-[#C8962C] font-medium' : messageStatus === '!' ? 'text-[#FF3B30] font-bold' : 'text-white/30'}`}>{messageStatus === '!' ? '⚠ Tap to retry' : messageStatus}</span>}
+                        {isMe && messageStatus && <motion.span initial={messageStatus === 'Seen' ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={messageStatus === 'Seen' ? { delay: 0.2, duration: 0.3 } : { duration: 0.15 }} className={`text-[10px] ml-1 ${messageStatus === 'Seen' ? 'text-[#C8962C] font-medium' : messageStatus === '!' ? 'text-[#FF3B30] font-bold' : 'text-white/30'}`}>{messageStatus === '!' ? '⚠ Tap to retry' : messageStatus}</motion.span>}
                       </p>
                     )}
                   </div>
@@ -878,7 +904,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                         : 'bg-[#1C1C1E] text-white rounded-bl-sm border border-white/[0.06]',
                       isHighlightedMsg && 'ring-2 ring-[#C8962C] ring-offset-1 ring-offset-[#050507]',
                       isFailed && 'ring-1 ring-[#FF3B30]/50',
-                      isOptimistic && !isFailed && 'opacity-70'
+                      // opacity handled by parent motion.div animation (0.7 → 1.0 on confirm)
                     )}
                     style={isMe ? { background: isHighlightedMsg ? 'linear-gradient(135deg, #C8962C 0%, #D4A94E 100%)' : isFailed ? '#1C1C1E' : 'linear-gradient(135deg, #C8962C 0%, #A07722 100%)' } : isHighlightedMsg ? { background: '#1C1C1E', border: '2px solid #C8962C' } : undefined}
                     onClick={isFailed ? () => {
@@ -898,7 +924,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                     {msg.created_date && (
                       <p className="text-[10px] mt-1 opacity-50 flex items-center gap-0.5">
                         {formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
-                        {isMe && messageStatus && <span className={`text-[10px] ml-1 ${messageStatus === 'Seen' ? 'text-[#C8962C] font-medium' : messageStatus === '!' ? 'text-[#FF3B30] font-bold' : 'text-white/30'}`}>{messageStatus === '!' ? '⚠ Tap to retry' : messageStatus}</span>}
+                        {isMe && messageStatus && <motion.span initial={messageStatus === 'Seen' ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={messageStatus === 'Seen' ? { delay: 0.2, duration: 0.3 } : { duration: 0.15 }} className={`text-[10px] ml-1 ${messageStatus === 'Seen' ? 'text-[#C8962C] font-medium' : messageStatus === '!' ? 'text-[#FF3B30] font-bold' : 'text-white/30'}`}>{messageStatus === '!' ? '⚠ Tap to retry' : messageStatus}</motion.span>}
                       </p>
                     )}
                   </div>
