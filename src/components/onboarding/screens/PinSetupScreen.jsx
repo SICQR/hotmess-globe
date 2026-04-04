@@ -32,8 +32,17 @@ export default function PinSetupScreen({ onNext, onSkip }) {
       const hash = await hashPin(pin);
       const { data: { user } } = await supabase.auth.getUser();
       await supabase.from('profiles').update({
-        pin_code_hash: hash, onboarding_stage: 'pin_complete', updated_at: new Date().toISOString(),
+        pin_code_hash: hash,
+        onboarding_stage: 'complete',
+        onboarding_completed: true,
+        onboarding_completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       }).eq('id', user.id);
+      // Set localStorage flags for BootGuard fallback
+      try {
+        localStorage.setItem('hm_age_confirmed_v1', 'true');
+        localStorage.setItem('hm_community_attested_v1', 'true');
+      } catch {}
       onNext?.();
     } catch { toast.error('Could not save PIN'); } finally { setSaving(false); }
   };
