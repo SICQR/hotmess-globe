@@ -223,17 +223,20 @@ export function calculateRankScore(
   trust: TrustMeta,
   distance: number,
   isOnline: boolean,
+  photoCount: number = 0,
   weights: {
     distance: number
     online: number
     verified: number
     trust: number
+    photo: number
     randomDelta: number
   } = {
-    distance: 0.3,
-    online: 0.2,
-    verified: 0.2,
-    trust: 0.2,
+    distance: 0.25,
+    online: 0.15,
+    verified: 0.15,
+    trust: 0.15,
+    photo: 0.2,
     randomDelta: 0.1,
   }
 ): number {
@@ -244,11 +247,15 @@ export function calculateRankScore(
   const trustScore = trust.reliabilityScore
   const randomness = Math.random() * 2 - 1 // -1 to 1
 
+  // Photo quality: 0 photos = 0.3 (penalty), 1 = 0.6, 3+ = 1.0, verified+3+ = 1.0 (extra via verified weight)
+  const photoScore = photoCount === 0 ? 0.3 : photoCount === 1 ? 0.6 : Math.min(1, photoCount / 3)
+
   const score =
     distanceScore * weights.distance +
     onlineScore * weights.online +
     verifiedBoost * weights.verified +
     trustScore * weights.trust +
+    photoScore * weights.photo +
     randomness * weights.randomDelta
 
   return Math.max(0, Math.min(1, score))

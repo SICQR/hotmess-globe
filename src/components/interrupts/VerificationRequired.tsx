@@ -27,7 +27,7 @@ export function VerificationRequired({
         
         <button 
           onClick={onStartVerification}
-          className="w-full h-11 rounded-xl bg-[#39FF14] text-black font-semibold"
+          className="w-full h-11 rounded-xl bg-[#C8962C] text-black font-semibold"
         >
           Start Verification
         </button>
