@@ -16,6 +16,7 @@ import DisputeResolution from '../components/seller/DisputeResolution';
 import FeaturedListingsManager from '../components/seller/FeaturedListingsManager';
 import SellerRatingDisplay from '../components/seller/SellerRatingDisplay';
 import { toast } from 'sonner';
+import { humanizeError } from '@/lib/errorUtils';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { 
@@ -162,7 +163,7 @@ export default function SellerDashboard() {
       }
     },
     onError: (error) => {
-      toast.error(error?.message || 'Failed to create product');
+      toast.error(humanizeError(error, 'Failed to create product'));
     },
   });
 
@@ -175,7 +176,7 @@ export default function SellerDashboard() {
       toast.success('Product updated!');
     },
     onError: (error) => {
-      toast.error(error?.message || 'Failed to update product');
+      toast.error(humanizeError(error, 'Failed to update product'));
     },
   });
 
@@ -192,7 +193,7 @@ export default function SellerDashboard() {
       }
     },
     onError: (error) => {
-      toast.error(error?.message || 'Failed to delete product');
+      toast.error(humanizeError(error, 'Failed to delete product'));
     },
   });
 

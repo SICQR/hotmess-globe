@@ -9,6 +9,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { humanizeError } from '@/lib/errorUtils';
 
 export default function L2CreateEventSheet({ editId, ...editProps }) {
   const { closeSheet } = useSheet();
@@ -72,7 +73,7 @@ export default function L2CreateEventSheet({ editId, ...editProps }) {
       queryClient.invalidateQueries({ queryKey: ['events-mode'] });
       setTimeout(() => closeSheet(), 1200);
     } catch (err) {
-      toast.error(err.message || `Failed to ${isEdit ? 'update' : 'create'} event`);
+      toast.error(humanizeError(err, `Failed to ${isEdit ? 'update' : 'create'} event`));
     } finally {
       setLoading(false);
     }

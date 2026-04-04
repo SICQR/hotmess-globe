@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Eye, EyeOff, Loader2, Mail, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
+import { humanizeError } from '@/lib/errorUtils';
 
 /* ─── Animation configs ───────────────────────────────────── */
 const springSmooth = { type: 'spring', stiffness: 200, damping: 25 };
@@ -81,7 +82,7 @@ export default function HotmessSplash() {
       if (error) throw error;
       setStage('reset-sent');
     } catch (err) {
-      toast.error(err.message || 'Failed to send reset email');
+      toast.error(humanizeError(err, 'Failed to send reset email'));
     } finally {
       setLoading(false);
     }
@@ -114,7 +115,7 @@ export default function HotmessSplash() {
         setTimeout(() => navigate('/', { replace: true }), 800);
       }
     } catch (err) {
-      toast.error(err.message || 'Authentication failed');
+      toast.error(humanizeError(err, 'Authentication failed'));
     } finally {
       setLoading(false);
     }
@@ -128,7 +129,7 @@ export default function HotmessSplash() {
       if (error) throw error;
       toast.success('Confirmation email resent!');
     } catch (err) {
-      toast.error(err.message || 'Failed to resend');
+      toast.error(humanizeError(err, 'Failed to resend'));
     } finally {
       setResendLoading(false);
     }

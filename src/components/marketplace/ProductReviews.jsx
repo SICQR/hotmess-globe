@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, MessageSquare, Loader2, X } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
+import { humanizeError } from '@/lib/errorUtils';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -150,7 +151,7 @@ export default function ProductReviews({ productId }) {
       toast.success('Review submitted');
     },
     onError: (err) => {
-      toast.error(err.message || 'Could not submit review');
+      toast.error(humanizeError(err, 'Could not submit review'));
     },
   });
 

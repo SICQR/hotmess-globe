@@ -5,6 +5,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { Users, Plus, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { humanizeError } from '@/lib/errorUtils';
 import PostCard from '../components/community/PostCard';
 import TrendingSummary from '../components/community/TrendingSummary';
 import PersonalizedFeed from '../components/community/PersonalizedFeed';
@@ -72,7 +73,7 @@ export default function Community() {
       queryClient.invalidateQueries(['user-likes']);
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to like post');
+      toast.error(humanizeError(error, 'Failed to like post'));
     }
   });
 
