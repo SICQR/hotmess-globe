@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
 import { DollarSign, TrendingUp, Clock, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
+import { humanizeError } from '@/lib/errorUtils';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -52,7 +53,7 @@ export default function PayoutManager({ payouts, orders, sellerId, stripeConnect
       toast.success('Payout requested');
     },
     onError: (error) => {
-      toast.error(error.message || 'Payout failed');
+      toast.error(humanizeError(error, 'Payout failed'));
     }
   });
 

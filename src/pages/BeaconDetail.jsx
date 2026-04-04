@@ -19,6 +19,7 @@ import ConvictPlayer from '../components/radio/ConvictPlayer';
 import { Music } from 'lucide-react';
 import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
 import { toast } from 'sonner';
+import { humanizeError } from '@/lib/errorUtils';
 import { BEACON_COLOR } from '@/hooks/useP2PListingBeacon';
 
 
@@ -127,7 +128,7 @@ export default function BeaconDetail() {
       queryClient.invalidateQueries({ queryKey: ['beacon_checkins'] });
     } catch (error) {
       console.error('Failed to scan:', error);
-      toast.error(error?.message || 'Failed to scan');
+      toast.error(humanizeError(error, 'Failed to scan'));
     }
   };
 

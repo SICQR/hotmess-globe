@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, ShoppingCart, Check, Gift, Tag, Sparkles, X, Clock, Shield, Truck, Percent } from 'lucide-react';
 import { toast } from 'sonner';
+import { humanizeError } from '@/lib/errorUtils';
 import ErrorBoundary from '../components/error/ErrorBoundary';
 import {
   Dialog,
@@ -501,7 +502,7 @@ export default function Checkout() {
       if (error) throw error;
       toast.success('Magic link sent. Check your email.');
     } catch (error) {
-      toast.error(error?.message || 'Failed to send magic link');
+      toast.error(humanizeError(error, 'Failed to send magic link'));
     } finally {
       setSendingLink(false);
     }

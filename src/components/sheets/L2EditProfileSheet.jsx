@@ -17,6 +17,7 @@ import {
   ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { humanizeError } from '@/lib/errorUtils';
 import { useSheet } from '@/contexts/SheetContext';
 import { cn, validateDisplayName } from '@/lib/utils';
 
@@ -257,7 +258,7 @@ export default function L2EditProfileSheet() {
       setSaved(true);
       setTimeout(() => closeSheet(), 1200);
     } catch (err) {
-      toast.error(err.message || 'Failed to save');
+      toast.error(humanizeError(err, 'Failed to save'));
     } finally {
       setSaving(false);
     }

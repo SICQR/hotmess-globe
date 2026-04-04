@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { humanizeError } from '@/lib/errorUtils';
 import { useSheet } from '@/contexts/SheetContext';
 import { cn } from '@/lib/utils';
 
@@ -196,7 +197,7 @@ export default function L2SellSheet() {
         toast.error('Failed to list item. Are you signed in?');
       }
     } catch (err) {
-      toast.error(err.message || 'Failed to list item');
+      toast.error(humanizeError(err, 'Failed to list item'));
     } finally {
       setLoading(false);
     }

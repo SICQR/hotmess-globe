@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { X, Users, MessageCircle, Calendar, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
+import { humanizeError } from '@/lib/errorUtils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function NewMessageModal({ currentUser, allUsers, onClose, onThreadCreated, prefillToEmail }) {
@@ -122,7 +123,7 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
       onThreadCreated(thread);
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to create thread');
+      toast.error(humanizeError(error, 'Failed to create thread'));
     },
   });
 

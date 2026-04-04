@@ -17,6 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Shield, FileText, MapPin, KeyRound, Camera, Check, Loader2, Delete, Ghost, Globe } from 'lucide-react';
 import { toast } from 'sonner';
+import { humanizeError } from '@/lib/errorUtils';
 import { validateDisplayName, deriveUsernameSlug } from '@/lib/utils';
 import { AppBanner } from '@/components/banners/AppBanner';
 
@@ -424,7 +425,7 @@ export default function OnboardingGate() {
       setPhotoUrl(publicUrl);
       toast.success('Photo uploaded');
     } catch (err) {
-      toast.error(err.message || 'Upload failed');
+      toast.error(humanizeError(err, 'Upload failed'));
     } finally {
       setPhotoUploading(false);
     }

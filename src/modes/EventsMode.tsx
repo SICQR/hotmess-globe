@@ -17,6 +17,7 @@ import { format, isToday, isTomorrow } from 'date-fns';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
+import { humanizeError } from '@/lib/errorUtils';
 import { cn } from '@/lib/utils';
 import { pushNotify } from '@/lib/pushNotify';
 import { useGlobe } from '@/contexts/GlobeContext';
@@ -157,7 +158,7 @@ export default function EventsMode() {
       queryClient.invalidateQueries({ queryKey: ['events-mode'] });
       toast.success('RSVP updated');
     },
-    onError: (err: Error) => toast.error(err.message || 'Could not update RSVP'),
+    onError: (err: Error) => toast.error(humanizeError(err, 'Could not update RSVP')),
   });
 
   return (

@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { Eye, EyeOff, Loader2, Check } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
+import { humanizeError } from '@/lib/errorUtils';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ export default function ResetPassword() {
       toast.success('Password updated! Signing you in...');
       setTimeout(() => navigate('/', { replace: true }), 1200);
     } catch (err) {
-      toast.error(err.message || 'Failed to update password');
+      toast.error(humanizeError(err, 'Failed to update password'));
     } finally {
       setLoading(false);
     }

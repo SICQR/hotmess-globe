@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Home, Car, Building, HelpCircle, Sparkles, X, Camera, MapPin, Clock, Eye, Edit3, Square, Users, Send as SendIcon } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
+import { humanizeError } from '@/lib/errorUtils';
 import { useGlobe } from '@/contexts/GlobeContext';
 import { usePowerups } from '@/hooks/usePowerups';
 import { useSheet } from '@/contexts/SheetContext';
@@ -184,7 +185,7 @@ export default function RightNowModal({ isOpen, onClose, intent: intentProp = 'e
           : "You're live! Allow location access to appear on the globe."
       );
     } catch (err) {
-      toast.error(err.message || 'Failed to go live');
+      toast.error(humanizeError(err, 'Failed to go live'));
     } finally {
       setLoading(false);
     }

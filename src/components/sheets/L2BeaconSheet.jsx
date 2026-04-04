@@ -15,6 +15,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { humanizeError } from '@/lib/errorUtils';
 import { usePowerups } from '@/hooks/usePowerups';
 
 const BEACON_DAILY_LIMIT = 3; // default daily beacon limit per user
@@ -168,7 +169,7 @@ function BeaconCreator({ onSuccess }) {
       toast.success('Beacon dropped!');
       setTimeout(() => onSuccess?.(), 1200);
     } catch (err) {
-      toast.error(err.message || 'Failed to drop beacon');
+      toast.error(humanizeError(err, 'Failed to drop beacon'));
     } finally {
       setLoading(false);
     }
