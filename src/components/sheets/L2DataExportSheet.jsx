@@ -26,8 +26,7 @@ export default function L2DataExportSheet() {
         user_email: 'admin',
         type: 'admin_alert',
         title: 'Data Export Request',
-        message: `User ${session.user.email} requested a GDPR data export`,
-        link: 'AdminDashboard',
+        body: 'A user requested a GDPR data export',
       });
 
       setRequested(true);
