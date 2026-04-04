@@ -1,15 +1,16 @@
 /**
- * HomeMode -- Dashboard (route: /)
+ * HomeMode -- Control Deck (route: /)
  *
- * The default landing screen after login. A scrollable OS dashboard that
- * surfaces live/real-time nightlife activity across 6 sections:
+ * The default landing screen after login. A scrollable OS dashboard with:
  *
- *   1. Top bar -- City selector + wordmark + notification bell
- *   2. Right Now strip -- Active users with intent pills
- *   3. Nearby Events -- Horizontal event cards from beacons VIEW
- *   4. Active Beacons -- Compact list of closest beacons
- *   5. From the Market -- 2-col grid of preloved listings
- *   6. Radio banner -- Live radio with waveform animation
+ *   1. Hero — Atmospheric noir with HOTMESS LONDON identity + Open Pulse / Go Live CTAs
+ *   2. Core Lanes — 2x2 nav grid: Pulse, Ghosted, Market, Music
+ *   3. Right Now — Live users with intent pills (or Go Live empty state)
+ *   4. Nearby Events — Horizontal event cards from beacons VIEW
+ *   5. Market Feature — Single HNH MESS product card
+ *   6. Drops — Horizontal brand carousel (RAW, HUNG, HIGH, SUPERHUNG, SUPERRAW)
+ *   7. Radio — Live radio banner with play/pause
+ *   8. Community — Recent posts (hidden when empty)
  *
  * Data: TanStack Query (useQuery) for all fetches.
  * Animation: Framer Motion staggered fade-up on mount.
@@ -28,19 +29,19 @@ import {
   Bell,
   Zap,
   ChevronRight,
-  Flame,
-  Star,
   Play,
   Pause,
   Radio,
   Calendar,
-  Sparkles,
   Clock,
-  MessageSquare,
   Heart,
-  Ghost,
   Moon,
-  Wifi,
+  Globe,
+  Ghost,
+  ShoppingBag,
+  Music,
+  Droplets,
+  Shirt,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useRadio } from '@/contexts/RadioContext';
@@ -50,9 +51,6 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { nanoid } from 'nanoid';
 import { format, isToday, isTomorrow } from 'date-fns';
 import RightNowModal from '@/components/globe/RightNowModal';
-import { AppBanner } from '@/components/banners/AppBanner';
-import { HNHMessHero } from '@/components/home/HNHMessHero';
-import { HNHMessStrip } from '@/components/home/HNHMessStrip';
 import { CardMoreButton } from '@/components/ui/CardMoreButton';
 import '@/styles/radio-waveform.css';
 
@@ -74,12 +72,6 @@ const INTENT_COLORS: Record<string, { bg: string; text: string }> = {
   explore: { bg: '#8E8E93', text: '#000' },
 };
 
-/**
- * Return the color pair associated with a user intent.
- *
- * @param intent - The intent label (case-insensitive) to look up.
- * @returns An object with `bg` (background color) and `text` (text color); when `intent` is unrecognized or falsy returns the default `{ bg: AMBER, text: '#000' }`.
- */
 function getIntentStyle(intent: string) {
   return INTENT_COLORS[intent?.toLowerCase()] ?? { bg: AMBER, text: '#000' };
 }
@@ -177,38 +169,13 @@ function RightNowSkeleton() {
 function EventCardSkeleton() {
   return (
     <div className="w-[260px] flex-shrink-0">
-      <div className={`rounded-2xl overflow-hidden border border-white/5`} style={{ background: CARD_BG }}>
+      <div className="rounded-2xl overflow-hidden border border-white/5" style={{ background: CARD_BG }}>
         <ShimmerBox className="w-full h-36 rounded-none" />
         <div className="p-3 space-y-2">
           <ShimmerBox className="w-3/4 h-4" />
           <ShimmerBox className="w-1/2 h-3" />
           <ShimmerBox className="w-20 h-5 rounded-full" />
         </div>
-      </div>
-    </div>
-  );
-}
-
-function BeaconRowSkeleton() {
-  return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <ShimmerBox className="w-9 h-9 rounded-xl" />
-      <div className="flex-1 space-y-1.5">
-        <ShimmerBox className="w-2/3 h-4" />
-        <ShimmerBox className="w-1/3 h-3" />
-      </div>
-      <ShimmerBox className="w-12 h-3" />
-    </div>
-  );
-}
-
-function ProductCardSkeleton() {
-  return (
-    <div className={`rounded-2xl overflow-hidden border border-white/5`} style={{ background: CARD_BG }}>
-      <ShimmerBox className="w-full aspect-square rounded-none" />
-      <div className="p-3 space-y-2">
-        <ShimmerBox className="w-3/4 h-3.5" />
-        <ShimmerBox className="w-1/3 h-4" />
       </div>
     </div>
   );
@@ -251,7 +218,6 @@ function RightNowCard({
             </span>
           </div>
         )}
-        {/* Online dot */}
         <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#34C759] rounded-full border-2 border-[#050507]" />
       </div>
       <span className="text-white text-[11px] font-medium truncate w-full text-center leading-tight">
@@ -318,9 +284,7 @@ function EventCard({
             <Calendar className="w-10 h-10" style={{ color: `${AMBER}60` }} />
           </div>
         )}
-        {/* Gradient overlay for readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-        {/* Date badge top-left */}
         {datePill && (
           <span
             className="absolute top-2.5 left-2.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full backdrop-blur-sm"
@@ -329,9 +293,7 @@ function EventCard({
             {datePill}
           </span>
         )}
-        {/* More actions top-right */}
         {id && <CardMoreButton itemType="event" itemId={id} title={title} className="absolute top-2.5 right-2.5" />}
-        {/* Bottom text overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-3">
           <p className="text-white font-bold text-sm leading-tight line-clamp-1 drop-shadow-lg">{title}</p>
           {venue && (
@@ -340,146 +302,6 @@ function EventCard({
             </p>
           )}
         </div>
-      </div>
-    </button>
-  );
-}
-
-// ---- Beacon row -------------------------------------------------------------
-const BEACON_ICONS: Record<string, typeof Flame> = {
-  event: Calendar,
-  social: Star,
-  default: Flame,
-};
-
-function BeaconRow({
-  id,
-  title,
-  kind,
-  distance,
-  isLast,
-  onTap,
-}: {
-  id?: string;
-  title: string;
-  kind?: string;
-  distance?: string;
-  isLast: boolean;
-  onTap: () => void;
-}) {
-  const Icon = BEACON_ICONS[kind ?? ''] ?? BEACON_ICONS.default;
-  return (
-    <button
-      onClick={onTap}
-      className={`w-full flex items-center gap-3 px-4 py-3 text-left active:bg-white/5 transition-colors ${
-        !isLast ? 'border-b border-white/5' : ''
-      }`}
-      aria-label={`View beacon: ${title}`}
-    >
-      <div
-        className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-        style={{ background: `${AMBER}15` }}
-      >
-        <Icon className="w-4.5 h-4.5" style={{ color: AMBER }} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-white text-sm font-semibold truncate">{title}</p>
-      </div>
-      {distance && (
-        <span className="text-xs font-medium flex-shrink-0" style={{ color: MUTED }}>
-          {distance}
-        </span>
-      )}
-      {id && <CardMoreButton itemType="beacon" itemId={id} title={title} className="ml-1" />}
-    </button>
-  );
-}
-
-// ---- Product card -----------------------------------------------------------
-function ProductCard({
-  id,
-  title,
-  imageUrl,
-  price,
-  onTap,
-}: {
-  id?: string;
-  title: string;
-  imageUrl?: string;
-  price?: number;
-  onTap: () => void;
-}) {
-  return (
-    <button
-      onClick={onTap}
-      className="text-left active:scale-[0.98] transition-transform rounded-xl overflow-hidden border border-white/[0.08] relative"
-      style={{ background: CARD_BG }}
-      aria-label={`View product: ${title}`}
-    >
-      <div className="relative aspect-[3/4]">
-        {imageUrl ? (
-          <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center" style={{ background: `${AMBER}10` }}>
-            <Sparkles className="w-8 h-8" style={{ color: `${AMBER}60` }} />
-          </div>
-        )}
-        {/* Bottom gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-        {/* More actions top-right */}
-        {id && <CardMoreButton itemType="product" itemId={id} title={title} className="absolute top-2.5 right-2.5" />}
-        <div className="absolute bottom-0 left-0 right-0 p-3">
-          <p className="text-white text-xs font-bold leading-tight line-clamp-2 mb-1 drop-shadow-lg">{title}</p>
-          {price != null && (
-            <p className="text-base font-black drop-shadow-lg" style={{ color: AMBER }}>
-              &pound;{price}
-            </p>
-          )}
-        </div>
-      </div>
-    </button>
-  );
-}
-
-// ---- SceneScout Tonight's Picks --------------------------------------------
-interface ScenePickProps {
-  rank: number;
-  title: string;
-  venue?: string;
-  time?: string;
-  score: number;
-  onTap: () => void;
-}
-
-function ScenePick({ rank, title, venue, time, score, onTap }: ScenePickProps) {
-  return (
-    <button
-      onClick={onTap}
-      className="w-full flex items-center gap-3 text-left active:bg-white/5 transition-colors px-4 py-3"
-      aria-label={`View event: ${title}`}
-    >
-      <span className="font-black text-2xl w-8 flex-shrink-0" style={{ color: `${AMBER}60` }}>
-        {rank}
-      </span>
-      <div className="flex-1 min-w-0">
-        <p className="text-white font-bold text-sm leading-tight truncate">{title}</p>
-        <div className="flex items-center gap-3 mt-0.5">
-          {venue && (
-            <span className="text-[11px] truncate max-w-[120px]" style={{ color: MUTED }}>
-              {venue}
-            </span>
-          )}
-          {time && (
-            <span className="flex items-center gap-0.5 text-[11px] flex-shrink-0" style={{ color: MUTED }}>
-              <Clock className="w-3 h-3" />
-              {time}
-            </span>
-          )}
-        </div>
-      </div>
-      <div className="flex-shrink-0 flex flex-col items-end gap-0.5">
-        <span className="font-black text-sm" style={{ color: AMBER }}>{score}%</span>
-        <span className="text-[9px] font-bold uppercase tracking-wide" style={{ color: `${AMBER}60` }}>match</span>
       </div>
     </button>
   );
@@ -497,15 +319,12 @@ function RadioBanner({ onNavigate }: { onNavigate: () => void }) {
       role="link"
       aria-label="Open HOTMESS Radio"
     >
-      {/* Left: Radio icon */}
       <div
         className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
         style={{ background: 'rgba(0,194,224,0.12)', border: '1px solid rgba(0,194,224,0.2)' }}
       >
         <Radio className="w-6 h-6" style={{ color: '#00C2E0' }} />
       </div>
-
-      {/* Middle: Info + waveform */}
       <div className="flex-1 min-w-0">
         <p className="font-black text-xs tracking-[0.15em] mb-0.5" style={{ color: '#00C2E0' }}>
           HOTMESS RADIO
@@ -524,8 +343,6 @@ function RadioBanner({ onNavigate }: { onNavigate: () => void }) {
           )}
         </div>
       </div>
-
-      {/* Right: Play/Pause */}
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -545,19 +362,121 @@ function RadioBanner({ onNavigate }: { onNavigate: () => void }) {
   );
 }
 
+// ---- Core Lanes (2x2 nav grid) ----------------------------------------------
+const CORE_LANES = [
+  { label: 'Pulse', sub: "See who's around", icon: Globe, route: '/ghosted' },
+  { label: 'Ghosted', sub: 'Browse low-key', icon: Ghost, route: '/ghosted' },
+  { label: 'Market', sub: 'Shop HNH + more', icon: ShoppingBag, route: '/market' },
+  { label: 'Music', sub: "What's playing now", icon: Music, route: '/music' },
+] as const;
+
+function CoreLanes({ onNavigate }: { onNavigate: (route: string) => void }) {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      {CORE_LANES.map((lane) => {
+        const Icon = lane.icon;
+        return (
+          <button
+            key={lane.label}
+            onClick={() => onNavigate(lane.route)}
+            className="flex flex-col items-start gap-2 rounded-2xl p-4 text-left border border-white/[0.06] active:scale-[0.97] transition-transform"
+            style={{ background: CARD_BG }}
+            aria-label={`${lane.label}: ${lane.sub}`}
+          >
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ background: `${AMBER}15` }}
+            >
+              <Icon className="w-5 h-5" style={{ color: AMBER }} />
+            </div>
+            <div>
+              <p className="text-white font-bold text-sm">{lane.label}</p>
+              <p className="text-[11px] mt-0.5" style={{ color: MUTED }}>{lane.sub}</p>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ---- Market Feature (single HNH MESS card) ----------------------------------
+function MarketFeature({ onNavigate }: { onNavigate: () => void }) {
+  return (
+    <button
+      onClick={onNavigate}
+      className="w-full rounded-2xl overflow-hidden border border-white/[0.06] text-left active:scale-[0.98] transition-transform"
+      style={{ background: CARD_BG }}
+      aria-label="Shop HNH MESS lube"
+    >
+      <div className="relative h-44 overflow-hidden">
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `radial-gradient(ellipse 80% 70% at 30% 50%, rgba(200,150,44,0.18) 0%, transparent 70%), linear-gradient(135deg, ${CARD_BG} 0%, #2a2a2e 100%)`,
+          }}
+        />
+        {/* Product icon */}
+        <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-[0.12]">
+          <Droplets className="w-32 h-32" style={{ color: AMBER }} />
+        </div>
+        <div className="relative z-10 p-5 flex flex-col justify-end h-full">
+          <p className="font-black text-xs tracking-[0.2em] uppercase mb-1" style={{ color: AMBER }}>HNH MESS</p>
+          <p className="text-white font-bold text-lg leading-tight">Premium water-based lube</p>
+          <p className="text-white/50 text-sm mt-1">50ML &middot; &pound;10 &nbsp;/&nbsp; 250ML &middot; &pound;15</p>
+          <div className="flex items-center gap-1 mt-3">
+            <span className="text-sm font-bold" style={{ color: AMBER }}>Shop now</span>
+            <ChevronRight className="w-4 h-4" style={{ color: AMBER }} />
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// ---- Drops Carousel (brand tiles) -------------------------------------------
+const DROP_BRANDS = [
+  { name: 'RAW', color: '#C8962C' },
+  { name: 'HUNG', color: '#C41230' },
+  { name: 'HIGH', color: '#C8962C' },
+  { name: 'SUPERHUNG', color: '#C41230' },
+  { name: 'SUPERRAW', color: '#C8962C' },
+] as const;
+
+function DropsCarousel({ onNavigate }: { onNavigate: () => void }) {
+  return (
+    <div>
+      <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scrollbar-hide -mx-5 px-5">
+        {DROP_BRANDS.map((brand) => (
+          <button
+            key={brand.name}
+            onClick={onNavigate}
+            className="flex-shrink-0 snap-start w-[140px] rounded-2xl border border-white/[0.06] p-4 flex flex-col justify-between active:scale-[0.97] transition-transform"
+            style={{ background: CARD_BG, minHeight: 120 }}
+            aria-label={`Browse ${brand.name} drops`}
+          >
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center mb-3"
+              style={{ background: `${brand.color}15` }}
+            >
+              <Shirt className="w-4 h-4" style={{ color: brand.color }} />
+            </div>
+            <div>
+              <p className="font-black text-sm tracking-wider" style={{ color: brand.color }}>{brand.name}</p>
+              <p className="text-[10px] mt-0.5 flex items-center gap-0.5" style={{ color: MUTED }}>
+                Browse <ChevronRight className="w-3 h-3" />
+              </p>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // =============================================================================
 // Main HomeMode Component
-/**
- * Renders the HomeMode dashboard with sections for Right Now, Community, Events, Beacons, Market, Picks, and Radio.
- *
- * The component fetches and refreshes section data via React Query (with periodic refetch intervals), supports pull-to-refresh
- * (dragging down at the top invalidates queries when pulled past a threshold), and persists the selected city in localStorage
- * under the key `hm_city`. Tapping the city pill cycles between London, Berlin, and New York. Various UI actions open sheets
- * or navigate to routes (e.g., profile, event, market, radio), and a Right Now modal is shown when triggered.
- *
- * @param className - Optional CSS class names applied to the root container
- * @returns The HomeMode React element representing the full home dashboard UI
- */
+// =============================================================================
 export function HomeMode({ className = '' }: HomeModeProps) {
   const navigate = useNavigate();
   const { openSheet } = useSheet();
@@ -565,12 +484,12 @@ export function HomeMode({ className = '' }: HomeModeProps) {
   const { profile } = useBootGuard();
   const queryClient = useQueryClient();
 
-  // Profile nudge — shown once per session if user completed onboarding but has no avatar/bio/display_name
+  // Profile nudge -- shown once per session if user completed onboarding but has no avatar/bio/display_name
   const [nudgeDismissed, setNudgeDismissed] = useState(() => {
     try { return !!sessionStorage.getItem('hm_nudge_dismissed'); } catch { return false; }
   });
   const dismissNudge = () => {
-    try { sessionStorage.setItem('hm_nudge_dismissed', '1'); } catch {}
+    try { sessionStorage.setItem('hm_nudge_dismissed', '1'); } catch { /* noop */ }
     setNudgeDismissed(true);
   };
   const showProfileNudge =
@@ -616,7 +535,6 @@ export function HomeMode({ className = '' }: HomeModeProps) {
       if (!user) return;
 
       if (next) {
-        // ON: upsert presence online + create check-in beacon at current location
         void supabase.from('user_presence').upsert({
           user_id: user.id,
           status: 'online',
@@ -624,7 +542,6 @@ export function HomeMode({ className = '' }: HomeModeProps) {
           metadata: { night_mode: true },
         }, { onConflict: 'user_id' }).catch(() => {});
 
-        // Try to get location for beacon
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             async (pos) => {
@@ -651,12 +568,11 @@ export function HomeMode({ className = '' }: HomeModeProps) {
                 localStorage.setItem(NIGHT_BEACON_KEY, beacon.id);
               }
             },
-            () => {}, // location denied — still activate night mode
+            () => {},
             { enableHighAccuracy: false, timeout: 5000 },
           );
         }
       } else {
-        // OFF: set presence offline + expire only the Night Mode beacon
         void supabase.from('user_presence').upsert({
           user_id: user.id,
           status: 'offline',
@@ -735,62 +651,9 @@ export function HomeMode({ className = '' }: HomeModeProps) {
     refetchInterval: 60_000,
   });
 
-  // 3. Active beacons (non-event, closest)
-  const {
-    data: activeBeacons = [],
-    isLoading: beaconsLoading,
-  } = useQuery({
-    queryKey: ['home-beacons'],
-    queryFn: async () => {
-      const now = new Date().toISOString();
-      const { data, error } = await supabase
-        .from('beacons')
-        .select('id, metadata, starts_at, ends_at, kind, type, intensity')
-        .gte('ends_at', now)
-        .order('starts_at', { ascending: true })
-        .limit(3);
-      if (error) throw error;
-      return (data ?? []).map((b: Record<string, unknown>) => {
-        const meta = (b.metadata ?? {}) as Record<string, string>;
-        return {
-          id: b.id as string,
-          title: meta.title || 'Beacon',
-          kind: b.kind as string,
-          intensity: b.intensity as number,
-        };
-      });
-    },
-    refetchInterval: 60_000,
-  });
-
-  // 4. Preloved listings
-  const {
-    data: marketListings = [],
-    isLoading: marketLoading,
-  } = useQuery({
-    queryKey: ['home-market'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('preloved_listings')
-        .select('id, title, price, images, category')
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(4);
-      if (error) throw error;
-      return (data ?? []).map((p: Record<string, unknown>) => ({
-        id: p.id as string,
-        title: (p.title as string) || 'Item',
-        price: p.price as number,
-        imageUrl: Array.isArray(p.images) ? (p.images[0] as string) : undefined,
-      }));
-    },
-    refetchInterval: 120_000,
-  });
-
-  // 5. Community posts preview (3 most recent)
+  // 3. Community posts preview (3 most recent)
   const {
     data: communityPosts = [],
-    isLoading: communityLoading,
   } = useQuery({
     queryKey: ['home-community'],
     queryFn: async () => {
@@ -875,29 +738,46 @@ export function HomeMode({ className = '' }: HomeModeProps) {
         <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
         <div className="pb-36 space-y-6">
 
-          {/* ── Section 1: Hero Banner — atmospheric noir with radial gold glow ── */}
-          <div className="relative w-full h-48 overflow-hidden">
+          {/* ============================================================== */}
+          {/* 1. HERO -- Atmospheric noir with HOTMESS LONDON identity       */}
+          {/* ============================================================== */}
+          <div className="relative w-full h-56 overflow-hidden">
             <img
               src="/assets/hero-storm.jpg"
               alt="HOTMESS London"
-              className="w-full h-full object-cover opacity-60"
+              className="w-full h-full object-cover opacity-50"
             />
-            {/* Radial gold glow overlay */}
             <div
               className="absolute inset-0"
               style={{
                 background: `radial-gradient(ellipse 70% 60% at 50% 70%, rgba(200,150,44,0.15) 0%, transparent 70%)`,
               }}
             />
-            {/* Bottom fade to root bg */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/50 to-[#050507]/20" />
-            {/* Noise texture overlay for cinematic grain */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/60 to-[#050507]/10" />
             <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\' opacity=\'0.5\'/%3E%3C/svg%3E")', backgroundSize: '128px 128px' }} />
-            <div className="absolute bottom-4 left-5 right-5">
+            <div className="absolute bottom-5 left-5 right-5">
               <h2 className="font-black text-3xl tracking-[0.15em] uppercase leading-none drop-shadow-lg">
                 <span className="text-white">HOT</span><span style={{ color: AMBER }}>MESS</span>
               </h2>
-              <p className="text-white/40 text-xs mt-1 tracking-wide">Always too much, yet never enough</p>
+              <p className="text-white/40 text-xs mt-1.5 tracking-wide uppercase">London</p>
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() => navigate('/pulse')}
+                  className="h-11 px-6 rounded-xl font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform"
+                  style={{ background: AMBER, color: '#000' }}
+                >
+                  <Globe className="w-4 h-4" />
+                  Open Pulse
+                </button>
+                <button
+                  onClick={() => setShowRightNow(true)}
+                  className="h-11 px-6 rounded-xl font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform border"
+                  style={{ borderColor: 'rgba(255,255,255,0.15)', color: '#fff', background: 'rgba(255,255,255,0.06)' }}
+                >
+                  <Zap className="w-4 h-4" style={{ color: AMBER }} />
+                  Go Live
+                </button>
+              </div>
             </div>
           </div>
 
@@ -920,24 +800,24 @@ export function HomeMode({ className = '' }: HomeModeProps) {
                 className="text-white/30 text-base leading-none flex-shrink-0"
                 aria-label="Dismiss"
               >
-                ✕
+                &#x2715;
               </button>
             </div>
           )}
 
-          {/* ── Section 3: HNH MESS Hero (primary revenue product) ── */}
-          <HNHMessHero />
-
-          {/* ── HNH MESS Strip ── */}
-          <HNHMessStrip />
-
-          {/* ── Dynamic Home Strip Banner ── */}
-          <AppBanner placement="home_strip" variant="strip" />
-
           <div className="px-5 space-y-6">
 
-          {/* ── Section 4: Who's Out Right Now ── */}
+          {/* ============================================================== */}
+          {/* 2. CORE LANES -- 2x2 nav grid                                  */}
+          {/* ============================================================== */}
           <AnimatedSection index={0}>
+            <CoreLanes onNavigate={(route) => navigate(route)} />
+          </AnimatedSection>
+
+          {/* ============================================================== */}
+          {/* 3. RIGHT NOW -- Live users with intent pills                   */}
+          {/* ============================================================== */}
+          <AnimatedSection index={1}>
             <SectionHeader
               title="Right Now"
               linkLabel="Go live"
@@ -955,36 +835,18 @@ export function HomeMode({ className = '' }: HomeModeProps) {
                     avatarUrl={u.avatarUrl}
                     name={u.name}
                     intent={u.intent}
-                    onTap={() => openSheet('profile', { email: u.email })}
+                    onTap={() => openSheet('profile', { userId: u.userId })}
                   />
                 ))}
               </div>
             )}
           </AnimatedSection>
 
-          {/* ── Ghosted Online Bar ── */}
-          <button
-            onClick={() => navigate('/ghosted')}
-            className="flex items-center gap-2.5 w-full rounded-2xl px-4 py-3 active:scale-[0.98] transition-transform"
-            style={{ background: CARD_BG, border: '1px solid rgba(255,255,255,0.06)' }}
-          >
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center"
-              style={{ background: `${AMBER}20` }}
-            >
-              <Ghost className="w-4 h-4" style={{ color: AMBER }} />
-            </div>
-            <span className="text-white font-bold text-sm">Ghosted</span>
-            <span className="text-white/40 text-xs flex items-center gap-1">
-              <Wifi className="w-3 h-3" />
-              {rightNowUsers.length > 0 ? `${rightNowUsers.length} Online` : 'Browse'}
-            </span>
-            <ChevronRight className="w-4 h-4 text-white/20 ml-auto" />
-          </button>
-
-          {/* ── Section 5: Nearby Events ── */}
+          {/* ============================================================== */}
+          {/* 4. NEARBY EVENTS                                               */}
+          {/* ============================================================== */}
           {(eventsLoading || nearbyEvents.length > 0) && (
-            <AnimatedSection index={1}>
+            <AnimatedSection index={2}>
               <SectionHeader
                 title="Happening near you"
                 linkLabel="See all"
@@ -1013,168 +875,81 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             </AnimatedSection>
           )}
 
-          {/* ── Section 6: Radio Banner ── */}
-          <AnimatedSection index={2}>
+          {/* ============================================================== */}
+          {/* 5. MARKET FEATURE -- Single HNH MESS card                      */}
+          {/* ============================================================== */}
+          <AnimatedSection index={3}>
+            <SectionHeader
+              title="HNH MESS"
+              linkLabel="Shop"
+              onLink={() => navigate('/market')}
+            />
+            <MarketFeature onNavigate={() => navigate('/market')} />
+          </AnimatedSection>
+
+          {/* ============================================================== */}
+          {/* 6. DROPS -- Fashion brand carousel                             */}
+          {/* ============================================================== */}
+          <AnimatedSection index={4}>
+            <SectionHeader
+              title="Drops"
+              linkLabel="Browse Drops"
+              onLink={() => navigate('/market')}
+            />
+            <DropsCarousel onNavigate={() => navigate('/market')} />
+          </AnimatedSection>
+
+          {/* ============================================================== */}
+          {/* 7. MUSIC / RADIO                                               */}
+          {/* ============================================================== */}
+          <AnimatedSection index={5}>
             <RadioBanner onNavigate={() => navigate('/radio')} />
           </AnimatedSection>
 
-          {/* ── Section 7: Community ── */}
-          {(communityLoading || communityPosts.length > 0) && (
-            <AnimatedSection index={3}>
+          {/* ============================================================== */}
+          {/* 8. COMMUNITY -- Only if posts exist                            */}
+          {/* ============================================================== */}
+          {communityPosts.length > 0 && (
+            <AnimatedSection index={6}>
               <SectionHeader
                 title="Community"
                 linkLabel="See all"
                 onLink={() => openSheet('community', {})}
               />
-              {communityLoading ? (
-                <div className="space-y-2">
-                  {[0, 1, 2].map(i => <ShimmerBox key={i} className="w-full h-16" />)}
-                </div>
-              ) : (
-                <div className="rounded-2xl overflow-hidden border border-white/5 divide-y divide-white/5" style={{ background: CARD_BG }}>
-                  {communityPosts.map((post: Record<string, unknown>) => (
-                    <button
-                      key={post.id as string}
-                      onClick={() => openSheet('community', {})}
-                      className="w-full flex items-start gap-3 px-4 py-3 text-left active:bg-white/5 transition-colors"
-                    >
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                        style={{ background: `${AMBER}20` }}>
-                        <span className="text-[11px] font-black" style={{ color: AMBER }}>
-                          {((post.user_name as string) || 'A')[0].toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white/90 text-sm leading-snug line-clamp-2">{post.content as string}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs" style={{ color: MUTED }}>{post.user_name as string || 'Anonymous'}</span>
-                          {(post.like_count as number) > 0 && (
-                            <span className="flex items-center gap-0.5 text-xs" style={{ color: MUTED }}>
-                              <Heart className="w-3 h-3" />{post.like_count as number}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+              <div className="rounded-2xl overflow-hidden border border-white/5 divide-y divide-white/5" style={{ background: CARD_BG }}>
+                {communityPosts.map((post: Record<string, unknown>) => (
                   <button
+                    key={post.id as string}
                     onClick={() => openSheet('community', {})}
-                    className="w-full px-4 py-3 text-left text-xs font-semibold active:bg-white/5 transition-colors flex items-center justify-between"
-                    style={{ color: AMBER }}
+                    className="w-full flex items-start gap-3 px-4 py-3 text-left active:bg-white/5 transition-colors"
                   >
-                    View all posts
-                    <ChevronRight className="w-3.5 h-3.5" />
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                      style={{ background: `${AMBER}20` }}>
+                      <span className="text-[11px] font-black" style={{ color: AMBER }}>
+                        {((post.user_name as string) || 'A')[0].toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white/90 text-sm leading-snug line-clamp-2">{post.content as string}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs" style={{ color: MUTED }}>{post.user_name as string || 'Anonymous'}</span>
+                        {(post.like_count as number) > 0 && (
+                          <span className="flex items-center gap-0.5 text-xs" style={{ color: MUTED }}>
+                            <Heart className="w-3 h-3" />{post.like_count as number}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </button>
-                </div>
-              )}
-            </AnimatedSection>
-          )}
-
-          {/* ── Section 8: Active Beacons ── */}
-          {(beaconsLoading || activeBeacons.length > 0) && (
-            <AnimatedSection index={4}>
-              <SectionHeader title="Active Beacons" />
-              <div className="rounded-2xl overflow-hidden border border-white/5" style={{ background: CARD_BG }}>
-                {beaconsLoading ? (
-                  <>
-                    <BeaconRowSkeleton />
-                    <BeaconRowSkeleton />
-                    <BeaconRowSkeleton />
-                  </>
-                ) : (
-                  activeBeacons.map((b, i) => (
-                    <BeaconRow
-                      key={b.id}
-                      id={b.id}
-                      title={b.title}
-                      kind={b.kind}
-                      isLast={i === activeBeacons.length - 1}
-                      onTap={() => openSheet('beacon', { id: b.id })}
-                    />
-                  ))
-                )}
-              </div>
-            </AnimatedSection>
-          )}
-
-          {/* ── Section 9: From the Market ── */}
-          {(marketLoading || marketListings.length > 0) && (
-            <AnimatedSection index={5}>
-              <SectionHeader
-                title="Fresh drops"
-                linkLabel="Browse market"
-                onLink={() => navigate('/market')}
-              />
-              {marketLoading ? (
-                <div className="grid grid-cols-2 gap-3">
-                  <ProductCardSkeleton />
-                  <ProductCardSkeleton />
-                  <ProductCardSkeleton />
-                  <ProductCardSkeleton />
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  {marketListings.map((p) => (
-                    <ProductCard
-                      key={p.id}
-                      id={p.id}
-                      title={p.title}
-                      imageUrl={p.imageUrl}
-                      price={p.price}
-                      onTap={() => openSheet('product', { id: p.id })}
-                    />
-                  ))}
-                </div>
-              )}
-            </AnimatedSection>
-          )}
-
-          {/* ── Section 10: Scene Scout (Tonight's Picks) ── */}
-          {nearbyEvents.length > 0 && (
-            <AnimatedSection index={6}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4" style={{ color: AMBER }} />
-                  <h2 className="text-white font-bold text-base">Tonight's Picks</h2>
-                  <span
-                    className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider"
-                    style={{ background: `${AMBER}20`, color: AMBER }}
-                  >
-                    AI
-                  </span>
-                </div>
+                ))}
                 <button
-                  onClick={() => navigate('/pulse')}
-                  className="flex items-center gap-0.5 text-xs font-semibold active:opacity-70 transition-opacity"
+                  onClick={() => openSheet('community', {})}
+                  className="w-full px-4 py-3 text-left text-xs font-semibold active:bg-white/5 transition-colors flex items-center justify-between"
                   style={{ color: AMBER }}
                 >
-                  See all
+                  View all posts
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
-              </div>
-              <div
-                className="rounded-2xl overflow-hidden border border-white/5 divide-y divide-white/5"
-                style={{ background: CARD_BG }}
-              >
-                {nearbyEvents.slice(0, 3).map((ev, i) => {
-                  // Derive a match score from position + event timing
-                  const baseScore = 97 - i * 8;
-                  const score = Math.max(baseScore, 72);
-                  const timeStr = ev.startsAt
-                    ? new Date(ev.startsAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-                    : undefined;
-                  return (
-                    <ScenePick
-                      key={ev.id}
-                      rank={i + 1}
-                      title={ev.title}
-                      venue={ev.venue}
-                      time={timeStr}
-                      score={score}
-                      onTap={() => openSheet('event', { id: ev.id })}
-                    />
-                  );
-                })}
               </div>
             </AnimatedSection>
           )}
@@ -1183,7 +958,6 @@ export function HomeMode({ className = '' }: HomeModeProps) {
         </div>
       </div>
 
-      {/* Right Now modal (existing) */}
       {/* City Picker */}
       <AnimatePresence>
         {showCityPicker && (
@@ -1217,7 +991,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
                     }}
                   >
                     <span className="font-semibold">{c}</span>
-                    {c === city && <span style={{ color: '#C8962C' }}>\u2713</span>}
+                    {c === city && <span style={{ color: '#C8962C' }}>{'\u2713'}</span>}
                   </button>
                 ))}
               </div>
