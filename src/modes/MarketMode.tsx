@@ -58,6 +58,7 @@ import { useBootGuard } from '@/contexts/BootGuardContext';
 import { isBrandVisible, BRAND_CONFIG } from '@/config/brands';
 import { AppBanner } from '@/components/banners/AppBanner';
 import { HNHMarketHero } from '@/components/home/HNHMarketHero';
+import { HNHMessStrip } from '@/components/home/HNHMessStrip';
 import { CardMoreButton } from '@/components/ui/CardMoreButton';
 import {
   getAllProducts,
@@ -977,6 +978,9 @@ export function MarketMode({ className = '' }: MarketModeProps) {
         <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
         {/* HNH MESS product cards */}
         <HNHMarketHero />
+
+        {/* HNH MESS persistent strip (46px, "from £10") */}
+        <HNHMessStrip className="mt-2" />
 
         {/* HNH Lube banner (fallback / additional) */}
         <AppBanner placement="market_lube" variant="card" className="mx-4 mt-2" />
