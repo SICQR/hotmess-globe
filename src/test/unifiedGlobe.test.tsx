@@ -1,9 +1,8 @@
 /**
  * UnifiedGlobe — route-gating tests
  *
- * Verifies that UnifiedGlobe correctly switches between GlobePage and
- * AmbientGlobe based on route: GlobePage on /pulse, AmbientGlobe on all
- * other routes.
+ * Verifies that UnifiedGlobe only renders on /pulse and returns null on
+ * all other routes (AmbientGlobe was removed in session 9).
  *
  * Three.js, GlobePage, AmbientGlobe, and supabaseClient are all mocked so
  * this runs in jsdom without WebGL or canvas support.
@@ -119,25 +118,24 @@ function renderAt(path: string) {
 // Tests
 // ---------------------------------------------------------------------------
 describe('UnifiedGlobe route-gating', () => {
-  it('renders AmbientGlobe (non-null) on / (home)', () => {
+  it('returns null on / (home)', () => {
     const { container } = renderAt('/');
-    // UnifiedGlobe renders AmbientGlobe on non-pulse routes.
-    expect(container.firstChild).not.toBeNull();
+    expect(container.firstChild).toBeNull();
   });
 
-  it('renders AmbientGlobe (non-null) on /market', () => {
+  it('returns null on /market', () => {
     const { container } = renderAt('/market');
-    expect(container.firstChild).not.toBeNull();
+    expect(container.firstChild).toBeNull();
   });
 
-  it('renders AmbientGlobe (non-null) on /profile', () => {
+  it('returns null on /profile', () => {
     const { container } = renderAt('/profile');
-    expect(container.firstChild).not.toBeNull();
+    expect(container.firstChild).toBeNull();
   });
 
-  it('renders AmbientGlobe (non-null) on /ghosted', () => {
+  it('returns null on /ghosted', () => {
     const { container } = renderAt('/ghosted');
-    expect(container.firstChild).not.toBeNull();
+    expect(container.firstChild).toBeNull();
   });
 
   it('renders a container element on /pulse', () => {
