@@ -29,6 +29,7 @@ import TravelModal from '@/components/messaging/TravelModal';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { usePowerups } from '@/hooks/usePowerups';
 import { Zap } from 'lucide-react';
+import { pushNotify } from '@/lib/pushNotify';
 
 // ── Read-state helpers ────────────────────────────────────────────────────────
 // getLastRead: kept for backward compat (returns local timestamp or 0)
@@ -63,6 +64,52 @@ const markRead = (threadId, userEmail) => {
   try { localStorage.setItem(`chat_read_${threadId}`, String(Date.now())); } catch {}
 };
 
+/** Location card — renders shared location with expiry, trust signals, visual hierarchy */
+function LocationCard({ msg, isMe, otherName }) {
+  const sentAt = msg.created_date ? new Date(msg.created_date) : null;
+  const expiresAt = sentAt ? new Date(sentAt.getTime() + 60 * 60 * 1000) : null;
+  const isExpired = expiresAt ? new Date() > expiresAt : false;
+  const minsLeft = expiresAt && !isExpired ? Math.max(0, Math.round((expiresAt.getTime() - Date.now()) / 60000)) : 0;
+  const distText = (msg.content || '').replace('📍 My Location', '').replace(' — ', '').trim();
+
+  return (
+    <motion.div
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      className={cn(
+        'max-w-[80%] px-4 py-3 rounded-2xl border overflow-hidden',
+        isExpired
+          ? 'bg-white/5 border-white/10 opacity-60'
+          : isMe ? 'bg-[#C8962C]/15 border-[#C8962C]/30' : 'bg-[#1C1C1E] border-white/10'
+      )}
+    >
+      <div className="flex items-center gap-2">
+        <span className={cn('text-lg', !isExpired && 'animate-pulse')}>📍</span>
+        <span className="text-sm font-bold text-white">
+          {isExpired ? 'Location expired' : isMe ? 'My Location' : `${otherName}'s Location`}
+        </span>
+      </div>
+      {!isExpired && distText && (
+        <p className="text-xs text-white/60 mt-1 ml-7">{distText}</p>
+      )}
+      <div className="flex items-center justify-between mt-2 ml-7">
+        <p className="text-[10px] text-white/30">
+          {isExpired
+            ? sentAt ? formatDistanceToNow(sentAt, { addSuffix: true }) : ''
+            : `Expires in ${minsLeft} min`}
+        </p>
+        {!isExpired && (
+          <p className="text-[10px] text-[#C8962C]/60">Approximate only</p>
+        )}
+      </div>
+      {isMe && !isExpired && (
+        <p className="text-[9px] text-white/20 mt-1.5 ml-7">Shared for 1 hour. You're in control.</p>
+      )}
+    </motion.div>
+  );
+}
+
 /**
  * Supabase-powered chat sheet UI that manages threads, messages, profiles, real-time updates, media attachments, and Wingman AI suggestions.
  *
@@ -95,6 +142,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showTravelModal, setShowTravelModal] = useState(false);
   const [highlightNext, setHighlightNext] = useState(false);
+  const [failedMsgIds, setFailedMsgIds] = useState(new Set());
 
   // ── Wingman AI state ─────────────────────────────────────────────────────
   const [wingmanLoading, setWingmanLoading] = useState(false);
@@ -288,16 +336,28 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
 
       const senderProfile = profiles[currentUser.email];
 
-      // Insert message (sender_name not a DB column — display name resolved client-side from profiles cache)
+      // Optimistic: show message immediately before DB insert
       const isHighlighted = highlightNext && isBoostActive('highlighted_message');
+      const now = new Date().toISOString();
+      const optimisticMsg = {
+        _optimistic: true, // no `id` yet = ✓ (Sent) state
+        thread_id: thread.id,
+        sender_email: currentUser.email,
+        content: isHighlighted ? JSON.stringify({ text, is_highlighted: true }) : text,
+        message_type: 'text',
+        created_date: now,
+      };
+      setMessages(prev => [...prev, optimisticMsg]);
+
+      // Insert to DB
       const { error: msgError } = await supabase
         .from('chat_messages')
         .insert({
           thread_id: thread.id,
           sender_email: currentUser.email,
-          content: isHighlighted ? JSON.stringify({ text, is_highlighted: true }) : text,
+          content: optimisticMsg.content,
           message_type: 'text',
-          created_date: new Date().toISOString(),
+          created_date: now,
         });
       if (msgError) throw msgError;
       // Consume the highlight toggle after sending
@@ -305,6 +365,19 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
 
       // Mark thread read on send (DB-first via markRead helper)
       markRead(thread.id, currentUser?.email);
+
+      // Push notification to recipient (fire-and-forget, never blocks)
+      const recipientEmail = thread.participant_emails?.find(e => e !== currentUser.email);
+      if (recipientEmail) {
+        const senderName = profiles[currentUser.email]?.display_name || 'Someone';
+        pushNotify({
+          emails: [recipientEmail],
+          title: senderName,
+          body: text.length > 60 ? text.slice(0, 57) + '…' : text,
+          tag: `chat-${thread.id}`,
+          url: `/ghosted?sheet=chat&thread=${thread.id}`,
+        });
+      }
 
       // Update thread last_message
       await supabase
@@ -328,8 +401,11 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         if (!realtimeRef.current) openThread(thread);
       }
     } catch (err) {
-      toast.error("Couldn't send. Try again.");
-      setNewMessage(text);
+      toast.error("Couldn't send. Tap message to retry.");
+      // Mark the optimistic message as failed — don't remove it
+      setMessages(prev => prev.map(m =>
+        m._optimistic && m.content === text ? { ...m, _failed: true } : m
+      ));
     } finally {
       setSending(false);
       inputRef.current?.focus();
@@ -698,7 +774,17 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           </div>
           <div className="min-w-0">
             <p className="text-white font-bold truncate">{otherName}</p>
-            <p className="text-[#8E8E93] text-xs">Tap to view profile</p>
+            <p className="text-[#8E8E93] text-xs truncate">
+              {otherProfile?.distance_m != null
+                ? otherProfile.distance_m < 1000
+                  ? 'Nearby'
+                  : `~${Math.round(otherProfile.distance_m / 1000)} km away`
+                : otherProfile?.is_online
+                  ? 'Online now'
+                  : otherProfile?.last_seen
+                    ? 'Recently active'
+                    : 'Tap to view profile'}
+            </p>
           </div>
         </button>
       </div>
@@ -744,11 +830,17 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
               }
             }
 
-            // Message status: Sent → Delivered → Seen
+            // Message status: ✓ (sent) → ✓✓ (delivered) → "Seen" (read, last msg only)
             const recipientUnread = selectedThread?.unread_count?.[otherEmail];
             const isReadByRecipient = isMe && recipientUnread === 0;
-            const isLastFromMe = isMe && (i === messages.length - 1 || messages.slice(i + 1).every(m => m.sender_email === currentUser?.email));
-            const messageStatus = !isMe ? null : isReadByRecipient ? 'Seen' : msg.id ? 'Delivered' : 'Sent';
+            const isLastFromMe = isMe && !messages.slice(i + 1).some(m => m.sender_email === currentUser?.email);
+            const isFailed = !!msg._failed;
+            const isOptimistic = !!msg._optimistic && !msg.id;
+            // Only show "Seen" on the very last message from me — keeps it clean
+            const messageStatus = !isMe ? null
+              : isFailed ? '!'
+              : isReadByRecipient && isLastFromMe ? 'Seen'
+              : msg.id ? '✓✓' : '✓';
 
             return (
               <React.Fragment key={msg.id || i}>
@@ -759,19 +851,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                 className={cn('flex', isMe ? 'justify-end' : 'justify-start')}
               >
                 {msg.message_type === 'location' ? (
-                  <div className={cn('max-w-[80%] px-4 py-3 rounded-2xl border', isMe ? 'bg-[#C8962C]/15 border-[#C8962C]/30' : 'bg-[#1C1C1E] border-white/10')}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-lg">📍</span>
-                      <span className="text-sm font-bold text-white">{isMe ? 'My Location' : 'Their Location'}</span>
-                    </div>
-                    <p className="text-xs text-white/50">{msg.content?.replace('📍 My Location', '').replace(' — ', '') || 'Approximate'}</p>
-                    {msg.created_date && (
-                      <p className="text-[10px] mt-2 text-white/30">
-                        {formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
-                        {' · Expires after 1 hour'}
-                      </p>
-                    )}
-                  </div>
+                  <LocationCard msg={msg} isMe={isMe} otherName={otherName} />
                 ) : isMeetpoint && msg.metadata ? (
                   <MeetpointCard {...msg.metadata} />
                 ) : isPhoto ? (
@@ -785,20 +865,28 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                     {msg.created_date && (
                       <p className="text-[10px] mt-1 opacity-40 text-white flex items-center gap-0.5">
                         {formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
-                        {isMe && messageStatus && <span className={`text-[10px] ml-1 ${messageStatus === 'Seen' ? 'text-[#C8962C]' : 'text-white/40'}`}>{messageStatus}</span>}
+                        {isMe && messageStatus && <span className={`text-[10px] ml-1 ${messageStatus === 'Seen' ? 'text-[#C8962C] font-medium' : messageStatus === '!' ? 'text-[#FF3B30] font-bold' : 'text-white/30'}`}>{messageStatus === '!' ? '⚠ Tap to retry' : messageStatus}</span>}
                       </p>
                     )}
                   </div>
                 ) : (
                   <div
                     className={cn(
-                      'max-w-[80%] px-4 py-2.5 rounded-2xl shadow-lg',
+                      'max-w-[80%] px-4 py-2.5 rounded-2xl shadow-lg transition-opacity',
                       isMe
                         ? 'text-white rounded-br-sm'
                         : 'bg-[#1C1C1E] text-white rounded-bl-sm border border-white/[0.06]',
-                      isHighlightedMsg && 'ring-2 ring-[#C8962C] ring-offset-1 ring-offset-[#050507]'
+                      isHighlightedMsg && 'ring-2 ring-[#C8962C] ring-offset-1 ring-offset-[#050507]',
+                      isFailed && 'ring-1 ring-[#FF3B30]/50',
+                      isOptimistic && !isFailed && 'opacity-70'
                     )}
-                    style={isMe ? { background: isHighlightedMsg ? 'linear-gradient(135deg, #C8962C 0%, #D4A94E 100%)' : 'linear-gradient(135deg, #C8962C 0%, #A07722 100%)' } : isHighlightedMsg ? { background: '#1C1C1E', border: '2px solid #C8962C' } : undefined}
+                    style={isMe ? { background: isHighlightedMsg ? 'linear-gradient(135deg, #C8962C 0%, #D4A94E 100%)' : isFailed ? '#1C1C1E' : 'linear-gradient(135deg, #C8962C 0%, #A07722 100%)' } : isHighlightedMsg ? { background: '#1C1C1E', border: '2px solid #C8962C' } : undefined}
+                    onClick={isFailed ? () => {
+                      // Remove failed message and retry
+                      setMessages(prev => prev.filter(m => m !== msg));
+                      setNewMessage(msg.content);
+                    } : undefined}
+                    role={isFailed ? 'button' : undefined}
                   >
                     {isHighlightedMsg && (
                       <div className="flex items-center gap-1 mb-1">
@@ -810,7 +898,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                     {msg.created_date && (
                       <p className="text-[10px] mt-1 opacity-50 flex items-center gap-0.5">
                         {formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
-                        {isMe && messageStatus && <span className={`text-[10px] ml-1 ${messageStatus === 'Seen' ? 'text-[#C8962C]' : 'text-white/40'}`}>{messageStatus}</span>}
+                        {isMe && messageStatus && <span className={`text-[10px] ml-1 ${messageStatus === 'Seen' ? 'text-[#C8962C] font-medium' : messageStatus === '!' ? 'text-[#FF3B30] font-bold' : 'text-white/30'}`}>{messageStatus === '!' ? '⚠ Tap to retry' : messageStatus}</span>}
                       </p>
                     )}
                   </div>
