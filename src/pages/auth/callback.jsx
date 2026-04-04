@@ -152,13 +152,14 @@ async function routeAfterAuth(userId, navigate) {
       }
     } catch {}
 
-    if (profile?.onboarding_completed === true) {
-      navigate('/ghosted', { replace: true });
-    } else {
-      navigate('/', { replace: true });
-    }
+    const dest = profile?.onboarding_completed === true ? '/ghosted' : '/';
+    navigate(dest, { replace: true });
+    // Hard fallback: if React Router navigate doesn't fire (race with BootGuard),
+    // force a full page load after a short delay.
+    setTimeout(() => { window.location.replace(dest); }, 1500);
   } catch {
     // DB unavailable — BootGuardContext will recover from /
     navigate('/', { replace: true });
+    setTimeout(() => { window.location.replace('/'); }, 1500);
   }
 }
