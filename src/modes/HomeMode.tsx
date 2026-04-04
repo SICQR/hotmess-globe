@@ -17,7 +17,7 @@
  * Loading: Skeleton loaders (not spinners).
  */
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { useNavigate } from 'react-router-dom';
@@ -235,10 +235,12 @@ function RightNowCard({
 
 // ---- Right Now empty state --------------------------------------------------
 function RightNowEmpty({ onGoLive }: { onGoLive: () => void }) {
+  // Pick a random urgency headline on mount (stable per session)
+  const [headline] = useState(() => EMPTY_HEADLINES[Math.floor(Math.random() * EMPTY_HEADLINES.length)]);
   return (
     <div className="flex flex-col items-center py-6 px-4 rounded-2xl border border-dashed border-white/10" style={{ background: `${CARD_BG}80` }}>
       <Zap className="w-10 h-10 mb-2" style={{ color: MUTED }} />
-      <p className="text-white text-sm font-semibold mb-1">Be first to share your vibe tonight</p>
+      <p className="text-white text-sm font-semibold mb-1">{headline}</p>
       <p className="text-xs mb-3" style={{ color: MUTED }}>Let people nearby know you're out</p>
       <button
         onClick={onGoLive}
@@ -362,6 +364,24 @@ function RadioBanner({ onNavigate }: { onNavigate: () => void }) {
   );
 }
 
+// ---- Hero headlines (rotate every 6s) ----------------------------------------
+const HERO_HEADLINES = [
+  "Who's out. Who's up. Who's next.",
+  'Find trouble. Or be it.',
+  'Right place. Wrong decisions.',
+  'Stay messy.',
+  'Always too much, yet never enough.',
+] as const;
+
+// ---- Right Now empty state urgency variants ---------------------------------
+const EMPTY_HEADLINES = [
+  "No one's live. Own it.",
+  'Quiet\u2026 for now.',
+  'You could start this.',
+  'Be first to share your vibe tonight.',
+  "The night's waiting. Are you?",
+] as const;
+
 // ---- Core Lanes (2x2 nav grid) ----------------------------------------------
 const CORE_LANES = [
   { label: 'Pulse', sub: "See who's around", icon: Globe, route: '/ghosted' },
@@ -370,11 +390,18 @@ const CORE_LANES = [
   { label: 'Music', sub: "What's playing now", icon: Music, route: '/music' },
 ] as const;
 
-function CoreLanes({ onNavigate }: { onNavigate: (route: string) => void }) {
+function CoreLanes({
+  onNavigate,
+  signals,
+}: {
+  onNavigate: (route: string) => void;
+  signals: Record<string, string>;
+}) {
   return (
     <div className="grid grid-cols-2 gap-3">
       {CORE_LANES.map((lane) => {
         const Icon = lane.icon;
+        const signal = signals[lane.label];
         return (
           <button
             key={lane.label}
@@ -383,11 +410,18 @@ function CoreLanes({ onNavigate }: { onNavigate: (route: string) => void }) {
             style={{ background: CARD_BG }}
             aria-label={`${lane.label}: ${lane.sub}`}
           >
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: `${AMBER}15` }}
-            >
-              <Icon className="w-5 h-5" style={{ color: AMBER }} />
+            <div className="flex items-center justify-between w-full">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: `${AMBER}15` }}
+              >
+                <Icon className="w-5 h-5" style={{ color: AMBER }} />
+              </div>
+              {signal && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${AMBER}15`, color: AMBER }}>
+                  {signal}
+                </span>
+              )}
             </div>
             <div>
               <p className="text-white font-bold text-sm">{lane.label}</p>
@@ -669,6 +703,21 @@ export function HomeMode({ className = '' }: HomeModeProps) {
     refetchInterval: 60_000,
   });
 
+  // ---- Hero headline rotation (every 6s) ------------------------------------
+  const [heroIdx, setHeroIdx] = useState(() => Math.floor(Math.random() * HERO_HEADLINES.length));
+  useEffect(() => {
+    const t = setInterval(() => setHeroIdx(i => (i + 1) % HERO_HEADLINES.length), 6000);
+    return () => clearInterval(t);
+  }, []);
+
+  // ---- Live signals for Core Lanes ------------------------------------------
+  const { isPlaying: radioPlaying } = useRadio();
+  const laneSignals: Record<string, string> = {};
+  if (rightNowUsers.length > 0) laneSignals['Pulse'] = `${rightNowUsers.length} nearby`;
+  else laneSignals['Ghosted'] = 'Quiet tonight';
+  if (nearbyEvents.length > 0) laneSignals['Market'] = `${nearbyEvents.length} events`;
+  if (radioPlaying) laneSignals['Music'] = 'Live now';
+
   // ---- Render ---------------------------------------------------------------
   return (
     <div className={`h-full w-full flex flex-col overflow-hidden ${className}`} style={{ background: ROOT_BG }}>
@@ -759,7 +808,18 @@ export function HomeMode({ className = '' }: HomeModeProps) {
               <h2 className="font-black text-3xl tracking-[0.15em] uppercase leading-none drop-shadow-lg">
                 <span className="text-white">HOT</span><span style={{ color: AMBER }}>MESS</span>
               </h2>
-              <p className="text-white/40 text-xs mt-1.5 tracking-wide uppercase">London</p>
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={heroIdx}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.4 }}
+                  className="text-white/50 text-xs mt-1.5 tracking-wide"
+                >
+                  {HERO_HEADLINES[heroIdx]}
+                </motion.p>
+              </AnimatePresence>
               <div className="flex gap-3 mt-4">
                 <button
                   onClick={() => navigate('/pulse')}
@@ -811,7 +871,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
           {/* 2. CORE LANES -- 2x2 nav grid                                  */}
           {/* ============================================================== */}
           <AnimatedSection index={0}>
-            <CoreLanes onNavigate={(route) => navigate(route)} />
+            <CoreLanes onNavigate={(route) => navigate(route)} signals={laneSignals} />
           </AnimatedSection>
 
           {/* ============================================================== */}
