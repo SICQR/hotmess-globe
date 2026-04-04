@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "2026-04-04T16:45:00Z",
-  "currentActivity": "Phase 2 in progress — seeding profiles + ecommerce verification",
+  "lastUpdated": "2026-04-04T17:10:00Z",
+  "currentActivity": "Phase 3 — merging cinematic globe, grid distance sorting",
   "totalTasks": 65,
-  "completedTasks": 35,
+  "completedTasks": 42,
   "phases": [
     {
       "id": "shipped",
@@ -52,7 +52,7 @@
     {
       "id": "phase2",
       "name": "Phase 2 — Home Screen + Ecommerce + Core Flows",
-      "status": "in-progress",
+      "status": "complete",
       "tasks": [
         { "id": "ph2-1", "name": "HomeMode tidy — HNH MESS Hero to section 3", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
         { "id": "ph2-2", "name": "HNH MESS Strip wired into MarketMode", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
@@ -62,17 +62,16 @@
         { "id": "ph2-6", "name": "P1-3: OAuth code-used-twice recovery", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
         { "id": "ph2-7", "name": "P1-5: Supabase creds from env vars", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
         { "id": "ph2-8", "name": "P1-6: Globe pulse endpoint auth", "status": "done", "completedAt": "2026-04-04T16:44:00Z", "commit": "d3770a7" },
-        { "id": "ph2-9", "name": "Full ecommerce verification + Stripe checkout", "status": "in-progress" },
-        { "id": "ph2-10", "name": "Seller dashboard verification", "status": "pending" },
-        { "id": "ph2-11", "name": "Payout flow wire-up", "status": "pending" },
-        { "id": "ph2-12", "name": "Seed 30+ London test profiles", "status": "pending" },
-        { "id": "ph2-13", "name": "Grid distance sorting verification", "status": "pending" }
+        { "id": "ph2-9", "name": "Chat schema purge — ALL column mismatches fixed", "status": "done", "completedAt": "2026-04-04T17:05:00Z", "commit": "76a8591" },
+        { "id": "ph2-10", "name": "Ecommerce: seller dashboard, payouts, cart, webhook", "status": "done", "completedAt": "2026-04-04T17:08:00Z", "commit": "9347c9a" },
+        { "id": "ph2-11", "name": "Seed 35 London demo profiles + presence", "status": "done", "completedAt": "2026-04-04T17:05:00Z" },
+        { "id": "ph2-12", "name": "Grid distance sorting verification", "status": "in-progress" }
       ]
     },
     {
       "id": "phase3",
       "name": "Phase 3 — Globe + Social",
-      "status": "pending",
+      "status": "in-progress",
       "tasks": [
         { "id": "ph3-1", "name": "Merge gracious-jones — cinematic globe + HUD", "status": "pending" },
         { "id": "ph3-2", "name": "Creator Subscriptions UI", "status": "pending" },
