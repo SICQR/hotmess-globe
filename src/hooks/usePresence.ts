@@ -190,7 +190,7 @@ export function useHeartbeat(userId: string | null, intervalMs: number = 30000) 
       // sendBeacon with Supabase REST API — must include apikey + auth headers
       const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`;
       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
-      const session = JSON.parse(localStorage.getItem('sb-klsywpvncqqglhnhrjbh-auth-token') ?? '{}');
+      const session = JSON.parse(localStorage.getItem('sb-rfoftonnlwudilafhfkl-auth-token') ?? '{}');
       const accessToken = session?.access_token ?? anonKey;
       const body = JSON.stringify({ is_online: false, last_loc_ts: new Date().toISOString() });
       const headers = {
