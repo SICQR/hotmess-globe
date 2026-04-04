@@ -462,48 +462,8 @@ export default function OnboardingGate() {
           p_details: { community_attestation: true, timestamp: new Date().toISOString() },
         }).catch((e) => console.warn('grant_user_consent failed (continuing):', e));
 
-        // ── Handle invite code referral ──────────────────────────────────────
-        // If the user was invited via deep link, record the referral
-        const inviteCode = localStorage.getItem('hm_invite_code');
-        if (inviteCode) {
-          try {
-            // Get the inviter's email from referrals table by matching the code
-            const { data: referralRecords } = await supabase
-              .from('referrals')
-              .select('referrer_email')
-              .eq('referral_code', inviteCode)
-              .limit(1);
-
-            if (referralRecords?.length > 0) {
-              const inviterEmail = referralRecords[0].referrer_email;
-              const { data: { user: currentUser } } = await supabase.auth.getUser();
-
-              if (currentUser?.email) {
-                // Record the referral link
-                await supabase
-                  .from('referrals')
-                  .upsert(
-                    {
-                      referrer_email: inviterEmail,
-                      referred_email: currentUser.email,
-                      referral_code: inviteCode,
-                      status: 'completed',
-                      created_at: new Date().toISOString(),
-                    },
-                    { onConflict: 'referrer_email,referred_email' }
-                  )
-                  .catch((e) => console.warn('Failed to record referral:', e));
-              }
-            }
-          } catch (err) {
-            console.warn('Invite code processing failed (continuing):', err);
-          } finally {
-            // Clear the invite code after processing
-            try {
-              localStorage.removeItem('hm_invite_code');
-            } catch {}
-          }
-        }
+        // Referral recording is handled in src/pages/auth/callback.jsx (single source of truth).
+        // Do NOT duplicate referral writes here — it causes double-insert conflicts.
 
         // Fire-and-forget profile refresh — do NOT await.
         // Awaiting refetchProfile triggers setIsLoading(true) which unmounts us

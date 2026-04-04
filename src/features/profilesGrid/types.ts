@@ -42,6 +42,9 @@ export type Profile = {
   geoLng: number;
   photos: Photo[];
 
+  // Distance from viewer in metres (returned by API when lat/lng provided)
+  distance_m?: number;
+
   // Match probability fields (from /api/match-probability)
   matchProbability?: number;
   matchBreakdown?: MatchBreakdown;

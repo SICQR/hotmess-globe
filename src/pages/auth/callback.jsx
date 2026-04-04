@@ -41,9 +41,6 @@ export default function AuthCallback() {
 
         if (errorParam) {
           logger.error('OAuth error from provider', { error: errorParam, description: errorDescription });
-          // All auth errors → redirect back to splash after brief flash
-          // so the user can try again via the normal auth chooser.
-          // Covers: access_denied, invalid token, expired link, code exchange failure.
           navigate('/', { replace: true });
           return;
         }
@@ -52,8 +49,23 @@ export default function AuthCallback() {
         const { data, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError) {
+          // "code already used" means the user hit back during OAuth and replayed
+          // the callback URL. They likely already have a valid session — send them in.
+          const msg = sessionError.message || '';
+          if (msg.includes('code') && (msg.includes('already') || msg.includes('expired') || msg.includes('used'))) {
+            logger.warn('OAuth code already used — checking for existing session', { error: msg });
+            const { data: existing } = await supabase.auth.getSession();
+            if (existing?.session?.user?.id) {
+              await routeAfterAuth(existing.session.user.id, navigate);
+              return;
+            }
+            // No session at all — redirect to /ghosted as a best-effort
+            // (BootGuardContext will redirect to auth if truly unauthenticated)
+            navigate('/ghosted', { replace: true });
+            return;
+          }
+
           logger.error('Session error during callback', { error: sessionError.message });
-          // Redirect to splash — user can retry from the auth chooser
           navigate('/', { replace: true });
           return;
         }

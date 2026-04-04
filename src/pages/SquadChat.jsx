@@ -101,7 +101,6 @@ export default function SquadChat() {
       await supabase.from('chat_messages').insert({
         thread_id: chatThread.id,
         sender_email: currentUser.email,
-        sender_name: currentUser.full_name,
         content,
         message_type: 'text',
       });

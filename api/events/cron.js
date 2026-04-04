@@ -47,7 +47,7 @@ const isAuthorizedCron = (req) => {
 
 const findExistingBeaconId = async ({ serviceClient, city, title, eventDateIso }) => {
   const { data, error } = await serviceClient
-    .from('Beacon')
+    .from('events')
     .select('id')
     .eq('kind', 'event')
     .eq('city', city)
@@ -171,11 +171,11 @@ export default async function handler(req, res) {
       }
 
       if (existing.id) {
-        const { error } = await serviceClient.from('Beacon').update(row).eq('id', existing.id);
+        const { error } = await serviceClient.from('events').update(row).eq('id', existing.id);
         if (error) throw error;
         results.updated++;
       } else {
-        const { error } = await serviceClient.from('Beacon').insert(row);
+        const { error } = await serviceClient.from('events').insert(row);
         if (error) throw error;
         results.created++;
       }
