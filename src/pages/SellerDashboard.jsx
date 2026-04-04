@@ -2,7 +2,6 @@ import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { } from '@/components/utils/supabaseClient';
 import { Plus, Package, DollarSign, Star, TrendingUp, Edit, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -34,9 +33,13 @@ export default function SellerDashboard() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
-        setCurrentUser(user);
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser) {
+          setCurrentUser(null);
+          return;
+        }
+        const { data: profile } = await supabase.from("profiles").select("*").eq("id", authUser.id).maybeSingle();
+        setCurrentUser({ ...authUser, ...(profile || {}), auth_user_id: authUser.id, email: authUser.email || profile?.email });
       } catch (error) {
         console.error('Failed to fetch user:', error);
       }
@@ -79,14 +82,32 @@ export default function SellerDashboard() {
   });
 
   const { data: orderItems = [] } = useQuery({
-    queryKey: ['order-items'],
-    queryFn: () => supabase.from('order_items').select('*'),
+    queryKey: ['order-items', currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser?.id) return [];
+      try {
+        const { data, error } = await supabase.from('order_items').select('*');
+        if (error) return [];
+        return data || [];
+      } catch {
+        return [];
+      }
+    },
     enabled: !!currentUser,
   });
 
   const { data: promotions = [] } = useQuery({
     queryKey: ['promotions', currentUser?.id],
-    queryFn: () => supabase.from('promotions').select('*').eq('seller_id', currentUser.id).order('created_at', { ascending: false }),
+    queryFn: async () => {
+      if (!currentUser?.id) return [];
+      try {
+        const { data, error } = await supabase.from('promotions').select('*').eq('seller_id', currentUser.id).order('created_at', { ascending: false });
+        if (error) return [];
+        return data || [];
+      } catch {
+        return [];
+      }
+    },
     enabled: !!currentUser,
   });
 
@@ -108,7 +129,15 @@ export default function SellerDashboard() {
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => supabase.from('profiles').select('*'),
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase.from('profiles').select('*');
+        if (error) return [];
+        return data || [];
+      } catch {
+        return [];
+      }
+    },
     enabled: !!currentUser,
   });
 

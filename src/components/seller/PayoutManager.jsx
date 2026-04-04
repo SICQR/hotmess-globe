@@ -15,7 +15,7 @@ const STATUS_CONFIG = {
   cancelled: { icon: AlertCircle, color: '#FF6B35', label: 'Cancelled' },
 };
 
-export default function PayoutManager({ payouts, orders, sellerEmail, stripeConnectId }) {
+export default function PayoutManager({ payouts, orders, sellerId, stripeConnectId }) {
   const queryClient = useQueryClient();
   const [connecting, setConnecting] = useState(false);
 
@@ -35,12 +35,12 @@ export default function PayoutManager({ payouts, orders, sellerEmail, stripeConn
       }
 
       const { data, error } = await supabase.from('seller_payouts').insert({
-        seller_email: sellerEmail,
+        seller_id: sellerId,
         amount_gbp: availableBalance,
         stripe_connect_account_id: stripeConnectId,
         status: 'pending',
         payout_date: new Date().toISOString(),
-        period_start: format(new Date(unpaidOrders[0].created_date), 'yyyy-MM-dd'),
+        period_start: format(new Date(unpaidOrders[0].created_at || unpaidOrders[0].created_date), 'yyyy-MM-dd'),
         period_end: format(new Date(), 'yyyy-MM-dd'),
         order_ids: unpaidOrders.map(o => o.id)
       }).select().single();
@@ -59,9 +59,25 @@ export default function PayoutManager({ payouts, orders, sellerEmail, stripeConn
   const connectStripe = async () => {
     setConnecting(true);
     try {
-      // In production, this would redirect to Stripe Connect OAuth
-      toast.success('Opening Stripe Connect...');
-      // window.location.href = stripeConnectUrl;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error('Please sign in to connect Stripe');
+        return;
+      }
+      const res = await fetch('/api/stripe/connect-onboard', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ seller_id: sellerId }),
+      });
+      const json = await res.json();
+      if (json?.url) {
+        window.location.href = json.url;
+      } else {
+        toast.error(json?.error || 'Could not start Stripe Connect onboarding');
+      }
     } catch (error) {
       toast.error('Failed to connect Stripe');
     } finally {
