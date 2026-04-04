@@ -23,7 +23,6 @@ import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
-import { pushNotify } from '@/lib/pushNotify';
 import MeetpointCard from '@/components/messaging/MeetpointCard';
 import VideoCallModal from '@/components/video/VideoCallModal';
 import TravelModal from '@/components/messaging/TravelModal';
@@ -123,40 +122,14 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   const [resolvedToEmail, setResolvedToEmail] = useState(initialToEmail || null);
   useEffect(() => {
     if (!resolvedUserId || resolvedToEmail) return;
-
-    const resolve = async () => {
-      // 1. Try profiles table first
-      const { data } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('id', resolvedUserId)
-        .single();
-      if (data?.email) { setResolvedToEmail(data.email); return; }
-
-      // 2. Fallback: fetch from profile API (has service-role access to auth.users)
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
-        const res = await fetch(`/api/profile?uid=${resolvedUserId}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
-        if (res.ok) {
-          const json = await res.json();
-          const email = json?.user?.email;
-          if (email) {
-            setResolvedToEmail(email);
-            // Backfill profiles.email so future lookups work
-            supabase.from('profiles').update({ email }).eq('id', resolvedUserId).then(() => {});
-            return;
-          }
-        }
-      } catch {}
-
-      // 3. Last resort: use auth admin lookup (if current user is looking up their own auth)
-      // This won't work for other users, but at least the sender's email is always available
-    };
-
-    resolve();
+    supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', resolvedUserId)
+      .single()
+      .then(({ data }) => {
+        if (data?.email) setResolvedToEmail(data.email);
+      });
   }, [resolvedUserId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Load threads when user is ready ───────────────────────────────────────
@@ -299,6 +272,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           .insert({
             participant_emails: thread.participant_emails,
             active: true,
+            created_by: currentUser.email,
             last_message_at: new Date().toISOString(),
           })
           .select()
@@ -322,8 +296,8 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         .insert({
           thread_id: thread.id,
           sender_email: currentUser.email,
-          content: text,
-          message_type: isHighlighted ? 'highlighted' : 'text',
+          content: isHighlighted ? JSON.stringify({ text, is_highlighted: true }) : text,
+          message_type: 'text',
           created_date: new Date().toISOString(),
         });
       if (msgError) throw msgError;
@@ -341,19 +315,6 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           last_message_at: new Date().toISOString(),
         })
         .eq('id', thread.id);
-
-      // Push notification to the other participant(s)
-      const otherEmails = (thread.participant_emails || []).filter(e => e !== currentUser.email);
-      if (otherEmails.length) {
-        const senderName = profiles[currentUser.email]?.display_name || 'Someone';
-        pushNotify({
-          emails: otherEmails,
-          title: senderName,
-          body: text.length > 60 ? text.slice(0, 57) + '…' : text,
-          tag: `chat-${thread.id}`,
-          url: '/ghosted',
-        });
-      }
 
       // Refresh messages if no realtime (new thread)
       if (!realtimeRef.current || thread?._new) {
@@ -392,6 +353,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           .insert({
             participant_emails: thread.participant_emails,
             active: true,
+            created_by: currentUser.email,
             last_message_at: new Date().toISOString(),
           })
           .select().single();
@@ -404,7 +366,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       const { error: msgError } = await supabase.from('chat_messages').insert({
         thread_id: thread.id,
         sender_email: currentUser.email,
-        content: metadata ? JSON.stringify(metadata) : content,
+        content,
         message_type,
         created_date: new Date().toISOString(),
       });
@@ -414,20 +376,6 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         last_message: content.slice(0, 80),
         last_message_at: new Date().toISOString(),
       }).eq('id', thread.id);
-
-      // Push notification for special messages
-      const otherEmails = (thread.participant_emails || []).filter(e => e !== currentUser.email);
-      if (otherEmails.length) {
-        const senderName = profiles[currentUser.email]?.display_name || 'Someone';
-        const typeLabel = message_type === 'meetpoint' ? '📍 sent a meetpoint' : message_type === 'travel' ? '🚗 shared travel info' : 'sent a message';
-        pushNotify({
-          emails: otherEmails,
-          title: senderName,
-          body: typeLabel,
-          tag: `chat-${thread.id}`,
-          url: '/ghosted',
-        });
-      }
 
       const { data: msgs } = await supabase
         .from('chat_messages').select('*').eq('thread_id', thread.id)
@@ -457,7 +405,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   // ── Derive other-party info (needed by Wingman + chat view) ───────────────
   const otherEmail = selectedThread ? getOtherEmail(selectedThread) : '';
   const otherProfile = otherEmail ? getProfile(otherEmail) : null;
-  const otherName = otherProfile?.display_name || title || 'Chat';
+  const otherName = otherProfile?.display_name || otherEmail || title || 'Chat';
 
   const handleWingmanTap = useCallback(async () => {
     if (wingmanLoading) return;
@@ -563,6 +511,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       await handleSendSpecial({
         content: publicUrl,
         message_type: 'photo',
+        metadata: { url: publicUrl },
       });
     } catch (err) {
       toast.error(err.message || 'Failed to send photo');
@@ -670,7 +619,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         </button>
 
         <button
-          onClick={() => otherProfile?.id ? openSheet(SHEET_TYPES.PROFILE, { uid: otherProfile.id }) : null}
+          onClick={() => otherEmail && openSheet(SHEET_TYPES.PROFILE, { email: otherEmail })}
           className="flex items-center gap-3 flex-1 min-w-0"
         >
           <div className="relative flex-shrink-0">
@@ -705,7 +654,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           messages.map((msg, i) => {
             const isMe = msg.sender_email === currentUser?.email;
             const isMeetpoint = msg.message_type === 'meetpoint';
-            const isHighlightedMsg = msg.message_type === 'highlighted';
+            const isHighlightedMsg = !!msg.metadata?.is_highlighted;
             const isPhoto =
               msg.message_type === 'photo' ||
               /\.(jpe?g|png|gif|webp|avif|heic)(\?.*)?$/i.test(msg.content || '');
@@ -744,8 +693,8 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                 animate={{ opacity: 1, y: 0 }}
                 className={cn('flex', isMe ? 'justify-end' : 'justify-start')}
               >
-                {isMeetpoint && msg.content ? (
-                  <MeetpointCard {...(() => { try { return JSON.parse(msg.content); } catch { return {}; } })()  } />
+                {isMeetpoint && msg.metadata ? (
+                  <MeetpointCard {...msg.metadata} />
                 ) : isPhoto ? (
                   <div className={cn('max-w-[80%]', isMe ? 'items-end flex flex-col' : 'items-start flex flex-col')}>
                     <img

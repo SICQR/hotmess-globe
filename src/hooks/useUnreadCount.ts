@@ -136,8 +136,8 @@ export function useUnreadCount(): { unreadCount: number; clearTapsBadge: () => v
           (payload) => {
             fetchChatCount();
             if (document.hidden) {
-              const msg = payload.new as { sender_name?: string; content?: string };
-              const senderLabel = msg.sender_name || 'New message';
+              const msg = payload.new as { sender_email?: string; content?: string };
+              const senderLabel = msg.sender_email?.split('@')[0] || 'New message';
               const preview = msg.content?.slice(0, 60) ?? '';
               showLocalNotification(
                 'New message',
