@@ -79,7 +79,7 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
         }
       }
 
-      // 3. Upsert profile
+      // 3. Upsert profile (only columns that exist in prod profiles table)
       await supabase.from('profiles').upsert(
         {
           id: userId,
@@ -92,16 +92,10 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
           community_attested_at: new Date().toISOString(),
           is_online: true,
           is_visible: true,
-          last_active_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           ...(coords
             ? {
-                last_lat: coords.coords.latitude,
-                last_lng: coords.coords.longitude,
                 last_loc_ts: new Date().toISOString(),
-                loc_accuracy_m: Math.round(coords.coords.accuracy),
-                consent_location: true,
-                location_opt_in: true,
               }
             : {}),
         },
