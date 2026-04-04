@@ -328,12 +328,13 @@ export default async function handler(req, res) {
 
   let rows = Array.isArray(data) ? data : [];
 
-    // Exclude seeded ghost/demo/test/internal profiles from the grid
-    // GDPR: check BOTH email and username columns — username often contains emails
+    // Exclude ghost/test/internal profiles from the grid.
+    // Demo seed profiles (is_demo = true) are intentionally KEPT — they prevent
+    // empty-grid drop-off for new users.
     rows = rows.filter((r) => {
+      if (r?.is_demo === true) return true; // always show demo seed profiles
       const email = String(r?.email || '').trim().toLowerCase();
       const uname = String(r?.username || '').trim().toLowerCase();
-      // Check both fields for ghost patterns
       const candidates = [email, uname].filter(Boolean);
       for (const addr of candidates) {
         if (addr.endsWith('@hotmess.app')) return false;
@@ -343,7 +344,6 @@ export default async function handler(req, res) {
         if (addr === 'admin@hotmessldn.com') return false;
         if (addr.includes('e2e-boot-test')) return false;
         if (addr.startsWith('e2e.') && addr.includes('@hotmess')) return false;
-        if (addr.startsWith('demo_')) return false;
       }
       return true;
     });
