@@ -494,7 +494,10 @@ export default async function handler(req, res) {
         const uniqueId = row?.id ? String(row.id).trim() : null;
         // profiles.id = auth.uid(); legacy "User" rows may have auth_user_id
         const authUserId = row?.auth_user_id ? String(row.auth_user_id).trim() : uniqueId;
-        const dedupeKey = String(authUserId || displayName).trim();
+        // Dedup by real UUID — NEVER fall back to displayName (causes non-UUID IDs
+        // which break profile lookup and create false duplicates)
+        if (!uniqueId) return null; // Skip profiles without a real DB id
+        const dedupeKey = authUserId || uniqueId;
         const avatar = String(row?.avatar_url || '').trim();
         // Keep email internal for lookups but don't expose in response
         const emailInternal = row?.email ? String(row.email).trim() : null;
@@ -533,10 +536,9 @@ export default async function handler(req, res) {
         const productPreviews = isSellerProfile && emailInternal ? productPreviewsByEmail.get(String(emailInternal).toLowerCase()) : undefined;
 
         return {
-          id: `profile_${dedupeKey}`,
-          oderId: uniqueId || undefined,
+          id: uniqueId,
           // PRIVACY: Never expose email - use userId for routing
-          userId: authUserId || uniqueId || undefined,
+          userId: authUserId || uniqueId,
           authUserId: authUserId || undefined,
           username: username || undefined,
           profileName: displayName,
