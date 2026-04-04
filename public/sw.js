@@ -276,18 +276,35 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-// Push notification event
+// Push notification event — suppress if user is in that chat thread
 self.addEventListener('push', (event) => {
   const data = event.data?.json() ?? {};
   event.waitUntil(
-    self.registration.showNotification(data.title || 'HOTMESS', {
-      body: data.body || '',
-      icon: '/icons/icon-192.png',
-      badge: '/icons/icon-192.png',
-      data: data.url ? { url: data.url } : {},
-      tag: data.tag || 'hotmess-notif',
-      renotify: true,
-    })
+    (async () => {
+      // Check if user has the app focused on this thread — suppress push if so
+      if (data.tag && data.tag.startsWith('chat-')) {
+        try {
+          const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: false });
+          const threadId = data.tag.replace('chat-', '');
+          const isThreadOpen = windowClients.some(
+            (client) => client.focused && client.url && client.url.includes(`thread=${threadId}`)
+          );
+          if (isThreadOpen) {
+            // User is looking at this thread right now — don't interrupt
+            return;
+          }
+        } catch { /* fall through to show notification */ }
+      }
+
+      await self.registration.showNotification(data.title || 'HOTMESS', {
+        body: data.body || '',
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+        data: data.url ? { url: data.url } : {},
+        tag: data.tag || 'hotmess-notif',
+        renotify: true,
+      });
+    })()
   );
 });
 
