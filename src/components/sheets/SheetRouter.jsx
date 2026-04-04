@@ -30,8 +30,10 @@ const L2EventsSheet = lazy(() => import('./L2EventsSheet'));
 const L2MarketplaceSheet = lazy(() => import('./L2MarketplaceSheet'));
 const L2SellSheet = lazy(() => import('./L2SellSheet'));
 const L2PrelovedTermsSheet = lazy(() => import('./L2PrelovedTermsSheet'));
+const L2ReportListingSheet = lazy(() => import('./L2ReportListingSheet'));
 const L2PayoutsSheet = lazy(() => import('./L2PayoutsSheet'));
 const L2MyOrdersSheet = lazy(() => import('./L2MyOrdersSheet'));
+const L2MyListingsSheet = lazy(() => import('./L2MyListingsSheet'));
 const L2EditProfileSheet = lazy(() => import('./L2EditProfileSheet'));
 const L2SearchSheet = lazy(() => import('./L2SearchSheet'));
 const L2DirectionsSheet = lazy(() => import('./L2DirectionsSheet'));
@@ -137,9 +139,10 @@ const SHEET_COMPONENTS = {
   'sell': L2SellSheet,
   'seller-onboarding': L2SellSheet,
   'preloved-terms': L2PrelovedTermsSheet,
+  'report-listing': L2ReportListingSheet,
   'payouts': L2PayoutsSheet,
   'my-orders': L2MyOrdersSheet,
-  'my-listings': L2MyOrdersSheet,
+  'my-listings': L2MyListingsSheet,
   // Profile management
   'edit-profile': L2EditProfileSheet,
   'photos': L2PhotosSheet,
