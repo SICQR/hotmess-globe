@@ -1,14 +1,17 @@
 /**
- * L2SettingsSheet — Account settings hub
- * Links to privacy, notifications, blocked, help, membership.
- * Handles sign out and account deletion request.
+ * L2SettingsSheet — System settings
+ *
+ * Pure account/system controls. Identity lives in YOU section,
+ * safety lives in SAFETY section. No duplication.
+ *
+ * Sections: Account, Membership, Legal & Data, Sign Out / Delete
  */
 
 import { useState } from 'react';
 import {
-  Shield, Bell, Lock, HelpCircle, Crown, LogOut,
-  ChevronRight, User, Eye, AlertTriangle, Zap,
-  FileText, Accessibility, Download,
+  Bell, Lock, Eye, Crown, LogOut, ChevronRight,
+  AlertTriangle, Zap, FileText, Accessibility, Download,
+  Flag, Shield,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
@@ -35,9 +38,8 @@ export default function L2SettingsSheet() {
 
   const SECTIONS = [
     {
-      title: 'Profile',
+      title: 'Account',
       rows: [
-        { icon: User, label: 'Edit Profile', onTap: () => openSheet('edit-profile') },
         { icon: Eye, label: 'Privacy', onTap: () => openSheet('privacy') },
         { icon: Bell, label: 'Notifications', onTap: () => openSheet('notifications') },
         { icon: Lock, label: 'Blocked Users', onTap: () => openSheet('blocked') },
@@ -71,7 +73,7 @@ export default function L2SettingsSheet() {
       title: 'Support',
       rows: [
         { icon: Shield, label: 'Safety Center', onTap: () => openSheet('safety') },
-        { icon: HelpCircle, label: 'Help & Support', onTap: () => openSheet('help') },
+        { icon: Flag, label: 'Report an Issue', onTap: () => openSheet('report') },
       ],
     },
     {
