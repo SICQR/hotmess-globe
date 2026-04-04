@@ -36,7 +36,7 @@ export default function ReportButton({ itemType, itemId, variant = 'ghost' }) {
         user_email: 'admin',
         type: 'admin_alert',
         title: 'New Report',
-        message: `${user.full_name || user.email} reported a ${itemType}`,
+        message: `${user.full_name || user.display_name || 'A user'} reported a ${itemType}`,
         link: 'AdminDashboard'
       });
     },

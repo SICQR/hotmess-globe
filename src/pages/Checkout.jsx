@@ -356,7 +356,7 @@ export default function Checkout() {
             user_email: seller,
             type: 'order',
             title: 'New Order!',
-            message: `${freshUser.full_name || freshUser.email} placed an order`,
+            message: `${freshUser.full_name || freshUser.display_name || 'A buyer'} placed an order`,
             link: 'SellerDashboard'
           });
           if (notifyError) {

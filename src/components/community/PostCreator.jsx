@@ -157,7 +157,7 @@ export default function PostCreator({ user, onPostCreated, onCancel }) {
       } : {};
       const post = await supabase.from('community_posts').insert({
         user_email: user.email,
-        user_name: user.full_name || user.email,
+        user_name: user.full_name || user.display_name || 'Anonymous',
         content: content.trim(),
         category,
         tags,
@@ -175,7 +175,7 @@ export default function PostCreator({ user, onPostCreated, onCancel }) {
           user_email: 'admin',
           type: 'flagged_post',
           title: 'Post Flagged by AI',
-          message: `Post by ${user.full_name || user.email} flagged: ${moderation.reason}`,
+          message: `Post by ${user.full_name || user.display_name || 'a user'} flagged: ${moderation.reason}`,
           link: 'AdminDashboard',
           metadata: { post_id: post.id }
         });

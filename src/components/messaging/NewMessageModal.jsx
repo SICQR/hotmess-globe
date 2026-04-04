@@ -241,7 +241,7 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
                       const user = allUsers.find(u => u.email === email);
                       return (
                         <div key={email} className="flex items-center gap-2 px-3 py-1.5 bg-[#00C2E0]/20 border-2 border-[#00C2E0]">
-                          <span className="text-xs font-bold uppercase">{user?.full_name || email}</span>
+                          <span className="text-xs font-bold uppercase">{user?.full_name || user?.display_name || 'User'}</span>
                           <button onClick={() => toggleUser(email)}>
                             <X className="w-3 h-3" />
                           </button>
