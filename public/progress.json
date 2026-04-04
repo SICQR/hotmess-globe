@@ -1,0 +1,132 @@
+{
+  "lastUpdated": "2026-04-04T14:00:00Z",
+  "currentActivity": "Building progress dashboard + committing SOS push fix",
+  "totalTasks": 65,
+  "completedTasks": 18,
+  "phases": [
+    {
+      "id": "shipped",
+      "name": "Already Shipped (Previous Sessions)",
+      "status": "complete",
+      "tasks": [
+        { "id": "s1", "name": "Profile tap fix — api/profile.js SELECT *", "status": "done", "completedAt": "2026-04-04T08:00:00Z" },
+        { "id": "s2", "name": "Grid cleanup — 34 junk profiles hidden", "status": "done", "completedAt": "2026-04-04T08:15:00Z" },
+        { "id": "s3", "name": "Chat email resolution synced", "status": "done", "completedAt": "2026-04-04T08:30:00Z" },
+        { "id": "s4", "name": "Push notifications wired into chat", "status": "done", "completedAt": "2026-04-04T08:45:00Z" },
+        { "id": "s5", "name": "notify-push Edge Function deployed", "status": "done", "completedAt": "2026-04-04T09:00:00Z" },
+        { "id": "s6", "name": "VAPID keys aligned across all services", "status": "done", "completedAt": "2026-04-04T09:15:00Z" },
+        { "id": "s7", "name": "GDPR email scrub — 14 fallbacks stripped from 9 files", "status": "done", "completedAt": "2026-04-04T09:30:00Z" },
+        { "id": "s8", "name": "Profile sheet opens by uid not email", "status": "done", "completedAt": "2026-04-04T09:45:00Z" },
+        { "id": "s9", "name": "VITE_VAPID_PUBLIC_KEY aligned prod/preview/dev", "status": "done", "completedAt": "2026-04-04T10:00:00Z" }
+      ]
+    },
+    {
+      "id": "p0",
+      "name": "P0 — Production Crashers",
+      "status": "in-progress",
+      "tasks": [
+        { "id": "p0-1", "name": "Boost checkout 500 fix", "status": "done", "completedAt": "2026-04-04T10:30:00Z", "commit": "011f93a" },
+        { "id": "p0-2", "name": "Presence reads wrong project fix", "status": "done", "completedAt": "2026-04-04T10:30:00Z", "commit": "011f93a" },
+        { "id": "p0-3", "name": "CORS block on 5 endpoints fix", "status": "done", "completedAt": "2026-04-04T10:30:00Z", "commit": "011f93a" },
+        { "id": "p0-4", "name": "Referral cron 401 fix", "status": "done", "completedAt": "2026-04-04T10:30:00Z", "commit": "011f93a" },
+        { "id": "p0-5", "name": "activate_user_boost RPC verified in prod", "status": "done", "completedAt": "2026-04-04T11:00:00Z" },
+        { "id": "p0-6", "name": "grant_referral_rewards RPC verified in prod", "status": "done", "completedAt": "2026-04-04T11:00:00Z" },
+        { "id": "p0-merge", "name": "Merge fervent-raman to main + deploy", "status": "done", "completedAt": "2026-04-04T11:15:00Z", "commit": "b61668f" }
+      ]
+    },
+    {
+      "id": "phase1",
+      "name": "Phase 1 — Stop the Bleeding",
+      "status": "in-progress",
+      "tasks": [
+        { "id": "ph1-1", "name": "SOS push to trusted contacts", "status": "in-progress" },
+        { "id": "ph1-2", "name": "Presence heartbeat on boot (verified working)", "status": "done", "completedAt": "2026-04-04T11:30:00Z" },
+        { "id": "ph1-3", "name": "Progress dashboard for Phil", "status": "in-progress" },
+        { "id": "ph1-4", "name": "Brand visibility toggles", "status": "pending" },
+        { "id": "ph1-5", "name": "Env vars audit in Vercel", "status": "pending" },
+        { "id": "ph1-6", "name": "RLS migration 20260331000001 in prod", "status": "pending" },
+        { "id": "ph1-7", "name": "VITE_SUPABASE_ANON_KEY GitHub secret", "status": "pending" },
+        { "id": "ph1-8", "name": "OTP expiry set to 3600", "status": "pending" }
+      ]
+    },
+    {
+      "id": "phase2",
+      "name": "Phase 2 — Home Screen + Ecommerce + Core Flows",
+      "status": "pending",
+      "tasks": [
+        { "id": "ph2-1", "name": "HomeMode tidy — reorder sections, empty states", "status": "pending" },
+        { "id": "ph2-2", "name": "HNH MESS hero prominence + product cards", "status": "pending" },
+        { "id": "ph2-3", "name": "Full ecommerce verification + Stripe checkout", "status": "pending" },
+        { "id": "ph2-4", "name": "Seller dashboard verification", "status": "pending" },
+        { "id": "ph2-5", "name": "Payout flow wire-up", "status": "pending" },
+        { "id": "ph2-6", "name": "P1-1: Beacons cron writes to VIEW fix", "status": "pending" },
+        { "id": "ph2-7", "name": "P1-2: Referral double-insert fix", "status": "pending" },
+        { "id": "ph2-8", "name": "P1-3: OAuth code-used-twice crash fix", "status": "pending" },
+        { "id": "ph2-9", "name": "P1-4: Boost price IDs in Vercel", "status": "pending" },
+        { "id": "ph2-10", "name": "P1-5: Hardcoded Supabase creds fix", "status": "pending" },
+        { "id": "ph2-11", "name": "P1-6: Globe pulse endpoint auth", "status": "pending" },
+        { "id": "ph2-12", "name": "Seed 30+ London test profiles", "status": "pending" },
+        { "id": "ph2-13", "name": "Grid distance sorting verification", "status": "pending" }
+      ]
+    },
+    {
+      "id": "phase3",
+      "name": "Phase 3 — Globe + Social",
+      "status": "pending",
+      "tasks": [
+        { "id": "ph3-1", "name": "Merge gracious-jones — cinematic globe + HUD", "status": "pending" },
+        { "id": "ph3-2", "name": "Creator Subscriptions UI", "status": "pending" },
+        { "id": "ph3-3", "name": "Vercel region lhr1 (London)", "status": "pending" }
+      ]
+    },
+    {
+      "id": "phase4",
+      "name": "Phase 4 — Trust System",
+      "status": "pending",
+      "tasks": [
+        { "id": "ph4-1", "name": "Photo completion scoring in grid ranking", "status": "pending" },
+        { "id": "ph4-2", "name": "Photo count visible on profile card", "status": "pending" },
+        { "id": "ph4-3", "name": "Wire VerificationRequired as gate", "status": "pending" },
+        { "id": "ph4-4", "name": "Get Verified CTA in ProfileMode", "status": "pending" },
+        { "id": "ph4-5", "name": "Verification from onboarding", "status": "pending" },
+        { "id": "ph4-6", "name": "Seller trust indicators on listings", "status": "pending" },
+        { "id": "ph4-7", "name": "Trust score into grid ranking", "status": "pending" },
+        { "id": "ph4-8", "name": "Trust decay for inactive users", "status": "pending" },
+        { "id": "ph4-9", "name": "Photo quality multiplier", "status": "pending" }
+      ]
+    },
+    {
+      "id": "phase5",
+      "name": "Phase 5 — Polish",
+      "status": "pending",
+      "tasks": [
+        { "id": "ph5-1", "name": "P2 UX bugs (7 items)", "status": "pending" },
+        { "id": "ph5-2", "name": "Photo moderation — client validation + report flow", "status": "pending" },
+        { "id": "ph5-3", "name": "P3 tech debt (8 items)", "status": "pending" },
+        { "id": "ph5-4", "name": "Cherry-pick design polish from sharp-montalcini", "status": "pending" },
+        { "id": "ph5-5", "name": "Clean up stale worktrees and branches", "status": "pending" }
+      ]
+    },
+    {
+      "id": "testing",
+      "name": "Testing Suite",
+      "status": "pending",
+      "tasks": [
+        { "id": "t1", "name": "pushNotify unit test", "status": "pending" },
+        { "id": "t2", "name": "chatFlow unit test", "status": "pending" },
+        { "id": "t3", "name": "sosAlert unit test", "status": "pending" },
+        { "id": "t4", "name": "presenceHeartbeat unit test", "status": "pending" },
+        { "id": "t5", "name": "profileGrid unit test", "status": "pending" },
+        { "id": "t6", "name": "ecommerce unit test", "status": "pending" },
+        { "id": "t7", "name": "verification unit test", "status": "pending" },
+        { "id": "t8", "name": "trustScoring unit test", "status": "pending" },
+        { "id": "t9", "name": "GDPR compliance test", "status": "pending" },
+        { "id": "t10", "name": "E2E: signup-to-message", "status": "pending" },
+        { "id": "t11", "name": "E2E: sos-alert", "status": "pending" },
+        { "id": "t12", "name": "E2E: sell-and-buy", "status": "pending" },
+        { "id": "t13", "name": "E2E: go-live", "status": "pending" },
+        { "id": "t14", "name": "E2E: home-screen", "status": "pending" }
+      ]
+    }
+  ]
+}
