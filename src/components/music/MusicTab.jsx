@@ -1,39 +1,36 @@
 /**
- * MusicTab — Smash Daddys / Raw Convict Records music hub
+ * MusicTab — SMASH DADDYS / RAW CONVICT RECORDS
  *
- * Full rewrite (v2) with:
- * - Artist hero + platform links
- * - Releases grid (EPs show track count badge)
- * - ReleaseDetailSheet bottom sheet with:
- *   - Track list with inline play via MusicPlayerContext
- *   - Lyrics accordion (if lyrics exist)
- *   - Stem pack stub (if stem_pack_url)
- *   - Linked entity badges ("THIS TRACK IS ABOUT" cards)
- *   - Member gating (preview 30s for non-members, full for members)
- * - Per-release AppBanner cards (music_card_*)
- * - Banner placements for music_top hero
+ * Complete rewrite: label-first, cinematic, nightlife system.
+ * Sections: Hero → Hot Right Now → Live Radio → Featured Drop →
+ *           Producer Mode → All Releases → Preview/Stem overlays
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Play, ChevronDown, ChevronUp, Disc3, X, Loader2,
-  Lock, Crown, FileAudio, Link2, Headphones,
-  Radio as RadioIcon, Calendar,
+  Play, Pause, ChevronDown, Disc3, X, Loader2,
+  FileAudio, Headphones, ExternalLink,
+  Radio as RadioIcon,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
-import { AppBanner } from '@/components/banners/AppBanner';
-import { fetchBannersByPrefix } from '@/services/AppBannerService';
-import { CardMoreButton } from '@/components/ui/CardMoreButton';
+import { useRadio } from '@/contexts/RadioContext';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 
+// ── Brand tokens ─────────────────────────────────────────────────────────────
 const GOLD = '#C8962C';
 const BG = '#050507';
 const CARD = '#1C1C1E';
 const LABEL_RED = '#9B1B2A';
+const TEAL = '#00C2E0';
+const SOUNDCLOUD = '#FF5500';
+const SPOTIFY = '#1DB954';
+const LIVE_GREEN = '#30D158';
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDuration(ms) {
   if (!ms) return '';
@@ -50,27 +47,58 @@ function formatSeconds(sec) {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+function getTrackAccessLevel(track) {
+  if (track.stem_pack_url) return 'stems';
+  if (track.download_url || (track.preview_url && !track.is_preview_only)) return 'full';
+  if (track.preview_url) return 'preview';
+  return 'coming_soon';
+}
+
+function getReleaseAccessLevel(release, releaseTracks) {
+  if (release.stem_pack_url) return 'stems';
+  if (releaseTracks?.some(t => t.stem_pack_url)) return 'stems';
+  if (release.download_url || (release.preview_url && !release.is_preview_only)) return 'full';
+  if (release.preview_url) return 'preview';
+  return 'coming_soon';
+}
+
+// ── Section Header ───────────────────────────────────────────────────────────
+
+function SectionHeader({ children, color = 'white' }) {
+  return (
+    <h2
+      className="text-xs font-black uppercase tracking-[0.2em] mb-4"
+      style={{ color }}
+    >
+      {children}
+    </h2>
+  );
+}
+
+// ── Platform Link Buttons ────────────────────────────────────────────────────
+
 function PlatformLinks({ release, className = '' }) {
   const links = [
-    { url: release.soundcloud_url, label: 'SoundCloud', color: '#FF5500' },
-    { url: release.spotify_url, label: 'Spotify', color: '#1DB954' },
-    { url: release.apple_music_url, label: 'Apple Music', color: '#FA2D48' },
-    { url: release.beatport_url, label: 'Beatport', color: '#94D500' },
-  ].filter((l) => l.url);
-
+    { url: release?.soundcloud_url, label: 'SoundCloud', color: SOUNDCLOUD },
+    { url: release?.spotify_url, label: 'Spotify', color: SPOTIFY },
+    { url: release?.apple_music_url, label: 'Apple Music', color: '#FA2D48' },
+    { url: release?.beatport_url, label: 'Beatport', color: '#94D500' },
+  ].filter(l => l.url);
   if (links.length === 0) return null;
 
   return (
     <div className={`flex flex-wrap gap-2 ${className}`}>
-      {links.map((link) => (
+      {links.map(link => (
         <a
           key={link.label}
           href={link.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase border border-white/10 hover:border-white/20 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase border border-white/10 active:scale-95 transition-transform"
           style={{ color: link.color }}
+          aria-label={`Open on ${link.label}`}
         >
+          <ExternalLink className="w-3 h-3" />
           {link.label}
         </a>
       ))}
@@ -88,14 +116,12 @@ function LyricsAccordion({ lyrics }) {
     <div className="mt-4 border border-white/8 rounded-xl overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 active:bg-white/5 transition-colors"
+        aria-expanded={open}
+        aria-label="Toggle lyrics"
       >
         <span className="text-xs font-bold uppercase text-white/60">Lyrics</span>
-        {open ? (
-          <ChevronUp className="w-4 h-4 text-white/40" />
-        ) : (
-          <ChevronDown className="w-4 h-4 text-white/40" />
-        )}
+        <ChevronDown className={`w-4 h-4 text-white/40 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       <AnimatePresence>
         {open && (
@@ -119,14 +145,7 @@ function LyricsAccordion({ lyrics }) {
 
 function LinkedEntityCard({ release }) {
   if (!release.linked_entity_type || !release.linked_entity_label) return null;
-
-  const typeColors = {
-    app_feature: '#C8962C',
-    product: '#9E7D47',
-    brand: '#9B1B2A',
-    event: '#00C2E0',
-  };
-
+  const typeColors = { app_feature: GOLD, product: '#9E7D47', brand: LABEL_RED, event: TEAL };
   const color = typeColors[release.linked_entity_type] || GOLD;
 
   return (
@@ -135,11 +154,8 @@ function LinkedEntityCard({ release }) {
         This track is about
       </p>
       <div className="flex items-center gap-3">
-        <div
-          className="w-10 h-10 rounded-lg flex items-center justify-center"
-          style={{ backgroundColor: `${color}20` }}
-        >
-          <Link2 className="w-5 h-5" style={{ color }} />
+        <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${color}20` }}>
+          <ExternalLink className="w-5 h-5" style={{ color }} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-white">{release.linked_entity_label}</p>
@@ -148,7 +164,7 @@ function LinkedEntityCard({ release }) {
         {release.linked_entity_url && (
           <a
             href={release.linked_entity_url}
-            className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors"
+            className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase active:scale-95 transition-transform"
             style={{ backgroundColor: `${color}20`, color }}
           >
             {release.linked_entity_cta || 'View'}
@@ -159,112 +175,23 @@ function LinkedEntityCard({ release }) {
   );
 }
 
-// ── Stem Pack Stub ───────────────────────────────────────────────────────────
-
-function StemPackStub({ release }) {
-  if (!release.stem_pack_url) return null;
-
-  return (
-    <div className="mt-4 rounded-xl border border-[#9B1B2A]/20 bg-[#9B1B2A]/5 p-4">
-      <div className="flex items-center gap-3">
-        <FileAudio className="w-5 h-5 text-[#9B1B2A]" />
-        <div className="flex-1">
-          <p className="text-xs font-bold text-white">Stem Pack Available</p>
-          <p className="text-[10px] text-white/40">
-            {release.stem_pack_price_gbp
-              ? `£${Number(release.stem_pack_price_gbp).toFixed(2)}`
-              : 'Free with membership'}
-          </p>
-        </div>
-        <button className="px-3 py-1.5 rounded-lg bg-[#9B1B2A] text-[10px] font-bold uppercase text-white active:scale-[0.97] transition-transform">
-          Get Stems
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Member Gate Banner ───────────────────────────────────────────────────────
-
-function MemberGateBanner({ onJoin }) {
-  return (
-    <div className="rounded-xl border border-[#C8962C]/20 bg-[#C8962C]/5 p-4 flex items-center gap-3">
-      <Crown className="w-5 h-5 text-[#C8962C]" />
-      <div className="flex-1">
-        <p className="text-xs font-bold text-white">Members Only</p>
-        <p className="text-[10px] text-white/40">Full tracks, stems, and downloads require membership</p>
-      </div>
-      <button
-        onClick={onJoin}
-        className="px-3 py-1.5 rounded-lg bg-[#C8962C] text-[10px] font-black uppercase text-black active:scale-[0.97] transition-transform"
-      >
-        Join
-      </button>
-    </div>
-  );
-}
-
 // ── Release Detail Sheet ─────────────────────────────────────────────────────
 
-function ReleaseDetailSheet({ release, tracks, onClose, bannerData }) {
+function ReleaseDetailSheet({ release, tracks, onClose }) {
   const player = useMusicPlayer();
   const navigate = useNavigate();
 
-  // Auth + membership state
-  const [authUser, setAuthUser] = React.useState(null);
-  const [isMember, setIsMember] = React.useState(false);
-  React.useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return;
-      setAuthUser(user);
-      // Check for active membership
-      supabase
-        .from('memberships')
-        .select('status')
-        .eq('user_id', user.id)
-        .eq('status', 'active')
-        .maybeSingle()
-        .then(({ data }) => setIsMember(!!data));
-    });
-  }, []);
-
-  const handleJoin = () => {
-    if (!authUser) {
-      // Not logged in → go to onboarding / free signup
-      navigate('/');
-    } else {
-      // Logged in but no membership → go to upgrade
-      navigate('/more');
-    }
-  };
-
-  // Build queue from tracks or single release
   const trackList = tracks.length > 0
-    ? tracks.map((t) => ({
-        ...t,
-        artist: 'Smash Daddys',
-        artwork_url: release.artwork_url,
-      }))
+    ? tracks.map(t => ({ ...t, artist: 'Smash Daddys', artwork_url: release.artwork_url }))
     : [{
-        id: release.id,
-        title: release.title,
-        artist: 'Smash Daddys',
-        artwork_url: release.artwork_url,
-        preview_url: release.preview_url,
-        download_url: release.download_url,
-        duration_ms: release.duration_ms,
+        id: release.id, title: release.title, artist: 'Smash Daddys',
+        artwork_url: release.artwork_url, preview_url: release.preview_url,
+        download_url: release.download_url, duration_ms: release.duration_ms,
         duration_seconds: release.duration_seconds,
       }];
 
-  const handlePlayTrack = (track, idx) => {
-    player.playTrack(track, trackList, idx);
-  };
-
-  const handlePlayAll = () => {
-    if (trackList.length > 0) {
-      player.playTrack(trackList[0], trackList, 0);
-    }
-  };
+  const handlePlayTrack = (track, idx) => player.playTrack(track, trackList, idx);
+  const handlePlayAll = () => { if (trackList.length > 0) player.playTrack(trackList[0], trackList, 0); };
 
   return (
     <motion.div
@@ -276,24 +203,24 @@ function ReleaseDetailSheet({ release, tracks, onClose, bannerData }) {
     >
       {/* Header */}
       <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-[#0D0D0D]/90 backdrop-blur-xl border-b border-white/5">
-        <button onClick={onClose} className="p-2 -ml-2">
+        <button onClick={onClose} className="p-2 -ml-2 w-10 h-10 flex items-center justify-center" aria-label="Close">
           <ChevronDown className="w-5 h-5 text-white/60" />
         </button>
         <span className="text-[10px] font-bold uppercase text-white/30 tracking-widest">
           {release.catalog_number || 'Release'}
         </span>
-        <button onClick={onClose} className="p-2 -mr-2">
+        <button onClick={onClose} className="p-2 -mr-2 w-10 h-10 flex items-center justify-center" aria-label="Close">
           <X className="w-5 h-5 text-white/60" />
         </button>
       </div>
 
-      <div className="px-4 pb-32">
+      <div className="px-4 pb-40">
         {/* Artwork */}
         <div className="mt-4 mx-auto w-full max-w-[280px] aspect-square rounded-2xl overflow-hidden bg-[#1C1C1E] shadow-2xl">
           {release.artwork_url ? (
-            <img src={release.artwork_url} alt={release.title} className="w-full h-full object-cover" />
+            <img src={release.artwork_url} alt={release.title} className="w-full h-full object-cover" loading="lazy" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
+            <div className="w-full h-full flex items-center justify-center bg-[#9B1B2A]/10">
               <Disc3 className="w-16 h-16 text-[#9B1B2A]/30" />
             </div>
           )}
@@ -303,41 +230,31 @@ function ReleaseDetailSheet({ release, tracks, onClose, bannerData }) {
         <div className="mt-5 text-center">
           <h2 className="text-xl font-black uppercase text-white leading-tight">{release.title}</h2>
           <p className="text-xs text-white/40 mt-1 uppercase">
-            Smash Daddys · {release.release_type}
-            {release.genre && ` · ${release.genre}`}
-            {release.bpm && ` · ${release.bpm} BPM`}
+            Smash Daddys {release.release_type && `\u00b7 ${release.release_type}`}
+            {release.genre && ` \u00b7 ${release.genre}`}
+            {release.bpm && ` \u00b7 ${release.bpm} BPM`}
           </p>
           {release.key && (
             <p className="text-[10px] text-white/25 mt-0.5">Key: {release.key}</p>
           )}
         </div>
 
-        {/* Member gate */}
-        {release.member_only && !isMember && (
-          <div className="mt-4">
-            <MemberGateBanner onJoin={handleJoin} />
-          </div>
-        )}
-
-        {/* Play All button */}
+        {/* Play All */}
         <div className="mt-5 flex justify-center">
           <button
             onClick={handlePlayAll}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#C8962C] active:scale-[0.95] transition-transform"
+            className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#C8962C] active:scale-95 transition-transform"
+            aria-label="Play all tracks"
           >
             <Play className="w-4 h-4 text-black" fill="black" />
-            <span className="text-xs font-black uppercase text-black">
-              {release.member_only && !isMember ? 'Preview' : 'Play All'}
-            </span>
+            <span className="text-xs font-black uppercase text-black">Play</span>
           </button>
         </div>
 
-        {/* Track list (for EPs / multi-track releases) */}
+        {/* Track list */}
         {trackList.length > 1 && (
           <div className="mt-6">
-            <h3 className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-3">
-              Tracks
-            </h3>
+            <h3 className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-3">Tracks</h3>
             <div className="space-y-1">
               {trackList.map((track, idx) => {
                 const isActive = player.currentTrack?.id === track.id;
@@ -347,8 +264,9 @@ function ReleaseDetailSheet({ release, tracks, onClose, bannerData }) {
                     key={track.id}
                     onClick={() => handlePlayTrack(track, idx)}
                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-colors ${
-                      isActive ? 'bg-[#C8962C]/10' : 'hover:bg-white/5'
+                      isActive ? 'bg-[#C8962C]/10' : 'active:bg-white/5'
                     }`}
+                    aria-label={`Play ${track.title}`}
                   >
                     <span className="w-5 text-right text-[10px] text-white/20 font-mono">
                       {isTrackPlaying ? (
@@ -365,9 +283,6 @@ function ReleaseDetailSheet({ release, tracks, onClose, bannerData }) {
                     <span className="text-[10px] text-white/20">
                       {formatDuration(track.duration_ms) || formatSeconds(track.duration_seconds)}
                     </span>
-                    {release.member_only && !isMember && (
-                      <Lock className="w-3 h-3 text-white/15" />
-                    )}
                   </button>
                 );
               })}
@@ -378,107 +293,197 @@ function ReleaseDetailSheet({ release, tracks, onClose, bannerData }) {
         {/* Lyrics */}
         <LyricsAccordion lyrics={release.lyrics} />
 
-        {/* Linked entity ("THIS TRACK IS ABOUT") */}
+        {/* Linked entity */}
         <LinkedEntityCard release={release} />
 
         {/* Stem pack */}
-        <StemPackStub release={release} />
+        {release.stem_pack_url && (
+          <div className="mt-4 rounded-xl border border-[#C8962C]/20 bg-[#C8962C]/5 p-4">
+            <div className="flex items-center gap-3">
+              <FileAudio className="w-5 h-5 text-[#C8962C]" />
+              <div className="flex-1">
+                <p className="text-xs font-bold text-white">Stem Pack Available</p>
+                <p className="text-[10px] text-white/40">
+                  {release.stem_pack_price_gbp ? `\u00a3${Number(release.stem_pack_price_gbp).toFixed(2)}` : 'Free'}
+                </p>
+              </div>
+              <button
+                onClick={() => console.log('[STEMS] Purchase flow for', release.id)}
+                className="px-3 py-1.5 rounded-lg bg-[#C8962C] text-[10px] font-bold uppercase text-black active:scale-95 transition-transform"
+              >
+                Get Stems
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Platform links */}
         <PlatformLinks release={release} className="mt-5 justify-center" />
-
-        {/* Banner card for this release */}
-        {bannerData && (
-          <div className="mt-5">
-            <AppBanner placement={`music_card_${release.catalog_number}`} variant="card" />
-          </div>
-        )}
       </div>
     </motion.div>
   );
 }
 
-// ── Main MusicTab ────────────────────────────────────────────────────────────
+// ── Stem Unlock Sheet ────────────────────────────────────────────────────────
+
+function StemUnlockSheet({ release, onClose }) {
+  const stemTypes = ['Drums', 'Bass', 'Vocals', 'FX'];
+  const price = release.stem_pack_price_gbp ? `\u00a3${Number(release.stem_pack_price_gbp).toFixed(2)}` : 'Free';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[110] flex items-end justify-center"
+    >
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/80"
+        onClick={onClose}
+      />
+      {/* Sheet */}
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        className="relative w-full max-h-[80vh] rounded-t-3xl bg-[#1C1C1E] px-6 pt-6 pb-10 z-10"
+      >
+        {/* Drag handle */}
+        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-6" />
+
+        <h2 className="text-2xl font-black uppercase text-white text-center">
+          Unlock the Source
+        </h2>
+        <p className="text-sm text-white/50 text-center mt-2 mb-6">
+          Includes full stems + early access
+        </p>
+
+        {/* Stem types */}
+        <div className="grid grid-cols-4 gap-3 mb-6">
+          {stemTypes.map(stem => (
+            <div key={stem} className="flex flex-col items-center gap-2 py-3 rounded-xl bg-white/[0.03] border border-white/5">
+              <FileAudio className="w-6 h-6 text-[#C8962C]" />
+              <span className="text-[10px] font-bold uppercase text-white/60">{stem}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Buy CTA */}
+        <button
+          onClick={() => {
+            console.log('[STEMS] Purchase:', release.id, price);
+            onClose();
+          }}
+          className="w-full h-12 rounded-xl bg-[#C8962C] text-black font-black uppercase text-sm active:scale-95 transition-transform"
+          aria-label={`Buy stems for ${price}`}
+        >
+          Buy {'\u2014'} {price}
+        </button>
+
+        <button
+          onClick={onClose}
+          className="w-full mt-3 text-center text-sm text-white/35 py-2 active:text-white/50"
+        >
+          Cancel
+        </button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ── Preview End Overlay ──────────────────────────────────────────────────────
+
+function PreviewEndOverlay({ onUpgrade, onDismiss }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[120] flex items-center justify-center px-8"
+    >
+      <div className="absolute inset-0 bg-black/85" onClick={onDismiss} />
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="relative bg-[#1C1C1E] rounded-2xl p-8 text-center max-w-[320px] w-full border border-white/5"
+      >
+        <h3 className="text-2xl font-black uppercase text-white">
+          Unlock the Floor
+        </h3>
+        <p className="text-sm text-white/50 mt-2 mb-6">
+          Full tracks. Full access.
+        </p>
+        <button
+          onClick={onUpgrade}
+          className="w-full h-12 rounded-xl bg-[#C8962C] text-black font-black uppercase text-sm active:scale-95 transition-transform"
+        >
+          Upgrade
+        </button>
+        <button
+          onClick={onDismiss}
+          className="w-full mt-3 text-center text-sm text-white/35 py-2 active:text-white/50"
+        >
+          Keep browsing
+        </button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── MAIN MUSIC TAB ───────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export default function MusicTab() {
   const navigate = useNavigate();
+  const player = useMusicPlayer();
+  const radio = useRadio();
+  const scrollRef = useRef(null);
+
+  // Data
   const [artist, setArtist] = useState(null);
   const [releases, setReleases] = useState([]);
-  const [tracks, setTracks] = useState({});       // release_id -> Track[]
+  const [allTracks, setAllTracks] = useState([]);      // flat list
+  const [tracksByRelease, setTracksByRelease] = useState({}); // release_id -> Track[]
   const [loading, setLoading] = useState(true);
+
+  // UI state
   const [selectedRelease, setSelectedRelease] = useState(null);
-  const [bannerMap, setBannerMap] = useState({});  // catalog -> banner
-  const [showMemberCTA, setShowMemberCTA] = useState(false);
-  const [upcomingEvents, setUpcomingEvents] = useState([]);
-  const player = useMusicPlayer();
-  const scrollRef = useRef(null);
+  const [stemRelease, setStemRelease] = useState(null); // release for stem sheet
+  const [showPreviewEnd, setShowPreviewEnd] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
-  // Fetch upcoming events for cross-link
-  useEffect(() => {
-    let mounted = true;
-    supabase
-      .from('beacons')
-      .select('id, title, starts_at')
-      .or('type.eq.event,kind.eq.event')
-      .gte('ends_at', new Date().toISOString())
-      .order('starts_at', { ascending: true })
-      .limit(3)
-      .then(({ data }) => {
-        if (mounted && data?.length) setUpcomingEvents(data);
-      });
-    return () => { mounted = false; };
-  }, []);
+  // ── Data fetch ─────────────────────────────────────────────────────────────
 
-  // Fetch data
   useEffect(() => {
     let mounted = true;
 
     async function load() {
-      // Artist
-      const { data: artistData } = await supabase
-        .from('label_artists')
-        .select('*')
-        .eq('slug', 'smash-daddys')
-        .single();
-
-      // Releases
-      const { data: relData } = await supabase
-        .from('label_releases')
-        .select('*')
-        .eq('is_active', true)
-        .order('release_date', { ascending: false });
-
-      // Tracks (for EPs)
-      const { data: trackData } = await supabase
-        .from('tracks')
-        .select('*')
-        .order('track_number', { ascending: true });
-
-      // Banners for music cards
-      const banners = await fetchBannersByPrefix('music_card_');
+      const [artistRes, relRes, trackRes] = await Promise.all([
+        supabase.from('label_artists').select('*').eq('slug', 'smash-daddys').single(),
+        supabase.from('label_releases').select('*').eq('is_active', true).order('release_date', { ascending: false }),
+        supabase.from('tracks').select('*').order('track_number', { ascending: true }),
+      ]);
 
       if (!mounted) return;
 
-      setArtist(artistData);
-      setReleases(relData || []);
+      setArtist(artistRes.data);
+      setReleases(relRes.data || []);
+      const tks = trackRes.data || [];
+      setAllTracks(tks);
 
-      // Group tracks by release_id
       const grouped = {};
-      (trackData || []).forEach((t) => {
+      tks.forEach(t => {
         if (!grouped[t.release_id]) grouped[t.release_id] = [];
         grouped[t.release_id].push(t);
       });
-      setTracks(grouped);
-
-      // Map banners by catalog number extracted from placement
-      const bMap = {};
-      (banners || []).forEach((b) => {
-        const cat = b.placement.replace('music_card_', '');
-        bMap[cat] = b;
-      });
-      setBannerMap(bMap);
-
+      setTracksByRelease(grouped);
       setLoading(false);
     }
 
@@ -486,8 +491,20 @@ export default function MusicTab() {
     return () => { mounted = false; };
   }, [reloadKey]);
 
+  // ── Preview end detection ──────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!player.currentTrack) return;
+    const access = getTrackAccessLevel(player.currentTrack);
+    if (access === 'preview' && !player.isPlaying && player.progress > 0.95) {
+      setShowPreviewEnd(true);
+    }
+  }, [player.isPlaying, player.progress, player.currentTrack]);
+
+  // ── Pull to refresh ────────────────────────────────────────────────────────
+
   const handleRefresh = useCallback(async () => {
-    setReloadKey((k) => k + 1);
+    setReloadKey(k => k + 1);
   }, []);
 
   const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
@@ -495,322 +512,516 @@ export default function MusicTab() {
     scrollRef,
   });
 
+  // ── Derived data ───────────────────────────────────────────────────────────
+
+  // Hot right now: all individual tracks, newest first
+  const hotTracks = allTracks
+    .filter(t => t.preview_url || t.download_url)
+    .slice(0, 12)
+    .map(t => {
+      const rel = releases.find(r => r.id === t.release_id);
+      return { ...t, artist: 'Smash Daddys', artwork_url: t.artwork_url || rel?.artwork_url };
+    });
+
+  // Featured drop: first release with artwork
+  const featuredRelease = releases[0] || null;
+
+  // ── Loading state ──────────────────────────────────────────────────────────
+
   if (loading) {
     return (
       <div className="h-full w-full flex items-center justify-center" style={{ backgroundColor: BG }}>
-        <Loader2 className="w-8 h-8 animate-spin text-[#9B1B2A]" />
+        <div className="w-8 h-8 border-2 border-[#C8962C] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // ── Empty state ────────────────────────────────────────────────────────────
+
+  if (releases.length === 0 && allTracks.length === 0) {
+    return (
+      <div className="h-full w-full flex flex-col items-center justify-center px-6 text-center" style={{ backgroundColor: BG }}>
+        <div className="w-16 h-16 rounded-2xl bg-[#1C1C1E] flex items-center justify-center mb-4">
+          <Disc3 className="w-8 h-8 text-white/10" />
+        </div>
+        <p className="text-white font-bold text-lg uppercase">No Music Yet</p>
+        <p className="text-white/40 text-sm mt-2 max-w-[260px]">
+          New releases from Raw Convict Records are on the way. Check back soon.
+        </p>
+        <button
+          onClick={() => navigate('/radio')}
+          className="mt-6 h-12 px-8 rounded-xl bg-[#C8962C] text-black font-black text-sm uppercase active:scale-95 transition-transform"
+        >
+          Listen to Radio
+        </button>
       </div>
     );
   }
 
   return (
-    <div ref={scrollRef} className="h-full w-full overflow-y-auto overscroll-contain pb-40" style={{ backgroundColor: BG }} {...pullHandlers}>
+    <div
+      ref={scrollRef}
+      className="h-full w-full overflow-y-auto overscroll-contain"
+      style={{ backgroundColor: BG }}
+      {...pullHandlers}
+    >
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
-      {/* ── Music Top Banner ── */}
-      <AppBanner placement="music_top" variant="hero" className="mx-4 mt-4" />
 
-      {/* ── Artist Hero ── */}
-      {artist && (
-        <div className="px-4 pt-6 pb-4">
-          <div className="flex items-center gap-4">
-            {artist.photo_url ? (
-              <img
-                src={artist.photo_url}
-                alt={artist.name}
-                className="w-20 h-20 rounded-2xl object-cover border-2 border-[#9B1B2A]/30"
-              />
-            ) : (
-              <div className="w-20 h-20 rounded-2xl bg-[#9B1B2A]/10 flex items-center justify-center">
-                <Disc3 className="w-10 h-10 text-[#9B1B2A]/40" />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-[9px] font-black uppercase tracking-widest text-[#9B1B2A]">
-                Raw Convict Records
-              </p>
-              <h1 className="text-2xl font-black uppercase text-white leading-none mt-0.5">
-                {artist.name}
-              </h1>
-              {artist.genres?.length > 0 && (
-                <p className="text-[10px] text-white/30 mt-1">
-                  {artist.genres.join(' · ')}
-                </p>
-              )}
-            </div>
+      {/* ═══════════════════════════════════════════════════════════════════════
+          1. HERO — SMASH DADDYS
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden">
+        {/* Background — artist photo or dark gradient */}
+        {artist?.photo_url ? (
+          <div className="absolute inset-0">
+            <img
+              src={artist.photo_url}
+              alt=""
+              className="w-full h-full object-cover"
+              aria-hidden="true"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#050507]/70 via-[#050507]/85 to-[#050507]" />
           </div>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-b from-[#9B1B2A]/15 via-[#050507] to-[#050507]" />
+        )}
 
-          {artist.bio && (
-            <p className="text-xs text-white/50 leading-relaxed mt-4">
-              {artist.bio}
-            </p>
-          )}
+        <div className="relative px-6 pt-14 pb-8">
+          {/* Label name */}
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#9B1B2A] mb-2">
+            Raw Convict Records
+          </p>
 
-          {/* Artist platform links */}
-          <div className="flex flex-wrap gap-2 mt-4">
-            {artist.soundcloud_url && (
-              <a href={artist.soundcloud_url} target="_blank" rel="noopener noreferrer"
-                className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase border border-white/10 text-[#FF5500]">
+          {/* Artist name */}
+          <h1 className="text-4xl font-black uppercase text-white leading-[0.95] tracking-tight">
+            Smash<br />Daddys
+          </h1>
+
+          {/* Tagline */}
+          <p className="text-sm text-white/50 italic mt-3">
+            Built for the floor. No compromise.
+          </p>
+
+          {/* CTAs */}
+          <div className="flex items-center gap-2.5 mt-6">
+            <button
+              onClick={() => {
+                if (hotTracks.length > 0) player.playTrack(hotTracks[0], hotTracks, 0);
+                else if (featuredRelease?.preview_url) {
+                  player.playTrack({
+                    id: featuredRelease.id, title: featuredRelease.title,
+                    artist: 'Smash Daddys', artwork_url: featuredRelease.artwork_url,
+                    preview_url: featuredRelease.preview_url,
+                  }, [], 0);
+                }
+              }}
+              className="h-11 px-6 rounded-full bg-[#C8962C] text-black font-black text-xs uppercase flex items-center gap-2 active:scale-95 transition-transform"
+              aria-label="Listen now"
+            >
+              <Play className="w-4 h-4" fill="black" />
+              Listen Now
+            </button>
+            {(artist?.soundcloud_url) && (
+              <a
+                href={artist.soundcloud_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-11 px-5 rounded-full border border-[#FF5500]/40 text-[#FF5500] font-bold text-xs uppercase flex items-center active:scale-95 transition-transform"
+                aria-label="Open SoundCloud"
+              >
                 SoundCloud
               </a>
             )}
-            {artist.spotify_url && (
-              <a href={artist.spotify_url} target="_blank" rel="noopener noreferrer"
-                className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase border border-white/10 text-[#1DB954]">
+            {(artist?.spotify_url) && (
+              <a
+                href={artist.spotify_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-11 px-5 rounded-full border border-[#1DB954]/40 text-[#1DB954] font-bold text-xs uppercase flex items-center active:scale-95 transition-transform"
+                aria-label="Open Spotify"
+              >
                 Spotify
-              </a>
-            )}
-            {artist.apple_music_url && (
-              <a href={artist.apple_music_url} target="_blank" rel="noopener noreferrer"
-                className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase border border-white/10 text-[#FA2D48]">
-                Apple Music
-              </a>
-            )}
-            {artist.beatport_url && (
-              <a href={artist.beatport_url} target="_blank" rel="noopener noreferrer"
-                className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase border border-white/10 text-[#94D500]">
-                Beatport
               </a>
             )}
           </div>
         </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          2. HOT RIGHT NOW — horizontal carousel
+          ═══════════════════════════════════════════════════════════════════ */}
+      {hotTracks.length > 0 && (
+        <section className="mt-8 pl-6">
+          <SectionHeader>Hot Right Now</SectionHeader>
+          <div className="flex gap-3 overflow-x-auto pb-4 pr-6 scrollbar-hide">
+            {hotTracks.map((track, idx) => {
+              const access = getTrackAccessLevel(track);
+              const isActive = player.currentTrack?.id === track.id;
+              const isTrackPlaying = isActive && player.isPlaying;
+
+              return (
+                <motion.button
+                  key={track.id}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => player.playTrack(track, hotTracks, idx)}
+                  className="flex-shrink-0 w-[140px] text-left"
+                  aria-label={`Play ${track.title}`}
+                >
+                  {/* Artwork */}
+                  <div className={`relative w-[140px] h-[140px] rounded-xl overflow-hidden bg-[#1C1C1E] ${
+                    access === 'stems' ? 'ring-2 ring-[#C8962C]/50' : ''
+                  } ${access === 'preview' ? 'opacity-70' : ''}`}>
+                    {track.artwork_url ? (
+                      <img src={track.artwork_url} alt={track.title} className="w-full h-full object-cover" loading="lazy" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-[#9B1B2A]/10">
+                        <Disc3 className="w-10 h-10 text-[#9B1B2A]/30" />
+                      </div>
+                    )}
+
+                    {/* Access badge */}
+                    {access === 'preview' && (
+                      <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-white/15 text-white/60 backdrop-blur-sm">
+                        Preview
+                      </span>
+                    )}
+                    {access === 'stems' && (
+                      <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-[#C8962C]/90 text-black backdrop-blur-sm">
+                        Stems
+                      </span>
+                    )}
+
+                    {/* Playing indicator */}
+                    {isTrackPlaying && (
+                      <div className="absolute bottom-2 left-2 flex items-end gap-0.5 h-3">
+                        {[60, 100, 40].map((h, i) => (
+                          <span
+                            key={i}
+                            className="w-[3px] bg-[#C8962C] rounded-full animate-pulse"
+                            style={{ height: `${h}%`, animationDelay: `${i * 0.15}s` }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <p className="text-xs font-bold text-white truncate mt-2">{track.title}</p>
+                  <p className="text-[10px] text-white/40 truncate">Smash Daddys</p>
+                </motion.button>
+              );
+            })}
+          </div>
+        </section>
       )}
 
-      {/* ── Cross-links: Radio + Events ── */}
-      <div className="px-4 mt-2 space-y-2 mb-4">
-        <button
-          onClick={() => navigate('/radio')}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl active:scale-[0.98] transition-all"
-          style={{ background: '#00C2E010', border: '1px solid #00C2E025' }}
-        >
-          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#00C2E020' }}>
-            <RadioIcon className="w-4 h-4" style={{ color: '#00C2E0' }} />
-          </div>
-          <div className="flex-1 min-w-0 text-left">
-            <p className="text-xs font-bold text-white/80">Live Radio</p>
-            <p className="text-[10px] text-white/40">HOTMESS RADIO -- tune in now</p>
-          </div>
-          <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{ background: '#00C2E020', color: '#00C2E0' }}>
-            LISTEN
-          </span>
-        </button>
-        {upcomingEvents.length > 0 && (
-          <button
-            onClick={() => navigate('/pulse')}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl active:scale-[0.98] transition-all"
-            style={{ background: 'rgba(200,150,44,0.06)', border: '1px solid rgba(200,150,44,0.15)' }}
-          >
-            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'rgba(200,150,44,0.15)' }}>
-              <Calendar className="w-4 h-4" style={{ color: GOLD }} />
+      {/* ═══════════════════════════════════════════════════════════════════════
+          3. LIVE RADIO
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="mx-6 mt-8">
+        <div className="rounded-2xl border border-[#00C2E0]/15 bg-gradient-to-r from-[#00C2E0]/8 to-transparent p-5">
+          <div className="flex items-center gap-4">
+            {/* Pulsing live dot */}
+            <div className="relative w-12 h-12 rounded-full bg-[#00C2E0]/10 flex items-center justify-center flex-shrink-0">
+              <RadioIcon className="w-6 h-6 text-[#00C2E0]" />
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-[#30D158] animate-pulse" />
             </div>
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-xs font-bold text-white/80">Upcoming Events</p>
-              <p className="text-[10px] text-white/40">{upcomingEvents.length} event{upcomingEvents.length !== 1 ? 's' : ''} near you</p>
-            </div>
-            <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{ background: 'rgba(200,150,44,0.15)', color: GOLD }}>
-              VIEW
-            </span>
-          </button>
-        )}
-      </div>
 
-      {/* ── Releases ── */}
-      <div className="px-4 mt-2">
-        {/* Empty state when no releases exist */}
-        {releases.length === 0 && !loading && (
-          <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-[#1C1C1E] flex items-center justify-center mb-4">
-              <Disc3 className="w-8 h-8 text-white/10" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-xs font-black uppercase text-[#00C2E0] tracking-wide">
+                  Hotmess Radio
+                </p>
+                <span className="text-[9px] font-bold uppercase text-[#30D158] tracking-wider animate-pulse">
+                  Live
+                </span>
+              </div>
+              {radio.currentShowName ? (
+                <p className="text-sm text-white/70 truncate mt-0.5">{radio.currentShowName}</p>
+              ) : (
+                <p className="text-sm text-white/40 mt-0.5">Broadcasting 24/7</p>
+              )}
             </div>
-            <p className="text-white font-bold text-base">No music yet</p>
-            <p className="text-white/40 text-sm mt-1.5 max-w-[260px]">
-              New releases from Raw Convict Records and Smash Daddys are on the way. Check back soon.
+
+            <button
+              onClick={() => radio.togglePlay()}
+              className="h-10 px-5 rounded-full bg-[#00C2E0] text-black font-black text-xs uppercase flex items-center gap-1.5 active:scale-95 transition-transform flex-shrink-0"
+              aria-label={radio.isPlaying ? 'Pause radio' : 'Listen to radio'}
+            >
+              {radio.isPlaying ? (
+                <>
+                  <Pause className="w-3.5 h-3.5" fill="black" />
+                  Live
+                </>
+              ) : (
+                <>
+                  <Play className="w-3.5 h-3.5" fill="black" />
+                  Listen
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          4. FEATURED DROP
+          ═══════════════════════════════════════════════════════════════════ */}
+      {featuredRelease && (
+        <section className="mt-10 px-6">
+          <SectionHeader color={LABEL_RED}>Featured Drop</SectionHeader>
+
+          <div className="flex flex-col items-center">
+            {/* Large artwork */}
+            <motion.div
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setSelectedRelease(featuredRelease)}
+              className="w-full max-w-[320px] aspect-square rounded-2xl overflow-hidden bg-[#1C1C1E] shadow-2xl cursor-pointer"
+            >
+              {featuredRelease.artwork_url ? (
+                <img
+                  src={featuredRelease.artwork_url}
+                  alt={featuredRelease.title}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-[#9B1B2A]/10">
+                  <Disc3 className="w-20 h-20 text-[#9B1B2A]/20" />
+                </div>
+              )}
+            </motion.div>
+
+            {/* Title */}
+            <h3 className="text-xl font-black uppercase text-white text-center mt-5 leading-tight">
+              {featuredRelease.title}
+            </h3>
+            <p className="text-xs text-white/40 uppercase mt-1">Smash Daddys</p>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-3 mt-5 flex-wrap justify-center">
+              <button
+                onClick={() => {
+                  const featureTrackList = tracksByRelease[featuredRelease.id] || [];
+                  if (featureTrackList.length > 0) {
+                    const queue = featureTrackList.map(t => ({
+                      ...t, artist: 'Smash Daddys', artwork_url: featuredRelease.artwork_url,
+                    }));
+                    player.playTrack(queue[0], queue, 0);
+                  } else if (featuredRelease.preview_url) {
+                    player.playTrack({
+                      id: featuredRelease.id, title: featuredRelease.title,
+                      artist: 'Smash Daddys', artwork_url: featuredRelease.artwork_url,
+                      preview_url: featuredRelease.preview_url,
+                      download_url: featuredRelease.download_url,
+                    }, [], 0);
+                  }
+                }}
+                className="h-11 px-6 rounded-full bg-[#C8962C] text-black font-black text-xs uppercase flex items-center gap-2 active:scale-95 transition-transform"
+              >
+                <Play className="w-4 h-4" fill="black" />
+                {featuredRelease.preview_url && !featuredRelease.download_url ? 'Preview' : 'Play'}
+              </button>
+
+              {/* External links */}
+              <PlatformLinks release={featuredRelease} />
+
+              {/* Stems CTA */}
+              {featuredRelease.stem_pack_url && (
+                <button
+                  onClick={() => setStemRelease(featuredRelease)}
+                  className="h-11 px-5 rounded-full border border-[#C8962C]/40 text-[#C8962C] font-bold text-xs uppercase flex items-center gap-2 active:scale-95 transition-transform"
+                >
+                  <FileAudio className="w-4 h-4" />
+                  Unlock Stems
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          5. PRODUCER MODE
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="mt-10 mx-6 rounded-2xl border border-[#C8962C]/10 bg-[#C8962C]/[0.03] p-6">
+        <h2 className="text-lg font-black uppercase text-white tracking-wide">
+          For Producers
+        </h2>
+        <p className="text-sm text-white/50 mt-1">Unlock the source.</p>
+
+        {/* Find first release with stems */}
+        {(() => {
+          const stemRelDoc = releases.find(r => r.stem_pack_url) ||
+            releases.find(r => (tracksByRelease[r.id] || []).some(t => t.stem_pack_url));
+
+          if (stemRelDoc) {
+            const stemTypes = ['Drums', 'Bass', 'Vocals', 'FX'];
+            const price = stemRelDoc.stem_pack_price_gbp
+              ? `\u00a3${Number(stemRelDoc.stem_pack_price_gbp).toFixed(2)}`
+              : 'Free';
+
+            return (
+              <div className="mt-5">
+                <div className="grid grid-cols-4 gap-2 mb-5">
+                  {stemTypes.map(stem => (
+                    <div key={stem} className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-white/[0.03] border border-white/5">
+                      <FileAudio className="w-5 h-5 text-[#C8962C]" />
+                      <span className="text-[9px] font-bold uppercase text-white/50">{stem}</span>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setStemRelease(stemRelDoc)}
+                  className="w-full h-12 rounded-xl bg-[#C8962C] text-black font-black text-sm uppercase active:scale-95 transition-transform"
+                >
+                  Unlock Stems {'\u2014'} {price}
+                </button>
+              </div>
+            );
+          }
+
+          return (
+            <p className="text-sm text-white/30 mt-4 italic">
+              Stem packs coming soon.
             </p>
-            <div className="flex gap-3 mt-5">
-              <button
-                onClick={() => navigate('/radio')}
-                className="h-10 px-5 rounded-xl bg-[#C8962C] text-black font-bold text-xs active:scale-95 transition-transform"
-              >
-                Listen to radio
-              </button>
-              <button
-                onClick={() => navigate('/')}
-                className="h-10 px-5 rounded-xl border border-white/15 text-white/70 font-bold text-xs active:scale-95 transition-transform"
-              >
-                Check back soon
-              </button>
-            </div>
-          </div>
-        )}
-        {/* Helper function to render a single release card */}
-        {releases.length > 0 && (() => {
-          const renderReleaseCard = (rel) => {
-            const isActive = player.currentTrack &&
-              (player.currentTrack.id === rel.id ||
-               tracks[rel.id]?.some((t) => t.id === player.currentTrack?.id));
-            const trackCount = tracks[rel.id]?.length || 0;
-            const hasPreview = rel.preview_url && rel.preview_url !== 'PENDING_UPLOAD';
+          );
+        })()}
+      </section>
 
-            const handleCardClick = () => {
-              if (!hasPreview) {
-                setShowMemberCTA(true);
-              } else {
-                setSelectedRelease(rel);
-              }
-            };
+      {/* ═══════════════════════════════════════════════════════════════════════
+          6. ALL RELEASES — 2-col grid
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="mt-10 px-6 pb-40">
+        <SectionHeader>All Releases</SectionHeader>
+
+        <div className="grid grid-cols-2 gap-3">
+          {releases.map(rel => {
+            const relTracks = tracksByRelease[rel.id] || [];
+            const access = getReleaseAccessLevel(rel, relTracks);
+            const isActive = player.currentTrack && (
+              player.currentTrack.id === rel.id ||
+              relTracks.some(t => t.id === player.currentTrack?.id)
+            );
+            const isCurrentPlaying = isActive && player.isPlaying;
 
             return (
               <motion.button
                 key={rel.id}
                 whileTap={{ scale: 0.97 }}
-                onClick={handleCardClick}
+                onClick={() => setSelectedRelease(rel)}
                 className={`relative overflow-hidden rounded-xl text-left transition-colors ${
-                  isActive ? 'ring-1 ring-[#C8962C]/40' : ''
+                  access === 'stems' ? 'ring-1 ring-[#C8962C]/40' : ''
                 }`}
                 style={{ backgroundColor: CARD }}
+                aria-label={`Open ${rel.title}`}
               >
                 {/* Artwork */}
-                <div className="aspect-square w-full bg-[#9B1B2A]/5 relative">
+                <div className={`aspect-square w-full relative ${
+                  access === 'preview' ? 'opacity-70' : ''
+                }`}>
                   {rel.artwork_url ? (
-                    <img src={rel.artwork_url} alt={rel.title} className="w-full h-full object-cover" />
+                    <img
+                      src={rel.artwork_url}
+                      alt={rel.title}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
+                    <div className="w-full h-full flex items-center justify-center bg-[#9B1B2A]/10">
                       <Disc3 className="w-10 h-10 text-[#9B1B2A]/20" />
                     </div>
                   )}
-                  {/* Type badge */}
-                  <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-black/60 text-white/60">
-                    {rel.release_type}
-                  </span>
-                  {/* More actions */}
-                  <CardMoreButton
-                    itemType="release"
-                    itemId={rel.id}
-                    title={rel.title}
-                    className="absolute bottom-2 left-2 z-10"
-                  />
-                  {/* Track count for EPs */}
-                  {trackCount > 1 && (
-                    <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[8px] font-black bg-[#9B1B2A] text-white">
-                      {trackCount} tracks
+
+                  {/* Access badges */}
+                  {access === 'preview' && (
+                    <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-white/15 text-white/60 backdrop-blur-sm">
+                      Preview
                     </span>
                   )}
-                  {/* Member badge */}
-                  {rel.member_only && (
-                    <span className="absolute bottom-2 right-2">
-                      <Lock className="w-3.5 h-3.5 text-[#C8962C]/60" />
+                  {access === 'coming_soon' && (
+                    <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-white/10 text-white/40 backdrop-blur-sm">
+                      Coming Soon
                     </span>
                   )}
-                  {/* Locked overlay if no preview */}
-                  {!hasPreview && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                      <Lock className="w-8 h-8 text-white/30" />
-                    </div>
+                  {access === 'stems' && (
+                    <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-[#C8962C]/90 text-black backdrop-blur-sm">
+                      Stems
+                    </span>
                   )}
+
+                  {/* Release type badge */}
+                  {rel.release_type && access !== 'preview' && access !== 'coming_soon' && (
+                    <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-black/50 text-white/60 backdrop-blur-sm">
+                      {rel.release_type}
+                    </span>
+                  )}
+
                   {/* Playing indicator */}
-                  {isActive && player.isPlaying && (
-                    <div className="absolute bottom-2 left-2">
-                      <div className="flex items-end gap-0.5 h-3">
-                        <span className="w-[3px] bg-[#C8962C] rounded-full animate-pulse" style={{ height: '60%' }} />
-                        <span className="w-[3px] bg-[#C8962C] rounded-full animate-pulse" style={{ height: '100%', animationDelay: '0.15s' }} />
-                        <span className="w-[3px] bg-[#C8962C] rounded-full animate-pulse" style={{ height: '40%', animationDelay: '0.3s' }} />
-                      </div>
+                  {isCurrentPlaying && (
+                    <div className="absolute bottom-2 left-2 flex items-end gap-0.5 h-3">
+                      {[60, 100, 40].map((h, i) => (
+                        <span
+                          key={i}
+                          className="w-[3px] bg-[#C8962C] rounded-full animate-pulse"
+                          style={{ height: `${h}%`, animationDelay: `${i * 0.15}s` }}
+                        />
+                      ))}
                     </div>
                   )}
                 </div>
+
                 {/* Info */}
                 <div className="p-3">
                   <p className="text-xs font-bold text-white truncate">{rel.title}</p>
-                  <p className="text-[10px] text-white/30 mt-0.5">
+                  <p className="text-[10px] text-white/30 mt-0.5 truncate">
                     {rel.catalog_number}
-                    {rel.genre && ` · ${rel.genre}`}
+                    {rel.genre && ` \u00b7 ${rel.genre}`}
                   </p>
                 </div>
               </motion.button>
             );
-          };
+          })}
+        </div>
+      </section>
 
-          // Group releases by catalog number prefix
-          const rcrReleases = releases.filter(r => /^(RCR|RAW)/.test(r.catalog_number ?? ''));
-          const sdReleases = releases.filter(r => r.catalog_number?.startsWith('SD'));
-          const otherReleases = releases.filter(r =>
-            !/^(RCR|RAW)/.test(r.catalog_number ?? '') && !r.catalog_number?.startsWith('SD')
-          );
+      {/* ═══════════════════════════════════════════════════════════════════════
+          OVERLAYS
+          ═══════════════════════════════════════════════════════════════════ */}
 
-          return (
-            <>
-              {rcrReleases.length > 0 && (
-                <>
-                  <h2 className="text-[10px] font-black uppercase tracking-widest mb-3" style={{ color: '#9B1B2A' }}>
-                    Raw Convict Records · {rcrReleases.length}
-                  </h2>
-                  <div className="grid grid-cols-2 gap-3 mb-6">
-                    {rcrReleases.map(renderReleaseCard)}
-                  </div>
-                </>
-              )}
-              {sdReleases.length > 0 && (
-                <>
-                  <h2 className="text-[10px] font-black uppercase tracking-widest mb-3" style={{ color: '#C8962C' }}>
-                    Smash Daddys · {sdReleases.length}
-                  </h2>
-                  <div className="grid grid-cols-2 gap-3 mb-6">
-                    {sdReleases.map(renderReleaseCard)}
-                  </div>
-                </>
-              )}
-              {otherReleases.length > 0 && (
-                <>
-                  <h2 className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-3">
-                    Other Releases · {otherReleases.length}
-                  </h2>
-                  <div className="grid grid-cols-2 gap-3 mb-6">
-                    {otherReleases.map(renderReleaseCard)}
-                  </div>
-                </>
-              )}
-            </>
-          );
-        })()}
-      </div>
-
-      {/* ── Release Detail Sheet ── */}
+      {/* Release Detail Sheet */}
       <AnimatePresence>
         {selectedRelease && (
           <ReleaseDetailSheet
             release={selectedRelease}
-            tracks={tracks[selectedRelease.id] || []}
+            tracks={tracksByRelease[selectedRelease.id] || []}
             onClose={() => setSelectedRelease(null)}
-            bannerData={bannerMap[selectedRelease.catalog_number]}
           />
         )}
       </AnimatePresence>
 
-      {/* ── Member CTA Overlay ── */}
-      {showMemberCTA && (
-        <div style={{
-          position: 'fixed', bottom: 83, left: 0, right: 0, zIndex: 50,
-          background: 'linear-gradient(to top, #0A0A0A 70%, transparent)',
-          padding: '28px 20px 20px', textAlign: 'center',
-        }}>
-          <p style={{ color: '#F5F5F5', fontWeight: 700, fontSize: 16, margin: '0 0 8px' }}>Members only</p>
-          <p style={{ color: 'rgba(245,245,245,0.5)', fontSize: 13, margin: '0 0 16px' }}>
-            Join HOTMESS to unlock the full catalogue.
-          </p>
-          <button onClick={() => navigate('/more')} style={{
-            background: '#D4AF37', color: '#0A0A0A', border: 'none', borderRadius: 8,
-            padding: '14px 0', fontWeight: 700, fontSize: 14, width: '100%', cursor: 'pointer',
-          }}>
-            BECOME A MEMBER →
-          </button>
-          <button onClick={() => setShowMemberCTA(false)} style={{
-            background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)',
-            fontSize: 13, marginTop: 12, cursor: 'pointer', display: 'block', margin: '12px auto 0',
-          }}>
-            Keep browsing
-          </button>
-        </div>
-      )}
+      {/* Stem Unlock Sheet */}
+      <AnimatePresence>
+        {stemRelease && (
+          <StemUnlockSheet
+            release={stemRelease}
+            onClose={() => setStemRelease(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Preview End Overlay */}
+      <AnimatePresence>
+        {showPreviewEnd && (
+          <PreviewEndOverlay
+            onUpgrade={() => {
+              setShowPreviewEnd(false);
+              navigate('/more');
+            }}
+            onDismiss={() => setShowPreviewEnd(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
-

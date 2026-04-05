@@ -43,6 +43,8 @@ import {
   Ghost,
   ShoppingBag,
   Music,
+  Disc3,
+  Headphones,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useRadio } from '@/contexts/RadioContext';
@@ -633,6 +635,22 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
     refetchInterval: 60_000,
   });
 
+  // 4. Latest music drop (newest active release)
+  const { data: latestDrop } = useQuery({
+    queryKey: ['home-latest-drop'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('label_releases')
+        .select('id, title, artwork_url, preview_url, catalog_number, release_type, genre, bpm')
+        .eq('is_active', true)
+        .order('release_date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    refetchInterval: 300_000,
+  });
+
   // ── Pulse state -> tone -> headline rotation ─────────────────────────────────
   const { isPlaying: radioPlaying, currentShowName, togglePlay } = useRadio();
   const tone = deriveTone(rightNowUsers.length, nearbyEvents.length);
@@ -762,6 +780,89 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
               </button>
             </div>
           </ImageSection>
+
+          {/* ================================================================ */}
+          {/* MUSIC + PULSE BLOCKS (per brief: music at top of homepage)       */}
+          {/* ================================================================ */}
+          <div className="px-5 pt-6 pb-2 space-y-3" style={{ background: ROOT_BG }}>
+
+            {/* BLOCK 1: LIVE NOW — HOTMESS RADIO */}
+            <button
+              onClick={() => { trackEvent('home_cta_tap', { cta: 'radio_live', tone }); togglePlay(); }}
+              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl active:scale-[0.98] transition-all border"
+              style={{ background: 'rgba(0,194,224,0.06)', borderColor: 'rgba(0,194,224,0.15)' }}
+            >
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(0,194,224,0.15)' }}>
+                {radioPlaying ? (
+                  <Pause className="w-5 h-5" style={{ color: '#00C2E0' }} />
+                ) : (
+                  <Play className="w-5 h-5 ml-0.5" style={{ color: '#00C2E0' }} />
+                )}
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-black uppercase text-white tracking-wide">HOTMESS RADIO</p>
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#30D158] opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#30D158]" />
+                  </span>
+                </div>
+                <p className="text-[11px] text-white/40 mt-0.5">{currentShowName || 'Live now'}</p>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg flex-shrink-0" style={{ background: '#00C2E0', color: '#000' }}>
+                {radioPlaying ? 'Playing' : 'Listen'}
+              </span>
+            </button>
+
+            {/* BLOCK 2: DROP LIVE — latest release */}
+            {latestDrop && (
+              <button
+                onClick={() => { trackEvent('home_cta_tap', { cta: 'drop_live', tone }); navigate('/music'); }}
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl active:scale-[0.98] transition-all border"
+                style={{ background: 'rgba(155,27,42,0.06)', borderColor: 'rgba(155,27,42,0.15)' }}
+              >
+                <div className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 bg-[#1C1C1E]">
+                  {latestDrop.artwork_url ? (
+                    <img src={latestDrop.artwork_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Disc3 className="w-5 h-5 text-[#9B1B2A]/40" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="flex items-center gap-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#9B1B2A' }}>Drop Live</p>
+                  </div>
+                  <p className="text-sm font-bold text-white truncate mt-0.5">{latestDrop.title}</p>
+                  <p className="text-[10px] text-white/30 mt-0.5">Smash Daddys · {latestDrop.catalog_number}</p>
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg flex-shrink-0" style={{ background: AMBER, color: '#000' }}>
+                  {latestDrop.preview_url ? 'Play' : 'View'}
+                </span>
+              </button>
+            )}
+
+            {/* BLOCK 3: WHAT'S MOVING — Pulse */}
+            <button
+              onClick={() => { trackEvent('home_cta_tap', { cta: 'whats_moving', tone }); navigate('/pulse'); }}
+              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl active:scale-[0.98] transition-all border"
+              style={{ background: `${AMBER}08`, borderColor: `${AMBER}15` }}
+            >
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${AMBER}15` }}>
+                <Globe className="w-5 h-5" style={{ color: AMBER }} />
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-sm font-black uppercase text-white tracking-wide">What's Moving</p>
+                <p className="text-[11px] text-white/40 mt-0.5">
+                  {rightNowUsers.length > 0 ? `${rightNowUsers.length} people nearby` : 'See who\'s around'}
+                </p>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg flex-shrink-0" style={{ background: AMBER, color: '#000' }}>
+                Pulse
+              </span>
+            </button>
+          </div>
 
           {/* ================================================================ */}
           {/* DATA CARDS: Profile nudge + Right Now + Core Lanes + Events      */}
