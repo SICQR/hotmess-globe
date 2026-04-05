@@ -34,7 +34,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SlidersHorizontal, Ghost, ArrowRight, X, MessageCircle, Heart, Ban, Flag, Shield } from 'lucide-react';
+import { SlidersHorizontal, Ghost, X, MessageCircle, Heart, Ban, Flag, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSheet } from '@/contexts/SheetContext';
 import { useRightNowCount } from '@/components/globe/useRealtimeBeacons';
@@ -329,9 +329,9 @@ function GhostedEmpty({ onOpenFilters, onGoLive }: { onOpenFilters: () => void; 
       transition={{ duration: 0.4 }}
     >
       <Ghost className="w-12 h-12 mb-4" style={{ color: AMBER }} />
-      <h2 className="text-lg font-black text-white mb-2">No signals yet</h2>
+      <h2 className="text-lg font-black text-white mb-2">Quiet right now</h2>
       <p className="text-sm text-[#8E8E93] mb-6 max-w-[260px]">
-        Go Live so people nearby know you're out tonight
+        Go Live and be seen first
       </p>
       <button
         onClick={onGoLive || onOpenFilters}
@@ -779,24 +779,8 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
               </p>
             </div>
 
-            {/* Right: Go Live + Safety + SOS + ambient toggle + filter icon with badge */}
+            {/* Right: ambient toggle + filter icon with badge */}
             <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => openSheet('social', {})}
-              className="h-7 px-2.5 rounded-full text-[10px] font-bold active:scale-95 transition-transform"
-              style={{ background: 'rgba(200,150,44,0.15)', border: '1px solid rgba(200,150,44,0.3)', color: AMBER }}
-              aria-label="Go live"
-            >
-              Go Live
-            </button>
-            <button
-              onClick={() => navigate('/safety')}
-              className="w-8 h-8 flex items-center justify-center rounded-full active:scale-95 transition-transform"
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
-              aria-label="Safety"
-            >
-              <span className="text-white/50 text-[10px] font-bold">SOS</span>
-            </button>
             <GhostedAmbientToggle />
             <button
               data-testid="ghosted-filter-btn"
@@ -922,8 +906,8 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
             {chatThreads.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <Ghost className="w-10 h-10 mb-3" style={{ color: AMBER }} />
-                <h3 className="text-base font-bold text-white mb-1">No signals yet</h3>
-                <p className="text-sm mb-5" style={{ color: MUTED }}>Boo someone nearby to start</p>
+                <h3 className="text-base font-bold text-white mb-1">No Boos yet</h3>
+                <p className="text-sm mb-5" style={{ color: MUTED }}>Send one in Ghosted</p>
                 <button
                   onClick={() => setActiveTab('nearby')}
                   className="h-10 px-5 rounded-full text-sm font-bold active:scale-95 transition-transform"
@@ -1019,18 +1003,6 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
               <Zap className={`w-5 h-5 ${isBoostActive('profile_bump') ? 'text-[#C8962C]' : 'text-white/60'}`} />
             </button>
 
-            <button
-              onClick={() => openSheet('social', {})}
-              className="h-12 px-6 rounded-full flex items-center gap-2 font-bold text-sm text-black shadow-lg active:scale-95 transition-transform"
-              style={{
-                backgroundColor: AMBER,
-                boxShadow: `0 8px 32px rgba(200,150,44,0.35)`,
-              }}
-              aria-label="Share your vibe right now"
-            >
-              Share your vibe
-              <ArrowRight className="w-4 h-4" />
-            </button>
           </motion.div>
         )}
       </AnimatePresence>
