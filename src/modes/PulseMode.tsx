@@ -1,5 +1,5 @@
 /**
- * PulseMode -- Globe HUD Overlay (route: /pulse)
+ * PulseMode -- Multi-Layered Signal Engine (route: /pulse)
  *
  * The immersive globe mode. The Three.js globe renders at L0 (in App.jsx
  * via UnifiedGlobe). This component renders ONLY the HUD overlay that
@@ -7,14 +7,19 @@
  * so the globe shows through.
  *
  * Layout:
- *   1. Top HUD -- city + beacon count | PULSE wordmark | safety indicator
- *   2. Filter chip strip -- All | Events | Hotspots | Safety
- *   3. Bottom drawer -- peek at 80px, swipe up to 50vh
- *      - Upcoming Events (h-scroll cards)
- *      - Active Beacons (compact list)
- *      - Safety Alerts (red-tinted cards)
- *   4. Beacon FAB -- amber +, tap or long-press to create
- *   5. Legend card -- bottom-left, dismissible
+ *   1. Top HUD -- dynamic state line (counts + radio status)
+ *   2. LayerStrip -- 4 multi-select layer toggles (People/Intent/Drops/Safety)
+ *   3. Priority strip -- contextual alerts (events, drops, surges)
+ *   4. ActionBar -- floating contextual pills (Go Live, Post, Browse)
+ *   5. Bottom drawer -- peek at 140px, swipe up to 55vh
+ *      - Right Now (People layer) -- h-scroll avatars
+ *      - Events & Beacons (Intent layer)
+ *      - Drops Nearby (Commerce layer)
+ *      - Pulse Feed
+ *      - Radio card
+ *      - Scene Scout
+ *   6. Beacon FAB -- amber +, tap or long-press to create
+ *   7. Legend card -- bottom-left, dismissible
  *
  * Data: TanStack Query (useQuery) with 30s refetch + Supabase realtime.
  * Animations: Framer Motion spring physics on drawer.
@@ -42,9 +47,13 @@ import {
   Sparkles,
   Send,
   MessageSquare,
+  Users,
+  ShoppingBag,
+  Eye,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useGlobe } from '@/contexts/GlobeContext';
+import { useRadio } from '@/contexts/RadioContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { format, isToday, isTomorrow } from 'date-fns';
 import { useLongPress } from '@/hooks/useLongPress';
@@ -56,8 +65,18 @@ import { usePowerups } from '@/hooks/usePowerups';
 // ---- Brand constants --------------------------------------------------------
 const AMBER = '#C8962C';
 const MUTED = '#8E8E93';
-const GLASS = 'bg-black/50 backdrop-blur-xl';
-const GLASS_BORDER = 'border border-white/10';
+const LIME = '#39FF14';
+const TEAL = '#00C2E0';
+const DROP_GOLD = '#FFD700';
+const SAFETY_RED = '#FF3B30';
+
+// ---- Glass utility ----------------------------------------------------------
+const glassStyle = (opacity = 0.5, blur = 20): React.CSSProperties => ({
+  background: `rgba(0,0,0,${opacity})`,
+  backdropFilter: `blur(${blur}px)`,
+  WebkitBackdropFilter: `blur(${blur}px)`,
+  border: '1px solid rgba(255,255,255,0.08)',
+});
 
 // ---- Scene Scout types ------------------------------------------------------
 interface SceneScoutPick {
@@ -76,7 +95,7 @@ interface SceneScoutData {
 }
 
 // ---- Types ------------------------------------------------------------------
-type FilterType = 'all' | 'events' | 'hotspots' | 'safety';
+type LayerKey = 'people' | 'intent' | 'drops' | 'safety';
 
 interface BeaconItem {
   id: string;
@@ -91,6 +110,24 @@ interface BeaconItem {
   lat?: number;
   lng?: number;
   severity?: string;
+}
+
+interface DropItem {
+  id: string;
+  title: string;
+  price: number | null;
+  imageUrl: string | null;
+  sellerName: string | null;
+  createdAt: string;
+}
+
+interface RightNowUser {
+  id: string;
+  userId: string;
+  intent: string;
+  displayName: string;
+  avatarUrl: string | null;
+  createdAt: string;
 }
 
 interface PulseModeProps {
@@ -125,6 +162,18 @@ function formatTimeAgo(dateStr: string | undefined): string {
   }
 }
 
+// ---- Intent color ring for Right Now users ----------------------------------
+function getIntentColor(intent: string): string {
+  switch (intent) {
+    case 'hookup': return '#FF5500';
+    case 'crowd':
+    case 'hang': return TEAL;
+    case 'drop':
+    case 'explore': return '#A899D8';
+    default: return LIME;
+  }
+}
+
 // ---- Beacon type icon -------------------------------------------------------
 function BeaconIcon({ kind, className = '', color }: { kind?: string; className?: string; color?: string }) {
   const style = color ? { color } : undefined;
@@ -142,62 +191,47 @@ function BeaconIcon({ kind, className = '', color }: { kind?: string; className?
 function getBeaconDotColor(kind?: string): string {
   switch (kind) {
     case 'event': return AMBER;
-    case 'safety': return '#FF3B30';
+    case 'safety': return SAFETY_RED;
     default: return '#FFFFFF';
   }
 }
 
 // =============================================================================
-// TopHUD
+// TopHUD — Dynamic state line
 // =============================================================================
 function TopHUD({
   city,
-  beaconCount,
+  stateLine,
   safetyCount,
-  rightNowCount,
   onSafetyTap,
   onCityTap,
 }: {
   city: string;
-  beaconCount: number;
+  stateLine: string;
   safetyCount: number;
-  rightNowCount: number;
   onSafetyTap: () => void;
   onCityTap: () => void;
 }) {
   return (
     <div
       className="mx-4 rounded-2xl px-4 h-14 flex items-center justify-between"
-      style={{
-        background: 'rgba(0,0,0,0.5)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255,255,255,0.08)',
-      }}
+      style={glassStyle(0.5, 20)}
     >
-      {/* Left: city + beacon count */}
+      {/* Left: city + dynamic state line */}
       <button
         onClick={onCityTap}
-        className="flex items-center gap-2 active:scale-95 transition-transform min-w-0"
-        aria-label={`City: ${city}. ${beaconCount} active beacons.`}
+        className="flex items-center gap-2 active:scale-95 transition-transform min-w-0 flex-1"
+        aria-label={`City: ${city}. ${stateLine}`}
       >
         <MapPin className="w-4 h-4 flex-shrink-0" style={{ color: AMBER }} />
         <span className="text-white font-bold text-sm truncate">{city}</span>
-        <span className="text-white/40 text-xs flex-shrink-0">{beaconCount} active</span>
-        {rightNowCount > 0 && (
-          <span
-            className="flex-shrink-0 text-[10px] font-black px-1.5 py-0.5 rounded-full"
-            style={{ background: '#39FF1430', color: '#39FF14', border: '1px solid #39FF1440' }}
-          >
-            {rightNowCount} live
-          </span>
-        )}
+        <span className="text-white/40 text-[10px] flex-shrink-0 truncate max-w-[140px]">{stateLine}</span>
         <ChevronDown className="w-3 h-3 text-white/30 flex-shrink-0" />
       </button>
 
       {/* Center: PULSE wordmark */}
       <h1
-        className="text-sm font-black tracking-[0.35em] uppercase select-none flex-shrink-0"
+        className="text-sm font-black tracking-[0.35em] uppercase select-none flex-shrink-0 mx-2"
         style={{ color: AMBER, textShadow: `0 0 20px ${AMBER}40` }}
       >
         PULSE
@@ -221,45 +255,49 @@ function TopHUD({
 }
 
 // =============================================================================
-// FilterChipStrip
+// LayerStrip — Multi-select layer toggles
 // =============================================================================
-const FILTERS: { key: FilterType; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'events', label: 'Events' },
-  { key: 'hotspots', label: 'Hotspots' },
-  { key: 'safety', label: 'Safety' },
+const LAYERS: { key: LayerKey; label: string; color: string; icon: React.ElementType }[] = [
+  { key: 'people', label: 'People', color: LIME, icon: Users },
+  { key: 'intent', label: 'Intent', color: AMBER, icon: Flame },
+  { key: 'drops', label: 'Drops', color: DROP_GOLD, icon: ShoppingBag },
+  { key: 'safety', label: 'Safety', color: SAFETY_RED, icon: Shield },
 ];
 
-function FilterChipStrip({
-  activeFilter,
-  onFilterChange,
+function LayerStrip({
+  activeLayers,
+  onToggle,
   counts,
 }: {
-  activeFilter: FilterType;
-  onFilterChange: (f: FilterType) => void;
-  counts: Record<FilterType, number>;
+  activeLayers: Set<LayerKey>;
+  onToggle: (key: LayerKey) => void;
+  counts: Record<LayerKey, number>;
 }) {
   return (
     <div className="mx-4 flex gap-2 overflow-x-auto scrollbar-hide py-1">
-      {FILTERS.map(({ key, label }) => {
-        const isActive = activeFilter === key;
+      {LAYERS.map(({ key, label, color, icon: Icon }) => {
+        // Hide Safety chip unless there are alerts
+        if (key === 'safety' && counts.safety === 0) return null;
+
+        const isActive = activeLayers.has(key);
         const count = counts[key];
         return (
           <button
             key={key}
-            onClick={() => onFilterChange(key)}
-            className={`flex-shrink-0 h-10 px-4 rounded-full text-sm font-medium transition-all active:scale-95 ${
+            onClick={() => onToggle(key)}
+            className="flex-shrink-0 h-10 px-4 rounded-full text-sm font-medium transition-all active:scale-95 flex items-center gap-1.5"
+            style={
               isActive
-                ? 'text-white shadow-lg'
-                : `${GLASS} ${GLASS_BORDER} text-white/70`
-            }`}
-            style={isActive ? { background: AMBER } : undefined}
-            aria-label={`Filter: ${label}${count > 0 ? ` (${count})` : ''}`}
+                ? { background: `${color}20`, border: `1.5px solid ${color}60`, color }
+                : { ...glassStyle(0.5, 16), color: 'rgba(255,255,255,0.5)' }
+            }
+            aria-label={`Layer: ${label}${count > 0 ? ` (${count})` : ''}. ${isActive ? 'Active' : 'Inactive'}`}
             aria-pressed={isActive}
           >
+            <Icon className="w-3.5 h-3.5" />
             {label}
-            {key !== 'all' && count > 0 && (
-              <span className={`ml-1.5 ${isActive ? 'text-white/80' : 'text-white/40'}`}>
+            {count > 0 && (
+              <span className={`text-xs ${isActive ? 'opacity-80' : 'opacity-40'}`}>
                 {count}
               </span>
             )}
@@ -281,21 +319,20 @@ function LegendCard({ onDismiss }: { onDismiss: () => void }) {
       exit={{ opacity: 0, y: 10 }}
       transition={{ duration: 0.25 }}
       className="rounded-xl px-3 py-2.5 flex items-center gap-3"
-      style={{
-        background: 'rgba(0,0,0,0.5)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255,255,255,0.08)',
-      }}
+      style={glassStyle(0.5, 16)}
     >
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full" style={{ background: AMBER }} />
-          <span className="text-[10px] text-white/60">Event</span>
+          <span className="w-2 h-2 rounded-full" style={{ background: LIME }} />
+          <span className="text-[10px] text-white/60">People</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-white" />
-          <span className="text-[10px] text-white/60">Hotspot</span>
+          <span className="w-2 h-2 rounded-full" style={{ background: AMBER }} />
+          <span className="text-[10px] text-white/60">Intent</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full" style={{ background: DROP_GOLD }} />
+          <span className="text-[10px] text-white/60">Drops</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-[#FF3B30]" />
@@ -334,12 +371,7 @@ function EventCard({
     <button
       onClick={onTap}
       className="w-[220px] flex-shrink-0 snap-start text-left active:scale-[0.97] transition-transform rounded-2xl overflow-hidden"
-      style={{
-        background: 'rgba(0,0,0,0.6)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255,255,255,0.08)',
-      }}
+      style={glassStyle(0.6, 16)}
       aria-label={`View event: ${title}`}
     >
       {imageUrl ? (
@@ -443,6 +475,153 @@ function SafetyAlertCard({
 }
 
 // =============================================================================
+// RightNowUserCard (horizontal scroll in People layer)
+// =============================================================================
+function RightNowUserCard({
+  user,
+  onTap,
+}: {
+  user: RightNowUser;
+  onTap: () => void;
+}) {
+  const intentColor = getIntentColor(user.intent);
+  return (
+    <button
+      onClick={onTap}
+      className="flex-shrink-0 flex flex-col items-center gap-1.5 w-16 active:scale-95 transition-transform"
+      aria-label={`View profile: ${user.displayName}`}
+    >
+      <div
+        className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0"
+        style={{ border: `2px solid ${intentColor}`, padding: '2px' }}
+      >
+        {user.avatarUrl ? (
+          <img src={user.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" loading="lazy" />
+        ) : (
+          <div className="w-full h-full rounded-full bg-white/10 flex items-center justify-center">
+            <Users className="w-4 h-4 text-white/30" />
+          </div>
+        )}
+      </div>
+      <span className="text-[10px] text-white/70 truncate w-full text-center font-medium">
+        {user.displayName}
+      </span>
+      <span className="text-[8px] font-bold uppercase truncate" style={{ color: intentColor }}>
+        {formatTimeAgo(user.createdAt)}
+      </span>
+    </button>
+  );
+}
+
+// =============================================================================
+// DropCard (horizontal scroll in Commerce layer)
+// =============================================================================
+function DropCard({
+  drop,
+  onTap,
+}: {
+  drop: DropItem;
+  onTap: () => void;
+}) {
+  return (
+    <button
+      onClick={onTap}
+      className="w-[140px] flex-shrink-0 snap-start text-left active:scale-[0.97] transition-transform rounded-xl overflow-hidden"
+      style={glassStyle(0.6, 16)}
+      aria-label={`View drop: ${drop.title}`}
+    >
+      {drop.imageUrl ? (
+        <img src={drop.imageUrl} alt="" className="w-full h-[100px] object-cover" loading="lazy" />
+      ) : (
+        <div className="w-full h-[100px] flex items-center justify-center" style={{ background: `${DROP_GOLD}08` }}>
+          <ShoppingBag className="w-6 h-6" style={{ color: `${DROP_GOLD}40` }} />
+        </div>
+      )}
+      <div className="p-2.5">
+        <p className="text-white text-xs font-semibold leading-tight line-clamp-1">{drop.title}</p>
+        {drop.price != null && (
+          <p className="text-xs font-bold mt-0.5" style={{ color: DROP_GOLD }}>
+            {'\u00A3'}{drop.price.toFixed(2)}
+          </p>
+        )}
+      </div>
+    </button>
+  );
+}
+
+// =============================================================================
+// ActionBar — floating contextual pills (replaces lime FAB + purple FAB)
+// =============================================================================
+function ActionBar({
+  onGoLive,
+  onPost,
+  onBrowseNearby,
+  rightNowCount,
+}: {
+  onGoLive: () => void;
+  onPost: () => void;
+  onBrowseNearby: () => void;
+  rightNowCount: number;
+}) {
+  return (
+    <div className="flex items-center gap-2 justify-center">
+      {/* Go Live */}
+      <button
+        onClick={onGoLive}
+        className="h-10 px-4 rounded-full flex items-center gap-1.5 text-xs font-bold active:scale-95 transition-transform"
+        style={{
+          ...glassStyle(0.5, 16),
+          borderColor: `${LIME}40`,
+          color: LIME,
+        }}
+        aria-label={`Go live${rightNowCount > 0 ? ` (${rightNowCount} live now)` : ''}`}
+      >
+        <Zap className="w-3.5 h-3.5" />
+        Go Live
+        {rightNowCount > 0 && (
+          <span
+            className="text-[9px] font-black px-1 py-0.5 rounded-full ml-0.5"
+            style={{ background: `${LIME}20` }}
+          >
+            {rightNowCount}
+          </span>
+        )}
+      </button>
+
+      {/* Post */}
+      <button
+        onClick={onPost}
+        className="h-10 px-4 rounded-full flex items-center gap-1.5 text-xs font-bold active:scale-95 transition-transform"
+        style={{
+          ...glassStyle(0.5, 16),
+          borderColor: `${AMBER}40`,
+          color: AMBER,
+        }}
+        aria-label="Post to Pulse"
+      >
+        <Send className="w-3.5 h-3.5" />
+        Post
+      </button>
+
+      {/* Browse Nearby */}
+      <button
+        onClick={onBrowseNearby}
+        className="h-10 px-4 rounded-full flex items-center gap-1.5 text-xs font-bold active:scale-95 transition-transform"
+        style={{
+          ...glassStyle(0.5, 16),
+          borderColor: `${TEAL}40`,
+          color: TEAL,
+        }}
+        aria-label="Browse nearby profiles"
+      >
+        <Eye className="w-3.5 h-3.5" />
+        Nearby
+      </button>
+    </div>
+  );
+}
+
+// =============================================================================
 // BeaconFAB
 // =============================================================================
 function BeaconFAB({ onTap, onLongPress, showPulse = false }: { onTap: () => void; onLongPress: () => void; showPulse?: boolean }) {
@@ -463,11 +642,7 @@ function BeaconFAB({ onTap, onLongPress, showPulse = false }: { onTap: () => voi
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
           className="absolute -top-10 right-0 px-3 py-1.5 rounded-lg whitespace-nowrap"
-          style={{
-            background: 'rgba(0,0,0,0.8)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-          }}
+          style={glassStyle(0.8, 8)}
         >
           <span className="text-xs font-medium text-white">Create beacon</span>
         </motion.div>
@@ -501,34 +676,50 @@ function BeaconFAB({ onTap, onLongPress, showPulse = false }: { onTap: () => voi
 // BottomDrawer
 // =============================================================================
 const PEEK_HEIGHT = 140; // px visible when collapsed
-const EXPANDED_HEIGHT_VH = 50; // vh when expanded
+const EXPANDED_HEIGHT_VH = 55; // vh when expanded
 
 function BottomDrawer({
   events,
   beacons,
   safetyAlerts,
+  rightNowUsers,
+  drops,
   eventsLoading,
   beaconsLoading,
+  rightNowLoading,
+  dropsLoading,
+  activeLayers,
   onEventTap,
   onBeaconTap,
   onSafetyTap,
+  onProfileTap,
+  onDropTap,
   onSeeAllEvents,
   sceneScoutSection,
   pulseFeedSection,
   focusedBeaconId,
+  emptyState,
 }: {
   events: BeaconItem[];
   beacons: BeaconItem[];
   safetyAlerts: BeaconItem[];
+  rightNowUsers: RightNowUser[];
+  drops: DropItem[];
   eventsLoading: boolean;
   beaconsLoading: boolean;
+  rightNowLoading: boolean;
+  dropsLoading: boolean;
+  activeLayers: Set<LayerKey>;
   focusedBeaconId?: string | null;
   onEventTap: (id: string) => void;
   onBeaconTap: (id: string) => void;
   onSafetyTap: (id: string) => void;
+  onProfileTap: (userId: string) => void;
+  onDropTap: (id: string) => void;
   onSeeAllEvents: () => void;
   sceneScoutSection?: React.ReactNode;
   pulseFeedSection?: React.ReactNode;
+  emptyState?: React.ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
   const controls = useAnimation();
@@ -545,7 +736,6 @@ function BottomDrawer({
     const offset = info.offset.y;
 
     if (expanded) {
-      // Currently expanded: swipe down to collapse
       if (velocity > 300 || offset > 80) {
         setExpanded(false);
         controls.start({ y: 0, transition: { type: 'spring', damping: 30, stiffness: 300 } });
@@ -553,7 +743,6 @@ function BottomDrawer({
         controls.start({ y: -getExpandedOffset() + PEEK_HEIGHT, transition: { type: 'spring', damping: 30, stiffness: 300 } });
       }
     } else {
-      // Currently collapsed: swipe up to expand
       if (velocity < -300 || offset < -60) {
         setExpanded(true);
         controls.start({ y: -getExpandedOffset() + PEEK_HEIGHT, transition: { type: 'spring', damping: 30, stiffness: 300 } });
@@ -573,9 +762,18 @@ function BottomDrawer({
     }
   }, [expanded, controls, getExpandedOffset]);
 
-  const hasContent = events.length > 0 || beacons.length > 0 || safetyAlerts.length > 0 || eventsLoading || beaconsLoading || !!sceneScoutSection;
+  const showPeople = activeLayers.has('people');
+  const showIntent = activeLayers.has('intent');
+  const showDrops = activeLayers.has('drops');
+  const showSafety = activeLayers.has('safety');
 
-  if (!hasContent && !eventsLoading && !beaconsLoading) return null;
+  const hasAnyContent =
+    (showPeople && (rightNowUsers.length > 0 || rightNowLoading)) ||
+    (showIntent && (events.length > 0 || beacons.length > 0 || eventsLoading || beaconsLoading)) ||
+    (showDrops && (drops.length > 0 || dropsLoading)) ||
+    (showSafety && safetyAlerts.length > 0) ||
+    !!sceneScoutSection ||
+    !!pulseFeedSection;
 
   return (
     <motion.div
@@ -584,21 +782,15 @@ function BottomDrawer({
       dragConstraints={{ top: -getExpandedOffset() + PEEK_HEIGHT, bottom: 0 }}
       dragElastic={0.1}
       onDragEnd={handleDragEnd}
-      style={{ y: dragY }}
+      style={{
+        ...glassStyle(0.65, 24),
+        borderBottom: 'none',
+        height: `${EXPANDED_HEIGHT_VH}vh`,
+        y: dragY,
+      }}
       className="rounded-t-3xl overflow-hidden touch-pan-y"
       role="region"
       aria-label="Nearby activity drawer"
-      {...{
-        style: {
-          background: 'rgba(0,0,0,0.65)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          borderBottom: 'none',
-          height: `${EXPANDED_HEIGHT_VH}vh`,
-          y: dragY,
-        }
-      }}
     >
       {/* Drag handle */}
       <div
@@ -638,19 +830,49 @@ function BottomDrawer({
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        {/* Scene Scout section */}
-        {sceneScoutSection}
+        {/* Empty state when nothing is live */}
+        {!hasAnyContent && !eventsLoading && !beaconsLoading && !rightNowLoading && !dropsLoading && emptyState}
 
-        {/* Pulse feed section */}
-        {pulseFeedSection}
+        {/* ---- Right Now section (People layer) ---- */}
+        {showPeople && (rightNowLoading || rightNowUsers.length > 0) && (
+          <section className="mb-5">
+            <div className="flex items-center gap-2 mb-2.5">
+              <div className="w-0.5 h-3.5 rounded-full" style={{ background: LIME }} />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Right Now</h3>
+              {rightNowUsers.length > 0 && (
+                <span className="text-[10px] font-bold" style={{ color: LIME }}>{rightNowUsers.length} live</span>
+              )}
+            </div>
+            {rightNowLoading ? (
+              <div className="flex gap-3 overflow-hidden">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="w-16 flex-shrink-0 flex flex-col items-center gap-1.5">
+                    <div className="w-12 h-12 rounded-full animate-pulse bg-white/[0.04]" />
+                    <div className="h-2 w-10 animate-pulse bg-white/[0.04] rounded" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4">
+                {rightNowUsers.map((u) => (
+                  <RightNowUserCard
+                    key={u.id}
+                    user={u}
+                    onTap={() => onProfileTap(u.userId)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
-        {/* Events section */}
-        {(eventsLoading || events.length > 0) && (
+        {/* ---- Events & Beacons section (Intent layer) ---- */}
+        {showIntent && (eventsLoading || events.length > 0) && (
           <section className="mb-5">
             <div className="flex items-center justify-between mb-2.5">
               <div className="flex items-center gap-2">
                 <div className="w-0.5 h-3.5 rounded-full" style={{ background: AMBER }} />
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Upcoming Events</h3>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Events</h3>
               </div>
               {events.length > 0 && (
                 <button
@@ -691,8 +913,7 @@ function BottomDrawer({
           </section>
         )}
 
-        {/* Beacons section */}
-        {(beaconsLoading || beacons.length > 0) && (
+        {showIntent && (beaconsLoading || beacons.length > 0) && (
           <section className="mb-5">
             <div className="flex items-center gap-2 mb-2.5">
               <div className="w-0.5 h-3.5 rounded-full" style={{ background: AMBER }} />
@@ -729,8 +950,44 @@ function BottomDrawer({
           </section>
         )}
 
-        {/* Safety alerts section */}
-        {safetyAlerts.length > 0 && (
+        {/* ---- Drops Nearby section (Commerce layer) ---- */}
+        {showDrops && (dropsLoading || drops.length > 0) && (
+          <section className="mb-5">
+            <div className="flex items-center gap-2 mb-2.5">
+              <div className="w-0.5 h-3.5 rounded-full" style={{ background: DROP_GOLD }} />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Drops Nearby</h3>
+              {drops.length > 0 && (
+                <span className="text-[10px] font-bold" style={{ color: DROP_GOLD }}>{drops.length}</span>
+              )}
+            </div>
+            {dropsLoading ? (
+              <div className="flex gap-3 overflow-hidden">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="w-[140px] flex-shrink-0 rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                    <div className="w-full h-[100px] animate-pulse bg-white/[0.04]" />
+                    <div className="p-2.5 space-y-1.5">
+                      <div className="h-3 w-3/4 animate-pulse bg-white/[0.04] rounded" />
+                      <div className="h-3 w-1/2 animate-pulse bg-white/[0.04] rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-1 -mx-4 px-4">
+                {drops.map((d) => (
+                  <DropCard
+                    key={d.id}
+                    drop={d}
+                    onTap={() => onDropTap(d.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* ---- Safety alerts section ---- */}
+        {showSafety && safetyAlerts.length > 0 && (
           <section className="mb-5">
             <h3 className="text-[#FF6961] text-xs font-semibold uppercase tracking-wider mb-2.5">
               Safety Alerts
@@ -746,6 +1003,12 @@ function BottomDrawer({
             </div>
           </section>
         )}
+
+        {/* Scene Scout section */}
+        {sceneScoutSection}
+
+        {/* Pulse feed section */}
+        {pulseFeedSection}
 
         {/* Cross-links */}
         <section className="mb-5 space-y-2">
@@ -772,17 +1035,6 @@ function BottomDrawer({
             </button>
           )}
         </section>
-
-        {/* Empty state (all sections empty after load) */}
-        {!eventsLoading && !beaconsLoading && events.length === 0 && beacons.length === 0 && safetyAlerts.length === 0 && (
-          <div className="flex flex-col items-center py-8">
-            <RadioIcon className="w-10 h-10 mb-3" style={{ color: MUTED }} />
-            <p className="text-white text-sm font-semibold mb-1">Nothing nearby right now</p>
-            <p className="text-xs text-center" style={{ color: MUTED }}>
-              Drop a beacon to let people know what is happening
-            </p>
-          </div>
-        )}
       </div>
     </motion.div>
   );
@@ -791,14 +1043,14 @@ function BottomDrawer({
 // =============================================================================
 // Main PulseMode
 // =============================================================================
-// ---- Vibe intent mapping (UI label → DB enum value) -----------------------
+// ---- Vibe intent mapping (UI label -> DB enum value) -----------------------
 const VIBE_INTENTS: { label: string; emoji: string; value: string }[] = [
-  { label: 'OUT TONIGHT', emoji: '🔥', value: 'hookup' },
-  { label: 'LOOKING TO CHAT', emoji: '💬', value: 'crowd' },
-  { label: 'AT AN EVENT', emoji: '🎉', value: 'drop' },
+  { label: 'OUT TONIGHT', emoji: '\uD83D\uDD25', value: 'hookup' },
+  { label: 'LOOKING TO CHAT', emoji: '\uD83D\uDCAC', value: 'crowd' },
+  { label: 'AT AN EVENT', emoji: '\uD83C\uDF89', value: 'drop' },
 ];
 
-// ---- City → Country code mapping -------------------------------------------
+// ---- City -> Country code mapping -------------------------------------------
 const CITY_COUNTRY: Record<string, string> = {
   london: 'GB', berlin: 'DE', amsterdam: 'NL', barcelona: 'ES',
   paris: 'FR', new_york: 'US', los_angeles: 'US', san_francisco: 'US',
@@ -828,7 +1080,7 @@ function PostComposer({ onClose, city, onPosted }: { onClose: () => void; city: 
           );
           locationWkt = `SRID=4326;POINT(${pos.coords.longitude} ${pos.coords.latitude})`;
         } catch {
-          // location denied — post without coords
+          // location denied -- post without coords
         }
       }
 
@@ -866,7 +1118,7 @@ function PostComposer({ onClose, city, onPosted }: { onClose: () => void; city: 
     >
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-white font-black text-sm uppercase tracking-wider">Post to Pulse</h3>
-        <button onClick={onClose} className="text-white/40 active:text-white"><X className="w-5 h-5" /></button>
+        <button onClick={onClose} className="text-white/40 active:text-white" aria-label="Close composer"><X className="w-5 h-5" /></button>
       </div>
 
       <textarea
@@ -921,6 +1173,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
   const { openSheet } = useSheet();
   const queryClient = useQueryClient();
   const { isActive: isBoostActive, expiresAt: boostExpiresAt } = usePowerups();
+  const { isPlaying: radioIsPlaying } = useRadio();
 
   // ---- Pull-to-refresh -------------------------------------------------------
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -933,7 +1186,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
   });
   const navigate = useNavigate();
 
-  // ---- GlobeContext — shared state drives both the Three.js canvas and this HUD
+  // ---- GlobeContext -- shared state drives both the Three.js canvas and this HUD
   const {
     selectedCity,
     setSelectedCity,
@@ -953,12 +1206,45 @@ export function PulseMode({ className = '' }: PulseModeProps) {
   const [rightNowOpen, setRightNowOpen] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
 
+  // ---- Layer toggle state (multi-select) ------------------------------------
+  const [activeLayers, setActiveLayers] = useState<Set<LayerKey>>(() => new Set(['people', 'intent', 'drops']));
+
+  const handleLayerToggle = useCallback((key: LayerKey) => {
+    setActiveLayers((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }, []);
+
+  // Sync activeFilter in GlobeContext from layer toggles (best-effort mapping)
+  useEffect(() => {
+    if (activeLayers.has('intent') && activeLayers.has('people')) {
+      setActiveFilter('all');
+    } else if (activeLayers.has('intent') && !activeLayers.has('people')) {
+      setActiveFilter('events');
+    } else if (activeLayers.has('safety')) {
+      setActiveFilter('safety');
+    } else {
+      setActiveFilter('all');
+    }
+  }, [activeLayers, setActiveFilter]);
+
+  // Auto-show safety layer when alerts exist
+  useEffect(() => {
+    // Handled via the LayerStrip hiding the chip when count is 0
+  }, []);
+
   // ---- Scene Scout state ----------------------------------------------------
   const [sceneScoutLoading, setSceneScoutLoading] = useState(false);
   const [sceneScoutData, setSceneScoutData] = useState<SceneScoutData | null>(null);
   const [sceneScoutOpen, setSceneScoutOpen] = useState(false);
 
-  // City tap → opens city-picker sheet (globe flies to selected city)
+  // City tap -> opens city-picker sheet (globe flies to selected city)
   const handleCityTap = useCallback(() => {
     openSheet('city-picker', {
       currentCity: selectedCity,
@@ -1130,9 +1416,74 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     refetchInterval: 30_000,
   });
 
+  // ---- Data: Right Now users (full rows for People layer) -------------------
+  const {
+    data: rightNowUsers = [],
+    isLoading: rightNowUsersLoading,
+  } = useQuery({
+    queryKey: ['pulse-right-now-users'],
+    queryFn: async () => {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('right_now_status')
+        .select('id, user_id, intent, created_at, profiles!inner(display_name, avatar_url)')
+        .gt('expires_at', now)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (error) {
+        console.error('[pulse] right now users query error:', error.message);
+        return [];
+      }
+      return (data ?? []).map((row: Record<string, unknown>) => {
+        const profile = row.profiles as Record<string, unknown> | null;
+        return {
+          id: row.id as string,
+          userId: row.user_id as string,
+          intent: (row.intent as string) || 'explore',
+          displayName: (profile?.display_name as string) || 'Someone',
+          avatarUrl: (profile?.avatar_url as string) || null,
+          createdAt: row.created_at as string,
+        } as RightNowUser;
+      });
+    },
+    refetchInterval: 30_000,
+  });
+
+  // ---- Data: Drops Nearby (preloved_listings, status=live) ------------------
+  const {
+    data: dropsNearby = [],
+    isLoading: dropsLoading,
+  } = useQuery({
+    queryKey: ['pulse-drops-nearby'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('preloved_listings')
+        .select('id, title, price, image_urls, seller_name, created_at')
+        .eq('status', 'live')
+        .order('created_at', { ascending: false })
+        .limit(8);
+      if (error) {
+        console.error('[pulse] drops query error:', error.message);
+        return [];
+      }
+      return (data ?? []).map((row: Record<string, unknown>) => {
+        const imgUrls = row.image_urls as string[] | null;
+        return {
+          id: row.id as string,
+          title: (row.title as string) || 'Listing',
+          price: (row.price as number) ?? null,
+          imageUrl: imgUrls?.[0] || null,
+          sellerName: (row.seller_name as string) || null,
+          createdAt: row.created_at as string,
+        } as DropItem;
+      });
+    },
+    refetchInterval: 30_000,
+  });
+
   // ---- Realtime subscriptions -----------------------------------------------
   useEffect(() => {
-    // Beacons realtime — immediately invalidate queries so new beacons appear
+    // Beacons realtime -- immediately invalidate queries so new beacons appear
     const beaconsChannel = supabase
       .channel('pulse-beacons-live')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'beacons' }, () => {
@@ -1147,11 +1498,12 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       .channel('pulse-right-now-live')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'right_now_status' }, () => {
         queryClient.invalidateQueries({ queryKey: ['pulse-right-now-count'] });
+        queryClient.invalidateQueries({ queryKey: ['pulse-right-now-users'] });
         queryClient.invalidateQueries({ queryKey: ['right-now-users-globe'] });
       })
       .subscribe();
 
-    // Pulse feed realtime — new posts appear immediately
+    // Pulse feed realtime -- new posts appear immediately
     const postsChannel = supabase
       .channel('pulse-posts-live')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'right_now_posts' }, () => {
@@ -1159,10 +1511,19 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       })
       .subscribe();
 
+    // Drops realtime
+    const dropsChannel = supabase
+      .channel('pulse-drops-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'preloved_listings' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['pulse-drops-nearby'] });
+      })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(beaconsChannel);
       supabase.removeChannel(rightNowChannel);
       supabase.removeChannel(postsChannel);
+      supabase.removeChannel(dropsChannel);
     };
   }, [queryClient]);
 
@@ -1171,28 +1532,29 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     (b) => b.kind !== 'event' && b.type !== 'event' && b.kind !== 'safety' && b.type !== 'safety'
   );
 
-  const filteredBeacons = (() => {
-    switch (activeFilter) {
-      case 'events':
-        return { events, beacons: [], safety: [] };
-      case 'hotspots':
-        return { events: [], beacons: nonEventBeacons, safety: [] };
-      case 'safety':
-        return { events: [], beacons: [], safety: safetyAlerts };
-      default:
-        return { events, beacons: nonEventBeacons, safety: safetyAlerts };
-    }
-  })();
-
-  // ---- Counts for chips -----------------------------------------------------
-  const filterCounts: Record<FilterType, number> = {
-    all: events.length + nonEventBeacons.length + safetyAlerts.length,
-    events: events.length,
-    hotspots: nonEventBeacons.length,
+  // ---- Layer counts for chips -----------------------------------------------
+  const layerCounts: Record<LayerKey, number> = {
+    people: rightNowCount,
+    intent: events.length + nonEventBeacons.length,
+    drops: dropsNearby.length,
     safety: safetyAlerts.length,
   };
 
-  // ---- Priority beacon — highest-intensity event starting within 24 h ------
+  // ---- Dynamic state line for TopHUD ----------------------------------------
+  const stateLine = useMemo(() => {
+    const parts: string[] = [];
+
+    const totalActive = events.length + nonEventBeacons.length;
+    if (totalActive > 0) parts.push(`${totalActive} active`);
+    if (rightNowCount > 0) parts.push(`${rightNowCount} live`);
+    if (dropsNearby.length > 0) parts.push(`${dropsNearby.length} drop${dropsNearby.length !== 1 ? 's' : ''}`);
+    if (radioIsPlaying) parts.push('Radio live');
+
+    if (parts.length === 0) return 'Quiet nearby';
+    return parts.join(' \u00B7 ');
+  }, [events.length, nonEventBeacons.length, rightNowCount, dropsNearby.length, radioIsPlaying]);
+
+  // ---- Priority beacon -- highest-intensity event starting within 24 h ------
   const priorityBeacon = useMemo(() => {
     const in24h = events.filter((e) => {
       if (!e.startsAt) return false;
@@ -1202,6 +1564,16 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     if (in24h.length === 0) return null;
     return in24h.sort((a, b) => ((b.intensity ?? 0) - (a.intensity ?? 0)))[0];
   }, [events]);
+
+  // ---- Priority alerts (drops + surges) ------------------------------------
+  const priorityDropAlert = useMemo(() => {
+    if (dropsNearby.length === 0) return null;
+    const newest = dropsNearby[0];
+    const age = Date.now() - new Date(newest.createdAt).getTime();
+    // Only show if drop was created in last 30 minutes
+    if (age > 30 * 60 * 1000) return null;
+    return newest;
+  }, [dropsNearby]);
 
   // ---- Sheet navigation handlers --------------------------------------------
   const handleEventTap = useCallback((id: string) => {
@@ -1217,6 +1589,14 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     openSheet('beacon', { beaconId: id });
   }, [openSheet]);
 
+  const handleProfileTap = useCallback((userId: string) => {
+    openSheet('profile', { id: userId });
+  }, [openSheet]);
+
+  const handleDropTap = useCallback((id: string) => {
+    openSheet('preloved', { id });
+  }, [openSheet]);
+
   const handleCreateBeacon = useCallback(() => {
     openSheet('beacon', { mode: 'create' });
   }, [openSheet]);
@@ -1229,16 +1609,23 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     openSheet('events', {});
   }, [openSheet]);
 
-  // Safety indicator tap → toggle safety filter (globe highlights safety beacons)
+  // Safety indicator tap -> toggle safety layer
   const handleSafetyIndicatorTap = useCallback(() => {
-    setActiveFilter(activeFilter === 'safety' ? 'all' : 'safety');
-  }, [activeFilter, setActiveFilter]);
+    setActiveLayers((prev) => {
+      const next = new Set(prev);
+      if (next.has('safety')) {
+        next.delete('safety');
+      } else {
+        next.add('safety');
+      }
+      return next;
+    });
+  }, []);
 
   // ---- Scene Scout handler (CHROME gated) -----------------------------------
   const handleSceneScout = useCallback(async () => {
     if (sceneScoutLoading) return;
 
-    // CHROME tier gate
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser?.email) {
@@ -1353,7 +1740,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
                     className="flex-shrink-0 text-xs font-black px-1.5 py-0.5 rounded"
                     style={{ background: `${AMBER}20`, color: AMBER }}
                   >
-                    {pick.type === 'event' ? '📅' : '📍'}
+                    {pick.type === 'event' ? '\uD83D\uDCC5' : '\uD83D\uDCCD'}
                   </span>
                 </div>
               </div>
@@ -1367,21 +1754,23 @@ export function PulseMode({ className = '' }: PulseModeProps) {
   // ---- Pulse feed section JSX (radio card + posts) --------------------------
   const pulseFeedSection = (
     <section className="mb-5">
-      {/* Radio card — always pinned */}
+      {/* Radio card -- always pinned */}
       <button
         onClick={() => navigate('/radio')}
         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-3 active:scale-[0.98] transition-all"
         style={{ background: '#00C2E015', border: '1px solid #00C2E030' }}
       >
         <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#00C2E020' }}>
-          <RadioIcon className="w-4 h-4" style={{ color: '#00C2E0' }} />
+          <RadioIcon className="w-4 h-4" style={{ color: TEAL }} />
         </div>
         <div className="flex-1 min-w-0 text-left">
           <p className="text-xs font-bold text-white/80 truncate">HOTMESS RADIO</p>
-          <p className="text-[10px] text-white/40 truncate">Late Night Mess · Live now</p>
+          <p className="text-[10px] text-white/40 truncate">
+            {radioIsPlaying ? 'Playing now' : 'Late Night Mess'}
+          </p>
         </div>
-        <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{ background: '#00C2E020', color: '#00C2E0' }}>
-          ▶ LISTEN
+        <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{ background: '#00C2E020', color: TEAL }}>
+          {radioIsPlaying ? '\u23F8 PLAYING' : '\u25B6 LISTEN'}
         </span>
       </button>
 
@@ -1398,7 +1787,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
         </div>
       ) : pulsePosts.length === 0 ? (
         <p className="text-white/20 text-xs text-center py-6">
-          No pulse posts yet. Be the first — tap + to post.
+          No pulse posts yet. Be the first -- tap Post above.
         </p>
       ) : (
         <div className="space-y-2">
@@ -1432,6 +1821,35 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     </section>
   );
 
+  // ---- Behavioral empty state -----------------------------------------------
+  const emptyState = (
+    <div className="flex flex-col items-center py-10">
+      <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: `${AMBER}10` }}>
+        <Zap className="w-8 h-8" style={{ color: MUTED }} />
+      </div>
+      <p className="text-white text-base font-bold mb-1">Nothing live nearby</p>
+      <p className="text-sm text-center mb-5" style={{ color: MUTED }}>
+        Be the signal
+      </p>
+      <div className="flex gap-3">
+        <button
+          onClick={() => setRightNowOpen(true)}
+          className="h-12 px-6 rounded-xl font-bold text-sm active:scale-95 transition-transform"
+          style={{ background: `${LIME}15`, border: `1.5px solid ${LIME}40`, color: LIME }}
+        >
+          Go Live
+        </button>
+        <button
+          onClick={handleCreateBeacon}
+          className="h-12 px-6 rounded-xl font-bold text-sm active:scale-95 transition-transform"
+          style={{ background: `${AMBER}15`, border: `1.5px solid ${AMBER}40`, color: AMBER }}
+        >
+          Drop a Beacon
+        </button>
+      </div>
+    </div>
+  );
+
   // ---- Render ---------------------------------------------------------------
   return (
     <div className={`h-full w-full relative pointer-events-none ${className}`}>
@@ -1446,14 +1864,13 @@ export function PulseMode({ className = '' }: PulseModeProps) {
         <div className="space-y-3 pt-1">
           <TopHUD
             city={displayCity}
-            beaconCount={allBeacons.length}
+            stateLine={stateLine}
             safetyCount={safetyAlerts.length}
-            rightNowCount={rightNowCount}
             onSafetyTap={handleSafetyIndicatorTap}
             onCityTap={handleCityTap}
           />
 
-          {/* Priority alert strip — highest-intensity event starting within 24 h */}
+          {/* Priority alert strip -- highest-intensity event starting within 24 h */}
           {priorityBeacon && (
             <div
               className="mx-3 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer active:scale-[0.98] transition-transform"
@@ -1467,19 +1884,50 @@ export function PulseMode({ className = '' }: PulseModeProps) {
               <span className="flex-shrink-0 text-white/40 font-normal">
                 {priorityBeacon.startsAt
                   ? isToday(new Date(priorityBeacon.startsAt))
-                    ? `Tonight · ${format(new Date(priorityBeacon.startsAt), 'HH:mm')}`
+                    ? `Tonight \u00B7 ${format(new Date(priorityBeacon.startsAt), 'HH:mm')}`
                     : isTomorrow(new Date(priorityBeacon.startsAt))
-                    ? `Tomorrow · ${format(new Date(priorityBeacon.startsAt), 'HH:mm')}`
-                    : format(new Date(priorityBeacon.startsAt), 'MMM d · HH:mm')
+                    ? `Tomorrow \u00B7 ${format(new Date(priorityBeacon.startsAt), 'HH:mm')}`
+                    : format(new Date(priorityBeacon.startsAt), 'MMM d \u00B7 HH:mm')
                   : ''}
               </span>
             </div>
           )}
 
-          <FilterChipStrip
-            activeFilter={activeFilter}
-            onFilterChange={setActiveFilter}
-            counts={filterCounts}
+          {/* Drop alert strip -- new drop in last 30 min */}
+          {!priorityBeacon && priorityDropAlert && (
+            <div
+              className="mx-3 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer active:scale-[0.98] transition-transform"
+              style={{ background: `${DROP_GOLD}12`, border: `1px solid ${DROP_GOLD}25`, color: DROP_GOLD }}
+              onClick={() => handleDropTap(priorityDropAlert.id)}
+              role="button"
+              aria-label={`New drop: ${priorityDropAlert.title}`}
+            >
+              <ShoppingBag className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="truncate flex-1">{priorityDropAlert.title}</span>
+              <span className="flex-shrink-0 text-white/40 font-normal">
+                {formatTimeAgo(priorityDropAlert.createdAt)}
+              </span>
+            </div>
+          )}
+
+          {/* Right Now surge strip */}
+          {!priorityBeacon && !priorityDropAlert && rightNowCount >= 5 && (
+            <div
+              className="mx-3 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer active:scale-[0.98] transition-transform"
+              style={{ background: `${LIME}10`, border: `1px solid ${LIME}20`, color: LIME }}
+              onClick={() => setRightNowOpen(true)}
+              role="button"
+              aria-label={`${rightNowCount} people just went live nearby`}
+            >
+              <Zap className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="truncate flex-1">{rightNowCount} people live nearby</span>
+            </div>
+          )}
+
+          <LayerStrip
+            activeLayers={activeLayers}
+            onToggle={handleLayerToggle}
+            counts={layerCounts}
           />
         </div>
       </div>
@@ -1491,7 +1939,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
 
       {/* Legend card (bottom-left, above drawer) */}
       {!legendDismissed && (
-        <div className="fixed left-4 z-30 pointer-events-auto" style={{ bottom: 'calc(180px + env(safe-area-inset-bottom, 0px))' }}>
+        <div className="fixed left-4 z-30 pointer-events-auto" style={{ bottom: 'calc(280px + env(safe-area-inset-bottom, 0px))' }}>
           <LegendCard onDismiss={handleDismissLegend} />
         </div>
       )}
@@ -1543,31 +1991,14 @@ export function PulseMode({ className = '' }: PulseModeProps) {
         </button>
       </div>
 
-      {/* Right Now FAB (bottom-left, lime) */}
-      <div className="fixed left-4 z-[45] pointer-events-auto" style={{ bottom: 'calc(180px + env(safe-area-inset-bottom, 0px))' }}>
-        <div className="relative">
-          {rightNowCount > 0 && (
-            <motion.div
-              className="absolute inset-0 rounded-full"
-              style={{ border: '2px solid #39FF14' }}
-              animate={{ scale: [1, 1.7], opacity: [0.6, 0] }}
-              transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
-            />
-          )}
-          <button
-            onClick={() => setRightNowOpen(true)}
-            className="w-14 h-14 rounded-full flex flex-col items-center justify-center gap-0.5 shadow-lg active:scale-95 transition-transform"
-            style={{ background: '#39FF1415', border: '1.5px solid #39FF14', boxShadow: '0 4px 24px #39FF1430' }}
-            aria-label="Go Right Now"
-          >
-            <Zap className="w-5 h-5" style={{ color: '#39FF14' }} />
-            {rightNowCount > 0 && (
-              <span className="text-[8px] font-black leading-none" style={{ color: '#39FF14' }}>
-                {rightNowCount}
-              </span>
-            )}
-          </button>
-        </div>
+      {/* ActionBar (floating, centered, above bottom drawer) */}
+      <div className="fixed left-0 right-0 z-[45] pointer-events-auto flex justify-center" style={{ bottom: 'calc(230px + env(safe-area-inset-bottom, 0px))' }}>
+        <ActionBar
+          onGoLive={() => setRightNowOpen(true)}
+          onPost={() => setComposerOpen(true)}
+          onBrowseNearby={() => navigate('/ghosted')}
+          rightNowCount={rightNowCount}
+        />
       </div>
 
       {/* Beacon FAB (bottom-right, above nav) */}
@@ -1588,31 +2019,27 @@ export function PulseMode({ className = '' }: PulseModeProps) {
         style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}
       >
         <BottomDrawer
-          events={filteredBeacons.events}
-          beacons={filteredBeacons.beacons}
-          safetyAlerts={filteredBeacons.safety}
+          events={events}
+          beacons={nonEventBeacons}
+          safetyAlerts={safetyAlerts}
+          rightNowUsers={rightNowUsers}
+          drops={dropsNearby}
           eventsLoading={eventsLoading}
           beaconsLoading={beaconsLoading}
+          rightNowLoading={rightNowUsersLoading}
+          dropsLoading={dropsLoading}
+          activeLayers={activeLayers}
           onEventTap={handleEventTap}
           onBeaconTap={handleBeaconTap}
           onSafetyTap={handleSafetyTap}
+          onProfileTap={handleProfileTap}
+          onDropTap={handleDropTap}
           onSeeAllEvents={handleSeeAllEvents}
           sceneScoutSection={sceneScoutSection}
           pulseFeedSection={pulseFeedSection}
           focusedBeaconId={focusedBeaconId}
+          emptyState={emptyState}
         />
-      </div>
-
-      {/* Post composer FAB */}
-      <div className="fixed left-1/2 -translate-x-1/2 z-[45] pointer-events-auto" style={{ bottom: 'calc(180px + env(safe-area-inset-bottom, 0px))' }}>
-        <button
-          onClick={() => setComposerOpen(true)}
-          className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform"
-          style={{ background: '#A855F7', boxShadow: '0 4px 24px #A855F730' }}
-          aria-label="Post to Pulse"
-        >
-          <Plus className="w-5 h-5 text-white" />
-        </button>
       </div>
 
       {/* Post composer sheet */}
