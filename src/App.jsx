@@ -50,6 +50,7 @@ import { RadioMiniPlayer } from '@/components/radio/RadioMiniPlayer';
 import { MusicPlayerProvider } from '@/contexts/MusicPlayerContext';
 import { MusicMiniPlayer } from '@/components/music/MusicMiniPlayer';
 import { GlobalTicker } from '@/components/banners/GlobalTicker';
+import { MovementStatusCard } from '@/components/movement/MovementStatusCard';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useDeepLinkSheet } from '@/hooks/useDeepLinkSheet';
 import { usePresenceHeartbeat } from '@/hooks/usePresenceHeartbeat';
@@ -798,6 +799,9 @@ function OSArchitecture() {
 
       {/* Global Ticker — scrolling banner strip above nav */}
       <GlobalTicker className="fixed left-0 right-0 z-[45]" style={{ bottom: '83px' }} />
+
+      {/* Movement Status Card — floats above nav when sharing movement (Z-50) */}
+      {isAuthenticated && <MovementStatusCard />}
 
       {/* L1: OS Bottom Nav — amber-circle 5-tab nav */}
       <OSBottomNav />

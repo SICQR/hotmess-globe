@@ -140,9 +140,23 @@ function GhostedCardInner({
 
         {/* Context line + vibe chip */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] text-white/50 truncate leading-tight">
-            {contextLabel}
-          </span>
+          {contextType === 'moving' ? (
+            <span className="text-[10px] text-white/50 truncate leading-tight flex items-center gap-1">
+              <motion.span
+                animate={{ x: [0, 3, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                className="inline-block"
+                style={{ color: '#C8962C' }}
+              >
+                &rarr;
+              </motion.span>
+              {contextLabel}
+            </span>
+          ) : (
+            <span className="text-[10px] text-white/50 truncate leading-tight">
+              {contextLabel}
+            </span>
+          )}
           {vibe && (
             <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/50 flex-shrink-0 leading-tight">
               {vibe}

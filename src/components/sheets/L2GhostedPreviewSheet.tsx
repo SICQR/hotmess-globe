@@ -21,11 +21,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Ghost, MessageCircle, Navigation, Heart, Shield, Share2, BadgeCheck, X, ChevronLeft } from 'lucide-react';
+import { Ghost, MessageCircle, Navigation, Heart, Shield, Share2, BadgeCheck, X, ChevronLeft, MapPin, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSheet } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useTaps } from '@/hooks/useTaps';
+import { useNearbyMovement } from '@/hooks/useNearbyMovement';
+import { useGPS } from '@/hooks/useGPS';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -58,6 +60,11 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
   const [hasSaved, setHasSaved] = useState(false);
 
   const { isTapped, sendTap } = useTaps(myEmail);
+  const { position: myPosition } = useGPS();
+  const { movers } = useNearbyMovement(myPosition?.lat ?? null, myPosition?.lng ?? null);
+
+  // Find if this user is currently moving
+  const moverInfo = uid ? movers.find((m) => m.userId === uid) : null;
 
   // Load profile + auth
   useEffect(() => {
@@ -141,6 +148,28 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
       lng: profile.last_lng,
     });
   }, [profile, openSheet]);
+
+  const handleSuggestStop = useCallback(() => {
+    if (!profile) return;
+    openSheet('chat', {
+      userId: profile.id,
+      title: `Chat with ${profile.display_name || 'Someone'}`,
+      prefillMessage: "You're passing near me \u2014 quick stop?",
+      movementContext: moverInfo
+        ? {
+            type: 'movement' as const,
+            destination: moverInfo.destinationLabel || undefined,
+            etaMinutes: moverInfo.etaMinutes || undefined,
+            isPassingNear: moverInfo.isPassingNear,
+            sessionId: moverInfo.sessionId,
+          }
+        : undefined,
+    });
+  }, [profile, openSheet, moverInfo]);
+
+  const handleShareMovement = useCallback(() => {
+    openSheet('movement-share', {});
+  }, [openSheet]);
 
   const handleSave = useCallback(async () => {
     if (!profile) return;
@@ -271,6 +300,44 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
           <p className="text-sm text-white/60 mb-4 leading-relaxed">{profile.bio}</p>
         )}
 
+        {/* Movement context banner */}
+        {moverInfo && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 px-3.5 py-3 rounded-xl flex items-center gap-3"
+            style={{
+              background: 'rgba(200,150,44,0.08)',
+              border: '1px solid rgba(200,150,44,0.2)',
+            }}
+          >
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: 'rgba(200,150,44,0.15)' }}
+            >
+              <Navigation className="w-4 h-4" style={{ color: '#C8962C' }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white">
+                Moving{moverInfo.destinationLabel ? ` toward ${moverInfo.destinationLabel}` : ''}
+              </p>
+              <div className="flex items-center gap-2 text-xs text-white/40">
+                {moverInfo.etaMinutes && (
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    ETA {moverInfo.etaMinutes} min
+                  </span>
+                )}
+                {moverInfo.isPassingNear && (
+                  <span style={{ color: '#C8962C' }} className="font-semibold">
+                    Passing near you
+                  </span>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Intent/vibe chips */}
         {profile.looking_for.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-6">
@@ -311,6 +378,19 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
             <MessageCircle className="w-4 h-4" />
             Message
           </button>
+
+          {/* Suggest Stop (only when user is moving nearby) */}
+          {moverInfo && moverInfo.isPassingNear && (
+            <button
+              onClick={handleSuggestStop}
+              className="flex-1 h-12 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
+              style={{ backgroundColor: 'rgba(200,150,44,0.15)', color: '#C8962C', border: '1px solid rgba(200,150,44,0.3)' }}
+              aria-label="Suggest a stop"
+            >
+              <MapPin className="w-4 h-4" />
+              Suggest Stop
+            </button>
+          )}
 
           {/* Meet */}
           <button

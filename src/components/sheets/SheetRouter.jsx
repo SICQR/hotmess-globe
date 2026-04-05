@@ -87,6 +87,7 @@ const L2DataExportSheet = lazy(() => import('./L2DataExportSheet'));
 const L2ReportSheet = lazy(() => import('./L2ReportSheet'));
 const L2VerificationSheet = lazy(() => import('./L2VerificationSheet'));
 const L2GhostedPreviewSheet = lazy(() => import('./L2GhostedPreviewSheet'));
+const L2MovementShareSheet = lazy(() => import('./L2MovementShareSheet'));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PLACEHOLDER FOR UNIMPLEMENTED SHEETS
@@ -221,6 +222,8 @@ const SHEET_COMPONENTS = {
   'verification': L2VerificationSheet,
   // Ghosted preview (grid tap → profile preview)
   'ghosted-preview': L2GhostedPreviewSheet,
+  // Movement sharing
+  'movement-share': L2MovementShareSheet,
 };
 
 
