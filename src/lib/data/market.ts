@@ -95,7 +95,7 @@ export async function getPrelovedProducts(filters: ProductFilters = {}): Promise
   try {
     // Step 1: fetch listings
     let query = supabase
-      .from('preloved_listings')
+      .from('market_listings')
       .select('*')
       .eq('status', 'active');
 
@@ -152,7 +152,7 @@ export async function getPrelovedProducts(filters: ProductFilters = {}): Promise
 
 export async function getPrelovedProductById(id: string): Promise<Product | null> {
   const { data, error } = await supabase
-    .from('preloved_listings')
+    .from('market_listings')
     .select('*')
     .eq('id', id)
     .single();
@@ -437,7 +437,7 @@ export async function getProductById(unifiedId: string): Promise<Product | null>
  */
 export async function getCategories(): Promise<string[]> {
   const { data, error } = await supabase
-    .from('preloved_listings')
+    .from('market_listings')
     .select('category')
     .eq('status', 'active')
     .not('category', 'is', null);
@@ -514,7 +514,7 @@ export async function createListing(input: CreateListingInput): Promise<Product 
   if (!user) return null;
 
   const { data, error } = await supabase
-    .from('preloved_listings')
+    .from('market_listings')
     .insert({
       seller_id: user.id,
       title: input.title,
@@ -541,7 +541,7 @@ export async function updateListing(
   updates: Partial<CreateListingInput>
 ): Promise<Product | null> {
   const { data, error } = await supabase
-    .from('preloved_listings')
+    .from('market_listings')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', listingId)
     .select('*')
@@ -557,7 +557,7 @@ export async function updateListing(
 
 export async function deleteListing(listingId: string): Promise<boolean> {
   const { error } = await supabase
-    .from('preloved_listings')
+    .from('market_listings')
     .update({ status: 'deleted' })
     .eq('id', listingId);
 

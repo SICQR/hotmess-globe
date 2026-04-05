@@ -381,14 +381,16 @@ export default function Profile() {
     refetchInterval: 60000,
   });
 
+  const profileUserId = profileUser?.id || profileUser?.auth_user_id || null;
   const { data: rightNowStatus } = useQuery({
-    queryKey: ['right-now-profile', userEmail],
+    queryKey: ['right-now-profile', profileUserId],
     queryFn: async () => {
-      const { data: statuses, error } = await supabase.from('right_now_status').select('*').eq('user_email', userEmail).gte('expires_at', new Date().toISOString());
+      if (!profileUserId) return null;
+      const { data: statuses, error } = await supabase.from('right_now_status').select('*').eq('user_id', profileUserId).gte('expires_at', new Date().toISOString());
       if (error) throw error;
       return (statuses || []).find(s => new Date(s.expires_at) > new Date()) || null;
     },
-    enabled: !!userEmail,
+    enabled: !!profileUserId,
     refetchInterval: 15000
   });
 

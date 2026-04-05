@@ -49,7 +49,7 @@ export async function reportListing(input: ReportInput): Promise<boolean> {
     if (count != null && count >= 3) {
       // Auto-flag the listing
       await supabase
-        .from('preloved_listings')
+        .from('market_listings')
         .update({ moderation: 'flagged' })
         .eq('id', listingId)
         .eq('moderation', 'clear'); // only if currently clear
