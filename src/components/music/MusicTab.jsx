@@ -10,7 +10,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Play, Pause, ChevronDown, Disc3, X, Loader2,
+  Play, Pause, ChevronDown, Disc3, X,
   FileAudio, Headphones, ExternalLink,
   Radio as RadioIcon,
 } from 'lucide-react';
@@ -221,8 +221,9 @@ function ReleaseDetailSheet({ release, tracks, onClose }) {
           {release.artwork_url ? (
             <img src={release.artwork_url} alt={release.title} className="w-full h-full object-cover" loading="lazy" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-[#9B1B2A]/10">
-              <Disc3 className="w-16 h-16 text-[#9B1B2A]/30" />
+            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1C1C1E] to-[#0D0D0D]">
+              <Disc3 className="w-14 h-14 text-[#C8962C]/20 mb-2" />
+              <span className="text-[9px] font-bold uppercase tracking-widest text-white/15">RAW CONVICT</span>
             </div>
           )}
         </div>
@@ -796,8 +797,9 @@ export default function MusicTab() {
                     {track.artwork_url ? (
                       <img src={track.artwork_url} alt={track.title} className="w-full h-full object-cover" loading="lazy" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-[#9B1B2A]/10">
-                        <Disc3 className="w-10 h-10 text-[#9B1B2A]/30" />
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1C1C1E] to-[#0D0D0D]">
+                        <Disc3 className="w-8 h-8 text-[#C8962C]/30 mb-1" />
+                        <span className="text-[8px] font-bold uppercase tracking-widest text-white/15">RCR</span>
                       </div>
                     )}
 
@@ -908,8 +910,9 @@ export default function MusicTab() {
                   loading="lazy"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-[#9B1B2A]/10">
-                  <Disc3 className="w-20 h-20 text-[#9B1B2A]/20" />
+                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1C1C1E] to-[#0D0D0D]">
+                  <Disc3 className="w-16 h-16 text-[#C8962C]/20 mb-2" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/15">RAW CONVICT</span>
                 </div>
               )}
             </motion.div>

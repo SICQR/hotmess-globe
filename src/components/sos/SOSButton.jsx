@@ -111,41 +111,41 @@ export function SOSButton({ className, onTrigger }) {
         onTouchStart={startHold}
         onTouchEnd={endHold}
         className={cn(
-          'relative w-16 h-16 rounded-full flex items-center justify-center transition-all',
+          'relative w-10 h-10 rounded-full flex items-center justify-center transition-all',
           isHolding
             ? 'bg-red-600 scale-110'
-            : 'bg-red-600/50 border-2 border-red-500 hover:bg-red-600/70',
+            : 'bg-red-600/30 border border-red-500/60 hover:bg-red-600/50',
           className
         )}
       >
         {/* Progress ring */}
         <svg
           className="absolute inset-0 w-full h-full -rotate-90"
-          viewBox="0 0 64 64"
+          viewBox="0 0 40 40"
         >
           <circle
-            cx="32"
-            cy="32"
-            r="28"
+            cx="20"
+            cy="20"
+            r="17"
             fill="none"
-            stroke="rgba(255,0,0,0.3)"
-            strokeWidth="4"
+            stroke="rgba(255,0,0,0.2)"
+            strokeWidth="3"
           />
           <circle
-            cx="32"
-            cy="32"
-            r="28"
+            cx="20"
+            cy="20"
+            r="17"
             fill="none"
             stroke="#FF0000"
-            strokeWidth="4"
-            strokeDasharray={`${progress * 176} 176`}
+            strokeWidth="3"
+            strokeDasharray={`${progress * 107} 107`}
             strokeLinecap="round"
             className="transition-all"
           />
         </svg>
 
         <AlertTriangle
-          size={24}
+          size={16}
           className={cn(
             'relative z-10 transition-colors',
             isHolding ? 'text-white' : 'text-red-500'

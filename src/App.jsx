@@ -826,11 +826,8 @@ function OSArchitecture() {
       {/* Radio Mini Player — sits just above OSBottomNav (Z-40) */}
       <RadioMiniPlayer hidden={onRadioRoute} />
 
-      {/* Music Mini Player — sits just above OSBottomNav (Z-50) */}
+      {/* Music Mini Player — sits just above radio player or nav (Z-50) */}
       <MusicMiniPlayer />
-
-      {/* Global Ticker — scrolling banner strip above nav */}
-      <GlobalTicker className="fixed left-0 right-0 z-[45]" style={{ bottom: '83px' }} />
 
       {/* L1: OS Bottom Nav — amber-circle 5-tab nav */}
       <OSBottomNav />
@@ -841,7 +838,7 @@ function OSArchitecture() {
       {/* L3: SOS long-press trigger — auth only (Z-190) */}
       {isAuthenticated && (
         <SOSButton
-          className="fixed bottom-24 right-4 z-[190]"
+          className="fixed bottom-[100px] right-3 z-[190]"
           onTrigger={triggerSOS}
         />
       )}
