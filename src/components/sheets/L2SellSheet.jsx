@@ -249,7 +249,7 @@ export default function L2SellSheet() {
 
       // Insert listing — new schema fields
       const { data: listing, error } = await supabase
-        .from('preloved_listings')
+        .from('market_listings')
         .insert({
           seller_id: userId,
           title: title.trim(),

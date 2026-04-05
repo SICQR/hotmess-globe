@@ -62,7 +62,7 @@ export default function L2EditListingSheet({ listingId, listing: listingProp }) 
 
     const load = async () => {
       const { data, error } = await supabase
-        .from('preloved_listings')
+        .from('market_listings')
         .select('*')
         .eq('id', listingId)
         .single();
@@ -88,7 +88,7 @@ export default function L2EditListingSheet({ listingId, listing: listingProp }) 
 
     setSaving(true);
     const { error } = await supabase
-      .from('preloved_listings')
+      .from('market_listings')
       .update({
         title: title.trim(),
         description: description.trim(),
@@ -114,7 +114,7 @@ export default function L2EditListingSheet({ listingId, listing: listingProp }) 
     if (!id) return;
     setDeleting(true);
     const { error } = await supabase
-      .from('preloved_listings')
+      .from('market_listings')
       .update({ status: 'archived' })
       .eq('id', id);
     setDeleting(false);

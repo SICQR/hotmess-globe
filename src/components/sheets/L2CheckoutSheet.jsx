@@ -38,7 +38,7 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
     if (!id) { setLoading(false); return; }
     const load = async () => {
       const { data } = await supabase
-        .from('preloved_listings')
+        .from('market_listings')
         .select('id, title, price, images, seller_id')
         .eq('id', id)
         .single();

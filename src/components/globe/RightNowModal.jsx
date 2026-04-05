@@ -65,7 +65,7 @@ export default function RightNowModal({ isOpen, onClose, intent: intentProp = 'e
       const { data } = await supabase
         .from('right_now_status')
         .select('*')
-        .eq('user_email', user.email)
+        .eq('user_id', user.id)
         .gte('expires_at', new Date().toISOString())
         .maybeSingle();
       if (data) setIsLive(true);
@@ -97,7 +97,7 @@ export default function RightNowModal({ isOpen, onClose, intent: intentProp = 'e
       await supabase
         .from('right_now_status')
         .update({ expires_at: new Date().toISOString() })
-        .eq('user_email', user.email);
+        .eq('user_id', user.id);
       setIsLive(false);
       toast.success('You are no longer live');
     } catch {
@@ -149,8 +149,7 @@ export default function RightNowModal({ isOpen, onClose, intent: intentProp = 'e
       const { error } = await supabase
         .from('right_now_status')
         .upsert({
-          user_email: user.email,
-          user_id: user.id ?? null,
+          user_id: user.id,
           intent: intentProp,
           timeframe: duration === 0 ? 'indefinite' : duration < 60 ? `${duration}m` : `${duration/60}h`,
           active: true,
@@ -166,7 +165,7 @@ export default function RightNowModal({ isOpen, onClose, intent: intentProp = 'e
             photo_url: photoUrl,
             vibe_blast: vibeBlast && isBoostActive('vibe_blast'),
           },
-        }, { onConflict: 'user_email' });
+        }, { onConflict: 'user_id' });
 
       if (error) throw error;
 

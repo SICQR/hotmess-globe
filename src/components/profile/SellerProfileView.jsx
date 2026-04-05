@@ -24,7 +24,7 @@ export default function SellerProfileView({ user }) {
     queryFn: async () => {
       if (!user?.id) return [];
       const { data, error } = await supabase
-        .from('preloved_listings')
+        .from('market_listings')
         .select('id, title, price, condition, category, photos, status, created_at')
         .eq('seller_id', user.id)
         .eq('status', 'active')
@@ -42,7 +42,7 @@ export default function SellerProfileView({ user }) {
     queryFn: async () => {
       if (!user?.id) return 0;
       const { count } = await supabase
-        .from('preloved_listings')
+        .from('market_listings')
         .select('*', { count: 'exact', head: true })
         .eq('seller_id', user.id)
         .eq('status', 'sold');

@@ -89,7 +89,7 @@ export default function CreatePrelovedSheet({ open, onClose, currentUser }) {
       }
 
       // Insert listing
-      const { error: insertError } = await supabase.from('preloved_listings').insert({
+      const { error: insertError } = await supabase.from('market_listings').insert({
         seller_id: currentUser.id,
         title: form.title.trim(),
         description: form.description.trim(),
