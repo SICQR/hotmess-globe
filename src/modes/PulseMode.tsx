@@ -72,6 +72,9 @@ import GhostedOverlay from '@/components/ghosted/GhostedOverlay';
 import type { GhostedContext } from '@/hooks/useVenuePresence';
 import { useLiveMode } from '@/contexts/LiveModeContext';
 import { useVenueVibeMix, VIBE_CONFIG, VIBES, type Vibe } from '@/hooks/useVenueVibes';
+import { useNearbyMovement } from '@/hooks/useNearbyMovement';
+import { useGPS } from '@/hooks/useGPS';
+import { Navigation } from 'lucide-react';
 import { VibeMixBar } from '@/components/vibe/VibeSelector';
 
 // ---- Brand constants --------------------------------------------------------
@@ -1154,19 +1157,27 @@ function ActionBar({
         Post
       </button>
 
-      {/* Open Ghosted */}
+      {/* Open Ghosted — promoted as primary nearby action */}
       <button
         onClick={onBrowseNearby}
-        className="h-10 px-4 rounded-full flex items-center gap-1.5 text-xs font-bold active:scale-95 transition-transform"
+        className="h-10 px-5 rounded-full flex items-center gap-1.5 text-xs font-bold active:scale-95 transition-transform"
         style={{
-          ...glassStyle(0.5, 16),
-          borderColor: `${AMBER}40`,
+          background: `${AMBER}20`,
+          border: `1.5px solid ${AMBER}50`,
           color: AMBER,
         }}
-        aria-label="See men nearby on Ghosted"
+        aria-label="See who's nearby on Ghosted"
       >
         <Eye className="w-3.5 h-3.5" />
-        Ghosted
+        Nearby
+        {rightNowCount > 0 && (
+          <span
+            className="text-[9px] font-black px-1 py-0.5 rounded-full ml-0.5"
+            style={{ background: `${AMBER}30` }}
+          >
+            {rightNowCount}
+          </span>
+        )}
       </button>
     </div>
   );
@@ -1250,6 +1261,10 @@ function BottomDrawer({
   pulseFeedSection,
   focusedBeaconId,
   emptyState,
+  moversNearby,
+  radioPlaying,
+  radioShowName,
+  onBrowseGhosted,
 }: {
   events: BeaconItem[];
   beacons: BeaconItem[];
@@ -1271,6 +1286,10 @@ function BottomDrawer({
   sceneScoutSection?: React.ReactNode;
   pulseFeedSection?: React.ReactNode;
   emptyState?: React.ReactNode;
+  moversNearby?: number;
+  radioPlaying?: boolean;
+  radioShowName?: string;
+  onBrowseGhosted?: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const controls = useAnimation();
@@ -1355,7 +1374,7 @@ function BottomDrawer({
       </div>
 
       {/* Drawer header */}
-      <div className="flex items-center justify-between px-4 pb-3">
+      <div className="flex items-center justify-between px-4 pb-2">
         <div className="flex items-center gap-2">
           <div className="w-0.5 h-4 rounded-full" style={{ background: AMBER }} />
           <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Nearby now</h2>
@@ -1372,6 +1391,51 @@ function BottomDrawer({
           )}
         </button>
       </div>
+
+      {/* ── NEARBY INTELLIGENCE STRIP ── compact signal summary */}
+      {(() => {
+        const signals: React.ReactNode[] = [];
+        const liveCount = rightNowUsers.length;
+        const moverCount = moversNearby ?? 0;
+        const eventCount = events.length;
+
+        if (liveCount > 0) signals.push(
+          <span key="live" className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#39FF14]" />
+            <span className="text-white/70">{liveCount} live</span>
+          </span>
+        );
+        if (moverCount > 0) signals.push(
+          <span key="moving" className="flex items-center gap-1">
+            <Navigation className="w-2.5 h-2.5" style={{ color: AMBER }} />
+            <span className="text-white/70">{moverCount} moving</span>
+          </span>
+        );
+        if (radioPlaying && radioShowName) signals.push(
+          <span key="radio" className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00C2E0] animate-pulse" />
+            <span style={{ color: '#00C2E0' }}>On air</span>
+          </span>
+        );
+        if (eventCount > 0) signals.push(
+          <span key="events" className="flex items-center gap-1">
+            <span className="text-white/50">{eventCount} event{eventCount !== 1 ? 's' : ''}</span>
+          </span>
+        );
+
+        if (signals.length === 0) return null;
+
+        return (
+          <div className="flex items-center gap-3 px-4 pb-3 text-[11px] font-semibold overflow-x-auto scrollbar-hide">
+            {signals.map((s, i) => (
+              <React.Fragment key={i}>
+                {i > 0 && <span className="text-white/15">·</span>}
+                {s}
+              </React.Fragment>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Scrollable content */}
       <div
@@ -1561,30 +1625,34 @@ function BottomDrawer({
         {/* Pulse feed section */}
         {pulseFeedSection}
 
-        {/* Cross-links */}
-        <section className="mb-5 space-y-2">
+        {/* ── GHOSTED BRIDGE — contextual entry with movement/radio hints ── */}
+        <section className="mb-5">
           <button
-            onClick={() => window.location.assign('/ghosted')}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl active:scale-[0.98] transition-all"
-            style={{ background: 'rgba(200,150,44,0.06)', border: '1px solid rgba(200,150,44,0.15)' }}
+            onClick={onBrowseGhosted}
+            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl active:scale-[0.98] transition-all"
+            style={{ background: `${AMBER}10`, border: `1px solid ${AMBER}25` }}
           >
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-xs font-bold" style={{ color: AMBER }}>Who's nearby</p>
-              <p className="text-[10px] text-white/40">See people around you on Ghosted</p>
-            </div>
-          </button>
-          {events.length > 0 && (
-            <button
-              onClick={() => onSeeAllEvents()}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl active:scale-[0.98] transition-all"
-              style={{ background: 'rgba(200,150,44,0.06)', border: '1px solid rgba(200,150,44,0.15)' }}
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: `${AMBER}15` }}
             >
-              <div className="flex-1 min-w-0 text-left">
-                <p className="text-xs font-bold" style={{ color: AMBER }}>Tonight's events</p>
-                <p className="text-[10px] text-white/40">{events.length} event{events.length !== 1 ? 's' : ''} happening</p>
-              </div>
-            </button>
-          )}
+              <Eye className="w-5 h-5" style={{ color: AMBER }} />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-sm font-bold" style={{ color: AMBER }}>See who's nearby</p>
+              <p className="text-[11px] text-white/40 mt-0.5">
+                {(() => {
+                  const parts: string[] = [];
+                  if (rightNowUsers.length > 0) parts.push(`${rightNowUsers.length} live`);
+                  if ((moversNearby ?? 0) > 0) parts.push(`${moversNearby} moving`);
+                  if (radioPlaying) parts.push('listeners nearby');
+                  if (parts.length > 0) return parts.join(' · ');
+                  return 'Open Ghosted';
+                })()}
+              </p>
+            </div>
+            <ChevronDown className="w-4 h-4 rotate-[-90deg] flex-shrink-0" style={{ color: `${AMBER}60` }} />
+          </button>
         </section>
       </div>
     </motion.div>
@@ -1724,8 +1792,10 @@ export function PulseMode({ className = '' }: PulseModeProps) {
   const { openSheet } = useSheet();
   const queryClient = useQueryClient();
   const { isActive: isBoostActive, expiresAt: boostExpiresAt } = usePowerups();
-  const { isPlaying: radioIsPlaying } = useRadio();
+  const { isPlaying: radioIsPlaying, currentShowName: radioShowName } = useRadio();
   const { enterLive } = useLiveMode();
+  const { position: myPosition } = useGPS();
+  const { data: nearbyMovers = [] } = useNearbyMovement(myPosition?.lat ?? null, myPosition?.lng ?? null);
 
   // ---- Pull-to-refresh -------------------------------------------------------
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -2161,7 +2231,9 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     lines.push('Active right now');
     if (rightNowCount > 2) lines.push('Trending nearby');
     if (events.length > 0) lines.push('Something just started');
-    if (radioIsPlaying) lines.push('Radio live');
+    if (nearbyMovers.length > 0) lines.push(`${nearbyMovers.length} moving nearby`);
+    if (radioIsPlaying && radioShowName) lines.push(`On air · ${radioShowName}`);
+    else if (radioIsPlaying) lines.push('Radio live');
 
     // Conversion hooks in state line
     if (hottestVenue) {
@@ -2170,7 +2242,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     }
 
     return lines;
-  }, [events.length, nonEventBeacons.length, rightNowCount, dropsNearby.length, radioIsPlaying, hottestVenue]);
+  }, [events.length, nonEventBeacons.length, rightNowCount, dropsNearby.length, radioIsPlaying, radioShowName, nearbyMovers.length, hottestVenue]);
 
   // Rotate through state lines every 4s
   const [stateLineIdx, setStateLineIdx] = useState(0);
@@ -2497,30 +2569,28 @@ export function PulseMode({ className = '' }: PulseModeProps) {
 
   // ---- Behavioral empty state -----------------------------------------------
   const emptyState = (
-    <div className="flex flex-col items-center py-10">
-      <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: `${AMBER}10` }}>
-        <Zap className="w-8 h-8" style={{ color: MUTED }} />
+    <div className="flex flex-col items-center py-10 px-6">
+      <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4" style={{ background: `${AMBER}08` }}>
+        <Zap className="w-7 h-7" style={{ color: `${MUTED}80` }} />
       </div>
-      <p className="text-white text-base font-bold mb-1">Nothing live nearby</p>
-      <p className="text-sm text-center mb-5" style={{ color: MUTED }}>
-        Be the signal
+      <p className="text-white text-base font-bold mb-1">Quiet nearby right now</p>
+      <p className="text-sm text-center mb-6 max-w-[220px]" style={{ color: MUTED }}>
+        Go Live so people nearby can find you
       </p>
-      <div className="flex gap-3">
-        <button
-          onClick={() => openSheet('go-live', {})}
-          className="h-12 px-6 rounded-xl font-bold text-sm active:scale-95 transition-transform"
-          style={{ background: `${LIME}15`, border: `1.5px solid ${LIME}40`, color: LIME }}
-        >
-          Go Live
-        </button>
-        <button
-          onClick={handleCreateBeacon}
-          className="h-12 px-6 rounded-xl font-bold text-sm active:scale-95 transition-transform"
-          style={{ background: `${AMBER}15`, border: `1.5px solid ${AMBER}40`, color: AMBER }}
-        >
-          Drop a Beacon
-        </button>
-      </div>
+      <button
+        onClick={() => openSheet('go-live', {})}
+        className="h-11 px-8 rounded-full font-bold text-sm active:scale-95 transition-transform"
+        style={{ background: AMBER, color: '#000' }}
+      >
+        Go Live
+      </button>
+      <button
+        onClick={() => navigate('/ghosted')}
+        className="mt-3 text-xs font-semibold active:opacity-70 transition-opacity"
+        style={{ color: `${AMBER}80` }}
+      >
+        Open Ghosted
+      </button>
     </div>
   );
 
@@ -2742,6 +2812,10 @@ export function PulseMode({ className = '' }: PulseModeProps) {
           pulseFeedSection={pulseFeedSection}
           focusedBeaconId={focusedBeaconId}
           emptyState={emptyState}
+          moversNearby={nearbyMovers.length}
+          radioPlaying={radioIsPlaying}
+          radioShowName={radioShowName}
+          onBrowseGhosted={() => navigate('/ghosted')}
         />
       </div>
 
