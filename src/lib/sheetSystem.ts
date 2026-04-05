@@ -568,6 +568,17 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────
+  // GHOSTED PREVIEW (profile tap from grid)
+  // ─────────────────────────────────────────────────────────────────────────
+  'ghosted-preview': {
+    id: 'ghosted-preview',
+    title: 'Profile',
+    height: 'large',
+    auth: false,
+    deepLinkParams: ['uid'],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
   // AUTH — MORE SIGN-IN METHODS
   // ─────────────────────────────────────────────────────────────────────────
   'more-auth-methods': {
