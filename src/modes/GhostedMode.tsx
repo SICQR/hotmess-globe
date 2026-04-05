@@ -61,26 +61,15 @@ const CARD_BG = '#1C1C1E';
 const MUTED = '#8E8E93';
 
 // ---- Tab definitions --------------------------------------------------------
-type TabKey = 'all' | 'live' | 'online' | 'rightnow' | 'events';
+type TabKey = 'nearby' | 'live' | 'chats';
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: 'all', label: 'All' },
+  { key: 'nearby', label: 'Nearby' },
   { key: 'live', label: 'Live' },
-  { key: 'online', label: 'Online Now' },
-  { key: 'rightnow', label: 'Right Now' },
-  { key: 'events', label: 'Events Tonight' },
+  { key: 'chats', label: 'Chats' },
 ];
 
-// ---- Filter presets (quick-tap chips below tabs) ----------------------------
-type PresetKey = 'nearby' | 'young' | 'hookup' | 'hang' | 'verified';
-
-const FILTER_PRESETS: { key: PresetKey; label: string; filters: Partial<ReturnType<typeof defaultGhostedFilters>> }[] = [
-  { key: 'nearby', label: 'Nearby (<1km)', filters: { distanceKm: 1 } },
-  { key: 'young', label: '18–25', filters: { ageMin: 18, ageMax: 25 } },
-  { key: 'hookup', label: 'Hookup', filters: { vibes: ['hookup'] } },
-  { key: 'hang', label: 'Hang', filters: { vibes: ['hang'] } },
-  { key: 'verified', label: 'Online only', filters: { onlineOnly: true } },
-];
+// Filter presets removed — cleaner UI with single filter sheet
 
 // ---- Filter key for localStorage sync ----------------------------------------
 const GHOSTED_FILTERS_KEY = 'hm_ghosted_filters';
@@ -295,7 +284,7 @@ function GhostedSkeleton() {
 
 // ---- Empty state ------------------------------------------------------------
 
-function GhostedEmpty({ onOpenFilters }: { onOpenFilters: () => void }) {
+function GhostedEmpty({ onOpenFilters, onGoLive }: { onOpenFilters: () => void; onGoLive?: () => void }) {
   const [referralCode, setReferralCode] = useState<string | null>(null);
 
   useEffect(() => {
@@ -340,25 +329,25 @@ function GhostedEmpty({ onOpenFilters }: { onOpenFilters: () => void }) {
       transition={{ duration: 0.4 }}
     >
       <Ghost className="w-12 h-12 mb-4" style={{ color: AMBER }} />
-      <h2 className="text-lg font-black text-white mb-2">Nobody nearby yet</h2>
+      <h2 className="text-lg font-black text-white mb-2">Quiet right now</h2>
       <p className="text-sm text-[#8E8E93] mb-6 max-w-[260px]">
-        HOTMESS is growing in your area. Invite a friend and go live together.
+        Go Live so people nearby know you're out tonight.
       </p>
       <button
-        onClick={handleInvite}
+        onClick={onGoLive || onOpenFilters}
         className="h-12 px-6 text-black font-bold rounded-2xl flex items-center gap-2 active:scale-95 transition-transform mb-3"
         style={{ backgroundColor: AMBER }}
-        aria-label="Invite a friend"
+        aria-label="Go Live"
       >
-        Invite a friend
+        Go Live
       </button>
       <button
-        onClick={onOpenFilters}
+        onClick={handleInvite}
         className="text-sm font-medium"
         style={{ color: MUTED }}
-        aria-label="Open filters"
+        aria-label="Invite a friend"
       >
-        or adjust filters
+        or invite a friend
       </button>
     </motion.div>
   );
@@ -450,10 +439,10 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
   const [vibeTagFilter, setVibeTagFilter] = useState<string | null>(null);
 
   // ---- Active tab ----
-  const [activeTab, setActiveTab] = useState<TabKey>('all');
+  const [activeTab, setActiveTab] = useState<TabKey>('nearby');
 
-  // ---- Active filter preset (quick-tap chip) ----
-  const [activePreset, setActivePreset] = useState<PresetKey | null>(null);
+  // ---- Chat threads for Chats tab ----
+  const [chatThreads, setChatThreads] = useState<any[]>([]);
 
   // ---- Profile Bump: load user IDs with active profile_bump boost ----
   const [boostUserIds, setBoostUserIds] = useState<Set<string>>(new Set());
@@ -478,48 +467,30 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
     return () => clearInterval(iv);
   }, []);
 
-  // ---- Events Tonight: load user IDs of people with tonight RSVPs ----
-  const [tonightUserIds, setTonightUserIds] = useState<Set<string>>(new Set());
-
+  // ---- Chat threads for Chats tab ----
   useEffect(() => {
-    if (activeTab !== 'events') return;
+    if (activeTab !== 'chats') return;
+    let cancelled = false;
 
-    const fetchTonightRsvps = async () => {
-      // Build today's date range in UTC
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      const todayEnd = new Date();
-      todayEnd.setHours(23, 59, 59, 999);
-
+    const fetchChats = async () => {
       try {
-        // Get beacon IDs for events happening today
-        const { data: beacons } = await supabase
-          .from('beacons')
-          .select('id')
-          .gte('starts_at', todayStart.toISOString())
-          .lte('starts_at', todayEnd.toISOString())
-          .not('starts_at', 'is', null);
-
-        if (!beacons || beacons.length === 0) return;
-
-        const beaconIds = beacons.map((b: any) => b.id);
-
-        // Get user IDs who RSVPed for those beacons
-        const { data: rsvps } = await supabase
-          .from('event_rsvps')
-          .select('user_id')
-          .in('beacon_id', beaconIds)
-          .in('status', ['going', 'interested']);
-
-        if (rsvps && rsvps.length > 0) {
-          setTonightUserIds(new Set(rsvps.map((r: any) => r.user_id)));
-        }
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user?.id || cancelled) return;
+        const uid = session.user.id;
+        const { data } = await supabase
+          .from('chat_threads')
+          .select('*')
+          .contains('participants', [uid])
+          .order('last_message_at', { ascending: false })
+          .limit(30);
+        if (!cancelled && data) setChatThreads(data);
       } catch {
-        // Non-fatal — Events Tonight tab will show empty state
+        // Non-fatal
       }
     };
 
-    fetchTonightRsvps();
+    fetchChats();
+    return () => { cancelled = true; };
   }, [activeTab]);
 
   // ---- Quick action handlers ----
@@ -663,31 +634,15 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
 
       // Tab filters
       if (activeTab === 'live') {
-        // LIVE tab: show users with active presence (< 30 min), active check-ins, or radio listeners
+        // LIVE tab: users with active presence (< 30 min), active right_now, or online
         const lastSeen = profile.last_seen ? new Date(profile.last_seen).getTime() : 0;
         const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000;
         const isRecentlyActive = lastSeen > thirtyMinutesAgo;
         const hasRightNow = !!(profile.rightNow || profile.right_now_status);
         if (!profile.is_online && !profile.onlineNow && !isRecentlyActive && !hasRightNow) return false;
       }
-
-      if (activeTab === 'online') {
-        // Show if is_online OR last_seen within 15 minutes
-        const lastSeen = profile.last_seen ? new Date(profile.last_seen).getTime() : 0;
-        const fifteenMinutesAgo = Date.now() - 15 * 60 * 1000;
-        const isRecentlyActive = lastSeen > fifteenMinutesAgo;
-        if (!profile.is_online && !profile.onlineNow && !isRecentlyActive) return false;
-      }
-
-      if (activeTab === 'rightnow') {
-        if (!profile.rightNow && !profile.right_now_status) return false;
-      }
-
-      if (activeTab === 'events') {
-        // Show profiles who have RSVPed for tonight's events
-        // Falls back to empty state if no RSVPs loaded yet
-        return tonightUserIds.has(profile.id);
-      }
+      // 'nearby' tab: no additional filter (distance handled above)
+      // 'chats' tab: renders its own list, not the grid
 
       // Vibe tag filter (from card chip tap)
       if (vibeTagFilter) {
@@ -703,7 +658,7 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
 
       return true;
     },
-    [filters, activeTab, tonightUserIds, vibeTagFilter, blockedIds, myPosition],
+    [filters, activeTab, vibeTagFilter, blockedIds, myPosition],
   );
 
   // ---- Profile tap handler ----
@@ -866,67 +821,40 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
             })}
           </div>
 
-          {/* ====== SORT CHIPS ====== */}
-          <div className="flex gap-1.5 pb-2 overflow-x-auto scrollbar-hide -mx-4 px-4">
-            {([
-              { key: 'nearby' as SortKey, label: 'Nearby' },
-              { key: 'last_active' as SortKey, label: 'Last Active' },
-              { key: 'newest' as SortKey, label: 'Newest' },
-            ]).map((sort) => {
-              const isActive = sortBy === sort.key;
-              return (
+          {/* ====== SORT CHIPS (only on grid tabs) ====== */}
+          {activeTab !== 'chats' && (
+            <div className="flex gap-1.5 pb-2 overflow-x-auto scrollbar-hide -mx-4 px-4">
+              {([
+                { key: 'nearby' as SortKey, label: 'Nearby' },
+                { key: 'last_active' as SortKey, label: 'Last Active' },
+                { key: 'newest' as SortKey, label: 'Newest' },
+              ]).map((sort) => {
+                const isActive = sortBy === sort.key;
+                return (
+                  <button
+                    key={sort.key}
+                    onClick={() => setSortBy(sort.key)}
+                    className={`flex-shrink-0 h-7 px-3 rounded-full text-xs font-semibold transition-all active:scale-95 ${
+                      isActive
+                        ? 'bg-white/15 text-white border border-white/20'
+                        : 'text-white/30 border border-white/[0.04]'
+                    }`}
+                  >
+                    {sort.label}
+                  </button>
+                );
+              })}
+              {vibeTagFilter && (
                 <button
-                  key={sort.key}
-                  onClick={() => setSortBy(sort.key)}
-                  className={`flex-shrink-0 h-7 px-3 rounded-full text-xs font-semibold transition-all active:scale-95 ${
-                    isActive
-                      ? 'bg-white/15 text-white border border-white/20'
-                      : 'text-white/30 border border-white/[0.04]'
-                  }`}
+                  onClick={() => setVibeTagFilter(null)}
+                  className="flex-shrink-0 h-7 px-3 rounded-full text-xs font-bold bg-[#C8962C]/20 text-[#C8962C] border border-[#C8962C]/30 flex items-center gap-1 active:scale-95 transition-all"
                 >
-                  {sort.label}
+                  {vibeTagFilter}
+                  <X className="w-3 h-3" />
                 </button>
-              );
-            })}
-            {vibeTagFilter && (
-              <button
-                onClick={() => setVibeTagFilter(null)}
-                className="flex-shrink-0 h-7 px-3 rounded-full text-xs font-bold bg-[#C8962C]/20 text-[#C8962C] border border-[#C8962C]/30 flex items-center gap-1 active:scale-95 transition-all"
-              >
-                {vibeTagFilter}
-                <X className="w-3 h-3" />
-              </button>
-            )}
-          </div>
-
-          {/* ====== FILTER PRESETS (quick-tap chips) ====== */}
-          <div className="flex gap-1.5 pb-3 overflow-x-auto scrollbar-hide -mx-4 px-4">
-            {FILTER_PRESETS.map((preset) => {
-              const isActive = activePreset === preset.key;
-              return (
-                <button
-                  key={preset.key}
-                  onClick={() => {
-                    if (isActive) {
-                      setActivePreset(null);
-                      setFilters(loadGhostedFilters());
-                    } else {
-                      setActivePreset(preset.key);
-                      setFilters({ ...defaultGhostedFilters(), ...preset.filters });
-                    }
-                  }}
-                  className={`flex-shrink-0 h-7 px-3 rounded-full text-xs font-semibold transition-all active:scale-95 ${
-                    isActive
-                      ? 'text-black'
-                      : 'text-white/40 border border-white/[0.06]'
-                  }`}
-                  style={{ backgroundColor: isActive ? AMBER : 'transparent' }}
-                >
-                  {preset.label}
-                </button>
-              );
-            })}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -950,30 +878,105 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
 
       {/* ====== DYNAMIC BANNERS ====== */}
       <AppBanner placement="ghosted_top" variant="strip" />
-      <AppBanner placement="ghosted_entry" variant="subtle" className="px-4" />
 
-      {/* ====== FULL-SCREEN 3-COL GRID ====== */}
+      {/* ====== CONTENT AREA ====== */}
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto scroll-momentum pb-24 relative z-10"
         {...pullHandlers}
       >
         <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
-        <ProfilesGrid
-          onOpenProfile={handleProfileTap}
-          containerClassName="p-0"
-          cols={3}
-          showHeader={false}
-          filterProfiles={filterProfiles}
-          sortProfiles={sortProfiles}
-          viewerEmail={myEmail}
-          viewerLat={myPosition?.lat}
-          viewerLng={myPosition?.lng}
-          onLongPress={handleLongPress}
-          emptyComponent={<GhostedEmpty onOpenFilters={() => openSheet('filters')} />}
-          onVibeTagClick={handleVibeTagClick}
-          boostUserIds={boostUserIds}
-        />
+
+        {/* ====== HERO BANNER ====== */}
+        {activeTab !== 'chats' && (
+          <div className="px-4 pt-3 pb-4">
+            <div
+              className="rounded-2xl p-5 relative overflow-hidden"
+              style={{ background: 'linear-gradient(135deg, rgba(200,150,44,0.08) 0%, rgba(5,5,7,0.95) 60%)' }}
+            >
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] mb-1" style={{ color: AMBER }}>GHOSTED</p>
+              <h2 className="text-lg font-black text-white leading-snug">In your moment<br />right now</h2>
+              <p className="text-xs mt-2 mb-4" style={{ color: MUTED }}>
+                People nearby, live context, movement. Real.
+              </p>
+              <button
+                onClick={() => openSheet('social', {})}
+                className="h-9 px-5 rounded-full text-xs font-bold active:scale-95 transition-transform"
+                style={{ background: AMBER, color: '#000' }}
+                aria-label="Go Live"
+              >
+                Go Live
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ====== CHATS TAB CONTENT ====== */}
+        {activeTab === 'chats' ? (
+          <div className="px-4">
+            {chatThreads.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <MessageCircle className="w-10 h-10 mb-3" style={{ color: AMBER }} />
+                <h3 className="text-base font-bold text-white mb-1">No conversations yet</h3>
+                <p className="text-sm mb-5" style={{ color: MUTED }}>Boo someone on Ghosted to start a chat.</p>
+                <button
+                  onClick={() => setActiveTab('nearby')}
+                  className="h-10 px-5 rounded-full text-sm font-bold"
+                  style={{ background: AMBER, color: '#000' }}
+                >
+                  Open Nearby
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {chatThreads.map((thread: any) => (
+                  <button
+                    key={thread.id}
+                    onClick={() => openSheet('chat', { threadId: thread.id })}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl active:bg-white/5 transition-colors"
+                  >
+                    <div className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                      <Ghost className="w-5 h-5 text-white/30" />
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="text-sm font-semibold text-white truncate">
+                        {thread.title || 'Chat'}
+                      </p>
+                      <p className="text-xs text-white/40 truncate">
+                        {thread.last_message || 'Start chatting...'}
+                      </p>
+                    </div>
+                    {(thread.unread_count ?? 0) > 0 && (
+                      <span
+                        className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full text-[10px] font-black text-black"
+                        style={{ background: AMBER }}
+                      >
+                        {thread.unread_count}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* ====== PROFILE GRID (Nearby + Live tabs) ====== */
+          <ProfilesGrid
+            onOpenProfile={handleProfileTap}
+            containerClassName="p-0"
+            cols={3}
+            showHeader={false}
+            filterProfiles={filterProfiles}
+            sortProfiles={sortProfiles}
+            viewerEmail={myEmail}
+            viewerLat={myPosition?.lat}
+            viewerLng={myPosition?.lng}
+            onLongPress={handleLongPress}
+            emptyComponent={<GhostedEmpty onOpenFilters={() => openSheet('filters')} onGoLive={() => openSheet('social', {})} />}
+            onVibeTagClick={handleVibeTagClick}
+            boostUserIds={boostUserIds}
+          />
+        )}
       </div>
 
       {/* ====== "RIGHT NOW" FAB + BOOST BUTTON ====== */}
