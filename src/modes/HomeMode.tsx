@@ -780,10 +780,10 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
           {/* RETURN AWARENESS — "since you left" micro-signals               */}
           {/* ================================================================ */}
           {sinceYouLeft && sinceYouLeft.total > 0 && (
-            <div className="px-5 py-3" style={{ background: ROOT_BG }}>
-              <p className="text-[11px] text-white/40 tracking-wide">
+            <div className="px-5 py-4" style={{ background: ROOT_BG }}>
+              <p className="text-[11px] text-white/40 tracking-wide font-medium">
                 {sinceYouLeft.drops > 0
-                  ? `Something dropped since you left`
+                  ? `New drop while you were away`
                   : sinceYouLeft.signals > 0
                     ? `${sinceYouLeft.signals} new signal${sinceYouLeft.signals !== 1 ? 's' : ''} since you left`
                     : `${sinceYouLeft.posts} new post${sinceYouLeft.posts !== 1 ? 's' : ''} since you left`}
@@ -795,22 +795,22 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
           {radioPlaying && (
             <button
               onClick={() => navigate('/radio')}
-              className="mx-5 mt-2 mb-1 flex items-center gap-2 px-3 py-2 rounded-xl active:scale-[0.98] transition-transform"
+              className="mx-5 mt-2 mb-2 flex items-center gap-2 px-4 py-3 rounded-2xl active:scale-[0.98] transition-transform"
               style={{ background: 'rgba(0,194,224,0.06)', border: '1px solid rgba(0,194,224,0.12)' }}
             >
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#30D158] opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#30D158]" />
               </span>
-              <span className="text-[11px] font-bold text-white/50">Still live</span>
-              <span className="text-[10px] text-[#00C2E0] font-bold uppercase tracking-wider ml-auto">Resume</span>
+              <span className="text-[11px] font-bold text-white/50">Radio still live</span>
+              <span className="text-[10px] text-[#00C2E0] font-bold uppercase tracking-[0.15em] ml-auto">Resume</span>
             </button>
           )}
 
           {/* SAVED TRACKS — "You didn't finish this" */}
           {savedTracks.length > 0 && (
-            <div className="px-5 pt-3 pb-1" style={{ background: ROOT_BG }}>
-              <p className="text-[9px] font-black uppercase tracking-widest text-white/20 mb-2">You didn't finish this</p>
+            <div className="px-5 pt-4 pb-2" style={{ background: ROOT_BG }}>
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/20 mb-3">Continue listening</p>
               <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
                 {savedTracks.slice(0, 4).map((t) => (
                   <button
@@ -843,7 +843,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
             imageSrc="/images/home/hero-world.jpg"
             imageStyle={{ objectPosition: '55% 30%', transform: 'scale(1.35)' }}
           >
-            <h2 className="font-black text-4xl tracking-[0.15em] uppercase leading-none drop-shadow-lg">
+            <h2 className="font-black text-4xl tracking-[0.2em] uppercase leading-none drop-shadow-lg">
               <span className="text-white">HOT</span><span style={{ color: AMBER }}>MESS</span>
             </h2>
             <AnimatePresence mode="wait">
@@ -858,10 +858,10 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
                 {headlines[heroIdx]}
               </motion.p>
             </AnimatePresence>
-            <div className="flex gap-3 mt-5">
+            <div className="flex gap-3 mt-6">
               <button
                 onClick={() => { trackEvent('home_cta_tap', { cta: 'open_pulse', tone, live_users: rightNowUsers.length }); navigate('/pulse'); }}
-                className="h-12 px-6 rounded-xl text-sm font-bold flex items-center gap-2 active:scale-95 transition-transform"
+                className="h-12 px-6 rounded-2xl text-sm font-bold flex items-center gap-2 active:scale-[0.97] transition-transform"
                 style={{ background: AMBER, color: '#000' }}
               >
                 <Globe className="w-4 h-4" />
@@ -869,7 +869,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
               </button>
               <button
                 onClick={() => { trackEvent('home_cta_tap', { cta: 'go_live', tone, live_users: rightNowUsers.length }); setShowRightNow(true); }}
-                className="h-12 px-6 rounded-xl text-sm font-bold flex items-center gap-2 border border-white/20 text-white active:scale-95 transition-transform active:bg-white/10"
+                className="h-12 px-6 rounded-2xl text-sm font-bold flex items-center gap-2 border border-white/15 text-white active:scale-[0.97] transition-transform active:bg-white/[0.06]"
               >
                 <Zap className="w-4 h-4" style={{ color: AMBER }} />
                 Go Live
@@ -880,7 +880,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
           {/* ================================================================ */}
           {/* MUSIC + PULSE BLOCKS (per brief: music at top of homepage)       */}
           {/* ================================================================ */}
-          <div className="px-5 pt-6 pb-2 space-y-3" style={{ background: ROOT_BG }}>
+          <div className="px-5 pt-6 pb-4 space-y-4" style={{ background: ROOT_BG }}>
 
             {/* BLOCK 1: LIVE NOW — HOTMESS RADIO */}
             <button

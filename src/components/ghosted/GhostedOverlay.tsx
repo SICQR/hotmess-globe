@@ -90,14 +90,14 @@ export default function GhostedOverlay({ context, onClose, onExpandToNearby }: G
                   : 'AROUND YOU'}
               </motion.h1>
               <motion.p
-                className="text-sm text-white/40 mt-0.5"
+                className="text-sm text-white/40 mt-1"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.12 }}
               >
                 {isVenue
-                  ? `${visibleUsers.length} active`
-                  : `Near ${getAreaFromContext(context)} · Moving`}
+                  ? `${visibleUsers.length} ${visibleUsers.length === 1 ? 'person' : 'people'} visible`
+                  : `Near ${getAreaFromContext(context)}`}
               </motion.p>
             </div>
             <button
@@ -162,19 +162,23 @@ export default function GhostedOverlay({ context, onClose, onExpandToNearby }: G
           {!isLoading && visibleUsers.length === 0 && (
             <motion.div
               className="text-center py-16"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
             >
-              <Users className="w-10 h-10 mx-auto mb-3" style={{ color: 'rgba(255,255,255,0.15)' }} />
-              <p className="text-white/30 text-sm">
-                {isVenue ? 'No one visible here right now' : 'No one nearby right now'}
+              <Users className="w-10 h-10 mx-auto mb-4" style={{ color: 'rgba(255,255,255,0.12)' }} />
+              <p className="text-white/25 text-sm font-medium">
+                {isVenue ? 'No one visible here right now.' : 'Quiet nearby. Check back later.'}
+              </p>
+              <p className="text-white/15 text-xs mt-2">
+                {isVenue ? 'Check in to be the first.' : 'People appear as they go live.'}
               </p>
             </motion.div>
           )}
 
           {/* Presence cards grid */}
           {visibleUsers.length > 0 && (
-            <div className={isVenue ? 'space-y-2' : 'grid grid-cols-2 gap-2'}>
+            <div className={isVenue ? 'space-y-2' : 'grid grid-cols-2 gap-3'}>
               {visibleUsers.map((user, i) => (
                 <PresenceCard
                   key={user.id}
@@ -194,7 +198,7 @@ export default function GhostedOverlay({ context, onClose, onExpandToNearby }: G
           {isVenue && onExpandToNearby && visibleUsers.length > 0 && (
             <motion.button
               onClick={onExpandToNearby}
-              className="w-full mt-5 py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold active:scale-[0.98] transition-transform"
+              className="w-full mt-6 py-3 rounded-2xl flex items-center justify-center gap-2 text-sm font-semibold active:scale-[0.98] transition-transform"
               style={{
                 background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.06)',
@@ -267,31 +271,27 @@ function PresenceCard({
 
         <div className={isVenueMode ? 'flex-1 min-w-0' : 'text-center'}>
           {/* Context label */}
-          <p className="text-white/30 text-[10px] font-medium tracking-wide uppercase">
+          <p className="text-white/30 text-[10px] font-bold tracking-[0.1em] uppercase">
             {user.context_label}
           </p>
 
           {/* Distance */}
           {user.distance_m !== null && (
-            <p className="text-white/50 text-[11px] font-medium mt-0.5">
+            <p className="text-white/45 text-[10px] font-medium mt-1">
               {user.distance_m < 100 ? 'Very close' : `${user.distance_m}m away`}
             </p>
           )}
 
-          {/* Verified badge */}
-          {user.is_verified && (
-            <div className="flex items-center gap-1 mt-0.5">
-              <Shield className="w-2.5 h-2.5" style={{ color: AMBER }} />
-              <span className="text-[9px] font-semibold" style={{ color: `${AMBER}80` }}>Verified</span>
-            </div>
-          )}
-
-          {/* Live vibe chip */}
-          {user.vibe && (
-            <div className="mt-1">
-              <VibeChip vibe={user.vibe as Vibe} />
-            </div>
-          )}
+          {/* Verified badge + vibe on same row when venue mode */}
+          <div className={`flex items-center gap-2 mt-1 ${isVenueMode ? '' : 'justify-center'}`}>
+            {user.is_verified && (
+              <div className="flex items-center gap-1">
+                <Shield className="w-2.5 h-2.5" style={{ color: AMBER }} />
+                <span className="text-[9px] font-bold" style={{ color: `${AMBER}80` }}>Verified</span>
+              </div>
+            )}
+            {user.vibe && <VibeChip vibe={user.vibe as Vibe} />}
+          </div>
         </div>
       </div>
 

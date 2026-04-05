@@ -772,14 +772,14 @@ function ClusterPanel({
         className="relative w-full rounded-t-3xl px-6 pt-5 pb-10 z-10"
         style={{ ...glassStyle(0.85, 24), borderTop: '1px solid rgba(255,255,255,0.08)' }}
       >
-        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-5" />
+        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-4" />
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: `${AMBER}15` }}>
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: `${AMBER}15` }}>
             <Flame className="w-6 h-6" style={{ color: AMBER }} />
           </div>
           <div>
             <p className="text-white font-bold text-base">{cluster.title || 'Active Area'}</p>
-            <p className="text-[11px] text-white/40 mt-0.5">{cluster.count} signal{cluster.count !== 1 ? 's' : ''} \u00B7 {cluster.type}</p>
+            <p className="text-[11px] text-white/40 mt-1">{cluster.count} signal{cluster.count !== 1 ? 's' : ''} \u00B7 {cluster.type}</p>
           </div>
         </div>
 
@@ -787,7 +787,7 @@ function ClusterPanel({
         {onSeeWhoIsAround && (
           <button
             onClick={onSeeWhoIsAround}
-            className="w-full mt-4 py-2.5 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold active:scale-[0.98] transition-transform"
+            className="w-full mt-4 py-3 rounded-2xl flex items-center justify-center gap-2 text-xs font-semibold active:scale-[0.98] transition-transform"
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}
           >
             <Users className="w-3.5 h-3.5" />
@@ -795,7 +795,7 @@ function ClusterPanel({
           </button>
         )}
 
-        <div className="flex gap-3 mt-4">
+        <div className="flex gap-3 mt-6">
           <button onClick={onBrowse} className="flex-1 h-11 rounded-xl bg-[#C8962C] text-black font-bold text-xs uppercase flex items-center justify-center gap-2 active:scale-[0.97] transition-transform">
             Browse Nearby
           </button>
@@ -845,18 +845,18 @@ function EventPanel({
         className="relative w-full rounded-t-3xl px-6 pt-5 pb-10 z-10"
         style={{ ...glassStyle(0.85, 24), borderTop: '1px solid rgba(255,255,255,0.08)' }}
       >
-        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-5" />
+        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-4" />
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,194,224,0.08)' }}>
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(0,194,224,0.08)' }}>
             <Calendar className="w-6 h-6 text-[#00C2E0]" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-white font-bold text-base truncate">{event.title}</p>
-            {timeStr && <p className="text-[11px] text-white/40 mt-0.5">{timeStr}</p>}
+            {timeStr && <p className="text-[11px] text-white/40 mt-1">{timeStr}</p>}
             {event.venue && <p className="text-[10px] text-white/30 mt-0.5 truncate">{event.venue}</p>}
           </div>
         </div>
-        <div className="flex gap-3 mt-5">
+        <div className="flex gap-3 mt-6">
           <button onClick={onView} className="flex-1 h-11 rounded-xl bg-[#C8962C] text-black font-bold text-xs uppercase flex items-center justify-center gap-2 active:scale-[0.97] transition-transform">
             View Event
           </button>
@@ -927,12 +927,13 @@ function VenuePanel({
         {/* Conversion label header — only for Level 3+ */}
         {convLabel && (
           <motion.div
-            initial={{ opacity: 0, y: -8 }}
+            initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-3"
+            transition={{ duration: 0.2 }}
+            className="mb-4"
           >
             <span
-              className="text-[11px] font-black tracking-[0.2em] uppercase px-3 py-1 rounded-full"
+              className="text-[11px] font-black tracking-[0.15em] uppercase px-3 py-1.5 rounded-full"
               style={{
                 background: level >= 4 ? 'rgba(200,150,44,0.2)' : 'rgba(255,255,255,0.08)',
                 color: level >= 4 ? AMBER : '#fff',
@@ -946,16 +947,16 @@ function VenuePanel({
 
         {/* Pro tier: subtle trending label when event active or high intensity */}
         {isPro && (place as any).event_active && !convLabel && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mb-3">
-            <span className="text-[11px] font-black tracking-[0.2em] uppercase px-3 py-1 rounded-full"
+          <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="mb-4">
+            <span className="text-[11px] font-black tracking-[0.15em] uppercase px-3 py-1.5 rounded-full"
               style={{ background: 'rgba(200,150,44,0.12)', color: AMBER, border: '1px solid rgba(200,150,44,0.2)' }}>
               FEATURED TONIGHT
             </span>
           </motion.div>
         )}
         {isPro && level >= 2 && !convLabel && !(place as any).event_active && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mb-3">
-            <span className="text-[11px] font-black tracking-[0.2em] uppercase px-3 py-1 rounded-full"
+          <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="mb-4">
+            <span className="text-[11px] font-black tracking-[0.15em] uppercase px-3 py-1.5 rounded-full"
               style={{ background: 'rgba(200,150,44,0.08)', color: `${AMBER}90`, border: '1px solid rgba(200,150,44,0.15)' }}>
               TRENDING TONIGHT
             </span>
@@ -964,7 +965,7 @@ function VenuePanel({
 
         {/* Community tier: calm header */}
         {isCommunity && (
-          <div className="mb-3 flex items-center gap-2">
+          <div className="mb-4 flex items-center gap-2">
             <div className="w-2 h-2 rounded-full" style={{ background: '#5588AA' }} />
             <span className="text-[11px] font-semibold text-white/40 tracking-wider uppercase">Safe space</span>
           </div>
@@ -991,7 +992,6 @@ function VenuePanel({
         {count > 0 && !isCommunity && (
           <div className="mt-4">
             <div className="flex items-center gap-3">
-              {/* Silhouette dots — anonymous presence indicators */}
               <div className="flex -space-x-1.5">
                 {Array.from({ length: Math.min(count, 8) }).map((_, i) => (
                   <div
@@ -1022,28 +1022,28 @@ function VenuePanel({
               </div>
               <div>
                 <span className="text-white text-lg font-bold">{count}</span>
-                <span className="text-white/40 text-sm ml-1.5">here now</span>
+                <span className="text-white/40 text-sm ml-2">here now</span>
               </div>
             </div>
             {momLabel && (
-              <p className="text-xs font-semibold mt-1.5" style={{ color: AMBER }}>
+              <p className="text-xs font-semibold mt-2" style={{ color: AMBER }}>
                 {momLabel}
               </p>
             )}
           </div>
         )}
         {count === 0 && !isCommunity && (
-          <p className="text-white/30 text-sm mt-3">No one here yet — be the first</p>
+          <p className="text-white/30 text-sm mt-4">Quiet right now. Be the first to check in.</p>
         )}
         {isCommunity && (
-          <p className="text-white/30 text-sm mt-3">Private space — check-ins are not displayed publicly</p>
+          <p className="text-white/30 text-sm mt-4">Private space. Check-ins stay between you and the venue.</p>
         )}
 
         {/* See who's here — bridge to Ghosted (not for community venues) */}
         {onSeeWhoIsHere && count > 0 && !isCommunity && (
           <button
             onClick={onSeeWhoIsHere}
-            className="w-full mt-4 py-2.5 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold active:scale-[0.98] transition-transform"
+            className="w-full mt-4 py-3 rounded-2xl flex items-center justify-center gap-2 text-xs font-semibold active:scale-[0.98] transition-transform"
             style={{
               background: 'rgba(255,255,255,0.04)',
               border: '1px solid rgba(255,255,255,0.06)',
@@ -1059,16 +1059,16 @@ function VenuePanel({
         {vibeMix && vibeMix.total > 0 && !isCommunity && (
           <motion.div
             className="mt-4"
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
+            transition={{ delay: 0.12, duration: 0.2 }}
           >
-            <p className="text-[10px] font-semibold text-white/30 tracking-wider uppercase mb-2">
+            <p className="text-[10px] font-bold text-white/30 tracking-[0.15em] uppercase mb-2">
               Vibe right now
             </p>
             <VibeMixBar vibes={vibeMix.vibes} total={vibeMix.total} />
             {vibeMix.dominant && (
-              <p className="text-[11px] font-medium mt-1.5" style={{ color: VIBE_CONFIG[vibeMix.dominant].color }}>
+              <p className="text-[11px] font-medium mt-2" style={{ color: VIBE_CONFIG[vibeMix.dominant].color }}>
                 {VIBE_CONFIG[vibeMix.dominant].emoji} Mostly {VIBE_CONFIG[vibeMix.dominant].label.toLowerCase()} tonight
               </p>
             )}
@@ -1076,7 +1076,7 @@ function VenuePanel({
         )}
 
         {/* CTAs */}
-        <div className="flex gap-3 mt-5">
+        <div className="flex gap-3 mt-6">
           <button
             onClick={onCheckIn}
             className="flex-1 h-11 rounded-xl text-black font-bold text-xs uppercase flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
@@ -2135,6 +2135,13 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     safety: safetyAlerts.length,
   };
 
+  // ---- Hottest venue (conversion hook in state line + priority strip) --------
+  const hottestVenue = useMemo(() => {
+    const entries = Array.from(venueIntensityMap.values());
+    const hot = entries.filter(v => v.intensity_level >= 3).sort((a, b) => b.intensity_level - a.intensity_level || b.effective_count - a.effective_count);
+    return hot[0] ?? null;
+  }, [venueIntensityMap]);
+
   // ---- Dynamic state line for TopHUD ----------------------------------------
   const stateLines = useMemo(() => {
     const lines: string[] = [];
@@ -2194,12 +2201,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     return newest;
   }, [dropsNearby]);
 
-  // ---- Hottest venue alert (conversion hook in priority strip) ---------------
-  const hottestVenue = useMemo(() => {
-    const entries = Array.from(venueIntensityMap.values());
-    const hot = entries.filter(v => v.intensity_level >= 3).sort((a, b) => b.intensity_level - a.intensity_level || b.effective_count - a.effective_count);
-    return hot[0] ?? null;
-  }, [venueIntensityMap]);
+  // hottestVenue — moved above stateLines to avoid block-scoped variable error
 
   // ---- Sheet navigation handlers --------------------------------------------
   const handleEventTap = useCallback((id: string) => {
