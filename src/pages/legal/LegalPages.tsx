@@ -615,3 +615,128 @@ export function PrivacyPolicyPage() {
     </LegalPageLayout>
   );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOCATION & PRESENCE DISCLOSURE
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function LocationDisclosurePage() {
+  return (
+    <LegalPageLayout title="Location & Presence">
+      <p><em>Last updated: April 2026</em></p>
+
+      <h2>How HOTMESS Uses Location</h2>
+      <p>
+        HOTMESS uses your device location to show what is happening near you,
+        enable venue check-ins, and connect you with nearby people. Your exact
+        coordinates are never shown to other users.
+      </p>
+
+      <h2>1. Approximate Location</h2>
+      <p>
+        All locations displayed to other users are grid-snapped to approximately
+        500 metres. We never reveal your precise position. Distances shown between
+        users are rounded estimates.
+      </p>
+
+      <h2>2. Visibility Choices</h2>
+      <p>
+        You control whether you appear to others. In Settings you can choose:
+      </p>
+      <ul>
+        <li><strong>Visible</strong> — appear on the map and in nearby lists</li>
+        <li><strong>Low visibility</strong> — reduced presence, less prominent</li>
+        <li><strong>Invisible</strong> — completely hidden from all public surfaces</li>
+      </ul>
+      <p>You can change this at any time. Changes apply immediately.</p>
+
+      <h2>3. Venue Check-ins</h2>
+      <p>
+        When you check in to a venue, others at that venue may see that you are
+        there. You can check in privately by setting your visibility to invisible
+        before checking in. Community venues never reveal attendees publicly.
+      </p>
+
+      <h2>4. Travel Sharing</h2>
+      <p>
+        Journey sharing is always optional. You can choose to share your ETA with
+        specific contacts, but this must be explicitly enabled each time (or set to
+        trusted contacts only). You can stop sharing mid-journey at any time.
+      </p>
+
+      <h2>5. Expiry</h2>
+      <p>
+        Presence data, vibes, and check-ins expire automatically. Check-ins decay
+        over time. Live vibes expire after 4 hours. Travel sessions end when you
+        arrive or cancel. We do not maintain permanent public location histories.
+      </p>
+
+      <h2>6. Contact</h2>
+      <p>
+        Questions about location privacy: <a href="mailto:privacy@hotmessldn.com">privacy@hotmessldn.com</a>
+      </p>
+    </LegalPageLayout>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI DISCLOSURE
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function AIDisclosurePage() {
+  return (
+    <LegalPageLayout title="AI Disclosure">
+      <p><em>Last updated: April 2026</em></p>
+
+      <h2>How HOTMESS Uses AI</h2>
+      <p>
+        HOTMESS uses AI to provide contextual suggestions based on your activity
+        and approximate location. AI features are optional and can be disabled at
+        any time in Settings.
+      </p>
+
+      <h2>1. What AI Does</h2>
+      <p>AI-powered features include:</p>
+      <ul>
+        <li><strong>Wingman</strong> — conversation starters based on shared context</li>
+        <li><strong>Scene Scout</strong> — venue and event recommendations</li>
+        <li><strong>Profile suggestions</strong> — tips to improve your profile</li>
+      </ul>
+
+      <h2>2. What AI Does Not Do</h2>
+      <ul>
+        <li>AI does not make decisions with legal or significant effects on you</li>
+        <li>AI does not access your private messages without your request</li>
+        <li>AI does not create profiles of you that are shared with third parties</li>
+        <li>AI does not use your data for training models</li>
+      </ul>
+
+      <h2>3. Your Control</h2>
+      <p>
+        You can disable all AI suggestions in Settings at any time. When disabled,
+        no AI analysis runs on your activity or context. The toggle takes effect
+        immediately.
+      </p>
+
+      <h2>4. Data Used</h2>
+      <p>
+        When enabled, AI features may use: your approximate location, current venue
+        context, active vibe, and publicly visible profile information. We do not
+        use private health data, financial information, or special category data
+        for AI features.
+      </p>
+
+      <h2>5. No Undisclosed Profiling</h2>
+      <p>
+        HOTMESS does not engage in undisclosed behavioural profiling. All AI
+        features are clearly labelled in the interface. There is no hidden scoring,
+        ranking, or classification of users beyond what is visible in the product.
+      </p>
+
+      <h2>6. Contact</h2>
+      <p>
+        Questions about AI: <a href="mailto:privacy@hotmessldn.com">privacy@hotmessldn.com</a>
+      </p>
+    </LegalPageLayout>
+  );
+}

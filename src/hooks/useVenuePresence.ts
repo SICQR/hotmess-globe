@@ -14,6 +14,27 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
 
+/** Batch-fetch privacy settings for a set of user IDs */
+async function getPrivacyMap(userIds: string[]): Promise<Map<string, { show_at_venues: boolean; show_nearby: boolean; share_vibe: boolean; visibility: string }>> {
+  const map = new Map<string, { show_at_venues: boolean; show_nearby: boolean; share_vibe: boolean; visibility: string }>();
+  if (userIds.length === 0) return map;
+  try {
+    const { data } = await supabase
+      .from('user_privacy_settings')
+      .select('user_id, show_at_venues, show_nearby, share_vibe, visibility')
+      .in('user_id', userIds);
+    for (const row of data || []) {
+      map.set(row.user_id, {
+        show_at_venues: row.show_at_venues ?? true,
+        show_nearby: row.show_nearby ?? true,
+        share_vibe: row.share_vibe ?? true,
+        visibility: row.visibility ?? 'visible',
+      });
+    }
+  } catch { /* graceful: default to visible */ }
+  return map;
+}
+
 export interface PresenceUser {
   id: string;
   display_name: string;
@@ -79,12 +100,21 @@ async function fetchVenueUsers(ctx: GhostedContext, myUserId: string | null): Pr
 
   if (!profiles) return [];
 
-  const vibeMap = await getVibeMap(profiles.map(p => p.id));
+  const [vibeMap, privacyMap] = await Promise.all([
+    getVibeMap(profiles.map(p => p.id)),
+    getPrivacyMap(profiles.map(p => p.id)),
+  ]);
 
   return profiles
     .filter(p => !blockedIds.has(p.id))
     .filter(p => p.display_name) // GDPR: must have name
     .filter(p => (p.visibility_level || 'visible') !== 'invisible')
+    .filter(p => {
+      const priv = privacyMap.get(p.id);
+      if (priv?.visibility === 'invisible') return false;
+      if (priv?.show_at_venues === false) return false;
+      return true;
+    })
     .map(p => ({
       id: p.id,
       display_name: p.display_name,
@@ -175,12 +205,21 @@ async function fetchAreaUsers(ctx: GhostedContext, myUserId: string | null): Pro
   // Approximate area label
   const areaLabel = getAreaLabel(ctx.lat, ctx.lng);
 
-  const vibeMap = await getVibeMap(profiles.map(p => p.id));
+  const [vibeMap, privacyMap] = await Promise.all([
+    getVibeMap(profiles.map(p => p.id)),
+    getPrivacyMap(profiles.map(p => p.id)),
+  ]);
 
   return profiles
     .filter(p => !blockedIds.has(p.id))
     .filter(p => p.display_name)
     .filter(p => (p.visibility_level || 'visible') !== 'invisible')
+    .filter(p => {
+      const priv = privacyMap.get(p.id);
+      if (priv?.visibility === 'invisible') return false;
+      if (priv?.show_nearby === false) return false;
+      return true;
+    })
     .map(p => {
       // Approximate distance
       const dist = p.geo_lat && p.geo_lng
@@ -207,17 +246,22 @@ async function fetchAreaUsers(ctx: GhostedContext, myUserId: string | null): Pro
     .sort((a, b) => (a.distance_m ?? Infinity) - (b.distance_m ?? Infinity));
 }
 
-/** Get live vibes for a set of user IDs */
+/** Get live vibes for a set of user IDs (respects share_vibe privacy) */
 async function getVibeMap(userIds: string[]): Promise<Map<string, string>> {
   if (userIds.length === 0) return new Map();
   try {
-    const { data } = await supabase
-      .from('user_live_vibes')
-      .select('user_id, vibe, expires_at')
-      .in('user_id', userIds);
+    const [vibeRes, privRes] = await Promise.all([
+      supabase.from('user_live_vibes').select('user_id, vibe, expires_at').in('user_id', userIds),
+      supabase.from('user_privacy_settings').select('user_id, share_vibe').in('user_id', userIds),
+    ]);
+    const vibeHidden = new Set<string>();
+    for (const row of privRes.data || []) {
+      if (row.share_vibe === false) vibeHidden.add(row.user_id);
+    }
     const map = new Map<string, string>();
     const now = new Date();
-    for (const row of data || []) {
+    for (const row of vibeRes.data || []) {
+      if (vibeHidden.has(row.user_id)) continue;
       if (!row.expires_at || new Date(row.expires_at) > now) {
         map.set(row.user_id, row.vibe);
       }
