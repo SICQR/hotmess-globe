@@ -644,6 +644,219 @@ function localApiRoutes() {
             });
         }
 
+        // ── Push notification endpoint ──────────────────────────────────────
+        if (path === '/api/push/send' && (method === 'POST' || method === 'OPTIONS')) {
+          return importFresh('./api/push/send.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'push/send handler error' }));
+            });
+        }
+
+        // ── Safety endpoints ────────────────────────────────────────────────
+        if (path === '/api/safety/alert' && (method === 'POST' || method === 'OPTIONS')) {
+          return importFresh('./api/safety/alert.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'safety/alert handler error' }));
+            });
+        }
+
+        if (path === '/api/safety/respond' && (method === 'POST' || method === 'OPTIONS')) {
+          return importFresh('./api/safety/respond.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'safety/respond handler error' }));
+            });
+        }
+
+        if (path === '/api/safety/check-ins' && (method === 'GET' || method === 'POST' || method === 'OPTIONS')) {
+          return importFresh('./api/safety/check-ins.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'safety/check-ins handler error' }));
+            });
+        }
+
+        // ── AI endpoints ────────────────────────────────────────────────────
+        if (path === '/api/ai/wingman' && method === 'POST') {
+          return importFresh('./api/ai/wingman.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'ai/wingman handler error' }));
+            });
+        }
+
+        if (path === '/api/ai/scene-scout' && method === 'POST') {
+          return importFresh('./api/ai/scene-scout.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'ai/scene-scout handler error' }));
+            });
+        }
+
+        if (path === '/api/ai/chat' && method === 'POST') {
+          return importFresh('./api/ai/chat.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'ai/chat handler error' }));
+            });
+        }
+
+        if (path === '/api/ai/profile-analysis' && method === 'POST') {
+          return importFresh('./api/ai/profile-analysis.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'ai/profile-analysis handler error' }));
+            });
+        }
+
+        // ── Stripe — boost checkout + connect onboard ───────────────────────
+        if (path === '/api/stripe/create-boost-checkout' && method === 'POST') {
+          return importFresh('./api/stripe/create-boost-checkout.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'stripe/create-boost-checkout handler error' }));
+            });
+        }
+
+        if (path === '/api/stripe/connect-onboard' && method === 'POST') {
+          return importFresh('./api/stripe/connect-onboard.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'stripe/connect-onboard handler error' }));
+            });
+        }
+
+        // ── Premium endpoints ───────────────────────────────────────────────
+        if (path === '/api/premium/subscribe' && method === 'POST') {
+          return importFresh('./api/premium/subscribe.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'premium/subscribe handler error' }));
+            });
+        }
+
+        if (path === '/api/premium/unlock' && method === 'POST') {
+          return importFresh('./api/premium/unlock.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'premium/unlock handler error' }));
+            });
+        }
+
+        // ── Auth — Telegram verify ──────────────────────────────────────────
+        if (path === '/api/auth/telegram/verify' && method === 'POST') {
+          return importFresh('./api/auth/telegram/verify.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'auth/telegram/verify handler error' }));
+            });
+        }
+
+        // ── Daily check-in ──────────────────────────────────────────────────
+        if (path === '/api/daily-checkin' && (method === 'GET' || method === 'POST')) {
+          return importFresh('./api/daily-checkin.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'daily-checkin handler error' }));
+            });
+        }
+
+        // ── GDPR data request ───────────────────────────────────────────────
+        if (path === '/api/gdpr/request' && method === 'POST') {
+          return importFresh('./api/gdpr/request.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'gdpr/request handler error' }));
+            });
+        }
+
+        // ── Globe pulse ─────────────────────────────────────────────────────
+        if (path === '/api/globe/pulse' && method === 'GET') {
+          return importFresh('./api/globe/pulse.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'globe/pulse handler error' }));
+            });
+        }
+
+        // ── Video call room ─────────────────────────────────────────────────
+        if (path === '/api/video/create-room' && method === 'POST') {
+          return importFresh('./api/video/create-room.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'video/create-room handler error' }));
+            });
+        }
+
+        // ── Match probability embeddings ────────────────────────────────────
+        if (path === '/api/match-probability/embeddings' && method === 'POST') {
+          return importFresh('./api/match-probability/embeddings.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'match-probability/embeddings handler error' }));
+            });
+        }
+
+        // ── Payments ────────────────────────────────────────────────────────
+        if (path === '/api/payments/create' && method === 'POST') {
+          return importFresh('./api/payments/create.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'payments/create handler error' }));
+            });
+        }
+
+        // ── Admin safety switch ─────────────────────────────────────────────
+        if (path === '/api/admin/safety-switch' && (method === 'GET' || method === 'POST')) {
+          return importFresh('./api/admin/safety-switch.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'admin/safety-switch handler error' }));
+            });
+        }
+
         return next();
       });
     },
