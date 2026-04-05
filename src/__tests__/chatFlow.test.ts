@@ -16,7 +16,6 @@ const CHAT_FILES = [
   'src/components/sheets/L2ChatSheet.jsx',
   'src/components/messaging/ChatThread.jsx',
   'src/pages/SquadChat.jsx',
-  'src/hooks/useChat.ts',
   'src/hooks/useUnreadCount.ts',
 ];
 

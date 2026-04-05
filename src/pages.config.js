@@ -47,7 +47,7 @@ import Leaderboard from './pages/Leaderboard';
 import Marketplace from './pages/Marketplace';
 import MembershipUpgrade from './pages/MembershipUpgrade';
 import Messages from './pages/Messages';
-import More from './pages/More';
+
 import Music from './pages/Music';
 import MusicRelease from './pages/MusicRelease';
 import MyEvents from './pages/MyEvents';
@@ -138,7 +138,7 @@ export const PAGES = {
     "Messages": Messages,
     "Pricing": Pricing,
     "LuxShowcase": LuxShowcase,
-    "More": More,
+
     "Music": Music,
     "MusicRelease": MusicRelease,
     "MyEvents": MyEvents,
