@@ -20,8 +20,6 @@ import CheckoutStart from '@/pages/CheckoutStart';
 import CreatorsCart from '@/pages/CreatorsCart';
 import CreatorsCheckout from '@/pages/CreatorsCheckout';
 import CreatorsCheckoutSuccess from '@/pages/CreatorsCheckoutSuccess';
-import Privacy from '@/pages/legal/Privacy';
-import Terms from '@/pages/legal/Terms';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
 import { AboutPage, LegalPage, AccessibilityPage, PrivacyPolicyPage, RemixLicensePage, CommercialLicensePage, CreatorAgreementPage, DMCAPage } from '@/pages/legal/LegalPages';
 import { CookieBanner } from '@/components/legal/CookieBanner';
@@ -316,13 +314,13 @@ const ShopCheckoutStartRoute = () => {
 
 const LegalPrivacyRoute = () => (
   <LayoutWrapper currentPageName="More">
-    <Privacy />
+    <PrivacyPolicyPage />
   </LayoutWrapper>
 );
 
 const LegalTermsRoute = () => (
   <LayoutWrapper currentPageName="More">
-    <Terms />
+    <LegalPage />
   </LayoutWrapper>
 );
 

@@ -6,9 +6,8 @@ const HotmessSplash = lazy(() => import('@/components/splash/HotmessSplash'));
 import AgeGate from '@/pages/AgeGate';
 import Auth from '@/pages/Auth';
 import ResetPassword from '@/pages/ResetPassword';
-import Privacy from '@/pages/legal/Privacy';
-import Terms from '@/pages/legal/Terms';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
+import { PrivacyPolicyPage, LegalPage } from '@/pages/legal/LegalPages';
 
 const Spinner = () => (
   <div className="fixed inset-0 bg-black flex items-center justify-center">
@@ -45,10 +44,10 @@ export default function PublicShell({ startAt = '/' }) {
         <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Legal */}
-        <Route path="/legal/privacy" element={<Privacy />} />
-        <Route path="/legal/terms" element={<Terms />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/terms" element={<Terms />} />
+        <Route path="/legal/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/legal/terms" element={<LegalPage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms" element={<LegalPage />} />
         <Route path="/PrivacyHub" element={<PrivacyHub />} />
 
         {/* Catch-all → splash */}
