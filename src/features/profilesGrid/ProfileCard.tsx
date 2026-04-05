@@ -551,6 +551,7 @@ function ProfileCardInner({
           lastSeen={lastSeen}
           distanceKm={typeof (profile as any)?.distance_km === 'number' ? (profile as any).distance_km : undefined}
           isOnline={(profile as any)?.is_online === true}
+          isMoving={!!(profile as any)?.movement_active || !!(profile as any)?.is_moving}
           sceneTag={Array.isArray((profile as any)?.public_attributes?.scenes) && (profile as any).public_attributes.scenes.length > 0 ? (profile as any).public_attributes.scenes[0] : undefined}
           onClick={openProfile}
           onVibeTagClick={onVibeTagClick}

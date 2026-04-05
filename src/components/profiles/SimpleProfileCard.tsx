@@ -26,6 +26,7 @@ interface SimpleProfileCardProps {
   lastSeen?: string;
   distanceKm?: number;
   isOnline?: boolean;
+  isMoving?: boolean;
   sceneTag?: string;
   tonightVibe?: string; // hookup | hang | explore
   onClick?: () => void;
@@ -50,6 +51,7 @@ export function SimpleProfileCard({
   lastSeen,
   distanceKm,
   isOnline,
+  isMoving,
   sceneTag,
   tonightVibe,
   onClick,
@@ -128,8 +130,8 @@ export function SimpleProfileCard({
       {/* Bottom gradient — subtle, just enough for text */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
 
-      {/* TOP-LEFT: Presence dot (green=online, amber=away, hidden=offline) */}
-      {showPresenceDot && (
+      {/* TOP-LEFT: Presence dot (green=online, amber=away, hidden=offline) — hidden when moving */}
+      {showPresenceDot && !isMoving && (
         <div className="absolute top-2 left-2 z-10">
           <div
             className="w-2.5 h-2.5 rounded-full ring-2 ring-black/50"
@@ -138,6 +140,14 @@ export function SimpleProfileCard({
               boxShadow: PRESENCE_DOT[computedStatus].glow,
             }}
           />
+        </div>
+      )}
+
+      {/* TOP-LEFT: Movement indicator (overrides presence dot) */}
+      {isMoving && (
+        <div className="absolute top-2 left-2 z-10 flex items-center gap-1 px-1.5 py-0.5 rounded-md" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+          <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="#C8962C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+          <span className="text-[8px] font-black uppercase" style={{ color: '#C8962C' }}>Moving</span>
         </div>
       )}
 

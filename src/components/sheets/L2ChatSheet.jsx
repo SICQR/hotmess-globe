@@ -133,7 +133,7 @@ function LocationCard({ msg, isMe, otherName }) {
  * @param {string} [props.title] - Fallback title used when the other participant's name is unavailable.
  * @returns {JSX.Element} The chat sheet React element.
  */
-export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmail, userId: initialUserId, toUid, title }) {
+export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmail, userId: initialUserId, toUid, title, meetMode, suggestStop, otherIsMoving }) {
   // Accept both prop names — callers may pass userId or legacy toUid
   const resolvedUserId = initialUserId || toUid;
   const { openSheet, updateSheetProps } = useSheet();
@@ -177,6 +177,21 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       if (user) setCurrentUser({ id: user.id, email: user.email });
     });
   }, []);
+
+  // ── Pre-seed composer for movement flows ──────────────────────────────────
+  const [hasPreSeeded, setHasPreSeeded] = useState(false);
+  useEffect(() => {
+    if (hasPreSeeded) return;
+    if (suggestStop) {
+      setNewMessage("You\u2019re passing near me \u2014 quick stop?");
+      setHasPreSeeded(true);
+      setTimeout(() => inputRef.current?.focus(), 300);
+    } else if (meetMode && otherIsMoving) {
+      setNewMessage("Meet on the way?");
+      setHasPreSeeded(true);
+      setTimeout(() => inputRef.current?.focus(), 300);
+    }
+  }, [suggestStop, meetMode, otherIsMoving, hasPreSeeded]);
 
   // ── Resolve userId → email internally (GDPR: email never exposed as prop) ──
   const [resolvedToEmail, setResolvedToEmail] = useState(initialToEmail || null);
@@ -846,13 +861,20 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                 <span className="text-sm font-black text-white">{otherName[0]?.toUpperCase() || '?'}</span>
               )}
             </div>
-            {/* Online indicator */}
-            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#34C759] rounded-full border-2 border-[#050507]" />
+            {/* Status indicator — navigation arrow when moving, green dot otherwise */}
+            {(otherIsMoving || otherProfile?.movement_active || otherProfile?.is_moving) ? (
+              <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-[#050507] flex items-center justify-center" style={{ background: '#C8962C' }}>
+                <Navigation className="w-2 h-2 text-black" />
+              </span>
+            ) : (
+              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#34C759] rounded-full border-2 border-[#050507]" />
+            )}
           </div>
           <div className="min-w-0">
             <p className="text-white font-bold truncate">{otherName}</p>
-            <p className="text-[#8E8E93] text-xs truncate">
+            <p className="text-xs truncate" style={{ color: (otherIsMoving || otherProfile?.movement_active || otherProfile?.is_moving) ? '#C8962C' : '#8E8E93' }}>
               {(() => {
+                const isOtherMoving = otherIsMoving || otherProfile?.movement_active || otherProfile?.is_moving;
                 const parts = [];
                 // Distance
                 if (otherProfile?.distance_m != null) {
@@ -860,11 +882,15 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                   else if (otherProfile.distance_m < 1000) parts.push(`${Math.round(otherProfile.distance_m)}m`);
                   else parts.push(`${(otherProfile.distance_m / 1000).toFixed(1)}km`);
                 }
-                // Context
-                if (otherProfile?.venue_name || otherProfile?.checkin_venue) {
+                // Context — movement gets richer label
+                if (isOtherMoving) {
+                  const eta = otherProfile?.movement_eta || otherProfile?.eta;
+                  const dest = otherProfile?.movement_destination || otherProfile?.destination_label;
+                  if (eta) parts.push(`Moving · ${eta}`);
+                  else if (dest) parts.push(`On the way to ${dest}`);
+                  else parts.push('On the move nearby');
+                } else if (otherProfile?.venue_name || otherProfile?.checkin_venue) {
                   parts.push(`At ${otherProfile.venue_name || otherProfile.checkin_venue}`);
-                } else if (otherProfile?.movement_active || otherProfile?.is_moving) {
-                  parts.push('Moving');
                 } else if (otherProfile?.is_online) {
                   parts.push('Online');
                 } else if (otherProfile?.last_seen) {
@@ -895,67 +921,144 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           </div>
         ) : messages.length === 0 ? (
           <div className="text-center py-10 px-6">
-            {/* Contextual headline */}
-            <p className="text-white font-bold text-base mb-1">
-              {otherProfile?.venue_name || otherProfile?.checkin_venue
-                ? `He's at ${otherProfile.venue_name || otherProfile.checkin_venue}`
-                : otherProfile?.movement_active || otherProfile?.is_moving
-                  ? 'He\'s on the move nearby'
-                  : 'You\'re both nearby'}
-            </p>
-            <p className="text-white/40 text-sm mb-5">
-              {otherProfile?.movement_active || otherProfile?.is_moving
-                ? 'Share a meetpoint or suggest a stop'
-                : 'Send a Boo, share a meetpoint, or just say hey'}
-            </p>
-            <div className="flex items-center justify-center gap-2">
-              <button
-                onClick={async () => {
-                  if (!currentUser?.email || !otherEmail) return;
-                  try {
-                    await supabase.from('taps').insert({
-                      tapper_email: currentUser.email,
-                      tapped_email: otherEmail,
-                      tap_type: 'boo',
-                    });
-                    if (typeof window !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(50);
-                    toast('Boo sent');
-                  } catch { /* best-effort */ }
-                }}
-                className="h-10 px-5 rounded-full text-sm font-bold active:scale-95 transition-transform"
-                style={{ background: '#C8962C', color: '#000' }}
-              >
-                Boo
-              </button>
-              <button
-                onClick={() => {
-                  if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                      (pos) => {
-                        const lat = Math.round(pos.coords.latitude * 1000) / 1000;
-                        const lng = Math.round(pos.coords.longitude * 1000) / 1000;
-                        handleSendSpecial?.({
-                          content: `\u{1F4CD} My Location`,
-                          message_type: 'location',
-                          metadata: { approxLat: lat, approxLng: lng },
+            {/* Movement-aware contextual headline */}
+            {(otherIsMoving || otherProfile?.movement_active || otherProfile?.is_moving) ? (
+              <>
+                <div className="flex items-center justify-center gap-1.5 mb-3">
+                  <Navigation className="w-4 h-4" style={{ color: '#C8962C' }} />
+                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#C8962C' }}>Moving</span>
+                </div>
+                <p className="text-white font-bold text-base mb-1">He's on the move nearby</p>
+                <p className="text-white/40 text-sm mb-5">
+                  {suggestStop ? 'Suggest a quick stop' : meetMode ? 'Pick a meetpoint' : 'Share a meetpoint or suggest a stop'}
+                </p>
+              </>
+            ) : otherProfile?.venue_name || otherProfile?.checkin_venue ? (
+              <>
+                <p className="text-white font-bold text-base mb-1">
+                  {`He's at ${otherProfile.venue_name || otherProfile.checkin_venue}`}
+                </p>
+                <p className="text-white/40 text-sm mb-5">
+                  Send a Boo, share a meetpoint, or just say hey
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-white font-bold text-base mb-1">You're both nearby</p>
+                <p className="text-white/40 text-sm mb-5">
+                  Send a Boo, share a meetpoint, or just say hey
+                </p>
+              </>
+            )}
+
+            {/* Movement quick actions — different hierarchy when moving */}
+            {(otherIsMoving || otherProfile?.movement_active || otherProfile?.is_moving) ? (
+              <div className="flex flex-col items-center gap-2">
+                {/* Primary: Share meetpoint */}
+                <button
+                  onClick={() => {
+                    if (navigator.geolocation) {
+                      navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                          const lat = Math.round(pos.coords.latitude * 1000) / 1000;
+                          const lng = Math.round(pos.coords.longitude * 1000) / 1000;
+                          handleSendSpecial?.({
+                            content: '\u{1F4CD} My Location \u2014 meet here?',
+                            message_type: 'location',
+                            metadata: { approxLat: lat, approxLng: lng },
+                          });
+                        },
+                        () => toast('Location not available'),
+                        { enableHighAccuracy: false, timeout: 5000 }
+                      );
+                    }
+                  }}
+                  className="h-11 px-6 rounded-full text-sm font-bold active:scale-95 transition-transform"
+                  style={{ background: '#C8962C', color: '#000' }}
+                >
+                  Share meetpoint
+                </button>
+                <div className="flex items-center gap-2">
+                  {/* Suggest Stop pre-seeded message */}
+                  <button
+                    onClick={() => {
+                      setNewMessage("You\u2019re passing near me \u2014 quick stop?");
+                      setTimeout(() => inputRef.current?.focus(), 100);
+                    }}
+                    className="h-10 px-4 rounded-full text-xs font-bold active:scale-95 transition-transform"
+                    style={{ background: 'rgba(200,150,44,0.12)', color: '#C8962C', border: '1px solid rgba(200,150,44,0.2)' }}
+                  >
+                    Suggest a stop
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!currentUser?.email || !otherEmail) return;
+                      try {
+                        await supabase.from('taps').insert({
+                          tapper_email: currentUser.email,
+                          tapped_email: otherEmail,
+                          tap_type: 'boo',
                         });
-                      },
-                      () => toast('Location not available'),
-                      { enableHighAccuracy: false, timeout: 5000 }
-                    );
-                  }
-                }}
-                className="h-10 px-5 rounded-full text-sm font-bold bg-white/10 text-white active:scale-95 transition-transform border border-white/10"
-              >
-                Share location
-              </button>
-              <button
-                onClick={() => inputRef.current?.focus()}
-                className="h-10 px-5 rounded-full text-sm font-bold bg-white/5 text-white/60 active:scale-95 transition-transform border border-white/8"
-              >
-                Message
-              </button>
-            </div>
+                        if (typeof window !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(50);
+                        toast('Boo sent');
+                      } catch { /* best-effort */ }
+                    }}
+                    className="h-10 px-4 rounded-full text-xs font-bold bg-white/8 text-white/60 active:scale-95 transition-transform border border-white/10"
+                  >
+                    Boo
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  onClick={async () => {
+                    if (!currentUser?.email || !otherEmail) return;
+                    try {
+                      await supabase.from('taps').insert({
+                        tapper_email: currentUser.email,
+                        tapped_email: otherEmail,
+                        tap_type: 'boo',
+                      });
+                      if (typeof window !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(50);
+                      toast('Boo sent');
+                    } catch { /* best-effort */ }
+                  }}
+                  className="h-10 px-5 rounded-full text-sm font-bold active:scale-95 transition-transform"
+                  style={{ background: '#C8962C', color: '#000' }}
+                >
+                  Boo
+                </button>
+                <button
+                  onClick={() => {
+                    if (navigator.geolocation) {
+                      navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                          const lat = Math.round(pos.coords.latitude * 1000) / 1000;
+                          const lng = Math.round(pos.coords.longitude * 1000) / 1000;
+                          handleSendSpecial?.({
+                            content: `\u{1F4CD} My Location`,
+                            message_type: 'location',
+                            metadata: { approxLat: lat, approxLng: lng },
+                          });
+                        },
+                        () => toast('Location not available'),
+                        { enableHighAccuracy: false, timeout: 5000 }
+                      );
+                    }
+                  }}
+                  className="h-10 px-5 rounded-full text-sm font-bold bg-white/10 text-white active:scale-95 transition-transform border border-white/10"
+                >
+                  Share location
+                </button>
+                <button
+                  onClick={() => inputRef.current?.focus()}
+                  className="h-10 px-5 rounded-full text-sm font-bold bg-white/5 text-white/60 active:scale-95 transition-transform border border-white/8"
+                >
+                  Message
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           messages.map((msg, i) => {

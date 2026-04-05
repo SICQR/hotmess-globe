@@ -657,13 +657,17 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
       const email = (profile as any)?.email || null;
       const distM = (profile as any)?.distance_m ?? null;
       const isMoving = !!(profile as any)?.movement_active || !!(profile as any)?.is_moving;
+      const movementDestination = (profile as any)?.movement_destination || (profile as any)?.destination_label || null;
+      const movementEta = (profile as any)?.movement_eta || (profile as any)?.eta || null;
       const venueName = (profile as any)?.venue_name || (profile as any)?.checkin_venue || null;
       const rightNow = (profile as any)?.rightNow || (profile as any)?.right_now_status || null;
       const isOnline = !!(profile as any)?.is_online || !!(profile as any)?.onlineNow;
 
-      // Build context string
+      // Build context string — movement gets richer detail
       let context = 'Nearby';
-      if (isMoving) context = 'Moving';
+      if (isMoving && movementEta) context = `Moving · ${movementEta}`;
+      else if (isMoving && movementDestination) context = `On the way to ${movementDestination}`;
+      else if (isMoving) context = 'Passing near you';
       else if (venueName) context = `At ${venueName}`;
       else if (rightNow?.intention) context = rightNow.intention.charAt(0).toUpperCase() + rightNow.intention.slice(1);
       else if (isOnline) context = 'Online';
@@ -683,6 +687,8 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
         context,
         vibe,
         isMoving,
+        movementDestination: isMoving ? movementDestination : undefined,
+        movementEta: isMoving ? movementEta : undefined,
         isListening: isListening || (context === 'Listening'),
         radioShow: radioShow || (context === 'Listening' ? currentShowName : undefined),
         email,

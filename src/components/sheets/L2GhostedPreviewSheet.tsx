@@ -155,10 +155,14 @@ export default function L2GhostedPreviewSheet({
     if (uid) {
       closeSheet();
       setTimeout(() => {
-        openSheet('chat', { userId: uid, title: `Chat with ${name}` });
+        openSheet('chat', {
+          userId: uid,
+          title: `Chat with ${name}`,
+          otherIsMoving: isMoving || false,
+        });
       }, 200);
     }
-  }, [uid, name, openSheet, closeSheet]);
+  }, [uid, name, isMoving, openSheet, closeSheet]);
 
   // ── Meet handler ────────────────────────────────────────────────
   const handleMeet = useCallback(() => {
@@ -170,6 +174,23 @@ export default function L2GhostedPreviewSheet({
           userId: uid,
           title: `Chat with ${name}`,
           meetMode: true,
+          otherIsMoving: isMoving || false,
+        });
+      }, 200);
+    }
+  }, [uid, name, isMoving, openSheet, closeSheet]);
+
+  // ── Suggest Stop handler (movement-specific) ───────────────────
+  const handleSuggestStop = useCallback(() => {
+    hapticLight();
+    if (uid) {
+      closeSheet();
+      setTimeout(() => {
+        openSheet('chat', {
+          userId: uid,
+          title: `Chat with ${name}`,
+          suggestStop: true,
+          otherIsMoving: true,
         });
       }, 200);
     }
@@ -290,7 +311,7 @@ export default function L2GhostedPreviewSheet({
           {/* Secondary: Suggest stop + Message */}
           <div className="flex gap-3">
             <button
-              onClick={handleMessage}
+              onClick={handleSuggestStop}
               className="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 text-xs font-bold active:scale-95 transition-all"
               style={{ background: `${AMBER}12`, color: AMBER, border: `1px solid ${AMBER}20` }}
             >
