@@ -11,7 +11,7 @@
  * - Delivery: pickup, shipping, both
  * - Approximate location only — never exact address
  *
- * Data: Supabase preloved_listings table
+ * Data: Supabase market_listings table
  */
 
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
