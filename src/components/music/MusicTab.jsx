@@ -19,6 +19,7 @@ import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { useRadio } from '@/contexts/RadioContext';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
+import { trackIntent } from '@/lib/notifications/templates';
 
 // ── Brand tokens ─────────────────────────────────────────────────────────────
 const GOLD = '#C8962C';
@@ -336,6 +337,11 @@ function StemUnlockSheet({ release, onClose }) {
   ];
   const price = release.stem_pack_price_gbp ? `\u00a3${Number(release.stem_pack_price_gbp).toFixed(2)}` : 'Free';
 
+  // Track stem interest for retention notifications
+  useEffect(() => {
+    trackIntent({ type: 'stem_view', releaseId: release.id });
+  }, [release.id]);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -643,6 +649,45 @@ export default function MusicTab() {
       {...pullHandlers}
     >
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          0. CONTINUE LISTENING — unfinished previews
+          ═══════════════════════════════════════════════════════════════════ */}
+      {(() => {
+        let saved = [];
+        try { saved = JSON.parse(localStorage.getItem('hm_saved_tracks') || '[]'); } catch { /* noop */ }
+        if (saved.length === 0) return null;
+        return (
+          <section className="px-6 pt-5 pb-3">
+            <p className="text-[9px] font-black uppercase tracking-widest text-white/20 mb-3">You left this here</p>
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+              {saved.slice(0, 4).map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    const track = allTracks.find(at => at.id === t.id);
+                    if (track) player.playTrack(track, allTracks, allTracks.indexOf(track));
+                  }}
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl flex-shrink-0 active:scale-[0.97] transition-transform"
+                  style={{ background: 'rgba(200,150,44,0.06)', border: '1px solid rgba(200,150,44,0.1)' }}
+                >
+                  {t.artwork_url ? (
+                    <img src={t.artwork_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                      <Disc3 className="w-5 h-5 text-white/20" />
+                    </div>
+                  )}
+                  <div className="text-left min-w-0">
+                    <p className="text-xs font-bold text-white truncate max-w-[100px]">{t.title}</p>
+                    <p className="text-[10px] text-white/30">{t.artist}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* ═══════════════════════════════════════════════════════════════════════
           1. HERO — SMASH DADDYS
@@ -1098,7 +1143,27 @@ export default function MusicTab() {
               setShowPreviewEnd(false);
               navigate('/more');
             }}
-            onDismiss={() => setShowPreviewEnd(false)}
+            onDismiss={() => {
+              setShowPreviewEnd(false);
+              // Save the track for "You didn't finish this" on homepage
+              if (player.currentTrack) {
+                try {
+                  const saved = JSON.parse(localStorage.getItem('hm_saved_tracks') || '[]');
+                  const exists = saved.some(s => s.id === player.currentTrack.id);
+                  if (!exists) {
+                    saved.unshift({
+                      id: player.currentTrack.id,
+                      title: player.currentTrack.title,
+                      artist: player.currentTrack.artist || 'Smash Daddys',
+                      artwork_url: player.currentTrack.artwork_url,
+                    });
+                    localStorage.setItem('hm_saved_tracks', JSON.stringify(saved.slice(0, 8)));
+                  }
+                } catch { /* noop */ }
+                // Track preview abandon intent for retention push
+                trackIntent({ type: 'preview_abandon', trackId: player.currentTrack.id });
+              }
+            }}
           />
         )}
       </AnimatePresence>

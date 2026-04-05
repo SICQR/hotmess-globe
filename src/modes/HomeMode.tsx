@@ -464,6 +464,23 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
     (!profile?.avatar_url || !profile?.bio || !profile?.display_name);
   const [city, setCity] = useState(() => localStorage.getItem('hm_city') || 'London');
   const [showRightNow, setShowRightNow] = useState(false);
+
+  // ── "Since you left" return awareness ────────────────────────────────────────
+  const [lastVisit] = useState<string | null>(() => {
+    try { return localStorage.getItem('hm_last_visit'); } catch { return null; }
+  });
+  // Write current timestamp on mount — next visit will use it
+  useEffect(() => {
+    try { localStorage.setItem('hm_last_visit', new Date().toISOString()); } catch { /* noop */ }
+  }, []);
+
+  // Saved-for-later tracks
+  const [savedTracks] = useState<Array<{ id: string; title: string; artist: string; artwork_url?: string }>>(() => {
+    try {
+      const raw = localStorage.getItem('hm_saved_tracks');
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+  });
   const [nightMode, setNightMode] = useState(() => localStorage.getItem('hm_night_mode') === 'true');
   const [nightModeBeaconId, setNightModeBeaconId] = useState<string | null>(
     () => localStorage.getItem(NIGHT_BEACON_KEY) || null
@@ -651,6 +668,25 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
     refetchInterval: 300_000,
   });
 
+  // 5. "Since you left" signals — lightweight counts
+  const { data: sinceYouLeft } = useQuery({
+    queryKey: ['home-since-left', lastVisit],
+    enabled: !!lastVisit,
+    queryFn: async () => {
+      const since = lastVisit!;
+      const [rnRes, dropRes, postRes] = await Promise.all([
+        supabase.from('right_now_status').select('id', { count: 'exact', head: true }).gte('updated_at', since),
+        supabase.from('label_releases').select('id', { count: 'exact', head: true }).gte('release_date', since).eq('is_active', true),
+        supabase.from('community_posts').select('id', { count: 'exact', head: true }).gte('created_at', since).eq('moderation_status', 'approved'),
+      ]);
+      const signals = (rnRes.count ?? 0);
+      const drops = (dropRes.count ?? 0);
+      const posts = (postRes.count ?? 0);
+      return { signals, drops, posts, total: signals + drops + posts };
+    },
+    staleTime: 60_000,
+  });
+
   // ── Pulse state -> tone -> headline rotation ─────────────────────────────────
   const { isPlaying: radioPlaying, currentShowName, togglePlay } = useRadio();
   const tone = deriveTone(rightNowUsers.length, nearbyEvents.length);
@@ -739,6 +775,66 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
       >
         <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
         <div className="pb-36">
+
+          {/* ================================================================ */}
+          {/* RETURN AWARENESS — "since you left" micro-signals               */}
+          {/* ================================================================ */}
+          {sinceYouLeft && sinceYouLeft.total > 0 && (
+            <div className="px-5 py-3" style={{ background: ROOT_BG }}>
+              <p className="text-[11px] text-white/40 tracking-wide">
+                {sinceYouLeft.drops > 0
+                  ? `Something dropped since you left`
+                  : sinceYouLeft.signals > 0
+                    ? `${sinceYouLeft.signals} new signal${sinceYouLeft.signals !== 1 ? 's' : ''} since you left`
+                    : `${sinceYouLeft.posts} new post${sinceYouLeft.posts !== 1 ? 's' : ''} since you left`}
+              </p>
+            </div>
+          )}
+
+          {/* RADIO RETURN — "still live" if radio was playing */}
+          {radioPlaying && (
+            <button
+              onClick={() => navigate('/radio')}
+              className="mx-5 mt-2 mb-1 flex items-center gap-2 px-3 py-2 rounded-xl active:scale-[0.98] transition-transform"
+              style={{ background: 'rgba(0,194,224,0.06)', border: '1px solid rgba(0,194,224,0.12)' }}
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#30D158] opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#30D158]" />
+              </span>
+              <span className="text-[11px] font-bold text-white/50">Still live</span>
+              <span className="text-[10px] text-[#00C2E0] font-bold uppercase tracking-wider ml-auto">Resume</span>
+            </button>
+          )}
+
+          {/* SAVED TRACKS — "You didn't finish this" */}
+          {savedTracks.length > 0 && (
+            <div className="px-5 pt-3 pb-1" style={{ background: ROOT_BG }}>
+              <p className="text-[9px] font-black uppercase tracking-widest text-white/20 mb-2">You didn't finish this</p>
+              <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+                {savedTracks.slice(0, 4).map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => navigate('/music')}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl flex-shrink-0 active:scale-[0.97] transition-transform"
+                    style={{ background: 'rgba(200,150,44,0.06)', border: '1px solid rgba(200,150,44,0.1)' }}
+                  >
+                    {t.artwork_url ? (
+                      <img src={t.artwork_url} alt="" className="w-8 h-8 rounded-lg object-cover" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                        <Music className="w-4 h-4 text-white/20" />
+                      </div>
+                    )}
+                    <div className="text-left">
+                      <p className="text-xs font-bold text-white truncate max-w-[120px]">{t.title}</p>
+                      <p className="text-[10px] text-white/30">{t.artist}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ================================================================ */}
           {/* SECTION 1: HERO -- WORLD ENTRY                                   */}
