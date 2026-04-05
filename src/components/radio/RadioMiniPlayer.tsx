@@ -42,7 +42,7 @@ export function RadioMiniPlayer({ hidden = false }: RadioMiniPlayerProps) {
       className="fixed left-0 right-0 z-40 bg-[#0D0D0D] border-t border-[#C8962C]/20 px-4 py-2 flex items-center gap-3 cursor-grab active:cursor-grabbing touch-none"
       // bottom position — above nav
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      {...{ style: { bottom: 'calc(env(safe-area-inset-bottom, 0px) + 64px)', y, opacity } } as any}
+      {...{ style: { bottom: '83px', y, opacity } } as any}
     >
       {/* Left: amber radio icon badge */}
       <div className="w-8 h-8 rounded-full bg-[#C8962C] flex items-center justify-center flex-shrink-0">

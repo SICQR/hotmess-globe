@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, SkipForward, X, Music } from 'lucide-react';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
+import { useRadio } from '@/contexts/RadioContext';
 
 export function MusicMiniPlayer() {
   const {
@@ -24,6 +25,7 @@ export function MusicMiniPlayer() {
     dismissMiniPlayer,
   } = useMusicPlayer();
   const navigate = useNavigate();
+  const { isPlaying: radioPlaying } = useRadio();
 
   return (
     <AnimatePresence>
@@ -34,7 +36,7 @@ export function MusicMiniPlayer() {
           exit={{ y: 56, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           className="fixed left-0 right-0 z-50 bg-[#1C1C1E]/95 backdrop-blur-xl border-t border-white/8"
-          style={{ bottom: '83px' }} /* above nav */
+          style={{ bottom: radioPlaying ? '131px' : '83px' }} /* above nav, shifts up when radio mini player visible */
         >
           {/* Progress bar */}
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-white/5">
@@ -47,13 +49,13 @@ export function MusicMiniPlayer() {
           <div className="flex items-center gap-3 px-4 py-2">
             {/* Artwork */}
             <div
-              className="w-10 h-10 rounded-lg bg-[#9B1B2A]/20 flex items-center justify-center overflow-hidden shrink-0 cursor-pointer"
+              className="w-10 h-10 rounded-lg bg-[#1C1C1E] flex items-center justify-center overflow-hidden shrink-0 cursor-pointer"
               onClick={() => navigate('/music')}
             >
               {currentTrack.artwork_url ? (
                 <img src={currentTrack.artwork_url} alt="" className="w-full h-full object-cover" />
               ) : (
-                <Music className="w-5 h-5 text-[#9B1B2A]" />
+                <Music className="w-5 h-5 text-[#C8962C]/40" />
               )}
             </div>
 

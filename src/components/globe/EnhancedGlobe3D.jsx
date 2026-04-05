@@ -2034,6 +2034,8 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       
       // Clear references
       scene.clear();
+      // Clear tooltip to prevent selectNode crash on detached DOM nodes
+      setArcTooltip(null);
     };
   }, [beacons, cities, activeLayers, highlightedIds, userActivities, routesData, globeActivity, onBeaconClick, onCityClick, activeFilter, focusedBeaconId, amplifiedBeaconIds]);
 
@@ -2058,7 +2060,8 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
             left: arcTooltip.x + 15,
             top: arcTooltip.y - 40,
             zIndex: 80, // Z.OVERLAY
-            pointerEvents: 'none'
+            pointerEvents: 'none',
+            userSelect: 'none',
           }}
           className="px-4 py-3 bg-black/95 border border-[#C8962C]/40 rounded-xl backdrop-blur-xl"
         >
