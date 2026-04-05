@@ -245,9 +245,40 @@ export default function VenueCheckin() {
           )}
         </AnimatePresence>
 
-        {/* Count + momentum */}
+        {/* Who's there — anonymous silhouettes */}
         {checkinCount > 0 && (
-          <div className="mb-2">
+          <div className="mb-3">
+            <div className="flex justify-center -space-x-2 mb-2">
+              {Array.from({ length: Math.min(checkinCount, 6) }).map((_, i) => (
+                <div
+                  key={i}
+                  className="w-9 h-9 rounded-full flex items-center justify-center"
+                  style={{
+                    background: place?.type === 'curated'
+                      ? `rgba(200,150,44,${0.08 + i * 0.03})`
+                      : `rgba(255,255,255,${0.05 + i * 0.02})`,
+                    border: `1px solid ${place?.type === 'curated' ? `${GOLD}25` : 'rgba(255,255,255,0.1)'}`,
+                  }}
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="8" r="4" fill={place?.type === 'curated' ? `${GOLD}40` : 'rgba(255,255,255,0.2)'} />
+                    <path d="M4 20c0-4 4-7 8-7s8 3 8 7" fill={place?.type === 'curated' ? `${GOLD}30` : 'rgba(255,255,255,0.15)'} />
+                  </svg>
+                </div>
+              ))}
+              {checkinCount > 6 && (
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold"
+                  style={{
+                    background: place?.type === 'curated' ? `${GOLD}15` : 'rgba(255,255,255,0.06)',
+                    color: place?.type === 'curated' ? GOLD : 'rgba(255,255,255,0.4)',
+                    border: `1px solid ${place?.type === 'curated' ? `${GOLD}25` : 'rgba(255,255,255,0.1)'}`,
+                  }}
+                >
+                  +{checkinCount - 6}
+                </div>
+              )}
+            </div>
             <span className="text-white text-3xl font-bold">{checkinCount}</span>
             <span className="text-white/50 text-sm ml-2">here now</span>
           </div>

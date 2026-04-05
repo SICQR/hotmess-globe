@@ -726,6 +726,39 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
           labelSprite.userData = { placeType: place.type, isLabel: true, intensityLevel: level };
           placesGroup.add(labelSprite);
         }
+
+        // ── Who's There: anonymous silhouette dots around venue nodes ──
+        // Small dim dots scattered in a tight cluster. Count = real check-ins (capped at 12).
+        if (isVenue && level >= 1 && intensity) {
+          const silCount = Math.min(intensity.checkins_4h || 0, 12);
+          const silhouetteColor = place.type === 'curated' ? 0xC8962C : 0x888888;
+          for (let si = 0; si < silCount; si++) {
+            // Scatter in a ring around the node (pseudo-random from index)
+            const angle = (si / Math.max(silCount, 1)) * Math.PI * 2 + (si * 137.5 * Math.PI / 180); // golden angle
+            const dist = 0.012 + (si % 3) * 0.005; // tight cluster
+            const silSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+              color: silhouetteColor,
+              transparent: true,
+              opacity: 0.3 + level * 0.08,
+              blending: THREE.NormalBlending,
+            }));
+            const silSize = 0.006 + Math.random() * 0.003;
+            silSprite.scale.set(silSize, silSize, 1);
+            // Position around the venue node
+            const silPos = pos.clone();
+            const normal = silPos.clone().normalize();
+            const tangent = new THREE.Vector3(-normal.z, 0, normal.x).normalize();
+            const bitangent = new THREE.Vector3().crossVectors(normal, tangent).normalize();
+            silSprite.position.copy(silPos)
+              .add(tangent.clone().multiplyScalar(Math.cos(angle) * dist))
+              .add(bitangent.clone().multiplyScalar(Math.sin(angle) * dist));
+            silSprite.userData = {
+              placeType: place.type, isSilhouette: true,
+              intensityLevel: level, silIndex: si, baseOpacity: 0.3 + level * 0.08,
+            };
+            placesGroup.add(silSprite);
+          }
+        }
       });
 
       globe.add(placesGroup);
@@ -1633,6 +1666,12 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
           } else {
             child.material.opacity = 0;
           }
+        }
+        // Silhouette dot subtle drift — slight opacity shimmer for "alive" feel
+        if (child.userData?.isSilhouette && child.material) {
+          const si = child.userData.silIndex || 0;
+          const shimmer = child.userData.baseOpacity + Math.sin(time * 0.8 + si * 1.3) * 0.12;
+          child.material.opacity = Math.max(0.15, Math.min(0.7, shimmer));
         }
       });
 
