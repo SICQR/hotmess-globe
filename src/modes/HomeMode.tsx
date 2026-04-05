@@ -863,7 +863,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
           {/* ================================================================ */}
           <ImageSection
             imageSrc="/images/home/hero-pulse.jpg"
-            imageStyle={{ objectPosition: '65% 40%', transform: 'scale(1.6)' }}
+            imageStyle={{ objectPosition: '50% 60%', transform: 'scale(1.3)' }}
           >
             <p
               className="font-black text-2xl tracking-[0.3em] uppercase"
@@ -889,7 +889,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
           {/* ================================================================ */}
           <ImageSection
             imageSrc="/images/home/hnh-primary.jpg"
-            imageStyle={{ objectPosition: '50% 55%', transform: 'scale(1.4)' }}
+            imageStyle={{ objectPosition: '70% 30%', transform: 'scale(1.1)' }}
           >
             <p className="font-black text-xs tracking-[0.25em] uppercase" style={{ color: AMBER }}>
               HNH MESS
