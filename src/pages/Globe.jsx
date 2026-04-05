@@ -345,6 +345,33 @@ export default function GlobePage({ embedded = false }) {
   // Venue intensity: time-weighted check-in counts with 5-level system
   const { intensityMap: venueIntensity } = useVenueIntensity();
 
+  // Venue vibes: aggregated dominant vibe per venue for globe tint
+  const { data: venueVibes } = useQuery({
+    queryKey: ['globe-venue-vibes'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('venue_vibe_mix')
+        .select('place_slug, vibe, count');
+      if (!data) return new Map();
+      const map = new Map();
+      for (const row of data) {
+        const existing = map.get(row.place_slug);
+        if (!existing) {
+          map.set(row.place_slug, { dominant: row.vibe, total: Number(row.count) || 0 });
+        } else {
+          existing.total += Number(row.count) || 0;
+          if ((Number(row.count) || 0) > (existing._maxCount || 0)) {
+            existing.dominant = row.vibe;
+            existing._maxCount = Number(row.count) || 0;
+          }
+        }
+      }
+      return map;
+    },
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+
   // Living Globe: activity reactor (seed heat + venue glow)
   const liveBeaconCount = (rightNowUsers?.length ?? 0) + (beacons?.length ?? 0);
   const globeActivity = useGlobeActivity(liveBeaconCount);
@@ -741,6 +768,7 @@ export default function GlobePage({ embedded = false }) {
             cities={cities}
             pulsePlaces={pulsePlaces}
             venueIntensity={venueIntensity}
+            venueVibes={venueVibes}
             activeLayers={debouncedLayers}
             userActivities={userActivities}
             userIntents={userIntents}

@@ -15,6 +15,8 @@ import { MapPin, Check, LogIn } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PulsePlace } from '@/hooks/usePulsePlaces';
 import { INTENSITY_VISUALS, getConversionLabel, getMomentumLabel } from '@/hooks/useVenueIntensity';
+import VibeSelector from '@/components/vibe/VibeSelector';
+import { useSetVibe, useMyVibe, type Vibe } from '@/hooks/useVenueVibes';
 
 const GOLD = '#C8962C';
 
@@ -30,6 +32,9 @@ export default function VenueCheckin() {
   const [checkingIn, setCheckingIn] = useState(false);
   const [checkedIn, setCheckedIn] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [selectedVibe, setSelectedVibe] = useState<Vibe | null>(null);
+  const setVibeMutation = useSetVibe();
+  const { data: myVibe } = useMyVibe();
 
   // Load venue + user + intensity
   useEffect(() => {
@@ -340,6 +345,39 @@ export default function VenueCheckin() {
             'Check in'
           )}
         </button>
+
+        {/* Vibe selector — appears after check-in */}
+        <AnimatePresence>
+          {checkedIn && !isCommunity && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ delay: 0.3, type: 'spring', stiffness: 300 }}
+              className="mt-5 w-full max-w-xs"
+            >
+              <p className="text-white/40 text-[11px] font-semibold tracking-wider uppercase text-center mb-3">
+                What's your vibe?
+              </p>
+              <VibeSelector
+                selected={selectedVibe || myVibe?.vibe || null}
+                onSelect={(vibe) => {
+                  setSelectedVibe(vibe);
+                  setVibeMutation.mutate({
+                    vibe,
+                    placeSlug: slug,
+                    venueId: place?.id || null,
+                    lat: place?.lat || null,
+                    lng: place?.lng || null,
+                  });
+                  toast.success(`Vibe set: ${vibe}`);
+                }}
+                loading={setVibeMutation.isPending}
+                compact
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {checkedIn && (
           <p className="text-white/30 text-xs mt-3">Your safety contacts have been notified</p>

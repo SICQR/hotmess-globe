@@ -14,6 +14,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, MessageCircle, ChevronDown, Users, MapPin, Shield } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useVenuePresence, type GhostedContext, type PresenceUser } from '@/hooks/useVenuePresence';
+import { VibeChip } from '@/components/vibe/VibeSelector';
+import type { Vibe } from '@/hooks/useVenueVibes';
 
 const AMBER = '#C8962C';
 
@@ -281,6 +283,13 @@ function PresenceCard({
             <div className="flex items-center gap-1 mt-0.5">
               <Shield className="w-2.5 h-2.5" style={{ color: AMBER }} />
               <span className="text-[9px] font-semibold" style={{ color: `${AMBER}80` }}>Verified</span>
+            </div>
+          )}
+
+          {/* Live vibe chip */}
+          {user.vibe && (
+            <div className="mt-1">
+              <VibeChip vibe={user.vibe as Vibe} />
             </div>
           )}
         </div>
