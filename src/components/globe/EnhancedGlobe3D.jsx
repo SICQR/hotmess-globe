@@ -49,6 +49,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
   beacons = [],
   cities = [],
   pulsePlaces = [],
+  venueIntensity = new Map(),
   activeLayers = ['pins'],
   userActivities = [],
   userIntents = [],
@@ -614,12 +615,22 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     const placesGroup = new THREE.Group();
     const placeMeshes = [];
 
-    // Visual config per place type
+    // Visual config per place type (base — modified by intensity)
     const PLACE_VISUALS = {
       city:    { color: 0x1A1A1A, emissive: 0x333333, size: 0.025, glowOpacity: 0.15, pulseSpeed: 0,   glowSize: 3.0, labelColor: '#666666' },
       zone:    { color: 0xBBBBBB, emissive: 0x888888, size: 0.018, glowOpacity: 0.20, pulseSpeed: 0.15, glowSize: 2.5, labelColor: '#999999' },
       club:    { color: 0xFFFFFF, emissive: 0xCCCCCC, size: 0.016, glowOpacity: 0.35, pulseSpeed: 0.25, glowSize: 2.0, labelColor: '#CCCCCC' },
       curated: { color: 0xC8962C, emissive: 0xC8962C, size: 0.022, glowOpacity: 0.60, pulseSpeed: 0.83, glowSize: 3.5, labelColor: '#C8962C' },
+    };
+
+    // 5-level intensity system: modifies club/curated nodes based on check-in data
+    const INTENSITY_LEVELS = {
+      0: { glowMult: 0.3, sizeMult: 1.0, pulseSpeed: 0,    emissiveMult: 0.3, heatColor: null },
+      1: { glowMult: 0.5, sizeMult: 1.1, pulseSpeed: 0.33, emissiveMult: 0.5, heatColor: null },
+      2: { glowMult: 0.7, sizeMult: 1.2, pulseSpeed: 0.5,  emissiveMult: 0.7, heatColor: null },
+      3: { glowMult: 1.0, sizeMult: 1.4, pulseSpeed: 0.71, emissiveMult: 1.0, heatColor: 0xFF8800 },
+      4: { glowMult: 1.4, sizeMult: 1.7, pulseSpeed: 0.91, emissiveMult: 1.5, heatColor: 0xFF6600 },
+      5: { glowMult: 1.8, sizeMult: 2.0, pulseSpeed: 1.11, emissiveMult: 2.0, heatColor: 0xFF4400 },
     };
 
     const placeGeo = new THREE.SphereGeometry(0.015, 8, 8);
@@ -629,62 +640,90 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         const visual = PLACE_VISUALS[place.type] || PLACE_VISUALS.city;
         const pos = latLngToVector3(place.lat, place.lng, globeRadius * 1.008);
 
-        // Pin mesh
+        // Get live intensity for venues/curated (Map from venueIntensity prop)
+        const intensity = venueIntensity?.get?.(place.slug);
+        const level = intensity?.intensity_level ?? 0;
+        const iLevel = INTENSITY_LEVELS[Math.min(level, 5)] || INTENSITY_LEVELS[0];
+        const isVenue = place.type === 'club' || place.type === 'curated';
+
+        // Pin mesh — intensity modifies emissive + size for venues
+        const baseEmissiveIntensity = place.type === 'curated' ? 1.8 : place.type === 'club' ? 0.8 : 0.4;
         const mat = new THREE.MeshStandardMaterial({
-          color: visual.color,
-          emissive: visual.emissive,
-          emissiveIntensity: place.type === 'curated' ? 1.8 : place.type === 'club' ? 0.8 : 0.4,
+          color: isVenue && level >= 4 ? (iLevel.heatColor || visual.color) : visual.color,
+          emissive: isVenue && level >= 3 ? (iLevel.heatColor || visual.emissive) : visual.emissive,
+          emissiveIntensity: isVenue ? baseEmissiveIntensity * iLevel.emissiveMult : baseEmissiveIntensity,
           roughness: 0.3,
           metalness: place.type === 'curated' ? 0.6 : 0.2,
         });
         const mesh = new THREE.Mesh(placeGeo, mat);
         mesh.position.copy(pos);
-        const scale = visual.size / 0.015;
+        const baseScale = visual.size / 0.015;
+        const scale = isVenue ? baseScale * iLevel.sizeMult : baseScale;
         mesh.scale.setScalar(scale);
         mesh.userData = {
           type: 'place',
           place,
           placeType: place.type,
           baseScale: scale,
-          beaconVisual: { pulseSpeed: visual.pulseSpeed },
+          intensityLevel: level,
+          intensityPulseSpeed: isVenue ? iLevel.pulseSpeed : visual.pulseSpeed,
+          beaconVisual: { pulseSpeed: isVenue ? iLevel.pulseSpeed : visual.pulseSpeed },
         };
         placesGroup.add(mesh);
         placeMeshes.push(mesh);
 
-        // Glow sprite
-        if (visual.glowOpacity > 0) {
+        // Glow sprite — intensity amplifies glow
+        const glowOpacity = isVenue ? visual.glowOpacity * iLevel.glowMult : visual.glowOpacity;
+        if (glowOpacity > 0.05) {
+          const glowColor = isVenue && iLevel.heatColor ? iLevel.heatColor : visual.emissive;
           const glowSprite = new THREE.Sprite(new THREE.SpriteMaterial({
-            color: visual.emissive,
+            color: glowColor,
             transparent: true,
-            opacity: visual.glowOpacity,
+            opacity: Math.min(glowOpacity, 0.9),
             blending: THREE.AdditiveBlending,
           }));
-          const gs = visual.size * visual.glowSize;
+          const gs = visual.size * visual.glowSize * (isVenue ? iLevel.sizeMult : 1);
           glowSprite.scale.set(gs, gs, 1);
           glowSprite.position.copy(pos);
-          glowSprite.userData = { placeType: place.type };
+          glowSprite.userData = { placeType: place.type, intensityLevel: level };
           placesGroup.add(glowSprite);
         }
 
-        // Name label (canvas sprite) — only for curated + clubs at mid zoom
-        if (place.type === 'curated' || place.type === 'club') {
+        // Heat bloom ring for Level 3+ venues
+        if (isVenue && level >= 3 && iLevel.heatColor) {
+          const heatSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+            color: iLevel.heatColor,
+            transparent: true,
+            opacity: 0.15 + level * 0.05,
+            blending: THREE.AdditiveBlending,
+          }));
+          const hs = visual.size * 5 * iLevel.sizeMult;
+          heatSprite.scale.set(hs, hs, 1);
+          heatSprite.position.copy(pos);
+          heatSprite.userData = { placeType: place.type, isHeatBloom: true, intensityLevel: level };
+          placesGroup.add(heatSprite);
+        }
+
+        // Name label — for curated + clubs, or any venue with Level 2+
+        if (place.type === 'curated' || place.type === 'club' || (isVenue && level >= 2)) {
           const labelCanvas = document.createElement('canvas');
           labelCanvas.width = 256;
           labelCanvas.height = 48;
           const lctx = labelCanvas.getContext('2d');
-          lctx.fillStyle = visual.labelColor;
+          // Active venues get brighter labels
+          lctx.fillStyle = level >= 3 ? '#FFFFFF' : visual.labelColor;
           lctx.font = place.type === 'curated' ? 'bold 24px Arial' : '20px Arial';
           lctx.textAlign = 'center';
           lctx.textBaseline = 'middle';
           lctx.fillText(place.name.toUpperCase().slice(0, 20), 128, 24);
           const labelTex = new THREE.CanvasTexture(labelCanvas);
           const labelSprite = new THREE.Sprite(
-            new THREE.SpriteMaterial({ map: labelTex, transparent: true, opacity: 0.7 })
+            new THREE.SpriteMaterial({ map: labelTex, transparent: true, opacity: level >= 3 ? 0.9 : 0.7 })
           );
           labelSprite.scale.set(0.14, 0.028, 1);
           labelSprite.position.copy(pos);
           labelSprite.position.y += 0.04;
-          labelSprite.userData = { placeType: place.type, isLabel: true };
+          labelSprite.userData = { placeType: place.type, isLabel: true, intensityLevel: level };
           placesGroup.add(labelSprite);
         }
       });
@@ -1512,20 +1551,29 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
 
         child.visible = visible;
 
-        // Curated gold pulse animation (1.2s = ~0.83 Hz)
-        if (pt === 'curated' && child.userData?.baseScale) {
-          const pulse = 1 + Math.sin(time * 0.83 * Math.PI * 2) * 0.25;
-          child.scale.setScalar(child.userData.baseScale * pulse);
+        // Intensity-driven pulse animation for all place types
+        if (child.userData?.baseScale) {
+          const speed = child.userData.intensityPulseSpeed || 0;
+          if (speed > 0) {
+            // Amplitude scales with intensity: L0=none, L1=subtle, L5=dramatic
+            const level = child.userData.intensityLevel || 0;
+            const amp = pt === 'zone' ? 0.1 : (0.1 + level * 0.04); // zones breathe gently
+            const pulse = 1 + Math.sin(time * speed * Math.PI * 2) * amp;
+            child.scale.setScalar(child.userData.baseScale * pulse);
+          }
         }
-        // Zone breathing
-        if (pt === 'zone' && child.userData?.baseScale) {
-          const breathe = 1 + Math.sin(time * 0.15 * Math.PI * 2) * 0.1;
-          child.scale.setScalar(child.userData.baseScale * breathe);
-        }
-        // Club slow pulse
-        if (pt === 'club' && child.userData?.baseScale) {
-          const pulse = 1 + Math.sin(time * 0.25 * Math.PI * 2) * 0.15;
-          child.scale.setScalar(child.userData.baseScale * pulse);
+        // Heat bloom breathing for Level 3+ venues
+        if (child.userData?.isHeatBloom && child.material) {
+          const level = child.userData.intensityLevel || 0;
+          if (level >= 3) {
+            const bloomSpeed = 0.5 + level * 0.15;
+            const breathe = 0.3 + Math.sin(time * bloomSpeed * Math.PI * 2) * 0.2;
+            child.material.opacity = breathe;
+            const bloomScale = 1 + Math.sin(time * bloomSpeed * 0.7 * Math.PI * 2) * 0.15;
+            child.scale.setScalar(bloomScale);
+          } else {
+            child.material.opacity = 0;
+          }
         }
       });
 
