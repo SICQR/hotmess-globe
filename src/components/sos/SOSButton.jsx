@@ -196,12 +196,14 @@ export function DistressModal({ onClose }) {
           </a>
 
           <button
+            onClick={() => { setShowDistress(false); window.location.href = '/care'; }}
             className="flex items-center justify-center gap-3 w-full py-4 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20"
           >
             Contact Hand N Hand
           </button>
 
           <button
+            onClick={() => { setShowDistress(false); window.location.href = '/care#breathing'; }}
             className="flex items-center justify-center gap-3 w-full py-4 bg-white/5 text-white/60 rounded-xl hover:bg-white/10"
           >
             Grounding exercise

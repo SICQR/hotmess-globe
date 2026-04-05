@@ -332,25 +332,17 @@ function GhostedEmpty({ onOpenFilters, onGoLive }: { onOpenFilters: () => void; 
       transition={{ duration: 0.4 }}
     >
       <Ghost className="w-12 h-12 mb-4" style={{ color: AMBER }} />
-      <h2 className="text-lg font-black text-white mb-2">Quiet right now</h2>
+      <h2 className="text-lg font-black text-white mb-2">Nobody nearby yet</h2>
       <p className="text-sm text-[#8E8E93] mb-6 max-w-[260px]">
-        Go Live and be seen first
+        Go Live so people know you're out
       </p>
       <button
         onClick={onGoLive || onOpenFilters}
-        className="h-12 px-6 text-black font-bold rounded-2xl flex items-center gap-2 active:scale-95 transition-transform mb-3"
+        className="h-12 px-6 text-black font-bold rounded-2xl flex items-center gap-2 active:scale-95 transition-transform"
         style={{ backgroundColor: AMBER }}
         aria-label="Go Live"
       >
         Go Live
-      </button>
-      <button
-        onClick={handleInvite}
-        className="text-sm font-medium"
-        style={{ color: MUTED }}
-        aria-label="Invite a friend"
-      >
-        or invite a friend
       </button>
     </motion.div>
   );
@@ -722,26 +714,8 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
     [],
   );
 
-  // ---- FAB scroll-hide logic ----
+  // ---- Scroll ref for pull-to-refresh ----
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [fabVisible, setFabVisible] = useState(true);
-  const lastScrollTop = useRef(0);
-
-  const handleScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const currentScrollTop = el.scrollTop;
-    const isScrollingDown = currentScrollTop > lastScrollTop.current && currentScrollTop > 60;
-    setFabVisible(!isScrollingDown);
-    lastScrollTop.current = currentScrollTop;
-  }, []);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.addEventListener('scroll', handleScroll, { passive: true });
-    return () => el.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
 
   // ---- Pull-to-refresh ----
   const handleRefresh = useCallback(async () => {
@@ -924,8 +898,7 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
         </div>
       )}
 
-      {/* ====== DYNAMIC BANNERS ====== */}
-      <AppBanner placement="ghosted_top" variant="strip" />
+      {/* Dynamic banners removed — grid IS the content, no pre-content clutter */}
 
       {/* ====== CONTENT AREA ====== */}
       <div
@@ -1005,56 +978,31 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
         )}
       </div>
 
-      {/* ====== "RIGHT NOW" FAB + BOOST BUTTON ====== */}
-      <AnimatePresence>
-        {fabVisible && (
-          <motion.div
-            className="fixed z-20 left-1/2 -translate-x-1/2 flex items-center gap-2"
-            style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 20, opacity: 0 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+      {/* ====== BOOST FAB (single purpose — no duplicate Go Live) ====== */}
+      {isBoostActive('profile_bump') && (
+        <motion.div
+          className="fixed z-20 right-4"
+          style={{ bottom: 'calc(90px + env(safe-area-inset-bottom, 0px))' }}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+        >
+          <button
+            onClick={() => {
+              const exp = boostExpiresAt('profile_bump');
+              const m = exp ? Math.round((exp.getTime() - Date.now()) / 60000) : 0;
+              toast(`Profile Bump active - ${m < 60 ? `${m}m` : `${Math.round(m / 60)}h`} left`, {
+                style: { background: '#1C1C1E', color: '#C8962C', border: '1px solid rgba(200,150,44,0.3)' },
+              });
+            }}
+            className="h-10 w-10 rounded-full flex items-center justify-center bg-[#C8962C]/20 border border-[#C8962C]/50 shadow-lg active:scale-95 transition-transform"
+            style={{ boxShadow: '0 0 16px rgba(200,150,44,0.3)' }}
+            aria-label="Profile Bump active"
           >
-            {/* Boost Profile trigger */}
-            <button
-              onClick={() => {
-                if (isBoostActive('profile_bump')) {
-                  const exp = boostExpiresAt('profile_bump');
-                  const m = exp ? Math.round((exp.getTime() - Date.now()) / 60000) : 0;
-                  toast(`Profile Bump active - ${m < 60 ? `${m}m` : `${Math.round(m / 60)}h`} left`, {
-                    style: { background: '#1C1C1E', color: '#C8962C', border: '1px solid rgba(200,150,44,0.3)' },
-                  });
-                } else {
-                  openSheet('boost-shop', {});
-                }
-              }}
-              className={`h-12 w-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform ${
-                isBoostActive('profile_bump')
-                  ? 'bg-[#C8962C]/20 border border-[#C8962C]/50'
-                  : 'bg-white/10 border border-white/15'
-              }`}
-              style={isBoostActive('profile_bump') ? { boxShadow: '0 0 16px rgba(200,150,44,0.3)' } : undefined}
-              aria-label={isBoostActive('profile_bump') ? 'Profile Bump active' : 'Boost your profile'}
-            >
-              <Zap className={`w-5 h-5 ${isBoostActive('profile_bump') ? 'text-[#C8962C]' : 'text-white/60'}`} />
-            </button>
-
-            <button
-              onClick={() => openSheet('go-live', {})}
-              className="h-12 px-6 rounded-full flex items-center gap-2 font-bold text-sm text-black shadow-lg active:scale-95 transition-transform"
-              style={{
-                backgroundColor: AMBER,
-                boxShadow: `0 8px 32px rgba(200,150,44,0.35)`,
-              }}
-              aria-label="Share your vibe right now"
-            >
-              Share your vibe
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <Zap className="w-4 h-4 text-[#C8962C]" />
+          </button>
+        </motion.div>
+      )}
 
       {/* ====== QUICK ACTION MENU (long-press overlay) ====== */}
       <AnimatePresence>

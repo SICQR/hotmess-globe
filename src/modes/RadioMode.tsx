@@ -51,6 +51,7 @@ import {
   X,
   Music,
   ChevronLeft,
+  ChevronRight,
   Calendar,
 } from 'lucide-react';
 import { useRadio } from '@/contexts/RadioContext';
@@ -569,39 +570,7 @@ export function RadioMode({ className = '' }: RadioModeProps) {
           <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black to-transparent pointer-events-none" />
         </section>
 
-        {/* == NOW PLAYING CARD == */}
-        <section className="px-4 pb-5 -mt-4 relative z-[1]">
-          <h2 className="text-[11px] font-black text-[#8E8E93] uppercase tracking-widest mb-3">
-            Now Playing
-          </h2>
-          <div className="bg-[#1C1C1E] rounded-2xl overflow-hidden border border-white/5">
-            <div className="flex gap-4 p-4">
-              {/* Artwork placeholder */}
-              <div className="w-20 h-20 rounded-xl flex-shrink-0 bg-gradient-to-br from-[#C8962C]/30 to-[#C8962C]/5 flex items-center justify-center">
-                <Music className="w-8 h-8 text-[#C8962C]/60" />
-              </div>
-              {/* Info */}
-              <div className="flex-1 min-w-0 flex flex-col justify-center">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className="font-bold text-white text-base leading-tight truncate">
-                    {nowPlayingShow?.name || 'HOTMESS RADIO'}
-                  </p>
-                  {isPlaying && (
-                    <span className="inline-flex items-center gap-1 bg-[#C8962C]/20 text-[#C8962C] text-[10px] font-black px-2 py-0.5 rounded-full uppercase flex-shrink-0">
-                      ON AIR
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm text-[#8E8E93] mb-1 truncate">
-                  {nowPlayingShow?.host || 'HOTMESS'}
-                </p>
-                <p className="text-xs text-white/30 leading-relaxed line-clamp-2">
-                  {nowPlayingShow?.description || "London's queer community radio station."}
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* Now Playing removed — hero already shows current show + ON AIR state */}
 
         {/* == SCHEDULE STRIP == */}
         <section className="px-4 pb-5">
@@ -717,31 +686,21 @@ export function RadioMode({ className = '' }: RadioModeProps) {
           </AnimatePresence>
         </section>
 
-        {/* == RAW CONVICT RECORDS == */}
+        {/* == RAW CONVICT RECORDS — link to Music tab (single source of truth for releases) == */}
         <section className="px-4 pb-5">
-          <h2 className="text-[11px] font-black text-[#8E8E93] uppercase tracking-widest mb-3">
-            Raw Convict Records
-          </h2>
-          <div className="space-y-2">
-            {PLAYLIST_TRACKS.map((track) => (
-              <a
-                key={track.id}
-                href={track.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 bg-[#1C1C1E] rounded-xl px-3 py-2.5 border border-white/5 hover:border-[#C8962C]/30 transition-colors"
-              >
-                <div className="w-8 h-8 rounded-lg bg-[#C8962C]/10 flex items-center justify-center flex-shrink-0">
-                  <Music className="w-4 h-4 text-[#C8962C]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-semibold truncate">{track.title}</p>
-                  <p className="text-[#8E8E93] text-[10px]">{track.artist} \u00b7 {track.duration}</p>
-                </div>
-                <ExternalLink className="w-3.5 h-3.5 text-white/20 flex-shrink-0" />
-              </a>
-            ))}
-          </div>
+          <button
+            onClick={() => navigate('/music')}
+            className="w-full flex items-center gap-3 bg-[#1C1C1E] rounded-2xl px-4 py-4 border border-white/5 active:bg-white/5 transition-colors"
+          >
+            <div className="w-10 h-10 rounded-xl bg-[#9B1B2A]/15 flex items-center justify-center flex-shrink-0">
+              <Music className="w-5 h-5 text-[#9B1B2A]" />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-white text-sm font-bold">Raw Convict Records</p>
+              <p className="text-[#8E8E93] text-[10px]">Releases, stems &amp; more</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-white/20 flex-shrink-0" />
+          </button>
         </section>
 
         {/* == ABOUT STRIP == */}

@@ -145,7 +145,7 @@ function PurchaseSuccessScreen({ onDismiss, listingId, openSheet }: {
           className="w-full h-12 rounded-xl font-bold text-sm active:scale-95 transition-transform border"
           style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)' }}
         >
-          Browse more
+          Back to market
         </button>
         {listingId && (
           <button
@@ -376,7 +376,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
       {/* ================================================================== */}
       {/* SELL FAB — shows on preloved engine or all engines for auth users   */}
       {/* ================================================================== */}
-      {isAuthenticated && (
+      {isAuthenticated && activeEngine !== 'shop' && (
         <button
           onClick={() => openSheet('sell', {})}
           className="fixed bottom-24 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform"
