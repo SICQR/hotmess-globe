@@ -112,8 +112,11 @@ export default function L2TapsSheet() {
           <div className="flex flex-col items-center justify-center py-20 px-6 text-center gap-4">
             <Ghost className="w-12 h-12 text-white/20" />
             <p className="text-white/40 text-sm">
-              {error ? 'Could not load boos right now.' : 'No boos yet. Hang around Ghosted or Boo someone first.'}
+              {error ? 'Could not load boos right now.' : 'No Boos yet'}
             </p>
+            {!error && (
+              <p className="text-white/25 text-xs">Send one in Ghosted</p>
+            )}
             {!error && (
               <button
                 onClick={() => closeSheet()}
