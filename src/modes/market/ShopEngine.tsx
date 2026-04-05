@@ -230,8 +230,8 @@ export function ShopEngine({ search, className = '' }: ShopEngineProps) {
           <div className="w-16 h-16 rounded-2xl bg-[#1C1C1E] flex items-center justify-center mb-4">
             <ShoppingBag className="w-8 h-8 text-white/10" />
           </div>
-          <h3 className="text-lg font-bold text-white mb-1">No products yet</h3>
-          <p className="text-sm text-center text-white/40">New drops land all the time. Check back soon.</p>
+          <h3 className="text-lg font-bold text-white mb-1">Nothing in the shop yet</h3>
+          <p className="text-sm text-center text-white/40">Official merch and HNH MESS products land here.</p>
         </div>
       )}
 

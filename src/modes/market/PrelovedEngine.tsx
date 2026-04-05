@@ -302,12 +302,12 @@ export function PrelovedEngine({ search, className = '' }: PrelovedEngineProps) 
 
   return (
     <div ref={scrollRef} className={`flex-1 overflow-y-auto scroll-momentum pb-32 ${className}`}>
-      {/* Safety banner */}
+      {/* Trust banner */}
       {!search && (
         <div className="mx-4 mt-4 mb-2 px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center gap-2">
-          <Shield className="w-4 h-4 text-white/20 flex-shrink-0" />
-          <p className="text-white/25 text-[10px]">
-            Chat first. Agree terms before exchanging. Meet safely.
+          <Shield className="w-4 h-4 text-[#9E7D47]/40 flex-shrink-0" />
+          <p className="text-white/30 text-[10px]">
+            Every sale starts in chat. No anonymous purchases.
           </p>
         </div>
       )}
@@ -387,22 +387,30 @@ export function PrelovedEngine({ search, className = '' }: PrelovedEngineProps) 
             <Package className="w-8 h-8 text-white/10" />
           </div>
           <h3 className="text-lg font-bold text-white mb-1">
-            {categoryFilter ? 'Nothing in this category' : 'Nothing listed yet'}
+            {categoryFilter ? 'Nothing in this category' : 'No listings yet'}
           </h3>
           <p className="text-sm text-center text-white/40 mb-4">
             {categoryFilter
               ? 'Try a different category or check back later.'
-              : 'Drop the first piece'}
+              : 'Be the first to list something for the community.'}
           </p>
-          {categoryFilter && (
+          <div className="flex items-center gap-3">
+            {categoryFilter && (
+              <button
+                onClick={() => setCategoryFilter(null)}
+                className="h-10 px-6 rounded-xl text-sm font-bold active:scale-95 transition-transform bg-white/10 text-white/70 border border-white/10"
+              >
+                Show all
+              </button>
+            )}
             <button
-              onClick={() => setCategoryFilter(null)}
+              onClick={() => openSheet('sell', {})}
               className="h-10 px-6 rounded-xl text-sm font-bold active:scale-95 transition-transform"
               style={{ backgroundColor: PRELOVED_BROWN, color: '#000' }}
             >
-              Show all
+              Sell something
             </button>
-          )}
+          </div>
         </div>
       )}
 

@@ -11,7 +11,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/components/utils/supabaseClient';
 import {
-  MessageCircle, Send, ArrowLeft,
+  Send, ArrowLeft,
   Loader2, Search, ChevronRight,
   Camera, Mic, Video, Navigation,
   Sparkles, X, Flag, Ghost,

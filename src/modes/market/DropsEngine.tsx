@@ -258,7 +258,7 @@ export function DropsEngine({ search, className = '' }: DropsEngineProps) {
             <Flame className="w-8 h-8 text-white/10" />
           </div>
           <h3 className="text-lg font-bold text-white mb-1">No drops right now</h3>
-          <p className="text-sm text-center text-white/40">Follow your favourite brands. You'll know when something drops.</p>
+          <p className="text-sm text-center text-white/40">Limited pieces from HOTMESS brands land here. Check back.</p>
         </div>
       )}
 

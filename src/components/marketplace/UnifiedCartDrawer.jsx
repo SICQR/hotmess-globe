@@ -173,7 +173,7 @@ function CreatorsCartPanel({ currentUser, enabled }) {
   return (
     <div className="mt-6 space-y-4">
       <SheetHeader>
-        <SheetTitle className="text-white font-black uppercase tracking-wider">Creators cart</SheetTitle>
+        <SheetTitle className="text-white font-black uppercase tracking-wider">Preloved cart</SheetTitle>
       </SheetHeader>
 
       {isLoading ? (
@@ -182,10 +182,10 @@ function CreatorsCartPanel({ currentUser, enabled }) {
         </div>
       ) : cartWithProducts.length === 0 ? (
         <div className="border border-white/10 bg-white/5 p-4">
-          <p className="text-white/70 text-sm">Your creators cart is empty.</p>
+          <p className="text-white/70 text-sm">Your preloved cart is empty.</p>
           <div className="mt-3 flex gap-3">
-            <Link to="/market/creators" className="text-[#C8962C] hover:underline text-sm font-bold">
-              Browse creators
+            <Link to="/market/preloved" className="text-[#9E7D47] hover:underline text-sm font-bold">
+              Browse preloved
             </Link>
           </div>
         </div>
@@ -429,11 +429,11 @@ export default function UnifiedCartDrawer({ currentUser }) {
         <SheetContent className="bg-black text-white border-l border-white/10 w-full sm:max-w-md">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="bg-white/5 border border-white/10 w-full justify-start">
-              <TabsTrigger value="shopify" className="data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black">
+              <TabsTrigger value="shopify" className="data-[state=active]:bg-[#C8962C] data-[state=active]:text-black">
                 Shop ({shopifyCount})
               </TabsTrigger>
-              <TabsTrigger value="creators" className="data-[state=active]:bg-[#C8962C] data-[state=active]:text-white">
-                Creators ({Number(creatorsCount) || 0})
+              <TabsTrigger value="creators" className="data-[state=active]:bg-[#9E7D47] data-[state=active]:text-white">
+                Preloved ({Number(creatorsCount) || 0})
               </TabsTrigger>
             </TabsList>
 

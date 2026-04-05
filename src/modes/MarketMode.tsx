@@ -246,24 +246,22 @@ export function MarketMode({ className = '' }: MarketModeProps) {
           </h1>
 
           <div className="flex items-center gap-2">
-            {/* Cart — only show on shop engine */}
-            {activeEngine === 'shop' && (
-              <button
-                onClick={() => openSheet('cart', {})}
-                className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.06] active:scale-90 transition-transform"
-                aria-label={`Shopping bag${cartItemCount > 0 ? `, ${cartItemCount} items` : ''}`}
-              >
-                <ShoppingBag className="w-5 h-5 text-white/70" />
-                {cartItemCount > 0 && (
-                  <span
-                    className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-bold text-black px-1"
-                    style={{ backgroundColor: AMBER }}
-                  >
-                    {cartItemCount > 99 ? '99+' : cartItemCount}
-                  </span>
-                )}
-              </button>
-            )}
+            {/* Cart — visible on all engines */}
+            <button
+              onClick={() => openSheet('cart', {})}
+              className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.06] active:scale-90 transition-transform"
+              aria-label={`Shopping bag${cartItemCount > 0 ? `, ${cartItemCount} items` : ''}`}
+            >
+              <ShoppingBag className="w-5 h-5 text-white/70" />
+              {cartItemCount > 0 && (
+                <span
+                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-bold text-black px-1"
+                  style={{ backgroundColor: AMBER }}
+                >
+                  {cartItemCount > 99 ? '99+' : cartItemCount}
+                </span>
+              )}
+            </button>
 
             {/* Filter */}
             <button
@@ -305,7 +303,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
         </div>
 
         {/* Engine tabs */}
-        <div className="px-4 pb-3 flex items-center gap-2">
+        <div className="px-4 pb-2 flex items-center gap-2">
           {ENGINE_TABS.map((tab) => {
             const isActive = activeEngine === tab.key;
             const Icon = tab.icon;
@@ -328,6 +326,14 @@ export function MarketMode({ className = '' }: MarketModeProps) {
               </button>
             );
           })}
+        </div>
+        {/* Engine context line */}
+        <div className="px-4 pb-3">
+          <p className="text-[11px] text-white/25">
+            {activeEngine === 'shop' && 'Official merch + HNH MESS. Direct checkout.'}
+            {activeEngine === 'drops' && 'Limited runs from HOTMESS brands. Gone when gone.'}
+            {activeEngine === 'preloved' && 'Community marketplace. Chat first, deal in person.'}
+          </p>
         </div>
       </div>
 
@@ -374,15 +380,15 @@ export function MarketMode({ className = '' }: MarketModeProps) {
       </AnimatePresence>
 
       {/* ================================================================== */}
-      {/* SELL FAB — shows on preloved engine or all engines for auth users   */}
+      {/* SELL FAB — preloved only (drops are brand-owned, not user-sell)   */}
       {/* ================================================================== */}
-      {isAuthenticated && activeEngine !== 'shop' && (
+      {isAuthenticated && activeEngine === 'preloved' && (
         <button
           onClick={() => openSheet('sell', {})}
           className="fixed bottom-24 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform"
           style={{
-            backgroundColor: activeEngine === 'preloved' ? '#9E7D47' : AMBER,
-            boxShadow: `0 8px 24px ${activeEngine === 'preloved' ? 'rgba(158,125,71,0.35)' : 'rgba(200,150,44,0.35)'}`,
+            backgroundColor: '#9E7D47',
+            boxShadow: '0 8px 24px rgba(158,125,71,0.35)',
           }}
           aria-label="Sell an item"
         >

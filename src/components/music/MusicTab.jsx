@@ -9,7 +9,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Play, Pause, ChevronDown, Disc3, X,
+  Play, ChevronDown, Disc3, X,
   FileAudio, Headphones, ExternalLink,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
