@@ -24,6 +24,7 @@ export interface PresenceUser {
   looking_for: string[];
   age: number | null;
   is_verified: boolean;
+  vibe: string | null;      // live vibe: RAW | HUNG | HIGH | LOOKING | CHILLING
 }
 
 export interface GhostedContext {
@@ -78,6 +79,8 @@ async function fetchVenueUsers(ctx: GhostedContext, myUserId: string | null): Pr
 
   if (!profiles) return [];
 
+  const vibeMap = await getVibeMap(profiles.map(p => p.id));
+
   return profiles
     .filter(p => !blockedIds.has(p.id))
     .filter(p => p.display_name) // GDPR: must have name
@@ -92,6 +95,7 @@ async function fetchVenueUsers(ctx: GhostedContext, myUserId: string | null): Pr
       looking_for: p.looking_for || [],
       age: p.age,
       is_verified: p.is_verified || false,
+      vibe: vibeMap.get(p.id) || null,
     }));
 }
 
@@ -133,7 +137,7 @@ async function fetchAreaUsers(ctx: GhostedContext, myUserId: string | null): Pro
       .limit(50);
 
     if (checkins) {
-      checkinUserIds = [...new Set(checkins.map(c => c.user_id))];
+      checkinUserIds = Array.from(new Set(checkins.map((c: any) => c.user_id as string)));
     }
   }
 
@@ -171,6 +175,8 @@ async function fetchAreaUsers(ctx: GhostedContext, myUserId: string | null): Pro
   // Approximate area label
   const areaLabel = getAreaLabel(ctx.lat, ctx.lng);
 
+  const vibeMap = await getVibeMap(profiles.map(p => p.id));
+
   return profiles
     .filter(p => !blockedIds.has(p.id))
     .filter(p => p.display_name)
@@ -195,9 +201,31 @@ async function fetchAreaUsers(ctx: GhostedContext, myUserId: string | null): Pro
         looking_for: p.looking_for || [],
         age: p.age,
         is_verified: p.is_verified || false,
+        vibe: vibeMap.get(p.id) || null,
       };
     })
     .sort((a, b) => (a.distance_m ?? Infinity) - (b.distance_m ?? Infinity));
+}
+
+/** Get live vibes for a set of user IDs */
+async function getVibeMap(userIds: string[]): Promise<Map<string, string>> {
+  if (userIds.length === 0) return new Map();
+  try {
+    const { data } = await supabase
+      .from('user_live_vibes')
+      .select('user_id, vibe, expires_at')
+      .in('user_id', userIds);
+    const map = new Map<string, string>();
+    const now = new Date();
+    for (const row of data || []) {
+      if (!row.expires_at || new Date(row.expires_at) > now) {
+        map.set(row.user_id, row.vibe);
+      }
+    }
+    return map;
+  } catch {
+    return new Map();
+  }
 }
 
 /** Get blocked user IDs for the current user */

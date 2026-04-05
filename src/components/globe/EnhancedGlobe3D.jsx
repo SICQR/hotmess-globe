@@ -65,6 +65,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
   activeFilter = 'all',
   focusedBeaconId = null,
   amplifiedBeaconIds,
+  venueVibes = new Map(), // Map<slug, { dominant: string, total: number }>
 }, ref) {
   const mountRef = useRef(null);
   const hoveredArcRef = useRef(null);
@@ -635,6 +636,15 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     // Event-active boost (Standard + Pro only)
     const EVENT_ACTIVE_BOOST = { glowMult: 1.20, pulseMult: 1.30, sizeMult: 1.08 };
 
+    // Vibe accent colors for globe tint (THREE.js hex)
+    const VIBE_GLOW_COLORS = {
+      RAW:      0x9B1B2A,
+      HUNG:     0xC41230,
+      HIGH:     0xA899D8,
+      LOOKING:  0xFF5500,
+      CHILLING: 0x00C2E0,
+    };
+
     // 5-level intensity system: modifies club/curated nodes based on check-in data
     const INTENSITY_LEVELS = {
       0: { glowMult: 0.3, sizeMult: 1.0, pulseSpeed: 0,    emissiveMult: 0.3, heatColor: null },
@@ -713,7 +723,10 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         const glowOpacity = isVenue ? visual.glowOpacity * iLevel.glowMult * tierMod.glowMult * eventBoost.glowMult : visual.glowOpacity;
         // Community venues: suppress glow
         if (glowOpacity > 0.05 && !isCommunity) {
-          const glowColor = isPro ? 0xC8962C : isVenue && iLevel.heatColor ? iLevel.heatColor : visual.emissive;
+          // Vibe-tinted glow: if venue has a dominant vibe, subtly shift glow color
+          const venueVibe = venueVibes?.get?.(place.slug);
+          const vibeGlow = venueVibe?.dominant && VIBE_GLOW_COLORS[venueVibe.dominant] && venueVibe.total >= 3 ? VIBE_GLOW_COLORS[venueVibe.dominant] : null;
+          const glowColor = isPro ? 0xC8962C : vibeGlow ? vibeGlow : isVenue && iLevel.heatColor ? iLevel.heatColor : visual.emissive;
           const glowSprite = new THREE.Sprite(new THREE.SpriteMaterial({
             color: glowColor,
             transparent: true,

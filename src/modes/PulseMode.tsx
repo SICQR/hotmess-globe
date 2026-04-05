@@ -70,6 +70,8 @@ import type { PulsePlace } from '@/hooks/usePulsePlaces';
 import L2RouteSheet from '@/components/sheets/L2RouteSheet';
 import GhostedOverlay from '@/components/ghosted/GhostedOverlay';
 import type { GhostedContext } from '@/hooks/useVenuePresence';
+import { useVenueVibeMix, VIBE_CONFIG, VIBES, type Vibe } from '@/hooks/useVenueVibes';
+import { VibeMixBar } from '@/components/vibe/VibeSelector';
 
 // ---- Brand constants --------------------------------------------------------
 const AMBER = '#C8962C';
@@ -887,6 +889,7 @@ function VenuePanel({
   onRoute: () => void;
   onSeeWhoIsHere?: () => void;
 }) {
+  const { data: vibeMix } = useVenueVibeMix(place.slug);
   const level = intensity?.intensity_level ?? 0;
   const count = intensity?.checkins_4h ?? 0;
   const fakeIntensity = {
@@ -1050,6 +1053,26 @@ function VenuePanel({
             <Users className="w-3.5 h-3.5" />
             See who's here
           </button>
+        )}
+
+        {/* VIBE RIGHT NOW — live energy mix (not for community) */}
+        {vibeMix && vibeMix.total > 0 && !isCommunity && (
+          <motion.div
+            className="mt-4"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <p className="text-[10px] font-semibold text-white/30 tracking-wider uppercase mb-2">
+              Vibe right now
+            </p>
+            <VibeMixBar vibes={vibeMix.vibes} total={vibeMix.total} />
+            {vibeMix.dominant && (
+              <p className="text-[11px] font-medium mt-1.5" style={{ color: VIBE_CONFIG[vibeMix.dominant].color }}>
+                {VIBE_CONFIG[vibeMix.dominant].emoji} Mostly {VIBE_CONFIG[vibeMix.dominant].label.toLowerCase()} tonight
+              </p>
+            )}
+          </motion.div>
         )}
 
         {/* CTAs */}
