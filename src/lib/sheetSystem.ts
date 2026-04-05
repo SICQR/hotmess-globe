@@ -157,6 +157,13 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: false,
     deepLinkParams: [],
   },
+  'ghosted-preview': {
+    id: 'ghosted-preview',
+    title: 'Preview',
+    height: 'medium',
+    auth: false,
+    deepLinkParams: ['uid'],
+  },
   'social': {
     id: 'social',
     title: 'Social',

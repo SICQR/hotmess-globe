@@ -852,15 +852,26 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           <div className="min-w-0">
             <p className="text-white font-bold truncate">{otherName}</p>
             <p className="text-[#8E8E93] text-xs truncate">
-              {otherProfile?.distance_m != null
-                ? otherProfile.distance_m < 1000
-                  ? 'Nearby'
-                  : `~${Math.round(otherProfile.distance_m / 1000)} km away`
-                : otherProfile?.is_online
-                  ? 'Online now'
-                  : otherProfile?.last_seen
-                    ? 'Recently active'
-                    : 'Tap to view profile'}
+              {(() => {
+                const parts = [];
+                // Distance
+                if (otherProfile?.distance_m != null) {
+                  if (otherProfile.distance_m < 100) parts.push('<100m');
+                  else if (otherProfile.distance_m < 1000) parts.push(`${Math.round(otherProfile.distance_m)}m`);
+                  else parts.push(`${(otherProfile.distance_m / 1000).toFixed(1)}km`);
+                }
+                // Context
+                if (otherProfile?.venue_name || otherProfile?.checkin_venue) {
+                  parts.push(`At ${otherProfile.venue_name || otherProfile.checkin_venue}`);
+                } else if (otherProfile?.movement_active || otherProfile?.is_moving) {
+                  parts.push('Moving');
+                } else if (otherProfile?.is_online) {
+                  parts.push('Online');
+                } else if (otherProfile?.last_seen) {
+                  parts.push('Recently active');
+                }
+                return parts.length > 0 ? parts.join(' · ') : 'Tap to view profile';
+              })()}
             </p>
           </div>
         </button>
@@ -883,8 +894,34 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
             <Loader2 className="w-6 h-6 text-[#C8962C] animate-spin" />
           </div>
         ) : messages.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-white/40 text-sm">No messages yet. Say hi! 👋</p>
+          <div className="text-center py-12 px-6">
+            <p className="text-white font-bold text-base mb-1">You're both nearby</p>
+            <p className="text-white/40 text-sm mb-5">Send a Boo or suggest a meet</p>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={async () => {
+                  if (!currentUser?.email || !otherEmail) return;
+                  try {
+                    await supabase.from('taps').insert({
+                      tapper_email: currentUser.email,
+                      tapped_email: otherEmail,
+                      tap_type: 'boo',
+                    });
+                    if (typeof window !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(50);
+                  } catch { /* best-effort */ }
+                }}
+                className="h-10 px-5 rounded-full text-sm font-bold active:scale-95 transition-transform"
+                style={{ background: '#C8962C', color: '#000' }}
+              >
+                Boo
+              </button>
+              <button
+                onClick={() => inputRef.current?.focus()}
+                className="h-10 px-5 rounded-full text-sm font-bold bg-white/10 text-white active:scale-95 transition-transform border border-white/10"
+              >
+                Message
+              </button>
+            </div>
           </div>
         ) : (
           messages.map((msg, i) => {

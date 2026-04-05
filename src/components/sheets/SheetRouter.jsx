@@ -87,6 +87,7 @@ const L2DataExportSheet = lazy(() => import('./L2DataExportSheet'));
 const L2ReportSheet = lazy(() => import('./L2ReportSheet'));
 const L2VerificationSheet = lazy(() => import('./L2VerificationSheet'));
 const L2RouteSheet = lazy(() => import('./L2RouteSheet'));
+const L2GhostedPreviewSheet = lazy(() => import('./L2GhostedPreviewSheet'));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PLACEHOLDER FOR UNIMPLEMENTED SHEETS
@@ -221,6 +222,8 @@ const SHEET_COMPONENTS = {
   'verification': L2VerificationSheet,
   // Travel route
   'route': L2RouteSheet,
+  // Ghosted preview (tap → preview sheet with Boo/Message/Meet)
+  'ghosted-preview': L2GhostedPreviewSheet,
 };
 
 
