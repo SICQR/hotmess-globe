@@ -548,6 +548,8 @@ export default function GlobePage({ embedded = false }) {
   }, [filteredBeacons]);
 
   const handleBeaconClick = useCallback((beacon) => {
+    // Null = empty space tap (dismiss focused state)
+    if (!beacon) return;
     // Don't handle cluster clicks
     if (beacon.isCluster) return;
 
@@ -735,6 +737,7 @@ export default function GlobePage({ embedded = false }) {
             globeActivity={globeActivity}
             globeEvents={globeEvents}
             onBeaconClick={(beacon) => {
+              if (!beacon) return; // Empty tap — dismiss
               handleBeaconClick(beacon);
               setFocusedBeaconId(beacon.id);
             }}
