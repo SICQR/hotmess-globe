@@ -50,6 +50,7 @@ import {
   Users,
   ShoppingBag,
   Eye,
+  Disc3,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useGlobe } from '@/contexts/GlobeContext';
@@ -119,6 +120,7 @@ interface DropItem {
   imageUrl: string | null;
   sellerName: string | null;
   createdAt: string;
+  dropType?: 'preloved' | 'music_drop';
 }
 
 interface RightNowUser {
@@ -523,27 +525,51 @@ function DropCard({
   drop: DropItem;
   onTap: () => void;
 }) {
+  const isMusic = drop.dropType === 'music_drop';
+  const accentColor = isMusic ? '#9B1B2A' : DROP_GOLD;
+
   return (
     <button
       onClick={onTap}
       className="w-[140px] flex-shrink-0 snap-start text-left active:scale-[0.97] transition-transform rounded-xl overflow-hidden"
-      style={glassStyle(0.6, 16)}
+      style={{
+        ...glassStyle(0.6, 16),
+        ...(isMusic ? { border: '1px solid rgba(200,150,44,0.25)' } : {}),
+      }}
       aria-label={`View drop: ${drop.title}`}
     >
-      {drop.imageUrl ? (
-        <img src={drop.imageUrl} alt="" className="w-full h-[100px] object-cover" loading="lazy" />
-      ) : (
-        <div className="w-full h-[100px] flex items-center justify-center" style={{ background: `${DROP_GOLD}08` }}>
-          <ShoppingBag className="w-6 h-6" style={{ color: `${DROP_GOLD}40` }} />
-        </div>
-      )}
+      <div className="relative">
+        {drop.imageUrl ? (
+          <img src={drop.imageUrl} alt="" className="w-full h-[100px] object-cover" loading="lazy" />
+        ) : (
+          <div className="w-full h-[100px] flex items-center justify-center" style={{ background: `${accentColor}08` }}>
+            {isMusic ? (
+              <Disc3 className="w-6 h-6" style={{ color: `${accentColor}60` }} />
+            ) : (
+              <ShoppingBag className="w-6 h-6" style={{ color: `${accentColor}40` }} />
+            )}
+          </div>
+        )}
+        {isMusic && (
+          <span
+            className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-black uppercase"
+            style={{ background: DROP_GOLD, color: '#000' }}
+          >
+            Drop
+          </span>
+        )}
+      </div>
       <div className="p-2.5">
         <p className="text-white text-xs font-semibold leading-tight line-clamp-1">{drop.title}</p>
-        {drop.price != null && (
+        {isMusic ? (
+          <p className="text-[10px] font-bold mt-0.5" style={{ color: DROP_GOLD }}>
+            {drop.sellerName || 'Smash Daddys'}
+          </p>
+        ) : drop.price != null ? (
           <p className="text-xs font-bold mt-0.5" style={{ color: DROP_GOLD }}>
             {'\u00A3'}{drop.price.toFixed(2)}
           </p>
-        )}
+        ) : null}
       </div>
     </button>
   );
@@ -1449,24 +1475,23 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     refetchInterval: 30_000,
   });
 
-  // ---- Data: Drops Nearby (preloved_listings, status=live) ------------------
+  // ---- Data: Drops Nearby (preloved_listings + music_drops) ------------------
   const {
     data: dropsNearby = [],
     isLoading: dropsLoading,
   } = useQuery({
     queryKey: ['pulse-drops-nearby'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch preloved listings
+      const { data: prelovedData, error: prelovedErr } = await supabase
         .from('preloved_listings')
         .select('id, title, price, image_urls, seller_name, created_at')
         .eq('status', 'live')
         .order('created_at', { ascending: false })
-        .limit(8);
-      if (error) {
-        console.error('[pulse] drops query error:', error.message);
-        return [];
-      }
-      return (data ?? []).map((row: Record<string, unknown>) => {
+        .limit(6);
+      if (prelovedErr) console.error('[pulse] preloved drops error:', prelovedErr.message);
+
+      const prelovedDrops: DropItem[] = (prelovedData ?? []).map((row: Record<string, unknown>) => {
         const imgUrls = row.image_urls as string[] | null;
         return {
           id: row.id as string,
@@ -1475,8 +1500,33 @@ export function PulseMode({ className = '' }: PulseModeProps) {
           imageUrl: imgUrls?.[0] || null,
           sellerName: (row.seller_name as string) || null,
           createdAt: row.created_at as string,
-        } as DropItem;
+          dropType: 'preloved' as const,
+        };
       });
+
+      // Fetch music drops (releases from last 24h, or latest 3)
+      const { data: musicData, error: musicErr } = await supabase
+        .from('label_releases')
+        .select('id, title, artwork_url, catalog_number, release_date')
+        .eq('is_active', true)
+        .order('release_date', { ascending: false })
+        .limit(3);
+      if (musicErr) console.error('[pulse] music drops error:', musicErr.message);
+
+      const musicDrops: DropItem[] = (musicData ?? []).map((row: Record<string, unknown>) => ({
+        id: `music_${row.id as string}`,
+        title: (row.title as string) || 'Release',
+        price: null,
+        imageUrl: (row.artwork_url as string) || null,
+        sellerName: 'Smash Daddys',
+        createdAt: (row.release_date as string) || new Date().toISOString(),
+        dropType: 'music_drop' as const,
+      }));
+
+      // Merge and sort by date (newest first)
+      return [...musicDrops, ...prelovedDrops].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
     },
     refetchInterval: 30_000,
   });
@@ -1594,8 +1644,12 @@ export function PulseMode({ className = '' }: PulseModeProps) {
   }, [openSheet]);
 
   const handleDropTap = useCallback((id: string) => {
-    openSheet('preloved', { id });
-  }, [openSheet]);
+    if (id.startsWith('music_')) {
+      navigate('/music');
+    } else {
+      openSheet('preloved', { id });
+    }
+  }, [openSheet, navigate]);
 
   const handleCreateBeacon = useCallback(() => {
     openSheet('beacon', { mode: 'create' });
