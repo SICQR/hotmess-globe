@@ -70,6 +70,7 @@ import type { PulsePlace } from '@/hooks/usePulsePlaces';
 import L2RouteSheet from '@/components/sheets/L2RouteSheet';
 import GhostedOverlay from '@/components/ghosted/GhostedOverlay';
 import type { GhostedContext } from '@/hooks/useVenuePresence';
+import { useLiveMode } from '@/contexts/LiveModeContext';
 import { useVenueVibeMix, VIBE_CONFIG, VIBES, type Vibe } from '@/hooks/useVenueVibes';
 import { VibeMixBar } from '@/components/vibe/VibeSelector';
 
@@ -1724,6 +1725,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
   const queryClient = useQueryClient();
   const { isActive: isBoostActive, expiresAt: boostExpiresAt } = usePowerups();
   const { isPlaying: radioIsPlaying } = useRadio();
+  const { enterLive } = useLiveMode();
 
   // ---- Pull-to-refresh -------------------------------------------------------
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -2793,6 +2795,13 @@ export function PulseMode({ className = '' }: PulseModeProps) {
                 radius_m: 1000,
               };
               setClusterPanelItem(null);
+              // Enter Live Mode with area context
+              enterLive({
+                type: 'area',
+                areaLabel: clusterPanelItem.title,
+                lat: clusterPanelItem.lat,
+                lng: clusterPanelItem.lng,
+              });
               setGhostedContext(ctx);
             }}
           />
@@ -2834,6 +2843,15 @@ export function PulseMode({ className = '' }: PulseModeProps) {
                 lng: venuePanelItem.lng,
               };
               setVenuePanelItem(null);
+              // Enter Live Mode with venue context
+              enterLive({
+                type: 'venue',
+                venueId: venuePanelItem.id,
+                venueName: venuePanelItem.name,
+                venueSlug: venuePanelItem.slug,
+                lat: venuePanelItem.lat,
+                lng: venuePanelItem.lng,
+              });
               setGhostedContext(ctx);
             }}
           />

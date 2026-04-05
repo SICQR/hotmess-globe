@@ -44,6 +44,8 @@ import { OSBottomNav } from '@/modes/OSBottomNav';
 import { RadioProvider } from '@/contexts/RadioContext';
 import { PersonaProvider } from '@/contexts/PersonaContext';
 import { GlobeProvider } from '@/contexts/GlobeContext';
+import { LiveModeProvider } from '@/contexts/LiveModeContext';
+import LiveModeOverlay from '@/components/live/LiveModeOverlay';
 import { RadioMiniPlayer } from '@/components/radio/RadioMiniPlayer';
 import { MusicPlayerProvider } from '@/contexts/MusicPlayerContext';
 import { MusicMiniPlayer } from '@/components/music/MusicMiniPlayer';
@@ -682,11 +684,13 @@ function App() {
                               - Router only handles URL sync, not page mounts
                             */}
                             <RadioProvider>
-                              <MusicPlayerProvider>
-                                <PersonaProvider>
-                                  <OSArchitecture />
-                                </PersonaProvider>
-                              </MusicPlayerProvider>
+                              <LiveModeProvider>
+                                <MusicPlayerProvider>
+                                  <PersonaProvider>
+                                    <OSArchitecture />
+                                  </PersonaProvider>
+                                </MusicPlayerProvider>
+                              </LiveModeProvider>
                             </RadioProvider>
                           </BootRouter>
                         </GlobeProvider>
@@ -830,6 +834,9 @@ function OSArchitecture() {
 
       {/* L1: OS Bottom Nav — amber-circle 5-tab nav */}
       <OSBottomNav />
+
+      {/* L2.5: Live Mode Overlay — unified presence layer (Z-110) */}
+      <LiveModeOverlay />
 
       {/* L3: SOS long-press trigger — auth only (Z-190) */}
       {isAuthenticated && (

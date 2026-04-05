@@ -35,10 +35,12 @@ import {
 import { useSheet } from '@/contexts/SheetContext';
 import { useRadio } from '@/contexts/RadioContext';
 import { useBootGuard } from '@/contexts/BootGuardContext';
+import { useLiveMode } from '@/contexts/LiveModeContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { motionTokens, getMotion, useReducedMotion } from '@/lib/motionTokens';
 import RightNowModal from '@/components/globe/RightNowModal';
 import { trackEvent } from '@/components/utils/analytics';
+import { Eye } from 'lucide-react';
 
 // ── Brand tokens ────────────────────────────────────────────────────────────
 const AMBER = '#C8962C';
@@ -71,6 +73,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
   const { openSheet } = useSheet();
   const { profile } = useBootGuard();
   const { isPlaying: radioPlaying, currentShowName, togglePlay } = useRadio();
+  const { isLive, enterLive } = useLiveMode();
   const reduced = useReducedMotion();
 
   const [showRightNow, setShowRightNow] = useState(false);
@@ -290,9 +293,24 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
                 <p className="text-xs font-bold uppercase tracking-[0.2em] mb-1" style={{ color: AMBER }}>
                   You&rsquo;re live
                 </p>
-                <p className="text-white text-sm font-semibold">
+                <p className="text-white text-sm font-semibold mb-3">
                   Your signal is out — {userRnStatus?.intent ?? 'Explore'}
                 </p>
+                {!isLive && (
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      trackEvent('home_cta_tap', { cta: 'enter_live_mode' });
+                      enterLive({ type: 'global' });
+                    }}
+                    className="h-10 px-5 rounded-full text-sm font-bold flex items-center gap-1.5"
+                    style={{ background: AMBER, color: '#000' }}
+                    aria-label="Enter Live Mode — see who is in your moment"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    See Who&rsquo;s Out
+                  </motion.button>
+                )}
               </>
             )}
             {cardVariant === 'go-live' && (
