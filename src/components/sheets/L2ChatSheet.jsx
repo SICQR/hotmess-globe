@@ -30,6 +30,9 @@ import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { usePowerups } from '@/hooks/usePowerups';
 import { Zap } from 'lucide-react';
 import { pushNotify } from '@/lib/pushNotify';
+import { parseLocation } from '@/lib/locationParser';
+import ChatTravelCard from '@/components/chat/ChatTravelCard';
+import JourneyStatusCard from '@/components/chat/JourneyStatusCard';
 
 // ── Read-state helpers ────────────────────────────────────────────────────────
 // getLastRead: kept for backward compat (returns local timestamp or 0)
@@ -489,7 +492,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
 
       // Increment unread + push notification with smart fallback for media/location
       const recipientEmail = thread.participant_emails?.find(e => e !== currentUser.email);
-      const lastMsg = message_type === 'location' ? '📍 Location shared' : message_type === 'photo' ? '📷 Photo' : content.slice(0, 80);
+      const lastMsg = message_type === 'location' ? '📍 Location shared' : message_type === 'travel' ? '🚗 On the way' : message_type === 'photo' ? '📷 Photo' : content.slice(0, 80);
 
       if (recipientEmail) {
         const currentUnread = thread.unread_count || {};
@@ -499,6 +502,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         if (!mutedBy.includes(recipientEmail)) {
           const senderName = profiles[currentUser.email]?.display_name || 'Someone';
           const pushBody = message_type === 'location' ? `${senderName} sent a location`
+            : message_type === 'travel' ? `${senderName} is on the way`
             : message_type === 'photo' ? `${senderName} sent a photo`
             : content.length > 60 ? content.slice(0, 57) + '…' : content;
           pushNotify({
@@ -934,7 +938,9 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 className={cn('flex', isMe ? 'justify-end' : 'justify-start')}
               >
-                {msg.message_type === 'location' ? (
+                {msg.message_type === 'travel' && msg.metadata ? (
+                  <JourneyStatusCard metadata={msg.metadata} isMe={isMe} otherName={otherName} />
+                ) : msg.message_type === 'location' ? (
                   <LocationCard msg={msg} isMe={isMe} otherName={otherName} />
                 ) : isMeetpoint && msg.metadata ? (
                   <MeetpointCard {...msg.metadata} />
@@ -986,6 +992,28 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                     )}
                   </div>
                 )}
+                {/* Inline travel card — auto-detect postcode/venue in text messages */}
+                {msg.message_type === 'text' && (() => {
+                  const loc = parseLocation(msg.content);
+                  if (!loc || loc.confidence < 0.5) return null;
+                  const cachedPos = typeof window !== 'undefined' ? window.__hm_last_pos : null;
+                  return (
+                    <div className={cn('mt-1.5', isMe ? 'flex justify-end' : 'flex justify-start')}>
+                      <ChatTravelCard
+                        location={loc}
+                        isMe={isMe}
+                        userLat={cachedPos?.lat}
+                        userLng={cachedPos?.lng}
+                        onRoute={() => {
+                          if (loc.lat && loc.lng) {
+                            const url = `https://www.google.com/maps/dir/?api=1&destination=${loc.lat},${loc.lng}`;
+                            window.open(url, '_blank');
+                          }
+                        }}
+                      />
+                    </div>
+                  );
+                })()}
               </motion.div>
               </React.Fragment>
             );

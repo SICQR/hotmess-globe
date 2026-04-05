@@ -67,6 +67,7 @@ import { AppBanner } from '@/components/banners/AppBanner';
 import { usePowerups } from '@/hooks/usePowerups';
 import { useVenueIntensity, getConversionLabel, getMomentumLabel, type PlaceIntensity } from '@/hooks/useVenueIntensity';
 import type { PulsePlace } from '@/hooks/usePulsePlaces';
+import L2RouteSheet from '@/components/sheets/L2RouteSheet';
 
 // ---- Brand constants --------------------------------------------------------
 const AMBER = '#C8962C';
@@ -1671,6 +1672,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
   const [clusterPanelItem, setClusterPanelItem] = useState<{ title: string; count: number; type: string; lat: number; lng: number } | null>(null);
   const [eventPanelItem, setEventPanelItem] = useState<{ id: string; title: string; startsAt?: string; kind?: string; venue?: string } | null>(null);
   const [venuePanelItem, setVenuePanelItem] = useState<PulsePlace | null>(null);
+  const [routeDestination, setRouteDestination] = useState<{ label: string; lat: number; lng: number; type?: string; slug?: string } | null>(null);
 
   // Venue intensity for conversion hooks
   const { intensityMap: venueIntensityMap } = useVenueIntensity();
@@ -2713,11 +2715,20 @@ export function PulseMode({ className = '' }: PulseModeProps) {
             onClose={() => setVenuePanelItem(null)}
             onCheckIn={() => { setVenuePanelItem(null); navigate(`/v/${venuePanelItem.slug}`); }}
             onRoute={() => {
+              const dest = { label: venuePanelItem.name, lat: venuePanelItem.lat, lng: venuePanelItem.lng, type: 'pulse_place', slug: venuePanelItem.slug };
               setVenuePanelItem(null);
-              // Open in maps as fallback (travel system will replace this)
-              const url = `https://www.google.com/maps/dir/?api=1&destination=${venuePanelItem.lat},${venuePanelItem.lng}`;
-              window.open(url, '_blank');
+              setRouteDestination(dest);
             }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Route Sheet */}
+      <AnimatePresence>
+        {routeDestination && (
+          <L2RouteSheet
+            destination={routeDestination}
+            onClose={() => setRouteDestination(null)}
           />
         )}
       </AnimatePresence>
