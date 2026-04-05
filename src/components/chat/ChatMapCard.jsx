@@ -104,17 +104,17 @@ export default function ChatMapCard({
       </div>
 
       {/* Info + actions */}
-      <div className="px-3 py-3 space-y-2.5">
+      <div className="px-4 py-4 space-y-3">
         <div>
           <p className="text-white font-bold text-sm leading-tight">{label}</p>
           {distance && (
-            <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: '#8E8E93' }}>
+            <p className="text-xs mt-1 flex items-center gap-1" style={{ color: '#8E8E93' }}>
               <MapPin className="w-3 h-3" />
               {distance}
             </p>
           )}
           {address && !distance && (
-            <p className="text-xs mt-0.5" style={{ color: '#8E8E93' }} title={address}>
+            <p className="text-xs mt-1" style={{ color: '#8E8E93' }} title={address}>
               {address}
             </p>
           )}
@@ -122,7 +122,7 @@ export default function ChatMapCard({
 
         {/* CTA row */}
         <div className="flex gap-2">
-          {/* Start (native directions) */}
+          {/* Directions */}
           <a
             href={
               lat && lng
@@ -131,12 +131,12 @@ export default function ChatMapCard({
             }
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl text-xs font-bold active:scale-[0.97] transition-transform"
+            className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-2xl text-xs font-bold active:scale-[0.97] transition-transform"
             style={{ background: AMBER, color: '#000' }}
             aria-label="Get directions"
           >
             <Navigation className="w-3.5 h-3.5" />
-            Start
+            Directions
           </a>
 
           {/* Uber */}
@@ -144,7 +144,7 @@ export default function ChatMapCard({
             href={uberUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl text-xs font-bold active:scale-[0.97] transition-transform"
+            className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-2xl text-xs font-bold active:scale-[0.97] transition-transform"
             style={{
               background: 'transparent',
               border: `1px solid ${AMBER}50`,
@@ -160,11 +160,11 @@ export default function ChatMapCard({
           {/* Share */}
           <button
             onClick={() => handleShare(label, address)}
-            className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl text-xs font-bold active:scale-[0.97] transition-transform"
+            className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-2xl text-xs font-bold active:scale-[0.97] transition-transform"
             style={{
               background: 'transparent',
-              border: '1px solid rgba(255,255,255,0.12)',
-              color: 'rgba(255,255,255,0.6)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: 'rgba(255,255,255,0.5)',
             }}
             aria-label="Share location"
           >

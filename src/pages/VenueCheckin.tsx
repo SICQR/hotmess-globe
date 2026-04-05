@@ -235,16 +235,17 @@ export default function VenueCheckin() {
 
         {/* Venue name */}
         <h1 className="text-white text-2xl font-bold mb-1">{place.name}</h1>
-        <p className="text-white/40 text-sm mb-4">{place.notes || place.country}</p>
+        <p className="text-white/40 text-sm mb-6">{place.notes || place.country}</p>
 
         {/* Conversion label */}
         <AnimatePresence>
           {conversionLabel && (
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="mb-3 px-4 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase"
+              transition={{ duration: 0.2 }}
+              className="mb-4 px-4 py-1.5 rounded-full text-xs font-bold tracking-[0.15em] uppercase"
               style={{
                 background: intensityLevel >= 4 ? `${GOLD}30` : 'rgba(255,255,255,0.08)',
                 color: intensityLevel >= 4 ? GOLD : '#fff',
@@ -307,17 +308,17 @@ export default function VenueCheckin() {
         )}
 
         {checkinCount === 0 && !isCommunity && (
-          <p className="text-white/30 text-sm mb-6">No one here yet</p>
+          <p className="text-white/30 text-sm mb-6">Quiet right now. Be the first tonight.</p>
         )}
         {isCommunity && (
-          <p className="text-white/30 text-sm mb-6">Private space — check-ins are not displayed publicly</p>
+          <p className="text-white/30 text-sm mb-6">Private space. Your check-in stays between you and the venue.</p>
         )}
 
         {/* Check-in CTA */}
         <button
           onClick={handleCheckin}
           disabled={checkedIn || checkingIn}
-          className="w-full max-w-xs py-4 rounded-2xl font-bold text-lg transition-all active:scale-95 disabled:opacity-50"
+          className="w-full max-w-xs py-4 rounded-2xl font-bold text-lg transition-transform active:scale-[0.97] disabled:opacity-40"
           style={{
             background: checkedIn ? '#1C1C1E' : isCommunity ? '#5588AA' : GOLD,
             color: checkedIn ? (isCommunity ? '#5588AA' : GOLD) : '#000',

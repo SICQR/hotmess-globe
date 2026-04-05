@@ -574,7 +574,7 @@ function QuickRow({ items, delay }: { items: QuickItem[]; delay: number }) {
           key={label}
           onClick={onTap}
           whileTap={{ scale: 0.97 }}
-          className="flex items-center gap-2.5 p-3 rounded-xl bg-[#1C1C1E]/60 border border-white/[0.04] transition-all text-left"
+          className="flex items-center gap-3 p-3 rounded-2xl bg-[#1C1C1E]/60 border border-white/[0.04] transition-all text-left"
         >
           <Icon className="w-4 h-4 flex-shrink-0" style={{ color: accent || '#8E8E93' }} />
           <span className="text-xs font-semibold text-white/60 truncate flex-1">{label}</span>
@@ -624,7 +624,7 @@ function NudgeCard({ nudge, onDismiss }: { nudge: Nudge; onDismiss: () => void }
             className="px-3 py-1.5 rounded-lg text-[11px] font-bold"
             style={{ background: nudge.accent, color: nudge.accent === GOLD ? '#000' : '#fff' }}
           >
-            Go
+            Fix now
           </button>
           <button
             onClick={onDismiss}
@@ -732,7 +732,7 @@ export default function MorePage() {
       {/* Sections */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum pb-24" {...pullHandlers}>
         <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
-        <div className="px-4 py-4 space-y-3">
+        <div className="px-4 py-4 space-y-4">
 
           {/* ── NUDGE (single, priority-based) ───────────────────── */}
           <AnimatePresence>
@@ -810,7 +810,7 @@ export default function MorePage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.16 }}
             whileTap={{ scale: 0.98 }}
-            className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#1C1C1E]/40 border border-white/[0.04] transition-all text-left mt-2"
+            className="w-full flex items-center gap-3 p-4 rounded-2xl bg-[#1C1C1E]/40 border border-white/[0.04] transition-all text-left"
           >
             <div className="w-8 h-8 rounded-lg bg-[#C8962C]/10 flex items-center justify-center">
               <Heart className="w-4 h-4" style={{ color: GOLD }} />

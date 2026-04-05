@@ -218,7 +218,7 @@ export default function L2RouteSheet({ destination, chatThreadId, recipientUserI
                   style={{
                     background: active ? `${config.color}15` : 'rgba(255,255,255,0.04)',
                     border: `1px solid ${active ? `${config.color}40` : 'rgba(255,255,255,0.06)'}`,
-                    ringColor: active ? config.color : undefined,
+                    ...(active ? { '--tw-ring-color': config.color } as React.CSSProperties : {}),
                   }}
                 >
                   <Icon className="w-5 h-5 mx-auto mb-1" style={{ color: active ? config.color : 'rgba(255,255,255,0.3)' }} />
@@ -284,17 +284,17 @@ export default function L2RouteSheet({ destination, chatThreadId, recipientUserI
         <div className="px-5 pb-8 flex gap-3">
           <button
             onClick={handleGoNow}
-            className="flex-1 h-12 rounded-xl flex items-center justify-center gap-2 text-sm font-bold active:scale-[0.97] transition-transform"
+            className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold active:scale-[0.97] transition-transform"
             style={{ background: AMBER, color: '#000' }}
           >
             <Navigation className="w-4 h-4" />
-            Go now
+            Open route
           </button>
           {chatThreadId && (
             <button
               onClick={handleShareETA}
               disabled={shared || createSession.isPending}
-              className="flex-1 h-12 rounded-xl flex items-center justify-center gap-2 text-sm font-bold active:scale-[0.97] transition-transform disabled:opacity-50"
+              className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold active:scale-[0.97] transition-transform disabled:opacity-40"
               style={{
                 background: shared ? 'rgba(200,150,44,0.08)' : 'rgba(200,150,44,0.12)',
                 color: AMBER,

@@ -19,27 +19,27 @@ function LegalPageLayout({ title, children }: LegalPageProps) {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#0E0E12] text-white">
+    <div className="min-h-screen bg-[#050507] text-white">
       {/* Header */}
-      <header className="sticky top-0 z-50 flex items-center gap-4 border-b border-white/10 bg-[#0E0E12]/95 backdrop-blur px-4 py-3">
+      <header className="sticky top-0 z-50 flex items-center gap-4 border-b border-white/[0.06] bg-[#050507]/95 backdrop-blur-xl px-4 py-4">
         <button
           onClick={() => navigate(-1)}
-          className="rounded-full p-2 hover:bg-white/10 transition-colors"
+          className="rounded-full w-10 h-10 flex items-center justify-center hover:bg-white/[0.06] active:scale-95 transition-all"
           aria-label="Go back"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft className="h-5 w-5 text-white/60" />
         </button>
-        <h1 className="text-lg font-bold">{title}</h1>
+        <h1 className="text-base font-bold tracking-wide">{title}</h1>
       </header>
 
       {/* Content */}
-      <main className="mx-auto max-w-2xl px-4 py-8 prose prose-invert prose-pink">
+      <main className="mx-auto max-w-2xl px-6 py-8 prose prose-invert prose-sm prose-headings:text-white/90 prose-headings:font-bold prose-headings:tracking-wide prose-p:text-white/60 prose-li:text-white/60 prose-a:text-[#C8962C] prose-a:no-underline hover:prose-a:underline prose-strong:text-white/80">
         {children}
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 px-4 py-6 text-center text-xs text-gray-500">
-        © {new Date().getFullYear()} HOTMESS LDN. All rights reserved.
+      <footer className="border-t border-white/[0.06] px-6 py-8 text-center text-xs text-white/20 font-medium tracking-wider uppercase">
+        {new Date().getFullYear()} HOTMESS LDN
       </footer>
     </div>
   );
