@@ -141,8 +141,8 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
 
   const handleGoLive = useCallback(() => {
     trackEvent('home_cta_tap', { cta: 'go_live' });
-    setShowRightNow(true);
-  }, []);
+    openSheet('go-live', {});
+  }, [openSheet]);
 
   const handleEnterPulse = useCallback(() => {
     trackEvent('home_cta_tap', { cta: 'enter_pulse' });
@@ -290,11 +290,17 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
           >
             {cardVariant === 'live' && (
               <>
-                <p className="text-xs font-bold uppercase tracking-[0.2em] mb-1" style={{ color: AMBER }}>
-                  You&rsquo;re live
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: AMBER }} />
+                  <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: AMBER }}>
+                    You&rsquo;re live
+                  </p>
+                </div>
+                <p className="text-white text-sm font-semibold mb-1">
+                  People nearby can see you
                 </p>
-                <p className="text-white text-sm font-semibold mb-3">
-                  Your signal is out — {userRnStatus?.intent ?? 'Explore'}
+                <p className="text-xs mb-3" style={{ color: MUTED }}>
+                  {userRnStatus?.intent ?? 'Explore'}
                 </p>
                 {!isLive && (
                   <motion.button
@@ -315,9 +321,9 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
             )}
             {cardVariant === 'go-live' && (
               <>
-                <p className="text-white text-sm font-semibold mb-1">You could start this.</p>
+                <p className="text-white text-sm font-semibold mb-1">You&rsquo;re invisible right now</p>
                 <p className="text-xs mb-4" style={{ color: MUTED }}>
-                  Let people nearby know you&rsquo;re out tonight.
+                  Go Live and show up nearby
                 </p>
                 <motion.button
                   whileTap={{ scale: 0.95 }}

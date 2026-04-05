@@ -26,6 +26,8 @@ interface PreviewProps {
   context?: string;
   vibe?: string | null;
   isMoving?: boolean;
+  isListening?: boolean;
+  radioShow?: string;
   email?: string | null;
   movementDestination?: string;
 }
@@ -38,6 +40,8 @@ export default function L2GhostedPreviewSheet({
   context = 'Nearby',
   vibe,
   isMoving,
+  isListening,
+  radioShow,
   email,
   movementDestination,
 }: PreviewProps) {
@@ -114,7 +118,7 @@ export default function L2GhostedPreviewSheet({
         url: '/ghosted',
       });
 
-      toast('Boo sent');
+      toast(isMoving ? 'Sent · Catch him before he lands' : isListening ? 'Sent · You\'re in the same moment' : 'Boo sent');
     } catch {
       toast('Failed to send Boo');
     }
@@ -206,6 +210,19 @@ export default function L2GhostedPreviewSheet({
               style={{ background: `${AMBER}20`, color: AMBER, border: `1px solid ${AMBER}30` }}
             >
               {vibe}
+            </span>
+          </div>
+        )}
+
+        {/* Radio context */}
+        {isListening && radioShow && (
+          <div
+            className="mt-3 flex items-center gap-2 px-3 py-2 rounded-xl"
+            style={{ background: 'rgba(0,194,224,0.08)', border: '1px solid rgba(0,194,224,0.15)' }}
+          >
+            <span className="w-2 h-2 rounded-full bg-[#00C2E0] animate-pulse" />
+            <span className="text-xs font-semibold text-[#00C2E0]">
+              Listening · {radioShow}
             </span>
           </div>
         )}

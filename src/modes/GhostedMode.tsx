@@ -50,7 +50,10 @@ import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { usePowerups } from '@/hooks/usePowerups';
 import { useGPS } from '@/hooks/useGPS';
 import { calculateDistance } from '@/lib/locationUtils';
-import { Zap, Eye } from 'lucide-react';
+import { Zap, Eye, Radio, ArrowRight } from 'lucide-react';
+import { useLiveMode } from '@/contexts/LiveModeContext';
+import { useRadio } from '@/contexts/RadioContext';
+import { hapticMedium } from '@/lib/haptics';
 
 // Lazy load the grid component
 import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
@@ -365,6 +368,8 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
   const onlineCount = useRightNowCount();
   const { isActive: isBoostActive, expiresAt: boostExpiresAt } = usePowerups();
   const { position: myPosition } = useGPS();
+  const { isLive } = useLiveMode();
+  const { isPlaying: radioPlaying, currentShowName } = useRadio();
 
   // ---- Auth + profile data ----
   const [city, setCity] = useState('London');
@@ -684,6 +689,10 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
       // Build vibe
       const vibe = rightNow?.intention || (profile as any)?.vibe || null;
 
+      // Detect radio listening state
+      const isListening = !!(profile as any)?.radio_show || !!(profile as any)?.is_listening;
+      const radioShow = (profile as any)?.radio_show || (radioPlaying ? currentShowName : null);
+
       openSheet('ghosted-preview', {
         uid,
         name,
@@ -692,6 +701,8 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
         context,
         vibe,
         isMoving,
+        isListening: isListening || (context === 'Listening'),
+        radioShow: radioShow || (context === 'Listening' ? currentShowName : undefined),
         email,
       });
     },
@@ -766,21 +777,47 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
               </span>
             </div>
 
-            {/* Center: GHOSTED wordmark + subtitle */}
+            {/* Center: GHOSTED wordmark + live state */}
             <div className="absolute left-1/2 -translate-x-1/2 text-center">
               <h1
                 className="font-black text-base tracking-[0.2em] uppercase leading-tight"
                 style={{ color: AMBER }}
               >
-                GHOSTED
+                {activeTab === 'live' ? 'LIVE NOW' : 'GHOSTED'}
               </h1>
               <p className="text-[10px] text-white/30 font-medium">
-                {city} - Right Now
+                {radioPlaying && currentShowName
+                  ? `${currentShowName}`
+                  : `${city} · Right Now`}
               </p>
             </div>
 
             {/* Right: ambient toggle + filter icon with badge */}
             <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => openSheet('go-live', {})}
+              className="h-7 px-2.5 rounded-full text-[10px] font-bold active:scale-95 transition-transform"
+              style={isLive
+                ? { background: `${AMBER}25`, border: `1px solid ${AMBER}50`, color: AMBER }
+                : { background: 'rgba(200,150,44,0.15)', border: '1px solid rgba(200,150,44,0.3)', color: AMBER }
+              }
+              aria-label={isLive ? 'You are live' : 'Go live'}
+            >
+              {isLive ? (
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                  Live
+                </span>
+              ) : 'Go Live'}
+            </button>
+            <button
+              onClick={() => navigate('/safety')}
+              className="w-8 h-8 flex items-center justify-center rounded-full active:scale-95 transition-transform"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+              aria-label="Safety"
+            >
+              <span className="text-white/50 text-[10px] font-bold">SOS</span>
+            </button>
             <GhostedAmbientToggle />
             <button
               data-testid="ghosted-filter-btn"
@@ -961,7 +998,7 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
             viewerLat={myPosition?.lat}
             viewerLng={myPosition?.lng}
             onLongPress={handleLongPress}
-            emptyComponent={<GhostedEmpty onOpenFilters={() => openSheet('filters')} onGoLive={() => openSheet('social', {})} />}
+            emptyComponent={<GhostedEmpty onOpenFilters={() => openSheet('filters')} onGoLive={() => openSheet('go-live', {})} />}
             onVibeTagClick={handleVibeTagClick}
             boostUserIds={boostUserIds}
           />
@@ -1003,6 +1040,18 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
               <Zap className={`w-5 h-5 ${isBoostActive('profile_bump') ? 'text-[#C8962C]' : 'text-white/60'}`} />
             </button>
 
+            <button
+              onClick={() => openSheet('go-live', {})}
+              className="h-12 px-6 rounded-full flex items-center gap-2 font-bold text-sm text-black shadow-lg active:scale-95 transition-transform"
+              style={{
+                backgroundColor: AMBER,
+                boxShadow: `0 8px 32px rgba(200,150,44,0.35)`,
+              }}
+              aria-label="Share your vibe right now"
+            >
+              Share your vibe
+              <ArrowRight className="w-4 h-4" />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

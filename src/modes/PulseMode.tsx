@@ -2507,7 +2507,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       </p>
       <div className="flex gap-3">
         <button
-          onClick={() => setRightNowOpen(true)}
+          onClick={() => openSheet('go-live', {})}
           className="h-12 px-6 rounded-xl font-bold text-sm active:scale-95 transition-transform"
           style={{ background: `${LIME}15`, border: `1.5px solid ${LIME}40`, color: LIME }}
         >
@@ -2589,7 +2589,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
             <div
               className="mx-3 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer active:scale-[0.98] transition-transform"
               style={{ background: `${LIME}10`, border: `1px solid ${LIME}20`, color: LIME }}
-              onClick={() => setRightNowOpen(true)}
+              onClick={() => openSheet('go-live', {})}
               role="button"
               aria-label={`${rightNowCount} people just went live nearby`}
             >
@@ -2697,7 +2697,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       {/* ActionBar (floating, centered, above bottom drawer) */}
       <div className="fixed left-0 right-0 z-[45] pointer-events-auto flex justify-center" style={{ bottom: 'calc(230px + env(safe-area-inset-bottom, 0px))' }}>
         <ActionBar
-          onGoLive={() => setRightNowOpen(true)}
+          onGoLive={() => openSheet('go-live', {})}
           onPost={() => setComposerOpen(true)}
           onBrowseNearby={() => navigate('/ghosted')}
           rightNowCount={rightNowCount}
@@ -2786,7 +2786,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
             cluster={clusterPanelItem}
             onClose={() => setClusterPanelItem(null)}
             onBrowse={() => { setClusterPanelItem(null); navigate('/ghosted'); }}
-            onGoLive={() => { setClusterPanelItem(null); setRightNowOpen(true); }}
+            onGoLive={() => { setClusterPanelItem(null); openSheet('go-live', {}); }}
             onSeeWhoIsAround={() => {
               const ctx: GhostedContext = {
                 mode: 'area',
