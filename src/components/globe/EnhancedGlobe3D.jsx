@@ -48,6 +48,7 @@ function createArc(from, to, radius) {
 const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
   beacons = [],
   cities = [],
+  pulsePlaces = [],
   activeLayers = ['pins'],
   userActivities = [],
   userIntents = [],
@@ -56,6 +57,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
   globeEvents = [],
   onBeaconClick,
   onCityClick,
+  onPlaceClick,
   selectedCity = null,
   highlightedIds = [],
   className = '',
@@ -605,6 +607,91 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       globe.add(cityGroup);
     }
 
+    // ══════════════════════════════════════════════════════════════════════
+    // PULSE PLACES — Cultural Anchor Layer (cities · zones · clubs · curated)
+    // 4-tier visual hierarchy with zoom-level visibility
+    // ══════════════════════════════════════════════════════════════════════
+    const placesGroup = new THREE.Group();
+    const placeMeshes = [];
+
+    // Visual config per place type
+    const PLACE_VISUALS = {
+      city:    { color: 0x1A1A1A, emissive: 0x333333, size: 0.025, glowOpacity: 0.15, pulseSpeed: 0,   glowSize: 3.0, labelColor: '#666666' },
+      zone:    { color: 0xBBBBBB, emissive: 0x888888, size: 0.018, glowOpacity: 0.20, pulseSpeed: 0.15, glowSize: 2.5, labelColor: '#999999' },
+      club:    { color: 0xFFFFFF, emissive: 0xCCCCCC, size: 0.016, glowOpacity: 0.35, pulseSpeed: 0.25, glowSize: 2.0, labelColor: '#CCCCCC' },
+      curated: { color: 0xC8962C, emissive: 0xC8962C, size: 0.022, glowOpacity: 0.60, pulseSpeed: 0.83, glowSize: 3.5, labelColor: '#C8962C' },
+    };
+
+    const placeGeo = new THREE.SphereGeometry(0.015, 8, 8);
+
+    if (Array.isArray(pulsePlaces) && pulsePlaces.length > 0) {
+      pulsePlaces.forEach(place => {
+        const visual = PLACE_VISUALS[place.type] || PLACE_VISUALS.city;
+        const pos = latLngToVector3(place.lat, place.lng, globeRadius * 1.008);
+
+        // Pin mesh
+        const mat = new THREE.MeshStandardMaterial({
+          color: visual.color,
+          emissive: visual.emissive,
+          emissiveIntensity: place.type === 'curated' ? 1.8 : place.type === 'club' ? 0.8 : 0.4,
+          roughness: 0.3,
+          metalness: place.type === 'curated' ? 0.6 : 0.2,
+        });
+        const mesh = new THREE.Mesh(placeGeo, mat);
+        mesh.position.copy(pos);
+        const scale = visual.size / 0.015;
+        mesh.scale.setScalar(scale);
+        mesh.userData = {
+          type: 'place',
+          place,
+          placeType: place.type,
+          baseScale: scale,
+          beaconVisual: { pulseSpeed: visual.pulseSpeed },
+        };
+        placesGroup.add(mesh);
+        placeMeshes.push(mesh);
+
+        // Glow sprite
+        if (visual.glowOpacity > 0) {
+          const glowSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+            color: visual.emissive,
+            transparent: true,
+            opacity: visual.glowOpacity,
+            blending: THREE.AdditiveBlending,
+          }));
+          const gs = visual.size * visual.glowSize;
+          glowSprite.scale.set(gs, gs, 1);
+          glowSprite.position.copy(pos);
+          glowSprite.userData = { placeType: place.type };
+          placesGroup.add(glowSprite);
+        }
+
+        // Name label (canvas sprite) — only for curated + clubs at mid zoom
+        if (place.type === 'curated' || place.type === 'club') {
+          const labelCanvas = document.createElement('canvas');
+          labelCanvas.width = 256;
+          labelCanvas.height = 48;
+          const lctx = labelCanvas.getContext('2d');
+          lctx.fillStyle = visual.labelColor;
+          lctx.font = place.type === 'curated' ? 'bold 24px Arial' : '20px Arial';
+          lctx.textAlign = 'center';
+          lctx.textBaseline = 'middle';
+          lctx.fillText(place.name.toUpperCase().slice(0, 20), 128, 24);
+          const labelTex = new THREE.CanvasTexture(labelCanvas);
+          const labelSprite = new THREE.Sprite(
+            new THREE.SpriteMaterial({ map: labelTex, transparent: true, opacity: 0.7 })
+          );
+          labelSprite.scale.set(0.14, 0.028, 1);
+          labelSprite.position.copy(pos);
+          labelSprite.position.y += 0.04;
+          labelSprite.userData = { placeType: place.type, isLabel: true };
+          placesGroup.add(labelSprite);
+        }
+      });
+
+      globe.add(placesGroup);
+    }
+
     // Mood blobs - fuzzy GPS user intents (ST_SnapToGrid privacy)
     const moodBlobsGroup = new THREE.Group();
     if (showActivity && asArray(userIntents).length > 0) {
@@ -898,10 +985,19 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       // Expand hit area for touch — set threshold based on pin size
       raycaster.params.Points = { threshold: 0.05 };
 
-      // Check beacons first
+      // Check beacons first (live signals highest priority)
       const beaconIntersects = raycaster.intersectObjects(beaconMeshes);
       if (beaconIntersects.length > 0) {
         return { type: 'beacon', mesh: beaconIntersects[0].object, data: beaconIntersects[0].object.userData?.beacon };
+      }
+
+      // Check pulse places (cultural anchors)
+      const placeIntersects = raycaster.intersectObjects(placeMeshes);
+      if (placeIntersects.length > 0) {
+        const placeObj = placeIntersects[0].object;
+        if (placeObj.userData?.place) {
+          return { type: 'place', mesh: placeObj, data: placeObj.userData.place };
+        }
       }
 
       // Check cities
@@ -1051,6 +1147,19 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         return;
       }
 
+      if (hit.type === 'place' && onPlaceClick) {
+        const place = hit.data;
+        focusPin(hit.mesh);
+        const placePos = latLngToVector3(place.lat, place.lng, globeRadius);
+        const direction = placePos.clone().normalize();
+        targetRotationY = Math.atan2(direction.x, direction.z);
+        targetRotationX = Math.asin(direction.y);
+        // Cities zoom in more, venues/curated stay closer
+        targetCameraZ = place.type === 'city' ? 3.2 : 3.0;
+        onPlaceClick(place);
+        return;
+      }
+
       if (hit.type === 'city' && onCityClick) {
         const city = hit.data;
         const cityPos = latLngToVector3(city.lat, city.lng, globeRadius);
@@ -1153,6 +1262,15 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
               targetCameraZ = 3.5;
               onBeaconClick(clickedBeacon);
             }
+          } else if (hit.type === 'place' && onPlaceClick) {
+            const place = hit.data;
+            focusPin(hit.mesh);
+            const placePos = latLngToVector3(place.lat, place.lng, globeRadius);
+            const direction = placePos.clone().normalize();
+            targetRotationY = Math.atan2(direction.x, direction.z);
+            targetRotationX = Math.asin(direction.y);
+            targetCameraZ = place.type === 'city' ? 3.2 : 3.0;
+            onPlaceClick(place);
           } else if (hit.type === 'city' && onCityClick) {
             const city = hit.data;
             const cityPos = latLngToVector3(city.lat, city.lng, globeRadius);
@@ -1378,6 +1496,39 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         }
       }
 
+      // ── Pulse Places: zoom-level visibility + curated gold pulse ─────
+      const currentZoomLevel = camera.userData._zoomLevel || 'city';
+      placesGroup.children.forEach(child => {
+        const pt = child.userData?.placeType;
+        if (!pt) return;
+
+        // Visibility rules: far=cities only, mid=all, close=all+labels
+        let visible = true;
+        if (currentZoomLevel === 'world') {
+          // Far: only cities + curated (curated appears earlier)
+          visible = pt === 'city' || pt === 'curated';
+        }
+        // Mid + close: everything visible
+
+        child.visible = visible;
+
+        // Curated gold pulse animation (1.2s = ~0.83 Hz)
+        if (pt === 'curated' && child.userData?.baseScale) {
+          const pulse = 1 + Math.sin(time * 0.83 * Math.PI * 2) * 0.25;
+          child.scale.setScalar(child.userData.baseScale * pulse);
+        }
+        // Zone breathing
+        if (pt === 'zone' && child.userData?.baseScale) {
+          const breathe = 1 + Math.sin(time * 0.15 * Math.PI * 2) * 0.1;
+          child.scale.setScalar(child.userData.baseScale * breathe);
+        }
+        // Club slow pulse
+        if (pt === 'club' && child.userData?.baseScale) {
+          const pulse = 1 + Math.sin(time * 0.25 * Math.PI * 2) * 0.15;
+          child.scale.setScalar(child.userData.baseScale * pulse);
+        }
+      });
+
       // Update arc shaders
       arcs.forEach(arc => {
         if (arc.userData.material?.uniforms?.uTime) {
@@ -1511,6 +1662,17 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         cityGroup.traverse(child => {
           if (child.geometry) child.geometry.dispose();
           if (child.material) child.material.dispose();
+        });
+      }
+
+      // Dispose pulse places group
+      if (placesGroup) {
+        placesGroup.traverse(child => {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) {
+            if (child.material.map) child.material.map.dispose();
+            child.material.dispose();
+          }
         });
       }
       
