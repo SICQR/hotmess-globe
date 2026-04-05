@@ -651,6 +651,15 @@ function ProfileCardInner({
         {...wrappedLongPressHandlers}
       >
         <div className="relative w-full aspect-[4/5] overflow-hidden rounded-2xl">
+          {/* Ghost fallback behind ReactBits when no avatar */}
+          {!currentUrl && (
+            <div className="absolute inset-0 bg-gradient-to-br from-[#1C1C1E] to-[#0D0D0D] flex flex-col items-center justify-center gap-1.5 z-0">
+              <svg className="w-10 h-10 text-white/15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 10h.01M15 10h.01M12 2a8 8 0 0 0-8 8v1a7 7 0 0 0 3 5.75V20a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-3.25A7 7 0 0 0 20 11v-1a8 8 0 0 0-8-8z" />
+              </svg>
+              <span className="text-[10px] font-bold text-white/20 uppercase tracking-wider">{initialsFromName(profile.profileName)}</span>
+            </div>
+          )}
           <ReactBitsProfileCard
             className="pc-grid"
             avatarUrl={currentUrl || ''}

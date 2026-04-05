@@ -9,7 +9,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, SkipForward, X, Music } from 'lucide-react';
+import { Play, Pause, SkipForward, X, Disc3 } from 'lucide-react';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { useRadio } from '@/contexts/RadioContext';
 
@@ -55,7 +55,7 @@ export function MusicMiniPlayer() {
               {currentTrack.artwork_url ? (
                 <img src={currentTrack.artwork_url} alt="" className="w-full h-full object-cover" />
               ) : (
-                <Music className="w-5 h-5 text-[#C8962C]/40" />
+                <Disc3 className="w-5 h-5 text-[#C8962C]/40" />
               )}
             </div>
 

@@ -203,7 +203,8 @@ export default function AlbumCarousel({
                   alt={`${currentRelease.title} - ${currentRelease.label}`}
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    e.currentTarget.src = 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&q=80';
+                    // Hide broken image, show edition label on dark bg
+                    e.currentTarget.style.display = 'none';
                   }}
                 />
                 
