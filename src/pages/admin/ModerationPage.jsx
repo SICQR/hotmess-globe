@@ -5,7 +5,7 @@
  * Access: Admin / Moderator users only (role = 'admin' | 'moderator')
  *
  * 4 tabs: Queue, Reports, Sellers, Log
- * Tables: moderation_cases, moderation_actions, preloved_listings,
+ * Tables: moderation_cases, moderation_actions, market_listings,
  *         preloved_listing_reports, seller_restrictions, profiles
  */
 

@@ -1,7 +1,7 @@
 /**
  * SellerProfileView — Seller tab inside L2ProfileSheet.
  *
- * Shows the seller's active preloved_listings from Supabase
+ * Shows the seller's active market_listings from Supabase
  * with a HOTMESS OS dark design. Replaces the old base44 query.
  */
 
@@ -18,7 +18,7 @@ const MUTED  = '#8E8E93';
 export default function SellerProfileView({ user }) {
   const { openSheet } = useSheet();
 
-  // ── Active listings from preloved_listings table ───────────────────────────
+  // ── Active listings from market_listings table ────────────────────────────
   const { data: listings = [], isLoading } = useQuery({
     queryKey: ['seller-listings', user?.id],
     queryFn: async () => {

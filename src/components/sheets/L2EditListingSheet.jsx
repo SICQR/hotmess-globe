@@ -3,7 +3,7 @@
  *
  * Registered in sheetSystem (height: full) + SheetRouter.
  * Pre-fills from existing listing data passed as sheet props.
- * Save -> update preloved_listings table.
+ * Save -> update market_listings table.
  * Delete -> set status = 'archived'.
  */
 
