@@ -68,6 +68,8 @@ import { usePowerups } from '@/hooks/usePowerups';
 import { useVenueIntensity, getConversionLabel, getMomentumLabel, type PlaceIntensity } from '@/hooks/useVenueIntensity';
 import type { PulsePlace } from '@/hooks/usePulsePlaces';
 import L2RouteSheet from '@/components/sheets/L2RouteSheet';
+import GhostedOverlay from '@/components/ghosted/GhostedOverlay';
+import type { GhostedContext } from '@/hooks/useVenuePresence';
 
 // ---- Brand constants --------------------------------------------------------
 const AMBER = '#C8962C';
@@ -744,11 +746,13 @@ function ClusterPanel({
   onClose,
   onBrowse,
   onGoLive,
+  onSeeWhoIsAround,
 }: {
   cluster: { title: string; count: number; type: string; lat: number; lng: number };
   onClose: () => void;
   onBrowse: () => void;
   onGoLive: () => void;
+  onSeeWhoIsAround?: () => void;
 }) {
   return (
     <motion.div
@@ -776,7 +780,20 @@ function ClusterPanel({
             <p className="text-[11px] text-white/40 mt-0.5">{cluster.count} signal{cluster.count !== 1 ? 's' : ''} \u00B7 {cluster.type}</p>
           </div>
         </div>
-        <div className="flex gap-3 mt-5">
+
+        {/* See who's around — bridge to Ghosted area mode */}
+        {onSeeWhoIsAround && (
+          <button
+            onClick={onSeeWhoIsAround}
+            className="w-full mt-4 py-2.5 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold active:scale-[0.98] transition-transform"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}
+          >
+            <Users className="w-3.5 h-3.5" />
+            See who's around
+          </button>
+        )}
+
+        <div className="flex gap-3 mt-4">
           <button onClick={onBrowse} className="flex-1 h-11 rounded-xl bg-[#C8962C] text-black font-bold text-xs uppercase flex items-center justify-center gap-2 active:scale-[0.97] transition-transform">
             Browse Nearby
           </button>
@@ -860,6 +877,7 @@ function VenuePanel({
   onClose,
   onCheckIn,
   onRoute,
+  onSeeWhoIsHere,
 }: {
   place: PulsePlace;
   intensity: PlaceIntensity | null;
@@ -867,6 +885,7 @@ function VenuePanel({
   onClose: () => void;
   onCheckIn: () => void;
   onRoute: () => void;
+  onSeeWhoIsHere?: () => void;
 }) {
   const level = intensity?.intensity_level ?? 0;
   const count = intensity?.checkins_4h ?? 0;
@@ -1015,6 +1034,22 @@ function VenuePanel({
         )}
         {isCommunity && (
           <p className="text-white/30 text-sm mt-3">Private space — check-ins are not displayed publicly</p>
+        )}
+
+        {/* See who's here — bridge to Ghosted (not for community venues) */}
+        {onSeeWhoIsHere && count > 0 && !isCommunity && (
+          <button
+            onClick={onSeeWhoIsHere}
+            className="w-full mt-4 py-2.5 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold active:scale-[0.98] transition-transform"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              color: 'rgba(255,255,255,0.5)',
+            }}
+          >
+            <Users className="w-3.5 h-3.5" />
+            See who's here
+          </button>
         )}
 
         {/* CTAs */}
@@ -1690,6 +1725,8 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     cameraCity,
     focusedPlace,
     setFocusedPlace,
+    ghostedContext,
+    setGhostedContext,
   } = useGlobe();
 
   // Prefer the live camera city (auto-updates as globe rotates) over the saved picker value
@@ -2723,6 +2760,16 @@ export function PulseMode({ className = '' }: PulseModeProps) {
             onClose={() => setClusterPanelItem(null)}
             onBrowse={() => { setClusterPanelItem(null); navigate('/ghosted'); }}
             onGoLive={() => { setClusterPanelItem(null); setRightNowOpen(true); }}
+            onSeeWhoIsAround={() => {
+              const ctx: GhostedContext = {
+                mode: 'area',
+                lat: clusterPanelItem.lat,
+                lng: clusterPanelItem.lng,
+                radius_m: 1000,
+              };
+              setClusterPanelItem(null);
+              setGhostedContext(ctx);
+            }}
           />
         )}
       </AnimatePresence>
@@ -2751,6 +2798,19 @@ export function PulseMode({ className = '' }: PulseModeProps) {
               setVenuePanelItem(null);
               setRouteDestination(dest);
             }}
+            onSeeWhoIsHere={() => {
+              const ctx: GhostedContext = {
+                mode: 'venue',
+                venue_id: venuePanelItem.id,
+                venue_name: venuePanelItem.name,
+                venue_slug: venuePanelItem.slug,
+                venue_tier: (venuePanelItem as any).tier || 'free',
+                lat: venuePanelItem.lat,
+                lng: venuePanelItem.lng,
+              };
+              setVenuePanelItem(null);
+              setGhostedContext(ctx);
+            }}
           />
         )}
       </AnimatePresence>
@@ -2761,6 +2821,29 @@ export function PulseMode({ className = '' }: PulseModeProps) {
           <L2RouteSheet
             destination={routeDestination}
             onClose={() => setRouteDestination(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Ghosted Overlay — contextual people layer */}
+      <AnimatePresence>
+        {ghostedContext && (
+          <GhostedOverlay
+            context={ghostedContext as GhostedContext}
+            onClose={() => setGhostedContext(null)}
+            onExpandToNearby={
+              (ghostedContext as GhostedContext)?.mode === 'venue'
+                ? () => {
+                    const gc = ghostedContext as GhostedContext;
+                    setGhostedContext({
+                      mode: 'area',
+                      lat: gc.lat,
+                      lng: gc.lng,
+                      radius_m: 1000,
+                    });
+                  }
+                : undefined
+            }
           />
         )}
       </AnimatePresence>

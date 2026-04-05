@@ -57,6 +57,9 @@ export function GlobeProvider({ children }) {
   // Focused place — set by Globe.jsx on place tap, read by PulseMode for VenuePanel
   const [focusedPlace, setFocusedPlace] = useState(null);
 
+  // Ghosted context — opens GhostedOverlay with venue/area context from Pulse
+  const [ghostedContext, setGhostedContext] = useState(null);
+
   // Amplified beacons Map<id, { multiplier, expiresAt }>
   const [amplifiedBeaconIds, setAmplifiedBeaconIds] = useState(new Map());
 
@@ -162,6 +165,8 @@ export function GlobeProvider({ children }) {
     amplifyBeacon,
     focusedPlace,
     setFocusedPlace,
+    ghostedContext,
+    setGhostedContext,
   };
 
   return (
@@ -194,6 +199,8 @@ const GLOBE_NOOP = {
   amplifyBeacon: () => {},
   focusedPlace: null,
   setFocusedPlace: () => {},
+  ghostedContext: null,
+  setGhostedContext: () => {},
 };
 
 export function useGlobe() {
