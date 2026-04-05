@@ -78,6 +78,7 @@ import MorePage from '@/pages/MorePage';
 const CarePage = lazy(() => import('@/pages/CarePage'));
 import AftercareNudge from '@/components/safety/AftercareNudge';
 import CreateBeaconBiz from '@/pages/biz/CreateBeaconBiz';
+const VenueCheckin = lazy(() => import('@/pages/VenueCheckin'));
 
 // Example screens (design system demos)
 const ChatWithMapExample = lazy(() => import('@/examples/ChatWithMapExample'));
@@ -545,6 +546,7 @@ const AuthenticatedApp = () => {
       <Route path="/safety/report" element={<Suspense fallback={null}><SafetyPage /></Suspense>} />
       <Route path="/safety/resources" element={<PageRoute pageKey="Care" />} />
       <Route path="/calendar/*" element={<PageRoute pageKey="Calendar" />} />
+      <Route path="/v/:slug" element={<Suspense fallback={<PageLoadingSkeleton />}><VenueCheckin /></Suspense>} />
       <Route path="/scan/*" element={<PageRoute pageKey="Scan" />} />
       <Route path="/community/*" element={<PageRoute pageKey="Community" />} />
       <Route path="/leaderboard/*" element={<PageRoute pageKey="Leaderboard" />} />

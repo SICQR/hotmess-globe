@@ -21,6 +21,7 @@ import { useGlobeRealtime } from '@/hooks/useGlobeRealtime';
 import { useProfileOpener } from '@/lib/profile';
 import LocationShopPanel from '../components/globe/LocationShopPanel';
 import { usePulsePlacesByType } from '@/hooks/usePulsePlaces';
+import { useVenueIntensity } from '@/hooks/useVenueIntensity';
 
 // ── City coords for programmatic flyTo ──────────────────────────────────────
 const CITY_COORDS = {
@@ -339,6 +340,9 @@ export default function GlobePage({ embedded = false }) {
 
   // Pulse Places: cultural anchor layer (cities, zones, clubs, curated)
   const { cities: placeCities, zones: placeZones, clubs: placeClubs, curated: placeCurated, allPlaces: pulsePlaces } = usePulsePlacesByType();
+
+  // Venue intensity: time-weighted check-in counts with 5-level system
+  const { intensityMap: venueIntensity } = useVenueIntensity();
 
   // Living Globe: activity reactor (seed heat + venue glow)
   const liveBeaconCount = (rightNowUsers?.length ?? 0) + (beacons?.length ?? 0);
@@ -735,6 +739,7 @@ export default function GlobePage({ embedded = false }) {
             beacons={filteredBeacons}
             cities={cities}
             pulsePlaces={pulsePlaces}
+            venueIntensity={venueIntensity}
             activeLayers={debouncedLayers}
             userActivities={userActivities}
             userIntents={userIntents}
