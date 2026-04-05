@@ -325,7 +325,7 @@ function GhostedEmpty({ onOpenFilters, onGoLive }: { onOpenFilters: () => void; 
       <Ghost className="w-12 h-12 mb-4" style={{ color: AMBER }} />
       <h2 className="text-lg font-black text-white mb-2">Nobody nearby yet</h2>
       <p className="text-sm text-[#8E8E93] mb-6 max-w-[260px]">
-        Go Live so people know you're out
+        Go Live so people nearby can find you
       </p>
       <button
         onClick={onGoLive || onOpenFilters}

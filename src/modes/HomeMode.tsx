@@ -35,12 +35,10 @@ import {
 import { useSheet } from '@/contexts/SheetContext';
 import { useRadio } from '@/contexts/RadioContext';
 import { useBootGuard } from '@/contexts/BootGuardContext';
-import { useLiveMode } from '@/contexts/LiveModeContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { motionTokens, getMotion, useReducedMotion } from '@/lib/motionTokens';
 import RightNowModal from '@/components/globe/RightNowModal';
 import { trackEvent } from '@/components/utils/analytics';
-import { Eye } from 'lucide-react';
 
 // ── Brand tokens ────────────────────────────────────────────────────────────
 const AMBER = '#C8962C';
@@ -58,10 +56,9 @@ const HERO_HEADLINES = [
 
 // ── Core nav grid config ────────────────────────────────────────────────────
 const CORE_LANES = [
-  { label: 'Pulse', sub: 'Live globe', icon: Globe, route: '/pulse' },
   { label: 'Ghosted', sub: 'Men nearby', icon: Ghost, route: '/ghosted' },
   { label: 'Market', sub: 'Gear up', icon: ShoppingBag, route: '/market' },
-  { label: 'Music', sub: 'Live radio', icon: Music, route: '/music' },
+  { label: 'Music', sub: 'Releases', icon: Music, route: '/music' },
 ] as const;
 
 interface HomeModeProps {
@@ -73,7 +70,6 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
   const { openSheet } = useSheet();
   const { profile } = useBootGuard();
   const { isPlaying: radioPlaying, currentShowName, togglePlay } = useRadio();
-  const { isLive, enterLive } = useLiveMode();
   const reduced = useReducedMotion();
 
   const [showRightNow, setShowRightNow] = useState(false);
@@ -172,7 +168,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         {/* ================================================================ */}
         <section
           className="relative w-full flex flex-col justify-end px-6 pb-10"
-          style={{ height: 520 }}
+          style={{ height: 400 }}
         >
           {/* Radial gold glow */}
           <motion.div
@@ -224,30 +220,20 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
               Tap in. See who&rsquo;s out. Move.
             </motion.p>
 
-            {/* CTAs */}
+            {/* Single dominant CTA */}
             <motion.div
               variants={reduced ? {} : motionTokens.fadeUpMd}
-              className="flex gap-3 mt-8"
+              className="mt-8"
             >
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={handleEnterPulse}
-                className="h-12 px-6 rounded-2xl text-sm font-bold flex items-center gap-2 transition-colors"
+                className="h-12 px-8 rounded-2xl text-sm font-bold flex items-center gap-2 transition-colors"
                 style={{ background: AMBER, color: '#000' }}
                 aria-label="Enter Pulse — live globe"
               >
                 <Globe className="w-4 h-4" />
                 Enter Pulse
-              </motion.button>
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={handleGoLive}
-                className="h-12 px-6 rounded-2xl text-sm font-bold flex items-center gap-2 text-white transition-colors"
-                style={{ border: '1px solid rgba(255,255,255,0.2)' }}
-                aria-label="Go Live — set your status"
-              >
-                <Zap className="w-4 h-4" style={{ color: AMBER }} />
-                Go Live
               </motion.button>
             </motion.div>
           </motion.div>
@@ -302,28 +288,26 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
                 <p className="text-xs mb-3" style={{ color: MUTED }}>
                   {userRnStatus?.intent ?? 'Explore'}
                 </p>
-                {!isLive && (
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      trackEvent('home_cta_tap', { cta: 'enter_live_mode' });
-                      enterLive({ type: 'global' });
-                    }}
-                    className="h-10 px-5 rounded-full text-sm font-bold flex items-center gap-1.5"
-                    style={{ background: AMBER, color: '#000' }}
-                    aria-label="Enter Live Mode — see who is in your moment"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    See Who&rsquo;s Out
-                  </motion.button>
-                )}
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    trackEvent('home_cta_tap', { cta: 'open_ghosted_live' });
+                    navigate('/ghosted');
+                  }}
+                  className="h-10 px-5 rounded-full text-sm font-bold flex items-center gap-1.5"
+                  style={{ background: AMBER, color: '#000' }}
+                  aria-label="Open Ghosted — see who's nearby"
+                >
+                  <Ghost className="w-3.5 h-3.5" />
+                  See Who&rsquo;s Nearby
+                </motion.button>
               </>
             )}
             {cardVariant === 'go-live' && (
               <>
-                <p className="text-white text-sm font-semibold mb-1">You&rsquo;re invisible right now</p>
+                <p className="text-white text-sm font-semibold mb-1">You&rsquo;re off the grid</p>
                 <p className="text-xs mb-4" style={{ color: MUTED }}>
-                  Go Live and show up nearby
+                  Go Live so people nearby can find you
                 </p>
                 <motion.button
                   whileTap={{ scale: 0.95 }}
@@ -362,43 +346,27 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         {/* 4. CORE NAV GRID — 2x2                                          */}
         {/* ================================================================ */}
         <section className="px-5 pb-6">
-          <motion.div
-            className="grid grid-cols-2 gap-3"
-            initial="initial"
-            animate="animate"
-            variants={{
-              animate: { transition: { staggerChildren: reduced ? 0 : 0.06 } },
-            }}
-          >
+          <div className="flex gap-2">
             {CORE_LANES.map((lane) => {
               const Icon = lane.icon;
               return (
                 <motion.button
                   key={lane.label}
-                  variants={reduced ? {} : motionTokens.fadeUpSm}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => {
                     trackEvent('home_lane_tap', { lane: lane.label });
                     navigate(lane.route);
                   }}
-                  className="flex flex-col items-start gap-3 rounded-2xl p-5 text-left"
+                  className="flex-1 flex items-center gap-2.5 rounded-xl px-3 py-3"
                   style={{ background: 'rgba(255,255,255,0.05)' }}
                   aria-label={`${lane.label} — ${lane.sub}`}
                 >
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ background: `${AMBER}15` }}
-                  >
-                    <Icon className="w-5 h-5" style={{ color: AMBER }} />
-                  </div>
-                  <div>
-                    <p className="text-white font-bold text-sm">{lane.label}</p>
-                    <p className="text-[11px] mt-0.5" style={{ color: MUTED }}>{lane.sub}</p>
-                  </div>
+                  <Icon className="w-4 h-4 flex-shrink-0" style={{ color: AMBER }} />
+                  <span className="text-white font-bold text-xs">{lane.label}</span>
                 </motion.button>
               );
             })}
-          </motion.div>
+          </div>
         </section>
 
         {/* ================================================================ */}
@@ -406,23 +374,18 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         {/* ================================================================ */}
         <section className="px-5 pb-8">
           <motion.div
-            className="rounded-2xl p-6"
-            style={{ background: 'rgba(255,255,255,0.03)' }}
+            className="rounded-2xl p-5"
+            style={{ background: userRnStatus ? `${AMBER}08` : 'rgba(255,255,255,0.03)', border: userRnStatus ? `1px solid ${AMBER}15` : 'none' }}
             {...getMotion('fadeUpMd', reduced)}
           >
-            <p className="text-white font-bold text-lg leading-snug">
-              Men are out right now.
+            <p className="text-white font-bold text-base leading-snug">
+              {userRnStatus
+                ? (rnCount > 1 ? `${rnCount} men out right now` : 'Someone nearby is live')
+                : 'Men are out right now.'}
             </p>
-            <motion.p
-              className="text-sm mt-1 mb-5"
-              style={{ color: MUTED }}
-              {...(reduced ? {} : {
-                animate: { opacity: [0.5, 0.8, 0.5] },
-                transition: { duration: 3.5, repeat: Infinity, ease: 'easeInOut' },
-              })}
-            >
-              Don&rsquo;t guess. See them.
-            </motion.p>
+            <p className="text-xs mt-1 mb-4" style={{ color: MUTED }}>
+              {userRnStatus ? 'You\u2019re live. See who\u2019s around.' : 'Don\u2019t guess. See them.'}
+            </p>
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => {

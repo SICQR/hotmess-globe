@@ -788,20 +788,20 @@ function ClusterPanel({
         {onSeeWhoIsAround && (
           <button
             onClick={onSeeWhoIsAround}
-            className="w-full mt-4 py-3 rounded-2xl flex items-center justify-center gap-2 text-xs font-semibold active:scale-[0.98] transition-transform"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}
+            className="w-full mt-4 py-3 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold active:scale-[0.98] transition-transform"
+            style={{ background: `${AMBER}12`, border: `1px solid ${AMBER}25`, color: AMBER }}
           >
             <Users className="w-3.5 h-3.5" />
-            See who's around
+            See who&rsquo;s around
           </button>
         )}
 
         <div className="flex gap-3 mt-6">
           <button onClick={onBrowse} className="flex-1 h-11 rounded-xl bg-[#C8962C] text-black font-bold text-xs uppercase flex items-center justify-center gap-2 active:scale-[0.97] transition-transform">
-            Browse Nearby
+            See Who&rsquo;s Here
           </button>
           <button onClick={onGoLive} className="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 text-xs font-bold uppercase active:scale-[0.97] transition-transform" style={{ background: 'rgba(200,150,44,0.12)', color: AMBER, border: '1px solid rgba(200,150,44,0.2)' }}>
-            <Zap className="w-4 h-4" /> Go Live Here
+            <Zap className="w-4 h-4" /> Go Live
           </button>
         </div>
       </motion.div>
@@ -1044,15 +1044,15 @@ function VenuePanel({
         {onSeeWhoIsHere && count > 0 && !isCommunity && (
           <button
             onClick={onSeeWhoIsHere}
-            className="w-full mt-4 py-3 rounded-2xl flex items-center justify-center gap-2 text-xs font-semibold active:scale-[0.98] transition-transform"
+            className="w-full mt-4 py-3 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold active:scale-[0.98] transition-transform"
             style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.06)',
-              color: 'rgba(255,255,255,0.5)',
+              background: `${AMBER}12`,
+              border: `1px solid ${AMBER}25`,
+              color: AMBER,
             }}
           >
             <Users className="w-3.5 h-3.5" />
-            See who's here
+            See who&rsquo;s here
           </button>
         )}
 
@@ -1154,19 +1154,19 @@ function ActionBar({
         Post
       </button>
 
-      {/* Browse Nearby */}
+      {/* Open Ghosted */}
       <button
         onClick={onBrowseNearby}
         className="h-10 px-4 rounded-full flex items-center gap-1.5 text-xs font-bold active:scale-95 transition-transform"
         style={{
           ...glassStyle(0.5, 16),
-          borderColor: `${TEAL}40`,
-          color: TEAL,
+          borderColor: `${AMBER}40`,
+          color: AMBER,
         }}
-        aria-label="Browse nearby profiles"
+        aria-label="See men nearby on Ghosted"
       >
         <Eye className="w-3.5 h-3.5" />
-        Nearby
+        Ghosted
       </button>
     </div>
   );
