@@ -41,7 +41,7 @@ import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { usePowerups } from '@/hooks/usePowerups';
 import { useGPS } from '@/hooks/useGPS';
 import { calculateDistance } from '@/lib/locationUtils';
-import { Zap, Eye } from 'lucide-react';
+import { Zap, Eye, Radio } from 'lucide-react';
 import { useLiveMode } from '@/contexts/LiveModeContext';
 import { useRadio } from '@/contexts/RadioContext';
 // hapticMedium import removed — haptics handled in preview sheet
@@ -549,33 +549,50 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
     setVibeTagFilter((prev) => (prev === tag ? null : tag));
   }, []);
 
-  // ---- Sort comparator based on sortBy pill ----
+  // ---- Sort comparator based on sortBy pill + Live tab context boost ----
   const sortProfiles = useCallback(
     (a: any, b: any) => {
+      // On the Live tab, boost contextual users to the top:
+      // 1. Current-show listeners  2. Moving nearby  3. At venue  4. Others
+      if (activeTab === 'live') {
+        const aListening = !!(a.radio_show || a.is_listening);
+        const bListening = !!(b.radio_show || b.is_listening);
+        const aMoving = !!(a.movement_active || a.is_moving);
+        const bMoving = !!(b.movement_active || b.is_moving);
+        const aVenue = !!(a.venue_name || a.checkin_venue);
+        const bVenue = !!(b.venue_name || b.checkin_venue);
+
+        const tierOf = (listening: boolean, moving: boolean, venue: boolean) => {
+          if (listening) return 3;
+          if (moving) return 2;
+          if (venue) return 1;
+          return 0;
+        };
+        const aTier = tierOf(aListening, aMoving, aVenue);
+        const bTier = tierOf(bListening, bMoving, bVenue);
+        if (aTier !== bTier) return bTier - aTier;
+        // Within same tier, fall through to sortBy
+      }
+
       if (sortBy === 'nearby') {
-        // API already sorts by distance when lat/lng sent, but we also
-        // sort client-side so local filter/tab changes keep distance order.
         const aDist = typeof a.distance_m === 'number' ? a.distance_m : Infinity;
         const bDist = typeof b.distance_m === 'number' ? b.distance_m : Infinity;
         if (aDist !== bDist) return aDist - bDist;
-        // Equal distance → fall through to rank
         return (b.rankScore ?? 0) - (a.rankScore ?? 0);
       }
       if (sortBy === 'last_active') {
         const aTime = a.last_seen ? new Date(a.last_seen).getTime() : 0;
         const bTime = b.last_seen ? new Date(b.last_seen).getTime() : 0;
-        return bTime - aTime; // most recent first
+        return bTime - aTime;
       }
       if (sortBy === 'newest') {
-        // Use profile id as a proxy (UUIDs are time-ordered in Supabase)
-        // or created_at if available
         const aId = String(a.id || '');
         const bId = String(b.id || '');
         return bId.localeCompare(aId);
       }
       return 0;
     },
-    [sortBy],
+    [sortBy, activeTab],
   );
 
   // ---- Combined filter predicate (filters + tab + blocks) ----
@@ -663,21 +680,23 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
       const rightNow = (profile as any)?.rightNow || (profile as any)?.right_now_status || null;
       const isOnline = !!(profile as any)?.is_online || !!(profile as any)?.onlineNow;
 
-      // Build context string — movement gets richer detail
+      // Detect radio listening state (before context build so we can use it)
+      const isListening = !!(profile as any)?.radio_show || !!(profile as any)?.is_listening;
+      const radioShow = (profile as any)?.radio_show || (radioPlaying ? currentShowName : null);
+
+      // Build context string — movement > venue > listening > intent > online
       let context = 'Nearby';
       if (isMoving && movementEta) context = `Moving · ${movementEta}`;
       else if (isMoving && movementDestination) context = `On the way to ${movementDestination}`;
       else if (isMoving) context = 'Passing near you';
       else if (venueName) context = `At ${venueName}`;
+      else if (isListening && radioShow) context = `Listening · ${radioShow}`;
+      else if (isListening) context = 'Listening';
       else if (rightNow?.intention) context = rightNow.intention.charAt(0).toUpperCase() + rightNow.intention.slice(1);
       else if (isOnline) context = 'Online';
 
       // Build vibe
       const vibe = rightNow?.intention || (profile as any)?.vibe || null;
-
-      // Detect radio listening state
-      const isListening = !!(profile as any)?.radio_show || !!(profile as any)?.is_listening;
-      const radioShow = (profile as any)?.radio_show || (radioPlaying ? currentShowName : null);
 
       openSheet('ghosted-preview', {
         uid,
@@ -878,7 +897,18 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
         </div>
       )}
 
-      {/* Dynamic banners removed — grid IS the content, no pre-content clutter */}
+      {/* ====== RADIO CONTEXT STRIP (Live tab only, when radio is playing) ====== */}
+      {activeTab === 'live' && radioPlaying && currentShowName && (
+        <div
+          className="px-4 py-2 flex items-center gap-2 border-b border-white/5"
+          style={{ background: 'rgba(0,194,224,0.06)' }}
+        >
+          <span className="w-2 h-2 rounded-full bg-[#00C2E0] animate-pulse flex-shrink-0" />
+          <Radio className="w-3.5 h-3.5 text-[#00C2E0] flex-shrink-0" />
+          <span className="text-xs font-bold text-[#00C2E0] truncate">ON AIR · {currentShowName}</span>
+          <span className="text-[10px] text-white/30 ml-auto flex-shrink-0">Listeners sorted first</span>
+        </div>
+      )}
 
       {/* ====== CONTENT AREA ====== */}
       <div

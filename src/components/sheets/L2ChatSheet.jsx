@@ -133,7 +133,7 @@ function LocationCard({ msg, isMe, otherName }) {
  * @param {string} [props.title] - Fallback title used when the other participant's name is unavailable.
  * @returns {JSX.Element} The chat sheet React element.
  */
-export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmail, userId: initialUserId, toUid, title, meetMode, suggestStop, otherIsMoving }) {
+export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmail, userId: initialUserId, toUid, title, meetMode, suggestStop, otherIsMoving, otherIsListening, otherRadioShow }) {
   // Accept both prop names — callers may pass userId or legacy toUid
   const resolvedUserId = initialUserId || toUid;
   const { openSheet, updateSheetProps } = useSheet();
@@ -891,6 +891,10 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                   else parts.push('On the move nearby');
                 } else if (otherProfile?.venue_name || otherProfile?.checkin_venue) {
                   parts.push(`At ${otherProfile.venue_name || otherProfile.checkin_venue}`);
+                } else if (otherIsListening && otherRadioShow) {
+                  parts.push(`Listening · ${otherRadioShow}`);
+                } else if (otherIsListening) {
+                  parts.push('Listening live');
                 } else if (otherProfile?.is_online) {
                   parts.push('Online');
                 } else if (otherProfile?.last_seen) {
@@ -940,6 +944,19 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                 </p>
                 <p className="text-white/40 text-sm mb-5">
                   Send a Boo, share a meetpoint, or just say hey
+                </p>
+              </>
+            ) : otherIsListening ? (
+              <>
+                <div className="flex items-center justify-center gap-1.5 mb-3">
+                  <span className="w-2 h-2 rounded-full bg-[#00C2E0] animate-pulse" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#00C2E0]">Tuned In</span>
+                </div>
+                <p className="text-white font-bold text-base mb-1">
+                  {otherRadioShow ? `You're both tuned in` : `He's listening live`}
+                </p>
+                <p className="text-white/40 text-sm mb-5">
+                  {otherRadioShow ? `Same moment — ${otherRadioShow}` : 'Send a Boo or say something'}
                 </p>
               </>
             ) : (

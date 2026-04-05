@@ -159,10 +159,12 @@ export default function L2GhostedPreviewSheet({
           userId: uid,
           title: `Chat with ${name}`,
           otherIsMoving: isMoving || false,
+          otherIsListening: isListening || false,
+          otherRadioShow: radioShow || null,
         });
       }, 200);
     }
-  }, [uid, name, isMoving, openSheet, closeSheet]);
+  }, [uid, name, isMoving, isListening, radioShow, openSheet, closeSheet]);
 
   // ── Meet handler ────────────────────────────────────────────────
   const handleMeet = useCallback(() => {
@@ -175,10 +177,12 @@ export default function L2GhostedPreviewSheet({
           title: `Chat with ${name}`,
           meetMode: true,
           otherIsMoving: isMoving || false,
+          otherIsListening: isListening || false,
+          otherRadioShow: radioShow || null,
         });
       }, 200);
     }
-  }, [uid, name, isMoving, openSheet, closeSheet]);
+  }, [uid, name, isMoving, isListening, radioShow, openSheet, closeSheet]);
 
   // ── Suggest Stop handler (movement-specific) ───────────────────
   const handleSuggestStop = useCallback(() => {
@@ -191,6 +195,8 @@ export default function L2GhostedPreviewSheet({
           title: `Chat with ${name}`,
           suggestStop: true,
           otherIsMoving: true,
+          otherIsListening: isListening || false,
+          otherRadioShow: radioShow || null,
         });
       }, 200);
     }
