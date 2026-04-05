@@ -1,9 +1,8 @@
 /**
  * MusicTab — SMASH DADDYS / RAW CONVICT RECORDS
  *
- * Complete rewrite: label-first, cinematic, nightlife system.
- * Sections: Hero → Hot Right Now → Live Radio → Featured Drop →
- *           Producer Mode → All Releases → Preview/Stem overlays
+ * Music = release library ONLY. Radio lives in RadioMode.
+ * Sections: Hero → Hot Right Now → Producer Mode → All Releases → Preview/Stem overlays
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -12,11 +11,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, Pause, ChevronDown, Disc3, X,
   FileAudio, Headphones, ExternalLink,
-  Radio as RadioIcon,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
-import { useRadio } from '@/contexts/RadioContext';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { trackIntent } from '@/lib/notifications/templates';
@@ -29,7 +26,7 @@ const LABEL_RED = '#9B1B2A';
 const TEAL = '#00C2E0';
 const SOUNDCLOUD = '#FF5500';
 const SPOTIFY = '#1DB954';
-const LIVE_GREEN = '#30D158';
+// LIVE_GREEN removed — radio indicator no longer in Music tab
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -514,7 +511,6 @@ function PreviewEndOverlay({ onUpgrade, onDismiss, phase = 'end' }) {
 export default function MusicTab() {
   const navigate = useNavigate();
   const player = useMusicPlayer();
-  const radio = useRadio();
   const scrollRef = useRef(null);
 
   // Data

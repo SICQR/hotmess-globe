@@ -5,34 +5,26 @@
  * No hero banners. No stacked preview widgets. No marketing blocks.
  * Pure people discovery.
  *
- * Layout (top to bottom):
- * 1. Glassmorphic header -- city pill, "GHOSTED" wordmark, filter icon
- * 2. Horizontal tab strip -- All | Online Now | Right Now | Events Tonight
- * 3. 3-column profile grid -- edge-to-edge, near-seamless gap
- * 4. Floating "Right Now" FAB -- hides on scroll down
- *
- * Data: ProfilesGrid (existing infinite-scroll component) + local tab filtering.
- * Auth: supabase.auth.getUser() -- no base44 dependency.
- * Filters: localStorage `hm_ghosted_filters` via L2FiltersSheet.
+ * Hierarchy (top → bottom):
+ * 1. Status row: city pill + count | GHOSTED | Go Live + Filter
+ * 2. Tabs: Nearby | Live | Chats
+ * 3. Sort chips: Nearby | Last Active | Newest (one light filter row)
+ * 4. Grid: 3-col profile cards, infinite scroll
  *
  * Wireframe:
  * ┌─────────────────────────────────────────┐
- * │ ┌─London─┐   GHOSTED   [filters]       │  sticky, glassmorphic
- * │ │248 near│                              │
+ * │ ┌London┐ 248    GHOSTED   [Live][⚙]    │  status row
+ * │ [Nearby] [Live] [Chats]                 │  tabs
+ * │ [Nearby] [Last Active] [Newest]         │  sort chips
  * ├─────────────────────────────────────────┤
- * │ [All] [Online] [Right Now] [Events]     │  pill tabs
- * ├─────────────────────────────────────────┤
- * │┌────┐┌────┐┌────┐                      │  3-col grid, gap-0.5
- * ││IMG ││IMG ││IMG │                       │  aspect-square
- * ││Name││Name││Name│                       │  infinite scroll
+ * │┌────┐┌────┐┌────┐                      │  3-col grid
+ * ││IMG ││IMG ││IMG │                       │
  * │└────┘└────┘└────┘                       │
- * │           ...                           │
- * │     [Share your vibe ->]                │  FAB above nav
  * └─────────────────────────────────────────┘
  */
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+// useNavigate removed — Ghosted doesn't navigate, it opens sheets
 import { motion, AnimatePresence } from 'framer-motion';
 import { SlidersHorizontal, Ghost, X, MessageCircle, Heart, Ban, Flag, Shield } from 'lucide-react';
 import { toast } from 'sonner';
@@ -43,17 +35,16 @@ import { loadGhostedFilters, defaultGhostedFilters } from '@/components/sheets/L
 import { useTaps } from '@/hooks/useTaps';
 import type { Profile } from '@/features/profilesGrid/types';
 import type { TapType } from '@/hooks/useTaps';
-import { AppBanner } from '@/components/banners/AppBanner';
-import { GhostedAmbientToggle } from '@/components/music/GhostedAmbientToggle';
+// AppBanner + GhostedAmbientToggle removed — grid IS the content, no pre-content clutter
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { usePowerups } from '@/hooks/usePowerups';
 import { useGPS } from '@/hooks/useGPS';
 import { calculateDistance } from '@/lib/locationUtils';
-import { Zap, Eye, Radio, ArrowRight } from 'lucide-react';
+import { Zap, Eye } from 'lucide-react';
 import { useLiveMode } from '@/contexts/LiveModeContext';
 import { useRadio } from '@/contexts/RadioContext';
-import { hapticMedium } from '@/lib/haptics';
+// hapticMedium import removed — haptics handled in preview sheet
 
 // Lazy load the grid component
 import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
@@ -355,7 +346,6 @@ interface GhostedModeProps {
 }
 
 export function GhostedMode({ className = '' }: GhostedModeProps) {
-  const navigate = useNavigate();
   const { openSheet } = useSheet();
   const onlineCount = useRightNowCount();
   const { isActive: isBoostActive, expiresAt: boostExpiresAt } = usePowerups();
@@ -751,22 +741,15 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
               </span>
             </div>
 
-            {/* Center: GHOSTED wordmark + live state */}
-            <div className="absolute left-1/2 -translate-x-1/2 text-center">
-              <h1
-                className="font-black text-base tracking-[0.2em] uppercase leading-tight"
-                style={{ color: AMBER }}
-              >
-                {activeTab === 'live' ? 'LIVE NOW' : 'GHOSTED'}
-              </h1>
-              <p className="text-[10px] text-white/30 font-medium">
-                {radioPlaying && currentShowName
-                  ? `${currentShowName}`
-                  : `${city} · Right Now`}
-              </p>
-            </div>
+            {/* Center: GHOSTED wordmark */}
+            <h1
+              className="absolute left-1/2 -translate-x-1/2 font-black text-base tracking-[0.2em] uppercase leading-tight"
+              style={{ color: AMBER }}
+            >
+              {activeTab === 'live' ? 'LIVE NOW' : 'GHOSTED'}
+            </h1>
 
-            {/* Right: ambient toggle + filter icon with badge */}
+            {/* Right: Go Live + filter */}
             <div className="flex items-center gap-1.5">
             <button
               onClick={() => openSheet('go-live', {})}
@@ -784,15 +767,6 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
                 </span>
               ) : 'Go Live'}
             </button>
-            <button
-              onClick={() => navigate('/safety')}
-              className="w-8 h-8 flex items-center justify-center rounded-full active:scale-95 transition-transform"
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
-              aria-label="Safety"
-            >
-              <span className="text-white/50 text-[10px] font-bold">SOS</span>
-            </button>
-            <GhostedAmbientToggle />
             <button
               data-testid="ghosted-filter-btn"
               onClick={() => openSheet('filters')}

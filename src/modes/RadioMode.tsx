@@ -4,34 +4,23 @@
  * Full-screen immersive radio player for HOTMESS OS.
  * Think Apple Music meets pirate radio station.
  *
+ * Radio = live broadcast ONLY. Music library lives in /music (MusicTab).
+ *
  * Wireframe:
  * +------------------------------------------+
- * |                               [Share]    |  Fixed top-right z-10
- * |                                          |
- * |  bg-gradient amber/20 -> 0D0D0D -> black |
- * |                                          |
- * |          H O T M E S S                   |  tracking-widest
+ * | [Back]                         [Share]   |
+ * |          H O T M E S S                   |
  * |            R A D I O                     |
- * |                                          |
- * |        [ LIVE ] or [OFF AIR]             |  Pill badge
- * |        ||||  (waveform bars)             |  CSS anim when playing
- * |   "Wake the Mess with DJ Chaos"          |  italic muted
- * |                                          |
- * |         (( (( [PLAY] )) ))               |  64px amber + pulse rings
- * |         [MUTE]      [===VOL===]          |  mute + range
- * |                                          |  min-h-[60vh]
- * +------------------------------------------+  scroll boundary
- * |  NOW PLAYING                             |
- * |  +--------------------------------------+|
- * |  | artwork  Show Name     [ON AIR]      ||
- * |  |          Host (muted)                ||
- * |  |          Desc (2-line)               ||
- * |  +--------------------------------------+|
- * |  UP NEXT                                 |
+ * |        [ON AIR] or [OFF AIR]             |
+ * |        ||||  (waveform bars)             |
+ * |   "Show Name with Host"                  |
+ * |         (( (( [PLAY] )) ))               |
+ * |         [MUTE]      [===VOL===]          |
+ * +------------------------------------------+
+ * |  UP NEXT              [Full Schedule]    |
  * |  [card] [card] [card]  horiz scroll      |
- * |  PAST SHOWS                              |
- * |  [SoundCloud link card]                  |
- * |  About strip                       pb-8  |
+ * |  [Raw Convict Records → /music]          |
+ * |  About strip                             |
  * +------------------------------------------+
  *
  * States: idle (not playing) | playing (amber glow) | error (toast)
@@ -47,7 +36,6 @@ import {
   VolumeX,
   Radio,
   Share2,
-  ExternalLink,
   X,
   Music,
   ChevronLeft,
@@ -61,7 +49,6 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { supabase } from '@/components/utils/supabaseClient';
 import '@/styles/radio-waveform.css';
-import { AppBanner } from '@/components/banners/AppBanner';
 import { SoundConsentModal } from '@/components/radio/SoundConsentModal';
 
 // -- Static show data (fallback) -----------------------------------------------
@@ -152,17 +139,7 @@ function getCurrentScheduledShow(shows: ShowData[]): ShowData | null {
 }
 
 
-// RAW CONVICT RECORDS — label releases (from Playlist.m3u)
-const PLAYLIST_TRACKS = [
-  { id: 'rcr-01', title: 'Another Half', artist: 'glenmccarty', duration: '3:50', href: 'https://soundcloud.com/rawconvictrecords/another-half' },
-  { id: 'rcr-02', title: 'Gone Under', artist: 'glenmccarty', duration: '2:59', href: 'https://soundcloud.com/rawconvictrecords/gone-under' },
-  { id: 'rcr-03', title: 'HNH Mess 2', artist: 'glenmccarty', duration: '3:05', href: 'https://soundcloud.com/rawconvictrecords/hnh-mess-2' },
-  { id: 'rcr-04', title: 'Hotline (Extended)', artist: 'glenmccarty', duration: '4:19', href: 'https://soundcloud.com/rawconvictrecords/hotline-extended' },
-  { id: 'rcr-05', title: "It's Not G, It's You", artist: 'glenmccarty', duration: '3:31', href: 'https://soundcloud.com/rawconvictrecords/its-not-g-its-you' },
-  { id: 'rcr-06', title: 'Love You, Hate You', artist: 'glenmccarty', duration: '2:15', href: 'https://soundcloud.com/rawconvictrecords/love-you-hate-you' },
-  { id: 'rcr-07', title: 'New Way, Same Us', artist: 'glenmccarty', duration: '2:29', href: 'https://soundcloud.com/rawconvictrecords/new-way-same-us' },
-  { id: 'rcr-08', title: 'Walking Red Flag', artist: 'glenmccarty', duration: '3:41', href: 'https://soundcloud.com/rawconvictrecords/walking-red-flag' },
-];
+// PLAYLIST_TRACKS removed — music lives in /music (MusicTab). Radio = live broadcast only.
 
 // -- Component ------------------------------------------------------------------
 
@@ -355,8 +332,6 @@ export function RadioMode({ className = '' }: RadioModeProps) {
       {/* ---- Scrollable content (hero + cards) ---- */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum scrollbar-hide" {...pullHandlers}>
         <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
-        {/* Dynamic Radio banner */}
-        <AppBanner placement="radio_top" variant="strip" />
 
         {/* == HERO SECTION == */}
         <section
