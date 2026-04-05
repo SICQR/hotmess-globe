@@ -164,8 +164,12 @@ export default function VenueCheckin() {
   // Intensity visual config
   const iv = INTENSITY_VISUALS[intensityLevel as keyof typeof INTENSITY_VISUALS] || INTENSITY_VISUALS[0];
   const fakeIntensity = { slug: slug || '', name: place?.name || '', type: place?.type || '', lat: 0, lng: 0, checkins_30m: 0, checkins_1h: 0, checkins_4h: checkinCount, effective_count: checkinCount, intensity_level: intensityLevel, momentum, last_checkin_at: null };
-  const conversionLabel = getConversionLabel(fakeIntensity);
-  const momentumLabel = getMomentumLabel(fakeIntensity);
+  const tier = (place as any)?.tier || 'free';
+  const isCommunity = tier === 'community';
+  const isPro = tier === 'pro';
+  const isGoldVenue = place?.type === 'curated' || isPro;
+  const conversionLabel = isCommunity ? null : getConversionLabel(fakeIntensity);
+  const momentumLabel = isCommunity ? null : getMomentumLabel(fakeIntensity);
 
   if (loading) {
     return (
@@ -197,17 +201,19 @@ export default function VenueCheckin() {
           <div
             className="w-24 h-24 rounded-full flex items-center justify-center"
             style={{
-              background: place.type === 'curated'
+              background: isGoldVenue
                 ? `radial-gradient(circle, ${GOLD}40 0%, ${GOLD}10 60%, transparent 80%)`
+                : isCommunity
+                ? 'radial-gradient(circle, rgba(85,136,170,0.15) 0%, transparent 70%)'
                 : 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)',
-              boxShadow: intensityLevel >= 3
-                ? `0 0 ${20 + intensityLevel * 10}px ${place.type === 'curated' ? GOLD : '#fff'}40`
+              boxShadow: intensityLevel >= 3 && !isCommunity
+                ? `0 0 ${20 + intensityLevel * 10}px ${isGoldVenue ? GOLD : '#fff'}40`
                 : undefined,
             }}
           >
             <MapPin
               className="w-10 h-10"
-              style={{ color: place.type === 'curated' ? GOLD : '#fff' }}
+              style={{ color: isCommunity ? '#5588AA' : isGoldVenue ? GOLD : '#fff' }}
             />
           </div>
 
@@ -245,8 +251,8 @@ export default function VenueCheckin() {
           )}
         </AnimatePresence>
 
-        {/* Who's there — anonymous silhouettes */}
-        {checkinCount > 0 && (
+        {/* Who's there — anonymous silhouettes (community: private, no public count) */}
+        {checkinCount > 0 && !isCommunity && (
           <div className="mb-3">
             <div className="flex justify-center -space-x-2 mb-2">
               {Array.from({ length: Math.min(checkinCount, 6) }).map((_, i) => (
@@ -295,8 +301,11 @@ export default function VenueCheckin() {
           </motion.p>
         )}
 
-        {checkinCount === 0 && (
+        {checkinCount === 0 && !isCommunity && (
           <p className="text-white/30 text-sm mb-6">No one here yet</p>
+        )}
+        {isCommunity && (
+          <p className="text-white/30 text-sm mb-6">Private space — check-ins are not displayed publicly</p>
         )}
 
         {/* Check-in CTA */}
@@ -305,9 +314,9 @@ export default function VenueCheckin() {
           disabled={checkedIn || checkingIn}
           className="w-full max-w-xs py-4 rounded-2xl font-bold text-lg transition-all active:scale-95 disabled:opacity-50"
           style={{
-            background: checkedIn ? '#1C1C1E' : GOLD,
-            color: checkedIn ? GOLD : '#000',
-            boxShadow: !checkedIn ? `0 0 30px ${GOLD}40` : undefined,
+            background: checkedIn ? '#1C1C1E' : isCommunity ? '#5588AA' : GOLD,
+            color: checkedIn ? (isCommunity ? '#5588AA' : GOLD) : '#000',
+            boxShadow: !checkedIn ? `0 0 30px ${isCommunity ? '#5588AA' : GOLD}40` : undefined,
           }}
         >
           {checkingIn ? (

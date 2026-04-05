@@ -879,7 +879,10 @@ function VenuePanel({
   } as PlaceIntensity;
   const convLabel = getConversionLabel(fakeIntensity);
   const momLabel = getMomentumLabel(fakeIntensity);
-  const isGold = place.type === 'curated';
+  const tier = (place as any).tier || 'free';
+  const isPro = tier === 'pro';
+  const isCommunity = tier === 'community';
+  const isGold = place.type === 'curated' || isPro;
 
   return (
     <motion.div
@@ -919,13 +922,39 @@ function VenuePanel({
           </motion.div>
         )}
 
+        {/* Pro tier: subtle trending label when event active or high intensity */}
+        {isPro && (place as any).event_active && !convLabel && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mb-3">
+            <span className="text-[11px] font-black tracking-[0.2em] uppercase px-3 py-1 rounded-full"
+              style={{ background: 'rgba(200,150,44,0.12)', color: AMBER, border: '1px solid rgba(200,150,44,0.2)' }}>
+              FEATURED TONIGHT
+            </span>
+          </motion.div>
+        )}
+        {isPro && level >= 2 && !convLabel && !(place as any).event_active && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mb-3">
+            <span className="text-[11px] font-black tracking-[0.2em] uppercase px-3 py-1 rounded-full"
+              style={{ background: 'rgba(200,150,44,0.08)', color: `${AMBER}90`, border: '1px solid rgba(200,150,44,0.15)' }}>
+              TRENDING TONIGHT
+            </span>
+          </motion.div>
+        )}
+
+        {/* Community tier: calm header */}
+        {isCommunity && (
+          <div className="mb-3 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full" style={{ background: '#5588AA' }} />
+            <span className="text-[11px] font-semibold text-white/40 tracking-wider uppercase">Safe space</span>
+          </div>
+        )}
+
         {/* Venue info */}
         <div className="flex items-center gap-3">
           <div
             className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: isGold ? 'rgba(200,150,44,0.12)' : 'rgba(255,255,255,0.06)' }}
+            style={{ background: isCommunity ? 'rgba(85,136,170,0.08)' : isGold ? 'rgba(200,150,44,0.12)' : 'rgba(255,255,255,0.06)' }}
           >
-            <MapPin className="w-6 h-6" style={{ color: isGold ? AMBER : '#fff' }} />
+            <MapPin className="w-6 h-6" style={{ color: isCommunity ? '#5588AA' : isGold ? AMBER : '#fff' }} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-white font-bold text-base truncate">{place.name}</p>
@@ -936,8 +965,8 @@ function VenuePanel({
           </div>
         </div>
 
-        {/* Who's there — anonymous silhouettes */}
-        {count > 0 && (
+        {/* Who's there — anonymous silhouettes (community venues: private, no public counts) */}
+        {count > 0 && !isCommunity && (
           <div className="mt-4">
             <div className="flex items-center gap-3">
               {/* Silhouette dots — anonymous presence indicators */}
@@ -981,8 +1010,11 @@ function VenuePanel({
             )}
           </div>
         )}
-        {count === 0 && (
+        {count === 0 && !isCommunity && (
           <p className="text-white/30 text-sm mt-3">No one here yet — be the first</p>
+        )}
+        {isCommunity && (
+          <p className="text-white/30 text-sm mt-3">Private space — check-ins are not displayed publicly</p>
         )}
 
         {/* CTAs */}
@@ -990,9 +1022,9 @@ function VenuePanel({
           <button
             onClick={onCheckIn}
             className="flex-1 h-11 rounded-xl text-black font-bold text-xs uppercase flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
-            style={{ background: AMBER }}
+            style={{ background: isCommunity ? '#5588AA' : AMBER }}
           >
-            {count === 0 ? 'Be the first' : 'Check in'}
+            {isCommunity ? 'Check in privately' : count === 0 ? 'Be the first' : 'Check in'}
           </button>
           {distanceText && (
             <button

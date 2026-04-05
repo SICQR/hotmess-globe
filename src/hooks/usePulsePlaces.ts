@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
 
+export type VenueTier = 'free' | 'standard' | 'pro' | 'community';
+
 export interface PulsePlace {
   id: string;
   slug: string;
@@ -13,6 +15,9 @@ export interface PulsePlace {
   parent_slug: string | null;
   is_active: boolean;
   notes: string | null;
+  tier: VenueTier;
+  event_active: boolean;
+  subscription_status: 'active' | 'inactive' | 'trial';
 }
 
 /**
@@ -25,7 +30,7 @@ export function usePulsePlaces() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pulse_places')
-        .select('id, slug, name, type, country, lat, lng, priority, parent_slug, is_active, notes')
+        .select('id, slug, name, type, country, lat, lng, priority, parent_slug, is_active, notes, tier, event_active, subscription_status')
         .eq('is_active', true)
         .order('priority', { ascending: false });
 
