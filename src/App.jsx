@@ -77,6 +77,13 @@ const CarePage = lazy(() => import('@/pages/CarePage'));
 import AftercareNudge from '@/components/safety/AftercareNudge';
 import CreateBeaconBiz from '@/pages/biz/CreateBeaconBiz';
 const VenueCheckin = lazy(() => import('@/pages/VenueCheckin'));
+const ComingSoon = lazy(() => import('@/pages/ComingSoon'));
+const SellerDashboard = lazy(() => import('@/pages/SellerDashboard'));
+const SellerOnboarding = lazy(() => import('@/pages/SellerOnboarding'));
+const CreatorDashboard = lazy(() => import('@/pages/CreatorDashboard'));
+const TicketsPage = lazy(() => import('@/pages/tickets/Tickets'));
+const TicketDetailPage = lazy(() => import('@/pages/tickets/TicketDetail'));
+const TicketChatPage = lazy(() => import('@/pages/tickets/TicketChat'));
 
 // Example screens (design system demos)
 const ChatWithMapExample = lazy(() => import('@/examples/ChatWithMapExample'));
@@ -603,6 +610,19 @@ const AuthenticatedApp = () => {
       <Route path="/leaderboard" element={<PageRoute pageKey="Leaderboard" />} />
       <Route path="/community" element={<PageRoute pageKey="Community" />} />
       <Route path="/profiles" element={<PageRoute pageKey="ProfilesGrid" />} />
+
+      {/* Seller / Creator / Tickets — explicit routes for pages that exist */}
+      <Route path="/seller-dashboard" element={<Suspense fallback={null}><SellerDashboard /></Suspense>} />
+      <Route path="/seller-onboarding" element={<Suspense fallback={null}><SellerOnboarding /></Suspense>} />
+      <Route path="/creator" element={<Suspense fallback={null}><CreatorDashboard /></Suspense>} />
+      <Route path="/creator/upload" element={<Suspense fallback={null}><CreatorDashboard /></Suspense>} />
+      <Route path="/creator/settings" element={<Suspense fallback={null}><CreatorDashboard /></Suspense>} />
+      <Route path="/creator/payout" element={<Suspense fallback={null}><ComingSoon /></Suspense>} />
+      <Route path="/tickets" element={<Suspense fallback={null}><TicketsPage /></Suspense>} />
+      <Route path="/tickets/new" element={<Suspense fallback={null}><TicketsPage /></Suspense>} />
+      <Route path="/tickets/:id" element={<Suspense fallback={null}><TicketDetailPage /></Suspense>} />
+      <Route path="/tickets/chat/:id" element={<Suspense fallback={null}><TicketChatPage /></Suspense>} />
+      <Route path="/profile/optimize" element={<Suspense fallback={null}><ComingSoon /></Suspense>} />
 
       {/* Backward-compatible auto-generated /PageName routes */}
       {Object.entries(Pages).map(([path, Page]) => {

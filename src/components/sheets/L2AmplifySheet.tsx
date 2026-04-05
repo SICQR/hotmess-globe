@@ -266,7 +266,7 @@ export default function L2AmplifySheet() {
 
     setSubmitting(false);
 
-    toast('Coming soon -- contact us at hello@hotmessldn.com', {
+    toast('This is being finished now — contact us at hello@hotmessldn.com', {
       description: `${TIERS.find((t) => t.id === selectedTier)?.label} amplification for "${venueName.trim()}" has been noted.`,
       duration: 6000,
     });

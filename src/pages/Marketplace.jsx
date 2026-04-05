@@ -102,7 +102,7 @@ function PrelovedCard({ item, index }) {
               <button
                 className="flex-1 text-black font-bold h-9 px-3 flex items-center justify-center rounded-md text-sm transition-colors cursor-pointer"
                 style={{ backgroundColor: conditionColor }}
-                onClick={() => toast.info('Messaging coming soon')}
+                onClick={() => toast.info('This is being finished now')}
               >
                 <MessageCircle className="w-4 h-4 mr-1.5" />
                 Message Seller

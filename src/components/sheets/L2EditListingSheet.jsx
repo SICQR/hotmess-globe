@@ -159,7 +159,7 @@ export default function L2EditListingSheet({ listingId, listing: listingProp }) 
             ))}
             <button
               className="w-20 h-20 rounded-xl bg-[#1C1C1E] border border-dashed border-white/10 flex items-center justify-center flex-shrink-0"
-              onClick={() => toast('Photo upload coming soon')}
+              onClick={() => toast('Photo upload is being finished now')}
             >
               <Camera className="w-5 h-5 text-white/20" />
             </button>

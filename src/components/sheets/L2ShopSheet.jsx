@@ -170,7 +170,7 @@ function InternalProductDetail({ product }) {
 
   const proceedToCheckout = async () => {
     if (!shopifyVariantId) {
-      toast('Shop coming soon — check back shortly', { icon: '🛍️' });
+      toast('This is being finished now', { icon: '🛍️' });
       return;
     }
     setAdding(true);
@@ -523,7 +523,7 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
               }).then(async ({ error }) => {
                 if (error) {
                   console.warn('[offers] insert error:', error.message);
-                  toast.error('Could not send offer — feature coming soon');
+                  toast.error('Could not send offer — this is being finished now');
                 } else {
                   toast.success(`Offer of £${amount.toFixed(2)} sent!`);
                   openSheet('chat', {

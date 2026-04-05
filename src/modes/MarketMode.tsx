@@ -116,6 +116,7 @@ function PurchaseSuccessScreen({ onDismiss, listingId, openSheet }: {
   listingId: string | null;
   openSheet: (type: string, props: Record<string, unknown>) => void;
 }) {
+  const navigate = useNavigate();
   return (
     <div className="h-full w-full flex flex-col items-center justify-center px-6 text-center" style={{ backgroundColor: ROOT_BG }}>
       <motion.div
@@ -133,7 +134,7 @@ function PurchaseSuccessScreen({ onDismiss, listingId, openSheet }: {
       <p className="text-white/50 text-sm mb-6">Your order is confirmed. Check your Vault for details.</p>
       <div className="flex flex-col gap-3 w-full max-w-xs">
         <button
-          onClick={() => { onDismiss(); window.location.href = '/more/vault'; }}
+          onClick={() => { onDismiss(); navigate('/more/vault'); }}
           className="w-full h-12 rounded-xl font-black text-sm active:scale-95 transition-transform"
           style={{ backgroundColor: '#C8962C', color: '#000' }}
         >

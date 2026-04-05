@@ -174,7 +174,7 @@ export default function Auth() {
 
   // ── Telegram placeholder ───────────────────────────────────────────────────
   const handleTelegram = () => {
-    toast('Coming soon', { description: 'Telegram login is being set up.' });
+    toast('Being finished now', { description: 'Telegram login is being set up.' });
   };
 
   // ── Magic link ─────────────────────────────────────────────────────────────
@@ -323,7 +323,7 @@ export default function Auth() {
         });
       },
       onSelectMagicLink: () => { setView('email'); },
-      onSelectPhone: () => { toast('Coming soon', { description: 'Phone OTP is being set up.' }); },
+      onSelectPhone: () => { toast('Being finished now', { description: 'Phone OTP is being set up.' }); },
       onSelectPassword: () => { setView('password-signin'); },
       appleEnabled: APPLE_ENABLED,
       isWebView: isInWebView(),

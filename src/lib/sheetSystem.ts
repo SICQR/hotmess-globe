@@ -667,6 +667,28 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: true,
     deepLinkParams: ['targetType', 'targetId'],
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // VERIFICATION
+  // ─────────────────────────────────────────────────────────────────────────
+  'verification': {
+    id: 'verification',
+    title: 'Get Verified',
+    height: 'large',
+    auth: true,
+    deepLinkParams: [],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ROUTE (travel route sheet)
+  // ─────────────────────────────────────────────────────────────────────────
+  'route': {
+    id: 'route',
+    title: 'Route',
+    height: 'medium',
+    auth: false,
+    deepLinkParams: ['lat', 'lng'],
+  },
 } as const;
 
 /**
