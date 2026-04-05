@@ -65,6 +65,8 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { AppBanner } from '@/components/banners/AppBanner';
 import { usePowerups } from '@/hooks/usePowerups';
+import { useVenueIntensity, getConversionLabel, getMomentumLabel, type PlaceIntensity } from '@/hooks/useVenueIntensity';
+import type { PulsePlace } from '@/hooks/usePulsePlaces';
 
 // ---- Brand constants --------------------------------------------------------
 const AMBER = '#C8962C';
@@ -848,6 +850,132 @@ function EventPanel({
 }
 
 // =============================================================================
+// VenuePanel — venue/curated place micro flow with intensity header
+// =============================================================================
+function VenuePanel({
+  place,
+  intensity,
+  distanceText,
+  onClose,
+  onCheckIn,
+  onRoute,
+}: {
+  place: PulsePlace;
+  intensity: PlaceIntensity | null;
+  distanceText: string | null;
+  onClose: () => void;
+  onCheckIn: () => void;
+  onRoute: () => void;
+}) {
+  const level = intensity?.intensity_level ?? 0;
+  const count = intensity?.checkins_4h ?? 0;
+  const fakeIntensity = {
+    slug: place.slug, name: place.name, type: place.type,
+    lat: place.lat, lng: place.lng, checkins_30m: 0, checkins_1h: 0,
+    checkins_4h: count, effective_count: intensity?.effective_count ?? 0,
+    intensity_level: level, momentum: intensity?.momentum ?? 0,
+    last_checkin_at: intensity?.last_checkin_at ?? null,
+  } as PlaceIntensity;
+  const convLabel = getConversionLabel(fakeIntensity);
+  const momLabel = getMomentumLabel(fakeIntensity);
+  const isGold = place.type === 'curated';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[110] flex items-end justify-center"
+    >
+      <motion.div className="absolute inset-0 bg-black/60" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        className="relative w-full rounded-t-3xl px-6 pt-5 pb-10 z-10"
+        style={{ ...glassStyle(0.85, 24), borderTop: `1px solid ${isGold ? 'rgba(200,150,44,0.2)' : 'rgba(255,255,255,0.08)'}` }}
+      >
+        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-4" />
+
+        {/* Conversion label header — only for Level 3+ */}
+        {convLabel && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-3"
+          >
+            <span
+              className="text-[11px] font-black tracking-[0.2em] uppercase px-3 py-1 rounded-full"
+              style={{
+                background: level >= 4 ? 'rgba(200,150,44,0.2)' : 'rgba(255,255,255,0.08)',
+                color: level >= 4 ? AMBER : '#fff',
+                border: `1px solid ${level >= 4 ? 'rgba(200,150,44,0.3)' : 'rgba(255,255,255,0.1)'}`,
+              }}
+            >
+              {convLabel}
+            </span>
+          </motion.div>
+        )}
+
+        {/* Venue info */}
+        <div className="flex items-center gap-3">
+          <div
+            className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: isGold ? 'rgba(200,150,44,0.12)' : 'rgba(255,255,255,0.06)' }}
+          >
+            <MapPin className="w-6 h-6" style={{ color: isGold ? AMBER : '#fff' }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-bold text-base truncate">{place.name}</p>
+            <p className="text-[11px] text-white/40 mt-0.5">
+              {place.notes || place.country || place.type}
+              {distanceText && <span className="text-white/60 font-medium"> · {distanceText}</span>}
+            </p>
+          </div>
+        </div>
+
+        {/* Count + momentum */}
+        {count > 0 && (
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-white text-2xl font-bold">{count}</span>
+            <span className="text-white/40 text-sm">here now</span>
+            {momLabel && (
+              <span className="text-xs font-semibold ml-auto" style={{ color: AMBER }}>
+                {momLabel}
+              </span>
+            )}
+          </div>
+        )}
+        {count === 0 && (
+          <p className="text-white/30 text-sm mt-3">No one here yet</p>
+        )}
+
+        {/* CTAs */}
+        <div className="flex gap-3 mt-5">
+          <button
+            onClick={onCheckIn}
+            className="flex-1 h-11 rounded-xl text-black font-bold text-xs uppercase flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
+            style={{ background: AMBER }}
+          >
+            {count === 0 ? 'Be the first' : 'Check in'}
+          </button>
+          {distanceText && (
+            <button
+              onClick={onRoute}
+              className="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 text-xs font-bold uppercase active:scale-[0.97] transition-transform"
+              style={{ background: 'rgba(200,150,44,0.12)', color: AMBER, border: '1px solid rgba(200,150,44,0.2)' }}
+            >
+              Route · {distanceText}
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// =============================================================================
 // ActionBar — floating contextual pills (replaces lime FAB + purple FAB)
 // =============================================================================
 function ActionBar({
@@ -1494,6 +1622,8 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     setFocusedBeaconId,
     emitPulse,
     cameraCity,
+    focusedPlace,
+    setFocusedPlace,
   } = useGlobe();
 
   // Prefer the live camera city (auto-updates as globe rotates) over the saved picker value
@@ -1507,6 +1637,18 @@ export function PulseMode({ className = '' }: PulseModeProps) {
   const [userPanelItem, setUserPanelItem] = useState<{ id: string; userId: string; intent: string; name: string; avatarUrl?: string } | null>(null);
   const [clusterPanelItem, setClusterPanelItem] = useState<{ title: string; count: number; type: string; lat: number; lng: number } | null>(null);
   const [eventPanelItem, setEventPanelItem] = useState<{ id: string; title: string; startsAt?: string; kind?: string; venue?: string } | null>(null);
+  const [venuePanelItem, setVenuePanelItem] = useState<PulsePlace | null>(null);
+
+  // Venue intensity for conversion hooks
+  const { intensityMap: venueIntensityMap } = useVenueIntensity();
+
+  // Sync focusedPlace from GlobeContext → open VenuePanel
+  useEffect(() => {
+    if (focusedPlace && focusedPlace.type !== 'city') {
+      setVenuePanelItem(focusedPlace as PulsePlace);
+      setFocusedPlace(null); // consume it
+    }
+  }, [focusedPlace, setFocusedPlace]);
 
   // ---- Layer toggle state (multi-select) ------------------------------------
   const [activeLayers, setActiveLayers] = useState<Set<LayerKey>>(() => new Set(['people', 'intent', 'drops']));
@@ -1885,8 +2027,14 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     if (events.length > 0) lines.push('Something just started');
     if (radioIsPlaying) lines.push('Radio live');
 
+    // Conversion hooks in state line
+    if (hottestVenue) {
+      const label = getConversionLabel(hottestVenue as PlaceIntensity);
+      if (label) lines.push(`${hottestVenue.name} · ${label}`);
+    }
+
     return lines;
-  }, [events.length, nonEventBeacons.length, rightNowCount, dropsNearby.length, radioIsPlaying]);
+  }, [events.length, nonEventBeacons.length, rightNowCount, dropsNearby.length, radioIsPlaying, hottestVenue]);
 
   // Rotate through state lines every 4s
   const [stateLineIdx, setStateLineIdx] = useState(0);
@@ -1919,6 +2067,13 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     return newest;
   }, [dropsNearby]);
 
+  // ---- Hottest venue alert (conversion hook in priority strip) ---------------
+  const hottestVenue = useMemo(() => {
+    const entries = Array.from(venueIntensityMap.values());
+    const hot = entries.filter(v => v.intensity_level >= 3).sort((a, b) => b.intensity_level - a.intensity_level || b.effective_count - a.effective_count);
+    return hot[0] ?? null;
+  }, [venueIntensityMap]);
+
   // ---- Sheet navigation handlers --------------------------------------------
   const handleEventTap = useCallback((id: string) => {
     openSheet('event', { id });
@@ -1949,6 +2104,41 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       openSheet('preloved', { id });
     }
   }, [openSheet, navigate, dropsNearby]);
+
+  // Venue panel open handler — called from Globe.jsx onPlaceClick
+  const handleVenueTap = useCallback((place: PulsePlace) => {
+    setVenuePanelItem(place);
+  }, []);
+
+  // Proximity: simple haversine distance for "X min away"
+  const getProximityText = useCallback((lat: number, lng: number): string | null => {
+    if (!navigator.geolocation) return null;
+    // Use cached position if available
+    const pos = (window as any).__hm_last_pos;
+    if (!pos?.lat || !pos?.lng) return null;
+    const R = 6371; // km
+    const dLat = (lat - pos.lat) * Math.PI / 180;
+    const dLng = (lng - pos.lng) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(pos.lat * Math.PI / 180) * Math.cos(lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+    const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    if (d > 3) return null; // too far, don't show
+    const walkMin = Math.round(d / 0.08); // ~5km/h walking
+    if (walkMin <= 2) return '2 min walk';
+    if (walkMin <= 20) return `${walkMin} min walk`;
+    const rideMin = Math.max(3, Math.round(d / 0.5)); // ~30km/h ride
+    return `${rideMin} min ride`;
+  }, []);
+
+  // Cache user position for proximity
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => { (window as any).__hm_last_pos = { lat: pos.coords.latitude, lng: pos.coords.longitude }; },
+      () => {},
+      { enableHighAccuracy: false, maximumAge: 60000 }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
 
   const handleCreateBeacon = useCallback(() => {
     openSheet('beacon', { mode: 'create' });
@@ -2277,6 +2467,35 @@ export function PulseMode({ className = '' }: PulseModeProps) {
             </div>
           )}
 
+          {/* Venue conversion strip — hottest venue Level 3+ */}
+          {!priorityBeacon && !priorityDropAlert && rightNowCount < 5 && hottestVenue && (() => {
+            const fakeI = { ...hottestVenue } as PlaceIntensity;
+            const label = getConversionLabel(fakeI);
+            const mom = getMomentumLabel(fakeI);
+            return (
+              <div
+                className="mx-3 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer active:scale-[0.98] transition-transform"
+                style={{
+                  background: hottestVenue.intensity_level >= 4 ? 'rgba(200,150,44,0.15)' : 'rgba(255,255,255,0.06)',
+                  border: `1px solid ${hottestVenue.intensity_level >= 4 ? 'rgba(200,150,44,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                  color: hottestVenue.intensity_level >= 4 ? AMBER : '#fff',
+                }}
+                onClick={() => {
+                  // Find the place data and open venue panel
+                  setVenuePanelItem({ slug: hottestVenue.slug, name: hottestVenue.name, type: hottestVenue.type as any, lat: hottestVenue.lat, lng: hottestVenue.lng } as PulsePlace);
+                }}
+                role="button"
+                aria-label={`${hottestVenue.name}: ${label}`}
+              >
+                <Flame className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="truncate flex-1">
+                  {hottestVenue.name} · {label || 'Active'}
+                </span>
+                {mom && <span className="flex-shrink-0 text-white/40 font-normal">{mom}</span>}
+              </div>
+            );
+          })()}
+
           <LayerStrip
             activeLayers={activeLayers}
             onToggle={handleLayerToggle}
@@ -2448,6 +2667,24 @@ export function PulseMode({ className = '' }: PulseModeProps) {
             onClose={() => setEventPanelItem(null)}
             onView={() => { setEventPanelItem(null); openSheet('event', { id: eventPanelItem.id }); }}
             onSave={() => { setEventPanelItem(null); toast('Saved'); }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {venuePanelItem && (
+          <VenuePanel
+            place={venuePanelItem}
+            intensity={venueIntensityMap.get(venuePanelItem.slug) ?? null}
+            distanceText={getProximityText(venuePanelItem.lat, venuePanelItem.lng)}
+            onClose={() => setVenuePanelItem(null)}
+            onCheckIn={() => { setVenuePanelItem(null); navigate(`/v/${venuePanelItem.slug}`); }}
+            onRoute={() => {
+              setVenuePanelItem(null);
+              // Open in maps as fallback (travel system will replace this)
+              const url = `https://www.google.com/maps/dir/?api=1&destination=${venuePanelItem.lat},${venuePanelItem.lng}`;
+              window.open(url, '_blank');
+            }}
           />
         )}
       </AnimatePresence>

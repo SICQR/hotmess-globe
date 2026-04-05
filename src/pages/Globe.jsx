@@ -102,6 +102,7 @@ export default function GlobePage({ embedded = false }) {
     activeLayer,
     setActiveLayer,
     amplifiedBeaconIds,
+    setFocusedPlace,
   } = useGlobe();
 
   // Realtime presence beacons from presence table (TTL-based)
@@ -757,21 +758,12 @@ export default function GlobePage({ embedded = false }) {
               ctxSetSelectedCity(city.name);
             }}
             onPlaceClick={(place) => {
-              // Cities: zoom in. Zones/clubs/curated: open micro flow.
+              // Cities: zoom in. Zones/clubs/curated: open VenuePanel via GlobeContext.
               if (place.type === 'city') {
                 handleCityClick({ ...place, active: true });
               } else {
-                // Treat as a beacon-like pin → preview
-                handleBeaconClick({
-                  id: `place-${place.slug}`,
-                  title: place.name,
-                  kind: place.type,
-                  beacon_category: place.type === 'curated' ? 'hotmess' : 'venue',
-                  lat: place.lat,
-                  lng: place.lng,
-                  description: place.notes,
-                  placeData: place,
-                });
+                // Set focused place → PulseMode reads it and shows VenuePanel
+                setFocusedPlace(place);
               }
             }}
             selectedCity={selectedCity}

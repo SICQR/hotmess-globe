@@ -731,6 +731,65 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       globe.add(placesGroup);
     }
 
+    // ══════════════════════════════════════════════════════════════════════
+    // CONVERSION LABELS — Ephemeral floating text above Level 3+ venues
+    // Labels fade in, drift upward, fade out. Max 1 per venue at a time.
+    // ══════════════════════════════════════════════════════════════════════
+    const conversionLabelsGroup = new THREE.Group();
+    globe.add(conversionLabelsGroup);
+    const activeConversionLabels = new Map(); // slug -> { sprite, startTime }
+    const prevIntensityLevels = new Map(); // slug -> last known level (for spike detection)
+
+    function createConversionLabel(text, position, isGold) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      ctx.font = 'bold 28px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      // Glow
+      ctx.shadowColor = isGold ? '#C8962C' : '#FFFFFF';
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = isGold ? '#C8962C' : '#FFFFFF';
+      ctx.fillText(text, 256, 32);
+      // Second pass for brightness
+      ctx.shadowBlur = 6;
+      ctx.fillText(text, 256, 32);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      const sprite = new THREE.Sprite(
+        new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false })
+      );
+      sprite.scale.set(0.18, 0.024, 1);
+      sprite.position.copy(position);
+      sprite.position.y += 0.06; // float above node
+      sprite.userData = { isConversionLabel: true, baseY: sprite.position.y };
+      return sprite;
+    }
+
+    function spawnConversionLabel(slug, text, position, isGold) {
+      // Only 1 label per venue at a time
+      if (activeConversionLabels.has(slug)) return;
+      const sprite = createConversionLabel(text, position, isGold);
+      conversionLabelsGroup.add(sprite);
+      activeConversionLabels.set(slug, { sprite, startTime: clock.getElapsedTime() });
+    }
+
+    // Spike ripple burst — triggered on level increase
+    function spawnSpikeRipple(position, color) {
+      const rippleSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+        color: color || 0xC8962C,
+        transparent: true,
+        opacity: 0.6,
+        blending: THREE.AdditiveBlending,
+      }));
+      rippleSprite.scale.set(0.02, 0.02, 1);
+      rippleSprite.position.copy(position);
+      rippleSprite.userData = { isSpikeRipple: true, startTime: clock.getElapsedTime(), baseScale: 0.02 };
+      conversionLabelsGroup.add(rippleSprite);
+    }
+
     // Mood blobs - fuzzy GPS user intents (ST_SnapToGrid privacy)
     const moodBlobsGroup = new THREE.Group();
     if (showActivity && asArray(userIntents).length > 0) {
@@ -1577,6 +1636,83 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         }
       });
 
+      // ── Conversion labels: spawn for L3+ venues, detect level spikes ──
+      placesGroup.children.forEach(child => {
+        if (!child.userData?.place || child.userData.isLabel || child.userData.isHeatBloom) return;
+        const slug = child.userData.place?.slug;
+        const level = child.userData.intensityLevel || 0;
+        if (!slug) return;
+
+        // Spike detection: level increased since last frame
+        const prevLevel = prevIntensityLevels.get(slug) ?? level;
+        if (level > prevLevel && level >= 3) {
+          // Level jumped → spike ripple + label
+          const hc = INTENSITY_LEVELS[Math.min(level, 5)]?.heatColor;
+          spawnSpikeRipple(child.position, hc || 0xC8962C);
+          const labels = ['JUST LIT UP', 'BUILDING FAST', 'IT\'S HAPPENING', 'PEAKING RIGHT NOW'];
+          const labelIdx = Math.min(level - 2, labels.length - 1);
+          spawnConversionLabel(slug, labels[labelIdx], child.position, child.userData.placeType === 'curated');
+        }
+        prevIntensityLevels.set(slug, level);
+
+        // Periodic label spawn for sustained L3+ (every ~8-12s, staggered)
+        if (level >= 3 && !activeConversionLabels.has(slug)) {
+          const hash = slug.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+          const interval = 8 + (hash % 5); // 8-12s per venue, staggered
+          if (Math.floor(time * 10) % Math.floor(interval * 10) === 0) {
+            const labels = level >= 5 ? 'PEAKING RIGHT NOW' : level >= 4 ? 'HOT TONIGHT' : 'BUILDING FAST';
+            spawnConversionLabel(slug, labels, child.position, child.userData.placeType === 'curated');
+          }
+        }
+      });
+
+      // ── Animate conversion labels (fade in → hold → drift up → fade out) ──
+      for (const [slug, lbl] of activeConversionLabels) {
+        const elapsed = time - lbl.startTime;
+        const TOTAL_DURATION = 3.5; // seconds
+        const FADE_IN = 0.25;
+        const HOLD = 2.0;
+        const FADE_OUT = TOTAL_DURATION - FADE_IN - HOLD;
+
+        if (elapsed >= TOTAL_DURATION) {
+          conversionLabelsGroup.remove(lbl.sprite);
+          lbl.sprite.material.map?.dispose();
+          lbl.sprite.material.dispose();
+          activeConversionLabels.delete(slug);
+          continue;
+        }
+
+        // Opacity
+        let opacity;
+        if (elapsed < FADE_IN) {
+          opacity = elapsed / FADE_IN;
+        } else if (elapsed < FADE_IN + HOLD) {
+          opacity = 1;
+        } else {
+          opacity = 1 - (elapsed - FADE_IN - HOLD) / FADE_OUT;
+        }
+        lbl.sprite.material.opacity = Math.max(0, Math.min(1, opacity)) * 0.85;
+
+        // Subtle upward drift
+        lbl.sprite.position.y = lbl.sprite.userData.baseY + elapsed * 0.003;
+      }
+
+      // ── Animate spike ripples (expand + fade) ──
+      conversionLabelsGroup.children.forEach(child => {
+        if (!child.userData?.isSpikeRipple) return;
+        const elapsed = time - child.userData.startTime;
+        const RIPPLE_DURATION = 0.8;
+        if (elapsed >= RIPPLE_DURATION) {
+          conversionLabelsGroup.remove(child);
+          child.material.dispose();
+          return;
+        }
+        const progress = elapsed / RIPPLE_DURATION;
+        const scale = child.userData.baseScale * (1 + progress * 8);
+        child.scale.set(scale, scale, 1);
+        child.material.opacity = 0.6 * (1 - progress);
+      });
+
       // Update arc shaders
       arcs.forEach(arc => {
         if (arc.userData.material?.uniforms?.uTime) {
@@ -1722,6 +1858,18 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
             child.material.dispose();
           }
         });
+      }
+
+      // Dispose conversion labels group
+      if (conversionLabelsGroup) {
+        conversionLabelsGroup.traverse(child => {
+          if (child.material) {
+            if (child.material.map) child.material.map.dispose();
+            child.material.dispose();
+          }
+        });
+        activeConversionLabels.clear();
+        prevIntensityLevels.clear();
       }
       
       // Dispose user trails
