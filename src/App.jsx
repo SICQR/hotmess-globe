@@ -835,10 +835,10 @@ function OSArchitecture() {
       {/* L2.5: Live Mode Overlay — unified presence layer (Z-110) */}
       <LiveModeOverlay />
 
-      {/* L3: SOS long-press trigger — auth only (Z-190) */}
+      {/* L3: SOS long-press trigger — auth only (Z-190) — above mini player (83+56=139px) */}
       {isAuthenticated && (
         <SOSButton
-          className="fixed bottom-[100px] right-3 z-[190]"
+          className="fixed bottom-[148px] right-3 z-[190]"
           onTrigger={triggerSOS}
         />
       )}
