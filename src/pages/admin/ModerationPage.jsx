@@ -117,7 +117,7 @@ function QueueTab({ userId }) {
     setLoading(true);
     try {
       let q = supabase
-        .from('preloved_listings')
+        .from('market_listings')
         .select('id, seller_id, title, category, item_condition, price_gbp, status, moderation, cover_image_url, created_at, profiles!preloved_listings_seller_id_fkey(display_name)')
         .order('created_at', { ascending: false })
         .limit(100);
@@ -170,7 +170,7 @@ function QueueTab({ userId }) {
   const handleClear = async (listing) => {
     setActing(listing.id);
     const { error } = await supabase
-      .from('preloved_listings')
+      .from('market_listings')
       .update({ moderation: 'clear' })
       .eq('id', listing.id);
     if (error) { toast.error('Failed to clear'); setActing(null); return; }
@@ -183,7 +183,7 @@ function QueueTab({ userId }) {
   const handleUnderReview = async (listing) => {
     setActing(listing.id);
     const { error } = await supabase
-      .from('preloved_listings')
+      .from('market_listings')
       .update({ moderation: 'under_review' })
       .eq('id', listing.id);
     if (error) { toast.error('Failed to update'); setActing(null); return; }
@@ -196,7 +196,7 @@ function QueueTab({ userId }) {
   const handleRemove = async (listing) => {
     setActing(listing.id);
     const { error } = await supabase
-      .from('preloved_listings')
+      .from('market_listings')
       .update({ moderation: 'removed', status: 'removed' })
       .eq('id', listing.id);
     if (error) { toast.error('Failed to remove'); setActing(null); return; }
@@ -388,7 +388,7 @@ function ReportsTab({ userId }) {
     setActing(report.id);
     // Put the listing under review
     await supabase
-      .from('preloved_listings')
+      .from('market_listings')
       .update({ moderation: 'under_review' })
       .eq('id', report.listing_id);
     await logAction(report.id, report.listing_id, 'investigate', `Investigating report: ${report.reason}`);
@@ -399,7 +399,7 @@ function ReportsTab({ userId }) {
   const handleActionReport = async (report) => {
     setActing(report.id);
     await supabase
-      .from('preloved_listings')
+      .from('market_listings')
       .update({ moderation: 'removed', status: 'removed' })
       .eq('id', report.listing_id);
     await logAction(report.id, report.listing_id, 'remove', `Actioned report: removed listing`);
@@ -510,7 +510,7 @@ function SellersTab({ userId }) {
       try {
         // Get all unique sellers from preloved_listings
         const { data: listingsData, error: listingsErr } = await supabase
-          .from('preloved_listings')
+          .from('market_listings')
           .select('seller_id, status, moderation');
         if (listingsErr) throw listingsErr;
 

@@ -94,7 +94,7 @@ export default async function handler(req, res) {
         if (userId && type === 'preloved_order' && listingId) {
           // Mark listing as sold
           const { error: listingErr } = await supabase
-            .from('preloved_listings')
+            .from('market_listings')
             .update({ status: 'sold' })
             .eq('id', listingId);
           if (listingErr) {
@@ -132,7 +132,7 @@ export default async function handler(req, res) {
 
           // Notify the seller via notifications table
           const { data: listing } = await supabase
-            .from('preloved_listings')
+            .from('market_listings')
             .select('seller_id, title')
             .eq('id', listingId)
             .maybeSingle();
@@ -354,7 +354,7 @@ export default async function handler(req, res) {
         // ── Preloved order (async payment) ─────────────────────────────────
         const asyncListingId = session.metadata?.listing_id;
         if (userId && type === 'preloved_order' && asyncListingId) {
-          await supabase.from('preloved_listings').update({ status: 'sold' }).eq('id', asyncListingId);
+          await supabase.from('market_listings').update({ status: 'sold' }).eq('id', asyncListingId);
           await supabase.from('vault_items').insert({
             user_id: userId,
             item_type: 'preloved_purchase',

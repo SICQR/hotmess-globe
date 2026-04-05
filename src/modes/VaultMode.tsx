@@ -128,7 +128,7 @@ export default function VaultMode() {
     queryFn: async () => {
       if (!user?.id) return [];
       const { data } = await supabase
-        .from('preloved_listings')
+        .from('market_listings')
         .select('id, title, price, created_at, status')
         .eq('seller_id', user.id)
         .eq('status', 'sold')

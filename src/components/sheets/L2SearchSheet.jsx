@@ -52,7 +52,7 @@ export default function L2SearchSheet({ q: initialQ = '' }) {
           .gte('starts_at', new Date().toISOString())
           .limit(10),
         supabase
-          .from('preloved_listings')
+          .from('market_listings')
           .select('id, title, price, images, category')
           .ilike('title', `%${q}%`)
           .neq('status', 'sold')

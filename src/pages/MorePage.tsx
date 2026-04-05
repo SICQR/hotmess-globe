@@ -243,7 +243,7 @@ function useActivityState(userId: string | null): ActivityState {
 
       const [tapsRes, listingsRes, ordersRes, eventsRes] = await Promise.allSettled([
         supabase.from('taps').select('id', { count: 'exact', head: true }).eq('tapped_id', userId).gte('created_at', today.toISOString()),
-        supabase.from('preloved_listings').select('id', { count: 'exact', head: true }).eq('seller_id', userId).in('status', ['live', 'active']),
+        supabase.from('market_listings').select('id', { count: 'exact', head: true }).eq('seller_id', userId).in('status', ['live', 'active']),
         supabase.from('product_orders').select('id', { count: 'exact', head: true }).eq('buyer_id', userId).in('status', ['pending', 'processing']),
         supabase.from('events').select('id', { count: 'exact', head: true }).gte('starts_at', now).or(`created_by.eq.${userId}`),
       ]);

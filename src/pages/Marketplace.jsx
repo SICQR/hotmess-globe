@@ -204,7 +204,7 @@ export default function Marketplace() {
     queryKey: ['preloved-listings'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('preloved_listings')
+        .from('market_listings')
         .select('*')
         .eq('status', 'active')
         .order('created_at', { ascending: false });

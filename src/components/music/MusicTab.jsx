@@ -10,7 +10,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Play, Pause, ChevronDown, Disc3, X, Loader2,
+  Play, Pause, ChevronDown, Disc3, X,
   FileAudio, Headphones, ExternalLink,
   Radio as RadioIcon,
 } from 'lucide-react';

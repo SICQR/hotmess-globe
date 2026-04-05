@@ -163,7 +163,7 @@ export default function L2MyListingsSheet() {
     queryFn: async () => {
       if (!userId) return [];
       let query = supabase
-        .from('preloved_listings')
+        .from('market_listings')
         .select('*')
         .eq('seller_id', userId)
         .order('created_at', { ascending: false });
@@ -202,19 +202,19 @@ export default function L2MyListingsSheet() {
     try {
       switch (action) {
         case 'pause':
-          await supabase.from('preloved_listings').update({ status: 'paused' }).eq('id', listingId);
+          await supabase.from('market_listings').update({ status: 'paused' }).eq('id', listingId);
           toast.success('Listing paused');
           break;
         case 'unpause':
-          await supabase.from('preloved_listings').update({ status: 'live' }).eq('id', listingId);
+          await supabase.from('market_listings').update({ status: 'live' }).eq('id', listingId);
           toast.success('Listing resumed');
           break;
         case 'sold':
-          await supabase.from('preloved_listings').update({ status: 'sold' }).eq('id', listingId);
+          await supabase.from('market_listings').update({ status: 'sold' }).eq('id', listingId);
           toast.success('Marked as sold');
           break;
         case 'delete': {
-          const { error } = await supabase.from('preloved_listings').delete().eq('id', listingId);
+          const { error } = await supabase.from('market_listings').delete().eq('id', listingId);
           if (error) {
             toast.error('Cannot delete live listings. Pause first.');
           } else {
