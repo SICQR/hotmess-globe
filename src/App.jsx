@@ -51,6 +51,7 @@ import { MusicPlayerProvider } from '@/contexts/MusicPlayerContext';
 import { MusicMiniPlayer } from '@/components/music/MusicMiniPlayer';
 import { GlobalTicker } from '@/components/banners/GlobalTicker';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useRetentionPush } from '@/hooks/useRetentionPush';
 import { useDeepLinkSheet } from '@/hooks/useDeepLinkSheet';
 import { usePresenceHeartbeat } from '@/hooks/usePresenceHeartbeat';
 import { useSwipeBack } from '@/hooks/useSwipeBack';
@@ -697,6 +698,8 @@ function OSArchitecture() {
   useViewportHeight();
   // Register service worker + request push permission on first load
   usePushNotifications();
+  // Retention push triggers — rate-limited, intent-based notifications
+  useRetentionPush();
   // Auto-open sheets from push notification deep links (?sheet=...)
   useDeepLinkSheet();
   // Update User.last_seen every 5 min — powers online presence dots on Ghosted grid
