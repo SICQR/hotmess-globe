@@ -2031,9 +2031,9 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     queryFn: async () => {
       // Fetch preloved listings
       const { data: prelovedData, error: prelovedErr } = await supabase
-        .from('preloved_listings')
-        .select('id, title, price, image_urls, seller_name, created_at')
-        .eq('status', 'live')
+        .from('market_listings')
+        .select('id, title, price, image_urls, seller_id, created_at')
+        .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(6);
       if (prelovedErr) console.error('[pulse] preloved drops error:', prelovedErr.message);
@@ -2045,7 +2045,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
           title: (row.title as string) || 'Listing',
           price: (row.price as number) ?? null,
           imageUrl: imgUrls?.[0] || null,
-          sellerName: (row.seller_name as string) || null,
+          sellerName: null,
           createdAt: row.created_at as string,
           dropType: 'preloved' as const,
         };
@@ -2111,7 +2111,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     // Drops realtime
     const dropsChannel = supabase
       .channel('pulse-drops-live')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'preloved_listings' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'market_listings' }, () => {
         queryClient.invalidateQueries({ queryKey: ['pulse-drops-nearby'] });
       })
       .subscribe();

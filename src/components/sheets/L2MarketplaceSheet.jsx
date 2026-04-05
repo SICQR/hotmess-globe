@@ -28,7 +28,7 @@ export default function L2MarketplaceSheet() {
     queryFn: async () => {
       try {
         let query = supabase
-          .from('preloved_listings')
+          .from('market_listings')
           .select('id, title, price, images, seller_id, category, condition, created_at, status')
           .eq('status', 'active')
           .order('created_at', { ascending: false })

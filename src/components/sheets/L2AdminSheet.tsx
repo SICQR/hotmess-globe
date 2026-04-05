@@ -342,7 +342,7 @@ function IncidentsTab() {
   useEffect(() => {
     (async () => {
       try {
-        // Fetch from emergency_contacts as proxy for incidents
+        // Fetch from trusted_contacts as proxy for incidents
         const { data, error } = await supabase
           .from('trusted_contacts')
           .select('*')
@@ -586,7 +586,7 @@ function SellersTab() {
     (async () => {
       try {
         const { data, error } = await supabase
-          .from('preloved_listings')
+          .from('market_listings')
           .select('*')
           .order('created_at', { ascending: false })
           .limit(50);

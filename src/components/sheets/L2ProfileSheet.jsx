@@ -323,7 +323,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
     queryFn: async () => {
       if (!profileUser?.email) return [];
       const { data } = await supabase
-        .from('preloved_listings')
+        .from('market_listings')
         .select('id, title, description, price, currency, images, delivery_type')
         .eq('seller_id', profileUser.id)
         .eq('status', 'active')
@@ -388,7 +388,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
     queryFn: async () => {
       if (!profileUser?.id) return 0;
       const { count } = await supabase
-        .from('preloved_listings')
+        .from('market_listings')
         .select('id', { count: 'exact', head: true })
         .eq('seller_id', profileUser.id)
         .eq('status', 'active');

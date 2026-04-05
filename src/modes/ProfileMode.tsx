@@ -310,7 +310,7 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
       if (!user) return 0;
 
       const { count, error } = await supabase
-        .from('preloved_listings')
+        .from('market_listings')
         .select('*', { count: 'exact', head: true })
         .eq('seller_id', user.id)
         .eq('status', 'active');
