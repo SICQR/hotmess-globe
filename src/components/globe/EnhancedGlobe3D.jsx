@@ -850,8 +850,73 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
           targetRotationY = Math.atan2(direction.x, direction.z);
           targetRotationX = Math.asin(direction.y);
           targetCameraZ = zoom;
-        }
+        },
+        clearFocus: () => clearFocus(),
+        getZoomLevel: () => {
+          const z = camera.position.z;
+          return z > 4.6 ? 'world' : z > 3.1 ? 'city' : 'local';
+        },
       };
+    }
+
+    // ── Focused pin tracking ────────────────────────────────────────────
+    let focusedMesh = null;
+    let focusedBaseScale = 1;
+
+    function clearFocus() {
+      if (focusedMesh) {
+        focusedMesh.scale.setScalar(focusedBaseScale);
+        if (focusedMesh.userData.glowMesh) {
+          focusedMesh.userData.glowMesh.material.opacity = focusedMesh.userData.glowBaseOpacity || 0.3;
+        }
+        focusedMesh = null;
+      }
+    }
+
+    function focusPin(mesh) {
+      clearFocus();
+      focusedMesh = mesh;
+      focusedBaseScale = mesh.userData.baseScale || mesh.scale.x;
+      // Grow 1.3×
+      mesh.scale.setScalar(focusedBaseScale * 1.3);
+      // Brighten glow
+      if (mesh.userData.glowMesh) {
+        mesh.userData.glowMesh.material.opacity = Math.min((mesh.userData.glowBaseOpacity || 0.3) * 2.5, 0.9);
+      }
+    }
+
+    // ── Raycast helper (shared between mouse + touch) ─────────────────
+    function raycastSignal(clientX, clientY) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const mouse = new THREE.Vector2(
+        ((clientX - rect.left) / rect.width) * 2 - 1,
+        -((clientY - rect.top) / rect.height) * 2 + 1
+      );
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(mouse, camera);
+
+      // Expand hit area for touch — set threshold based on pin size
+      raycaster.params.Points = { threshold: 0.05 };
+
+      // Check beacons first
+      const beaconIntersects = raycaster.intersectObjects(beaconMeshes);
+      if (beaconIntersects.length > 0) {
+        return { type: 'beacon', mesh: beaconIntersects[0].object, data: beaconIntersects[0].object.userData?.beacon };
+      }
+
+      // Check cities
+      const cityIntersects = raycaster.intersectObjects(cityGroup.children, true);
+      const cityObj = cityIntersects.find(i => i.object.userData?.type === 'city');
+      if (cityObj) {
+        return { type: 'city', mesh: cityObj.object, data: cityObj.object.userData.city };
+      }
+
+      return null;
+    }
+
+    // ── Haptic feedback (light tap) ──────────────────────────────────
+    function hapticTap() {
+      try { navigator.vibrate?.(8); } catch { /* noop */ }
     }
 
     const onMouseDown = (e) => {
@@ -942,72 +1007,78 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     };
 
     const onClick = (e) => {
-      if (Math.abs(e.clientX - previousMousePosition.x) > 10 || 
+      if (Math.abs(e.clientX - previousMousePosition.x) > 10 ||
           Math.abs(e.clientY - previousMousePosition.y) > 10) {
         return; // Was dragging, not clicking
       }
 
-      const rect = renderer.domElement.getBoundingClientRect();
-      const mouse = new THREE.Vector2(
-        ((e.clientX - rect.left) / rect.width) * 2 - 1,
-        -((e.clientY - rect.top) / rect.height) * 2 + 1
-      );
+      const hit = raycastSignal(e.clientX, e.clientY);
 
-      const raycaster = new THREE.Raycaster();
-      raycaster.setFromCamera(mouse, camera);
-      
-      // Check beacons first
-      const beaconIntersects = raycaster.intersectObjects(beaconMeshes);
-      if (beaconIntersects.length > 0 && onBeaconClick) {
-        const clickedBeacon = beaconIntersects[0].object.userData?.beacon;
-        
+      if (!hit) {
+        // Tap empty space → dismiss focus + notify parent
+        clearFocus();
+        if (typeof onBeaconClick === 'function') {
+          // Send null to signal "empty tap" (PulseMode uses this to close panels)
+          onBeaconClick(null);
+        }
+        return;
+      }
+
+      hapticTap();
+
+      if (hit.type === 'beacon' && onBeaconClick) {
+        const clickedBeacon = hit.data;
         if (!clickedBeacon) return;
-        
-        // If cluster, zoom in to expand it
+
+        // Focus the pin visually
+        focusPin(hit.mesh);
+
         if (clickedBeacon.isCluster && clickedBeacon.count > 1) {
           const beaconPos = latLngToVector3(clickedBeacon.lat, clickedBeacon.lng, globeRadius);
           const direction = beaconPos.clone().normalize();
           targetRotationY = Math.atan2(direction.x, direction.z);
           targetRotationX = Math.asin(direction.y);
-          targetCameraZ = Math.max(2.5, targetCameraZ - 1.5); // Zoom in to expand cluster
+          targetCameraZ = Math.max(2.5, targetCameraZ - 1.5);
         } else {
-          // Smooth camera transition to beacon
           const beaconPos = latLngToVector3(clickedBeacon.lat, clickedBeacon.lng, globeRadius);
           const direction = beaconPos.clone().normalize();
           targetRotationY = Math.atan2(direction.x, direction.z);
           targetRotationX = Math.asin(direction.y);
-          targetCameraZ = 3.5; // Zoom in slightly
-          
+          targetCameraZ = 3.5;
+
           onBeaconClick(clickedBeacon);
         }
         return;
       }
 
-      // Check city clicks
-      const cityIntersects = raycaster.intersectObjects(cityGroup.children, true);
-      if (cityIntersects.length > 0 && onCityClick) {
-        const cityObj = cityIntersects.find(i => i.object.userData?.type === 'city');
-        if (cityObj) {
-          const city = cityObj.object.userData.city;
-          const cityPos = latLngToVector3(city.lat, city.lng, globeRadius);
-          const direction = cityPos.clone().normalize();
-          targetRotationY = Math.atan2(direction.x, direction.z);
-          targetRotationX = Math.asin(direction.y);
-          targetCameraZ = 3.0; // Zoom in to city
-          
-          onCityClick(city);
-        }
+      if (hit.type === 'city' && onCityClick) {
+        const city = hit.data;
+        const cityPos = latLngToVector3(city.lat, city.lng, globeRadius);
+        const direction = cityPos.clone().normalize();
+        targetRotationY = Math.atan2(direction.x, direction.z);
+        targetRotationX = Math.asin(direction.y);
+        targetCameraZ = 3.0;
+        onCityClick(city);
       }
     };
 
+    // ── 3 zoom levels: World (5.5), City (3.8), Local (2.5) ─────────
+    const ZOOM_WORLD = 5.5;
+    const ZOOM_CITY = 3.8;
+    const ZOOM_LOCAL = 2.5;
+
     const onWheel = (e) => {
       e.preventDefault();
-      // Smoother zoom with reduced sensitivity
       const zoomSpeed = 0.001;
-      targetCameraZ = THREE.MathUtils.clamp(targetCameraZ + e.deltaY * zoomSpeed, 2.5, 6.0);
+      targetCameraZ = THREE.MathUtils.clamp(targetCameraZ + e.deltaY * zoomSpeed, ZOOM_LOCAL, ZOOM_WORLD);
     };
 
-    // Touch handlers
+    // Touch handlers — with tap detection for mobile
+    let touchStartPos = { x: 0, y: 0 };
+    let touchStartTime = 0;
+    const TAP_THRESHOLD = 12; // px — allow slight finger drift
+    const TAP_MAX_MS = 300;
+
     const onTouchStart = (e) => {
       lastInteractionTime = Date.now();
       if (e.touches.length === 2) {
@@ -1017,6 +1088,8 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         initialCameraZ = camera.position.z;
       } else if (e.touches.length === 1) {
         isDragging = true;
+        touchStartPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        touchStartTime = Date.now();
         previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       }
     };
@@ -1027,19 +1100,71 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         const distance = Math.sqrt(dx * dx + dy * dy);
         const scale = touchStartDistance / distance;
-        targetCameraZ = THREE.MathUtils.clamp(initialCameraZ * scale, 2.5, 6.0);
+        targetCameraZ = THREE.MathUtils.clamp(initialCameraZ * scale, 2.5, 5.5);
       } else if (e.touches.length === 1 && isDragging) {
         const deltaX = e.touches[0].clientX - previousMousePosition.x;
         const deltaY = e.touches[0].clientY - previousMousePosition.y;
         targetRotationY += deltaX * 0.005;
         targetRotationX += deltaY * 0.005;
         targetRotationX = THREE.MathUtils.clamp(targetRotationX, -0.8, 0.8);
+        velocity.x = deltaX * 0.005;
+        velocity.y = deltaY * 0.005;
         previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       }
     };
 
-    const onTouchEnd = () => {
+    const onTouchEnd = (e) => {
       isDragging = false;
+
+      // Detect tap: small movement + short duration
+      const endX = e.changedTouches?.[0]?.clientX ?? touchStartPos.x;
+      const endY = e.changedTouches?.[0]?.clientY ?? touchStartPos.y;
+      const dx = Math.abs(endX - touchStartPos.x);
+      const dy = Math.abs(endY - touchStartPos.y);
+      const elapsed = Date.now() - touchStartTime;
+
+      if (dx < TAP_THRESHOLD && dy < TAP_THRESHOLD && elapsed < TAP_MAX_MS) {
+        // This was a tap — run raycast
+        const hit = raycastSignal(endX, endY);
+
+        if (!hit) {
+          clearFocus();
+          if (typeof onBeaconClick === 'function') onBeaconClick(null);
+        } else {
+          hapticTap();
+
+          if (hit.type === 'beacon' && onBeaconClick) {
+            const clickedBeacon = hit.data;
+            if (!clickedBeacon) { touchStartDistance = 0; return; }
+
+            focusPin(hit.mesh);
+
+            if (clickedBeacon.isCluster && clickedBeacon.count > 1) {
+              const beaconPos = latLngToVector3(clickedBeacon.lat, clickedBeacon.lng, globeRadius);
+              const direction = beaconPos.clone().normalize();
+              targetRotationY = Math.atan2(direction.x, direction.z);
+              targetRotationX = Math.asin(direction.y);
+              targetCameraZ = Math.max(2.5, targetCameraZ - 1.5);
+            } else {
+              const beaconPos = latLngToVector3(clickedBeacon.lat, clickedBeacon.lng, globeRadius);
+              const direction = beaconPos.clone().normalize();
+              targetRotationY = Math.atan2(direction.x, direction.z);
+              targetRotationX = Math.asin(direction.y);
+              targetCameraZ = 3.5;
+              onBeaconClick(clickedBeacon);
+            }
+          } else if (hit.type === 'city' && onCityClick) {
+            const city = hit.data;
+            const cityPos = latLngToVector3(city.lat, city.lng, globeRadius);
+            const direction = cityPos.clone().normalize();
+            targetRotationY = Math.atan2(direction.x, direction.z);
+            targetRotationX = Math.asin(direction.y);
+            targetCameraZ = 3.0;
+            onCityClick(city);
+          }
+        }
+      }
+
       touchStartDistance = 0;
     };
 
@@ -1212,30 +1337,42 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         fpsWindowStart = now;
       }
 
-      // Smooth rotation + idle drift after 30s
+      // Weighted inertia — momentum continues after release with physical friction
       if (!isDragging) {
-        velocity.x *= 0.85;
-        velocity.y *= 0.85;
+        // Apply velocity to target (momentum carry)
+        targetRotationY += velocity.x;
+        targetRotationX += velocity.y;
+        targetRotationX = THREE.MathUtils.clamp(targetRotationX, -0.8, 0.8);
+        // Heavier friction — feels weighted, not slippery
+        velocity.x *= 0.92;
+        velocity.y *= 0.92;
+        // Kill micro-drift below threshold
+        if (Math.abs(velocity.x) < 0.00005) velocity.x = 0;
+        if (Math.abs(velocity.y) < 0.00005) velocity.y = 0;
+        // Idle drift after 30s of no interaction
         const idleMs = Date.now() - lastInteractionTime;
-        if (idleMs > 30000) {
-          targetRotationY += 0.0003; // gentle idle drift
+        if (idleMs > 30000 && velocity.x === 0 && velocity.y === 0) {
+          targetRotationY += 0.0003;
         }
       }
-      
-      // Smooth rotation with easing
-      globe.rotation.y += (targetRotationY - globe.rotation.y) * 0.15;
-      globe.rotation.x += (targetRotationX - globe.rotation.x) * 0.15;
+
+      // Smooth rotation with easing (slightly softer for physical feel)
+      globe.rotation.y += (targetRotationY - globe.rotation.y) * 0.12;
+      globe.rotation.x += (targetRotationX - globe.rotation.x) * 0.12;
       
       // Smooth camera zoom with easing
       const zoomDiff = targetCameraZ - camera.position.z;
       camera.position.z += zoomDiff * 0.12;
 
-      // Re-cluster beacons when zoom level changes significantly (throttled)
+      // Re-cluster beacons on zoom level transitions (World / City / Local)
       const clusterNow = Date.now();
-      if (clusterNow - lastClusterUpdate > 1000 && Math.abs(zoomDiff) < 0.01) {
-        const zoomThresholds = [3, 4, 5];
-        const currentZoomLevel = Math.round(camera.position.z);
-        if (zoomThresholds.includes(currentZoomLevel)) {
+      if (clusterNow - lastClusterUpdate > 800 && Math.abs(zoomDiff) < 0.02) {
+        const z = camera.position.z;
+        // Determine zoom level: World (>4.6), City (3.1-4.6), Local (<3.1)
+        const newLevel = z > 4.6 ? 'world' : z > 3.1 ? 'city' : 'local';
+        const prevLevel = camera.userData._zoomLevel || 'city';
+        if (newLevel !== prevLevel) {
+          camera.userData._zoomLevel = newLevel;
           updateBeaconClusters();
           lastClusterUpdate = clusterNow;
         }

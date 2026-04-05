@@ -675,6 +675,179 @@ function MusicDropPanel({
 }
 
 // =============================================================================
+// UserSignalPanel — user pin micro flow
+// =============================================================================
+function UserSignalPanel({
+  user,
+  onClose,
+  onViewProfile,
+  onChat,
+}: {
+  user: { id: string; userId: string; intent: string; name: string; avatarUrl?: string; distance?: string };
+  onClose: () => void;
+  onViewProfile: () => void;
+  onChat: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[110] flex items-end justify-center"
+    >
+      <motion.div className="absolute inset-0 bg-black/60" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        className="relative w-full rounded-t-3xl px-6 pt-5 pb-10 z-10"
+        style={{ ...glassStyle(0.85, 24), borderTop: '1px solid rgba(200,150,44,0.12)' }}
+      >
+        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-5" />
+        <div className="flex gap-4 items-center">
+          <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 bg-white/5">
+            {user.avatarUrl ? (
+              <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <Users className="w-6 h-6 text-white/20" />
+              </div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-bold text-base truncate">{user.name || 'Nearby'}</p>
+            <p className="text-[11px] text-white/40 mt-0.5">{user.intent} {user.distance ? `\u00B7 ${user.distance}` : ''}</p>
+          </div>
+        </div>
+        <div className="flex gap-3 mt-5">
+          <button onClick={onViewProfile} className="flex-1 h-11 rounded-xl bg-[#C8962C] text-black font-bold text-xs uppercase flex items-center justify-center gap-2 active:scale-[0.97] transition-transform">
+            View Profile
+          </button>
+          <button onClick={onChat} className="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 text-xs font-bold uppercase active:scale-[0.97] transition-transform" style={{ background: 'rgba(200,150,44,0.12)', color: AMBER, border: '1px solid rgba(200,150,44,0.2)' }}>
+            <MessageSquare className="w-4 h-4" /> Chat
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// =============================================================================
+// ClusterPanel — area cluster micro flow
+// =============================================================================
+function ClusterPanel({
+  cluster,
+  onClose,
+  onBrowse,
+  onGoLive,
+}: {
+  cluster: { title: string; count: number; type: string; lat: number; lng: number };
+  onClose: () => void;
+  onBrowse: () => void;
+  onGoLive: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[110] flex items-end justify-center"
+    >
+      <motion.div className="absolute inset-0 bg-black/60" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        className="relative w-full rounded-t-3xl px-6 pt-5 pb-10 z-10"
+        style={{ ...glassStyle(0.85, 24), borderTop: '1px solid rgba(255,255,255,0.08)' }}
+      >
+        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-5" />
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: `${AMBER}15` }}>
+            <Flame className="w-6 h-6" style={{ color: AMBER }} />
+          </div>
+          <div>
+            <p className="text-white font-bold text-base">{cluster.title || 'Active Area'}</p>
+            <p className="text-[11px] text-white/40 mt-0.5">{cluster.count} signal{cluster.count !== 1 ? 's' : ''} \u00B7 {cluster.type}</p>
+          </div>
+        </div>
+        <div className="flex gap-3 mt-5">
+          <button onClick={onBrowse} className="flex-1 h-11 rounded-xl bg-[#C8962C] text-black font-bold text-xs uppercase flex items-center justify-center gap-2 active:scale-[0.97] transition-transform">
+            Browse Nearby
+          </button>
+          <button onClick={onGoLive} className="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 text-xs font-bold uppercase active:scale-[0.97] transition-transform" style={{ background: 'rgba(200,150,44,0.12)', color: AMBER, border: '1px solid rgba(200,150,44,0.2)' }}>
+            <Zap className="w-4 h-4" /> Go Live Here
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// =============================================================================
+// EventPanel — event pin micro flow
+// =============================================================================
+function EventPanel({
+  event,
+  onClose,
+  onView,
+  onSave,
+}: {
+  event: { id: string; title: string; startsAt?: string; kind?: string; venue?: string };
+  onClose: () => void;
+  onView: () => void;
+  onSave: () => void;
+}) {
+  const timeStr = event.startsAt ? (() => {
+    const d = new Date(event.startsAt);
+    if (isToday(d)) return `Today \u00B7 ${format(d, 'h:mm a')}`;
+    if (isTomorrow(d)) return `Tomorrow \u00B7 ${format(d, 'h:mm a')}`;
+    return format(d, 'EEE d MMM \u00B7 h:mm a');
+  })() : '';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[110] flex items-end justify-center"
+    >
+      <motion.div className="absolute inset-0 bg-black/60" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        className="relative w-full rounded-t-3xl px-6 pt-5 pb-10 z-10"
+        style={{ ...glassStyle(0.85, 24), borderTop: '1px solid rgba(255,255,255,0.08)' }}
+      >
+        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-5" />
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,194,224,0.08)' }}>
+            <Calendar className="w-6 h-6 text-[#00C2E0]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-bold text-base truncate">{event.title}</p>
+            {timeStr && <p className="text-[11px] text-white/40 mt-0.5">{timeStr}</p>}
+            {event.venue && <p className="text-[10px] text-white/30 mt-0.5 truncate">{event.venue}</p>}
+          </div>
+        </div>
+        <div className="flex gap-3 mt-5">
+          <button onClick={onView} className="flex-1 h-11 rounded-xl bg-[#C8962C] text-black font-bold text-xs uppercase flex items-center justify-center gap-2 active:scale-[0.97] transition-transform">
+            View Event
+          </button>
+          <button onClick={onSave} className="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 text-xs font-bold uppercase active:scale-[0.97] transition-transform" style={{ background: 'rgba(200,150,44,0.12)', color: AMBER, border: '1px solid rgba(200,150,44,0.2)' }}>
+            Save
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// =============================================================================
 // ActionBar — floating contextual pills (replaces lime FAB + purple FAB)
 // =============================================================================
 function ActionBar({
@@ -1331,6 +1504,9 @@ export function PulseMode({ className = '' }: PulseModeProps) {
   const [rightNowOpen, setRightNowOpen] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   const [musicDropPanelItem, setMusicDropPanelItem] = useState<DropItem | null>(null);
+  const [userPanelItem, setUserPanelItem] = useState<{ id: string; userId: string; intent: string; name: string; avatarUrl?: string } | null>(null);
+  const [clusterPanelItem, setClusterPanelItem] = useState<{ title: string; count: number; type: string; lat: number; lng: number } | null>(null);
+  const [eventPanelItem, setEventPanelItem] = useState<{ id: string; title: string; startsAt?: string; kind?: string; venue?: string } | null>(null);
 
   // ---- Layer toggle state (multi-select) ------------------------------------
   const [activeLayers, setActiveLayers] = useState<Set<LayerKey>>(() => new Set(['people', 'intent', 'drops']));
@@ -2231,7 +2407,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
         />
       )}
 
-      {/* Music Drop Panel — mini release sheet */}
+      {/* ── Micro Flow Panels ─────────────────────────────────────────── */}
       <AnimatePresence>
         {musicDropPanelItem && (
           <MusicDropPanel
@@ -2239,6 +2415,39 @@ export function PulseMode({ className = '' }: PulseModeProps) {
             onClose={() => setMusicDropPanelItem(null)}
             onOpenMusic={() => { setMusicDropPanelItem(null); navigate('/music'); }}
             onUnlockStems={() => { setMusicDropPanelItem(null); navigate('/music'); }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {userPanelItem && (
+          <UserSignalPanel
+            user={userPanelItem}
+            onClose={() => setUserPanelItem(null)}
+            onViewProfile={() => { setUserPanelItem(null); openSheet('profile', { id: userPanelItem.userId }); }}
+            onChat={() => { setUserPanelItem(null); openSheet('chat', { profileId: userPanelItem.userId }); }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {clusterPanelItem && (
+          <ClusterPanel
+            cluster={clusterPanelItem}
+            onClose={() => setClusterPanelItem(null)}
+            onBrowse={() => { setClusterPanelItem(null); navigate('/ghosted'); }}
+            onGoLive={() => { setClusterPanelItem(null); setRightNowOpen(true); }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {eventPanelItem && (
+          <EventPanel
+            event={eventPanelItem}
+            onClose={() => setEventPanelItem(null)}
+            onView={() => { setEventPanelItem(null); openSheet('event', { id: eventPanelItem.id }); }}
+            onSave={() => { setEventPanelItem(null); toast('Saved'); }}
           />
         )}
       </AnimatePresence>
