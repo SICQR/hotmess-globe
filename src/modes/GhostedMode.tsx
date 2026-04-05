@@ -61,10 +61,11 @@ const CARD_BG = '#1C1C1E';
 const MUTED = '#8E8E93';
 
 // ---- Tab definitions --------------------------------------------------------
-type TabKey = 'all' | 'online' | 'rightnow' | 'events';
+type TabKey = 'all' | 'live' | 'online' | 'rightnow' | 'events';
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'all', label: 'All' },
+  { key: 'live', label: 'Live' },
   { key: 'online', label: 'Online Now' },
   { key: 'rightnow', label: 'Right Now' },
   { key: 'events', label: 'Events Tonight' },
@@ -661,6 +662,15 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
       }
 
       // Tab filters
+      if (activeTab === 'live') {
+        // LIVE tab: show users with active presence (< 30 min), active check-ins, or radio listeners
+        const lastSeen = profile.last_seen ? new Date(profile.last_seen).getTime() : 0;
+        const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000;
+        const isRecentlyActive = lastSeen > thirtyMinutesAgo;
+        const hasRightNow = !!(profile.rightNow || profile.right_now_status);
+        if (!profile.is_online && !profile.onlineNow && !isRecentlyActive && !hasRightNow) return false;
+      }
+
       if (activeTab === 'online') {
         // Show if is_online OR last_seen within 15 minutes
         const lastSeen = profile.last_seen ? new Date(profile.last_seen).getTime() : 0;

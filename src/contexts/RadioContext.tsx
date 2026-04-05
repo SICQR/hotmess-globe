@@ -22,6 +22,8 @@ import { supabase } from '@/components/utils/supabaseClient';
 const STREAM_URL = 'https://listen.radioking.com/radio/736103/stream/802454';
 // Write a radio_signal to DB at most once per 5 minutes per listen session
 const SIGNAL_THROTTLE_MS = 5 * 60 * 1000;
+// Listener tracking heartbeat interval
+const LISTENER_HEARTBEAT_MS = 60 * 1000;
 
 export interface RadioContextValue {
   isPlaying: boolean;
@@ -42,6 +44,7 @@ export function RadioProvider({ children }: { children: React.ReactNode }) {
   const pendingPlayRef = useRef(false);
   const lastSignalWriteRef = useRef<number>(0);
   const wasPlayingBeforeSheetRef = useRef(false);
+  const listenerHeartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   
   const { hasConsent, showModal, requestConsent, grantConsent, declineConsent } = useSoundConsent();
 
@@ -69,6 +72,52 @@ export function RadioProvider({ children }: { children: React.ReactNode }) {
       // Best-effort — never block playback
     }
   }, []);
+
+  /** Upsert radio_listeners row for LIVE MODE tracking */
+  const upsertRadioListener = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return;
+      const showId = currentShowName || 'live-stream';
+      await supabase.from('radio_listeners').upsert({
+        user_id: session.user.id,
+        show_id: showId,
+        updated_at: new Date().toISOString(),
+        expires_at: null, // active listener
+      }, { onConflict: 'user_id,show_id' });
+    } catch { /* best-effort — never block playback */ }
+  }, [currentShowName]);
+
+  /** Mark listener as expired (stopped listening) */
+  const expireRadioListener = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return;
+      await supabase.from('radio_listeners')
+        .update({ expires_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .eq('user_id', session.user.id);
+    } catch { /* best-effort */ }
+  }, []);
+
+  // Radio listener tracking: upsert when playing, expire when stopped, heartbeat every 60s
+  useEffect(() => {
+    if (isPlaying) {
+      upsertRadioListener();
+      listenerHeartbeatRef.current = setInterval(upsertRadioListener, LISTENER_HEARTBEAT_MS);
+    } else {
+      if (listenerHeartbeatRef.current) {
+        clearInterval(listenerHeartbeatRef.current);
+        listenerHeartbeatRef.current = null;
+      }
+      expireRadioListener();
+    }
+    return () => {
+      if (listenerHeartbeatRef.current) {
+        clearInterval(listenerHeartbeatRef.current);
+        listenerHeartbeatRef.current = null;
+      }
+    };
+  }, [isPlaying, upsertRadioListener, expireRadioListener]);
 
   // Create audio element once on mount
   useEffect(() => {
