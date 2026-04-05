@@ -66,7 +66,7 @@ interface HomeModeProps {
 // ---- Brand constants --------------------------------------------------------
 const AMBER = '#C8962C';
 const CARD_BG = '#1C1C1E';
-const ROOT_BG = '#050507';
+const ROOT_BG = '#000000';
 const MUTED = '#8E8E93';
 const NIGHT_BEACON_KEY = 'hm_night_beacon_id';
 
@@ -427,7 +427,7 @@ function ImageSection({
         <img
           src={imageSrc}
           alt=""
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover hm-image-hero"
           style={imageStyle}
           loading="lazy"
         />
@@ -801,7 +801,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
               </div>
               <div className="flex-1 min-w-0 text-left">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-black uppercase text-white tracking-wide">HOTMESS RADIO</p>
+                  <p className="text-sm font-black uppercase text-white tracking-wide">On Air Right Now</p>
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#30D158] opacity-75" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-[#30D158]" />
@@ -832,7 +832,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
                 </div>
                 <div className="flex-1 min-w-0 text-left">
                   <div className="flex items-center gap-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#9B1B2A' }}>Drop Live</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#9B1B2A' }}>Just Dropped</p>
                   </div>
                   <p className="text-sm font-bold text-white truncate mt-0.5">{latestDrop.title}</p>
                   <p className="text-[10px] text-white/30 mt-0.5">Smash Daddys · {latestDrop.catalog_number}</p>
@@ -853,9 +853,9 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
                 <Globe className="w-5 h-5" style={{ color: AMBER }} />
               </div>
               <div className="flex-1 min-w-0 text-left">
-                <p className="text-sm font-black uppercase text-white tracking-wide">What's Moving</p>
+                <p className="text-sm font-black uppercase text-white tracking-wide">The City is Moving</p>
                 <p className="text-[11px] text-white/40 mt-0.5">
-                  {rightNowUsers.length > 0 ? `${rightNowUsers.length} people nearby` : 'See who\'s around'}
+                  {rightNowUsers.length > 0 ? `${rightNowUsers.length} people out right now` : 'See who\'s around'}
                 </p>
               </div>
               <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg flex-shrink-0" style={{ background: AMBER, color: '#000' }}>

@@ -22,7 +22,7 @@ import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 
 // ── Brand tokens ─────────────────────────────────────────────────────────────
 const GOLD = '#C8962C';
-const BG = '#050507';
+const BG = '#000000';
 const CARD = '#1C1C1E';
 const LABEL_RED = '#9B1B2A';
 const TEAL = '#00C2E0';
@@ -328,7 +328,12 @@ function ReleaseDetailSheet({ release, tracks, onClose }) {
 
 function StemUnlockSheet({ release, onClose }) {
   const navigate = useNavigate();
-  const stemTypes = ['Drums', 'Bass', 'Vocals', 'FX'];
+  const stemTypes = [
+    { name: 'Drums', sub: 'Ready for your DAW' },
+    { name: 'Bass', sub: 'Ready for your DAW' },
+    { name: 'Vocals', sub: 'Ready for your DAW' },
+    { name: 'FX', sub: 'Ready for your DAW' },
+  ];
   const price = release.stem_pack_price_gbp ? `\u00a3${Number(release.stem_pack_price_gbp).toFixed(2)}` : 'Free';
 
   return (
@@ -360,33 +365,37 @@ function StemUnlockSheet({ release, onClose }) {
         <h2 className="text-2xl font-black uppercase text-white text-center">
           Unlock the Source
         </h2>
-        <p className="text-sm text-white/50 text-center mt-2 mb-6">
+        <p className="text-sm text-white/50 text-center mt-1">
           {release.title} &mdash; Smash Daddys
+        </p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-[#C8962C] text-center mt-2 mb-6">
+          Used by DJs. Built for the floor.
         </p>
 
         {/* What you get */}
         <div className="mb-5">
           <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-3">What you get</p>
           <div className="grid grid-cols-4 gap-3">
-            {stemTypes.map(stem => (
-              <div key={stem} className="flex flex-col items-center gap-2 py-3 rounded-xl bg-white/[0.03] border border-white/5">
+            {stemTypes.map(({ name, sub }) => (
+              <div key={name} className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-white/[0.03] border border-white/5">
                 <FileAudio className="w-6 h-6 text-[#C8962C]" />
-                <span className="text-[10px] font-bold uppercase text-white/60">{stem}</span>
+                <span className="text-[10px] font-bold uppercase text-white/60">{name}</span>
+                <span className="text-[7px] text-white/25 leading-tight text-center px-1">{sub}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* File format */}
-        <div className="mb-5 rounded-xl bg-white/[0.02] border border-white/5 px-4 py-3">
+        <div className="mb-4 rounded-xl bg-white/[0.02] border border-white/5 px-4 py-3">
           <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-2">File format</p>
-          <p className="text-xs text-white/70">WAV (16-bit or 24-bit) &middot; Studio quality</p>
+          <p className="text-xs text-white/70">WAV (24-bit) &middot; Studio quality &middot; Ready to drop into your DAW</p>
         </div>
 
         {/* Delivery */}
-        <div className="mb-5 rounded-xl bg-white/[0.02] border border-white/5 px-4 py-3">
+        <div className="mb-4 rounded-xl bg-white/[0.02] border border-white/5 px-4 py-3">
           <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-2">Delivery</p>
-          <p className="text-xs text-white/70">Instant download &middot; Saved to your account</p>
+          <p className="text-xs text-white/70">Instant download &middot; Saved to your account &middot; Re-download anytime</p>
         </div>
 
         {/* License summary */}
@@ -395,7 +404,7 @@ function StemUnlockSheet({ release, onClose }) {
           <div className="space-y-1.5 text-xs text-white/60">
             <p className="flex items-center gap-2"><span className="text-[#30D158]">{'\u2713'}</span> Remix + DJ use allowed</p>
             <p className="flex items-center gap-2"><span className="text-[#30D158]">{'\u2713'}</span> Share mixes non-commercially</p>
-            <p className="flex items-center gap-2"><span className="text-[#FF3B30]">{'\u2717'}</span> No commercial release</p>
+            <p className="flex items-center gap-2"><span className="text-[#FF3B30]">{'\u2717'}</span> No commercial release without upgrade</p>
             <p className="flex items-center gap-2"><span className="text-[#FF3B30]">{'\u2717'}</span> Ownership retained by HOTMESS</p>
           </div>
           <button
@@ -407,22 +416,25 @@ function StemUnlockSheet({ release, onClose }) {
         </div>
 
         {/* Buy CTA */}
-        <button
+        <motion.button
           onClick={() => {
             console.log('[STEMS] Purchase:', release.id, price);
             onClose();
           }}
           className="w-full h-12 rounded-xl bg-[#C8962C] text-black font-black uppercase text-sm active:scale-95 transition-transform"
           aria-label={`Buy stems for ${price}`}
+          animate={{ boxShadow: ['0 0 0px rgba(200,150,44,0)', '0 0 16px rgba(200,150,44,0.4)', '0 0 0px rgba(200,150,44,0)'] }}
+          transition={{ repeat: Infinity, duration: 5 }}
         >
           Buy now {'\u2014'} {price}
-        </button>
+        </motion.button>
+        <p className="text-center text-[9px] text-white/25 mt-2 mb-1">Secure checkout &middot; Instant delivery</p>
 
         <button
           onClick={onClose}
-          className="w-full mt-3 text-center text-sm text-white/35 py-2 active:text-white/50"
+          className="w-full mt-2 text-center text-sm text-white/35 py-2 active:text-white/50"
         >
-          Cancel
+          Save for later
         </button>
       </motion.div>
     </motion.div>
@@ -431,7 +443,10 @@ function StemUnlockSheet({ release, onClose }) {
 
 // ── Preview End Overlay ──────────────────────────────────────────────────────
 
-function PreviewEndOverlay({ onUpgrade, onDismiss }) {
+function PreviewEndOverlay({ onUpgrade, onDismiss, phase = 'end' }) {
+  // phase: 'taste' (80% warning) or 'end' (track stopped)
+  const isTaste = phase === 'taste';
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -446,23 +461,39 @@ function PreviewEndOverlay({ onUpgrade, onDismiss }) {
         exit={{ scale: 0.9, opacity: 0 }}
         className="relative bg-[#1C1C1E] rounded-2xl p-8 text-center max-w-[320px] w-full border border-white/5"
       >
-        <h3 className="text-2xl font-black uppercase text-white">
-          Unlock the Floor
-        </h3>
-        <p className="text-sm text-white/50 mt-2 mb-6">
-          Full tracks. Full access.
-        </p>
-        <button
+        {isTaste ? (
+          <>
+            <p className="text-[10px] font-black uppercase tracking-widest text-[#C8962C] mb-2">Preview ending</p>
+            <h3 className="text-2xl font-black uppercase text-white">
+              This is just a taste
+            </h3>
+            <p className="text-sm text-white/50 mt-2 mb-6">
+              The full drop is waiting.
+            </p>
+          </>
+        ) : (
+          <>
+            <h3 className="text-2xl font-black uppercase text-white">
+              Unlock the Full Drop
+            </h3>
+            <p className="text-sm text-white/50 mt-2 mb-6">
+              No cuts. No limits. Full catalogue.
+            </p>
+          </>
+        )}
+        <motion.button
           onClick={onUpgrade}
           className="w-full h-12 rounded-xl bg-[#C8962C] text-black font-black uppercase text-sm active:scale-95 transition-transform"
+          animate={{ boxShadow: ['0 0 0px rgba(200,150,44,0)', '0 0 16px rgba(200,150,44,0.4)', '0 0 0px rgba(200,150,44,0)'] }}
+          transition={{ repeat: Infinity, duration: 5 }}
         >
-          Upgrade
-        </button>
+          Get full access
+        </motion.button>
         <button
           onClick={onDismiss}
           className="w-full mt-3 text-center text-sm text-white/35 py-2 active:text-white/50"
         >
-          Keep browsing
+          Save for later
         </button>
       </motion.div>
     </motion.div>
@@ -524,12 +555,25 @@ export default function MusicTab() {
     return () => { mounted = false; };
   }, [reloadKey]);
 
-  // ── Preview end detection ──────────────────────────────────────────────────
+  // ── Preview end detection (80% taste warning + end conversion) ─────────────
+
+  const [previewPhase, setPreviewPhase] = useState('end'); // 'taste' | 'end'
+  const tasteShownRef = useRef(false);
 
   useEffect(() => {
-    if (!player.currentTrack) return;
+    if (!player.currentTrack) { tasteShownRef.current = false; return; }
     const access = getTrackAccessLevel(player.currentTrack);
-    if (access === 'preview' && !player.isPlaying && player.progress > 0.95) {
+    if (access !== 'preview') return;
+
+    // 80% — "this is just a taste" warning
+    if (player.progress > 0.80 && player.progress < 0.95 && player.isPlaying && !tasteShownRef.current) {
+      tasteShownRef.current = true;
+      setPreviewPhase('taste');
+      setShowPreviewEnd(true);
+    }
+    // Track ended — full conversion overlay
+    if (!player.isPlaying && player.progress > 0.95) {
+      setPreviewPhase('end');
       setShowPreviewEnd(true);
     }
   }, [player.isPlaying, player.progress, player.currentTrack]);
@@ -613,10 +657,10 @@ export default function MusicTab() {
               className="w-full h-full object-cover"
               aria-hidden="true"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#050507]/70 via-[#050507]/85 to-[#050507]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#000000]/70 via-[#000000]/85 to-[#000000]" />
           </div>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-b from-[#9B1B2A]/15 via-[#050507] to-[#050507]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#9B1B2A]/15 via-[#000000] to-[#000000]" />
         )}
 
         <div className="relative px-6 pt-14 pb-8">
@@ -881,7 +925,7 @@ export default function MusicTab() {
         <h2 className="text-lg font-black uppercase text-white tracking-wide">
           For Producers
         </h2>
-        <p className="text-sm text-white/50 mt-1">Unlock the source.</p>
+        <p className="text-sm text-white/50 mt-1">Unlock the source. Built for the floor.</p>
 
         {/* Find first release with stems */}
         {(() => {
@@ -889,27 +933,29 @@ export default function MusicTab() {
             releases.find(r => (tracksByRelease[r.id] || []).some(t => t.stem_pack_url));
 
           if (stemRelDoc) {
-            const stemTypes = ['Drums', 'Bass', 'Vocals', 'FX'];
+            const inlineStemTypes = ['Drums', 'Bass', 'Vocals', 'FX'];
             const price = stemRelDoc.stem_pack_price_gbp
               ? `\u00a3${Number(stemRelDoc.stem_pack_price_gbp).toFixed(2)}`
               : 'Free';
 
             return (
               <div className="mt-5">
-                <div className="grid grid-cols-4 gap-2 mb-5">
-                  {stemTypes.map(stem => (
+                <div className="grid grid-cols-4 gap-2 mb-4">
+                  {inlineStemTypes.map(stem => (
                     <div key={stem} className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-white/[0.03] border border-white/5">
                       <FileAudio className="w-5 h-5 text-[#C8962C]" />
                       <span className="text-[9px] font-bold uppercase text-white/50">{stem}</span>
                     </div>
                   ))}
                 </div>
-                <button
+                <p className="text-[10px] text-white/30 text-center mb-4">WAV 24-bit &middot; Ready to drop into your DAW</p>
+                <motion.button
                   onClick={() => setStemRelease(stemRelDoc)}
                   className="w-full h-12 rounded-xl bg-[#C8962C] text-black font-black text-sm uppercase active:scale-95 transition-transform"
+                  whileTap={{ scale: 0.97 }}
                 >
                   Unlock Stems {'\u2014'} {price}
-                </button>
+                </motion.button>
               </div>
             );
           }
@@ -1047,6 +1093,7 @@ export default function MusicTab() {
       <AnimatePresence>
         {showPreviewEnd && (
           <PreviewEndOverlay
+            phase={previewPhase}
             onUpgrade={() => {
               setShowPreviewEnd(false);
               navigate('/more');

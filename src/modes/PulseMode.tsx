@@ -30,7 +30,7 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import RightNowModal from '@/components/globe/RightNowModal';
-import { motion, useMotionValue, useAnimation } from 'framer-motion';
+import { motion, useMotionValue, useAnimation, AnimatePresence } from 'framer-motion';
 import type { PanInfo } from 'framer-motion';
 import {
   MapPin,
@@ -51,6 +51,9 @@ import {
   ShoppingBag,
   Eye,
   Disc3,
+  Play,
+  FileAudio,
+  Music,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useGlobe } from '@/contexts/GlobeContext';
@@ -572,6 +575,102 @@ function DropCard({
         ) : null}
       </div>
     </button>
+  );
+}
+
+// =============================================================================
+// MusicDropPanel — mini release bottom sheet (replaces hard redirect to /music)
+// =============================================================================
+function MusicDropPanel({
+  drop,
+  onClose,
+  onOpenMusic,
+  onUnlockStems,
+}: {
+  drop: DropItem;
+  onClose: () => void;
+  onOpenMusic: () => void;
+  onUnlockStems: () => void;
+}) {
+  const isRecent = Date.now() - new Date(drop.createdAt).getTime() < 24 * 60 * 60 * 1000;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[110] flex items-end justify-center"
+    >
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/70"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        className="relative w-full rounded-t-3xl px-6 pt-5 pb-10 z-10"
+        style={{ ...glassStyle(0.85, 24), borderTop: '1px solid rgba(200,150,44,0.15)' }}
+      >
+        {/* Drag handle */}
+        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-5" />
+
+        {/* Content */}
+        <div className="flex gap-4 items-start">
+          {/* Artwork */}
+          <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-[#1C1C1E]">
+            {drop.imageUrl ? (
+              <img src={drop.imageUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <Disc3 className="w-8 h-8 text-[#9B1B2A]/40" />
+              </div>
+            )}
+          </div>
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: isRecent ? '#30D158' : AMBER }}>
+              {isRecent ? 'Live right now' : 'Trending right now'}
+            </p>
+            <h3 className="text-lg font-black text-white truncate mt-1">{drop.title}</h3>
+            <p className="text-xs text-white/40 mt-0.5">{drop.sellerName || 'Smash Daddys'}</p>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={onClose}
+            className="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 text-xs font-bold uppercase active:scale-[0.97] transition-transform"
+            style={{ background: 'rgba(200,150,44,0.12)', color: AMBER, border: '1px solid rgba(200,150,44,0.2)' }}
+          >
+            <Play className="w-4 h-4" fill={AMBER} />
+            Preview
+          </button>
+          <button
+            onClick={onOpenMusic}
+            className="flex-1 h-11 rounded-xl bg-[#C8962C] text-black font-bold text-xs uppercase flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
+          >
+            <Music className="w-4 h-4" />
+            Open Music
+          </button>
+        </div>
+
+        {/* Stems CTA */}
+        <button
+          onClick={onUnlockStems}
+          className="w-full mt-3 h-10 rounded-xl flex items-center justify-center gap-2 text-xs font-bold uppercase active:scale-[0.97] transition-transform"
+          style={{ background: 'rgba(155,27,42,0.08)', color: '#9B1B2A', border: '1px solid rgba(155,27,42,0.15)' }}
+        >
+          <FileAudio className="w-3.5 h-3.5" />
+          Unlock Stems
+        </button>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -1231,6 +1330,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
   );
   const [rightNowOpen, setRightNowOpen] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [musicDropPanelItem, setMusicDropPanelItem] = useState<DropItem | null>(null);
 
   // ---- Layer toggle state (multi-select) ------------------------------------
   const [activeLayers, setActiveLayers] = useState<Set<LayerKey>>(() => new Set(['people', 'intent', 'drops']));
@@ -1645,11 +1745,16 @@ export function PulseMode({ className = '' }: PulseModeProps) {
 
   const handleDropTap = useCallback((id: string) => {
     if (id.startsWith('music_')) {
-      navigate('/music');
+      const drop = dropsNearby.find((d) => d.id === id);
+      if (drop) {
+        setMusicDropPanelItem(drop);
+      } else {
+        navigate('/music');
+      }
     } else {
       openSheet('preloved', { id });
     }
-  }, [openSheet, navigate]);
+  }, [openSheet, navigate, dropsNearby]);
 
   const handleCreateBeacon = useCallback(() => {
     openSheet('beacon', { mode: 'create' });
@@ -2107,6 +2212,18 @@ export function PulseMode({ className = '' }: PulseModeProps) {
           }}
         />
       )}
+
+      {/* Music Drop Panel — mini release sheet */}
+      <AnimatePresence>
+        {musicDropPanelItem && (
+          <MusicDropPanel
+            drop={musicDropPanelItem}
+            onClose={() => setMusicDropPanelItem(null)}
+            onOpenMusic={() => { setMusicDropPanelItem(null); navigate('/music'); }}
+            onUnlockStems={() => { setMusicDropPanelItem(null); navigate('/music'); }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
