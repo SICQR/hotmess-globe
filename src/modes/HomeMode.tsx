@@ -1,16 +1,20 @@
 /**
- * HomeMode -- Control Deck (route: /)
+ * HomeMode -- Full-screen image-driven homepage (route: /)
  *
- * The default landing screen after login. A scrollable OS dashboard with:
+ * A cinematic vertical scroll of full-bleed image sections with gradient
+ * overlays and bottom-anchored CTAs, interleaved with data-driven cards.
  *
- *   1. Hero — Atmospheric noir with HOTMESS LONDON identity + Open Pulse / Go Live CTAs
- *   2. Core Lanes — 2x2 nav grid: Pulse, Ghosted, Market, Music
- *   3. Right Now — Live users with intent pills (or Go Live empty state)
- *   4. Nearby Events — Horizontal event cards from beacons VIEW
- *   5. Market Feature — Single HNH MESS product card
- *   6. Drops — Horizontal brand carousel (RAW, HUNG, HIGH, SUPERHUNG, SUPERRAW)
- *   7. Radio — Live radio banner with play/pause
- *   8. Community — Recent posts (hidden when empty)
+ * Sections (in order):
+ *   1. Hero — World Entry (hero-world.jpg)
+ *   [profile nudge + Right Now + Core Lanes + Nearby Events — data cards]
+ *   2. Pulse Panel (hero-pulse.jpg)
+ *   3. HNH MESS — Product (hnh-primary.jpg)
+ *   4. SMASH / Radio (smash-primary.jpg)
+ *   5. HUNG — 2-col grid (hung-black.jpg + hung-white.jpg)
+ *   6. Essentials (essentials-primary.jpg)
+ *   7. Radio full-screen (hero-pulse.jpg reuse, dimmed)
+ *   8. Care — Soft Exit (hnh-secondary.jpg)
+ *   [Community posts — data cards]
  *
  * Data: TanStack Query (useQuery) for all fetches.
  * Animation: Framer Motion staggered fade-up on mount.
@@ -33,15 +37,12 @@ import {
   Pause,
   Radio,
   Calendar,
-  Clock,
   Heart,
   Moon,
   Globe,
   Ghost,
   ShoppingBag,
   Music,
-  Droplets,
-  Shirt,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useRadio } from '@/contexts/RadioContext';
@@ -53,8 +54,6 @@ import { format, isToday, isTomorrow } from 'date-fns';
 import RightNowModal from '@/components/globe/RightNowModal';
 import { CardMoreButton } from '@/components/ui/CardMoreButton';
 import { trackEvent } from '@/components/utils/analytics';
-import { HNHMessHero } from '@/components/home/HNHMessHero';
-import { HNHMessStrip } from '@/components/home/HNHMessStrip';
 import { AppBanner } from '@/components/banners/AppBanner';
 import '@/styles/radio-waveform.css';
 
@@ -239,7 +238,6 @@ function RightNowCard({
 
 // ---- Right Now empty state --------------------------------------------------
 function RightNowEmpty({ onGoLive }: { onGoLive: () => void }) {
-  // Pick a random urgency headline on mount (stable per session)
   const [headline] = useState(() => EMPTY_HEADLINES[Math.floor(Math.random() * EMPTY_HEADLINES.length)]);
   return (
     <div className="flex flex-col items-center py-6 px-4 rounded-2xl border border-dashed border-white/10" style={{ background: `${CARD_BG}80` }}>
@@ -312,63 +310,7 @@ function EventCard({
   );
 }
 
-// ---- Radio banner -----------------------------------------------------------
-function RadioBanner({ onNavigate }: { onNavigate: () => void }) {
-  const { isPlaying, currentShowName, togglePlay } = useRadio();
-
-  return (
-    <div
-      className="hm-depth hm-tap-lift rounded-xl border border-[#00C2E0]/20 p-4 flex items-center gap-4 cursor-pointer"
-      style={{ background: 'linear-gradient(135deg, rgba(0,194,224,0.08) 0%, #1C1C1E 60%)' }}
-      onClick={onNavigate}
-      role="link"
-      aria-label="Open HOTMESS Radio"
-    >
-      <div
-        className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-        style={{ background: 'rgba(0,194,224,0.12)', border: '1px solid rgba(0,194,224,0.2)' }}
-      >
-        <Radio className="w-6 h-6" style={{ color: '#00C2E0' }} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-black text-xs tracking-[0.15em] mb-0.5" style={{ color: '#00C2E0' }}>
-          HOTMESS RADIO
-        </p>
-        <div className="flex items-center gap-2">
-          <span className="text-white/40 text-[11px]">
-            {currentShowName || 'Live now'}
-          </span>
-          {isPlaying && (
-            <div className="waveform" style={{ height: 16 }}>
-              <span className="waveform-bar" style={{ height: 6 }} />
-              <span className="waveform-bar" style={{ height: 6 }} />
-              <span className="waveform-bar" style={{ height: 6 }} />
-              <span className="waveform-bar" style={{ height: 6 }} />
-            </div>
-          )}
-        </div>
-      </div>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          togglePlay();
-        }}
-        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform"
-        style={{ background: AMBER }}
-        aria-label={isPlaying ? 'Pause radio' : 'Play radio'}
-      >
-        {isPlaying ? (
-          <Pause className="w-5 h-5 text-black" />
-        ) : (
-          <Play className="w-5 h-5 text-black ml-0.5" />
-        )}
-      </button>
-    </div>
-  );
-}
-
 // ── Pulse-driven headline pools (tone = f(live state)) ──────────────────────
-// Headlines rotate within the active tone, not randomly across all states.
 const HERO_TONES = {
   high: [
     "Who's out. Who's up. Who's next.",
@@ -461,74 +403,36 @@ function CoreLanes({
   );
 }
 
-// ---- Market Feature (single HNH MESS card) ----------------------------------
-function MarketFeature({ onNavigate }: { onNavigate: () => void }) {
+// ---- Full-screen image section component ------------------------------------
+const IMAGE_GRADIENT = 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0) 70%)';
+
+function ImageSection({
+  imageSrc,
+  imageStyle,
+  children,
+  className = '',
+  minHeight = '100vh',
+}: {
+  imageSrc: string;
+  imageStyle?: React.CSSProperties;
+  children: React.ReactNode;
+  className?: string;
+  minHeight?: string;
+}) {
   return (
-    <button
-      onClick={onNavigate}
-      className="hm-depth hm-tap-lift w-full rounded-2xl overflow-hidden text-left"
-      aria-label="Shop HNH MESS lube"
-    >
-      <div className="relative h-44 overflow-hidden">
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `radial-gradient(ellipse 80% 70% at 30% 50%, rgba(200,150,44,0.18) 0%, transparent 70%), linear-gradient(135deg, ${CARD_BG} 0%, #2a2a2e 100%)`,
-          }}
+    <div className={`relative w-full overflow-hidden ${className}`} style={{ minHeight }}>
+      <div className="absolute inset-0">
+        <img
+          src={imageSrc}
+          alt=""
+          className="w-full h-full object-cover"
+          style={imageStyle}
+          loading="lazy"
         />
-        {/* Product icon */}
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-[0.12]">
-          <Droplets className="w-32 h-32" style={{ color: AMBER }} />
-        </div>
-        <div className="relative z-10 p-5 flex flex-col justify-end h-full">
-          <p className="font-black text-xs tracking-[0.2em] uppercase mb-1" style={{ color: AMBER }}>HNH MESS</p>
-          <p className="text-white font-bold text-lg leading-tight">Premium water-based lube</p>
-          <p className="text-white/50 text-sm mt-1">50ML &middot; &pound;10 &nbsp;/&nbsp; 250ML &middot; &pound;15</p>
-          <div className="flex items-center gap-1 mt-3">
-            <span className="text-sm font-bold" style={{ color: AMBER }}>Shop now</span>
-            <ChevronRight className="w-4 h-4" style={{ color: AMBER }} />
-          </div>
-        </div>
       </div>
-    </button>
-  );
-}
-
-// ---- Drops Carousel (brand tiles) -------------------------------------------
-const DROP_BRANDS = [
-  { name: 'RAW', color: '#C8962C' },
-  { name: 'HUNG', color: '#C41230' },
-  { name: 'HIGH', color: '#C8962C' },
-  { name: 'SUPERHUNG', color: '#C41230' },
-  { name: 'SUPERRAW', color: '#C8962C' },
-] as const;
-
-function DropsCarousel({ onNavigate }: { onNavigate: () => void }) {
-  return (
-    <div>
-      <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scrollbar-hide -mx-5 px-5">
-        {DROP_BRANDS.map((brand) => (
-          <button
-            key={brand.name}
-            onClick={onNavigate}
-            className="flex-shrink-0 snap-start w-[140px] rounded-2xl border border-white/[0.06] p-4 flex flex-col justify-between active:scale-[0.97] transition-transform"
-            style={{ background: CARD_BG, minHeight: 120 }}
-            aria-label={`Browse ${brand.name} drops`}
-          >
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center mb-3"
-              style={{ background: `${brand.color}15` }}
-            >
-              <Shirt className="w-4 h-4" style={{ color: brand.color }} />
-            </div>
-            <div>
-              <p className="font-black text-sm tracking-wider" style={{ color: brand.color }}>{brand.name}</p>
-              <p className="text-[10px] mt-0.5 flex items-center gap-0.5" style={{ color: MUTED }}>
-                Browse <ChevronRight className="w-3 h-3" />
-              </p>
-            </div>
-          </button>
-        ))}
+      <div className="absolute inset-0" style={{ background: IMAGE_GRADIENT }} />
+      <div className="relative z-10 flex flex-col justify-end h-full min-h-[inherit] px-5 pb-12">
+        {children}
       </div>
     </div>
   );
@@ -537,7 +441,7 @@ function DropsCarousel({ onNavigate }: { onNavigate: () => void }) {
 // =============================================================================
 // Main HomeMode Component
 // =============================================================================
-export function HomeMode({ className = '' }: HomeModeProps) {
+export default function HomeMode({ className = '' }: HomeModeProps) {
   const navigate = useNavigate();
   const { openSheet } = useSheet();
   const { unreadCount } = useUnreadCount();
@@ -729,22 +633,20 @@ export function HomeMode({ className = '' }: HomeModeProps) {
     refetchInterval: 60_000,
   });
 
-  // ── Pulse state → tone → headline rotation ─────────────────────────────────
-  const { isPlaying: radioPlaying } = useRadio();
+  // ── Pulse state -> tone -> headline rotation ─────────────────────────────────
+  const { isPlaying: radioPlaying, currentShowName, togglePlay } = useRadio();
   const tone = deriveTone(rightNowUsers.length, nearbyEvents.length);
   const headlines = HERO_TONES[tone];
   const [heroIdx, setHeroIdx] = useState(0);
 
-  // Reset index when tone changes so we start from the first headline of the new pool
   useEffect(() => { setHeroIdx(0); }, [tone]);
 
-  // Rotate within the active tone pool every 6s
   useEffect(() => {
     const t = setInterval(() => setHeroIdx(i => (i + 1) % headlines.length), 6000);
     return () => clearInterval(t);
   }, [headlines.length]);
 
-  // ── Live signals for Core Lanes (Pulse-driven badges on static structure) ──
+  // ── Live signals for Core Lanes ──
   const laneSignals: Record<string, string> = {};
   if (rightNowUsers.length > 0) laneSignals['Pulse'] = `${rightNowUsers.length} nearby`;
   if (rightNowUsers.length === 0) laneSignals['Ghosted'] = 'Quiet tonight';
@@ -818,235 +720,429 @@ export function HomeMode({ className = '' }: HomeModeProps) {
         {...pullHandlers}
       >
         <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
-        <div className="pb-36 space-y-6">
+        <div className="pb-36">
 
-          {/* ── Section 1: Hero Banner — atmospheric noir with radial gold glow ── */}
-          <div className="relative w-full h-56 overflow-hidden">
-            <img
-              src="/assets/hero-storm.jpg"
-              alt="HOTMESS London"
-              className="w-full h-full object-cover opacity-60"
-            />
-            {/* Radial gold glow overlay */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background: `radial-gradient(ellipse 70% 60% at 50% 70%, rgba(200,150,44,0.15) 0%, transparent 70%)`,
-              }}
-            />
-            {/* Bottom fade to root bg */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/50 to-[#050507]/20" />
-            {/* Noise texture overlay for cinematic grain */}
-            <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\' opacity=\'0.5\'/%3E%3C/svg%3E")', backgroundSize: '128px 128px' }} />
-            <div className="absolute bottom-5 left-5 right-5">
-              <h2 className="font-black text-3xl tracking-[0.15em] uppercase leading-none drop-shadow-lg">
-                <span className="text-white">HOT</span><span style={{ color: AMBER }}>MESS</span>
-              </h2>
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={`${tone}-${heroIdx}`}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.4 }}
-                  className="text-white/50 text-xs mt-1.5 tracking-wide"
-                >
-                  {headlines[heroIdx]}
-                </motion.p>
-              </AnimatePresence>
-              <div className="flex gap-3 mt-4">
-                <button
-                  onClick={() => { trackEvent('home_cta_tap', { cta: 'open_pulse', tone, live_users: rightNowUsers.length }); navigate('/pulse'); }}
-                  className="hm-btn-cinematic h-11 px-6 rounded-xl text-sm flex items-center gap-2"
-                >
-                  <Globe className="w-4 h-4" />
-                  Open Pulse
-                </button>
-                <button
-                  onClick={() => { trackEvent('home_cta_tap', { cta: 'go_live', tone, live_users: rightNowUsers.length }); setShowRightNow(true); }}
-                  className="hm-btn-ghost h-11 px-6 rounded-xl text-sm flex items-center gap-2"
-                >
-                  <Zap className="w-4 h-4" style={{ color: AMBER }} />
-                  Go Live
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* ── Profile nudge banner (post-onboarding, session-dismissible) ── */}
-          {showProfileNudge && (
-            <div
-              className="mx-4 flex items-center justify-between gap-3 rounded-xl px-4 py-3"
-              style={{ background: 'rgba(200,150,44,0.12)', border: '1px solid rgba(200,150,44,0.2)' }}
-            >
-              <span className="text-white/70 text-sm flex-1">Add a photo and bio to get more matches</span>
+          {/* ================================================================ */}
+          {/* SECTION 1: HERO -- WORLD ENTRY                                   */}
+          {/* ================================================================ */}
+          <ImageSection
+            imageSrc="/images/home/hero-world.jpg"
+            imageStyle={{ objectPosition: '55% 30%', transform: 'scale(1.35)' }}
+          >
+            <h2 className="font-black text-4xl tracking-[0.15em] uppercase leading-none drop-shadow-lg">
+              <span className="text-white">HOT</span><span style={{ color: AMBER }}>MESS</span>
+            </h2>
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={`${tone}-${heroIdx}`}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.4 }}
+                className="text-white/60 text-sm mt-2 tracking-wide"
+              >
+                {headlines[heroIdx]}
+              </motion.p>
+            </AnimatePresence>
+            <div className="flex gap-3 mt-5">
               <button
-                onClick={() => navigate('/profile')}
-                className="text-xs font-bold flex-shrink-0 px-3 py-1.5 rounded-lg"
+                onClick={() => { trackEvent('home_cta_tap', { cta: 'open_pulse', tone, live_users: rightNowUsers.length }); navigate('/pulse'); }}
+                className="h-12 px-6 rounded-xl text-sm font-bold flex items-center gap-2 active:scale-95 transition-transform"
                 style={{ background: AMBER, color: '#000' }}
               >
-                Complete profile
+                <Globe className="w-4 h-4" />
+                Open Pulse
               </button>
               <button
-                onClick={dismissNudge}
-                className="text-white/30 text-base leading-none flex-shrink-0"
-                aria-label="Dismiss"
+                onClick={() => { trackEvent('home_cta_tap', { cta: 'go_live', tone, live_users: rightNowUsers.length }); setShowRightNow(true); }}
+                className="h-12 px-6 rounded-xl text-sm font-bold flex items-center gap-2 border border-white/20 text-white active:scale-95 transition-transform active:bg-white/10"
               >
-                &#x2715;
+                <Zap className="w-4 h-4" style={{ color: AMBER }} />
+                Go Live
               </button>
             </div>
-          )}
+          </ImageSection>
 
-          {/* ── HNH MESS Hero (primary revenue product) ── */}
-          <HNHMessHero />
+          {/* ================================================================ */}
+          {/* DATA CARDS: Profile nudge + Right Now + Core Lanes + Events      */}
+          {/* ================================================================ */}
+          <div className="px-5 py-6 space-y-6" style={{ background: ROOT_BG }}>
 
-          {/* ── HNH MESS Strip ── */}
-          <HNHMessStrip />
-
-          {/* ── Dynamic Home Strip Banner ── */}
-          <AppBanner placement="home_strip" variant="strip" />
-
-          <div className="px-5 space-y-6">
-
-          {/* ── Core Lanes + Right Now ── */}
-          <AnimatedSection index={0}>
-            <CoreLanes onNavigate={(route) => navigate(route)} signals={laneSignals} tone={tone} />
-          </AnimatedSection>
-
-          {/* ============================================================== */}
-          {/* 3. RIGHT NOW -- Live users with intent pills                   */}
-          {/* ============================================================== */}
-          <AnimatedSection index={1}>
-            <SectionHeader
-              title="Right Now"
-              linkLabel="Go live"
-              onLink={() => setShowRightNow(true)}
-            />
-            {rightNowLoading ? (
-              <RightNowSkeleton />
-            ) : rightNowUsers.length === 0 ? (
-              <RightNowEmpty onGoLive={() => setShowRightNow(true)} />
-            ) : (
-              <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scrollbar-hide -mx-5 px-5">
-                {rightNowUsers.map((u) => (
-                  <RightNowCard
-                    key={u.id}
-                    avatarUrl={u.avatarUrl}
-                    name={u.name}
-                    intent={u.intent}
-                    onTap={() => openSheet('profile', { userId: u.userId })}
-                  />
-                ))}
+            {/* Profile nudge */}
+            {showProfileNudge && (
+              <div
+                className="flex items-center justify-between gap-3 rounded-xl px-4 py-3"
+                style={{ background: 'rgba(200,150,44,0.12)', border: '1px solid rgba(200,150,44,0.2)' }}
+              >
+                <span className="text-white/70 text-sm flex-1">Add a photo and bio to get more matches</span>
+                <button
+                  onClick={() => navigate('/profile')}
+                  className="text-xs font-bold flex-shrink-0 px-3 py-1.5 rounded-lg"
+                  style={{ background: AMBER, color: '#000' }}
+                >
+                  Complete profile
+                </button>
+                <button
+                  onClick={dismissNudge}
+                  className="text-white/30 text-base leading-none flex-shrink-0"
+                  aria-label="Dismiss"
+                >
+                  &#x2715;
+                </button>
               </div>
             )}
-          </AnimatedSection>
 
-          {/* ============================================================== */}
-          {/* 4. NEARBY EVENTS                                               */}
-          {/* ============================================================== */}
-          {(eventsLoading || nearbyEvents.length > 0) && (
-            <AnimatedSection index={2}>
+            {/* Right Now */}
+            <AnimatedSection index={0}>
               <SectionHeader
-                title="Happening near you"
-                linkLabel="See all"
-                onLink={() => navigate('/pulse')}
+                title="Right Now"
+                linkLabel="Go live"
+                onLink={() => setShowRightNow(true)}
               />
-              {eventsLoading ? (
-                <div className="flex gap-3 overflow-hidden">
-                  <EventCardSkeleton />
-                  <EventCardSkeleton />
-                </div>
+              {rightNowLoading ? (
+                <RightNowSkeleton />
+              ) : rightNowUsers.length === 0 ? (
+                <RightNowEmpty onGoLive={() => setShowRightNow(true)} />
               ) : (
                 <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scrollbar-hide -mx-5 px-5">
-                  {nearbyEvents.map((ev) => (
-                    <EventCard
-                      key={ev.id}
-                      id={ev.id}
-                      title={ev.title}
-                      imageUrl={ev.imageUrl}
-                      venue={ev.venue}
-                      startsAt={ev.startsAt}
-                      onTap={() => openSheet('event', { id: ev.id })}
+                  {rightNowUsers.map((u) => (
+                    <RightNowCard
+                      key={u.id}
+                      avatarUrl={u.avatarUrl}
+                      name={u.name}
+                      intent={u.intent}
+                      onTap={() => openSheet('profile', { userId: u.userId })}
                     />
                   ))}
                 </div>
               )}
             </AnimatedSection>
-          )}
 
-          {/* ── Section 5: Market Feature ── */}
-          <AnimatedSection index={3}>
-            <SectionHeader
-              title="HNH MESS"
-              linkLabel="Shop"
-              onLink={() => navigate('/market')}
-            />
-            <MarketFeature onNavigate={() => { trackEvent('home_cta_tap', { cta: 'market_feature', tone }); navigate('/market'); }} />
-          </AnimatedSection>
-
-          {/* ── Section 6: Drops ── */}
-          <AnimatedSection index={4}>
-            <SectionHeader
-              title="Drops"
-              linkLabel="Browse Drops"
-              onLink={() => navigate('/market')}
-            />
-            <DropsCarousel onNavigate={() => { trackEvent('home_cta_tap', { cta: 'drops', tone }); navigate('/market'); }} />
-          </AnimatedSection>
-
-          {/* ── Section 7: Radio ── */}
-          <AnimatedSection index={5}>
-            <RadioBanner onNavigate={() => navigate('/radio')} />
-          </AnimatedSection>
-
-          {/* ── Section 8: Community ── */}
-          {communityPosts.length > 0 && (
-            <AnimatedSection index={6}>
-              <SectionHeader
-                title="Community"
-                linkLabel="See all"
-                onLink={() => openSheet('community', {})}
-              />
-              <div className="rounded-2xl overflow-hidden border border-white/5 divide-y divide-white/5" style={{ background: CARD_BG }}>
-                {communityPosts.map((post: Record<string, unknown>) => (
-                  <button
-                    key={post.id as string}
-                    onClick={() => openSheet('community', {})}
-                    className="w-full flex items-start gap-3 px-4 py-3 text-left active:bg-white/5 transition-colors"
-                  >
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                      style={{ background: `${AMBER}20` }}>
-                      <span className="text-[11px] font-black" style={{ color: AMBER }}>
-                        {((post.user_name as string) || 'A')[0].toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white/90 text-sm leading-snug line-clamp-2">{post.content as string}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs" style={{ color: MUTED }}>{post.user_name as string || 'Anonymous'}</span>
-                        {(post.like_count as number) > 0 && (
-                          <span className="flex items-center gap-0.5 text-xs" style={{ color: MUTED }}>
-                            <Heart className="w-3 h-3" />{post.like_count as number}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-                <button
-                  onClick={() => openSheet('community', {})}
-                  className="w-full px-4 py-3 text-left text-xs font-semibold active:bg-white/5 transition-colors flex items-center justify-between"
-                  style={{ color: AMBER }}
-                >
-                  View all posts
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
+            {/* Core Lanes */}
+            <AnimatedSection index={1}>
+              <CoreLanes onNavigate={(route) => navigate(route)} signals={laneSignals} tone={tone} />
             </AnimatedSection>
+
+            {/* App Banner */}
+            <AppBanner placement="home_strip" variant="strip" />
+
+            {/* Nearby Events */}
+            {(eventsLoading || nearbyEvents.length > 0) && (
+              <AnimatedSection index={2}>
+                <SectionHeader
+                  title="Happening near you"
+                  linkLabel="See all"
+                  onLink={() => navigate('/pulse')}
+                />
+                {eventsLoading ? (
+                  <div className="flex gap-3 overflow-hidden">
+                    <EventCardSkeleton />
+                    <EventCardSkeleton />
+                  </div>
+                ) : (
+                  <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scrollbar-hide -mx-5 px-5">
+                    {nearbyEvents.map((ev) => (
+                      <EventCard
+                        key={ev.id}
+                        id={ev.id}
+                        title={ev.title}
+                        imageUrl={ev.imageUrl}
+                        venue={ev.venue}
+                        startsAt={ev.startsAt}
+                        onTap={() => openSheet('event', { id: ev.id })}
+                      />
+                    ))}
+                  </div>
+                )}
+              </AnimatedSection>
+            )}
+          </div>
+
+          {/* ================================================================ */}
+          {/* SECTION 2: PULSE PANEL                                           */}
+          {/* ================================================================ */}
+          <ImageSection
+            imageSrc="/images/home/hero-pulse.jpg"
+            imageStyle={{ objectPosition: '65% 40%', transform: 'scale(1.6)' }}
+          >
+            <p
+              className="font-black text-2xl tracking-[0.3em] uppercase"
+              style={{ color: AMBER }}
+            >
+              PULSE
+            </p>
+            <p className="text-white/50 text-sm mt-1.5">
+              See who's around &middot; Live map &middot; Real-time
+            </p>
+            <button
+              onClick={() => { trackEvent('home_cta_tap', { cta: 'enter_pulse', tone }); navigate('/pulse'); }}
+              className="mt-5 h-12 px-8 rounded-xl text-sm font-bold flex items-center gap-2 active:scale-95 transition-transform self-start"
+              style={{ background: AMBER, color: '#000' }}
+            >
+              <Globe className="w-4 h-4" />
+              Enter Pulse
+            </button>
+          </ImageSection>
+
+          {/* ================================================================ */}
+          {/* SECTION 3: HNH MESS -- PRIMARY PRODUCT                           */}
+          {/* ================================================================ */}
+          <ImageSection
+            imageSrc="/images/home/hnh-primary.jpg"
+            imageStyle={{ objectPosition: '50% 55%', transform: 'scale(1.4)' }}
+          >
+            <p className="font-black text-xs tracking-[0.25em] uppercase" style={{ color: AMBER }}>
+              HNH MESS
+            </p>
+            <p className="text-white font-bold text-2xl leading-tight mt-1">
+              Premium water-based lube
+            </p>
+            <p className="text-white/50 text-sm mt-1.5">
+              50ML &middot; &pound;10 &nbsp;/&nbsp; 250ML &middot; &pound;15
+            </p>
+            <button
+              onClick={() => { trackEvent('home_cta_tap', { cta: 'shop_hnh', tone }); navigate('/market'); }}
+              className="mt-5 h-12 px-8 rounded-xl text-sm font-bold flex items-center gap-2 active:scale-95 transition-transform self-start"
+              style={{ background: AMBER, color: '#000' }}
+            >
+              <ShoppingBag className="w-4 h-4" />
+              Shop HNH MESS
+            </button>
+          </ImageSection>
+
+          {/* ================================================================ */}
+          {/* SECTION 4: SMASH / RADIO                                         */}
+          {/* ================================================================ */}
+          <ImageSection
+            imageSrc="/images/home/smash-primary.jpg"
+            imageStyle={{ objectPosition: '50% 45%', transform: 'scale(1.3)' }}
+          >
+            <p className="font-black text-xs tracking-[0.25em] uppercase" style={{ color: '#9B1B2A' }}>
+              RAW CONVICT RECORDS
+            </p>
+            <p className="text-white font-bold text-xl leading-tight mt-1">
+              SMASH DADDYS
+            </p>
+            <p className="text-white/50 text-sm mt-1">
+              Music &middot; Radio &middot; Live
+            </p>
+            <div className="flex items-center gap-3 mt-5">
+              <button
+                onClick={() => { trackEvent('home_cta_tap', { cta: 'listen_now', tone }); navigate('/music'); togglePlay(); }}
+                className="h-12 px-6 rounded-xl text-sm font-bold flex items-center gap-2 active:scale-95 transition-transform"
+                style={{ background: AMBER, color: '#000' }}
+              >
+                {radioPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+                Listen Now
+              </button>
+              {radioPlaying && (
+                <div className="waveform" style={{ height: 20 }}>
+                  <span className="waveform-bar" style={{ height: 8 }} />
+                  <span className="waveform-bar" style={{ height: 8 }} />
+                  <span className="waveform-bar" style={{ height: 8 }} />
+                  <span className="waveform-bar" style={{ height: 8 }} />
+                </div>
+              )}
+            </div>
+          </ImageSection>
+
+          {/* ================================================================ */}
+          {/* SECTION 5: HUNG -- 2-COLUMN GRID                                 */}
+          {/* ================================================================ */}
+          <div className="px-5 py-10" style={{ background: ROOT_BG }}>
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-black text-xl tracking-[0.2em] uppercase" style={{ color: '#C41230' }}>
+                HUNG
+              </p>
+              <button
+                onClick={() => { trackEvent('home_cta_tap', { cta: 'shop_hung', tone }); navigate('/market'); }}
+                className="flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider active:opacity-70 transition-opacity"
+                style={{ color: '#C41230' }}
+              >
+                Shop HUNG
+                <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => navigate('/market')}
+                className="rounded-2xl overflow-hidden active:scale-[0.97] transition-transform"
+                style={{ background: '#000', padding: 16 }}
+                aria-label="HUNG Black collection"
+              >
+                <img
+                  src="/images/home/hung-black.jpg"
+                  alt="HUNG Black"
+                  className="w-full aspect-[3/4] rounded-xl"
+                  style={{ objectFit: 'contain', background: '#000' }}
+                  loading="lazy"
+                />
+              </button>
+              <button
+                onClick={() => navigate('/market')}
+                className="rounded-2xl overflow-hidden active:scale-[0.97] transition-transform"
+                style={{ background: '#000', padding: 16 }}
+                aria-label="HUNG White collection"
+              >
+                <img
+                  src="/images/home/hung-white.jpg"
+                  alt="HUNG White"
+                  className="w-full aspect-[3/4] rounded-xl"
+                  style={{ objectFit: 'contain', background: '#000' }}
+                  loading="lazy"
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* ================================================================ */}
+          {/* SECTION 6: ESSENTIALS                                            */}
+          {/* ================================================================ */}
+          <ImageSection
+            imageSrc="/images/home/essentials-primary.jpg"
+            imageStyle={{
+              objectPosition: '50% 35%',
+              transform: 'scale(1.4)',
+              filter: 'brightness(0.85) contrast(1.1)',
+            }}
+          >
+            <p className="font-black text-2xl tracking-[0.2em] uppercase text-white">
+              ESSENTIALS
+            </p>
+            <p className="text-white/50 text-sm mt-1">
+              Elevated basics
+            </p>
+            <button
+              onClick={() => { trackEvent('home_cta_tap', { cta: 'browse_essentials', tone }); navigate('/market'); }}
+              className="mt-5 h-12 px-8 rounded-xl text-sm font-bold flex items-center gap-2 active:scale-95 transition-transform self-start"
+              style={{ background: AMBER, color: '#000' }}
+            >
+              Browse
+            </button>
+          </ImageSection>
+
+          {/* ================================================================ */}
+          {/* SECTION 7: RADIO (full-screen reuse of pulse crop)               */}
+          {/* ================================================================ */}
+          <ImageSection
+            imageSrc="/images/home/hero-pulse.jpg"
+            imageStyle={{ objectPosition: '65% 40%', transform: 'scale(1.6)', opacity: 0.4 }}
+          >
+            <p className="font-black text-xs tracking-[0.25em] uppercase" style={{ color: '#00C2E0' }}>
+              HOTMESS RADIO
+            </p>
+            <p className="text-white font-bold text-xl leading-tight mt-1">
+              {currentShowName || 'Live now'}
+            </p>
+            <div className="flex items-center gap-3 mt-1.5">
+              {radioPlaying && (
+                <div className="waveform" style={{ height: 20 }}>
+                  <span className="waveform-bar" style={{ height: 8, background: '#00C2E0' }} />
+                  <span className="waveform-bar" style={{ height: 8, background: '#00C2E0' }} />
+                  <span className="waveform-bar" style={{ height: 8, background: '#00C2E0' }} />
+                  <span className="waveform-bar" style={{ height: 8, background: '#00C2E0' }} />
+                </div>
+              )}
+              <span className="text-white/40 text-sm">
+                {radioPlaying ? 'Streaming live' : 'Tap to tune in'}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 mt-5">
+              <button
+                onClick={(e) => { e.stopPropagation(); togglePlay(); }}
+                className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform"
+                style={{ background: '#00C2E0' }}
+                aria-label={radioPlaying ? 'Pause radio' : 'Play radio'}
+              >
+                {radioPlaying ? (
+                  <Pause className="w-5 h-5 text-black" />
+                ) : (
+                  <Play className="w-5 h-5 text-black ml-0.5" />
+                )}
+              </button>
+              <button
+                onClick={() => navigate('/radio')}
+                className="h-12 px-6 rounded-xl text-sm font-bold flex items-center gap-2 border text-white active:scale-95 transition-transform active:bg-white/10"
+                style={{ borderColor: 'rgba(0,194,224,0.3)' }}
+              >
+                <Radio className="w-4 h-4" style={{ color: '#00C2E0' }} />
+                Full Player
+              </button>
+            </div>
+          </ImageSection>
+
+          {/* ================================================================ */}
+          {/* SECTION 8: CARE -- SOFT EXIT                                     */}
+          {/* ================================================================ */}
+          <ImageSection
+            imageSrc="/images/home/hnh-secondary.jpg"
+            imageStyle={{ objectPosition: '50% 65%', transform: 'scale(1.2)', opacity: 0.85 }}
+          >
+            <p className="font-black text-xl tracking-[0.2em] uppercase text-white">
+              HAND N HAND
+            </p>
+            <p className="text-white/50 text-sm mt-1">
+              Aftercare &middot; Wellbeing &middot; Support
+            </p>
+            <button
+              onClick={() => { trackEvent('home_cta_tap', { cta: 'enter_care', tone }); navigate('/care'); }}
+              className="mt-5 h-12 px-8 rounded-xl text-sm font-bold flex items-center gap-2 active:scale-95 transition-transform self-start"
+              style={{ background: AMBER, color: '#000' }}
+            >
+              Enter Care
+            </button>
+          </ImageSection>
+
+          {/* ================================================================ */}
+          {/* COMMUNITY POSTS (data-driven, at the very end)                   */}
+          {/* ================================================================ */}
+          {communityPosts.length > 0 && (
+            <div className="px-5 py-6" style={{ background: ROOT_BG }}>
+              <AnimatedSection index={6}>
+                <SectionHeader
+                  title="Community"
+                  linkLabel="See all"
+                  onLink={() => openSheet('community', {})}
+                />
+                <div className="rounded-2xl overflow-hidden border border-white/5 divide-y divide-white/5" style={{ background: CARD_BG }}>
+                  {communityPosts.map((post: Record<string, unknown>) => (
+                    <button
+                      key={post.id as string}
+                      onClick={() => openSheet('community', {})}
+                      className="w-full flex items-start gap-3 px-4 py-3 text-left active:bg-white/5 transition-colors"
+                    >
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                        style={{ background: `${AMBER}20` }}>
+                        <span className="text-[11px] font-black" style={{ color: AMBER }}>
+                          {((post.user_name as string) || 'A')[0].toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white/90 text-sm leading-snug line-clamp-2">{post.content as string}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs" style={{ color: MUTED }}>{post.user_name as string || 'Anonymous'}</span>
+                          {(post.like_count as number) > 0 && (
+                            <span className="flex items-center gap-0.5 text-xs" style={{ color: MUTED }}>
+                              <Heart className="w-3 h-3" />{post.like_count as number}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => openSheet('community', {})}
+                    className="w-full px-4 py-3 text-left text-xs font-semibold active:bg-white/5 transition-colors flex items-center justify-between"
+                    style={{ color: AMBER }}
+                  >
+                    View all posts
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </AnimatedSection>
+            </div>
           )}
 
-
-          </div>{/* end px-5 */}
         </div>
       </div>
 
@@ -1096,5 +1192,3 @@ export function HomeMode({ className = '' }: HomeModeProps) {
     </div>
   );
 }
-
-export default HomeMode;
