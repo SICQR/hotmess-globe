@@ -935,20 +935,53 @@ function VenuePanel({
           </div>
         </div>
 
-        {/* Count + momentum */}
+        {/* Who's there — anonymous silhouettes */}
         {count > 0 && (
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-white text-2xl font-bold">{count}</span>
-            <span className="text-white/40 text-sm">here now</span>
+          <div className="mt-4">
+            <div className="flex items-center gap-3">
+              {/* Silhouette dots — anonymous presence indicators */}
+              <div className="flex -space-x-1.5">
+                {Array.from({ length: Math.min(count, 8) }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-7 h-7 rounded-full flex items-center justify-center"
+                    style={{
+                      background: isGold
+                        ? `rgba(200,150,44,${0.08 + i * 0.02})`
+                        : `rgba(255,255,255,${0.05 + i * 0.02})`,
+                      border: `1px solid ${isGold ? 'rgba(200,150,44,0.15)' : 'rgba(255,255,255,0.08)'}`,
+                    }}
+                  >
+                    <Users className="w-3 h-3" style={{ color: isGold ? `${AMBER}60` : 'rgba(255,255,255,0.25)' }} />
+                  </div>
+                ))}
+                {count > 8 && (
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold"
+                    style={{
+                      background: isGold ? 'rgba(200,150,44,0.15)' : 'rgba(255,255,255,0.08)',
+                      color: isGold ? AMBER : 'rgba(255,255,255,0.5)',
+                      border: `1px solid ${isGold ? 'rgba(200,150,44,0.2)' : 'rgba(255,255,255,0.1)'}`,
+                    }}
+                  >
+                    +{count - 8}
+                  </div>
+                )}
+              </div>
+              <div>
+                <span className="text-white text-lg font-bold">{count}</span>
+                <span className="text-white/40 text-sm ml-1.5">here now</span>
+              </div>
+            </div>
             {momLabel && (
-              <span className="text-xs font-semibold ml-auto" style={{ color: AMBER }}>
+              <p className="text-xs font-semibold mt-1.5" style={{ color: AMBER }}>
                 {momLabel}
-              </span>
+              </p>
             )}
           </div>
         )}
         {count === 0 && (
-          <p className="text-white/30 text-sm mt-3">No one here yet</p>
+          <p className="text-white/30 text-sm mt-3">No one here yet — be the first</p>
         )}
 
         {/* CTAs */}
