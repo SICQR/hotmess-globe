@@ -387,12 +387,12 @@ export function PrelovedEngine({ search, className = '' }: PrelovedEngineProps) 
             <Package className="w-8 h-8 text-white/10" />
           </div>
           <h3 className="text-lg font-bold text-white mb-1">
-            {categoryFilter ? 'Nothing in this category' : 'No listings yet'}
+            {categoryFilter ? 'Nothing in this category' : 'Nothing listed nearby'}
           </h3>
           <p className="text-sm text-center text-white/40 mb-4">
             {categoryFilter
               ? 'Try a different category or check back later.'
-              : 'Be the first to list something. Tap the + button.'}
+              : 'Drop the first piece. List something you\'re done with.'}
           </p>
           {categoryFilter && (
             <button

@@ -36,7 +36,7 @@ function timeAgo(iso: string): string {
 }
 
 export default function L2TapsSheet() {
-  const { openSheet } = useSheet();
+  const { openSheet, closeSheet } = useSheet();
   const [myEmail, setMyEmail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -112,8 +112,17 @@ export default function L2TapsSheet() {
           <div className="flex flex-col items-center justify-center py-20 px-6 text-center gap-4">
             <Ghost className="w-12 h-12 text-white/20" />
             <p className="text-white/40 text-sm">
-              {error ? 'Could not load boos right now.' : 'No boos yet. Hang around Ghosted!'}
+              {error ? 'Could not load boos right now.' : 'No boos yet. Hang around Ghosted or Boo someone first.'}
             </p>
+            {!error && (
+              <button
+                onClick={() => closeSheet()}
+                className="h-10 px-5 rounded-full text-sm font-bold"
+                style={{ background: '#C8962C', color: '#000' }}
+              >
+                Open Ghosted
+              </button>
+            )}
           </div>
         )}
 
