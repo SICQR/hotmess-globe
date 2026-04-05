@@ -150,7 +150,6 @@ function getCurrentScheduledShow(shows: ShowData[]): ShowData | null {
   return null;
 }
 
-const SOUNDCLOUD_URL = 'https://soundcloud.com/rawconvictrecords';
 
 // RAW CONVICT RECORDS — label releases (from Playlist.m3u)
 const PLAYLIST_TRACKS = [
@@ -716,55 +715,6 @@ export function RadioMode({ className = '' }: RadioModeProps) {
               </motion.div>
             )}
           </AnimatePresence>
-        </section>
-
-        {/* == SOUNDCLOUD / RAW CONVICT RECORDS == */}
-        <section className="px-4 pb-5">
-          <h2 className="text-[11px] font-black text-[#8E8E93] uppercase tracking-widest mb-3">
-            Raw Convict Records on SoundCloud
-          </h2>
-
-          {/* SoundCloud embed */}
-          <div className="rounded-2xl overflow-hidden mb-3 border border-white/5">
-            <iframe
-              title="Raw Convict Records on SoundCloud"
-              width="100%"
-              height="166"
-              scrolling="no"
-              frameBorder="0"
-              allow="autoplay"
-              src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/rawconvictrecords&color=%23C8962C&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false"
-              style={{ background: '#1C1C1E' }}
-            />
-          </div>
-
-          {/* Fallback link */}
-          <a
-            href={SOUNDCLOUD_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-4 bg-[#1C1C1E] rounded-2xl p-4 border border-white/5 active:bg-white/5 transition-colors group"
-          >
-            <div className="w-12 h-12 rounded-xl bg-[#FF5500]/10 flex items-center justify-center flex-shrink-0">
-              <svg
-                viewBox="0 0 24 24"
-                className="w-6 h-6 text-[#FF5500]"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M1 18V14a1 1 0 1 1 2 0v4a1 1 0 1 1-2 0zM4 18V12a1 1 0 1 1 2 0v6a1 1 0 1 1-2 0zM7 18V10a1 1 0 1 1 2 0v8a1 1 0 1 1-2 0zM10 18V8a1 1 0 1 1 2 0v10a1 1 0 1 1-2 0zM13 18V6h1c3 0 5 2 5.5 4.5H20c2.2 0 4 1.8 4 4s-1.8 4-4 4h-7v-.5z" />
-              </svg>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-white text-sm leading-tight">
-                Past Shows &amp; Releases
-              </p>
-              <p className="text-xs text-[#8E8E93] mt-0.5">
-                Stream on SoundCloud \u00b7 Raw Convict Records
-              </p>
-            </div>
-            <ExternalLink className="w-5 h-5 text-white/20 flex-shrink-0 group-hover:text-white/40 transition-colors" />
-          </a>
         </section>
 
         {/* == RAW CONVICT RECORDS == */}

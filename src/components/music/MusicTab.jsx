@@ -1022,7 +1022,7 @@ export default function MusicTab() {
       <section className="mt-10 px-6 pb-40">
         <SectionHeader>All Releases</SectionHeader>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
           {releases.map(rel => {
             const relTracks = tracksByRelease[rel.id] || [];
             const access = getReleaseAccessLevel(rel, relTracks);
@@ -1037,16 +1037,12 @@ export default function MusicTab() {
                 key={rel.id}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => setSelectedRelease(rel)}
-                className={`relative overflow-hidden rounded-xl text-left transition-colors ${
-                  access === 'stems' ? 'ring-1 ring-[#C8962C]/40' : ''
-                }`}
+                className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-left active:bg-white/5 transition-colors"
                 style={{ backgroundColor: CARD }}
                 aria-label={`Open ${rel.title}`}
               >
-                {/* Artwork */}
-                <div className={`aspect-square w-full relative ${
-                  access === 'preview' ? 'opacity-70' : ''
-                }`}>
+                {/* Artwork thumbnail */}
+                <div className={`w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-[#0D0D0D] ${access === 'stems' ? 'ring-1 ring-[#C8962C]/40' : ''} ${access === 'preview' ? 'opacity-70' : ''}`}>
                   {rel.artwork_url ? (
                     <img
                       src={rel.artwork_url}
@@ -1055,38 +1051,27 @@ export default function MusicTab() {
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-[#9B1B2A]/10">
-                      <Disc3 className="w-10 h-10 text-[#9B1B2A]/20" />
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Disc3 className="w-6 h-6 text-white/10" />
                     </div>
                   )}
+                </div>
 
-                  {/* Access badges */}
-                  {access === 'preview' && (
-                    <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-white/15 text-white/60 backdrop-blur-sm">
-                      Preview
-                    </span>
-                  )}
-                  {access === 'coming_soon' && (
-                    <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-white/10 text-white/40 backdrop-blur-sm">
-                      Coming Soon
-                    </span>
-                  )}
-                  {access === 'stems' && (
-                    <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-[#C8962C]/90 text-black backdrop-blur-sm">
-                      Stems
-                    </span>
-                  )}
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-white truncate">{rel.title}</p>
+                  <p className="text-xs text-white/40 truncate">
+                    Smash Daddys{rel.genre ? ` \u00b7 ${rel.genre}` : ''}
+                  </p>
+                </div>
 
-                  {/* Release type badge */}
-                  {rel.release_type && access !== 'preview' && access !== 'coming_soon' && (
-                    <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-black/50 text-white/60 backdrop-blur-sm">
-                      {rel.release_type}
-                    </span>
-                  )}
-
-                  {/* Playing indicator */}
+                {/* Status */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {access === 'preview' && <span className="text-[9px] font-bold uppercase text-white/30">Preview</span>}
+                  {access === 'coming_soon' && <span className="text-[9px] font-bold uppercase text-white/20">Soon</span>}
+                  {access === 'stems' && <span className="text-[9px] font-bold uppercase text-[#C8962C]">Stems</span>}
                   {isCurrentPlaying && (
-                    <div className="absolute bottom-2 left-2 flex items-end gap-0.5 h-3">
+                    <div className="flex items-end gap-0.5 h-3">
                       {[60, 100, 40].map((h, i) => (
                         <span
                           key={i}
@@ -1096,15 +1081,6 @@ export default function MusicTab() {
                       ))}
                     </div>
                   )}
-                </div>
-
-                {/* Info */}
-                <div className="p-3">
-                  <p className="text-xs font-bold text-white truncate">{rel.title}</p>
-                  <p className="text-[10px] text-white/30 mt-0.5 truncate">
-                    {rel.catalog_number}
-                    {rel.genre && ` \u00b7 ${rel.genre}`}
-                  </p>
                 </div>
               </motion.button>
             );
