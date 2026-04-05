@@ -86,6 +86,7 @@ const L2AccessibilitySheet = lazy(() => import('./L2AccessibilitySheet'));
 const L2DataExportSheet = lazy(() => import('./L2DataExportSheet'));
 const L2ReportSheet = lazy(() => import('./L2ReportSheet'));
 const L2VerificationSheet = lazy(() => import('./L2VerificationSheet'));
+const L2RouteSheet = lazy(() => import('./L2RouteSheet'));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PLACEHOLDER FOR UNIMPLEMENTED SHEETS
@@ -218,6 +219,8 @@ const SHEET_COMPONENTS = {
   'report': L2ReportSheet,
   // Verification
   'verification': L2VerificationSheet,
+  // Travel route
+  'route': L2RouteSheet,
 };
 
 

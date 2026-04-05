@@ -182,7 +182,7 @@ export default function ProductDetail() {
       return;
     }
 
-    toast.message('Purchase coming soon.');
+    toast.message('This is being finished now.');
   };
 
   const handleReview = () => {

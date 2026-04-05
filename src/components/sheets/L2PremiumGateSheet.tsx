@@ -90,7 +90,7 @@ export default function L2PremiumGateSheet({ origin }: L2PremiumGateSheetProps) 
       const cancelUrl = `${window.location.origin}${returnPath}?premium=cancelled`;
 
       // For now, show a toast since Stripe is not yet live
-      toast.success('Premium coming soon. You will be first to know.');
+      toast.success('This is being finished now. You will be first to know.');
       closeSheet();
 
       // When Stripe is live, uncomment:

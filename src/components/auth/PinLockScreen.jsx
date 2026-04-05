@@ -188,7 +188,7 @@ export function PinEntryScreen() {
       <Keypad
         onPress={handlePress}
         onDelete={handleDelete}
-        onBiometric={() => toast.info('Biometric unlock coming soon')}
+        onBiometric={() => toast.info('Biometric unlock is being finished now')}
         biometricAvailable={false}
       />
 

@@ -51,14 +51,14 @@ export default function L2BoostShopSheet() {
       if (json.error) {
         // Hide developer env-var errors from users
         if (json.error.includes('env var') || json.error.includes('STRIPE_BOOST') || json.error.includes('PRICE_ID')) {
-          toast('Power-ups coming soon', { icon: '⚡' });
+          toast('This is being finished now', { icon: '⚡' });
         } else {
           toast.error(json.error);
         }
         return;
       }
       window.location.href = json.url;
-    } catch { toast('Power-ups coming soon', { icon: '⚡' }); }
+    } catch { toast('This is being finished now', { icon: '⚡' }); }
     finally { setBuying(null); }
   };
 

@@ -79,7 +79,7 @@ export default function L2MembershipSheet() {
 
       if (!res.ok) {
         if (res.status === 503) {
-          toast.info('Payments not yet active — coming soon');
+          toast.info('This is being finished now');
         } else {
           toast.error(data?.error || 'Could not start checkout');
         }
