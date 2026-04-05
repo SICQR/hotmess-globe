@@ -329,9 +329,9 @@ function GhostedEmpty({ onOpenFilters, onGoLive }: { onOpenFilters: () => void; 
       transition={{ duration: 0.4 }}
     >
       <Ghost className="w-12 h-12 mb-4" style={{ color: AMBER }} />
-      <h2 className="text-lg font-black text-white mb-2">Quiet right now</h2>
+      <h2 className="text-lg font-black text-white mb-2">No signals yet</h2>
       <p className="text-sm text-[#8E8E93] mb-6 max-w-[260px]">
-        Go Live so people nearby know you're out tonight.
+        Go Live so people nearby know you're out tonight
       </p>
       <button
         onClick={onGoLive || onOpenFilters}
@@ -661,12 +661,39 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
     [filters, activeTab, vibeTagFilter, blockedIds, myPosition],
   );
 
-  // ---- Profile tap handler ----
+  // ---- Profile tap handler → opens preview sheet (NOT direct chat) ----
   const handleProfileTap = useCallback(
     (profile: Profile) => {
-      // profile.id is now a real UUID from the API (no prefix)
       const uid = String((profile as any)?.userId || (profile as any)?.authUserId || profile.id);
-      openSheet('profile', { uid });
+      const name = String(profile.profileName || 'Anonymous');
+      const avatar = (profile as any)?.photos?.[0]?.url || (profile as any)?.avatar_url || undefined;
+      const email = (profile as any)?.email || null;
+      const distM = (profile as any)?.distance_m ?? null;
+      const isMoving = !!(profile as any)?.movement_active || !!(profile as any)?.is_moving;
+      const venueName = (profile as any)?.venue_name || (profile as any)?.checkin_venue || null;
+      const rightNow = (profile as any)?.rightNow || (profile as any)?.right_now_status || null;
+      const isOnline = !!(profile as any)?.is_online || !!(profile as any)?.onlineNow;
+
+      // Build context string
+      let context = 'Nearby';
+      if (isMoving) context = 'Moving';
+      else if (venueName) context = `At ${venueName}`;
+      else if (rightNow?.intention) context = rightNow.intention.charAt(0).toUpperCase() + rightNow.intention.slice(1);
+      else if (isOnline) context = 'Online';
+
+      // Build vibe
+      const vibe = rightNow?.intention || (profile as any)?.vibe || null;
+
+      openSheet('ghosted-preview', {
+        uid,
+        name,
+        avatar,
+        distance: distM,
+        context,
+        vibe,
+        isMoving,
+        email,
+      });
     },
     [openSheet],
   );
@@ -887,44 +914,22 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
       >
         <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
 
-        {/* ====== HERO BANNER ====== */}
-        {activeTab !== 'chats' && (
-          <div className="px-4 pt-3 pb-4">
-            <div
-              className="rounded-2xl p-5 relative overflow-hidden"
-              style={{ background: 'linear-gradient(135deg, rgba(200,150,44,0.08) 0%, rgba(5,5,7,0.95) 60%)' }}
-            >
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] mb-1" style={{ color: AMBER }}>GHOSTED</p>
-              <h2 className="text-lg font-black text-white leading-snug">In your moment<br />right now</h2>
-              <p className="text-xs mt-2 mb-4" style={{ color: MUTED }}>
-                People nearby, live context, movement. Real.
-              </p>
-              <button
-                onClick={() => openSheet('social', {})}
-                className="h-9 px-5 rounded-full text-xs font-bold active:scale-95 transition-transform"
-                style={{ background: AMBER, color: '#000' }}
-                aria-label="Go Live"
-              >
-                Go Live
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Hero banner removed — grid IS the content. No filler. */}
 
         {/* ====== CHATS TAB CONTENT ====== */}
         {activeTab === 'chats' ? (
           <div className="px-4">
             {chatThreads.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
-                <MessageCircle className="w-10 h-10 mb-3" style={{ color: AMBER }} />
-                <h3 className="text-base font-bold text-white mb-1">No conversations yet</h3>
-                <p className="text-sm mb-5" style={{ color: MUTED }}>Boo someone on Ghosted to start a chat.</p>
+                <Ghost className="w-10 h-10 mb-3" style={{ color: AMBER }} />
+                <h3 className="text-base font-bold text-white mb-1">No signals yet</h3>
+                <p className="text-sm mb-5" style={{ color: MUTED }}>Boo someone nearby to start</p>
                 <button
                   onClick={() => setActiveTab('nearby')}
-                  className="h-10 px-5 rounded-full text-sm font-bold"
+                  className="h-10 px-5 rounded-full text-sm font-bold active:scale-95 transition-transform"
                   style={{ background: AMBER, color: '#000' }}
                 >
-                  Open Nearby
+                  Open Ghosted
                 </button>
               </div>
             ) : (
