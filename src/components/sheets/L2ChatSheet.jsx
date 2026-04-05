@@ -14,7 +14,7 @@ import {
   MessageCircle, Send, ArrowLeft,
   Loader2, Search, ChevronRight,
   Camera, Mic, Video, Navigation,
-  Sparkles, X, Flag,
+  Sparkles, X, Flag, Ghost,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -771,9 +771,9 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
             </div>
           ) : filteredThreads.length === 0 ? (
             <div className="text-center py-12 px-4">
-              <MessageCircle className="w-12 h-12 text-white/20 mx-auto mb-4" />
-              <p className="text-white/40 font-bold">No conversations yet</p>
-              <p className="text-white/20 text-sm mt-1">Tap someone's profile to start chatting</p>
+              <Ghost className="w-10 h-10 mx-auto mb-3" style={{ color: '#C8962C', opacity: 0.3 }} />
+              <p className="text-white/50 font-bold">No conversations yet</p>
+              <p className="text-white/25 text-sm mt-1">Boo someone in Ghosted to start</p>
             </div>
           ) : (
             <div className="divide-y divide-white/10">
@@ -894,10 +894,21 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
             <Loader2 className="w-6 h-6 text-[#C8962C] animate-spin" />
           </div>
         ) : messages.length === 0 ? (
-          <div className="text-center py-12 px-6">
-            <p className="text-white font-bold text-base mb-1">You're both nearby</p>
-            <p className="text-white/40 text-sm mb-5">Send a Boo or suggest a meet</p>
-            <div className="flex items-center justify-center gap-3">
+          <div className="text-center py-10 px-6">
+            {/* Contextual headline */}
+            <p className="text-white font-bold text-base mb-1">
+              {otherProfile?.venue_name || otherProfile?.checkin_venue
+                ? `He's at ${otherProfile.venue_name || otherProfile.checkin_venue}`
+                : otherProfile?.movement_active || otherProfile?.is_moving
+                  ? 'He\'s on the move nearby'
+                  : 'You\'re both nearby'}
+            </p>
+            <p className="text-white/40 text-sm mb-5">
+              {otherProfile?.movement_active || otherProfile?.is_moving
+                ? 'Share a meetpoint or suggest a stop'
+                : 'Send a Boo, share a meetpoint, or just say hey'}
+            </p>
+            <div className="flex items-center justify-center gap-2">
               <button
                 onClick={async () => {
                   if (!currentUser?.email || !otherEmail) return;
@@ -908,6 +919,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                       tap_type: 'boo',
                     });
                     if (typeof window !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(50);
+                    toast('Boo sent');
                   } catch { /* best-effort */ }
                 }}
                 className="h-10 px-5 rounded-full text-sm font-bold active:scale-95 transition-transform"
@@ -916,8 +928,30 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                 Boo
               </button>
               <button
-                onClick={() => inputRef.current?.focus()}
+                onClick={() => {
+                  if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                      (pos) => {
+                        const lat = Math.round(pos.coords.latitude * 1000) / 1000;
+                        const lng = Math.round(pos.coords.longitude * 1000) / 1000;
+                        handleSendSpecial?.({
+                          content: `\u{1F4CD} My Location`,
+                          message_type: 'location',
+                          metadata: { approxLat: lat, approxLng: lng },
+                        });
+                      },
+                      () => toast('Location not available'),
+                      { enableHighAccuracy: false, timeout: 5000 }
+                    );
+                  }
+                }}
                 className="h-10 px-5 rounded-full text-sm font-bold bg-white/10 text-white active:scale-95 transition-transform border border-white/10"
+              >
+                Share location
+              </button>
+              <button
+                onClick={() => inputRef.current?.focus()}
+                className="h-10 px-5 rounded-full text-sm font-bold bg-white/5 text-white/60 active:scale-95 transition-transform border border-white/8"
               >
                 Message
               </button>

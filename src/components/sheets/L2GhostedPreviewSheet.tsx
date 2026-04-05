@@ -1,20 +1,21 @@
 /**
  * L2GhostedPreviewSheet — Quick preview when tapping a Ghosted card.
  *
- * Shows: photo, name, distance, context, vibe.
- * Actions: Boo (primary), Message, Meet.
- * Movement users get: Suggest Stop, Meet Halfway.
+ * The decision point. Shows: photo, name, distance, context, vibe.
+ * Actions: Boo (fastest), Message, Meet (real next move).
+ * Movement users get: Suggest Stop, Meet Halfway (promoted).
  */
 
 import { useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import { Ghost, MessageCircle, MapPin, Navigation, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Ghost, MessageCircle, MapPin, Navigation, X, Radio } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 import { hapticMedium, hapticLight } from '@/lib/haptics';
 import { formatDistance } from '@/lib/ghostedUtils';
 import { pushNotify } from '@/lib/pushNotify';
+import { GHOST_SVG_PATH } from '@/lib/assetHelpers';
 
 const AMBER = '#C8962C';
 
@@ -30,6 +31,7 @@ interface PreviewProps {
   radioShow?: string;
   email?: string | null;
   movementDestination?: string;
+  movementEta?: string;
 }
 
 export default function L2GhostedPreviewSheet({
@@ -44,12 +46,27 @@ export default function L2GhostedPreviewSheet({
   radioShow,
   email,
   movementDestination,
+  movementEta,
 }: PreviewProps) {
   const { openSheet, closeSheet } = useSheet();
   const [booSent, setBooSent] = useState(false);
   const [sending, setSending] = useState(false);
 
   const distStr = formatDistance(distance);
+
+  // Build the subtitle line: "420m · At Eagle" or "1.2km · Moving · 6 min"
+  const subtitleParts: string[] = [];
+  if (distStr) subtitleParts.push(distStr);
+  if (isMoving && movementEta) {
+    subtitleParts.push(`Moving · ${movementEta}`);
+  } else if (isMoving && movementDestination) {
+    subtitleParts.push(`On the way to ${movementDestination}`);
+  } else if (isMoving) {
+    subtitleParts.push('Passing near you');
+  } else if (context && context !== 'Nearby') {
+    subtitleParts.push(context);
+  }
+  const subtitle = subtitleParts.join(' · ') || 'Nearby';
 
   // ── Boo handler ─────────────────────────────────────────────────
   const handleBoo = useCallback(async () => {
@@ -118,12 +135,19 @@ export default function L2GhostedPreviewSheet({
         url: '/ghosted',
       });
 
-      toast(isMoving ? 'Sent · Catch him before he lands' : isListening ? 'Sent · You\'re in the same moment' : 'Boo sent');
+      // Contextual success toast
+      if (isMoving) {
+        toast('Catch him before he lands');
+      } else if (isListening) {
+        toast("You're in the same moment");
+      } else {
+        toast('Boo sent');
+      }
     } catch {
       toast('Failed to send Boo');
     }
     setSending(false);
-  }, [email, sending, booSent]);
+  }, [email, sending, booSent, isMoving, isListening]);
 
   // ── Message handler ──────────────────────────────────────────────
   const handleMessage = useCallback(() => {
@@ -136,18 +160,22 @@ export default function L2GhostedPreviewSheet({
     }
   }, [uid, name, openSheet, closeSheet]);
 
-  // ── Meet handler (opens profile for now) ─────────────────────────
+  // ── Meet handler ────────────────────────────────────────────────
   const handleMeet = useCallback(() => {
     hapticLight();
     if (uid) {
       closeSheet();
       setTimeout(() => {
-        openSheet('profile', { uid });
+        openSheet('chat', {
+          userId: uid,
+          title: `Chat with ${name}`,
+          meetMode: true,
+        });
       }, 200);
     }
-  }, [uid, openSheet, closeSheet]);
+  }, [uid, name, openSheet, closeSheet]);
 
-  // ── Full profile ─────────────────────────────────────────────────
+  // ── Full profile ────────────────────────────────────────────────
   const handleFullProfile = useCallback(() => {
     hapticLight();
     if (uid) {
@@ -160,150 +188,178 @@ export default function L2GhostedPreviewSheet({
 
   return (
     <div className="flex flex-col pb-6">
-      {/* Hero area */}
-      <div className="relative h-64 overflow-hidden rounded-t-2xl">
+      {/* Hero — compact photo area */}
+      <div className="relative h-56 overflow-hidden rounded-t-2xl">
         {avatar ? (
-          <img
-            src={avatar}
-            alt=""
-            className="w-full h-full object-cover"
-          />
+          <img src={avatar} alt="" className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-white/5 flex items-center justify-center">
-            <span className="text-5xl font-black text-white/10">
-              {name.charAt(0).toUpperCase()}
-            </span>
+          <div className="w-full h-full bg-gradient-to-br from-[#1C1C1E] to-[#0D0D0D] flex flex-col items-center justify-center gap-2">
+            <svg className="w-14 h-14 text-white/10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d={GHOST_SVG_PATH} />
+            </svg>
+            <span className="text-sm font-bold text-white/15 uppercase tracking-wider">{name.slice(0, 2).toUpperCase()}</span>
           </div>
         )}
         <div
           className="absolute inset-0"
-          style={{ background: 'linear-gradient(to top, rgba(5,5,7,1) 0%, rgba(5,5,7,0.3) 50%, transparent 100%)' }}
+          style={{ background: 'linear-gradient(to top, rgba(5,5,7,1) 0%, rgba(5,5,7,0.4) 50%, transparent 100%)' }}
         />
 
-        {/* Close button */}
+        {/* Close */}
         <button
           onClick={() => closeSheet()}
           className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
         >
           <X className="w-4 h-4 text-white/70" />
         </button>
-      </div>
 
-      {/* Info section */}
-      <div className="px-5 -mt-12 relative z-10">
-        <h2 className="text-xl font-black text-white">{name}</h2>
-
-        {/* Distance + context */}
-        <div className="flex items-center gap-2 mt-1">
-          {distStr && (
-            <span className="text-sm font-semibold text-white/60">{distStr}</span>
-          )}
-          {distStr && <span className="text-white/20">·</span>}
-          <span className="text-sm text-white/50">{context}</span>
-        </div>
-
-        {/* Vibe badge */}
-        {vibe && (
-          <div className="mt-2">
-            <span
-              className="inline-block px-3 py-1 rounded-full text-xs font-bold"
-              style={{ background: `${AMBER}20`, color: AMBER, border: `1px solid ${AMBER}30` }}
-            >
-              {vibe}
-            </span>
-          </div>
-        )}
-
-        {/* Radio context */}
-        {isListening && radioShow && (
-          <div
-            className="mt-3 flex items-center gap-2 px-3 py-2 rounded-xl"
-            style={{ background: 'rgba(0,194,224,0.08)', border: '1px solid rgba(0,194,224,0.15)' }}
-          >
-            <span className="w-2 h-2 rounded-full bg-[#00C2E0] animate-pulse" />
-            <span className="text-xs font-semibold text-[#00C2E0]">
-              Listening · {radioShow}
-            </span>
-          </div>
-        )}
-
-        {/* Movement banner */}
+        {/* Movement indicator overlay */}
         {isMoving && (
-          <div
-            className="mt-3 flex items-center gap-2 px-3 py-2 rounded-xl"
-            style={{ background: `${AMBER}10`, border: `1px solid ${AMBER}20` }}
-          >
-            <Navigation className="w-3.5 h-3.5" style={{ color: AMBER }} />
-            <span className="text-xs font-semibold" style={{ color: AMBER }}>
-              {movementDestination
-                ? `On the way to ${movementDestination}`
-                : 'Passing near you'}
-            </span>
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm">
+            <motion.div
+              animate={{ y: [-1, 1, -1] }}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+            >
+              <Navigation className="w-3 h-3" style={{ color: AMBER }} />
+            </motion.div>
+            <span className="text-[10px] font-bold" style={{ color: AMBER }}>Moving</span>
+          </div>
+        )}
+
+        {/* Listening indicator overlay */}
+        {isListening && !isMoving && (
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm">
+            <span className="w-2 h-2 rounded-full bg-[#00C2E0] animate-pulse" />
+            <span className="text-[10px] font-bold text-[#00C2E0]">Listening</span>
           </div>
         )}
       </div>
 
-      {/* Action buttons */}
-      <div className="px-5 mt-6 flex gap-3">
-        {/* Boo — primary */}
-        <button
-          onClick={handleBoo}
-          disabled={sending}
-          className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm active:scale-95 transition-all"
-          style={{
-            background: booSent ? `${AMBER}20` : AMBER,
-            color: booSent ? AMBER : '#000',
-            border: booSent ? `1px solid ${AMBER}40` : 'none',
-          }}
-        >
-          <Ghost className="w-4 h-4" />
-          {booSent ? 'Sent' : 'Boo'}
-        </button>
+      {/* Identity + context — tight to hero */}
+      <div className="px-5 -mt-10 relative z-10">
+        <h2 className="text-xl font-black text-white leading-tight">{name}</h2>
+        <p className="text-sm text-white/50 mt-0.5">{subtitle}</p>
 
-        {/* Message */}
-        <button
-          onClick={handleMessage}
-          className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm bg-white/10 text-white active:scale-95 transition-all border border-white/10"
-        >
-          <MessageCircle className="w-4 h-4" />
-          Message
-        </button>
+        {/* Vibe badge — only if they've set an intent */}
+        {vibe && (
+          <span
+            className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold"
+            style={{ background: `${AMBER}20`, color: AMBER, border: `1px solid ${AMBER}30` }}
+          >
+            {vibe.charAt(0).toUpperCase() + vibe.slice(1)}
+          </span>
+        )}
 
-        {/* Meet */}
-        <button
-          onClick={handleMeet}
-          className="h-12 w-12 rounded-2xl flex items-center justify-center bg-white/5 text-white/60 active:scale-95 transition-all border border-white/10"
-        >
-          <MapPin className="w-4 h-4" />
-        </button>
+        {/* Radio context — compact inline */}
+        {isListening && radioShow && (
+          <div className="mt-2 flex items-center gap-1.5">
+            <Radio className="w-3 h-3 text-[#00C2E0]" />
+            <span className="text-xs text-[#00C2E0] font-semibold">{radioShow}</span>
+          </div>
+        )}
       </div>
 
-      {/* Movement-specific actions */}
-      {isMoving && (
-        <div className="px-5 mt-3 flex gap-3">
-          <button
-            onClick={handleMessage}
-            className="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 text-xs font-bold active:scale-95 transition-all"
-            style={{ background: `${AMBER}15`, color: AMBER, border: `1px solid ${AMBER}25` }}
-          >
-            <Navigation className="w-3.5 h-3.5" />
-            Suggest stop
-          </button>
+      {/* ── Actions ──────────────────────────────────────────────── */}
+
+      {/* Movement-promoted: when they're moving, Meet/Stop are primary */}
+      {isMoving ? (
+        <div className="px-5 mt-5 space-y-2">
+          {/* Primary row: Boo + Meet halfway */}
+          <div className="flex gap-3">
+            <button
+              onClick={handleBoo}
+              disabled={sending}
+              className="h-12 w-14 rounded-2xl flex items-center justify-center active:scale-95 transition-all flex-shrink-0"
+              style={{
+                background: booSent ? `${AMBER}20` : AMBER,
+                color: booSent ? AMBER : '#000',
+                border: booSent ? `1px solid ${AMBER}40` : 'none',
+              }}
+            >
+              <Ghost className="w-5 h-5" />
+            </button>
+            <button
+              onClick={handleMeet}
+              className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm active:scale-95 transition-all"
+              style={{ background: AMBER, color: '#000' }}
+            >
+              <MapPin className="w-4 h-4" />
+              Meet halfway
+            </button>
+          </div>
+          {/* Secondary: Suggest stop + Message */}
+          <div className="flex gap-3">
+            <button
+              onClick={handleMessage}
+              className="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 text-xs font-bold active:scale-95 transition-all"
+              style={{ background: `${AMBER}12`, color: AMBER, border: `1px solid ${AMBER}20` }}
+            >
+              <Navigation className="w-3.5 h-3.5" />
+              Suggest a stop
+            </button>
+            <button
+              onClick={handleMessage}
+              className="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 text-xs font-bold bg-white/8 text-white/70 active:scale-95 transition-all border border-white/10"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              Message
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Standard: Boo + Message + Meet */
+        <div className="px-5 mt-5 space-y-2">
+          <div className="flex gap-3">
+            {/* Boo — primary, fastest action */}
+            <button
+              onClick={handleBoo}
+              disabled={sending}
+              className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm active:scale-95 transition-all"
+              style={{
+                background: booSent ? `${AMBER}20` : AMBER,
+                color: booSent ? AMBER : '#000',
+                border: booSent ? `1px solid ${AMBER}40` : 'none',
+              }}
+            >
+              <Ghost className="w-4 h-4" />
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={booSent ? 'sent' : 'boo'}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {booSent ? 'Sent' : 'Boo'}
+                </motion.span>
+              </AnimatePresence>
+            </button>
+
+            {/* Message */}
+            <button
+              onClick={handleMessage}
+              className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm bg-white/10 text-white active:scale-95 transition-all border border-white/10"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Message
+            </button>
+          </div>
+
+          {/* Meet — full-width secondary, real next move */}
           <button
             onClick={handleMeet}
-            className="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 text-xs font-bold active:scale-95 transition-all"
-            style={{ background: `${AMBER}15`, color: AMBER, border: `1px solid ${AMBER}25` }}
+            className="w-full h-10 rounded-xl flex items-center justify-center gap-2 text-xs font-bold active:scale-95 transition-all border border-white/10 bg-white/5 text-white/70"
           >
             <MapPin className="w-3.5 h-3.5" />
-            Meet halfway
+            Meet
           </button>
         </div>
       )}
 
-      {/* View full profile */}
+      {/* View full profile — quiet link */}
       <button
         onClick={handleFullProfile}
-        className="mx-5 mt-4 h-10 rounded-xl text-xs font-semibold text-white/40 active:text-white/60 transition-colors"
+        className="mx-5 mt-3 h-8 text-xs font-semibold text-white/30 active:text-white/50 transition-colors"
       >
         View full profile
       </button>
