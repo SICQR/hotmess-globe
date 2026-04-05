@@ -327,6 +327,7 @@ function ReleaseDetailSheet({ release, tracks, onClose }) {
 // ── Stem Unlock Sheet ────────────────────────────────────────────────────────
 
 function StemUnlockSheet({ release, onClose }) {
+  const navigate = useNavigate();
   const stemTypes = ['Drums', 'Bass', 'Vocals', 'FX'];
   const price = release.stem_pack_price_gbp ? `\u00a3${Number(release.stem_pack_price_gbp).toFixed(2)}` : 'Free';
 
@@ -351,7 +352,7 @@ function StemUnlockSheet({ release, onClose }) {
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-        className="relative w-full max-h-[80vh] rounded-t-3xl bg-[#1C1C1E] px-6 pt-6 pb-10 z-10"
+        className="relative w-full max-h-[85vh] overflow-y-auto rounded-t-3xl bg-[#1C1C1E] px-6 pt-6 pb-10 z-10"
       >
         {/* Drag handle */}
         <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-6" />
@@ -360,17 +361,49 @@ function StemUnlockSheet({ release, onClose }) {
           Unlock the Source
         </h2>
         <p className="text-sm text-white/50 text-center mt-2 mb-6">
-          Includes full stems + early access
+          {release.title} &mdash; Smash Daddys
         </p>
 
-        {/* Stem types */}
-        <div className="grid grid-cols-4 gap-3 mb-6">
-          {stemTypes.map(stem => (
-            <div key={stem} className="flex flex-col items-center gap-2 py-3 rounded-xl bg-white/[0.03] border border-white/5">
-              <FileAudio className="w-6 h-6 text-[#C8962C]" />
-              <span className="text-[10px] font-bold uppercase text-white/60">{stem}</span>
-            </div>
-          ))}
+        {/* What you get */}
+        <div className="mb-5">
+          <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-3">What you get</p>
+          <div className="grid grid-cols-4 gap-3">
+            {stemTypes.map(stem => (
+              <div key={stem} className="flex flex-col items-center gap-2 py-3 rounded-xl bg-white/[0.03] border border-white/5">
+                <FileAudio className="w-6 h-6 text-[#C8962C]" />
+                <span className="text-[10px] font-bold uppercase text-white/60">{stem}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* File format */}
+        <div className="mb-5 rounded-xl bg-white/[0.02] border border-white/5 px-4 py-3">
+          <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-2">File format</p>
+          <p className="text-xs text-white/70">WAV (16-bit or 24-bit) &middot; Studio quality</p>
+        </div>
+
+        {/* Delivery */}
+        <div className="mb-5 rounded-xl bg-white/[0.02] border border-white/5 px-4 py-3">
+          <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-2">Delivery</p>
+          <p className="text-xs text-white/70">Instant download &middot; Saved to your account</p>
+        </div>
+
+        {/* License summary */}
+        <div className="mb-6 rounded-xl border border-[#9B1B2A]/20 bg-[#9B1B2A]/5 px-4 py-3">
+          <p className="text-[9px] font-black uppercase tracking-widest text-[#9B1B2A] mb-2">HOTMESS Remix License</p>
+          <div className="space-y-1.5 text-xs text-white/60">
+            <p className="flex items-center gap-2"><span className="text-[#30D158]">{'\u2713'}</span> Remix + DJ use allowed</p>
+            <p className="flex items-center gap-2"><span className="text-[#30D158]">{'\u2713'}</span> Share mixes non-commercially</p>
+            <p className="flex items-center gap-2"><span className="text-[#FF3B30]">{'\u2717'}</span> No commercial release</p>
+            <p className="flex items-center gap-2"><span className="text-[#FF3B30]">{'\u2717'}</span> Ownership retained by HOTMESS</p>
+          </div>
+          <button
+            onClick={() => { onClose(); navigate('/legal/remix-license'); }}
+            className="mt-2 text-[10px] font-bold uppercase tracking-wider text-[#C8962C] active:opacity-70"
+          >
+            Read full license &rarr;
+          </button>
         </div>
 
         {/* Buy CTA */}
@@ -382,7 +415,7 @@ function StemUnlockSheet({ release, onClose }) {
           className="w-full h-12 rounded-xl bg-[#C8962C] text-black font-black uppercase text-sm active:scale-95 transition-transform"
           aria-label={`Buy stems for ${price}`}
         >
-          Buy {'\u2014'} {price}
+          Buy now {'\u2014'} {price}
         </button>
 
         <button
