@@ -615,13 +615,25 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     const placesGroup = new THREE.Group();
     const placeMeshes = [];
 
-    // Visual config per place type (base — modified by intensity)
+    // Visual config per place type (base — modified by intensity + tier)
     const PLACE_VISUALS = {
       city:    { color: 0x1A1A1A, emissive: 0x333333, size: 0.025, glowOpacity: 0.15, pulseSpeed: 0,   glowSize: 3.0, labelColor: '#666666' },
       zone:    { color: 0xBBBBBB, emissive: 0x888888, size: 0.018, glowOpacity: 0.20, pulseSpeed: 0.15, glowSize: 2.5, labelColor: '#999999' },
       club:    { color: 0xFFFFFF, emissive: 0xCCCCCC, size: 0.016, glowOpacity: 0.35, pulseSpeed: 0.25, glowSize: 2.0, labelColor: '#CCCCCC' },
       curated: { color: 0xC8962C, emissive: 0xC8962C, size: 0.022, glowOpacity: 0.60, pulseSpeed: 0.83, glowSize: 3.5, labelColor: '#C8962C' },
     };
+
+    // ── Tier multipliers — amplify presence for paying venues ──
+    // Pro: gold tint, strongest draw. Standard: slightly stronger. Community: calm.
+    const TIER_MULTIPLIERS = {
+      free:      { glowMult: 1.0, sizeMult: 1.0, pulseMult: 1.0, intensityBoost: 1.0,  renderPriority: 0 },
+      standard:  { glowMult: 1.10, sizeMult: 1.05, pulseMult: 1.10, intensityBoost: 1.0,  renderPriority: 1 },
+      pro:       { glowMult: 1.25, sizeMult: 1.10, pulseMult: 1.15, intensityBoost: 1.15, renderPriority: 3 },
+      community: { glowMult: 0.6, sizeMult: 0.9, pulseMult: 0.5, intensityBoost: 1.0,  renderPriority: -1 },
+    };
+
+    // Event-active boost (Standard + Pro only)
+    const EVENT_ACTIVE_BOOST = { glowMult: 1.20, pulseMult: 1.30, sizeMult: 1.08 };
 
     // 5-level intensity system: modifies club/curated nodes based on check-in data
     const INTENSITY_LEVELS = {
@@ -636,7 +648,14 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     const placeGeo = new THREE.SphereGeometry(0.015, 8, 8);
 
     if (Array.isArray(pulsePlaces) && pulsePlaces.length > 0) {
-      pulsePlaces.forEach(place => {
+      // Sort by tier render priority: Pro first, Community last
+      const sortedPlaces = [...pulsePlaces].sort((a, b) => {
+        const pa = (TIER_MULTIPLIERS[a.tier] || TIER_MULTIPLIERS.free).renderPriority;
+        const pb = (TIER_MULTIPLIERS[b.tier] || TIER_MULTIPLIERS.free).renderPriority;
+        return pb - pa; // higher priority renders first (on top)
+      });
+
+      sortedPlaces.forEach(place => {
         const visual = PLACE_VISUALS[place.type] || PLACE_VISUALS.city;
         const pos = latLngToVector3(place.lat, place.lng, globeRadius * 1.008);
 
@@ -646,92 +665,130 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         const iLevel = INTENSITY_LEVELS[Math.min(level, 5)] || INTENSITY_LEVELS[0];
         const isVenue = place.type === 'club' || place.type === 'curated';
 
-        // Pin mesh — intensity modifies emissive + size for venues
+        // ── Tier modifiers ──
+        const tier = place.tier || 'free';
+        const tierMod = TIER_MULTIPLIERS[tier] || TIER_MULTIPLIERS.free;
+        const eventBoost = (tier === 'standard' || tier === 'pro') && place.event_active ? EVENT_ACTIVE_BOOST : { glowMult: 1, pulseMult: 1, sizeMult: 1 };
+        const isCommunity = tier === 'community';
+        const isPro = tier === 'pro';
+
+        // Pin mesh — intensity + tier modifies emissive + size for venues
         const baseEmissiveIntensity = place.type === 'curated' ? 1.8 : place.type === 'club' ? 0.8 : 0.4;
+        // Pro venues get gold tint; community gets muted blue
+        const tierColor = isPro ? 0xC8962C : isCommunity ? 0x5588AA : null;
+        const tierEmissive = isPro ? 0xC8962C : isCommunity ? 0x334455 : null;
+        // Visual intensity boost for Pro (display only, not count)
+        const displayIntensityMult = isVenue ? tierMod.intensityBoost : 1.0;
+        const effectiveEmissiveMult = iLevel.emissiveMult * displayIntensityMult;
+
         const mat = new THREE.MeshStandardMaterial({
-          color: isVenue && level >= 4 ? (iLevel.heatColor || visual.color) : visual.color,
-          emissive: isVenue && level >= 3 ? (iLevel.heatColor || visual.emissive) : visual.emissive,
-          emissiveIntensity: isVenue ? baseEmissiveIntensity * iLevel.emissiveMult : baseEmissiveIntensity,
-          roughness: 0.3,
-          metalness: place.type === 'curated' ? 0.6 : 0.2,
+          color: tierColor ? tierColor : isVenue && level >= 4 ? (iLevel.heatColor || visual.color) : visual.color,
+          emissive: tierEmissive ? tierEmissive : isVenue && level >= 3 ? (iLevel.heatColor || visual.emissive) : visual.emissive,
+          emissiveIntensity: isVenue ? baseEmissiveIntensity * effectiveEmissiveMult : baseEmissiveIntensity,
+          roughness: isCommunity ? 0.5 : 0.3,
+          metalness: isPro ? 0.7 : place.type === 'curated' ? 0.6 : isCommunity ? 0.1 : 0.2,
         });
         const mesh = new THREE.Mesh(placeGeo, mat);
         mesh.position.copy(pos);
         const baseScale = visual.size / 0.015;
-        const scale = isVenue ? baseScale * iLevel.sizeMult : baseScale;
+        const scale = isVenue ? baseScale * iLevel.sizeMult * tierMod.sizeMult * eventBoost.sizeMult : baseScale;
         mesh.scale.setScalar(scale);
+        const effectivePulseSpeed = (isVenue ? iLevel.pulseSpeed : visual.pulseSpeed) * tierMod.pulseMult * eventBoost.pulseMult;
         mesh.userData = {
           type: 'place',
           place,
           placeType: place.type,
           baseScale: scale,
           intensityLevel: level,
-          intensityPulseSpeed: isVenue ? iLevel.pulseSpeed : visual.pulseSpeed,
-          beaconVisual: { pulseSpeed: isVenue ? iLevel.pulseSpeed : visual.pulseSpeed },
+          tier,
+          isPro,
+          isCommunity,
+          intensityPulseSpeed: effectivePulseSpeed,
+          beaconVisual: { pulseSpeed: effectivePulseSpeed },
         };
         placesGroup.add(mesh);
         placeMeshes.push(mesh);
 
-        // Glow sprite — intensity amplifies glow
-        const glowOpacity = isVenue ? visual.glowOpacity * iLevel.glowMult : visual.glowOpacity;
-        if (glowOpacity > 0.05) {
-          const glowColor = isVenue && iLevel.heatColor ? iLevel.heatColor : visual.emissive;
+        // Glow sprite — intensity + tier amplifies glow
+        const glowOpacity = isVenue ? visual.glowOpacity * iLevel.glowMult * tierMod.glowMult * eventBoost.glowMult : visual.glowOpacity;
+        // Community venues: suppress glow
+        if (glowOpacity > 0.05 && !isCommunity) {
+          const glowColor = isPro ? 0xC8962C : isVenue && iLevel.heatColor ? iLevel.heatColor : visual.emissive;
           const glowSprite = new THREE.Sprite(new THREE.SpriteMaterial({
             color: glowColor,
             transparent: true,
             opacity: Math.min(glowOpacity, 0.9),
             blending: THREE.AdditiveBlending,
           }));
-          const gs = visual.size * visual.glowSize * (isVenue ? iLevel.sizeMult : 1);
+          const gs = visual.size * visual.glowSize * (isVenue ? iLevel.sizeMult * tierMod.sizeMult : 1);
           glowSprite.scale.set(gs, gs, 1);
           glowSprite.position.copy(pos);
-          glowSprite.userData = { placeType: place.type, intensityLevel: level };
+          glowSprite.userData = { placeType: place.type, intensityLevel: level, tier };
           placesGroup.add(glowSprite);
         }
-
-        // Heat bloom ring for Level 3+ venues
-        if (isVenue && level >= 3 && iLevel.heatColor) {
-          const heatSprite = new THREE.Sprite(new THREE.SpriteMaterial({
-            color: iLevel.heatColor,
+        // Community venues get a subtle calm glow instead
+        if (isCommunity) {
+          const communityGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+            color: 0x5588AA,
             transparent: true,
-            opacity: 0.15 + level * 0.05,
+            opacity: 0.12,
             blending: THREE.AdditiveBlending,
           }));
-          const hs = visual.size * 5 * iLevel.sizeMult;
+          const cgs = visual.size * 2.0;
+          communityGlow.scale.set(cgs, cgs, 1);
+          communityGlow.position.copy(pos);
+          communityGlow.userData = { placeType: place.type, intensityLevel: 0, tier: 'community' };
+          placesGroup.add(communityGlow);
+        }
+
+        // Heat bloom ring for Level 3+ venues (community venues never get heat)
+        if (isVenue && level >= 3 && iLevel.heatColor && !isCommunity) {
+          const heatColor = isPro ? 0xC8962C : iLevel.heatColor;
+          const heatSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+            color: heatColor,
+            transparent: true,
+            opacity: (0.15 + level * 0.05) * tierMod.glowMult,
+            blending: THREE.AdditiveBlending,
+          }));
+          const hs = visual.size * 5 * iLevel.sizeMult * tierMod.sizeMult;
           heatSprite.scale.set(hs, hs, 1);
           heatSprite.position.copy(pos);
-          heatSprite.userData = { placeType: place.type, isHeatBloom: true, intensityLevel: level };
+          heatSprite.userData = { placeType: place.type, isHeatBloom: true, intensityLevel: level, tier };
           placesGroup.add(heatSprite);
         }
 
-        // Name label — for curated + clubs, or any venue with Level 2+
-        if (place.type === 'curated' || place.type === 'club' || (isVenue && level >= 2)) {
+        // Name label — for curated + clubs, Pro always, or any venue with Level 2+
+        const showLabel = place.type === 'curated' || place.type === 'club' || isPro || (isVenue && level >= 2);
+        if (showLabel) {
           const labelCanvas = document.createElement('canvas');
           labelCanvas.width = 256;
           labelCanvas.height = 48;
           const lctx = labelCanvas.getContext('2d');
-          // Active venues get brighter labels
-          lctx.fillStyle = level >= 3 ? '#FFFFFF' : visual.labelColor;
-          lctx.font = place.type === 'curated' ? 'bold 24px Arial' : '20px Arial';
+          // Pro: gold labels. Community: muted blue. Active: white. Default: type color.
+          const labelColor = isPro ? '#C8962C' : isCommunity ? '#5588AA' : level >= 3 ? '#FFFFFF' : visual.labelColor;
+          lctx.fillStyle = labelColor;
+          lctx.font = (place.type === 'curated' || isPro) ? 'bold 24px Arial' : '20px Arial';
           lctx.textAlign = 'center';
           lctx.textBaseline = 'middle';
           lctx.fillText(place.name.toUpperCase().slice(0, 20), 128, 24);
           const labelTex = new THREE.CanvasTexture(labelCanvas);
+          const labelOpacity = isPro ? 0.95 : level >= 3 ? 0.9 : isCommunity ? 0.5 : 0.7;
           const labelSprite = new THREE.Sprite(
-            new THREE.SpriteMaterial({ map: labelTex, transparent: true, opacity: level >= 3 ? 0.9 : 0.7 })
+            new THREE.SpriteMaterial({ map: labelTex, transparent: true, opacity: labelOpacity })
           );
           labelSprite.scale.set(0.14, 0.028, 1);
           labelSprite.position.copy(pos);
           labelSprite.position.y += 0.04;
-          labelSprite.userData = { placeType: place.type, isLabel: true, intensityLevel: level };
+          labelSprite.userData = { placeType: place.type, isLabel: true, intensityLevel: level, tier };
           placesGroup.add(labelSprite);
         }
 
         // ── Who's There: anonymous silhouette dots around venue nodes ──
         // Small dim dots scattered in a tight cluster. Count = real check-ins (capped at 12).
-        if (isVenue && level >= 1 && intensity) {
+        // Community venues: no public silhouettes (privacy-first)
+        if (isVenue && level >= 1 && intensity && !isCommunity) {
           const silCount = Math.min(intensity.checkins_4h || 0, 12);
-          const silhouetteColor = place.type === 'curated' ? 0xC8962C : 0x888888;
+          const silhouetteColor = (place.type === 'curated' || isPro) ? 0xC8962C : 0x888888;
           for (let si = 0; si < silCount; si++) {
             // Scatter in a ring around the node (pseudo-random from index)
             const angle = (si / Math.max(silCount, 1)) * Math.PI * 2 + (si * 137.5 * Math.PI / 180); // golden angle
@@ -1676,21 +1733,25 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       });
 
       // ── Conversion labels: spawn for L3+ venues, detect level spikes ──
+      // Community venues never get conversion labels (privacy-first)
       placesGroup.children.forEach(child => {
         if (!child.userData?.place || child.userData.isLabel || child.userData.isHeatBloom) return;
+        if (child.userData.isCommunity) return; // skip community venues
         const slug = child.userData.place?.slug;
         const level = child.userData.intensityLevel || 0;
         if (!slug) return;
+
+        const childIsGold = child.userData.placeType === 'curated' || child.userData.isPro;
 
         // Spike detection: level increased since last frame
         const prevLevel = prevIntensityLevels.get(slug) ?? level;
         if (level > prevLevel && level >= 3) {
           // Level jumped → spike ripple + label
-          const hc = INTENSITY_LEVELS[Math.min(level, 5)]?.heatColor;
+          const hc = child.userData.isPro ? 0xC8962C : INTENSITY_LEVELS[Math.min(level, 5)]?.heatColor;
           spawnSpikeRipple(child.position, hc || 0xC8962C);
           const labels = ['JUST LIT UP', 'BUILDING FAST', 'IT\'S HAPPENING', 'PEAKING RIGHT NOW'];
           const labelIdx = Math.min(level - 2, labels.length - 1);
-          spawnConversionLabel(slug, labels[labelIdx], child.position, child.userData.placeType === 'curated');
+          spawnConversionLabel(slug, labels[labelIdx], child.position, childIsGold);
         }
         prevIntensityLevels.set(slug, level);
 
@@ -1700,7 +1761,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
           const interval = 8 + (hash % 5); // 8-12s per venue, staggered
           if (Math.floor(time * 10) % Math.floor(interval * 10) === 0) {
             const labels = level >= 5 ? 'PEAKING RIGHT NOW' : level >= 4 ? 'HOT TONIGHT' : 'BUILDING FAST';
-            spawnConversionLabel(slug, labels, child.position, child.userData.placeType === 'curated');
+            spawnConversionLabel(slug, labels, child.position, childIsGold);
           }
         }
       });
