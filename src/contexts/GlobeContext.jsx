@@ -54,6 +54,9 @@ export function GlobeProvider({ children }) {
     radio: true,
   });
 
+  // Focused place — set by Globe.jsx on place tap, read by PulseMode for VenuePanel
+  const [focusedPlace, setFocusedPlace] = useState(null);
+
   // Amplified beacons Map<id, { multiplier, expiresAt }>
   const [amplifiedBeaconIds, setAmplifiedBeaconIds] = useState(new Map());
 
@@ -157,6 +160,8 @@ export function GlobeProvider({ children }) {
     setActiveLayer,
     amplifiedBeaconIds,
     amplifyBeacon,
+    focusedPlace,
+    setFocusedPlace,
   };
 
   return (
@@ -187,6 +192,8 @@ const GLOBE_NOOP = {
   setActiveLayer: () => {},
   amplifiedBeaconIds: new Map(),
   amplifyBeacon: () => {},
+  focusedPlace: null,
+  setFocusedPlace: () => {},
 };
 
 export function useGlobe() {
