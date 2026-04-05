@@ -20,6 +20,7 @@ import { useGlobeActivity } from '@/hooks/useGlobeActivity';
 import { useGlobeRealtime } from '@/hooks/useGlobeRealtime';
 import { useProfileOpener } from '@/lib/profile';
 import LocationShopPanel from '../components/globe/LocationShopPanel';
+import { usePulsePlacesByType } from '@/hooks/usePulsePlaces';
 
 // ── City coords for programmatic flyTo ──────────────────────────────────────
 const CITY_COORDS = {
@@ -335,6 +336,9 @@ export default function GlobePage({ embedded = false }) {
   const [previewBeacon, setPreviewBeacon] = useState(null);
   const [locationShopBeacon, setLocationShopBeacon] = useState(null);
   const autoZoomedRef = React.useRef(false);
+
+  // Pulse Places: cultural anchor layer (cities, zones, clubs, curated)
+  const { cities: placeCities, zones: placeZones, clubs: placeClubs, curated: placeCurated, allPlaces: pulsePlaces } = usePulsePlacesByType();
 
   // Living Globe: activity reactor (seed heat + venue glow)
   const liveBeaconCount = (rightNowUsers?.length ?? 0) + (beacons?.length ?? 0);
@@ -730,6 +734,7 @@ export default function GlobePage({ embedded = false }) {
             ref={globeRef}
             beacons={filteredBeacons}
             cities={cities}
+            pulsePlaces={pulsePlaces}
             activeLayers={debouncedLayers}
             userActivities={userActivities}
             userIntents={userIntents}
@@ -745,6 +750,24 @@ export default function GlobePage({ embedded = false }) {
               handleCityClick(city);
               setCameraCity(city.name);
               ctxSetSelectedCity(city.name);
+            }}
+            onPlaceClick={(place) => {
+              // Cities: zoom in. Zones/clubs/curated: open micro flow.
+              if (place.type === 'city') {
+                handleCityClick({ ...place, active: true });
+              } else {
+                // Treat as a beacon-like pin → preview
+                handleBeaconClick({
+                  id: `place-${place.slug}`,
+                  title: place.name,
+                  kind: place.type,
+                  beacon_category: place.type === 'curated' ? 'hotmess' : 'venue',
+                  lat: place.lat,
+                  lng: place.lng,
+                  description: place.notes,
+                  placeData: place,
+                });
+              }
             }}
             selectedCity={selectedCity}
             highlightedIds={
