@@ -164,10 +164,25 @@ export function useGhostedGrid(
         .select('user_id, status_type, venue_id, expires_at')
         .gte('expires_at', now);
 
-      if (!rnRows?.length) return [];
+      const userIds = (rnRows || []).map((r: any) => r.user_id).filter((id: string) => id !== myId);
 
-      const userIds = rnRows.map((r: any) => r.user_id).filter((id: string) => id !== myId);
-      if (!userIds.length) return [];
+      // Also fetch active movement sessions (live_mode + public_live visibility)
+      let movementRows: any[] = [];
+      try {
+        const { data: mvData } = await supabase
+          .from('public_movement_presence')
+          .select('*')
+          .in('visibility', ['live_mode', 'public_live'])
+          .neq('user_id', myId!);
+        movementRows = mvData || [];
+      } catch {
+        // View may not exist yet — graceful degradation
+      }
+
+      // Merge user IDs from both sources
+      const movementUserIds = movementRows.map((m: any) => m.user_id);
+      const allUserIds = [...new Set([...userIds, ...movementUserIds])];
+      if (!allUserIds.length) return [];
 
       const { data: profiles } = await supabase
         .from('profiles')
@@ -175,14 +190,17 @@ export function useGhostedGrid(
           id, display_name, username, avatar_url, photos,
           last_lat, last_lng, is_online, age, looking_for, verified, last_seen
         `)
-        .in('id', userIds)
+        .in('id', allUserIds)
         .not('display_name', 'is', null);
 
-      // Merge right_now_status data
-      const statusMap = new Map(rnRows.map((r: any) => [r.user_id, r]));
+      // Merge right_now_status + movement data
+      const statusMap = new Map((rnRows || []).map((r: any) => [r.user_id, r]));
+      const movementMap = new Map(movementRows.map((m: any) => [m.user_id, m]));
+
       return (profiles || []).map((p: any) => ({
         ...p,
         _rnStatus: statusMap.get(p.id),
+        _movement: movementMap.get(p.id) || null,
       }));
     },
   });
@@ -302,15 +320,38 @@ export function useGhostedGrid(
     return liveQuery.data
       .filter((p: any) => !blocked.has(p.id))
       .map((p: any) => {
+        // Use movement lat/lng if available, else profile lat/lng
+        const pLat = p._movement?.approx_lat ?? p.last_lat;
+        const pLng = p._movement?.approx_lng ?? p.last_lng;
         const distanceM =
-          myLat != null && myLng != null && p.last_lat != null && p.last_lng != null
-            ? calculateDistance(myLat, myLng, p.last_lat, p.last_lng)
+          myLat != null && myLng != null && pLat != null && pLng != null
+            ? calculateDistance(myLat, myLng, pLat, pLng)
             : null;
 
-        const statusType = p._rnStatus?.status_type || '';
-        const contextLabel = statusType
-          ? statusType.charAt(0).toUpperCase() + statusType.slice(1)
-          : 'Live';
+        // Movement takes priority for context
+        let contextType: GhostedCardProps['contextType'] = 'live';
+        let contextLabel = 'Live';
+
+        if (p._movement) {
+          contextType = 'moving';
+          const eta = p._movement.latest_eta ?? p._movement.eta_minutes;
+          const dest = p._movement.destination_label;
+          if (eta && dest) {
+            contextLabel = `Moving \u00B7 ${eta} min to ${dest}`;
+          } else if (eta) {
+            contextLabel = `Moving \u00B7 ${eta} min away`;
+          } else if (dest) {
+            contextLabel = `Moving to ${dest}`;
+          } else {
+            contextLabel = 'Moving';
+          }
+        } else {
+          const statusType = p._rnStatus?.status_type || '';
+          contextLabel = statusType
+            ? statusType.charAt(0).toUpperCase() + statusType.slice(1)
+            : 'Live';
+        }
+
         const avatar = p.avatar_url || p.photos?.[0]?.url || null;
 
         return {
@@ -320,7 +361,7 @@ export function useGhostedGrid(
           distanceM: distanceM != null ? roundDistance(distanceM) : null,
           isOnline: true,
           isVerified: !!p.verified,
-          contextType: 'live' as const,
+          contextType,
           contextLabel,
           vibe: null,
           intent: null,

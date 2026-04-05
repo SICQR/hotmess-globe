@@ -579,6 +579,17 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────
+  // MOVEMENT SHARING
+  // ─────────────────────────────────────────────────────────────────────────
+  'movement-share': {
+    id: 'movement-share',
+    title: 'Share Movement',
+    height: 'medium',
+    auth: true,
+    deepLinkParams: [],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
   // AUTH — MORE SIGN-IN METHODS
   // ─────────────────────────────────────────────────────────────────────────
   'more-auth-methods': {
