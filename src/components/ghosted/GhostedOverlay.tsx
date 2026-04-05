@@ -16,6 +16,7 @@ import { useSheet } from '@/contexts/SheetContext';
 import { useVenuePresence, type GhostedContext, type PresenceUser } from '@/hooks/useVenuePresence';
 import { VibeChip } from '@/components/vibe/VibeSelector';
 import type { Vibe } from '@/hooks/useVenueVibes';
+import PrivacyDisclosure from '@/components/privacy/PrivacyDisclosure';
 
 const AMBER = '#C8962C';
 
@@ -108,6 +109,9 @@ export default function GhostedOverlay({ context, onClose, onExpandToNearby }: G
               <X className="w-5 h-5 text-white/50" />
             </button>
           </div>
+
+          {/* Privacy disclosure */}
+          <PrivacyDisclosure type="ghosted" className="mt-2" />
 
           {/* Silhouette preview row */}
           {visibleUsers.length > 0 && (

@@ -21,6 +21,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
+import { useAiEnabled } from '@/hooks/usePrivacySettings';
 
 const TYPE_STYLES = {
   event: {
@@ -46,6 +47,7 @@ export default function SceneScout({
   const { user } = useAuth();
   const navigate = useNavigate();
   const { openSheet } = useSheet();
+  const aiEnabled = useAiEnabled();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -53,6 +55,11 @@ export default function SceneScout({
 
   const fetchRecommendations = async () => {
     if (!user) return;
+    if (!aiEnabled) {
+      setLoading(false);
+      setError('ai_disabled');
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -111,6 +118,18 @@ export default function SceneScout({
         <div className="flex items-center justify-center gap-3 text-white/60">
           <Loader2 className="w-5 h-5 animate-spin" />
           <span>Finding your perfect night...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error === 'ai_disabled') {
+    return (
+      <div className={`bg-black border border-white/10 p-6 ${className}`}>
+        <div className="text-center">
+          <Sparkles className="w-8 h-8 text-white/20 mx-auto mb-3" />
+          <p className="text-sm text-white/50 mb-1">Smart suggestions are off</p>
+          <p className="text-xs text-white/30">Turn on in Settings → Privacy</p>
         </div>
       </div>
     );

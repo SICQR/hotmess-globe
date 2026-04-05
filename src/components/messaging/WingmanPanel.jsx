@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
+import { useAiEnabled } from '@/hooks/usePrivacySettings';
 
 const OPENER_TYPES = {
   personal: { label: 'Personal', icon: Heart, color: '#C8962C' },
@@ -37,6 +38,7 @@ export default function WingmanPanel({
 }) {
   const { user } = useAuth();
   const { openSheet } = useSheet();
+  const aiEnabled = useAiEnabled();
   const [openers, setOpeners] = useState([]);
   const [commonGround, setCommonGround] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -45,6 +47,14 @@ export default function WingmanPanel({
 
   const fetchOpeners = async () => {
     if (!user || !targetProfileId) return;
+    if (!aiEnabled) {
+      setOpeners([
+        { text: `Hey ${targetName || 'there'}! Your profile caught my eye.`, type: 'personal' },
+        { text: 'Something tells me we might vibe. Am I wrong?', type: 'flirty' },
+        { text: 'What brings you to HOTMESS?', type: 'question' }
+      ]);
+      return;
+    }
 
     setLoading(true);
     setError(null);
