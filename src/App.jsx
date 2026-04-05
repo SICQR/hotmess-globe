@@ -23,7 +23,7 @@ import CreatorsCheckoutSuccess from '@/pages/CreatorsCheckoutSuccess';
 import Privacy from '@/pages/legal/Privacy';
 import Terms from '@/pages/legal/Terms';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
-import { AboutPage, LegalPage, AccessibilityPage, PrivacyPolicyPage } from '@/pages/legal/LegalPages';
+import { AboutPage, LegalPage, AccessibilityPage, PrivacyPolicyPage, RemixLicensePage, CommercialLicensePage, CreatorAgreementPage, DMCAPage } from '@/pages/legal/LegalPages';
 import { CookieBanner } from '@/components/legal/CookieBanner';
 import { I18nProvider } from '@/contexts/I18nContext';
 import { WorldPulseProvider } from '@/contexts/WorldPulseContext';
@@ -491,6 +491,10 @@ const AuthenticatedApp = () => {
       <Route path="/legal/privacy-hub" element={<LegalPrivacyHubRoute />} />
       <Route path="/legal/about" element={<AboutPage />} />
       <Route path="/legal/accessibility" element={<AccessibilityPage />} />
+      <Route path="/legal/remix-license" element={<RemixLicensePage />} />
+      <Route path="/legal/commercial-license" element={<CommercialLicensePage />} />
+      <Route path="/legal/creator-agreement" element={<CreatorAgreementPage />} />
+      <Route path="/legal/dmca" element={<DMCAPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/accessibility" element={<AccessibilityPage />} />
       <Route path="/legal" element={<Navigate to="/legal/privacy" replace />} />

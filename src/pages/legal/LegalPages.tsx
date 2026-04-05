@@ -93,61 +93,117 @@ export function AboutPage() {
 export function LegalPage() {
   return (
     <LegalPageLayout title="Terms of Service">
-      <p><em>Last updated: February 2026</em></p>
+      <p><em>Last updated: April 2026</em></p>
 
-      <h2>1. Acceptance of Terms</h2>
+      <h2>1. Overview</h2>
       <p>
-        By accessing or using HOTMESS ("the Service"), you agree to be bound by 
-        these Terms of Service. If you do not agree, do not use the Service.
+        HOTMESS is a members-only platform providing access to music, content,
+        marketplace features, and community tools. By using HOTMESS, you agree
+        to these Terms. You must be 18+ to use this platform.
       </p>
 
-      <h2>2. Eligibility</h2>
+      <h2>2. Accounts</h2>
       <p>
-        You must be at least 18 years old to use HOTMESS. By using the Service, 
-        you represent and warrant that you are 18 or older.
+        You are responsible for maintaining your account security and all
+        activity under your account. We may suspend or terminate accounts
+        that violate these Terms.
       </p>
 
-      <h2>3. User Conduct</h2>
-      <p>You agree not to:</p>
+      <h2>3. Membership &amp; Access</h2>
+      <p>HOTMESS offers:</p>
       <ul>
-        <li>Harass, threaten, or abuse other users</li>
-        <li>Post illegal, harmful, or offensive content</li>
-        <li>Impersonate others or misrepresent your identity</li>
-        <li>Use the Service for commercial purposes without permission</li>
-        <li>Attempt to access other users' accounts</li>
-        <li>Violate any applicable laws</li>
+        <li><strong>Free access</strong> — preview only</li>
+        <li><strong>Paid membership</strong> — full streaming access</li>
+        <li><strong>Paid stem purchases</strong> — producer access</li>
+      </ul>
+      <p>You are purchasing <strong>access</strong>, not ownership.</p>
+
+      <h2>4. Music Usage</h2>
+      <p>
+        All music on HOTMESS is owned by HOTMESS / RAW CONVICT RECORDS.
+      </p>
+      <p>You may:</p>
+      <ul>
+        <li>Preview tracks</li>
+        <li>Stream tracks (if a member)</li>
+      </ul>
+      <p>You may not:</p>
+      <ul>
+        <li>Download audio (unless explicitly provided)</li>
+        <li>Redistribute or re-upload tracks</li>
+        <li>Extract audio from streams</li>
+        <li>Claim ownership of any content</li>
       </ul>
 
-      <h2>4. Content</h2>
+      <h2>5. Stem Purchases</h2>
+      <p>When purchasing stems, you receive:</p>
+      <ul>
+        <li>Downloadable audio files (WAV, studio quality)</li>
+        <li>Limited remix rights (see <a href="/legal/remix-license">Remix License</a>)</li>
+      </ul>
+      <p>You do not receive ownership or commercial release rights.</p>
+
+      <h2>6. Marketplace (Preloved / Products)</h2>
       <p>
-        You retain ownership of content you post. By posting, you grant HOTMESS 
-        a license to display, distribute, and promote your content within the Service.
+        Users may list items for sale. You agree that listings are accurate,
+        items are legal, and transactions are honest. HOTMESS is not liable
+        for disputes between buyers and sellers.
       </p>
 
-      <h2>5. Safety</h2>
+      <h2>7. Prohibited Use</h2>
+      <p>You may not:</p>
+      <ul>
+        <li>Upload illegal or stolen content</li>
+        <li>Harass or abuse other users</li>
+        <li>Misuse safety features</li>
+        <li>Attempt to extract or scrape platform content</li>
+        <li>Use the Service for commercial purposes without permission</li>
+      </ul>
+
+      <h2>8. Safety Features</h2>
       <p>
-        The SOS and safety features are provided as aids, not guarantees. In 
-        emergencies, always contact local emergency services directly.
+        The SOS and safety features are provided as aids, not guarantees.
+        In emergencies, always contact local emergency services directly.
       </p>
 
-      <h2>6. Termination</h2>
+      <h2>9. Content Ownership</h2>
       <p>
-        We may suspend or terminate accounts that violate these terms. You may 
-        delete your account at any time via Settings.
+        All platform content including music, branding, and visuals belongs
+        to HOTMESS unless otherwise stated. User-generated content (posts,
+        listings) remains yours, but you grant HOTMESS a licence to display
+        it within the Service.
       </p>
 
-      <h2>7. Limitation of Liability</h2>
+      <h2>10. Termination</h2>
       <p>
-        HOTMESS is provided "as is" without warranties. We are not liable for 
-        any damages arising from your use of the Service.
+        We may remove content, suspend accounts, or terminate access at our
+        discretion. You may delete your account at any time via Settings.
       </p>
 
-      <h2>8. Governing Law</h2>
+      <h2>11. Payments &amp; Refunds</h2>
+      <p>All sales are final unless:</p>
+      <ul>
+        <li>Files are corrupted or delivery fails</li>
+      </ul>
+      <p>No refunds for change of mind or misunderstanding of access terms.</p>
+
+      <h2>12. Limitation of Liability</h2>
       <p>
-        These terms are governed by the laws of England and Wales.
+        HOTMESS is provided "as is" without warranties. We are not liable for
+        user-generated misuse, third-party platform uploads, or unauthorised
+        remix releases.
       </p>
 
-      <h2>9. Contact</h2>
+      <h2>13. Changes</h2>
+      <p>
+        We may update these Terms at any time. Continued use constitutes
+        acceptance of the updated Terms.
+      </p>
+
+      <h2>14. Governing Law</h2>
+      <p>These terms are governed by the laws of England and Wales.</p>
+
+      <h2>15. Contact</h2>
       <p>
         Questions? Email <a href="mailto:legal@hotmessldn.com">legal@hotmessldn.com</a>
       </p>
@@ -196,6 +252,280 @@ export function AccessibilityPage() {
       <p>
         We welcome your feedback on the accessibility of HOTMESS. Please contact 
         us at <a href="mailto:accessibility@hotmessldn.com">accessibility@hotmessldn.com</a>
+      </p>
+    </LegalPageLayout>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REMIX LICENSE PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function RemixLicensePage() {
+  return (
+    <LegalPageLayout title="Remix License">
+      <p><em>Last updated: April 2026</em></p>
+
+      <h2>HOTMESS REMIX LICENSE</h2>
+      <p>This license applies to all stem purchases made through HOTMESS.</p>
+
+      <h2>1. What You Get</h2>
+      <p>When you purchase stems, you receive:</p>
+      <ul>
+        <li>WAV audio stems (drums, bass, vocals, FX)</li>
+        <li>Downloadable files in studio quality (16-bit or 24-bit)</li>
+        <li>Remix-ready material</li>
+        <li>Instant download + saved to your account</li>
+      </ul>
+
+      <h2>2. What You Can Do</h2>
+      <ul>
+        <li>Create remixes and edits</li>
+        <li>Use stems in DJ sets</li>
+        <li>Share mixes in non-commercial contexts</li>
+        <li>Experiment, learn, and produce new versions</li>
+      </ul>
+
+      <h2>3. What You Cannot Do</h2>
+      <ul>
+        <li>Release commercially (Spotify, Apple Music, Beatport, etc.)</li>
+        <li>Monetise directly</li>
+        <li>Sell or redistribute stems</li>
+        <li>Claim ownership of the original work</li>
+        <li>Upload to distribution platforms as your own release</li>
+      </ul>
+
+      <h2>4. Ownership</h2>
+      <p>
+        All rights remain with <strong>HOTMESS / RAW CONVICT RECORDS</strong>.
+        This includes master recordings, composition, and branding.
+      </p>
+
+      <h2>5. Commercial Use</h2>
+      <p>
+        If you want to release a remix commercially or monetise your version,
+        you must request a <a href="/legal/commercial-license">Commercial License</a>.
+        This is handled separately and not included in your stem purchase.
+      </p>
+
+      <h2>6. License Terms</h2>
+      <p>This license is:</p>
+      <ul>
+        <li>Non-exclusive</li>
+        <li>Non-transferable</li>
+        <li>Personal use only</li>
+      </ul>
+
+      <h2>7. Breach</h2>
+      <p>Violation of this license may result in:</p>
+      <ul>
+        <li>Account suspension</li>
+        <li>Removal of access</li>
+        <li>Legal action if necessary</li>
+      </ul>
+
+      <h2>8. Summary</h2>
+      <p>
+        You are buying <strong>access to create</strong>. You are not buying
+        ownership or release rights.
+      </p>
+
+      <h2>9. Contact</h2>
+      <p>
+        For licensing requests: <a href="mailto:legal@hotmessldn.com">legal@hotmessldn.com</a>
+      </p>
+    </LegalPageLayout>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMMERCIAL LICENSE PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function CommercialLicensePage() {
+  return (
+    <LegalPageLayout title="Commercial Remix License">
+      <p><em>Last updated: April 2026</em></p>
+
+      <h2>HOTMESS COMMERCIAL REMIX LICENSE</h2>
+      <p>
+        This license applies when HOTMESS grants permission for a remix to
+        be commercially released. Commercial use is NOT granted by default
+        and requires approval.
+      </p>
+
+      <h2>1. What This License Grants</h2>
+      <p>If approved, you may:</p>
+      <ul>
+        <li>Release the remix on streaming platforms (Spotify, Apple Music, etc.)</li>
+        <li>Monetise the remix</li>
+        <li>Distribute via digital stores (e.g. Beatport)</li>
+      </ul>
+
+      <h2>2. Ownership</h2>
+      <p>
+        Ownership remains with <strong>HOTMESS / RAW CONVICT RECORDS</strong>.
+        You are granted a limited commercial usage right, not ownership.
+      </p>
+
+      <h2>3. Revenue Terms</h2>
+      <p>Commercial releases may include:</p>
+      <ul>
+        <li>Revenue split agreements</li>
+        <li>Royalty structure</li>
+        <li>Or fixed licensing fee</li>
+      </ul>
+      <p>Terms are defined per release.</p>
+
+      <h2>4. Approval Required</h2>
+      <p>
+        You must NOT release any remix commercially unless HOTMESS has approved
+        it and a commercial agreement has been executed.
+      </p>
+
+      <h2>5. Credit Requirements</h2>
+      <p>All approved releases must include:</p>
+      <ul>
+        <li>Original by: HOTMESS / RAW CONVICT RECORDS</li>
+        <li>Remix by: [Your Name]</li>
+      </ul>
+
+      <h2>6. Restrictions</h2>
+      <p>You may not:</p>
+      <ul>
+        <li>Sublicense the remix</li>
+        <li>Claim full ownership</li>
+        <li>Distribute without agreement</li>
+      </ul>
+
+      <h2>7. Contact</h2>
+      <p>
+        For commercial remix requests: <a href="mailto:legal@hotmessldn.com">legal@hotmessldn.com</a>
+      </p>
+    </LegalPageLayout>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CREATOR AGREEMENT PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function CreatorAgreementPage() {
+  return (
+    <LegalPageLayout title="Creator Agreement">
+      <p><em>Last updated: April 2026</em></p>
+
+      <h2>HOTMESS CREATOR AGREEMENT</h2>
+      <p>
+        This agreement applies to users who purchase stems, create remixes,
+        or contribute content to the HOTMESS ecosystem.
+      </p>
+
+      <h2>1. Your Role</h2>
+      <p>
+        You are a creator within the HOTMESS ecosystem. You may remix, edit,
+        and experiment with purchased stems.
+      </p>
+
+      <h2>2. Ownership</h2>
+      <p>
+        All original content remains owned by <strong>HOTMESS / RAW CONVICT
+        RECORDS</strong>. Your remix does not grant ownership of the original work.
+      </p>
+
+      <h2>3. Your Rights</h2>
+      <ul>
+        <li>Create remixes</li>
+        <li>Use in DJ sets</li>
+        <li>Share non-commercially</li>
+      </ul>
+
+      <h2>4. Your Responsibilities</h2>
+      <ul>
+        <li>Respect licensing terms</li>
+        <li>Do not misuse content</li>
+        <li>Do not distribute illegally</li>
+      </ul>
+
+      <h2>5. Commercial Opportunities</h2>
+      <p>
+        HOTMESS may select remixes for official release or offer commercial
+        agreements. Participation is optional.
+      </p>
+
+      <h2>6. Conduct</h2>
+      <p>
+        You must behave respectfully, not abuse platform tools, and follow
+        community standards.
+      </p>
+
+      <h2>7. Contact</h2>
+      <p>
+        For creator inquiries: <a href="mailto:legal@hotmessldn.com">legal@hotmessldn.com</a>
+      </p>
+    </LegalPageLayout>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DMCA / COPYRIGHT & ABUSE POLICY
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function DMCAPage() {
+  return (
+    <LegalPageLayout title="Copyright &amp; Abuse Policy">
+      <p><em>Last updated: April 2026</em></p>
+
+      <h2>1. Overview</h2>
+      <p>
+        HOTMESS respects intellectual property rights and user safety. We
+        provide mechanisms to report copyright infringement, abusive
+        behaviour, and illegal content.
+      </p>
+
+      <h2>2. Copyright Infringement (DMCA)</h2>
+      <p>
+        If you believe your work has been used without permission, you may
+        submit a takedown request including:
+      </p>
+      <ul>
+        <li>Your name and contact details</li>
+        <li>Description of the copyrighted work</li>
+        <li>Location (URL or content reference) of the infringing material</li>
+        <li>Statement of good faith belief</li>
+        <li>Statement under penalty of perjury</li>
+      </ul>
+      <p>
+        Send requests to: <a href="mailto:dmca@hotmessldn.com">dmca@hotmessldn.com</a>
+      </p>
+
+      <h2>3. Our Response</h2>
+      <p>We may remove content, restrict accounts, and investigate claims.
+        Repeated violations may result in permanent bans.</p>
+
+      <h2>4. Counter-Notification</h2>
+      <p>
+        Users may submit a counter-notice if they believe content was
+        removed in error.
+      </p>
+
+      <h2>5. Abuse Reporting</h2>
+      <p>Users can report harassment, threats, illegal listings, and unsafe
+        behaviour via in-app report tools or by emailing support.</p>
+
+      <h2>6. Zero Tolerance</h2>
+      <p>We enforce strict action against exploitation, harassment, and
+        illegal activity.</p>
+
+      <h2>7. Disclaimer</h2>
+      <p>
+        HOTMESS is not responsible for user-generated content but will act
+        upon verified reports.
+      </p>
+
+      <h2>8. Contact</h2>
+      <p>
+        Report issues to: <a href="mailto:support@hotmessldn.com">support@hotmessldn.com</a>
       </p>
     </LegalPageLayout>
   );
