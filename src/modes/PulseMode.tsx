@@ -1691,18 +1691,36 @@ export function PulseMode({ className = '' }: PulseModeProps) {
   };
 
   // ---- Dynamic state line for TopHUD ----------------------------------------
-  const stateLine = useMemo(() => {
-    const parts: string[] = [];
+  const stateLines = useMemo(() => {
+    const lines: string[] = [];
 
     const totalActive = events.length + nonEventBeacons.length;
-    if (totalActive > 0) parts.push(`${totalActive} active`);
-    if (rightNowCount > 0) parts.push(`${rightNowCount} live`);
-    if (dropsNearby.length > 0) parts.push(`${dropsNearby.length} drop${dropsNearby.length !== 1 ? 's' : ''}`);
-    if (radioIsPlaying) parts.push('Radio live');
+    if (totalActive > 0 || rightNowCount > 0 || dropsNearby.length > 0) {
+      const parts: string[] = [];
+      if (totalActive > 0) parts.push(`${totalActive} active`);
+      if (rightNowCount > 0) parts.push(`${rightNowCount} live`);
+      if (dropsNearby.length > 0) parts.push(`${dropsNearby.length} drop${dropsNearby.length !== 1 ? 's' : ''}`);
+      lines.push(parts.join(' \u00B7 '));
+    }
 
-    if (parts.length === 0) return 'Quiet nearby';
-    return parts.join(' \u00B7 ');
+    // Rotating contextual labels
+    lines.push('Active right now');
+    if (rightNowCount > 2) lines.push('Trending nearby');
+    if (events.length > 0) lines.push('Something just started');
+    if (radioIsPlaying) lines.push('Radio live');
+
+    return lines;
   }, [events.length, nonEventBeacons.length, rightNowCount, dropsNearby.length, radioIsPlaying]);
+
+  // Rotate through state lines every 4s
+  const [stateLineIdx, setStateLineIdx] = useState(0);
+  useEffect(() => {
+    if (stateLines.length <= 1) return;
+    const t = setInterval(() => setStateLineIdx(i => (i + 1) % stateLines.length), 4000);
+    return () => clearInterval(t);
+  }, [stateLines.length]);
+
+  const stateLine = stateLines[stateLineIdx % stateLines.length] || 'Active right now';
 
   // ---- Priority beacon -- highest-intensity event starting within 24 h ------
   const priorityBeacon = useMemo(() => {
