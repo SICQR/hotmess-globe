@@ -499,8 +499,9 @@ export default async function handler(req, res) {
         const LONDON_LNG = -0.1276;
         const rawLat = row?.last_lat ?? row?.lat;
         const rawLng = row?.last_lng ?? row?.lng;
-        const lat = Number.isFinite(Number(rawLat)) ? Number(rawLat) : LONDON_LAT;
-        const lng = Number.isFinite(Number(rawLng)) ? Number(rawLng) : LONDON_LNG;
+        // PRIVACY: round to 3dp (~100m) before returning to other users
+        const lat = Number.isFinite(Number(rawLat)) ? Math.round(Number(rawLat) * 1000) / 1000 : LONDON_LAT;
+        const lng = Number.isFinite(Number(rawLng)) ? Math.round(Number(rawLng) * 1000) / 1000 : LONDON_LNG;
 
         // PRIVACY: username is the public handle — never expose real name or email
         // GDPR FIX: if username looks like an email address, treat it as empty

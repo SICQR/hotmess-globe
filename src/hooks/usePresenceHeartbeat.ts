@@ -68,8 +68,9 @@ export function usePresenceHeartbeat() {
         };
 
         if (coords) {
-          payload.last_lat = coords.lat;
-          payload.last_lng = coords.lng;
+          // Round to 3 decimal places (~100m) — never store exact GPS in user_presence
+          payload.last_lat = Math.round(coords.lat * 1000) / 1000;
+          payload.last_lng = Math.round(coords.lng * 1000) / 1000;
         }
 
         await supabase.from('user_presence').upsert(payload, { onConflict: 'user_id' });
