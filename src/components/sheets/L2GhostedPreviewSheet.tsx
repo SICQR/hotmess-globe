@@ -29,6 +29,7 @@ import { useTaps } from '@/hooks/useTaps';
 import { useNearbyMovement } from '@/hooks/useNearbyMovement';
 import { useGPS } from '@/hooks/useGPS';
 import { MatchOverlay } from '@/components/ghosted/MatchOverlay';
+import { calculateMidpoint, calculateDistance } from '@/lib/locationUtils';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -163,11 +164,27 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
       toast('Location not available');
       return;
     }
-    openSheet('directions', {
-      lat: profile.last_lat,
-      lng: profile.last_lng,
-    });
-  }, [profile, openSheet]);
+
+    // If we have both locations, offer midpoint (meet halfway)
+    if (myPosition?.lat && myPosition?.lng) {
+      const mid = calculateMidpoint(
+        myPosition.lat, myPosition.lng,
+        profile.last_lat, profile.last_lng,
+      );
+      const dist = calculateDistance(myPosition.lat, myPosition.lng, profile.last_lat, profile.last_lng);
+      openSheet('directions', {
+        lat: mid.lat,
+        lng: mid.lng,
+        label: dist < 500 ? 'Meet nearby' : 'Meet halfway',
+      });
+    } else {
+      openSheet('directions', {
+        lat: profile.last_lat,
+        lng: profile.last_lng,
+        label: `Meet ${profile.display_name || 'them'}`,
+      });
+    }
+  }, [profile, openSheet, myPosition]);
 
   const handleSuggestStop = useCallback(() => {
     if (!profile) return;
@@ -269,8 +286,11 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
     openSheet('chat', {
       userId: profile.id,
       title: `Chat with ${profile.display_name || 'Someone'}`,
+      prefillMessage: moverInfo
+        ? `We matched and you're nearby — quick meet?`
+        : `We matched 👻`,
     });
-  }, [profile, openSheet]);
+  }, [profile, openSheet, moverInfo]);
 
   const heroUrl = profile.avatar_url || profile.photos?.[0]?.url || null;
   const displayAge = profile.age ? `, ${profile.age}` : '';
