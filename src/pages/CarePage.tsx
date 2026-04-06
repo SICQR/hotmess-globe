@@ -4,8 +4,7 @@
  */
 import { useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, Phone, Shield, Wind, Send } from 'lucide-react';
-import { useSheet } from '@/contexts/SheetContext';
+import { ArrowLeft, Heart, Phone, Shield, Wind } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
@@ -28,7 +27,6 @@ const RESOURCES = [
 
 export default function CarePage() {
   const navigate = useNavigate();
-  const { openSheet } = useSheet();
   const queryClient = useQueryClient();
   const scrollRef = useRef(null);
   const handleRefresh = useCallback(async () => {
@@ -111,8 +109,8 @@ export default function CarePage() {
                 href={`tel:${r.number.replace(/\s/g, '')}`}
                 className="flex items-center gap-4 p-4 rounded-2xl bg-[#1C1C1E] border border-white/5 active:scale-[0.98] transition-transform"
               >
-                <div className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center flex-shrink-0">
-                  <Phone className="w-5 h-5 text-red-400" />
+                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0">
+                  <Phone className="w-5 h-5 text-white/40" />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-bold text-white">{r.name}</p>
@@ -134,23 +132,13 @@ export default function CarePage() {
           <p className="text-xs text-white/30">This activates your parasympathetic nervous system and helps you calm down.</p>
         </div>
 
-        {/* Contact support */}
-        <button
-          onClick={() => openSheet('support')}
-          className="w-full py-4 rounded-2xl font-bold text-sm active:scale-95 transition-transform border border-white/15 text-white/70 flex items-center justify-center gap-2"
-        >
-          <Send className="w-4 h-4" />
-          Contact Support
-        </button>
-
-        {/* Safety link */}
+        {/* Safety link — quiet secondary, not a rival CTA */}
         <button
           onClick={() => navigate('/safety')}
-          className="w-full py-4 rounded-2xl font-bold text-sm active:scale-95 transition-transform"
-          style={{ backgroundColor: GOLD, color: 'black' }}
+          className="w-full py-3 rounded-xl font-bold text-sm active:scale-95 transition-transform border border-white/10 text-white/40 flex items-center justify-center gap-2"
         >
-          <Shield className="w-4 h-4 inline mr-2" />
-          Go to Safety Hub
+          <Shield className="w-4 h-4" />
+          Safety Hub
         </button>
       </div>
     </div>

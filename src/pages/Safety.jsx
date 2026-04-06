@@ -197,20 +197,22 @@ export default function Safety() {
       {/* Scrollable content */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum px-4 py-4 pb-24" {...pullHandlers}>
         <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
-        {/* Quick action buttons */}
+        {/* Quick actions — clear hierarchy: SOS primary, Fake Call secondary */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           <button
             onClick={() => navigate('/sos')}
-            className="py-4 bg-red-600 text-white font-black text-base rounded-2xl active:scale-95 transition-transform"
+            className="py-3.5 font-bold text-sm rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2"
+            style={{ background: 'rgba(255,59,48,0.12)', color: '#FF3B30', border: '1px solid rgba(255,59,48,0.25)' }}
           >
-            🆘 SOS
+            <AlertTriangle className="w-4 h-4" />
+            SOS
           </button>
           <button
             onClick={() => navigate('/fake-call')}
-            className="py-4 bg-zinc-900 text-base font-black rounded-2xl active:scale-95 transition-transform"
-            style={{ border: '1px solid rgba(0,194,224,0.4)', color: '#00C2E0' }}
+            className="py-3.5 font-bold text-sm rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2 bg-[#1C1C1E] border border-white/10 text-white/70"
           >
-            📞 Fake Call
+            <Phone className="w-4 h-4 text-[#00C2E0]" />
+            Fake Call
           </button>
         </div>
 
@@ -248,7 +250,7 @@ export default function Safety() {
                   Start Safety Check-In
                 </h3>
                 <p className="text-sm text-white/60 mb-4">
-                  Let trusted contacts know you're out. We'll alert them if you don't check out on time.
+                  Your contacts get alerted if you don't check out on time.
                 </p>
                 
                 <div className="mb-4">
@@ -285,15 +287,10 @@ export default function Safety() {
               </div>
             )}
 
-            <div className="bg-white/5 border border-white/10 p-6">
-              <h3 className="text-xl font-black uppercase mb-2">HOW IT WORKS</h3>
-              <ul className="space-y-2 text-sm text-white/60">
-                <li>• Check in when you go out</li>
-                <li>• Set expected return time</li>
-                <li>• We'll send alerts to trusted contacts if you're overdue</li>
-                <li>• Check out when you're safe</li>
-                <li>• SOS button always available via panic button</li>
-              </ul>
+            <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
+              <p className="text-xs text-white/40 leading-relaxed">
+                Check in before you go out. Set a return time. If you don't check out, your trusted contacts are notified. SOS is always one hold away.
+              </p>
             </div>
           </TabsContent>
 
@@ -395,39 +392,15 @@ export default function Safety() {
               <CheckInTimerCustomizer />
               
               <div className="bg-white/5 border border-white/10 p-6">
-                <h3 className="text-lg font-black uppercase mb-4 flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-[#C8962C]" />
-                  Safety Features
+                <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-white/30" />
+                  How safety works
                 </h3>
-                <ul className="space-y-3 text-sm text-white/60">
-                  <li className="flex items-start gap-3">
-                    <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-white font-bold">Panic Button</p>
-                      <p className="text-xs">Always available in bottom-right corner. Sends SOS to all trusted contacts with your location.</p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Clock className="w-4 h-4 text-[#00C2E0] mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-white font-bold">Check-In Timer</p>
-                      <p className="text-xs">Set expected return time. Trusted contacts get notified if you're overdue.</p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <MapPin className="w-4 h-4 text-[#FFEB3B] mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-white font-bold">Location Sharing</p>
-                      <p className="text-xs">Real-time location shared during active check-ins and emergencies.</p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <MessageSquare className="w-4 h-4 text-[#C8962C] mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-white font-bold">Custom Messages</p>
-                      <p className="text-xs">Pre-define emergency messages for instant alerts.</p>
-                    </div>
-                  </li>
+                <ul className="space-y-2 text-xs text-white/40 leading-relaxed">
+                  <li>Hold the shield button (bottom-left) for 3 seconds to trigger SOS. Your location is shared with trusted contacts.</li>
+                  <li>Check-in timers alert contacts if you're overdue. Set one before you go out.</li>
+                  <li>Location is approximate only — never exact address — and only shared during active check-ins or SOS.</li>
+                  <li>Custom emergency messages can be pre-written in Settings above.</li>
                 </ul>
               </div>
             </div>
