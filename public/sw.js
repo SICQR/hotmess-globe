@@ -281,20 +281,26 @@ self.addEventListener('push', (event) => {
   const data = event.data?.json() ?? {};
   event.waitUntil(
     (async () => {
-      // Check if user has the app focused on this thread — suppress push if so
-      if (data.tag && data.tag.startsWith('chat-')) {
-        try {
-          const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: false });
-          const threadId = data.tag.replace('chat-', '');
-          const isThreadOpen = windowClients.some(
-            (client) => client.focused && client.url && client.url.includes(`thread=${threadId}`)
-          );
-          if (isThreadOpen) {
-            // User is looking at this thread right now — don't interrupt
+      // Suppress if user is focused on the relevant screen
+      try {
+        const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: false });
+        const focusedClient = windowClients.find((c) => c.focused && c.url);
+
+        if (focusedClient) {
+          const url = focusedClient.url;
+
+          // Chat thread: suppress if user is viewing that exact thread
+          if (data.tag && data.tag.startsWith('chat-')) {
+            const threadId = data.tag.replace('chat-', '');
+            if (url.includes(`thread=${threadId}`)) return;
+          }
+
+          // Boo/match: suppress if user is on /ghosted
+          if ((data.tag === 'boo' || data.tag === 'match') && url.includes('/ghosted')) {
             return;
           }
-        } catch { /* fall through to show notification */ }
-      }
+        }
+      } catch { /* fall through to show notification */ }
 
       await self.registration.showNotification(data.title || 'HOTMESS', {
         body: data.body || '',
@@ -308,11 +314,23 @@ self.addEventListener('push', (event) => {
   );
 });
 
-// Notification click handler
+// Notification click handler — focus existing window if possible
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = event.notification.data?.url || '/';
-  event.waitUntil(clients.openWindow(url));
+  const targetUrl = event.notification.data?.url || '/';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Try to focus an existing HOTMESS window and navigate it
+      for (const client of windowClients) {
+        if (client.url && new URL(client.url).origin === self.location.origin) {
+          client.postMessage({ type: 'NOTIFICATION_CLICK', url: targetUrl });
+          return client.focus();
+        }
+      }
+      // No existing window — open new
+      return self.clients.openWindow(targetUrl);
+    })
+  );
 });
 
 // Notification close handler
