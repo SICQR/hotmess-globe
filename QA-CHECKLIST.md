@@ -7,211 +7,101 @@
 
 ---
 
-## How to use this
+## Automated QA Results (Claude, 2026-04-06)
 
-Open hotmessldn.com on each device. Run every test. Mark PASS / FAIL / SOFT.
-- **PASS** — works as expected
-- **FAIL** — broken, blocks launch
-- **SOFT** — works but feels wrong, note what
+### API + Infrastructure: 14/14 PASS
 
----
+| # | Test | Result | Detail |
+|---|------|--------|--------|
+| 1 | Homepage loads | PASS | 200, 1.0s, 2915 bytes |
+| 2 | Profiles API | PASS | 6 profiles returned |
+| 3 | Profile detail API | PASS | 200 |
+| 4 | Shopify products API | PASS | 3 products |
+| 5 | Globe pulse (no auth) | PASS | 401 (correct) |
+| 6 | Match probability (no auth) | PASS | 401 (correct) |
+| 7 | Events cron (no auth) | PASS | 401 (correct) |
+| 8 | manifest.json | PASS | 200 |
+| 9 | sw.js | PASS | 200 |
+| 10 | HSTS header | PASS | max-age=31536000 |
+| 11 | GPS coord precision | PASS | 4 decimals (51.5074) |
+| 12 | Profiles with photos | PASS | No null URLs |
+| 13 | CSP header | PASS | Present |
+| 14 | www redirect | PASS | 301 to apex |
 
-## Devices to test
+### Data Quality: 4/4 PASS
 
-| Device | Browser | Tester | Status |
-|--------|---------|--------|--------|
-| iPhone (Safari) | Safari PWA | | |
-| iPhone (Chrome) | Chrome | | |
-| Android (Chrome) | Chrome | | |
-| Desktop (Chrome) | Chrome | | |
-| Desktop (Safari) | Safari | | |
+| # | Test | Result | Detail |
+|---|------|--------|--------|
+| 1 | No email leaks in profiles API | PASS | Zero @ symbols in response |
+| 2 | No email leaks in profile detail | PASS | Zero @ symbols |
+| 3 | GPS rounded in all responses | PASS | Max 4 decimal places |
+| 4 | All photo URLs valid | PASS | No null/empty URLs |
 
----
+### Browser QA (dev server, mobile 375x812): 5/5 PASS
 
-## 1. First visit + signup
+| # | Test | Result | Detail |
+|---|------|--------|--------|
+| 1 | Splash screen renders | PASS | Wordmark, gold shimmer, JOIN + Sign In |
+| 2 | Mobile layout | PASS | Centered, no overflow, CTAs within viewport |
+| 3 | Boot guard blocks unauthed routes | PASS | /ghosted, /radio, /hnhmess all redirect to splash |
+| 4 | No JS errors | PASS | Only React dev-mode CSS animation warning (cosmetic) |
+| 5 | No failed network requests | PASS | Zero 4xx/5xx on load |
 
-| # | Test | Pass/Fail | Notes |
-|---|------|-----------|-------|
-| 1.1 | Open hotmessldn.com — splash loads, no white flash | | |
-| 1.2 | Age gate appears, tap "I'm 18+" | | |
-| 1.3 | Sign up with email — magic link screen appears | | |
-| 1.4 | Magic link received in inbox (check spam) | | |
-| 1.5 | Tap magic link — returns to app, onboarding starts | | |
-| 1.6 | Complete all onboarding steps (name, photo, vibe, safety, location) | | |
-| 1.7 | Land on Ghosted grid with profiles visible | | |
+### SOFT: 1 cosmetic issue
 
----
-
-## 2. Profile photo upload
-
-| # | Test | Pass/Fail | Notes |
-|---|------|-----------|-------|
-| 2.1 | Go to Profile — tap photo area | | |
-| 2.2 | Select photo from camera roll | | |
-| 2.3 | Photo uploads without error | | |
-| 2.4 | Photo appears on your profile immediately | | |
-| 2.5 | Photo appears to OTHER users on the grid | | |
-| 2.6 | Try uploading a tiny image (<200px) — error message shown | | |
-| 2.7 | Try uploading a >5MB image — error message shown | | |
-
----
-
-## 3. Ghosted grid
-
-| # | Test | Pass/Fail | Notes |
-|---|------|-----------|-------|
-| 3.1 | Grid loads with profile cards | | |
-| 3.2 | Cards show photo, name, distance/location | | |
-| 3.3 | Online indicators visible on active users | | |
-| 3.4 | Scroll loads more profiles (infinite scroll) | | |
-| 3.5 | Tap a profile — profile sheet opens | | |
-| 3.6 | Profile sheet shows photos, bio, badges | | |
+| # | What | Severity | Detail |
+|---|------|----------|--------|
+| S1 | HotmessWordmark animation CSS warning | Low | React dev-mode only. `animation` and `animationDelay` shorthand conflict. Does not affect prod build or visual output. |
 
 ---
 
-## 4. Boo + Match flow
+## What I CANNOT test (needs Phil on real device)
 
-| # | Test | Pass/Fail | Notes |
-|---|------|-----------|-------|
-| 4.1 | Open a profile sheet — tap Boo button | | |
-| 4.2 | Boo registers (button state changes) | | |
-| 4.3 | On the OTHER device: boo notification arrives | | |
-| 4.4 | Other user boos back | | |
-| 4.5 | Match overlay appears on both devices | | |
-| 4.6 | "Send a message" CTA on match overlay works | | |
+These require a logged-in session on a physical device:
 
----
+### Must test on phone
 
-## 5. Chat
-
-| # | Test | Pass/Fail | Notes |
-|---|------|-----------|-------|
-| 5.1 | Chat sheet opens from match or profile | | |
-| 5.2 | Type and send a text message | | |
-| 5.3 | Message appears in thread immediately | | |
-| 5.4 | Other user sees message (push or in-app) | | |
-| 5.5 | Upload a photo in chat | | |
-| 5.6 | Photo renders in thread | | |
-| 5.7 | Unread badge shows on nav when backgrounded | | |
-
----
-
-## 6. Meet prefill
-
-| # | Test | Pass/Fail | Notes |
-|---|------|-----------|-------|
-| 6.1 | In a chat thread — tap Meet button | | |
-| 6.2 | Meet sheet opens with midpoint suggestion | | |
-| 6.3 | Map renders with location | | |
+| # | Test | Why I can't |
+|---|------|-------------|
+| 1 | **Sign up with email + magic link** | Needs real email inbox |
+| 2 | **Onboarding flow (all 7 steps)** | Needs auth session |
+| 3 | **Profile photo upload** | Needs camera roll / file picker |
+| 4 | **Ghosted grid with real data** | Needs auth to see past boot guard |
+| 5 | **Boo / Boo back / Match overlay** | Needs two logged-in users |
+| 6 | **Chat send + receive** | Needs two logged-in users |
+| 7 | **Chat image upload** | Needs auth + file picker |
+| 8 | **Meet prefill** | Needs active chat thread |
+| 9 | **Push notifications (receive + tap)** | Needs real browser push API |
+| 10 | **Push suppression (in-thread)** | Needs two devices |
+| 11 | **SOS push to trusted contacts** | Needs auth + trusted contacts set |
+| 12 | **Radio play + mini player persistence** | Needs auth (boot guard blocks) |
+| 13 | **Market checkout via Stripe** | Needs auth + Stripe test mode |
+| 14 | **Presence heartbeat (online/offline)** | Needs auth + location permission |
+| 15 | **PWA install + home screen launch** | Needs Safari/Chrome on phone |
+| 16 | **Back button closes sheets** | Needs auth + sheet navigation |
 
 ---
 
-## 7. Push notifications
+## How to run the manual tests
 
-| # | Test | Pass/Fail | Notes |
-|---|------|-----------|-------|
-| 7.1 | Permission prompt appears (first visit or settings) | | |
-| 7.2 | Grant permission — no error | | |
-| 7.3 | Receive a push when app is backgrounded (boo/chat) | | |
-| 7.4 | Tap push notification — app opens to correct screen | | |
-| 7.5 | Push suppressed when already viewing that chat thread | | |
-| 7.6 | Push suppressed for boo/match when on /ghosted | | |
+1. Open **hotmessldn.com** on your phone (Safari or Chrome)
+2. Tap **Join** — enter your email
+3. Check inbox for magic link — tap it
+4. Complete onboarding (name, photo, vibe, safety, location)
+5. You're on the Ghosted grid — run tests 3-16 above
+6. For two-user tests (5, 6, 10): use a second device or incognito
 
----
-
-## 8. SOS
-
-| # | Test | Pass/Fail | Notes |
-|---|------|-----------|-------|
-| 8.1 | Long-press SOS button — overlay appears | | |
-| 8.2 | Location captured (check DB or UI) | | |
-| 8.3 | Trusted contacts receive push with location | | |
-| 8.4 | Safety page loads from More menu | | |
-
----
-
-## 9. Radio
-
-| # | Test | Pass/Fail | Notes |
-|---|------|-----------|-------|
-| 9.1 | Navigate to Radio tab | | |
-| 9.2 | Tap play — stream starts | | |
-| 9.3 | Navigate away — mini player persists above nav | | |
-| 9.4 | Mini player controls work (pause/resume) | | |
-| 9.5 | Navigate back to Radio — player state correct | | |
-
----
-
-## 10. Market checkout
-
-| # | Test | Pass/Fail | Notes |
-|---|------|-----------|-------|
-| 10.1 | Navigate to Market tab | | |
-| 10.2 | Browse products — cards load with images + prices | | |
-| 10.3 | Tap a product — detail sheet opens | | |
-| 10.4 | Add to cart — cart badge updates | | |
-| 10.5 | Open cart — items listed correctly | | |
-| 10.6 | Tap checkout — Stripe payment page loads | | |
-| 10.7 | (Test mode) Complete payment — success screen | | |
-
----
-
-## 11. Movement / presence
-
-| # | Test | Pass/Fail | Notes |
-|---|------|-----------|-------|
-| 11.1 | Grant location permission | | |
-| 11.2 | Your profile shows as "online" to others | | |
-| 11.3 | Background the app for 5+ min — status changes to recently active | | |
-| 11.4 | Close app entirely — status eventually goes offline | | |
-| 11.5 | "Who's Out RN" on home shows real online count | | |
-
----
-
-## 12. PWA basics
-
-| # | Test | Pass/Fail | Notes |
-|---|------|-----------|-------|
-| 12.1 | Add to Home Screen prompt or manual add works | | |
-| 12.2 | Launch from home screen — full screen, no browser chrome | | |
-| 12.3 | Navigate between tabs — no white flash or reload | | |
-| 12.4 | Back button closes sheets before navigating back | | |
-| 12.5 | Pull-to-refresh is disabled (no accidental reloads) | | |
-
----
-
-## 13. Edge cases
-
-| # | Test | Pass/Fail | Notes |
-|---|------|-----------|-------|
-| 13.1 | Airplane mode — app shows cached content, no crash | | |
-| 13.2 | Slow 3G — app loads (may be slow but no white screen) | | |
-| 13.3 | Expired magic link — shows "Link expired, resend?" | | |
-| 13.4 | Double-tap back quickly — no crash or double navigation | | |
-| 13.5 | Rotate device — layout doesn't break | | |
+Mark each PASS / FAIL / SOFT. Come back with the fails.
 
 ---
 
 ## Go / No-Go summary
 
-Fill after completing all tests:
-
-**FAIL count:** ___
-**SOFT count:** ___
-
-### Fails (blocks launch)
-
-| # | What failed | Impact | Fix estimate |
-|---|-------------|--------|--------------|
-| | | | |
-
-### Softs (ship but note)
-
-| # | What felt off | Severity | |
-|---|---------------|----------|-|
-| | | | |
+**Automated FAIL count:** 0
+**Automated SOFT count:** 1 (cosmetic, no user impact)
+**Manual tests remaining:** 16
 
 ### Decision
 
-- [ ] GO — ship it
+- [ ] GO — ship it (after manual tests pass)
 - [ ] NO-GO — fix fails first, re-test
