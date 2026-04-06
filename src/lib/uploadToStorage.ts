@@ -34,6 +34,27 @@ function resolveBucket(bucket: string): string {
  * Bucket name is resolved via BUCKET_MAP before upload so callers can use
  * clean logical names regardless of how buckets are named in Supabase.
  */
+/**
+ * Load an image file and return its natural dimensions.
+ * Rejects if the file isn't a valid decodable image.
+ */
+function getImageDimensions(file: File): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const { naturalWidth: width, naturalHeight: height } = img;
+      URL.revokeObjectURL(url);
+      resolve({ width, height });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('File is not a valid image'));
+    };
+    img.src = url;
+  });
+}
+
 export async function uploadToStorage(
   file: File,
   bucket: string,
@@ -42,8 +63,17 @@ export async function uploadToStorage(
 ): Promise<string> {
   // Client-side validation for image uploads
   if (!options?.skipValidation && file.type.startsWith('image/')) {
-    if (file.size > 5 * 1024 * 1024) throw new Error('File must be under 5MB');
+    if (file.size > 5 * 1024 * 1024) throw new Error('File must be under 5 MB');
     if (file.size < 1024) throw new Error('File too small — may be corrupt');
+
+    const { width, height } = await getImageDimensions(file);
+    if (width < 200 || height < 200) {
+      throw new Error('Image must be at least 200 × 200 pixels');
+    }
+    const ratio = width / height;
+    if (ratio > 4 || ratio < 0.25) {
+      throw new Error('Image aspect ratio is too extreme (max 4:1)');
+    }
   }
 
   const resolvedBucket = resolveBucket(bucket);

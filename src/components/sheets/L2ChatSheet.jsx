@@ -22,6 +22,7 @@ import { SheetSection, SheetDivider } from './L2SheetContainer';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import { formatDistanceToNow } from 'date-fns';
 import MeetpointCard from '@/components/messaging/MeetpointCard';
 import VideoCallModal from '@/components/video/VideoCallModal';
@@ -485,28 +486,12 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   const handlePhotoUpload = async (file) => {
     if (!file || !currentUser?.email) return;
 
-    const ext = file.name.split('.').pop() || 'jpg';
-    const path = `chat-photos/${currentUser.id || currentUser.email}/${Date.now()}.${ext}`;
-
     try {
-      const { error: uploadError } = await supabase.storage
-        .from('uploads')
-        .upload(path, file, { upsert: false });
-
-      if (uploadError) {
-        toast.error('Could not upload photo');
-        return;
-      }
-
-      const { data: urlData } = supabase.storage
-        .from('uploads')
-        .getPublicUrl(path);
-
-      const publicUrl = urlData?.publicUrl;
-      if (!publicUrl) {
-        toast.error('Could not get photo URL');
-        return;
-      }
+      const publicUrl = await uploadToStorage(
+        file,
+        'chat-attachments',
+        currentUser.id || currentUser.email,
+      );
 
       await handleSendSpecial({
         content: publicUrl,
