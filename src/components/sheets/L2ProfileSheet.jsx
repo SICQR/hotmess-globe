@@ -34,7 +34,7 @@ const Chip = ({ children, gold = false }) => (
 );
 
 // ── Photo carousel (CSS snap-scroll, 3:4 portrait) ──────────────────────────
-function PhotoCarousel({ images = [], fallbackInitial = '?' }) {
+function PhotoCarousel({ images = [], fallbackInitial = '?', onIndexChange }) {
   const scrollRef = useRef(null);
   const [activeIdx, setActiveIdx] = useState(0);
 
@@ -42,8 +42,10 @@ function PhotoCarousel({ images = [], fallbackInitial = '?' }) {
     const el = scrollRef.current;
     if (!el) return;
     const idx = Math.round(el.scrollLeft / el.offsetWidth);
-    setActiveIdx(Math.max(0, Math.min(idx, images.length - 1)));
-  }, [images.length]);
+    const clamped = Math.max(0, Math.min(idx, images.length - 1));
+    setActiveIdx(clamped);
+    onIndexChange?.(clamped);
+  }, [images.length, onIndexChange]);
 
   // 0 photos — initials fallback
   if (!images.length) {
@@ -121,6 +123,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
   const { isTapped, sendTap } = useTaps(myUserId, myEmail);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [activePhotoIdx, setActivePhotoIdx] = useState(0);
 
   // ── Data queries ────────────────────────────────────────────────────────
 
@@ -646,6 +649,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
             return urls;
           })()}
           fallbackInitial={name[0]}
+          onIndexChange={setActivePhotoIdx}
         />
 
         {/* Gradient overlay at bottom */}
@@ -1033,12 +1037,32 @@ export default function L2ProfileSheet({ email, uid, id }) {
                 try {
                   const { data: { user } } = await supabase.auth.getUser();
                   if (!user || !profileUser) return;
+                  const allPhotos = [];
+                  const seen = new Set();
+                  const addUrl = (u) => { if (u && !seen.has(u)) { seen.add(u); allPhotos.push(u); } };
+                  addUrl(profileUser.avatar_url || profileUser.photos?.[0]);
+                  (profileUser.photos || []).forEach(p => addUrl(typeof p === 'string' ? p : p?.url));
+                  const reportedPhotoUrl = allPhotos[activePhotoIdx] || allPhotos[0] || null;
+
                   await supabase.from('photo_moderation_events').insert({
                     user_id: user.id,
                     event_type: 'user_reported',
                     reason: 'Reported from profile sheet',
-                    metadata: { reported_user_id: profileUser.id || profileUser.auth_user_id },
+                    metadata: {
+                      reported_user_id: profileUser.id || profileUser.auth_user_id,
+                      photo_url: reportedPhotoUrl,
+                      photo_index: activePhotoIdx,
+                    },
                   });
+                  // Flag the photo in profile_photos so RLS hides it from others
+                  if (reportedPhotoUrl) {
+                    await supabase
+                      .from('profile_photos')
+                      .update({ moderation_status: 'flagged' })
+                      .eq('user_id', profileUser.id || profileUser.auth_user_id)
+                      .eq('url', reportedPhotoUrl)
+                      .then(() => {}); // best-effort
+                  }
                   toast.success('Photo reported. Our team will review it.');
                 } catch { toast.error('Could not report photo.'); }
               }}
