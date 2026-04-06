@@ -604,27 +604,14 @@ test.describe('QA-07 · Chat image upload', () => {
     try {
       await setupUserA(page);
 
-      // Open the messages list via URL param deep-link
+      // Navigate directly to the seeded e2e chat thread (bypasses thread list click)
+      // Thread e2e00000... is the seeded Alpha↔Beta chat thread
       await page.evaluate(() => {
-        window.history.pushState({}, '', '/ghosted?sheet=chat');
+        window.history.pushState({}, '', '/ghosted?sheet=chat&thread=e2e00000-0000-0000-0000-000000000001');
         window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
       });
-      await page.waitForTimeout(1500);
-
-      // Click on the first thread INSIDE the Messages dialog (not the Ghosted grid)
-      const dialog = page.locator('[role="dialog"], [class*="sheet"], [class*="Sheet"]').last();
-      const firstThread = dialog.locator('button').filter({ hasText: /Beta|thread/i }).first();
-      if (await firstThread.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await firstThread.click({ timeout: 5_000 }).catch(() => {});
-        await page.waitForTimeout(1500);
-      } else {
-        // Generic fallback — any button in the sheet
-        const anyBtn = dialog.locator('button').first();
-        if (await anyBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-          await anyBtn.click({ timeout: 5_000 }).catch(() => {});
-          await page.waitForTimeout(1500);
-        }
-      }
+      // Wait for the chat composer to render (React state + animations)
+      await page.waitForTimeout(3000);
 
       // Check for file input in the DOM (may be in a sheet overlay)
       const fileInputs = page.locator('input[type="file"]');
