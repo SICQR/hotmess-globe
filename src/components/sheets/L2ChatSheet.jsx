@@ -994,11 +994,13 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                   </button>
                   <button
                     onClick={async () => {
-                      if (!currentUser?.email || !otherEmail) return;
+                      if (!currentUser?.id || !otherProfile?.id) return;
                       try {
                         await supabase.from('taps').insert({
-                          tapper_email: currentUser.email,
-                          tapped_email: otherEmail,
+                          from_user_id: currentUser.auth_user_id || currentUser.id,
+                          to_user_id: otherProfile.id,
+                          tapper_email: currentUser.email || '',
+                          tapped_email: otherEmail || '',
                           tap_type: 'boo',
                         });
                         if (typeof window !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(50);
@@ -1015,11 +1017,13 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
               <div className="flex items-center justify-center gap-2">
                 <button
                   onClick={async () => {
-                    if (!currentUser?.email || !otherEmail) return;
+                    if (!currentUser?.id || !otherProfile?.id) return;
                     try {
                       await supabase.from('taps').insert({
-                        tapper_email: currentUser.email,
-                        tapped_email: otherEmail,
+                        from_user_id: currentUser.auth_user_id || currentUser.id,
+                        to_user_id: otherProfile.id,
+                        tapper_email: currentUser.email || '',
+                        tapped_email: otherEmail || '',
                         tap_type: 'boo',
                       });
                       if (typeof window !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(50);

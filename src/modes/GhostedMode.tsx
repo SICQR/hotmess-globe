@@ -223,14 +223,14 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
   const { isPlaying, currentShowName } = useRadio();
   const { position: myPosition } = useGPS();
 
-  // ── Auth email for boo state ────────────────────────────────────────────
-  const [myEmail, setMyEmail] = useState<string | null>(null);
+  // ── Auth user for boo state ────────────────────────────────────────────
+  const [myUserId, setMyUserId] = useState<string | null>(null);
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setMyEmail(session?.user?.email ?? null);
+      setMyUserId(session?.user?.id ?? null);
     });
   }, []);
-  const { isTapped, isMutualBoo } = useTaps(myEmail);
+  const { isTapped, isMutualBoo } = useTaps(myUserId);
 
   // ── Tab state ────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<GhostedTab>('nearby');

@@ -17,6 +17,7 @@ const AMBER = '#C8962C';
 
 interface TapRow {
   id: string;
+  from_user_id: string | null;
   tapper_email: string;
   tap_type: string;
   created_at: string;
@@ -37,41 +38,44 @@ function timeAgo(iso: string): string {
 
 export default function L2TapsSheet() {
   const { openSheet, closeSheet } = useSheet();
+  const [myUserId, setMyUserId] = useState<string | null>(null);
   const [myEmail, setMyEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setMyEmail(data.user?.email ?? null);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setMyUserId(session?.user?.id ?? null);
+      setMyEmail(session?.user?.email ?? null);
     });
   }, []);
 
-  const { isTapped, sendTap } = useTaps(myEmail);
+  const { isTapped, sendTap } = useTaps(myUserId, myEmail);
 
   const { data: taps, isLoading, error } = useQuery<TapRow[]>({
-    queryKey: ['received-taps'],
+    queryKey: ['received-taps', myUserId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.email) return [];
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      if (!userId) return [];
 
       const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
+      // Query by UUID column, with fallback to email
       const { data, error } = await supabase
         .from('taps')
-        .select(`
-          id, tapper_email, tap_type, created_at,
-          profiles!taps_tapper_email_fkey(display_name, username, photos)
-        `)
-        .eq('tapped_email', user.email)
+        .select('id, from_user_id, tapper_email, tap_type, created_at')
+        .eq('to_user_id', userId)
         .gt('created_at', since)
         .order('created_at', { ascending: false })
         .limit(100);
 
       if (error) {
-        // Fallback: no join (taps table may not have FK)
+        // Fallback: query by email (pre-migration rows)
+        const userEmail = session?.user?.email;
+        if (!userEmail) throw error;
         const { data: fallback, error: fbErr } = await supabase
           .from('taps')
-          .select('id, tapper_email, tap_type, created_at')
-          .eq('tapped_email', user.email)
+          .select('id, from_user_id, tapper_email, tap_type, created_at')
+          .eq('tapped_email', userEmail)
           .gt('created_at', since)
           .order('created_at', { ascending: false })
           .limit(100);
@@ -80,13 +84,30 @@ export default function L2TapsSheet() {
         return (fallback || []) as TapRow[];
       }
 
-      return (data || []) as TapRow[];
+      // Hydrate profiles for each tapper
+      const tapperIds = (data || []).map(t => t.from_user_id).filter(Boolean) as string[];
+      let profileMap: Record<string, { display_name: string | null; username: string | null; photos: string[] | null }> = {};
+      if (tapperIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, display_name, username, photos')
+          .in('id', tapperIds);
+        for (const p of profiles || []) {
+          profileMap[p.id] = { display_name: p.display_name, username: p.username, photos: p.photos };
+        }
+      }
+
+      return (data || []).map(t => ({
+        ...t,
+        profiles: t.from_user_id ? profileMap[t.from_user_id] ?? null : null,
+      })) as TapRow[];
     },
     staleTime: 30_000,
+    enabled: !!myUserId,
   });
 
-  const handleOpenProfile = (tapperEmail: string) => {
-    openSheet('profile', { email: tapperEmail });
+  const handleOpenProfile = (userId: string) => {
+    openSheet('profile', { uid: userId });
   };
 
   return (
@@ -136,7 +157,7 @@ export default function L2TapsSheet() {
               const displayName = profile?.username || profile?.display_name || 'Someone';
               const avatar = profile?.photos?.[0] ?? null;
 
-              const alreadyBoodBack = myEmail ? isTapped(tap.tapper_email, 'boo') : false;
+              const alreadyBoodBack = tap.from_user_id ? isTapped(tap.from_user_id, 'boo') : false;
 
               return (
                 <motion.div
@@ -147,7 +168,7 @@ export default function L2TapsSheet() {
                 >
                   {/* Row tap → open profile */}
                   <button
-                    onClick={() => handleOpenProfile(tap.tapper_email)}
+                    onClick={() => tap.from_user_id && handleOpenProfile(tap.from_user_id)}
                     className="flex items-center gap-3 flex-1 min-w-0 text-left"
                   >
                     {/* Avatar */}
@@ -185,11 +206,11 @@ export default function L2TapsSheet() {
                   </button>
 
                   {/* Boo Back quick action */}
-                  {myEmail && (
+                  {tap.from_user_id && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        sendTap(tap.tapper_email, displayName, 'boo');
+                        sendTap(tap.from_user_id!, displayName, 'boo');
                       }}
                       className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all active:scale-90 ${
                         alreadyBoodBack

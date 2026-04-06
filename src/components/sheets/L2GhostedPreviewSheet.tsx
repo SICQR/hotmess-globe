@@ -55,6 +55,7 @@ interface ProfileData {
 export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
   const { closeSheet, openSheet } = useSheet();
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [myUserId, setMyUserId] = useState<string | null>(null);
   const [myEmail, setMyEmail] = useState<string | null>(null);
   const [myAvatarUrl, setMyAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,7 +63,7 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
   const [hasBood, setHasBood] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
 
-  const { isTapped, sendTap, isMutualBoo } = useTaps(myEmail);
+  const { isTapped, sendTap, isMutualBoo } = useTaps(myUserId, myEmail);
   const { position: myPosition } = useGPS();
   const { movers } = useNearbyMovement(myPosition?.lat ?? null, myPosition?.lng ?? null);
 
@@ -104,6 +105,7 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
 
         const email = session?.user?.email ?? null;
         setMyEmail(email);
+        setMyUserId(session?.user?.id ?? null);
 
         // Fetch my avatar for match overlay (best-effort)
         if (session?.user?.id) {
@@ -121,9 +123,9 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
           photos: profileData.photos || [],
         } as ProfileData);
 
-        // Check if already boo'd
-        if (profileData.email && session?.user?.email) {
-          setHasBood(isTapped(profileData.email, 'boo'));
+        // Check if already boo'd (by user ID)
+        if (uid && session?.user?.id) {
+          setHasBood(isTapped(uid, 'boo'));
         }
       } catch (err) {
         if (!cancelled) setError('Failed to load profile');
@@ -141,15 +143,15 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
   const [showMatch, setShowMatch] = useState(false);
 
   const handleBoo = useCallback(async () => {
-    if (!profile?.email || !myEmail) return;
-    const result = await sendTap(profile.email, profile.display_name || 'Someone', 'boo');
+    if (!uid || !myUserId) return;
+    const result = await sendTap(uid, profile?.display_name || 'Someone', 'boo');
     setHasBood(result.sent);
     if (result.sent && result.mutual) {
       setShowMatch(true);
     } else if (result.sent) {
       toast('Boo sent');
     }
-  }, [profile, myEmail, sendTap]);
+  }, [uid, myUserId, profile, sendTap]);
 
   const handleMessage = useCallback(() => {
     if (!profile) return;
@@ -340,7 +342,7 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-5 pt-4 pb-safe">
         {/* Mutual match banner */}
-        {profile.email && isMutualBoo(profile.email) && (
+        {uid && isMutualBoo(uid) && (
           <div
             className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3"
             style={{ background: 'rgba(200,150,44,0.1)', border: '1px solid rgba(200,150,44,0.25)' }}

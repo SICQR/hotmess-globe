@@ -108,7 +108,17 @@ export default function L2ProfileSheet({ email, uid, id }) {
   const [reportReason, setReportReason] = useState('');
   const [isBlocking, setIsBlocking] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
-  const { isTapped, sendTap } = useTaps();
+  const [myUserId, setMyUserId] = useState(null);
+  const [myEmail, setMyEmail] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setMyUserId(session?.user?.id ?? null);
+      setMyEmail(session?.user?.email ?? null);
+    });
+  }, []);
+
+  const { isTapped, sendTap } = useTaps(myUserId, myEmail);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -344,8 +354,8 @@ export default function L2ProfileSheet({ email, uid, id }) {
         const { count } = await supabase
           .from('taps')
           .select('id', { count: 'exact', head: true })
-          .eq('tapper_email', user.email || user.id)
-          .eq('tapped_email', targetId)
+          .eq('from_user_id', user.id)
+          .eq('to_user_id', targetId)
           .eq('tap_type', 'save');
         setIsSaved((count || 0) > 0);
       } catch {}
@@ -426,21 +436,20 @@ export default function L2ProfileSheet({ email, uid, id }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error('Sign in to save profiles'); return; }
       const targetId = profileUser.auth_user_id || profileUser.id;
-      const fromKey = user.email || user.id;
 
       if (isSaved) {
         await supabase
           .from('taps')
           .delete()
-          .eq('tapper_email', fromKey)
-          .eq('tapped_email', targetId)
+          .eq('from_user_id', user.id)
+          .eq('to_user_id', targetId)
           .eq('tap_type', 'save');
         setIsSaved(false);
         toast('Removed from saved');
       } else {
         await supabase
           .from('taps')
-          .insert({ tapper_email: fromKey, tapped_email: targetId, tap_type: 'save' });
+          .insert({ from_user_id: user.id, to_user_id: targetId, tapper_email: user.email || '', tapped_email: profileUser.email || '', tap_type: 'save' });
         setIsSaved(true);
         toast.success('Profile saved');
       }

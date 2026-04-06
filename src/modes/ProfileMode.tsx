@@ -288,13 +288,13 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
   const { data: tapsCount = 0 } = useQuery({
     queryKey: ['profile-mode-taps-count'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.email) return 0;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return 0;
 
       const { count, error } = await supabase
         .from('taps')
         .select('*', { count: 'exact', head: true })
-        .eq('tapped_email', user.email);
+        .eq('to_user_id', session.user.id);
 
       if (error) return 0;
       return count ?? 0;

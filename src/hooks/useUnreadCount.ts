@@ -93,9 +93,7 @@ export function useUnreadCount(): { unreadCount: number; clearTapsBadge: () => v
         // getSession() reads from localStorage — no network call
         const { data: { session } } = await supabase.auth.getSession();
         const user = session?.user;
-        if (!user || !mountedRef.current) return;
-        const userEmail = user.email;
-        if (!userEmail) return;
+        if (!user?.id || !mountedRef.current) return;
 
         const seenAt = parseInt(localStorage.getItem(TAPS_SEEN_KEY) || '0', 10);
         const seenAtISO = seenAt > 0
@@ -105,7 +103,7 @@ export function useUnreadCount(): { unreadCount: number; clearTapsBadge: () => v
         const { count, error } = await supabase
           .from('taps')
           .select('id', { count: 'exact', head: true })
-          .eq('tapped_email', userEmail)
+          .eq('to_user_id', user.id)
           .gt('created_at', seenAtISO);
 
         if (!error && count !== null && mountedRef.current) setTapsCount(count);

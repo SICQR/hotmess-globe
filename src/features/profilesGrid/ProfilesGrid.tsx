@@ -119,10 +119,11 @@ export default function ProfilesGrid({
 
   const [viewerLocation, setViewerLocation] = useState<LatLng | null>(null);
   const [viewerEmail, setViewerEmail] = useState<string | null>(viewerEmailProp ?? null);
+  const [viewerUserId, setViewerUserId] = useState<string | null>(null);
   const [viewerProfile, setViewerProfile] = useState<any>(null);
   const [isTelegramOpen, setIsTelegramOpen] = useState(false);
 
-  const { isTapped, sendTap } = useTaps(viewerEmail);
+  const { isTapped, sendTap } = useTaps(viewerUserId, viewerEmail);
 
   // Active venue check-ins for tonight-vibe badge on profile cards
   const { data: activeCheckins = [] } = useQuery({
@@ -190,6 +191,7 @@ export default function ProfilesGrid({
         const email = normalizeEmail(me?.email);
         // Only set from auth if the caller didn't supply a viewerEmail prop
         if (viewerEmailProp == null) setViewerEmail(email || null);
+        setViewerUserId(user.id);
         setViewerProfile(me || null);
 
         // Prefer device GPS when the viewer has explicitly consented.
