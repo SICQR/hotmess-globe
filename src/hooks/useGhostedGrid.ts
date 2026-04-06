@@ -137,7 +137,7 @@ export function useGhostedGrid(
         .select(`
           id, email, display_name, username, avatar_url,
           last_loc_ts, is_online,
-          age, looking_for, verified, city, bio,
+          age, looking_for, is_verified, city, bio,
           right_now_status, last_seen
         `)
         .or(`is_online.eq.true,last_seen.gte.${thirtyMinAgo}`)
@@ -188,7 +188,7 @@ export function useGhostedGrid(
         .from('profiles')
         .select(`
           id, email, display_name, username, avatar_url,
-          is_online, age, looking_for, verified, last_seen
+          is_online, age, looking_for, is_verified, last_seen
         `)
         .in('id', allUserIds)
         .not('display_name', 'is', null);
@@ -297,7 +297,7 @@ export function useGhostedGrid(
           avatarUrl: avatar,
           distanceM: distanceM != null ? roundDistance(distanceM) : null,
           isOnline: !!p.is_online,
-          isVerified: !!p.verified,
+          isVerified: !!p.is_verified,
           contextType,
           contextLabel,
           vibe: null,
@@ -361,7 +361,7 @@ export function useGhostedGrid(
           avatarUrl: avatar,
           distanceM: distanceM != null ? roundDistance(distanceM) : null,
           isOnline: true,
-          isVerified: !!p.verified,
+          isVerified: !!p.is_verified,
           contextType,
           contextLabel,
           vibe: null,
