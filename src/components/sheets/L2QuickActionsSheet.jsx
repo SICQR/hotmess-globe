@@ -19,7 +19,7 @@ const CARD = '#1C1C1E';
 
 const TAB_ACTIONS = {
   home: [
-    { id: 'go-live', label: 'Go Live', icon: Zap, action: 'sheet', target: 'ghosted' },
+    { id: 'go-live', label: 'Go Live', icon: Zap, action: 'sheet', target: 'go-live' },
     { id: 'safety', label: 'Safety Check', icon: Shield, action: 'navigate', target: '/safety' },
     { id: 'events', label: "What's Happening", icon: Calendar, action: 'sheet', target: 'events' },
   ],
@@ -29,7 +29,7 @@ const TAB_ACTIONS = {
     { id: 'tonight', label: "Tonight's Events", icon: Calendar, action: 'sheet', target: 'events' },
   ],
   ghosted: [
-    { id: 'go-live', label: 'Go Live', icon: Zap, action: 'sheet', target: 'ghosted' },
+    { id: 'go-live', label: 'Go Live', icon: Zap, action: 'sheet', target: 'go-live' },
     { id: 'filters', label: 'Filters', icon: Filter, action: 'sheet', target: 'filters' },
     { id: 'online', label: "Who's Online Now", icon: Users, action: 'navigate', target: '/ghosted' },
   ],

@@ -23,6 +23,7 @@ import {
   Radio as RadioIcon, Calendar,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
+import { toast } from 'sonner';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { AppBanner } from '@/components/banners/AppBanner';
 import { fetchBannersByPrefix } from '@/services/AppBannerService';
@@ -176,7 +177,10 @@ function StemPackStub({ release }) {
               : 'Free with membership'}
           </p>
         </div>
-        <button className="px-3 py-1.5 rounded-lg bg-[#9B1B2A] text-[10px] font-bold uppercase text-white active:scale-[0.97] transition-transform">
+        <button
+          onClick={() => toast('Stems coming soon')}
+          className="px-3 py-1.5 rounded-lg bg-[#9B1B2A] text-[10px] font-bold uppercase text-white active:scale-[0.97] transition-transform"
+        >
           Get Stems
         </button>
       </div>
