@@ -90,10 +90,10 @@ export default function L2TapsSheet() {
       if (tapperIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, display_name, username, photos')
+          .select('id, display_name, username, avatar_url')
           .in('id', tapperIds);
         for (const p of profiles || []) {
-          profileMap[p.id] = { display_name: p.display_name, username: p.username, photos: p.photos };
+          profileMap[p.id] = { display_name: p.display_name, username: p.username, photos: p.avatar_url ? [p.avatar_url] : null };
         }
       }
 

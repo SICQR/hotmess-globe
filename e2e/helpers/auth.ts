@@ -55,6 +55,9 @@ export async function bypassGates(page: Page): Promise<void> {
     // Community attestation flag — required for BootGuard error-path fallback.
     // Without this, if loadProfile fails the error handler falls to NEEDS_COMMUNITY_GATE.
     localStorage.setItem('hm_community_attested_v1', 'true');
+    // Tell OnboardingRouter that splash + age gate have been seen/passed already
+    localStorage.setItem('hm_splash_seen_v1', 'true');
+    localStorage.setItem('hm_age_gate_passed', 'true');
     sessionStorage.setItem('location_consent', 'false');
   });
 }
@@ -118,7 +121,50 @@ export async function loginAs(
   // 3. Navigate to the app — BootGuard picks up the session from localStorage
   await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 30_000 });
 
-  // 4. Wait for BootGuard READY — nav visible = app shell fully mounted
+  // 4. Handle onboarding screens if user hasn't completed onboarding yet.
+  //    The 3-step flow is: QuickSetup → Profile → PinSetup → /ghosted (nav visible).
+  //    We use Promise.race to avoid wasting time when the user is already onboarded.
+
+  // Helper: wait for nav (fast-path) OR a specific screen (onboarding-path)
+  const raceNavOr = async (screenText: string, timeout = 8_000): Promise<'nav' | 'screen' | 'timeout'> => {
+    return Promise.race([
+      page.locator('nav').first().waitFor({ state: 'visible', timeout }).then(() => 'nav' as const),
+      page.getByText(screenText, { exact: true }).waitFor({ state: 'visible', timeout }).then(() => 'screen' as const),
+    ]).catch(() => 'timeout' as const);
+  };
+
+  // Screen 1: QuickSetup — "You're almost in."
+  const r1 = await raceNavOr("You're almost in.");
+  if (r1 === 'nav') return;
+  if (r1 === 'screen') {
+    try {
+      const nameInput = page.getByPlaceholder("What do people call you?");
+      const current = await nameInput.inputValue().catch(() => '');
+      if (!current) await nameInput.fill('Alpha E2E');
+      await page.locator('button').filter({ hasText: /let.s go/i }).click();
+    } catch { /* best-effort */ }
+  }
+
+  // Screen 2: Profile — "About you"
+  const r2 = await raceNavOr('About you');
+  if (r2 === 'nav') return;
+  if (r2 === 'screen') {
+    try {
+      await page.locator('button').filter({ hasText: /skip for now/i }).click();
+    } catch { /* best-effort */ }
+  }
+
+  // Screen 3: PinSetup — "Protect your account"
+  const r3 = await raceNavOr('Protect your account');
+  if (r3 === 'nav') return;
+  if (r3 === 'screen') {
+    try {
+      // Writes onboarding_completed: true to DB, then calls onSkip → navigate('/ghosted')
+      await page.locator('button').filter({ hasText: /skip.*pin later/i }).click();
+    } catch { /* best-effort */ }
+  }
+
+  // 5. Final wait for BootGuard READY — nav visible = app shell fully mounted
   await page.locator('nav').first().waitFor({ state: 'visible', timeout: 30_000 });
 }
 
