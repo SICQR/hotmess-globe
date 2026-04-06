@@ -30,6 +30,12 @@ export interface GhostedCardProps {
   contextLabel: string;
   vibe: string | null;
   intent: string | null;
+  /** User email for boo state lookups */
+  email?: string | null;
+  /** Whether current user has boo'd this person */
+  isBood?: boolean;
+  /** Whether this is a mutual boo (both boo'd each other) */
+  isMutual?: boolean;
 }
 
 interface GhostedCardComponentProps extends GhostedCardProps {
@@ -58,6 +64,8 @@ function GhostedCardInner({
   contextLabel,
   vibe,
   intent,
+  isBood,
+  isMutual,
   index,
   onTap,
 }: GhostedCardComponentProps) {
@@ -66,6 +74,7 @@ function GhostedCardInner({
   return (
     <motion.button
       className="relative w-full aspect-[4/5] rounded-xl overflow-hidden bg-white/[0.03] focus:outline-none focus:ring-2 focus:ring-[#C8962C]/50"
+      style={isMutual ? { boxShadow: '0 0 0 2px #C8962C' } : undefined}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.03, 0.4), duration: 0.25 }}
@@ -110,6 +119,23 @@ function GhostedCardInner({
           aria-label="Online"
         />
       )}
+
+      {/* Boo / Mutual badge (top-left) */}
+      {isMutual ? (
+        <span
+          className="absolute top-2 left-2 z-10 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md"
+          style={{ backgroundColor: '#C8962C', color: '#000' }}
+        >
+          Match
+        </span>
+      ) : isBood ? (
+        <span
+          className="absolute top-2 left-2 z-10 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md"
+          style={{ backgroundColor: 'rgba(200,150,44,0.2)', color: '#C8962C' }}
+        >
+          Boo
+        </span>
+      ) : null}
 
       {/* Intent ring indicator (thin border at top) */}
       {intentColor && (
