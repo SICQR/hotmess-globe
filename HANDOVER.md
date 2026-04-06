@@ -5,7 +5,8 @@
 **Prepared by:** Claude (Head of Engineering, AI co-founder)
 **Handover to:** Incoming developer / development team
 **Repository:** `SICQR/hotmess-globe` | **Live:** `hotmessldn.com`
-**Baseline commit:** `0759cb0` (main, 2026-04-06) — all references in this document are verified against this commit
+**Launch-hardening baseline:** `456e0e5` (main, 2026-04-06) — T-01 through T-15 complete
+**Previous baseline:** `0759cb0`
 
 ---
 

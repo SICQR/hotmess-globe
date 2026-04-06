@@ -1,15 +1,17 @@
 # PROJECT-STATE.md
 
 **Last updated:** 2026-04-06
-**Current main:** `d41348e`
-**Handover baseline:** `003ecfa`
+**Launch-hardening baseline:** `456e0e5`
+**Previous handover baseline:** `003ecfa`
 **Docs:** HANDOVER.md v2.1, LAUNCH-BLOCKERS.md, FIRST-10-TICKETS.md
 
 ---
 
 ## Mode
 
-**Launch-hardening + trust-completion.**
+**Real-device QA → go/no-go.**
+
+Launch hardening complete at `456e0e5`. No new features. Only QA failures and launch blockers.
 
 The platform has a working core loop:
 
