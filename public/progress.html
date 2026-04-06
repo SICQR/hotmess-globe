@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOTMESS — Build Progress</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #050507;
+    --card: #1C1C1E;
+    --surface: #0D0D0D;
+    --gold: #C8962C;
+    --gold-dim: rgba(200,150,44,0.15);
+    --gold-glow: rgba(200,150,44,0.3);
+    --text: #FFFFFF;
+    --muted: #8E8E93;
+    --green: #30D158;
+    --amber: #FF9F0A;
+    --red: #FF3B30;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 16px 120px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 32px 0 24px;
+    border-bottom: 1px solid rgba(200,150,44,0.2);
+    margin-bottom: 24px;
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #C8962C 0%, #E8C56D 50%, #C8962C 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header .subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-top: 6px;
+  }
+
+  /* Overall progress */
+  .overall {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid rgba(200,150,44,0.15);
+    margin-bottom: 16px;
+  }
+  .ring-container {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+  }
+  .ring-bg, .ring-fill {
+    position: absolute;
+    top: 0; left: 0;
+    width: 80px;
+    height: 80px;
+  }
+  .ring-bg circle, .ring-fill circle {
+    fill: none;
+    stroke-width: 6;
+    cx: 40;
+    cy: 40;
+    r: 34;
+  }
+  .ring-bg circle { stroke: rgba(200,150,44,0.1); }
+  .ring-fill circle {
+    stroke: var(--gold);
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 40px 40px;
+    transition: stroke-dashoffset 1s ease;
+  }
+  .ring-percent {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--gold);
+  }
+  .overall-info h2 {
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .overall-info .counts {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Current activity */
+  .current-activity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: var(--gold-dim);
+    border: 1px solid rgba(200,150,44,0.25);
+    border-radius: 12px;
+    margin-bottom: 24px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .pulse-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--amber);
+    animation: pulse 2s infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,159,10,0.6); }
+    50% { opacity: 0.7; box-shadow: 0 0 0 8px rgba(255,159,10,0); }
+  }
+
+  /* Phase section */
+  .phase {
+    margin-bottom: 16px;
+    background: var(--card);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.06);
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+  .phase.active {
+    border-color: rgba(200,150,44,0.3);
+  }
+  .phase-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .phase-header:hover {
+    background: rgba(255,255,255,0.02);
+  }
+  .phase-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+  }
+  .phase-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .phase-status-dot.complete { background: var(--green); }
+  .phase-status-dot.in-progress { background: var(--amber); animation: pulse 2s infinite; }
+  .phase-status-dot.pending { background: var(--muted); opacity: 0.4; }
+
+  .phase-name {
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .phase-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .phase-count {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .phase-bar {
+    width: 60px;
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .phase-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--gold);
+    transition: width 0.8s ease;
+  }
+  .chevron {
+    font-size: 12px;
+    color: var(--muted);
+    transition: transform 0.2s;
+  }
+  .phase.expanded .chevron {
+    transform: rotate(90deg);
+  }
+
+  /* Tasks */
+  .phase-tasks {
+    display: none;
+    padding: 0 16px 12px;
+  }
+  .phase.expanded .phase-tasks {
+    display: block;
+  }
+  .task {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .task:first-child { border-top: none; }
+  .task-check {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--muted);
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+  }
+  .task-check.done {
+    background: var(--green);
+    border-color: var(--green);
+    color: #000;
+  }
+  .task-check.in-progress {
+    border-color: var(--amber);
+    background: rgba(255,159,10,0.15);
+  }
+  .task-check.in-progress::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--amber);
+    animation: pulse 2s infinite;
+  }
+  .task-name {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .task.done .task-name {
+    color: var(--muted);
+    text-decoration: line-through;
+    text-decoration-color: rgba(142,142,147,0.3);
+  }
+  .task-meta {
+    font-size: 11px;
+    color: var(--muted);
+    opacity: 0.6;
+    flex-shrink: 0;
+  }
+
+  /* Last updated */
+  .last-updated {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    opacity: 0.5;
+    margin-top: 24px;
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .container { padding: 16px 12px 100px; }
+    .header h1 { font-size: 22px; letter-spacing: 3px; }
+    .overall { flex-direction: column; text-align: center; }
+    .phase-bar { width: 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>HOTMESS</h1>
+    <div class="subtitle">Engineering Progress Dashboard</div>
+  </div>
+
+  <div class="overall" id="overall">
+    <div class="ring-container">
+      <svg class="ring-bg" viewBox="0 0 80 80"><circle /></svg>
+      <svg class="ring-fill" viewBox="0 0 80 80"><circle id="ring-circle" /></svg>
+      <div class="ring-percent" id="ring-percent">0%</div>
+    </div>
+    <div class="overall-info">
+      <h2 id="overall-title">Loading...</h2>
+      <div class="counts" id="overall-counts"></div>
+    </div>
+  </div>
+
+  <div class="current-activity" id="current-activity">
+    <div class="pulse-dot"></div>
+    <span id="activity-text">Loading...</span>
+  </div>
+
+  <div id="phases"></div>
+
+  <div class="last-updated" id="last-updated"></div>
+</div>
+
+<script>
+const CIRCUMFERENCE = 2 * Math.PI * 34;
+let data = null;
+
+function formatTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
+function getPhaseStats(phase) {
+  const total = phase.tasks.length;
+  const done = phase.tasks.filter(t => t.status === 'done').length;
+  const inProgress = phase.tasks.filter(t => t.status === 'in-progress').length;
+  return { total, done, inProgress };
+}
+
+function render(d) {
+  data = d;
+  const totalDone = d.phases.reduce((sum, p) => sum + p.tasks.filter(t => t.status === 'done').length, 0);
+  const totalAll = d.phases.reduce((sum, p) => sum + p.tasks.length, 0);
+  const pct = totalAll > 0 ? Math.round((totalDone / totalAll) * 100) : 0;
+
+  // Overall ring
+  const circle = document.getElementById('ring-circle');
+  const offset = CIRCUMFERENCE - (pct / 100) * CIRCUMFERENCE;
+  circle.style.strokeDasharray = CIRCUMFERENCE;
+  circle.style.strokeDashoffset = offset;
+
+  document.getElementById('ring-percent').textContent = pct + '%';
+  document.getElementById('overall-title').textContent = pct === 100 ? 'All Done!' : 'In Progress';
+  document.getElementById('overall-counts').textContent = totalDone + ' / ' + totalAll + ' tasks complete';
+
+  // Current activity
+  document.getElementById('activity-text').textContent = d.currentActivity || 'Idle';
+
+  // Phases
+  const container = document.getElementById('phases');
+  const expandedPhases = {};
+  container.querySelectorAll('.phase.expanded').forEach(el => {
+    expandedPhases[el.dataset.id] = true;
+  });
+
+  container.innerHTML = '';
+  d.phases.forEach(phase => {
+    const stats = getPhaseStats(phase);
+    const phasePct = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
+    const isExpanded = expandedPhases[phase.id] || phase.status === 'in-progress';
+
+    const el = document.createElement('div');
+    el.className = 'phase' + (isExpanded ? ' expanded' : '') + (phase.status === 'in-progress' ? ' active' : '');
+    el.dataset.id = phase.id;
+
+    el.innerHTML = `
+      <div class="phase-header">
+        <div class="phase-left">
+          <div class="phase-status-dot ${phase.status}"></div>
+          <div class="phase-name">${phase.name}</div>
+        </div>
+        <div class="phase-right">
+          <div class="phase-count">${stats.done}/${stats.total}</div>
+          <div class="phase-bar"><div class="phase-bar-fill" style="width:${phasePct}%"></div></div>
+          <div class="chevron">&#9654;</div>
+        </div>
+      </div>
+      <div class="phase-tasks">
+        ${phase.tasks.map(t => `
+          <div class="task ${t.status}">
+            <div class="task-check ${t.status}">${t.status === 'done' ? '&#10003;' : ''}</div>
+            <div class="task-name">${t.name}</div>
+            <div class="task-meta">${t.commit ? t.commit.slice(0,7) : ''}${t.completedAt ? ' ' + formatTime(t.completedAt) : ''}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    el.querySelector('.phase-header').addEventListener('click', () => {
+      el.classList.toggle('expanded');
+    });
+
+    container.appendChild(el);
+  });
+
+  // Last updated
+  document.getElementById('last-updated').textContent = 'Last updated: ' + new Date(d.lastUpdated).toLocaleString('en-GB');
+}
+
+async function load() {
+  try {
+    const res = await fetch('/progress.json?t=' + Date.now());
+    if (!res.ok) throw new Error('fetch failed');
+    const d = await res.json();
+    render(d);
+  } catch (e) {
+    console.warn('Failed to load progress data:', e);
+  }
+}
+
+load();
+setInterval(load, 10000);
+</script>
+</body>
+</html>

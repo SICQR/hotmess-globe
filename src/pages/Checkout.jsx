@@ -1,0 +1,867 @@
+import { supabase } from '@/components/utils/supabaseClient';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { createPageUrl } from '../utils';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { ArrowLeft, ShoppingCart, Check, Gift, Tag, Sparkles, X, Clock, Shield, Truck, Percent } from 'lucide-react';
+import { toast } from 'sonner';
+import { humanizeError } from '@/lib/errorUtils';
+import ErrorBoundary from '../components/error/ErrorBoundary';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { getGuestCartItems, mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
+import { isXpPurchasingEnabled } from '@/lib/featureFlags';
+
+// Promo code validation
+const PROMO_CODES = {
+  'HOTMESS10': { type: 'percent', value: 10, minXP: 100 },
+  'WELCOME20': { type: 'percent', value: 20, minXP: 200, newUsersOnly: true },
+  'SQUAD50': { type: 'fixed', value: 50, minXP: 200 },
+  'FREEDELIVERY': { type: 'freeDelivery', value: 0 },
+};
+
+export default function Checkout() {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [shippingAddress, setShippingAddress] = useState({});
+  const [notes, setNotes] = useState('');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [magicEmail, setMagicEmail] = useState('');
+  const [sendingLink, setSendingLink] = useState(false);
+  const [embeddedShopifyCheckoutUrl, setEmbeddedShopifyCheckoutUrl] = useState('');
+  const [isShopifyCheckoutOpen, setIsShopifyCheckoutOpen] = useState(false);
+  // New features
+  const [promoCode, setPromoCode] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState(null);
+  const [isGift, setIsGift] = useState(false);
+  const [giftRecipient, setGiftRecipient] = useState({ name: '', email: '', message: '' });
+  const [paymentMethod, setPaymentMethod] = useState('xp');
+  const [showPromoInput, setShowPromoInput] = useState(false);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const xpPurchasingEnabled = isXpPurchasingEnabled();
+
+  const isDisallowedCheckoutUrl = (value) => {
+    try {
+      const host = new URL(String(value)).host.toLowerCase();
+      return host.includes('myshopify.com') || host.includes('shopify.com') || host.includes('shop.app');
+    } catch {
+      return true;
+    }
+  };
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const isAuth = await supabase.auth.getSession().then(r => !!r.data.session);
+        if (!isAuth) {
+          window.location.href = "/auth" + (window.location.href ? `?next=${encodeURIComponent(window.location.href)}` : "");
+          return;
+        }
+
+        const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
+        setCurrentUser(user);
+      } catch (error) {
+        window.location.href = "/auth" + (window.location.href ? `?next=${encodeURIComponent(window.location.href)}` : "");
+      }
+    };
+    fetchUser();
+  }, []);
+
+  useEffect(() => {
+    if (!currentUser?.email) return;
+
+    const mergedKey = `guest_cart_merged_for:${currentUser.email}`;
+    try {
+      if (sessionStorage.getItem(mergedKey)) return;
+    } catch {
+      // If sessionStorage is unavailable, attempt merge anyway.
+    }
+
+    mergeGuestCartToUser({ currentUser })
+      .then(() => {
+        try {
+          sessionStorage.setItem(mergedKey, '1');
+        } catch {
+          // ignore
+        }
+        queryClient.invalidateQueries({ queryKey: ['cart'] });
+      })
+      .catch(() => {
+        // Non-fatal: keep guest cart local if merge fails.
+      });
+  }, [currentUser?.email, queryClient]);
+
+  const { data: cartItems = [] } = useQuery({
+    queryKey: ['cart', currentUser?.email || 'guest'],
+    queryFn: async () => {
+      // Filter out expired reservations (30min timeout)
+      const now = new Date();
+
+      if (!currentUser) {
+        const items = getGuestCartItems();
+        return items.filter(item => {
+          if (!item.reserved_until) return true;
+          return new Date(item.reserved_until) > now;
+        });
+      }
+
+      const authUserId = currentUser?.auth_user_id || null;
+
+      let query = supabase.from('cart_items').select('*');
+      if (authUserId) {
+        query = query.eq('auth_user_id', authUserId);
+      } else {
+        query = query.eq('user_email', currentUser.email);
+      }
+
+      const { data: items, error } = await query;
+      if (error) throw error;
+
+      return (items || []).filter(item => {
+        if (!item.reserved_until) return true;
+        return new Date(item.reserved_until) > now;
+      });
+    },
+    enabled: true
+  });
+
+  const cartProductIds = Array.from(
+    new Set(
+      (Array.isArray(cartItems) ? cartItems : [])
+        .map((item) => item?.product_id)
+        .filter((id) => id !== null && id !== undefined)
+        .map((id) => String(id))
+    )
+  );
+
+  const { data: products = [] } = useQuery({
+    queryKey: ['products', 'by-cart-ids', cartProductIds.join('|')],
+    queryFn: async () => {
+      if (!cartProductIds.length) return [];
+
+      // IMPORTANT: Use raw Supabase queries directly (no deduping).
+      // Deduping Shopify-imported rows can hide the exact
+      // product id referenced by a cart item and make the cart look empty.
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .in('id', cartProductIds);
+
+      if (error) {
+        // Fall back to the direct query (best-effort) if the ID lookup fails.
+        // This may miss the exact items, but it's better than hard-failing checkout.
+        const { data: fallback } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+        return Array.isArray(fallback) ? fallback : [];
+      }
+
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: cartProductIds.length > 0,
+  });
+
+  const cartWithProducts = (Array.isArray(cartItems) ? cartItems : [])
+    .map((item) => {
+      const product = products.find((p) => String(p.id) === String(item.product_id)) || null;
+      return { ...item, product };
+    });
+
+  const unresolvedCartItems = cartWithProducts.filter((item) => !item.product);
+
+  const shopifyCartItems = cartWithProducts.filter((item) => {
+    const seller = String(item?.product?.seller_email || '').toLowerCase();
+    const variantId = item?.shopify_variant_id || item?.product?.details?.shopify_variant_id;
+    // If product lookup failed but the cart item has a Shopify variant id, treat it as Shopify.
+    return !!variantId && (seller === 'shopify@hotmess.london' || !seller);
+  });
+
+  const xpCartItems = cartWithProducts.filter((item) => !shopifyCartItems.includes(item));
+
+  const totalXP = xpCartItems.reduce((sum, item) => {
+    const priceXp = item?.product?.price_xp || 0;
+    const qty = item?.quantity || 1;
+    return sum + (priceXp * qty);
+  }, 0);
+
+  const requiresShipping = xpCartItems.some((item) =>
+    ['physical', 'merch'].includes(String(item?.product?.product_type || '').toLowerCase())
+  );
+
+  const isShippingComplete = !requiresShipping || (
+    (shippingAddress.street || '').trim() &&
+    (shippingAddress.city || '').trim() &&
+    (shippingAddress.postcode || '').trim()
+  );
+
+  // Promo code discount calculation
+  const calculateDiscount = () => {
+    if (!appliedPromo) return 0;
+    if (appliedPromo.type === 'percent') {
+      return Math.floor(totalXP * (appliedPromo.value / 100));
+    }
+    if (appliedPromo.type === 'fixed') {
+      return Math.min(appliedPromo.value, totalXP);
+    }
+    return 0;
+  };
+
+  const discount = calculateDiscount();
+  const finalTotal = Math.max(0, totalXP - discount);
+
+  const applyPromoCode = () => {
+    const code = promoCode.toUpperCase().trim();
+    const promo = PROMO_CODES[code];
+    
+    if (!promo) {
+      toast.error('Invalid promo code');
+      return;
+    }
+    
+    if (promo.minXP && totalXP < promo.minXP) {
+      toast.error('This promo code has a minimum purchase requirement');
+      return;
+    }
+    
+    if (promo.newUsersOnly && currentUser?.created_date) {
+      const daysSinceJoin = (Date.now() - new Date(currentUser.created_date).getTime()) / (1000 * 60 * 60 * 24);
+      if (daysSinceJoin > 7) {
+        toast.error('This code is for new users only');
+        return;
+      }
+    }
+    
+    setAppliedPromo({ ...promo, code });
+    setShowPromoInput(false);
+    toast.success(`Promo ${code} applied!`);
+  };
+
+  const removePromo = () => {
+    setAppliedPromo(null);
+    setPromoCode('');
+  };
+
+  const checkoutMutation = useMutation({
+    mutationFn: async () => {
+      if (!xpPurchasingEnabled) {
+        throw new Error('Credit purchasing is coming soon.');
+      }
+
+      if (!currentUser) {
+        throw new Error('Please sign in to complete checkout');
+      }
+
+      if (!xpCartItems.length) {
+        throw new Error('No items to checkout');
+      }
+
+      // CRITICAL: Fetch fresh data and validate atomically
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { freshUser = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); freshUser = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
+      const currentXP = freshUser.xp || 0;
+      
+      // Check user has enough XP with fresh data
+      if (currentXP < totalXP) {
+        throw new Error('Insufficient balance to complete this purchase.');
+      }
+
+      // Fetch fresh product data to check inventory in real-time
+      const { data: freshProducts, error: productsError } = await supabase.from('products').select('*');
+      if (productsError) throw productsError;
+      
+      // Validate products and inventory atomically
+      for (const item of xpCartItems) {
+        const freshProduct = freshProducts.find(p => p.id === item.product.id);
+        if (!freshProduct || freshProduct.status !== 'active') {
+          throw new Error(`Product "${item.product.name}" is no longer available.`);
+        }
+        if (freshProduct.inventory_count !== undefined && freshProduct.inventory_count < item.quantity) {
+          throw new Error(`Only ${freshProduct.inventory_count} of "${item.product.name}" available.`);
+        }
+      }
+
+      // Group items by seller
+      const sellers = {};
+      xpCartItems.forEach(item => {
+        const seller = item.product.seller_email;
+        if (!sellers[seller]) sellers[seller] = [];
+        sellers[seller].push(item);
+      });
+
+      // ATOMIC TRANSACTION START - CRITICAL: Sequential operations prevent race conditions
+      // Step 1: Reserve inventory FIRST (prevents overselling race condition)
+      const inventoryUpdates = [];
+      try {
+        for (const item of xpCartItems) {
+          const freshProduct = freshProducts.find(p => p.id === item.product.id);
+          if (freshProduct.inventory_count !== undefined) {
+            // Double-check inventory hasn't changed since initial validation
+            if (freshProduct.inventory_count < item.quantity) {
+              throw new Error(`Only ${freshProduct.inventory_count} of "${item.product.name}" available.`);
+            }
+            const newInventory = freshProduct.inventory_count - item.quantity;
+            const { error: updateError } = await supabase.from('products').update({
+              inventory_count: Math.max(0, newInventory),
+              sales_count: (freshProduct.sales_count || 0) + item.quantity
+            }).eq('id', item.product.id);
+            if (updateError) throw updateError;
+            inventoryUpdates.push({ 
+              id: item.product.id, 
+              oldCount: freshProduct.inventory_count 
+            });
+          }
+        }
+
+        // Step 2: Deduct XP after inventory is reserved (safer order)
+        const newXP = currentXP - totalXP;
+        const updatePayload = { xp: newXP }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
+
+        // Step 3: Create orders (safe to do now that inventory & XP are locked)
+        for (const [seller, items] of Object.entries(sellers)) {
+          const { data: order, error: orderError } = await supabase.from('orders').insert({
+            buyer_email: freshUser.email,
+            seller_email: seller,
+            total_xp: items.reduce((sum, i) => sum + (i.product.price_xp * i.quantity), 0),
+            total_gbp: 0,
+            status: 'pending',
+            payment_method: 'xp',
+            shipping_address: shippingAddress,
+            notes
+          }).select().single();
+          if (orderError) throw orderError;
+
+          // Create order items
+          for (const item of items) {
+            const { error: itemError } = await supabase.from('order_items').insert({
+              order_id: order.id,
+              product_id: item.product.id,
+              product_name: item.product.name,
+              quantity: item.quantity,
+              price_xp: item.product.price_xp,
+              price_gbp: 0
+            });
+            if (itemError) throw itemError;
+          }
+
+          // Notify seller
+          const { error: notifyError } = await supabase.from('notifications').insert({
+            user_email: seller,
+            type: 'order',
+            title: 'New Order!',
+            message: `${freshUser.full_name || freshUser.display_name || 'A buyer'} placed an order`,
+            link: 'SellerDashboard'
+          });
+          if (notifyError) {
+            console.error('Failed to notify seller:', notifyError);
+          }
+        }
+
+        // Step 4: Clear cart
+        // Remove only the XP items from the DB cart.
+        for (const item of xpCartItems) {
+          if (item?.id) {
+            const { error: deleteError } = await supabase.from('cart_items').delete().eq('id', item.id);
+            if (deleteError) throw deleteError;
+          }
+        }
+      } catch (error) {
+        // CRITICAL ROLLBACK: Restore inventory and XP on any failure
+        console.error('Checkout failed, initiating rollback:', error);
+        
+        // Rollback inventory first (reverse order of operations)
+        for (const update of inventoryUpdates) {
+          try {
+            const { error: rollbackError } = await supabase.from('products').update({
+              inventory_count: update.oldCount
+            }).eq('id', update.id);
+            if (rollbackError) throw rollbackError;
+          } catch (rollbackError) {
+            console.error('Rollback failed for product', update.id, rollbackError);
+          }
+        }
+        
+        // Rollback XP
+        try {
+          const updatePayload = { xp: currentXP }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
+        } catch (rollbackError) {
+          console.error('XP rollback failed:', rollbackError);
+        }
+        
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['cart']);
+      toast.success('Order placed!');
+      navigate(createPageUrl('OrderHistory'));
+    },
+    onError: (error) => {
+      toast.error('Checkout failed. Please try again or contact support.');
+    }
+  });
+
+  const shopifyCheckoutMutation = useMutation({
+    mutationFn: async () => {
+      if (!shopifyCartItems.length) {
+        throw new Error('No Shopify items to checkout');
+      }
+
+      const lines = shopifyCartItems.map((item) => ({
+        variantId: item?.shopify_variant_id || item?.product?.details?.shopify_variant_id,
+        quantity: item?.quantity || 1,
+      }));
+
+      const resp = await fetch('/api/shopify/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lines }),
+      });
+
+      const contentType = resp.headers.get('content-type') || '';
+      const isJson = contentType.includes('application/json');
+      const payload = isJson ? await resp.json().catch(() => null) : await resp.text().catch(() => '');
+      if (!resp.ok) {
+        const message = isJson
+          ? (payload?.error || payload?.message || 'Failed to start Shopify checkout')
+          : 'Failed to start Shopify checkout';
+        const details = isJson && payload?.details ? ` (${payload.details})` : '';
+        const err = new Error(`${message}${details}`);
+        err.status = resp.status;
+        err.payload = payload;
+        throw err;
+      }
+
+      const checkoutUrl = payload?.cart?.checkoutUrl;
+      if (!checkoutUrl) {
+        throw new Error('Shopify did not return a checkout URL');
+      }
+
+      if (isDisallowedCheckoutUrl(checkoutUrl)) {
+        throw new Error('Checkout URL is not branded. Refusing to redirect to Shopify domains.');
+      }
+
+      return checkoutUrl;
+    },
+    onSuccess: (checkoutUrl) => {
+      // Do NOT embed Shopify checkout in an iframe.
+      // Embedding can trigger Shopify protected endpoints (e.g. /private_access_tokens)
+      // and is often blocked by Shopify/X-Frame-Options.
+      setEmbeddedShopifyCheckoutUrl(checkoutUrl);
+      setIsShopifyCheckoutOpen(true);
+    },
+    onError: (error) => {
+      toast.error('Couldn\'t start checkout. Please try again.');
+      // Keep a breadcrumb in DevTools for debugging 500s in prod.
+      console.error('[Checkout] Shopify checkout failed', {
+        status: error?.status,
+        message: error?.message,
+        payload: error?.payload,
+      });
+    },
+  });
+
+  const userXP = currentUser?.xp || 0;
+  const hasEnoughXP = currentUser ? userXP >= totalXP : true;
+
+  if ((cartItems?.length || 0) === 0) {
+    return (
+      <ErrorBoundary>
+        <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <ShoppingCart className="w-16 h-16 text-white/20 mx-auto mb-4" />
+          <p className="text-white/60 mb-4">Your cart is empty</p>
+          <Button onClick={() => navigate('/market')}>
+            Browse Market
+          </Button>
+        </div>
+        </div>
+      </ErrorBoundary>
+    );
+  }
+
+  const handleSendMagicLink = async () => {
+    const email = (magicEmail || '').trim();
+    if (!email) {
+      toast.error('Enter your email');
+      return;
+    }
+
+    setSendingLink(true);
+    try {
+      const redirectTo = `${window.location.origin}${createPageUrl('Checkout')}`;
+      const { error } = await auth.sendMagicLink(email, redirectTo);
+      if (error) throw error;
+      toast.success('Magic link sent. Check your email.');
+    } catch (error) {
+      toast.error(humanizeError(error, 'Failed to send magic link'));
+    } finally {
+      setSendingLink(false);
+    }
+  };
+
+  return (
+    <ErrorBoundary>
+      <div className="min-h-screen bg-black text-white p-4 md:p-8">
+      <div className="max-w-4xl mx-auto">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <Button onClick={() => navigate(-1)} variant="ghost" className="mb-6">
+            <ArrowLeft className="w-4 h-4 mr-2" /> Back
+          </Button>
+
+          <h1 className="text-4xl font-black uppercase mb-2">
+            CHECKOUT<span className="text-[#39FF14]">.</span>
+          </h1>
+          <p className="text-white/60 text-sm uppercase tracking-wider mb-8">
+            Complete your order
+          </p>
+
+
+          {shopifyCartItems.length > 0 && (
+            <div className="mb-8 bg-white/5 border-2 border-white/10 p-6">
+              <h2 className="text-xl font-black uppercase mb-2">SHOPIFY CHECKOUT</h2>
+              <p className="text-white/60 text-sm uppercase tracking-wider mb-4">
+                These items checkout on Shopify (card, Apple Pay, etc.).
+              </p>
+
+              {unresolvedCartItems.length > 0 && (
+                <div className="mb-4 bg-red-600/20 border-2 border-red-600 p-4 text-xs font-bold uppercase tracking-wider">
+                  Some cart items couldn’t load. Try refreshing, or remove/re-add the item.
+                </div>
+              )}
+
+              <Button
+                onClick={() => shopifyCheckoutMutation.mutate()}
+                disabled={shopifyCheckoutMutation.isPending}
+                className="bg-white hover:bg-white/90 text-black font-black uppercase"
+              >
+                {shopifyCheckoutMutation.isPending ? 'Starting Shopify checkout…' : 'Checkout on Shopify'}
+              </Button>
+            </div>
+          )}
+
+          <Dialog
+            open={isShopifyCheckoutOpen}
+            onOpenChange={(open) => {
+              setIsShopifyCheckoutOpen(open);
+              if (!open) setEmbeddedShopifyCheckoutUrl('');
+            }}
+          >
+            <DialogContent className="max-w-5xl bg-black border border-white/10 text-white">
+              <DialogHeader>
+                <DialogTitle className="font-black uppercase">Secure checkout</DialogTitle>
+                <DialogDescription className="text-white/60">
+                    Checkout opens in a separate secure page.
+                </DialogDescription>
+              </DialogHeader>
+
+                <div className="text-sm text-white/60">
+                  {embeddedShopifyCheckoutUrl
+                    ? 'When you’re ready, open the secure checkout to pay (card, Apple Pay, etc.).'
+                    : 'No checkout URL available.'}
+                </div>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-white/20 text-white hover:bg-white hover:text-black font-black uppercase"
+                  onClick={() => setIsShopifyCheckoutOpen(false)}
+                >
+                  Close
+                </Button>
+                <Button
+                  type="button"
+                  className="bg-white hover:bg-white/90 text-black font-black uppercase"
+                  onClick={() => {
+                    if (!embeddedShopifyCheckoutUrl) return;
+                    if (isDisallowedCheckoutUrl(embeddedShopifyCheckoutUrl)) {
+                      toast.error('Checkout URL is not branded. Refusing to redirect to Shopify domains.');
+                      return;
+                    }
+                    window.location.assign(embeddedShopifyCheckoutUrl);
+                  }}
+                  disabled={!embeddedShopifyCheckoutUrl}
+                >
+                  Open secure checkout
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Order Summary */}
+            <div className="bg-white/5 border-2 border-white/10 p-6">
+              <h2 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
+                <ShoppingCart className="w-5 h-5 text-[#C8962C]" />
+                Order Summary
+              </h2>
+              <div className="space-y-3 mb-6">
+                {cartWithProducts.map(item => (
+                  <div key={item.id ?? item.product_id} className="flex justify-between items-start p-4 bg-black/40 border border-white/10">
+                    <div className="flex-1">
+                      <div className="font-black uppercase text-sm mb-1">
+                        {item?.product?.name || 'Product unavailable'}
+                      </div>
+                      {item?.product ? (
+                        <>
+                          <div className="text-xs text-white/40 uppercase">
+                            Qty: {item.quantity}
+                          </div>
+                          {String(item?.product?.seller_email || '').toLowerCase() === 'shopify@hotmess.london' && (
+                            <div className="text-xs text-white/50 uppercase mt-1">
+                              {item?.variant_title ? `Size: ${item.variant_title} • ` : ''}Checkout on Shopify
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="text-xs text-red-400 uppercase mt-1">
+                          Couldn’t load product details. Remove and re-add.
+                        </div>
+                      )}
+                    </div>
+                    <div className="font-black text-lg text-white/60">
+                      {item?.product?.price_gbp ? `£${item.product.price_gbp * item.quantity}` : '—'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t-2 border-white/20 pt-4">
+                {/* Promo Code Section */}
+                <div className="mb-4">
+                  {appliedPromo ? (
+                    <div className="flex items-center justify-between p-3 bg-[#39FF14]/10 border border-[#39FF14]/30 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Tag className="w-4 h-4 text-[#39FF14]" />
+                        <span className="font-bold text-[#39FF14]">{appliedPromo.code}</span>
+                        <span className="text-white/60 text-sm">
+                          {appliedPromo.type === 'percent' ? `-${appliedPromo.value}%` : `-${appliedPromo.value}`}
+                        </span>
+                      </div>
+                      <button onClick={removePromo} className="text-white/40 hover:text-white">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : showPromoInput ? (
+                    <div className="flex gap-2">
+                      <Input
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value)}
+                        placeholder="Enter promo code"
+                        className="bg-white/5 border-white/20 text-white flex-1"
+                        onKeyPress={(e) => e.key === 'Enter' && applyPromoCode()}
+                      />
+                      <Button onClick={applyPromoCode} variant="outline" className="border-white/20">
+                        Apply
+                      </Button>
+                      <button onClick={() => setShowPromoInput(false)} className="text-white/40 hover:text-white px-2">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowPromoInput(true)}
+                      className="flex items-center gap-2 text-[#00C2E0] text-sm hover:underline"
+                    >
+                      <Percent className="w-4 h-4" /> Have a promo code?
+                    </button>
+                  )}
+                </div>
+
+                {!currentUser && (
+                  <div className="text-sm text-white/60 uppercase tracking-wider">
+                    Sign in to complete checkout.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Shipping Info */}
+            <div className="bg-white/5 border-2 border-white/10 p-6">
+              <h2 className="text-xl font-black uppercase mb-4">DELIVERY DETAILS</h2>
+
+              {/* Gift Option */}
+              <div className="mb-6">
+                <button
+                  onClick={() => setIsGift(!isGift)}
+                  className={`w-full p-4 border-2 rounded-lg flex items-center justify-between transition-all ${
+                    isGift 
+                      ? 'border-[#C8962C] bg-[#C8962C]/10' 
+                      : 'border-white/20 hover:border-white/40'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Gift className={`w-5 h-5 ${isGift ? 'text-[#C8962C]' : 'text-white/60'}`} />
+                    <div className="text-left">
+                      <p className="font-bold">Send as Gift</p>
+                      <p className="text-xs text-white/40">Add a personal message</p>
+                    </div>
+                  </div>
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                    isGift ? 'border-[#C8962C] bg-[#C8962C]' : 'border-white/40'
+                  }`}>
+                    {isGift && <Check className="w-3 h-3 text-black" />}
+                  </div>
+                </button>
+
+                <AnimatePresence>
+                  {isGift && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-4 space-y-3">
+                        <Input
+                          placeholder="Recipient's Name"
+                          value={giftRecipient.name}
+                          onChange={(e) => setGiftRecipient({ ...giftRecipient, name: e.target.value })}
+                          className="bg-white/5 border-white/20 text-white"
+                        />
+                        <Input
+                          placeholder="Recipient's Email"
+                          type="email"
+                          value={giftRecipient.email}
+                          onChange={(e) => setGiftRecipient({ ...giftRecipient, email: e.target.value })}
+                          className="bg-white/5 border-white/20 text-white"
+                        />
+                        <Textarea
+                          placeholder="Gift message (optional)"
+                          value={giftRecipient.message}
+                          onChange={(e) => setGiftRecipient({ ...giftRecipient, message: e.target.value })}
+                          className="bg-white/5 border-white/20 text-white h-20"
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Shipping Address */}
+              <div className="space-y-4">
+                <Input
+                  placeholder="Street Address"
+                  value={shippingAddress.street || ''}
+                  onChange={(e) => setShippingAddress({...shippingAddress, street: e.target.value})}
+                  className="bg-white/5 border-white/20 text-white"
+                />
+                <Input
+                  placeholder="City"
+                  value={shippingAddress.city || ''}
+                  onChange={(e) => setShippingAddress({...shippingAddress, city: e.target.value})}
+                  className="bg-white/5 border-white/20 text-white"
+                />
+                <Input
+                  placeholder="Postcode"
+                  value={shippingAddress.postcode || ''}
+                  onChange={(e) => setShippingAddress({...shippingAddress, postcode: e.target.value})}
+                  className="bg-white/5 border-white/20 text-white"
+                />
+                <Textarea
+                  placeholder="Order notes (optional)"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="bg-white/5 border-white/20 text-white h-24"
+                />
+
+                <Button
+                  onClick={() => {
+                    if (!currentUser) {
+                      setShowAuthModal(true);
+                      return;
+                    }
+                    checkoutMutation.mutate();
+                  }}
+                  disabled={
+                    xpCartItems.length === 0 ||
+                    !xpPurchasingEnabled ||
+                    (checkoutMutation.isPending) ||
+                    !isShippingComplete
+                  }
+                  className="w-full bg-[#39FF14] hover:bg-[#39FF14]/90 text-black font-black text-lg py-7 uppercase tracking-wider shadow-[0_0_20px_rgba(57,255,20,0.3)] border-2 border-[#39FF14]"
+                >
+                  {checkoutMutation.isPending ? (
+                    'PROCESSING ORDER...'
+                  ) : (
+                    <>
+                      <Check className="w-5 h-5 mr-2" />
+                      {currentUser ? 'COMPLETE ORDER' : 'SIGN IN TO COMPLETE'}
+                    </>
+                  )}
+                </Button>
+
+                {!isShippingComplete && (
+                  <div className="mt-2 text-xs text-red-400 uppercase tracking-wider">
+                    {requiresShipping ? 'Add a shipping address to continue.' : 'Complete required fields to continue.'}
+                  </div>
+                )}
+                
+                <div className="mt-4 p-4 bg-black/40 border border-white/10 text-xs text-white/60 uppercase tracking-wider">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-[#39FF14]" />
+                      <span>Secure checkout</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-[#00C2E0]" />
+                      <span>Order tracking</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-[#C8962C]" />
+                      <span>Secure checkout</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Truck className="w-4 h-4 text-[#C8962C]" />
+                      <span>Seller notified</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+      </div>
+
+      <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
+        <DialogContent className="bg-black text-white border-2 border-white/10">
+          <DialogHeader>
+            <DialogTitle className="font-black uppercase">Sign in to checkout</DialogTitle>
+            <DialogDescription className="text-white/60">
+              Magic link only. We’ll email you a secure sign-in link.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <Input
+              value={magicEmail}
+              onChange={(e) => setMagicEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="bg-white/5 border-white/20 text-white"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              onClick={handleSendMagicLink}
+              disabled={sendingLink}
+              className="bg-[#39FF14] hover:bg-[#39FF14]/90 text-black font-black uppercase"
+            >
+              {sendingLink ? 'Sending…' : 'Send magic link'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </ErrorBoundary>
+  );
+}

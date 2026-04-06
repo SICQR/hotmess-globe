@@ -1,0 +1,331 @@
+import { createClient } from '@supabase/supabase-js';
+import { getBearerToken, getEnv, getQueryParam, json } from './shopify/_utils.js';
+import { getSupabaseServerClients } from './routing/_utils.js';
+
+const isRunningOnVercel = () => {
+  const flag = process.env.VERCEL || process.env.VERCEL_ENV;
+  return !!flag;
+};
+
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+const normalizeId = (value) => String(value || '').trim();
+
+const buildFallbackProfiles = () => {
+  return [
+    {
+      id: 'profile_123',
+      auth_user_id: 'fallback_auth_123',
+      email: 'jay@example.com',
+      full_name: 'Jay',
+      avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1200&q=80',
+      city: 'London',
+      profile_type: 'creator',
+      bio: 'Late-night walks, loud music, no drama',
+      last_lng: -0.1278,
+      lat: 51.5074,
+      lng: -0.1278,
+      seller_bio: null,
+      shop_banner_url: null,
+    },
+    {
+      id: 'profile_124',
+      auth_user_id: 'fallback_auth_124',
+      email: 'sam@example.com',
+      full_name: 'Sam',
+      avatar_url: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=1200&q=80',
+      city: 'London',
+      profile_type: 'seller',
+      bio: 'Sunsets, scooters, and smoothies',
+      seller_tagline: 'Handmade beachwear + scooter charms',
+      last_lat: 51.5099,
+      last_lng: -0.1181,
+      lat: 51.5099,
+      lng: -0.1181,
+      seller_bio: null,
+      shop_banner_url: null,
+    },
+  ];
+};
+
+const isMissingTableError = (error) => {
+  const message = String(error?.message || '').toLowerCase();
+  const code = String(error?.code || '').toLowerCase();
+  return (
+    code === '42p01' ||
+    message.includes('schema cache') ||
+    message.includes('does not exist') ||
+    message.includes('could not find the table')
+  );
+};
+
+const isMissingColumnError = (error) => {
+  const message = String(error?.message || '').toLowerCase();
+  const code = String(error?.code || '').toUpperCase();
+
+  // PostgREST missing column often shows as PGRST204.
+  if (code === 'PGRST204') return true;
+  // Postgres missing column.
+  if (code === '42703') return true;
+
+  return (
+    message.includes('could not find') && message.includes('column')
+  ) || (
+    message.includes('column') && message.includes('does not exist')
+  );
+};
+
+const safeArray = (value) => (Array.isArray(value) ? value : []);
+
+const pickDefined = (primary, fallback) => (primary === undefined ? fallback : primary);
+
+const mergeAuthMeta = ({ row, meta }) => {
+  const out = { ...(row || {}) };
+  const userMeta = meta && typeof meta === 'object' ? meta : {};
+
+  // Only merge fields that are safe to render publicly in the Profile UI.
+  // Keep the rest gated on the client (and/or stored only locally).
+  const allowedKeys = [
+    'photos',
+    'bio',
+    'interests',
+    'looking_for',
+    'preferred_vibes',
+    'skills',
+    'music_taste',
+    'profile_theme',
+    'accent_color',
+    'availability_status',
+  ];
+
+  for (const key of allowedKeys) {
+    if (out[key] === undefined) {
+      out[key] = userMeta[key];
+    }
+  }
+
+  // Normalize photos shape lightly (keep the stored object structure).
+  if (out.photos !== undefined) {
+    out.photos = safeArray(out.photos).slice(0, 5);
+  }
+
+  out.interests = safeArray(out.interests);
+  out.looking_for = safeArray(out.looking_for);
+  out.preferred_vibes = safeArray(out.preferred_vibes);
+  out.skills = safeArray(out.skills);
+  out.music_taste = safeArray(out.music_taste);
+
+  return out;
+};
+
+const fetchMaybeSingle = async (client, table, where) => {
+  // Use SELECT * to avoid column-mismatch errors across environments.
+  // The GDPR email strip happens downstream before responding.
+  const { data, error } = await client
+    .from(table)
+    .select('*')
+    .match(where)
+    .maybeSingle();
+
+  if (error) return { data: null, error };
+  return { data: data || null, error: null };
+};
+
+export default async function handler(req, res) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET');
+    return json(res, 405, { error: 'Method not allowed' });
+  }
+
+  // Allow public profile viewing - auth is optional for GET requests
+  const accessToken = getBearerToken(req);
+  // Auth is NOT required for viewing profiles - RLS handles visibility
+
+  const emailRaw = getQueryParam(req, 'email');
+  const uidRaw = getQueryParam(req, 'uid') || getQueryParam(req, 'auth_user_id');
+
+  const email = emailRaw ? normalizeEmail(emailRaw) : null;
+  const uid = uidRaw ? normalizeId(uidRaw) : null;
+
+  if (!email && !uid) {
+    return json(res, 400, { error: 'Missing required query param: email or uid' });
+  }
+
+  const { error: supaErr, serviceClient, anonClient } = getSupabaseServerClients();
+
+  if (accessToken && anonClient) {
+    const { data, error } = await anonClient.auth.getUser(accessToken);
+    // Token validation is optional - profile viewing works without auth via RLS
+  }
+
+  // If service role isn't configured (common in local dev), try an authenticated anon-client query
+  // using the viewer's bearer token. This relies on RLS allowing authenticated reads.
+  if (supaErr || !serviceClient) {
+    const supabaseUrl = getEnv('SUPABASE_URL', ['VITE_SUPABASE_URL']);
+    const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY', ['VITE_SUPABASE_ANON_KEY']);
+
+    if (accessToken && supabaseUrl && supabaseAnonKey) {
+      const authedClient = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+        global: {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      });
+
+      // GDPR: strip email from response — never expose to other users
+      const stripEmail = (row) => {
+        if (!row) return row;
+        const { email: _email, user_email: _ue, ...safe } = row;
+        return safe;
+      };
+
+      const tables = ['profiles'];
+      for (const table of tables) {
+        if (email) {
+          const { data } = await fetchMaybeSingle(authedClient, table, { email });
+          if (data) return json(res, 200, { user: stripEmail(data) });
+        }
+
+        if (uid) {
+          const { data: byId } = await fetchMaybeSingle(authedClient, table, { id: uid });
+          if (byId) return json(res, 200, { user: stripEmail(byId) });
+        }
+      }
+    }
+
+    const fallbacks = buildFallbackProfiles();
+    const match = email
+      ? fallbacks.find((p) => normalizeEmail(p?.email) === email)
+      : fallbacks.find((p) => normalizeId(p?.auth_user_id) === uid || normalizeId(p?.id) === uid);
+
+    if (!match) {
+      return json(res, 200, {
+        ok: false,
+        notFound: true,
+        user: null,
+        error: 'Profile not found',
+      });
+    }
+    return json(res, 200, { user: match });
+  }
+
+  const tables = ['profiles'];
+  const whereEmail = email ? { email } : null;
+
+  let sawMissingTable = false;
+
+  const respondWithUser = async (row) => {
+    // Fetch profile_photos for this user (canonical multi-photo table)
+    let profilePhotos = [];
+    try {
+      const profileId = row?.id;
+      if (profileId && serviceClient) {
+        const { data: photoRows } = await serviceClient
+          .from('profile_photos')
+          .select('id, url, position, is_primary, created_at')
+          .eq('profile_id', String(profileId))
+          .order('position', { ascending: true });
+        if (Array.isArray(photoRows)) profilePhotos = photoRows;
+      }
+    } catch {
+      // Best-effort
+    }
+
+    const enrichRow = (r) => ({
+      ...r,
+      profile_photos: profilePhotos,
+    });
+
+    const authUserId = row?.auth_user_id ? String(row.auth_user_id).trim() : null;
+    if (!authUserId || !serviceClient?.auth?.admin?.getUserById) {
+      // GDPR: strip email from response — never expose to other users
+      const { email: _email, user_email: _ue, ...safe } = enrichRow(row) || {};
+      return json(res, 200, { user: safe });
+    }
+
+    try {
+      const { data, error } = await serviceClient.auth.admin.getUserById(authUserId);
+      const meta = error ? null : (data?.user?.user_metadata || null);
+      const merged = mergeAuthMeta({ row, meta });
+      // GDPR: strip email from response — never expose to other users
+      const { email: _email, user_email: _ue, ...safe } = enrichRow(merged) || {};
+      return json(res, 200, { user: safe });
+    } catch {
+      // GDPR: strip email from response — never expose to other users
+      const { email: _email, user_email: _ue, ...safe } = enrichRow(row) || {};
+      return json(res, 200, { user: safe });
+    }
+  };
+
+  for (const table of tables) {
+    if (whereEmail) {
+      const { data, error } = await fetchMaybeSingle(serviceClient, table, whereEmail);
+      if (error && isMissingTableError(error)) sawMissingTable = true;
+      if (data) return respondWithUser(data);
+    }
+
+    if (uid) {
+      const { data: byId, error: byIdError } = await fetchMaybeSingle(serviceClient, table, { id: uid });
+      if (byIdError && isMissingTableError(byIdError)) sawMissingTable = true;
+      if (byId) return respondWithUser(byId);
+    }
+  }
+
+  // If we were asked for a UID, it may exist in Supabase Auth even if the
+  // public profile row hasn't been created yet. Best-effort: resolve auth user
+  // -> email, then retry by email.
+  if (uid && serviceClient?.auth?.admin?.getUserById) {
+    try {
+      const { data: authData, error: authError } = await serviceClient.auth.admin.getUserById(uid);
+      const resolvedEmail = authError ? null : normalizeEmail(authData?.user?.email);
+      if (resolvedEmail) {
+        for (const table of tables) {
+          const { data, error } = await fetchMaybeSingle(serviceClient, table, { email: resolvedEmail });
+          if (error && isMissingTableError(error)) sawMissingTable = true;
+          if (data) return respondWithUser(data);
+        }
+      }
+    } catch {
+      // Non-fatal: fall through to existing fallback/404 behavior.
+    }
+  }
+
+  // Back-compat: sometimes the request uses a Supabase auth UID, but the profile row
+  // has not yet been linked via `auth_user_id`. Try to resolve the auth user email
+  // and then look up by email.
+  if (uid && serviceClient?.auth?.admin?.getUserById) {
+    try {
+      const { data } = await serviceClient.auth.admin.getUserById(uid);
+      const resolvedEmail = data?.user?.email ? normalizeEmail(data.user.email) : null;
+      if (resolvedEmail) {
+        for (const table of tables) {
+          const { data: byEmail } = await fetchMaybeSingle(serviceClient, table, { email: resolvedEmail });
+          if (byEmail) return respondWithUser(byEmail);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (sawMissingTable) {
+    const fallbacks = buildFallbackProfiles();
+    const match = email
+      ? fallbacks.find((p) => normalizeEmail(p?.email) === email)
+      : fallbacks.find((p) => normalizeId(p?.auth_user_id) === uid || normalizeId(p?.id) === uid);
+
+    if (match) {
+      // GDPR: strip email from response — never expose to other users
+      const { email: _email, user_email: _ue, ...safe } = match;
+      return json(res, 200, { user: safe });
+    }
+  }
+
+  return json(res, 200, {
+    ok: false,
+    notFound: true,
+    user: null,
+    error: 'Profile not found',
+  });
+}

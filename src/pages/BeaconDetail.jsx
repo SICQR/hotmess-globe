@@ -1,0 +1,345 @@
+import { supabase } from '@/components/utils/supabaseClient';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { createPageUrl } from '../utils';
+import { MapPin, ArrowLeft, Users, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
+import { isGamificationEnabled } from '@/lib/featureFlags';
+import CommentsSection from '../components/beacon/CommentsSection';
+import BeaconActions from '../components/beacon/BeaconActions';
+import EventRSVP from '../components/events/EventRSVP';
+import RelatedEvents from '../components/events/RelatedEvents';
+import EventTicket from '../components/events/EventTicket';
+import EventWaitlist from '../components/events/EventWaitlist';
+import TicketScanner from '../components/events/TicketScanner';
+import NightKingDisplay from '../components/gamification/NightKingDisplay';
+import ConvictPlayer from '../components/radio/ConvictPlayer';
+import { Music } from 'lucide-react';
+import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
+import { toast } from 'sonner';
+import { humanizeError } from '@/lib/errorUtils';
+import { BEACON_COLOR } from '@/hooks/useP2PListingBeacon';
+
+
+export default function BeaconDetail() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const beaconId = searchParams.get('id');
+  const [currentUser, setCurrentUser] = useState(null);
+  const [showScanner, setShowScanner] = useState(false);
+  const [showConvictPlayer, setShowConvictPlayer] = useState(false);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
+        setCurrentUser(user);
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const { data: beacons = [] } = useQuery({
+    queryKey: ['beacons'],
+    queryFn: () => supabase.from('beacons').select('*'),
+  });
+
+  const { data: myRsvp } = useQuery({
+    queryKey: ['my-rsvp', beaconId, currentUser?.email],
+    queryFn: async () => {
+      const rsvps = await supabase.from('event_rsvps').select('*').eq({
+        user_email: currentUser.email,
+        event_id: beaconId
+      });
+      return rsvps.find(r => r.status === 'going') || null;
+    },
+    enabled: !!currentUser && !!beaconId
+  });
+
+  const beacon = beacons.find(b => b.id === beaconId);
+
+  const soundCloudRef =
+    beacon?.soundcloud_urn ||
+    beacon?.soundcloud_url ||
+    beacon?.metadata?.soundcloud_urn ||
+    beacon?.metadata?.soundcloud_url ||
+    null;
+
+  if (!beacon) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-white/60 mb-4">Beacon not found</p>
+          <Button onClick={() => navigate(-1)} variant="ghost">
+            Go Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Use shared beacon colors with legacy fallbacks
+  const kindToColor = (kind) => ({
+    ...BEACON_COLOR,
+    venue: '#C8962C',
+    hookup: '#FF073A',
+    drop: '#FF6B35',
+    popup: '#C8962C',
+    private: BEACON_COLOR.event,
+  })[kind] || '#C8962C';
+
+  const handleScan = async () => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token || null;
+      if (!token) {
+        toast.error('Please log in to scan beacons');
+        return;
+      }
+
+      const res = await fetch('/api/scan/check-in', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ code: beacon?.id, source: 'beacon_detail' }),
+      });
+
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 409) {
+          toast.message('Already scanned recently');
+          return;
+        }
+        throw new Error(payload?.error || 'Scan failed');
+      }
+
+      toast.success('Scanned successfully!');
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+      queryClient.invalidateQueries({ queryKey: ['beacon_checkins'] });
+    } catch (error) {
+      console.error('Failed to scan:', error);
+      toast.error(humanizeError(error, 'Failed to scan'));
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      {/* Hero */}
+      <div className="relative h-64 bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20 border-b border-white/10">
+        <div className="absolute inset-0 flex items-end">
+          <div className="w-full p-6 md:p-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Button
+                onClick={() => navigate(-1)}
+                variant="ghost"
+                className="text-white/60 hover:text-white"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              <Button
+                onClick={() => navigate(createPageUrl('Beacons'))}
+                variant="ghost"
+                className="text-white/60 hover:text-white"
+              >
+                All Beacons
+              </Button>
+            </div>
+            <span
+              className="inline-block px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider mb-3"
+              style={{
+                backgroundColor: kindToColor(beacon.kind),
+                color: '#000'
+              }}
+            >
+              {beacon.kind}
+            </span>
+            <h1 className="text-3xl md:text-5xl font-black mb-2">{beacon.title}</h1>
+            <BeaconActions beacon={beacon} />
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-4xl mx-auto p-6 md:p-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Main Info */}
+          <div className="md:col-span-2 space-y-6">
+            {beacon.description && (
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                <h2 className="text-sm uppercase tracking-wider text-white/40 mb-3">Description</h2>
+                <p className="text-white/80 leading-relaxed">{beacon.description}</p>
+              </div>
+            )}
+
+            <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+              <h2 className="text-sm uppercase tracking-wider text-white/40 mb-4">Details</h2>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <MapPin className="w-5 h-5 text-[#C8962C]" />
+                  <div>
+                    <div className="text-xs text-white/40">Location</div>
+                    <div className="font-semibold">{beacon.city}</div>
+                  </div>
+                </div>
+                {beacon.created_date && (
+                  <div className="flex items-center gap-3">
+                    <Calendar className="w-5 h-5 text-[#C8962C]" />
+                    <div>
+                      <div className="text-xs text-white/40">Created</div>
+                      <div className="font-semibold">
+                        {format(new Date(beacon.created_date), 'MMM d, yyyy')}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {beacon.mode && (
+                  <div className="flex items-center gap-3">
+                    <Users className="w-5 h-5 text-[#C8962C]" />
+                    <div>
+                      <div className="text-xs text-white/40">Mode</div>
+                      <div className="font-semibold uppercase">{beacon.mode}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-4">
+            {/* Night King for Venues — only when gamification enabled */}
+            {isGamificationEnabled() && beacon.kind === 'venue' && (
+              <NightKingDisplay venueId={beaconId} />
+            )}
+
+            {/* Audio Drop Player */}
+            {beacon.mode === 'radio' && beacon.audio_url && (
+              <Button
+                onClick={() => setShowConvictPlayer(true)}
+                className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-white font-black py-6 border-2 border-white"
+              >
+                <Music className="w-5 h-5 mr-2" />
+                PLAY RAW TRACK
+              </Button>
+            )}
+
+            {/* SoundCloud (Embed-first + fallback link) */}
+            {soundCloudRef && (
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                <div className="text-xs uppercase tracking-wider text-white/40 mb-3">SoundCloud</div>
+                <SoundCloudEmbed
+                  urlOrUrn={soundCloudRef}
+                  title={beacon.title ? `${beacon.title} (SoundCloud)` : 'SoundCloud player'}
+                  visual={false}
+                  widgetParams={{ buying: false, sharing: false, download: false, show_user: false }}
+                />
+              </div>
+            )}
+
+            {/* Event RSVP */}
+            {beacon.kind === 'event' && currentUser && (
+              <>
+                <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                  <h3 className="text-sm uppercase tracking-wider text-white/40 mb-4">Event RSVP</h3>
+                  <EventRSVP event={beacon} currentUser={currentUser} />
+                </div>
+
+                {/* Waitlist */}
+                <EventWaitlist event={beacon} currentUser={currentUser} />
+
+                {/* Ticket */}
+                {myRsvp && (
+                  <EventTicket rsvp={myRsvp} event={beacon} />
+                )}
+
+                {/* Scanner for organizer */}
+                {beacon.created_by === currentUser.email && (
+                  <Button
+                    onClick={() => setShowScanner(true)}
+                    className="w-full bg-[#00C2E0] hover:bg-[#00C2E0]/90 text-black font-black"
+                  >
+                    SCAN TICKETS
+                  </Button>
+                )}
+              </>
+            )}
+
+            {beacon.xp_scan && (
+              <div className="bg-gradient-to-br from-[#FFEB3B]/20 to-[#FF6B35]/20 border border-[#FFEB3B]/40 rounded-xl p-6">
+                <Button
+                  onClick={handleScan}
+                  className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-bold"
+                >
+                  Scan Beacon
+                </Button>
+              </div>
+            )}
+
+            {beacon.intensity && (
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs uppercase tracking-wider text-white/40">Intensity</span>
+                  <span className="text-lg font-bold">{Math.round(beacon.intensity * 100)}%</span>
+                </div>
+                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#C8962C]"
+                    style={{ width: `${beacon.intensity * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {beacon.sponsored && (
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+                <div className="text-xs uppercase tracking-wider text-white/40">Sponsored</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Related Events */}
+        {beacon.kind === 'event' && (
+          <div className="mb-8">
+            <RelatedEvents 
+              currentEvent={beacon} 
+              userPreferences={currentUser?.event_preferences || []} 
+            />
+          </div>
+        )}
+
+        {/* Comments Section */}
+        <CommentsSection beaconId={beaconId} />
+        </div>
+
+        {/* Ticket Scanner Modal */}
+        {showScanner && (
+          <TicketScanner 
+            event={beacon} 
+            onClose={() => setShowScanner(false)} 
+          />
+        )}
+
+        {/* Convict Player Modal */}
+        {beacon.mode === 'radio' && beacon.audio_url && (
+          <ConvictPlayer
+            beacon={beacon}
+            isOpen={showConvictPlayer}
+            onClose={() => setShowConvictPlayer(false)}
+            currentUser={currentUser}
+          />
+        )}
+      </div>
+    );
+  }

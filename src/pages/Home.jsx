@@ -1,0 +1,1058 @@
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import { motion } from 'framer-motion';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/components/utils/supabaseClient';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../utils';
+import { MapPin, ShoppingBag, Users, Radio, Heart, Calendar, Zap, ArrowRight, Globe, Mic, Play } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useServerNow } from '@/hooks/use-server-now';
+import { toast } from 'sonner';
+import { schedule, getNextEpisode, generateICS, downloadICS } from '../components/radio/radioUtils';
+import { format } from 'date-fns';
+import { useWorldPulse } from '@/contexts/WorldPulseContext';
+import CityPulseBar from '@/components/globe/CityPulseBar';
+import LiveFeed from '@/components/globe/LiveFeed';
+import ErrorBoundary from '@/components/error/ErrorBoundary';
+import { ProfilesGrid } from '@/features/profilesGrid';
+import { 
+  GlobeLoadingFallback, 
+  GlobeErrorFallback, 
+  GlobeMobileFallback,
+  shouldUseMobileFallback 
+} from '@/components/globe/GlobeFallback';
+
+// Lazy-load heavy Globe component
+const GlobeHero = lazy(() => import('@/components/globe/GlobeHero'));
+
+const HNHMESS_RELEASE_SLUG = 'hnhmess';
+// Shopify product handles are not the same as release slugs.
+// This is the canonical Shopify handle for the HNHMESS lube product used by the home CTA.
+const HNHMESS_LUBE_SHOPIFY_HANDLE = 'hnh-mess-lube-250ml';
+const HNHMESS_RELEASE_AT_FALLBACK = new Date('2026-01-10T00:00:00Z');
+
+export default function Home() {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [useMobileFallback, setUseMobileFallback] = useState(() => shouldUseMobileFallback());
+  const [forceFullGlobe, setForceFullGlobe] = useState(false);
+  const queryClient = useQueryClient();
+  const { serverNow } = useServerNow();
+
+  const nextRadioUp = useMemo(() => {
+    const candidates = (schedule?.shows || [])
+      .map((show) => {
+        const nextEpisode = getNextEpisode(show?.id);
+        if (!show || !nextEpisode?.date) return null;
+        return { show, nextEpisode };
+      })
+      .filter(Boolean);
+
+    if (!candidates.length) return null;
+    return candidates.sort((a, b) => a.nextEpisode.date - b.nextEpisode.date)[0];
+  }, [serverNow]);
+
+  const handleAddNextShowToCalendar = () => {
+    if (!nextRadioUp?.show || !nextRadioUp?.nextEpisode) {
+      toast.error('No scheduled shows found.');
+      return;
+    }
+
+    const ics = generateICS(nextRadioUp.show, nextRadioUp.nextEpisode);
+    const filename = `${nextRadioUp.show.slug || nextRadioUp.show.id}-${format(nextRadioUp.nextEpisode.date, 'yyyy-MM-dd')}.ics`;
+    downloadICS(ics, filename);
+    toast.success('Calendar file downloaded.');
+  };
+
+  const formatLondonDateTime = (value) => {
+    try {
+      return new Date(value).toLocaleString('en-GB', { timeZone: 'Europe/London' });
+    } catch {
+      return '';
+    }
+  };
+
+  const formatCountdown = (target) => {
+    const now = serverNow ?? new Date();
+    const diffMs = Math.max(0, target.getTime() - now.getTime());
+    const totalSeconds = Math.floor(diffMs / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const pad2 = (n) => String(n).padStart(2, '0');
+    if (days > 0) return `${days}d ${pad2(hours)}h ${pad2(minutes)}m`;
+    return `${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}`;
+  };
+
+  const { data: releaseBeacons = [] } = useQuery({
+    queryKey: ['release-beacons'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('beacons')
+        .select('*')
+        .eq('active', true)
+        .eq('status', 'published')
+        .eq('kind', 'release')
+        .order('release_at')
+        .limit(10);
+      if (error) throw error;
+      return Array.isArray(data) ? data : [];
+    },
+    refetchInterval: 60000,
+  });
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('home-release-beacons')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'Beacon' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['release-beacons'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  const featuredRelease = (() => {
+    const now = serverNow ?? new Date();
+    const sorted = [...releaseBeacons]
+      .filter((b) => b?.release_at)
+      .sort((a, b) => new Date(a.release_at) - new Date(b.release_at));
+
+    const upcoming = sorted.find((b) => new Date(b.release_at) > now);
+    if (upcoming) return { beacon: upcoming, state: 'upcoming' };
+
+    const live = [...sorted]
+      .reverse()
+      .find((b) => {
+        const start = new Date(b.release_at);
+        const end = b.ends_at ? new Date(b.ends_at) : null;
+        return start <= now && (!end || now < end);
+      });
+    if (live) return { beacon: live, state: 'live' };
+
+    return null;
+  })();
+
+  const hnhmessReleaseBeacon = useMemo(() => {
+    const normalized = HNHMESS_RELEASE_SLUG;
+    return releaseBeacons.find((b) => String(b?.release_slug ?? '').trim() === normalized) || null;
+  }, [releaseBeacons]);
+
+  const hnhmessReleaseAt = useMemo(() => {
+    if (hnhmessReleaseBeacon?.release_at) return new Date(hnhmessReleaseBeacon.release_at);
+    return HNHMESS_RELEASE_AT_FALLBACK;
+  }, [hnhmessReleaseBeacon]);
+
+  const hnhmessWindow = useMemo(() => {
+    const startAt = new Date(hnhmessReleaseAt.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const endAt = new Date(hnhmessReleaseAt.getTime() + 72 * 60 * 60 * 1000);
+    return { startAt, endAt };
+  }, [hnhmessReleaseAt]);
+
+  const now = serverNow ?? new Date();
+  const isHnhmessWindow = now >= hnhmessWindow.startAt && now < hnhmessWindow.endAt;
+  const isHnhmessPreLaunch = now < hnhmessReleaseAt;
+
+  const handleHnhmessNotify = async () => {
+    try {
+      localStorage.setItem(`notify_release_${HNHMESS_RELEASE_SLUG}`, '1');
+      if ('Notification' in window && Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
+      toast.success('Saved. We’ll ping you while you’re in-app.');
+    } catch {
+      toast.success('Saved.');
+    }
+  };
+
+  const { data: recentBeacons = [] } = useQuery({
+    queryKey: ['recent-beacons'],
+    queryFn: async () => {
+      const { data: allBeacons, error } = await supabase.from('beacons').select('*').eq('active', true).eq('status', 'published');
+      if (error) throw error;
+
+      const today = new Date();
+      // Filter to only upcoming/current events
+      const upcomingBeacons = (allBeacons || []).filter(b => {
+        if (b.kind === 'event' && b.event_date) {
+          return new Date(b.event_date) >= today;
+        }
+        return true; // Non-events always show
+      });
+      // Sort by event date for events, created_date for others
+      return upcomingBeacons
+        .sort((a, b) => {
+          const aDate = a.event_date ? new Date(a.event_date) : new Date(a.created_date);
+          const bDate = b.event_date ? new Date(b.event_date) : new Date(b.created_date);
+          return aDate - bDate;
+        })
+        .slice(0, 6);
+    },
+    refetchInterval: 60000 // Refresh every minute
+  });
+
+  const { data: featuredShopify = null } = useQuery({
+    queryKey: ['shopify', 'featured', 'home'],
+    queryFn: async () => {
+      const resp = await fetch('/api/shopify/featured');
+      const payload = await resp.json().catch(() => null);
+      if (!resp.ok) return null;
+      return payload;
+    },
+    refetchInterval: 10 * 60 * 1000,
+  });
+
+  const featuredShopifyProducts = Array.isArray(featuredShopify?.products)
+    ? featuredShopify.products
+    : [];
+
+  const { data: shopifyProductsForLube = [] } = useQuery({
+    queryKey: ['shopify-products', 'for-home-lube'],
+    queryFn: async () => {
+      const { data: rows, error } = await supabase.from('products')
+        .select('*')
+        .eq('status', 'active')
+        .eq('seller_email', 'shopify@hotmess.london')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return Array.isArray(rows) ? rows : [];
+    },
+    refetchInterval: 10 * 60 * 1000,
+  });
+
+  const lubeProduct = useMemo(() => {
+    const candidates = [HNHMESS_LUBE_SHOPIFY_HANDLE, HNHMESS_RELEASE_SLUG].filter(Boolean);
+
+    const byHandle = shopifyProductsForLube.find((p) => {
+      const raw = p?.details?.shopify_handle;
+      const h = raw ? String(raw).toLowerCase().trim() : '';
+      return h && candidates.includes(h);
+    });
+    if (byHandle) return byHandle;
+
+    const byTag = shopifyProductsForLube.find((p) => {
+      const tags = Array.isArray(p?.tags) ? p.tags.map((t) => String(t).toLowerCase()) : [];
+      return candidates.some((c) => tags.includes(c));
+    });
+    if (byTag) return byTag;
+
+    const byName = shopifyProductsForLube.find((p) => String(p?.name ?? '').toLowerCase().includes('hnh'));
+    if (byName) return byName;
+
+    return null;
+  }, [shopifyProductsForLube]);
+
+  const lubeStorefrontHandle =
+    (lubeProduct?.details?.shopify_handle ? String(lubeProduct.details.shopify_handle).trim() : '') ||
+    HNHMESS_LUBE_SHOPIFY_HANDLE;
+
+  const { data: lubeStorefrontProduct = null } = useQuery({
+    queryKey: ['shopify-storefront-product', 'home', lubeStorefrontHandle],
+    queryFn: async () => {
+      const resp = await fetch(`/api/shopify/product?handle=${encodeURIComponent(lubeStorefrontHandle)}`);
+      const payload = await resp.json().catch(() => null);
+      if (!resp.ok) return null;
+      return payload?.product || null;
+    },
+    enabled: !!lubeStorefrontHandle,
+    refetchInterval: 10 * 60 * 1000,
+  });
+
+  const lubeImageUrl =
+    lubeProduct?.image_urls?.[0] ||
+    lubeStorefrontProduct?.featuredImage?.url ||
+    lubeStorefrontProduct?.images?.nodes?.[0]?.url ||
+    '';
+  const lubeImageAlt =
+    lubeStorefrontProduct?.featuredImage?.altText ||
+    lubeStorefrontProduct?.images?.nodes?.[0]?.altText ||
+    lubeProduct?.name ||
+    'HNH MESS lube';
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const isAuth = await supabase.auth.getSession().then(r => !!r.data.session);
+        if (!isAuth) {
+          setCurrentUser(null);
+          return;
+        }
+
+        const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
+        setCurrentUser(user);
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+        setCurrentUser(null);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const tonightEvent = useMemo(() => {
+    const events = Array.isArray(recentBeacons)
+      ? recentBeacons.filter((b) => String(b?.kind || '').toLowerCase() === 'event')
+      : [];
+    return events[0] || null;
+  }, [recentBeacons]);
+
+  // World Pulse for ambient city signals
+  const { pulses } = useWorldPulse();
+  const recentPulses = pulses?.slice(0, 3) || [];
+
+  return (
+    <div className="min-h-screen bg-black text-white pb-24 md:pb-0">
+      {/* CITY PULSE BAR - Sticky top */}
+      <div className="sticky top-0 z-50">
+        <CityPulseBar />
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          MOBILE-FIRST: PEOPLE NEAR YOU - Shows immediately on mobile
+          On desktop: appears after globe hero
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="md:hidden py-6 px-4 bg-black">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-2xl font-black uppercase">
+              RIGHT <span className="text-[#C8962C]">NOW</span>
+            </h2>
+            <p className="text-white/50 text-xs uppercase tracking-wider">People active near you</p>
+          </div>
+          <Link to={createPageUrl('Social')}>
+            <Button size="sm" className="bg-[#C8962C] text-white font-black uppercase text-xs px-4 py-2">
+              SEE ALL
+            </Button>
+          </Link>
+        </div>
+        <ProfilesGrid />
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          MOBILE-FIRST: QUICK ACTIONS BAR - Thumb-reachable on mobile
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="md:hidden py-4 px-4 bg-black border-t border-white/10">
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { to: '/social', icon: Users, label: 'Connect', color: 'text-[#C8962C]' },
+            { to: '/events', icon: Zap, label: 'Events', color: 'text-yellow-500' },
+            { to: '/music/live', icon: Radio, label: 'Radio', color: 'text-green-500' },
+            { to: '/market', icon: ShoppingBag, label: 'Market', color: 'text-purple-500' },
+          ].map((action) => (
+            <Link key={action.to} to={action.to}>
+              <div className="flex flex-col items-center gap-1 p-3 bg-white/5 border border-white/10 active:bg-white/10 transition-colors">
+                <action.icon className={`w-6 h-6 ${action.color}`} />
+                <span className="text-[10px] font-bold uppercase text-white/70">{action.label}</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          MOBILE-FIRST: TONIGHT'S EVENTS - What's happening
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="md:hidden py-6 px-4 bg-gradient-to-b from-black to-zinc-900">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-2xl font-black uppercase">
+              TONIGHT<span className="text-[#00C2E0]">.</span>
+            </h2>
+            <p className="text-white/50 text-xs uppercase tracking-wider">Events near you</p>
+          </div>
+          <Link to="/events">
+            <Button size="sm" variant="outline" className="border-white/30 text-white font-black uppercase text-xs px-4 py-2">
+              ALL EVENTS
+            </Button>
+          </Link>
+        </div>
+        {tonightEvent ? (
+          <Link to={`/events/${tonightEvent.id}`}>
+            <div className="relative h-48 overflow-hidden border-2 border-white/20 group">
+              <img 
+                src={tonightEvent.image_url || 'https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=800'} 
+                alt={tonightEvent.title}
+                className="w-full h-full object-cover group-active:scale-105 transition-transform"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-4">
+                <p className="text-[10px] uppercase tracking-wider text-[#00C2E0] font-bold mb-1">
+                  {tonightEvent.venue || 'LONDON'}
+                </p>
+                <h3 className="text-lg font-black uppercase leading-tight">{tonightEvent.title}</h3>
+              </div>
+            </div>
+          </Link>
+        ) : (
+          <div className="h-48 flex items-center justify-center border-2 border-dashed border-white/20 bg-white/5">
+            <p className="text-white/40 text-sm uppercase">No events tonight</p>
+          </div>
+        )}
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          GLOBE HERO - Full viewport on DESKTOP, compact on mobile
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="relative h-[50vh] md:min-h-[100svh] flex items-center justify-center overflow-hidden">
+        {/* Globe with lazy loading, error boundary, and mobile fallback */}
+        <div className="absolute inset-0">
+          {useMobileFallback && !forceFullGlobe ? (
+            <GlobeMobileFallback onRequestFullGlobe={() => setForceFullGlobe(true)} />
+          ) : (
+            <ErrorBoundary 
+              fallback={({ error, reset }) => (
+                <GlobeErrorFallback error={error} reset={reset} />
+              )}
+            >
+              <Suspense fallback={<GlobeLoadingFallback />}>
+                <GlobeHero />
+              </Suspense>
+            </ErrorBoundary>
+          )}
+        </div>
+
+        {/* Live Feed overlay - desktop only */}
+        <div className="absolute top-24 right-4 z-20 hidden md:block">
+          <LiveFeed />
+        </div>
+
+        {/* Main content */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.5 }}
+          className="relative z-10 text-center px-6 max-w-6xl"
+        >
+          <motion.h1 
+            className="text-[15vw] md:text-[12vw] font-black italic leading-[0.8] tracking-tighter mb-4 drop-shadow-2xl"
+            animate={{ 
+              textShadow: [
+                '0 0 20px rgba(255,20,147,0.5)',
+                '0 0 60px rgba(255,20,147,0.8)',
+                '0 0 20px rgba(255,20,147,0.5)'
+              ]
+            }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            HOT<span className="text-[#C8962C]">MESS</span>
+          </motion.h1>
+          
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="mb-8 hidden md:block"
+          >
+            <p className="text-lg md:text-2xl font-bold uppercase tracking-[0.3em] text-white/80 mb-2">
+              The Living World
+            </p>
+            <p className="text-sm md:text-base text-white/50 uppercase tracking-widest">
+              Nights • Radio • Connection • Commerce
+            </p>
+          </motion.div>
+
+          <motion.div 
+            className="flex flex-wrap gap-4 justify-center hidden md:flex"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.2 }}
+          >
+            <Link to="/welcome">
+              <Button className="bg-[#C8962C] hover:bg-white text-black font-black uppercase px-8 py-6 text-lg shadow-2xl group">
+                <Play className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
+                ENTER THE MESS
+              </Button>
+            </Link>
+            <Link to="/music/live">
+              <Button variant="outline" className="border-2 border-[#C8962C] text-[#C8962C] hover:bg-[#C8962C] hover:text-black font-black uppercase px-8 py-6 text-lg shadow-2xl backdrop-blur-sm">
+                <Radio className="w-5 h-5 mr-2" />
+                LIVE RADIO
+              </Button>
+            </Link>
+          </motion.div>
+        </motion.div>
+
+        {/* Scroll indicator - desktop only */}
+        <motion.div 
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:block"
+          animate={{ y: [0, 10, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+        >
+          <div className="w-6 h-10 border-2 border-white/30 rounded-full flex items-start justify-center p-2">
+            <motion.div 
+              className="w-1.5 h-1.5 bg-[#C8962C] rounded-full"
+              animate={{ y: [0, 16, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            />
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          DESKTOP: PEOPLE NEAR YOU - Shows after globe on desktop
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="hidden md:block py-16 px-6 bg-black">
+        <div className="max-w-7xl mx-auto">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-8"
+          >
+            <p className="text-xs uppercase tracking-[0.4em] text-white/40 mb-2">SOCIAL</p>
+            <h2 className="text-3xl md:text-5xl font-black uppercase mb-2">
+              RIGHT <span className="text-[#C8962C]">NOW</span>
+            </h2>
+            <p className="text-white/50 text-sm">People active near you</p>
+          </motion.div>
+          <ProfilesGrid />
+          <div className="mt-8 text-center">
+            <Link to={createPageUrl('Social')}>
+              <Button className="bg-[#C8962C] hover:bg-white hover:text-black text-white font-black uppercase px-8 py-4 border-2 border-[#C8962C]">
+                VIEW ALL
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* MODES GRID - What you can do (DESKTOP ONLY - mobile has quick actions bar) */}
+      <section className="hidden md:block py-16 px-6 bg-black">
+        <div className="max-w-7xl mx-auto">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl md:text-6xl font-black italic mb-4">
+              WHAT'S <span className="text-[#C8962C]">YOURS</span>
+            </h2>
+            <p className="text-white/50 uppercase tracking-widest">Choose your mode</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { to: '/social', icon: Users, title: 'Connect', desc: 'Find your people tonight', color: 'from-amber-500 to-red-500' },
+              { to: '/events', icon: Zap, title: 'Events', desc: 'What\'s happening now', color: 'from-yellow-500 to-orange-500' },
+              { to: '/music/live', icon: Radio, title: 'Radio', desc: 'Live sets & culture', color: 'from-green-500 to-emerald-500' },
+              { to: '/market', icon: ShoppingBag, title: 'Market', desc: 'Drops & P2P commerce', color: 'from-purple-500 to-violet-500' },
+            ].map((mode, i) => (
+              <motion.div
+                key={mode.to}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <Link to={mode.to}>
+                  <div className="group relative overflow-hidden rounded-xl bg-white/5 border border-white/10 hover:border-[#C8962C]/50 p-6 h-48 transition-all hover:scale-[1.02]">
+                    <div className={`absolute inset-0 bg-gradient-to-br ${mode.color} opacity-0 group-hover:opacity-20 transition-opacity`} />
+                    <mode.icon className="w-10 h-10 text-white mb-4 group-hover:scale-110 transition-transform" />
+                    <h3 className="text-2xl font-black uppercase mb-2">{mode.title}</h3>
+                    <p className="text-sm text-white/50">{mode.desc}</p>
+                    <ArrowRight className="absolute bottom-6 right-6 w-5 h-5 text-white/30 group-hover:text-[#C8962C] group-hover:translate-x-1 transition-all" />
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* BUSINESS / CREATOR STRIP */}
+      <section className="py-12 px-6 bg-gradient-to-r from-amber-950/30 via-black to-purple-950/30 border-y border-white/10">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Link to="/creator" className="group">
+              <div className="bg-black/50 border border-white/10 hover:border-[#C8962C]/50 rounded-xl p-8 transition-all">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-[#C8962C]/20 flex items-center justify-center">
+                    <Mic className="w-6 h-6 text-[#C8962C]" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-[#C8962C] uppercase tracking-widest">For Creators</p>
+                    <h3 className="text-xl font-black">Monetize Your Art</h3>
+                  </div>
+                </div>
+                <p className="text-white/50 text-sm mb-4">Radio shows, drops, tickets — earn from what you create.</p>
+                <span className="text-[#C8962C] text-sm group-hover:underline">Start creating →</span>
+              </div>
+            </Link>
+            <Link to="/business/globe" className="group">
+              <div className="bg-black/50 border border-white/10 hover:border-[#C8962C]/50 rounded-xl p-8 transition-all">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
+                    <Globe className="w-6 h-6 text-purple-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-purple-500 uppercase tracking-widest">For Business</p>
+                    <h3 className="text-xl font-black">Amplify Your Presence</h3>
+                  </div>
+                </div>
+                <p className="text-white/50 text-sm mb-4">See city heat, schedule signals, measure impact.</p>
+                <span className="text-purple-500 text-sm group-hover:underline">View dashboard →</span>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* LUBE CTA (always visible) */}
+      <section className="py-16 px-6 bg-black">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center bg-white/5 border-2 border-white/10 p-6 md:p-10">
+            <div className="relative aspect-[4/3] overflow-hidden">
+              {lubeImageUrl ? (
+                <img
+                  src={lubeImageUrl}
+                  alt={lubeImageAlt}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-black" />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+              <div className="absolute bottom-4 left-4">
+                <p className="text-xs uppercase tracking-[0.4em] text-white/70">Shop</p>
+                <p className="text-2xl font-black uppercase">HNH MESS LUBE</p>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-white/50 mb-3">For sale</p>
+              <h2 className="text-4xl md:text-5xl font-black italic mb-4">Lube + aftercare energy.</h2>
+              <p className="text-white/70 uppercase tracking-wider mb-8">
+                Smooth. Clean. Built for the night.
+              </p>
+
+              <div className="flex flex-wrap gap-3">
+                <Link to="/hnhmess">
+                  <Button className="bg-[#C8962C] hover:bg-white text-white hover:text-black font-black uppercase px-8 py-6 text-lg">
+                    Buy now
+                  </Button>
+                </Link>
+                {isHnhmessPreLaunch ? (
+                  <Button
+                    onClick={handleHnhmessNotify}
+                    variant="outline"
+                    className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg"
+                  >
+                    Notify me
+                  </Button>
+                ) : (
+                  <Link to={`/music/releases/${HNHMESS_RELEASE_SLUG}`}>
+                    <Button
+                      variant="outline"
+                      className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg"
+                    >
+                      Listen now
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* LAUNCH STRIP (HNHMESS window) */}
+      {isHnhmessWindow && (
+        <section className="py-10 px-6 bg-black">
+          <div className="max-w-7xl mx-auto">
+            <div className="bg-white/5 border-2 border-white/10 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.4em] text-white/50 mb-2">Launch</p>
+                <p className="text-xl font-black uppercase">
+                  {isHnhmessPreLaunch ? 'Midnight drop: HNHMESS + Vol1' : 'Out now: HNHMESS + Vol1'}
+                </p>
+                {isHnhmessPreLaunch && (
+                  <p className="text-white/60 uppercase tracking-wider text-sm">
+                    {formatCountdown(hnhmessReleaseAt)}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Link to={`/music/releases/${HNHMESS_RELEASE_SLUG}`}>
+                  <Button className="bg-[#C8962C] hover:bg-white text-white hover:text-black font-black uppercase">
+                    {isHnhmessPreLaunch ? 'Open release' : 'Play'}
+                  </Button>
+                </Link>
+                <Link to="/hnhmess">
+                  <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase">
+                    Buy now
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* RELEASE COUNTDOWN */}
+      {featuredRelease?.beacon?.release_slug && featuredRelease?.beacon?.release_at && (
+        <section className="py-16 px-6 bg-black">
+          <div className="max-w-7xl mx-auto">
+            <div className="bg-white/5 border-2 border-white/10 p-8">
+              <p className="text-xs uppercase tracking-[0.4em] text-white/50 mb-4">DROP</p>
+              <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+                <div>
+                  <h2 className="text-3xl md:text-5xl font-black italic mb-2">
+                    {featuredRelease.beacon.release_title || featuredRelease.beacon.title || 'RELEASE'}
+                  </h2>
+                  <p className="text-white/70 uppercase tracking-wider">
+                    {featuredRelease.state === 'upcoming' ? 'Launches in' : 'Live now'}
+                  </p>
+                  <p className="text-white/50 uppercase tracking-wider text-sm">
+                    {formatLondonDateTime(featuredRelease.beacon.release_at)} (London)
+                  </p>
+                </div>
+                <div className="text-right">
+                  {featuredRelease.state === 'upcoming' ? (
+                    <div className="text-3xl md:text-5xl font-mono font-black text-[#C8962C]">
+                      {formatCountdown(new Date(featuredRelease.beacon.release_at))}
+                    </div>
+                  ) : (
+                    <div className="text-3xl md:text-5xl font-black text-[#C8962C]">LIVE</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <Link to={`/music/releases/${encodeURIComponent(featuredRelease.beacon.release_slug)}`}>
+                  <Button className="bg-[#C8962C] hover:bg-white text-white hover:text-black font-black uppercase px-8 py-6 text-lg">
+                    OPEN RELEASE
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* SHOP COLLECTIONS */}
+      <section className="py-32 px-6 bg-white text-black">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-16"
+          >
+            <p className="text-xs uppercase tracking-[0.4em] text-black/40 mb-4">SHOP</p>
+            <h2 className="text-6xl md:text-8xl font-black italic mb-6">SHOP THE DROP</h2>
+            <p className="text-xl uppercase tracking-wider text-black/60 max-w-2xl">
+              Hardwear. Fit. Club armour. Limited runs.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {featuredShopifyProducts.length ? (
+              featuredShopifyProducts.slice(0, 2).map((p, idx) => {
+                const handle = p?.handle ? String(p.handle) : '';
+                const imageUrl = p?.featuredImage?.url || p?.images?.nodes?.[0]?.url || '';
+                const imageAlt =
+                  p?.featuredImage?.altText || p?.images?.nodes?.[0]?.altText || p?.title || 'Shop item';
+
+                return (
+                  <motion.div
+                    key={p?.id || handle || idx}
+                    initial={{ opacity: 0, y: 40 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.1 }}
+                  >
+                    <Link to={handle ? `/market/p/${encodeURIComponent(handle)}` : '/market'}>
+                      <div className="group relative aspect-square overflow-hidden bg-black">
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt={imageAlt}
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover object-center grayscale group-hover:grayscale-0 transition-all duration-700"
+                          />
+                        ) : null}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/0 group-hover:from-black/70 transition-all duration-500" />
+                        <div className="absolute inset-0 flex items-end p-4 sm:p-6">
+                          <div className="w-full max-w-[34rem] bg-black/40 backdrop-blur-sm border border-white/10 rounded-xl p-4 sm:p-5">
+                            <h3 className="text-xl sm:text-2xl md:text-3xl font-black italic leading-tight line-clamp-2 text-white drop-shadow-2xl break-words">
+                              {p?.title || 'Shop'}
+                            </h3>
+                            <p className="mt-2 text-xs uppercase tracking-[0.3em] text-white/90">Tap to view</p>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })
+            ) : (
+              <div className="border border-black/10 bg-black/5 p-6">
+                <p className="text-black/70">Shop is loading or unavailable.</p>
+                <Link to="/market">
+                  <Button className="mt-4 bg-black text-white font-black uppercase">Open Market</Button>
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* HUNGMESS EDITORIAL */}
+      <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden bg-black">
+        <div className="absolute inset-0">
+          <img
+            src="/images/hungmess-editorial.png"
+            alt="HUNGMESS editorial"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = 'https://images.unsplash.com/photo-1529068755536-a5ade0dcb4e8?w=1920&q=80';
+            }}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black" />
+        </div>
+        <div className="relative z-10 text-center px-6 max-w-6xl">
+          <p className="text-xs uppercase tracking-[0.4em] text-white/60 mb-4">Editorial</p>
+          <h2 className="text-[18vw] md:text-[10vw] font-black italic leading-[0.8] tracking-tighter text-white drop-shadow-2xl">
+            HUNGMESS
+          </h2>
+        </div>
+      </section>
+
+      {/* BEACONS */}
+      <section className="py-32 px-6 bg-black">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-16"
+          >
+            <p className="text-xs uppercase tracking-[0.4em] text-white/40 mb-4">EVENTS</p>
+            <h2 className="text-6xl md:text-8xl font-black italic mb-6 text-white">
+              TONIGHT<span className="text-[#00C2E0]">.</span>
+            </h2>
+            <p className="text-xl uppercase tracking-wider text-white/60 max-w-2xl">
+              Three moves you can actually make.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="bg-white/5 border-2 border-white/10 p-6 h-full">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-[#00C2E0] text-black flex items-center justify-center">
+                    <Calendar className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-2xl font-black uppercase">RSVP</h3>
+                </div>
+
+                {tonightEvent ? (
+                  <>
+                    <p className="text-white/60 uppercase tracking-wider text-xs mb-2">Tonight</p>
+                    <p className="text-2xl font-black mb-2">{tonightEvent.title}</p>
+                    <p className="text-white/70 text-sm mb-6 line-clamp-2">{tonightEvent.description}</p>
+                    <Link to={`/events/${encodeURIComponent(tonightEvent.id)}`}>
+                      <Button className="bg-[#00C2E0] hover:bg-white text-black font-black uppercase w-full">
+                        RSVP
+                      </Button>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-white/70 text-sm mb-6">
+                      Find what’s on and lock it in.
+                    </p>
+                    <Link to="/events">
+                      <Button className="bg-[#00C2E0] hover:bg-white text-black font-black uppercase w-full">
+                        VIEW EVENTS
+                      </Button>
+                    </Link>
+                  </>
+                )}
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+            >
+              <div className="bg-white/5 border-2 border-white/10 p-6 h-full">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-white/10 flex items-center justify-center">
+                    <MapPin className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-black uppercase">OPEN IN PULSE</h3>
+                </div>
+                <p className="text-white/70 text-sm mb-6">
+                  Map + layers. Find the energy.
+                </p>
+                <Link to="/pulse">
+                  <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase w-full">
+                    OPEN PULSE
+                  </Button>
+                </Link>
+              </div>
+            </motion.div>
+          </div>
+
+          <div className="text-center">
+            <Link to="/events">
+              <Button className="bg-[#00C2E0] hover:bg-white text-black font-black uppercase px-8 py-4 text-lg shadow-2xl">
+                VIEW ALL EVENTS
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* RADIO + CARE */}
+      <section className="relative py-32 px-6 overflow-hidden">
+        <div className="absolute inset-0">
+          <img 
+            src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=1920&q=80" 
+            alt="Radio"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#C8962C]/85 to-black/70" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <Radio className="w-12 h-12 drop-shadow-lg" />
+                <h2 className="text-5xl font-black italic drop-shadow-lg">ON AIR</h2>
+              </div>
+              <p className="text-xl mb-8 leading-relaxed text-white drop-shadow-md">
+                Live now on HOTMESS RADIO.
+              </p>
+
+              {nextRadioUp?.show && nextRadioUp?.nextEpisode && (
+                <p className="text-sm uppercase tracking-wider text-white/70 mb-6 drop-shadow-md">
+                  Next up: {nextRadioUp.show.title} • {format(nextRadioUp.nextEpisode.date, 'EEE d MMM')} • {nextRadioUp.nextEpisode.startTime} (London)
+                </p>
+              )}
+
+              <div className="flex flex-wrap gap-3">
+                <Link to="/music/live">
+                  <Button className="bg-black text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 shadow-2xl">
+                    LISTEN LIVE
+                  </Button>
+                </Link>
+                <Button
+                  onClick={handleAddNextShowToCalendar}
+                  variant="outline"
+                  className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 shadow-2xl backdrop-blur-sm"
+                >
+                  ADD NEXT SHOW TO CALENDAR
+                </Button>
+                <Link to="/music/schedule">
+                  <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 shadow-2xl backdrop-blur-sm">
+                    BROWSE SHOWS
+                  </Button>
+                </Link>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <Heart className="w-12 h-12 drop-shadow-lg" />
+                <h2 className="text-5xl font-black italic drop-shadow-lg">SAFETY CHECK</h2>
+              </div>
+              <p className="text-xl mb-8 leading-relaxed text-white drop-shadow-md">
+                You good?
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Button className="bg-black text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 shadow-2xl">
+                  ALL GOOD
+                </Button>
+                <Link to="/safety/resources">
+                  <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase shadow-2xl backdrop-blur-sm">
+                    NEED A MINUTE
+                  </Button>
+                </Link>
+                <Link to="/safety">
+                  <Button className="bg-white text-black hover:bg-black hover:text-white font-black uppercase shadow-2xl">
+                    SAFETY
+                  </Button>
+                </Link>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* FINAL CTA */}
+      <section className="py-32 px-6 bg-black text-white text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-4xl mx-auto"
+        >
+          <h2 className="text-6xl md:text-9xl font-black italic mb-8">
+            JOIN<span className="text-[#C8962C]">.</span>
+          </h2>
+          <p className="text-2xl uppercase tracking-wider text-white/60 mb-12">
+            London OS. No ghost status. Right now ends automatically.
+          </p>
+          {currentUser ? (
+            <div className="space-y-4">
+              <p className="text-xl text-[#39FF14]">Welcome back, {currentUser.full_name}</p>
+              <div className="flex flex-wrap gap-4 justify-center">
+                <Link to="/social">
+                  <Button className="bg-[#C8962C] hover:bg-white text-black font-black uppercase px-8 py-6 text-lg">
+                    GO RIGHT NOW
+                  </Button>
+                </Link>
+                <Link to="/pulse">
+                  <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg">
+                    OPEN PULSE
+                  </Button>
+                </Link>
+                {currentUser.role !== 'admin' && (
+                  <Link to={createPageUrl('PromoteToAdmin')}>
+                    <Button variant="outline" className="border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white font-black uppercase px-8 py-6 text-lg">
+                      BECOME ADMIN
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </div>
+          ) : (
+            <Link to="/auth">
+              <Button className="bg-[#C8962C] hover:bg-white text-black font-black uppercase px-12 py-8 text-2xl">
+                GET STARTED
+              </Button>
+            </Link>
+          )}
+        </motion.div>
+      </section>
+    </div>
+  );
+}
