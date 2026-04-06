@@ -136,7 +136,7 @@ export function useGhostedGrid(
         .from('profiles')
         .select(`
           id, email, display_name, username, avatar_url,
-          last_lat, last_lng, last_loc_ts, is_online,
+          last_loc_ts, is_online,
           age, looking_for, verified, city, bio,
           right_now_status, last_seen
         `)
@@ -188,7 +188,7 @@ export function useGhostedGrid(
         .from('profiles')
         .select(`
           id, email, display_name, username, avatar_url,
-          last_lat, last_lng, is_online, age, looking_for, verified, last_seen
+          is_online, age, looking_for, verified, last_seen
         `)
         .in('id', allUserIds)
         .not('display_name', 'is', null);

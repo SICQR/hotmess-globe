@@ -249,19 +249,9 @@ test.describe('QA-03 · Profile photo upload', () => {
     try {
       await setupUserA(page);
 
-      // Navigate to /more then open profile — mirrors real user flow
-      await navTo(page, '/more');
-      await page.waitForTimeout(1000);
-
-      // Tap "My Profile" or "Profile" in the More menu
-      const profileLink = page.locator('a, button').filter({ hasText: /my profile|profile/i }).first();
-      if (await profileLink.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await profileLink.click();
-        await page.waitForTimeout(1500);
-      } else {
-        await navTo(page, '/profile');
-      }
-      await page.waitForTimeout(2000);
+      // Direct route to profile
+      await navTo(page, '/profile');
+      await page.waitForTimeout(2500);
 
       // Look for edit / photo button
       const editBtn = page.locator('button, [role="button"]').filter({
@@ -638,15 +628,16 @@ test.describe('QA-07 · Chat image upload', () => {
       await page.waitForTimeout(2000);
 
       // Click on the first conversation thread to enter it
-      const threadRow = page.locator('[class*="thread"], [class*="conversation"], [class*="chat-row"]').first();
-      if (await threadRow.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await threadRow.click();
+      // The messages list renders items as divs with a name + chevron (>)
+      const firstThread = page.locator('text=Beta Tester').first();
+      if (await firstThread.isVisible({ timeout: 4000 }).catch(() => false)) {
+        await firstThread.click();
         await page.waitForTimeout(2000);
       } else {
-        // Try clicking on any list item in the messages panel
-        const listItem = page.locator('li, [role="listitem"]').first();
-        if (await listItem.isVisible({ timeout: 2000 }).catch(() => false)) {
-          await listItem.click();
+        // Generic fallback — any clickable row in the messages panel
+        const row = page.locator('[class*="thread"], [class*="row"], div').filter({ has: page.locator('img, [class*="avatar"]') }).first();
+        if (await row.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await row.click();
           await page.waitForTimeout(2000);
         }
       }
