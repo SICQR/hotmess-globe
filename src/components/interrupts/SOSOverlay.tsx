@@ -50,9 +50,9 @@ function detectPlatform(): 'ios' | 'android' | 'other' {
 
 interface EmergencyContact {
   id: string;
-  name: string;
-  phone: string;
-  relation: string;
+  contact_name: string;
+  contact_phone: string;
+  relationship: string;
 }
 
 interface SOSOverlayProps {
@@ -522,20 +522,20 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
         await supabase
           .from('right_now_status')
           .update({ expires_at: new Date().toISOString() })
-          .eq('user_email', user.email)
+          .eq('user_id', user.id)
           .gte('expires_at', new Date().toISOString());
       }
 
       const { data: contacts } = await supabase
         .from('trusted_contacts')
-        .select('id, name, phone, relation')
+        .select('id, contact_name, contact_phone, relationship')
         .eq('user_id', user.id)
         .order('created_at', { ascending: true })
         .limit(1);
 
       if (contacts && contacts.length > 0) {
         setFirstContact(contacts[0] as EmergencyContact);
-        setFakeCallContactName(contacts[0].name);
+        setFakeCallContactName(contacts[0].contact_name);
       }
     };
 
@@ -586,14 +586,13 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
       setLocationSharingActive(true);
       toast.success('Location shared with emergency contacts');
 
-      if (user.email) {
+      if (user.id) {
         await supabase.from('right_now_status').upsert({
-          user_email: user.email,
-          user_id: user.id ?? null,
+          user_id: user.id,
           status: 'sos',
           active: true,
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        }, { onConflict: 'user_email' });
+        }, { onConflict: 'user_id' });
 
         // Signal the Globe — safety pulse
         emitPulse?.({ type: 'sos', metadata: { userId: user.id } });
@@ -606,7 +605,7 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
   const handleTextContact = () => {
     if (!firstContact) return;
     const body = encodeURIComponent('I need help. This is an emergency. HOTMESS SOS triggered.');
-    window.location.href = `sms:${firstContact.phone}?body=${body}`;
+    window.location.href = `sms:${firstContact.contact_phone}?body=${body}`;
   };
 
   const handleAddContact = () => {
@@ -755,7 +754,7 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
               className="w-full py-4 bg-[#1C1C1E] border border-[#C8962C]/40 text-white font-black rounded-2xl flex items-center justify-center gap-2"
             >
               <MessageSquare className="w-5 h-5 text-[#C8962C]" />
-              Text {firstContact.name}
+              Text {firstContact.contact_name}
             </button>
           ) : (
             <button

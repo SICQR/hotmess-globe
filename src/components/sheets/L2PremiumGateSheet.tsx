@@ -218,10 +218,10 @@ export default function L2PremiumGateSheet({ origin }: L2PremiumGateSheetProps) 
           className="w-full py-4 rounded-2xl font-black text-black uppercase text-sm tracking-wide disabled:opacity-60 transition-all active:scale-[0.98]"
           style={{ background: '#C8962C' }}
         >
-          {isProcessing ? 'Processing...' : `Subscribe - ${TIERS.find(t => t.id === selectedTier)?.price}${TIERS.find(t => t.id === selectedTier)?.period}`}
+          {isProcessing ? 'Processing...' : 'Join Waitlist'}
         </button>
         <p className="text-[10px] text-white/20 text-center mt-2">
-          Cancel anytime. 7-day free trial for new members.
+          Premium is launching soon. We'll let you know.
         </p>
       </div>
     </div>
