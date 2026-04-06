@@ -59,6 +59,8 @@ export async function bypassGates(page: Page): Promise<void> {
     localStorage.setItem('hm_splash_seen_v1', 'true');
     localStorage.setItem('hm_age_gate_passed', 'true');
     sessionStorage.setItem('location_consent', 'false');
+    // Dismiss GDPR cookie banner so it never overlaps clickable elements
+    localStorage.setItem('hm_cookie_consent_v1', 'essential');
   });
 }
 

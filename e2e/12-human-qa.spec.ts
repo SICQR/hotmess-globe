@@ -611,16 +611,17 @@ test.describe('QA-07 · Chat image upload', () => {
       });
       await page.waitForTimeout(1500);
 
-      // Click on the first conversation thread to enter it
-      const firstThread = page.locator('text=Beta').first();
+      // Click on the first thread INSIDE the Messages dialog (not the Ghosted grid)
+      const dialog = page.locator('[role="dialog"], [class*="sheet"], [class*="Sheet"]').last();
+      const firstThread = dialog.locator('button').filter({ hasText: /Beta|thread/i }).first();
       if (await firstThread.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await firstThread.click();
+        await firstThread.click({ timeout: 5_000 }).catch(() => {});
         await page.waitForTimeout(1500);
       } else {
-        // Generic fallback — any clickable row that has an avatar
-        const row = page.locator('div').filter({ has: page.locator('img') }).nth(1);
-        if (await row.isVisible({ timeout: 2000 }).catch(() => false)) {
-          await row.click();
+        // Generic fallback — any button in the sheet
+        const anyBtn = dialog.locator('button').first();
+        if (await anyBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await anyBtn.click({ timeout: 5_000 }).catch(() => {});
           await page.waitForTimeout(1500);
         }
       }
