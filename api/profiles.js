@@ -421,6 +421,7 @@ export default async function handler(req, res) {
           .from('profile_photos')
           .select('profile_id, url, position, is_primary')
           .in('profile_id', profileIds)
+          .eq('moderation_status', 'approved')
           .order('position', { ascending: true });
         if (Array.isArray(photoRows)) {
           for (const p of photoRows) {

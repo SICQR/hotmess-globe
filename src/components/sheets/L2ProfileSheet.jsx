@@ -1059,7 +1059,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
                     await supabase
                       .from('profile_photos')
                       .update({ moderation_status: 'flagged' })
-                      .eq('user_id', profileUser.id || profileUser.auth_user_id)
+                      .eq('profile_id', profileUser.id || profileUser.auth_user_id)
                       .eq('url', reportedPhotoUrl)
                       .then(() => {}); // best-effort
                   }

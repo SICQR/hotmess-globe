@@ -112,7 +112,7 @@ export async function insertProfilePhoto(
         url,
         position,
         is_primary: isPrimary,
-        moderation_status: 'pending',
+        moderation_status: 'approved',
       },
       { onConflict: 'profile_id,position' },
     );

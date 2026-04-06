@@ -25,7 +25,7 @@ Remaining work is launch blockers, trust hardening, moderation, privacy, and ope
 
 | Blocker | Status | Notes |
 |---------|--------|-------|
-| Photo moderation pipeline | PARTIAL | Migration applied, pending/approved model exists, full server-side review workflow still missing |
+| Photo moderation pipeline | DONE | Trust-first: uploads approved by default, report/flag as safety net, RLS enforced, API filtered |
 | Push notification display | DONE / verify in-browser | SW handler present; needs real device confirmation |
 | Presence privacy audit | PARTIAL | Rounding and RLS addressed, needs final verification against public-facing APIs |
 | Stripe Connect onboarding | BLOCKED (manual) | Phil/dashboard action required |
@@ -47,6 +47,7 @@ Remaining work is launch blockers, trust hardening, moderation, privacy, and ope
 | T-08 | `9f31799` | 30 London seed profiles with presence + photos in prod |
 | T-09 | — | Env var audit — no missing-env crashes, CRON_SECRET still 401 |
 | T-10 | `c222497` | profile_overrides table created with correct profiles FK + RLS |
+| T-11 | `pending` | Photo moderation truth pass — trust-first, RLS fix, API filter, column bug fix |
 
 ---
 

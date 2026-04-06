@@ -225,6 +225,7 @@ export default async function handler(req, res) {
           .from('profile_photos')
           .select('id, url, position, is_primary, created_at')
           .eq('profile_id', String(profileId))
+          .eq('moderation_status', 'approved')
           .order('position', { ascending: true });
         if (Array.isArray(photoRows)) profilePhotos = photoRows;
       }
