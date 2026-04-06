@@ -35,6 +35,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
 import { useGlobe } from '@/contexts/GlobeContext';
+import { pushNotify } from '@/lib/pushNotify';
 
 // ── Platform detection ─────────────────────────────────────────────────────────
 
@@ -596,6 +597,46 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
 
         // Signal the Globe — safety pulse
         emitPulse?.({ type: 'sos', metadata: { userId: user.id } });
+      }
+
+      // ── Push notify trusted contacts who are app users ──────────────
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', user.id)
+        .single();
+
+      const displayName = profile?.display_name || 'A contact';
+
+      const { data: contacts } = await supabase
+        .from('trusted_contacts')
+        .select('contact_name, contact_phone, relationship')
+        .eq('user_id', user.id);
+
+      if (contacts && contacts.length > 0) {
+        // Find contacts that have app accounts (match by phone in profiles)
+        const phones = contacts.map((c: EmergencyContact) => c.contact_phone).filter(Boolean);
+        if (phones.length > 0) {
+          const { data: matchedProfiles } = await supabase
+            .from('profiles')
+            .select('email, phone')
+            .in('phone', phones);
+
+          const emails = (matchedProfiles || [])
+            .map((p: { email?: string }) => p.email)
+            .filter((e): e is string => !!e);
+
+          if (emails.length > 0) {
+            const mapsUrl = `https://www.google.com/maps?q=${position.latitude},${position.longitude}`;
+            pushNotify({
+              emails,
+              title: `SOS from ${displayName}`,
+              body: `Emergency alert triggered. Location: ${mapsUrl}`,
+              tag: 'sos-alert',
+              url: '/safety',
+            });
+          }
+        }
       }
     } catch {
       toast.error('Could not get location. Please enable location access.');
