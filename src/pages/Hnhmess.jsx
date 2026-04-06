@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
 import { useServerNow } from '@/hooks/use-server-now';
 import { addToCart } from '@/components/marketplace/cartStorage';
-import { createPageUrl } from '../utils';
 
 const RELEASE_SLUG = 'hnhmess';
 const FALLBACK_RELEASE_AT = new Date('2026-01-10T00:00:00Z');
@@ -197,165 +196,163 @@ export default function Hnhmess() {
     }
   }, []);
 
+  const PRODUCT_IMG =
+    'https://cdn.shopify.com/s/files/1/0898/3245/6517/files/upload_vfKIW_gxRluGoOwPLITLrg.png';
+
   return (
-    <div className="min-h-screen bg-black text-white pb-20">
-      <section className="relative min-h-screen flex items-center overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=1920&q=80"
-            alt="HNHMESS"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black" />
-        </div>
+    <div className="min-h-screen bg-[#050507] text-white pb-24">
 
-        <div className="relative z-10 w-full max-w-6xl mx-auto px-6 py-16">
-          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <p className="text-xs uppercase tracking-[0.4em] text-white/60 mb-4">RAW CONVICT RECORDS</p>
-            <h1 className="text-6xl md:text-9xl font-black italic leading-[0.85] tracking-tighter mb-6">
-              HNHMESS
+      {/* ── 1. MEANING — why this exists ─────────────────────────────── */}
+      <section className="relative overflow-hidden pt-16 pb-12 px-6">
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 20%, rgba(200,150,44,0.08) 0%, transparent 60%)' }} />
+        <div className="relative z-10 max-w-2xl mx-auto text-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <p className="text-[10px] uppercase tracking-[0.4em] text-[#C8962C] mb-6">Hand N Hand</p>
+            <h1 className="text-5xl md:text-7xl font-black leading-[0.9] tracking-tight mb-6">
+              HNH <span className="text-[#C8962C]">MESS</span>
             </h1>
-            <p className="text-xl md:text-2xl uppercase tracking-wider text-white/80 max-w-3xl mb-8">
-              Lube + aftercare energy. Soundtrack included.
+            <p className="text-white/60 text-base md:text-lg leading-relaxed max-w-lg mx-auto mb-4">
+              Built by the community, for the community. Body-safe, vegan,
+              and designed for connection — not performance.
             </p>
-
-            <div className="flex flex-wrap gap-3 items-center mb-10">
-              <Link to={`/music/releases/${RELEASE_SLUG}`}>
-                <Button className="bg-[#C8962C] hover:bg-white text-black font-black uppercase px-8 py-6 text-lg">
-                  <Play className="w-5 h-5 mr-2" />
-                  {isPreLaunch ? `Listen (${formatCountdown(releaseAt)})` : 'Listen now'}
-                </Button>
-              </Link>
-
-              {product ? (
-                <Button
-                  variant="outline"
-                  onClick={() => addToCartMutation.mutate()}
-                  className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg"
-                  disabled={addToCartMutation.isPending}
-                >
-                  <ShoppingBag className="w-5 h-5 mr-2" />
-                  Add lube to cart
-                </Button>
-              ) : (
-                <Link to={`/market/p/${RELEASE_SLUG}`}>
-                  <Button
-                    variant="outline"
-                    className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg"
-                  >
-                    <ShoppingBag className="w-5 h-5 mr-2" />
-                    Shop HNH MESS lube
-                  </Button>
-                </Link>
-              )}
-
-              {isPreLaunch && (
-                <Button
-                  variant="ghost"
-                  onClick={handleNotify}
-                  className="text-white/70 hover:text-white font-black uppercase"
-                >
-                  <Bell className="w-4 h-4 mr-2" />
-                  Notify me
-                </Button>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white/5 border-2 border-white/10 p-6">
-                <p className="text-xs uppercase tracking-[0.4em] text-white/50 mb-3">Release</p>
-
-                {galleryImages.length > 0 && (
-                  <div className="mb-5">
-                    <div className="aspect-square rounded-xl overflow-hidden border-2 border-white/10">
-                      <img
-                        src={galleryImages[Math.min(selectedImageIndex, galleryImages.length - 1)]}
-                        alt={product?.name || storefrontProduct?.title || 'HNH MESS lube'}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-
-                    {galleryImages.length > 1 && (
-                      <div className="flex gap-3 overflow-x-auto pt-3 pb-1">
-                        {galleryImages.map((url, idx) => (
-                          <button
-                            key={`${url}-${idx}`}
-                            type="button"
-                            onClick={() => setSelectedImageIndex(idx)}
-                            className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
-                              idx === selectedImageIndex
-                                ? 'border-white'
-                                : 'border-white/20 hover:border-white/50'
-                            }`}
-                            aria-label={`View image ${idx + 1}`}
-                          >
-                            <img src={url} alt="" className="w-full h-full object-cover" />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="flex items-end justify-between gap-6">
-                  <div>
-                    <p className="text-2xl font-black uppercase">HNHMESS</p>
-                    <p className="text-white/60 uppercase tracking-wider text-sm">Drops {formatLondonDateTime(releaseAt)} (London)</p>
-                    {primaryVariant?.price?.amount && (
-                      <p className="text-white/50 uppercase tracking-wider text-xs mt-1">
-                        Lube from {primaryVariant.price.amount} {primaryVariant.price.currencyCode}
-                      </p>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    {isPreLaunch ? (
-                      <div className="text-2xl md:text-3xl font-mono font-black text-[#C8962C]">
-                        {formatCountdown(releaseAt)}
-                      </div>
-                    ) : (
-                      <div className="text-2xl md:text-3xl font-black text-[#C8962C]">LIVE</div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  {isPreLaunch ? (
-                    <p className="text-white/60 text-sm">Player unlocks at T-0.</p>
-                  ) : soundcloudRef ? (
-                    <SoundCloudEmbed urlOrUrn={soundcloudRef} />
-                  ) : (
-                    <p className="text-white/60 text-sm">Track metadata not linked yet.</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-white/5 border-2 border-white/10 p-6">
-                <p className="text-xs uppercase tracking-[0.4em] text-white/50 mb-3">Care</p>
-                <p className="text-white/90 font-bold mb-3">Ask first. Confirm yes. Respect no. No pressure.</p>
-                <p className="text-white/70 text-sm mb-6">Hydrate. Reset. Check in. Land in Safety if you need it.</p>
-
-                <div className="flex flex-wrap gap-3">
-                  <Button
-                    variant="outline"
-                    className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase"
-                    onClick={() => navigate('/safety')}
-                  >
-                    <Shield className="w-4 h-4 mr-2" />
-                    Safety
-                  </Button>
-
-                  <Button
-                    className="bg-[#C8962C] hover:bg-white text-black font-black uppercase"
-                    onClick={() => navigate(createPageUrl('Checkout'))}
-                  >
-                    Checkout
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <p className="text-white/90 font-bold text-sm uppercase tracking-wider">
+              Ask first. Confirm yes. Respect no. No pressure.
+            </p>
           </motion.div>
         </div>
       </section>
+
+      {/* ── 2. PRODUCT — what it is ──────────────────────────────────── */}
+      <section className="max-w-2xl mx-auto px-6 pb-12">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5 }}>
+          <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+            <div className="flex items-center gap-6 p-6">
+              <div className="flex-shrink-0 w-28 h-36 relative">
+                <img
+                  src={galleryImages[0] || PRODUCT_IMG}
+                  alt="HNH MESS lube"
+                  className="w-full h-full object-contain drop-shadow-2xl"
+                  onError={(e) => { e.target.src = PRODUCT_IMG; }}
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 mb-1">Premium water-based lube</p>
+                <h2 className="text-2xl font-black uppercase mb-3">HNH MESS</h2>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-[10px] font-black uppercase tracking-widest rounded px-2 py-1" style={{ background: '#C8962C', color: '#000' }}>
+                    50ml &middot; &pound;10
+                  </span>
+                  <span className="text-[10px] font-black uppercase tracking-widest rounded px-2 py-1 border border-[#C8962C]/40 text-[#C8962C]">
+                    250ml &middot; &pound;15
+                  </span>
+                </div>
+                {primaryVariant?.price?.amount && (
+                  <p className="text-white/40 text-xs">
+                    From {primaryVariant.price.amount} {primaryVariant.price.currencyCode}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {galleryImages.length > 1 && (
+              <div className="px-6 pb-4">
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {galleryImages.map((url, idx) => (
+                    <button
+                      key={`${url}-${idx}`}
+                      type="button"
+                      onClick={() => setSelectedImageIndex(idx)}
+                      className={`shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-colors ${
+                        idx === selectedImageIndex ? 'border-white' : 'border-white/20 hover:border-white/50'
+                      }`}
+                    >
+                      <img src={url} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SoundCloud embed */}
+            {!isPreLaunch && soundcloudRef && (
+              <div className="px-6 pb-6">
+                <SoundCloudEmbed urlOrUrn={soundcloudRef} />
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ── 3. CTAs — shop, listen, safety ───────────────────────────── */}
+      <section className="max-w-2xl mx-auto px-6 pb-12">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5 }}>
+          <div className="flex flex-col gap-3">
+            {product ? (
+              <Button
+                onClick={() => addToCartMutation.mutate()}
+                className="w-full bg-[#C8962C] hover:bg-white text-black font-black uppercase py-6 text-base"
+                disabled={addToCartMutation.isPending}
+              >
+                <ShoppingBag className="w-5 h-5 mr-2" />
+                Add to cart
+              </Button>
+            ) : (
+              <Link to={`/market/p/${RELEASE_SLUG}`} className="block">
+                <Button className="w-full bg-[#C8962C] hover:bg-white text-black font-black uppercase py-6 text-base">
+                  <ShoppingBag className="w-5 h-5 mr-2" />
+                  Shop HNH MESS
+                </Button>
+              </Link>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <Link to={`/music/releases/${RELEASE_SLUG}`}>
+                <Button variant="outline" className="w-full border-2 border-white/20 text-white hover:bg-white/10 font-black uppercase py-4">
+                  <Play className="w-4 h-4 mr-2" />
+                  {isPreLaunch ? 'Preview' : 'Listen'}
+                </Button>
+              </Link>
+              <Button
+                variant="outline"
+                className="w-full border-2 border-white/20 text-white hover:bg-white/10 font-black uppercase py-4"
+                onClick={() => navigate('/safety')}
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Safety
+              </Button>
+            </div>
+
+            {isPreLaunch && (
+              <Button
+                variant="ghost"
+                onClick={handleNotify}
+                className="text-white/50 hover:text-white font-black uppercase text-xs"
+              >
+                <Bell className="w-4 h-4 mr-2" />
+                Notify me at launch
+              </Button>
+            )}
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ── 4. CARE — aftercare context ──────────────────────────────── */}
+      <section className="max-w-2xl mx-auto px-6 pb-12">
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center">
+          <p className="text-[10px] uppercase tracking-[0.4em] text-white/40 mb-3">Aftercare</p>
+          <p className="text-white/70 text-sm leading-relaxed max-w-md mx-auto">
+            Hydrate. Reset. Check in. Land in Safety if you need it.
+          </p>
+          <Link to="/care" className="inline-block mt-4 text-[#C8962C] text-xs font-black uppercase tracking-wider hover:text-white transition-colors">
+            Hand N Hand care resources
+          </Link>
+        </div>
+      </section>
+
+      {/* ── Footer ───────────────────────────────────────────────────── */}
+      <footer className="border-t border-white/10 px-6 py-6 text-center">
+        <p className="text-white/20 text-[10px] uppercase tracking-[0.3em]">A HOTMESS original</p>
+      </footer>
     </div>
   );
 }
