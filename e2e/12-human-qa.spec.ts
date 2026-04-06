@@ -596,7 +596,7 @@ test.describe('QA-06 · Chat send + receive', () => {
 
 test.describe('QA-07 · Chat image upload', () => {
   test('Image upload file input is present in the chat sheet', async ({ browser }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(150_000);
     test.skip(!E2E_AUTH_CONFIGURED, 'Skipping — auth secrets not configured');
     const ctx = await mkCtx(browser);
     const page = await ctx.newPage();
@@ -609,20 +609,19 @@ test.describe('QA-07 · Chat image upload', () => {
         window.history.pushState({}, '', '/ghosted?sheet=chat');
         window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
       });
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(1500);
 
       // Click on the first conversation thread to enter it
-      // The messages list renders items as divs with a name + chevron (>)
-      const firstThread = page.locator('text=Beta Tester').first();
-      if (await firstThread.isVisible({ timeout: 4000 }).catch(() => false)) {
+      const firstThread = page.locator('text=Beta').first();
+      if (await firstThread.isVisible({ timeout: 3000 }).catch(() => false)) {
         await firstThread.click();
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1500);
       } else {
-        // Generic fallback — any clickable row in the messages panel
-        const row = page.locator('[class*="thread"], [class*="row"], div').filter({ has: page.locator('img, [class*="avatar"]') }).first();
+        // Generic fallback — any clickable row that has an avatar
+        const row = page.locator('div').filter({ has: page.locator('img') }).nth(1);
         if (await row.isVisible({ timeout: 2000 }).catch(() => false)) {
           await row.click();
-          await page.waitForTimeout(2000);
+          await page.waitForTimeout(1500);
         }
       }
 

@@ -141,7 +141,8 @@ export async function loginAs(
       const nameInput = page.getByPlaceholder("What do people call you?");
       const current = await nameInput.inputValue().catch(() => '');
       if (!current) await nameInput.fill('Alpha E2E');
-      await page.locator('button').filter({ hasText: /let.s go/i }).click();
+      // 5s click timeout — don't wait 30s if button label changed
+      await page.locator('button').filter({ hasText: /let.s go/i }).click({ timeout: 5_000 });
     } catch { /* best-effort */ }
   }
 
@@ -150,7 +151,7 @@ export async function loginAs(
   if (r2 === 'nav') return;
   if (r2 === 'screen') {
     try {
-      await page.locator('button').filter({ hasText: /skip for now/i }).click();
+      await page.locator('button').filter({ hasText: /skip for now/i }).click({ timeout: 5_000 });
     } catch { /* best-effort */ }
   }
 
@@ -160,7 +161,7 @@ export async function loginAs(
   if (r3 === 'screen') {
     try {
       // Writes onboarding_completed: true to DB, then calls onSkip → navigate('/ghosted')
-      await page.locator('button').filter({ hasText: /skip.*pin later/i }).click();
+      await page.locator('button').filter({ hasText: /skip.*pin later/i }).click({ timeout: 5_000 });
     } catch { /* best-effort */ }
   }
 
