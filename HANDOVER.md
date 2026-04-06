@@ -1,6 +1,6 @@
 # HOTMESS OS -- Developer Handover Pack
 
-**Document version:** 2.0
+**Document version:** 2.1
 **Date:** 2026-04-06
 **Prepared by:** Claude (Head of Engineering, AI co-founder)
 **Handover to:** Incoming developer / development team
@@ -117,18 +117,18 @@ When two files disagree, the one marked **Source of Truth** wins.
 
 | User Type | Journey Status | Key Gaps |
 |-----------|---------------|----------|
-| New user (first arrival) | COMPLETE | 8-step onboarding -> profile on grid |
-| Ghosted social user | COMPLETE | Grid, boo/match, chat, video call, filters |
-| Seller (Shopify) | PARTIAL | List/view/earnings work. No Stripe Connect onboarding |
-| Seller (Preloved) | PARTIAL | List/view. Payment = arrange via chat only |
-| Buyer (Shopify) | COMPLETE | Full Shopify checkout flow |
-| Buyer (Preloved) | PARTIAL | Order record only, no payment |
-| Radio listener | COMPLETE | Live stream, mini player, show schedule |
-| Music listener | COMPLETE | Artist pages, inline audio, release grid |
-| Event organiser | COMPLETE | Create event -> beacons |
-| Event attendee | COMPLETE | RSVP -> ticket in Vault -> QR |
-| Safety user | COMPLETE | SOS, fake call, trusted contacts, live location |
-| Persona user | COMPLETE | Up to 5 personas, switch via long-press |
+| New user (first arrival) | DONE | 8-step onboarding -> profile on grid. Verified in code. |
+| Ghosted social user | DONE | Grid, boo/match, chat, filters. Verified in code. |
+| Seller (Shopify) | PARTIAL | List/view/earnings work. No Stripe Connect onboarding. |
+| Seller (Preloved) | PARTIAL | List/view. Payment = arrange via chat only. |
+| Buyer (Shopify) | DONE | Full Shopify checkout flow. Requires env vars verified. |
+| Buyer (Preloved) | PARTIAL | Order record only, no payment. |
+| Radio listener | DONE | Live stream, mini player, show schedule. Verified in code. |
+| Music listener | DONE | Artist pages, inline audio, release grid. Verified in code. |
+| Event organiser | DONE | Create event -> beacons. Verified in code. |
+| Event attendee | PARTIAL | RSVP -> ticket in Vault -> QR. QR scanning not verified in prod. |
+| Safety user | PARTIAL | SOS + fake call + trusted contacts work in code. Push to contacts requires real trusted_contacts rows (0 in prod). |
+| Persona user | PARTIAL | Code works. 0 personas created in prod — untested with real users. |
 
 ### 4.2 Core Feature Requirements
 
@@ -167,7 +167,7 @@ When two files disagree, the one marked **Source of Truth** wins.
 | FR-03.4 | Movement context cards | DONE | `MovementMessageCard.tsx` |
 | FR-03.5 | Read receipts | PARTIAL | `markRead()` writes to DB, full sync incomplete |
 | FR-03.6 | Typing indicators | DONE | `useTypingIndicator.ts` |
-| FR-03.7 | Video calls | DONE | `L2VideoCallSheet.tsx` |
+| FR-03.7 | Video calls | PARTIAL | `L2VideoCallSheet.tsx`. WebRTC peer connection in code, not verified in prod with real users. |
 | FR-03.8 | Wingman AI (conversation starters) | STUBBED | `console.warn('[TODO] LLM endpoint needed')` |
 
 #### FR-04: Marketplace
@@ -267,24 +267,24 @@ Safety Loop:
 
 ### 6.2 Service Gap Analysis
 
-| Service | Designed | Implemented | Gap |
-|---------|----------|-------------|-----|
-| Auth (magic link) | Yes | Yes | Apple Sign-In blocked in WebViews |
-| Ghosted social | Yes | Yes | None |
-| Boo/Match loop | Yes | Yes | None (shipped this session) |
-| Chat (1:1) | Yes | Yes | Read receipts partially synced |
-| Video call | Yes | Yes | WebRTC peer connection |
-| Marketplace (Shopify) | Yes | Yes | None |
-| Marketplace (Preloved) | Yes | Partial | No payment integration |
-| Radio streaming | Yes | Yes | Legacy shell player still mounted |
-| Music catalogue | Yes | Yes | Stems feature stubbed |
-| Events/Beacons | Yes | Yes | None |
-| Safety/SOS | Yes | Yes | None |
-| AI features | Yes | Stubbed | 13 components need Claude API wiring |
-| Push notifications | Yes | Partial | SW `push` event handler not wired to display |
-| Membership/Premium | Designed | Stubbed | Waitlist only, no Stripe subscription |
-| Photo moderation | Designed | Partial | Migration exists, pipeline TBC |
-| Admin dashboard | Designed | Partial | `AdminDashboard.jsx` exists |
+| Service | Designed | Delivery Status | Gap |
+|---------|----------|----------------|-----|
+| Auth (magic link) | Yes | DONE | Apple Sign-In BLOCKED in WebViews |
+| Ghosted social | Yes | DONE | None |
+| Boo/Match loop | Yes | DONE | None |
+| Chat (1:1) | Yes | PARTIAL | Read receipts partially synced |
+| Video call | Yes | PARTIAL | WebRTC in code, not verified in prod |
+| Marketplace (Shopify) | Yes | DONE | Env vars need verification |
+| Marketplace (Preloved) | Yes | PARTIAL | No payment integration |
+| Radio streaming | Yes | DONE | Legacy shell player still mounted (cleanup needed) |
+| Music catalogue | Yes | DONE | Stems feature STUBBED |
+| Events/Beacons | Yes | DONE | None |
+| Safety/SOS | Yes | PARTIAL | Code works, push to contacts untested (0 contacts in prod) |
+| AI features | Yes | STUBBED | 13 components need Claude API wiring |
+| Push notifications | Yes | PARTIAL | SW `push` event handler not wired to display |
+| Membership/Premium | Yes | STUBBED | Waitlist only, no Stripe subscription |
+| Photo moderation | Yes | PARTIAL | Migration + client writes exist, no server-side review |
+| Admin dashboard | Yes | PARTIAL | `AdminDashboard.jsx` exists, scope limited |
 
 ---
 
@@ -350,7 +350,7 @@ LOADING → UNAUTHENTICATED    → /auth
 
 ### 7.5 Sheet System
 
-77 L2 sheets registered. Open with `openSheet(type, props)` from `useSheet()`. Stack is LIFO. URL-synced via `?sheet=<type>`.
+77 L2 sheets registered (at baseline `0759cb0`). Open with `openSheet(type, props)` from `useSheet()`. Stack is LIFO. URL-synced via `?sheet=<type>`.
 
 **Gated sheets** (chat, video, travel) only open from `/ghosted` or when a profile sheet is in the stack. See `src/lib/sheetPolicy.ts`.
 
@@ -391,14 +391,14 @@ New sheet checklist:
 
 ### 7.8 Unarchitected / Gap Areas
 
-| Area | Status | Notes |
-|------|--------|-------|
-| AI/LLM integration | 13 stubs | Components have `console.warn('[TODO] LLM endpoint needed')`. Need Claude API endpoint. |
-| Photo moderation pipeline | Migration exists | `20260406000000_photo_moderation_status.sql` created but no server-side moderation flow |
-| Push notification display | SW registered | `push` event handler in SW not wired to show browser notifications |
-| Membership billing | Waitlist only | Stripe subscriptions designed but not connected |
-| VaultMode content | Shell exists | `VaultMode.tsx` exists but content scope undefined |
-| Legacy radio system | Mounted | `shell/RadioContext.jsx` + `PersistentRadioPlayer.jsx` still mounted alongside new system |
+| Area | Delivery State | Notes |
+|------|---------------|-------|
+| AI/LLM integration | STUBBED (13 components) | Components have `console.warn('[TODO] LLM endpoint needed')`. Need Claude API endpoint. |
+| Photo moderation pipeline | PARTIAL | Migration + client writes exist. No server-side review pipeline. |
+| Push notification display | PARTIAL | SW registered, VAPID set. `push` event handler not wired to show browser notifications. |
+| Membership billing | STUBBED | Waitlist UI only. Stripe subscriptions designed but not connected. |
+| VaultMode content | STUBBED | `VaultMode.tsx` shell exists. Content scope undefined. |
+| Legacy radio system | NOT STARTED (cleanup) | `shell/RadioContext.jsx` + `PersistentRadioPlayer.jsx` still mounted alongside new system. Needs removal. |
 
 ---
 
@@ -406,19 +406,19 @@ New sheet checklist:
 
 ### 8.1 External Services
 
-| Service | Purpose | Config Location | Status |
-|---------|---------|----------------|--------|
-| **Supabase** (prod) | Auth, DB, Storage, Realtime | `rfoftonnlwudilafhfkl` | ACTIVE |
-| **Supabase** (dev) | Staging environment | `klsywpvncqqglhnhrjbh` | ACTIVE |
-| **Supabase** (edge fns) | Push notifications | `axxwdjmbwkvqhcpwters` | ACTIVE |
-| **Shopify** | Headless commerce | `/api/shopify/*` + env vars | ACTIVE |
-| **Stripe** | Payments (future) | `@stripe/stripe-js` | NOT CONNECTED |
-| **Sentry** | Error tracking | `@sentry/react` | ACTIVE |
-| **Vercel** | Hosting + serverless | `prj_xdS5EoLRDpGhj4GOIbtSLSrCmvJO` | ACTIVE |
-| **Google Maps** | Routing/ETAs | `GOOGLE_MAPS_API_KEY` | OPTIONAL |
-| **SoundCloud** | OAuth + uploads | `/api/soundcloud/*` | CONFIGURED |
-| **Resend** | Transactional email | `RESEND_API_KEY` | CONFIGURED |
-| **OpenAI** | Event scraper fallback | `OPENAI_API_KEY` | OPTIONAL |
+| Service | Purpose | Config Location | Operational State |
+|---------|---------|----------------|-------------------|
+| **Supabase** (prod) | Auth, DB, Storage, Realtime | `rfoftonnlwudilafhfkl` | Active, verified |
+| **Supabase** (dev) | Staging environment | `klsywpvncqqglhnhrjbh` | Active, verified |
+| **Supabase** (edge fns) | Push notifications | `axxwdjmbwkvqhcpwters` | Active, verified |
+| **Shopify** | Headless commerce | `/api/shopify/*` + env vars | Active, env unverified |
+| **Stripe** | Payments (future) | `@stripe/stripe-js` | Not connected |
+| **Sentry** | Error tracking | `@sentry/react` | Active, env unverified |
+| **Vercel** | Hosting + serverless | `prj_xdS5EoLRDpGhj4GOIbtSLSrCmvJO` | Active, verified |
+| **Google Maps** | Routing/ETAs | `GOOGLE_MAPS_API_KEY` | Optional, env unverified |
+| **SoundCloud** | OAuth + uploads | `/api/soundcloud/*` | Configured, env unverified |
+| **Resend** | Transactional email | `RESEND_API_KEY` | Configured, env unverified |
+| **OpenAI** | Event scraper fallback | `OPENAI_API_KEY` | Optional, env unverified |
 
 ### 8.2 Supabase Edge Functions
 
@@ -547,7 +547,7 @@ Defined in `uploadToStorage.ts` BUCKET_MAP:
 **Known issue:** The `uploads` bucket does not exist in production. File upload features using this bucket will fail until created.
 
 ### 9.6 Migration Count
-156 migration files from `20260103` to `20260406`, covering schema creation, RLS policies, data seeds, and feature additions. See Appendix D for notable migrations and known issues.
+156 migration files (at baseline `0759cb0`) from `20260103` to `20260406`, covering schema creation, RLS policies, data seeds, and feature additions. See Appendix D for notable migrations and known issues.
 
 ---
 
@@ -842,7 +842,7 @@ Configured via Vercel Cron (`vercel.json` or Vercel dashboard):
 - [ ] Read `DESIGN_SYSTEM.md` (brand tokens, component patterns)
 - [ ] Get Supabase dashboard access (prod: `rfoftonnlwudilafhfkl`, dev: `klsywpvncqqglhnhrjbh`)
 - [ ] Get Vercel dashboard access (project: `prj_xdS5EoLRDpGhj4GOIbtSLSrCmvJO`)
-- [ ] Review open issues (Section 11) and prioritise
+- [ ] Review open issues (Section 15) and prioritise
 
 ### Credentials needed from Phil:
 
