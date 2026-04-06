@@ -27,10 +27,11 @@
 import { useState, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SlidersHorizontal, Ghost, ArrowRight, MessageCircle } from 'lucide-react';
+import { SlidersHorizontal, Ghost, ArrowRight, MessageCircle, Music, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSheet } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
+import { useRadio } from '@/contexts/RadioContext';
 import { useGPS } from '@/hooks/useGPS';
 import { useGhostedGrid, type GhostedTab, type ChatThreadItem } from '@/hooks/useGhostedGrid';
 import { GhostedCard, type GhostedCardProps } from '@/components/ghosted/GhostedCard';
@@ -218,6 +219,7 @@ interface GhostedModeProps {
 export function GhostedMode({ className = '' }: GhostedModeProps) {
   const navigate = useNavigate();
   const { openSheet } = useSheet();
+  const { isPlaying, currentShowName } = useRadio();
   const { position: myPosition } = useGPS();
 
   // ── Tab state ────────────────────────────────────────────────────────────
@@ -380,6 +382,26 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
         className="flex-1 overflow-y-auto scroll-momentum pb-24 relative z-10"
         onScroll={handleScroll}
       >
+        {/* Now Playing strip — display-only, links to /radio */}
+        {isPlaying && (
+          <button
+            onClick={() => navigate('/radio')}
+            className="w-full border-b border-white/5 active:opacity-80 transition-opacity"
+            style={{ backgroundColor: '#1C1C1E' }}
+          >
+            <div className="flex items-center gap-3 px-4 py-3">
+              <div className="w-8 h-8 rounded-lg bg-[#C8962C]/15 flex items-center justify-center flex-shrink-0">
+                <Music className="w-4 h-4 text-[#C8962C]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold">On Air</p>
+                <p className="text-sm text-white/80 font-bold truncate">{currentShowName || 'HOTMESS Radio'}</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-white/20 flex-shrink-0" />
+            </div>
+          </button>
+        )}
+
         {/* Hero banner (Nearby + Live tabs only) */}
         {activeTab !== 'chats' && <GhostedHeroBanner />}
 
