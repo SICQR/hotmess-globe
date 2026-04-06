@@ -607,7 +607,7 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
               </div>
 
               {/* Verified badge */}
-              {profile?.verified && (
+              {profile?.is_verified && (
                 <div
                   className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full flex items-center justify-center"
                   style={{ background: AMBER }}

@@ -815,83 +815,9 @@ export default function MusicTab() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          2. HOT RIGHT NOW — horizontal carousel
+          2. PRODUCER MODE — stems / for producers
           ═══════════════════════════════════════════════════════════════════ */}
-      {hotTracks.length > 0 && (
-        <section className="mt-8 pl-6">
-          <SectionHeader>Hot Right Now</SectionHeader>
-          <div className="flex gap-3 overflow-x-auto pb-4 pr-6 scrollbar-hide">
-            {hotTracks.map((track, idx) => {
-              const access = getTrackAccessLevel(track);
-              const isActive = player.currentTrack?.id === track.id;
-              const isTrackPlaying = isActive && player.isPlaying;
-
-              return (
-                <motion.button
-                  key={track.id}
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => player.playTrack(track, hotTracks, idx)}
-                  className="flex-shrink-0 w-[140px] text-left"
-                  aria-label={`Play ${track.title}`}
-                >
-                  {/* Artwork */}
-                  <div className={`relative w-[140px] h-[140px] rounded-xl overflow-hidden bg-[#1C1C1E] ${
-                    access === 'stems' ? 'ring-2 ring-[#C8962C]/50' : ''
-                  } ${access === 'preview' ? 'opacity-70' : ''}`}>
-                    {track.artwork_url ? (
-                      <img src={track.artwork_url} alt={track.title} className="w-full h-full object-cover" loading="lazy" />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1C1C1E] to-[#0D0D0D]">
-                        <Disc3 className="w-8 h-8 text-[#C8962C]/30 mb-1" />
-                        <span className="text-[8px] font-bold uppercase tracking-widest text-white/15">RCR</span>
-                      </div>
-                    )}
-
-                    {/* Access badge */}
-                    {access === 'preview' && (
-                      <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-white/15 text-white/60 backdrop-blur-sm">
-                        Preview
-                      </span>
-                    )}
-                    {access === 'stems' && (
-                      <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-[#C8962C]/90 text-black backdrop-blur-sm">
-                        Stems
-                      </span>
-                    )}
-
-                    {/* Playing indicator */}
-                    {isTrackPlaying && (
-                      <div className="absolute bottom-2 left-2 flex items-end gap-0.5 h-3">
-                        {[60, 100, 40].map((h, i) => (
-                          <span
-                            key={i}
-                            className="w-[3px] bg-[#C8962C] rounded-full animate-pulse"
-                            style={{ height: `${h}%`, animationDelay: `${i * 0.15}s` }}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <p className="text-xs font-bold text-white truncate mt-2">{track.title}</p>
-                  <p className="text-[10px] text-white/40 truncate">Smash Daddys</p>
-                </motion.button>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* Live Radio card removed — RadioMiniPlayer persists above nav, RadioMode is the full player.
-          Music tab = releases only. Radio = its own surface. */}
-
-      {/* Featured Drop removed — duplicated releases[0] which already appears first in All Releases */}
-
-      {/* ═══════════════════════════════════════════════════════════════════════
-          5. PRODUCER MODE
-          ═══════════════════════════════════════════════════════════════════ */}
-      <section className="mt-10 mx-6 rounded-2xl border border-[#C8962C]/10 bg-[#C8962C]/[0.03] p-6">
+      <section className="mt-8 mx-6 rounded-2xl border border-[#C8962C]/10 bg-[#C8962C]/[0.03] p-6">
         <h2 className="text-lg font-black uppercase text-white tracking-wide">
           For Producers
         </h2>
@@ -939,12 +865,11 @@ export default function MusicTab() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          6. ALL RELEASES — 2-col grid
+          3. ALL RELEASES — horizontal carousel (tap to open detail sheet)
           ═══════════════════════════════════════════════════════════════════ */}
-      <section className="mt-10 px-6 pb-40">
+      <section className="mt-10 pl-6 pb-40">
         <SectionHeader>All Releases</SectionHeader>
-
-        <div className="space-y-2">
+        <div className="flex gap-3 overflow-x-auto pb-4 pr-6 scrollbar-hide">
           {releases.map(rel => {
             const relTracks = tracksByRelease[rel.id] || [];
             const access = getReleaseAccessLevel(rel, relTracks);
@@ -957,43 +882,35 @@ export default function MusicTab() {
             return (
               <motion.button
                 key={rel.id}
-                whileTap={{ scale: 0.97 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => setSelectedRelease(rel)}
-                className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-left active:bg-white/5 transition-colors"
-                style={{ backgroundColor: CARD }}
+                className="flex-shrink-0 w-[140px] text-left"
                 aria-label={`Open ${rel.title}`}
               >
-                {/* Artwork thumbnail */}
-                <div className={`w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-[#0D0D0D] ${access === 'stems' ? 'ring-1 ring-[#C8962C]/40' : ''} ${access === 'preview' ? 'opacity-70' : ''}`}>
+                {/* Artwork */}
+                <div className={`relative w-[140px] h-[140px] rounded-xl overflow-hidden bg-[#1C1C1E] ${
+                  access === 'stems' ? 'ring-2 ring-[#C8962C]/50' : ''
+                } ${access === 'preview' ? 'opacity-70' : ''}`}>
                   {rel.artwork_url ? (
-                    <img
-                      src={rel.artwork_url}
-                      alt={rel.title}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
+                    <img src={rel.artwork_url} alt={rel.title} className="w-full h-full object-cover" loading="lazy" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Disc3 className="w-6 h-6 text-white/10" />
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1C1C1E] to-[#0D0D0D]">
+                      <Disc3 className="w-8 h-8 text-[#C8962C]/30 mb-1" />
+                      <span className="text-[8px] font-bold uppercase tracking-widest text-white/15">RCR</span>
                     </div>
                   )}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-white truncate">{rel.title}</p>
-                  <p className="text-xs text-white/40 truncate">
-                    Smash Daddys{rel.genre ? ` \u00b7 ${rel.genre}` : ''}
-                  </p>
-                </div>
-
-                {/* Status */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {access === 'preview' && <span className="text-[9px] font-bold uppercase text-white/30">Preview</span>}
-                  {access === 'coming_soon' && <span className="text-[9px] font-bold uppercase text-white/20">Soon</span>}
-                  {access === 'stems' && <span className="text-[9px] font-bold uppercase text-[#C8962C]">Stems</span>}
+                  {access === 'preview' && (
+                    <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-white/15 text-white/60 backdrop-blur-sm">
+                      Preview
+                    </span>
+                  )}
+                  {access === 'stems' && (
+                    <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-[#C8962C]/90 text-black backdrop-blur-sm">
+                      Stems
+                    </span>
+                  )}
                   {isCurrentPlaying && (
-                    <div className="flex items-end gap-0.5 h-3">
+                    <div className="absolute bottom-2 left-2 flex items-end gap-0.5 h-3">
                       {[60, 100, 40].map((h, i) => (
                         <span
                           key={i}
@@ -1004,6 +921,10 @@ export default function MusicTab() {
                     </div>
                   )}
                 </div>
+                <p className="text-xs font-bold text-white truncate mt-2">{rel.title}</p>
+                <p className="text-[10px] text-white/40 truncate">
+                  Smash Daddys{rel.genre ? ` · ${rel.genre}` : ''}
+                </p>
               </motion.button>
             );
           })}
