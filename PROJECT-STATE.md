@@ -1,7 +1,7 @@
 # PROJECT-STATE.md
 
 **Last updated:** 2026-04-06
-**Current main:** `c222497`
+**Current main:** `d41348e`
 **Handover baseline:** `003ecfa`
 **Docs:** HANDOVER.md v2.1, LAUNCH-BLOCKERS.md, FIRST-10-TICKETS.md
 
@@ -26,8 +26,10 @@ Remaining work is launch blockers, trust hardening, moderation, privacy, and ope
 | Blocker | Status | Notes |
 |---------|--------|-------|
 | Photo moderation pipeline | DONE | Trust-first: uploads approved by default, report/flag as safety net, RLS enforced, API filtered |
-| Push notification display | DONE / verify in-browser | SW handler present; needs real device confirmation |
-| Presence privacy audit | PARTIAL | Rounding and RLS addressed, needs final verification against public-facing APIs |
+| Push notification display | DONE | SW handler present, suppression logic, notificationclick focus |
+| Presence privacy audit | DONE | 3dp rounding in all APIs, RLS on user_presence, SOS uses raw precision |
+| Music/Radio dedup | DONE | Single-surface rule: Radio=broadcast, Music=releases+events |
+| HNH MESS page | DONE | Meaning first, product second, CTA third |
 | Stripe Connect onboarding | BLOCKED (manual) | Phil/dashboard action required |
 | Legacy radio removal | DONE | Old shell system removed/replaced |
 
@@ -47,42 +49,23 @@ Remaining work is launch blockers, trust hardening, moderation, privacy, and ope
 | T-08 | `9f31799` | 30 London seed profiles with presence + photos in prod |
 | T-09 | — | Env var audit — no missing-env crashes, CRON_SECRET still 401 |
 | T-10 | `c222497` | profile_overrides table created with correct profiles FK + RLS |
-| T-11 | `pending` | Photo moderation truth pass — trust-first, RLS fix, API filter, column bug fix |
+| T-11 | `1294d67` | Photo moderation truth pass — trust-first default, RLS policy fix, API filter, column bug fix |
+| T-12 | `1294d67` | Push notification QA — widened SW suppression (boo/match on /ghosted), notificationclick focus |
+| T-13 | `1294d67` | Presence privacy — 3dp GPS rounding in match-probability API, RLS verified |
+| T-14 | `f0a939f` | Music/Radio dedup — single-surface rule enforced, cross-domain content removed |
+| T-15 | `d41348e` | HNH MESS page — meaning first, product second, CTA third restructure |
 
 ---
 
-## Next 5 tickets
+## Next tickets
 
-### T-11 — Final photo moderation truth pass
+All 15 tickets from the initial launch-hardening pass are complete. Next priorities:
 
-- Verify owner sees pending, others see approved only, rejected clears cleanly
-- No broken media shells
-- Manual moderation workflow documented
-- **AC:** Real upload tested end-to-end on prod/dev accounts
-
-### T-12 — Real device push notification QA
-
-- Chrome mobile, Safari iOS/PWA, Android Chrome
-- Tap-through deep linking
-- Focused-thread suppression behavior
-- **AC:** User receives and opens push in real browser conditions
-
-### T-13 — Final presence privacy verification
-
-- No exact coords exposed to other users
-- Verify API payloads, movement/public presence behavior, logout/background cleanup
-- **AC:** Privacy-safe by code and observed UX
-
-### T-14 — Music / Radio dedup cleanup
-
-- Radio = live broadcast only, Music = release library only
-- Remove duplicate now-playing/archive/release truths
-- **AC:** One audio truth per surface
-
-### T-15 — HNH MESS page final conversion pass
-
-- Top hero, human image, stigma-smashing blurb, product/CTA hierarchy
-- **AC:** Meaning first, product second, CTA third
+1. Real device push notification QA (Chrome mobile, Safari PWA, Android) — manual testing
+2. Stripe Connect onboarding — blocked on Phil/dashboard
+3. P0/P1 items from plan (missing RPCs, beacon cron, OAuth crash, etc.)
+4. Home screen tidy + empty state handling
+5. Globe merge (claude/gracious-jones branch)
 
 ---
 
