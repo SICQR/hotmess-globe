@@ -51,14 +51,11 @@ const DEFAULT_CONFIG = {
 };
 
 const FEATURES = [
-  'Unlimited grid access',
-  'See who viewed your profile',
+  'Full Ghosted grid',
+  'Priority visibility',
   'Advanced filters',
-  'Priority in search',
   'Extra personas',
-  'Read receipts',
   'Stealth mode',
-  'No ads',
 ];
 
 const TIERS = [
