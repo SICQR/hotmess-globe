@@ -18,7 +18,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Play, ChevronDown, ChevronUp, Disc3, X, Loader2,
+  Play, ChevronDown, ChevronUp, Disc3, Loader2,
   Lock, Crown, FileAudio, Link2, Headphones,
   Radio as RadioIcon, Calendar,
 } from 'lucide-react';
@@ -286,9 +286,7 @@ function ReleaseDetailSheet({ release, tracks, onClose, bannerData }) {
         <span className="text-[10px] font-bold uppercase text-white/30 tracking-widest">
           {release.catalog_number || 'Release'}
         </span>
-        <button onClick={onClose} className="p-2 -mr-2">
-          <X className="w-5 h-5 text-white/60" />
-        </button>
+        <div className="w-9" /> {/* Spacer to balance header */}
       </div>
 
       <div className="px-4 pb-32">

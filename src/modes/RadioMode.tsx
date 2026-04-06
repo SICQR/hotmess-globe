@@ -61,7 +61,6 @@ import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { supabase } from '@/components/utils/supabaseClient';
 import '@/styles/radio-waveform.css';
 import { AppBanner } from '@/components/banners/AppBanner';
-import { SoundConsentModal } from '@/components/radio/SoundConsentModal';
 
 // -- Static show data (fallback) -----------------------------------------------
 interface ShowData {
@@ -170,8 +169,6 @@ interface RadioModeProps {
   className?: string;
 }
 
-const CONSENT_KEY = 'hm_sound_consent_v1';
-
 export function RadioMode({ className = '' }: RadioModeProps) {
   const { isPlaying, currentShowName, togglePlay, setCurrentShowName, audioRef } = useRadio();
   const navigate = useNavigate();
@@ -193,17 +190,6 @@ export function RadioMode({ className = '' }: RadioModeProps) {
   const [selectedShow, setSelectedShow] = useState<ShowData | null>(null);
   const [activeShowIndex, setActiveShowIndex] = useState(0);
 
-  // Sound consent modal state
-  const [showConsent, setShowConsent] = useState(() => {
-    try { return localStorage.getItem(CONSENT_KEY) !== 'granted'; } catch { return true; }
-  });
-
-  // Listen for sound consent request event
-  useEffect(() => {
-    const h = () => setShowConsent(true);
-    window.addEventListener('hm:request-audio-consent', h);
-    return () => window.removeEventListener('hm:request-audio-consent', h);
-  }, []);
 
   // Determine scheduled show and set initial show name
   const scheduledShow = getCurrentScheduledShow(shows);
@@ -495,18 +481,6 @@ export function RadioMode({ className = '' }: RadioModeProps) {
             )}
           </motion.div>
 
-          {/* Current show label */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.4 }}
-            className="relative z-10 text-sm text-[#8E8E93] italic mb-6 text-center"
-          >
-            {nowPlayingShow
-              ? `${nowPlayingShow.name} with ${nowPlayingShow.host}`
-              : 'HOTMESS RADIO'}
-          </motion.p>
-
           {/* Play / Pause button */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -608,7 +582,7 @@ export function RadioMode({ className = '' }: RadioModeProps) {
         <section className="px-4 pb-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[11px] font-black text-[#8E8E93] uppercase tracking-widest">
-              Up Next
+              Shows
             </h2>
             <button
               onClick={() => openSheet('schedule', {})}
@@ -655,13 +629,6 @@ export function RadioMode({ className = '' }: RadioModeProps) {
                     )}
                     {isActive && (
                       <div className="absolute inset-0 bg-[#C8962C]/20" />
-                    )}
-                    {isActive && isPlaying && (
-                      <div className="absolute top-2 right-2">
-                        <span className="inline-flex items-center gap-1 bg-[#C8962C] text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase">
-                          LIVE
-                        </span>
-                      </div>
                     )}
                   </div>
                   <div className="bg-[#1C1C1E] p-3 border-t border-white/5">
@@ -794,19 +761,6 @@ export function RadioMode({ className = '' }: RadioModeProps) {
           </div>
         </section>
 
-        {/* == ABOUT STRIP == */}
-        <section className="px-4 pb-8">
-          <div className="bg-[#1C1C1E] rounded-xl p-4 border border-white/5">
-            <p className="text-[#C8962C] text-[10px] font-black uppercase tracking-widest mb-2">
-              Community Radio
-            </p>
-            <p className="text-white/40 text-xs leading-relaxed">
-              HOTMESS RADIO -- London's queer community station. Music, shows, and voices from
-              the mess. Streaming live 24/7 via RadioKing.
-            </p>
-          </div>
-        </section>
-
         {/* Bottom spacer for nav clearance */}
         <div className="h-24" />
       </div>
@@ -814,15 +768,6 @@ export function RadioMode({ className = '' }: RadioModeProps) {
       {/* ---- Volume slider custom styles ---- */}
       <style>{volumeSliderCSS}</style>
 
-      {/* Sound Consent Modal */}
-      <SoundConsentModal
-        isOpen={showConsent}
-        onConsent={() => {
-          try { localStorage.setItem(CONSENT_KEY, 'granted'); } catch {}
-          setShowConsent(false);
-        }}
-        onDecline={() => setShowConsent(false)}
-      />
     </div>
   );
 }
