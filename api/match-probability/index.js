@@ -424,8 +424,8 @@ export default async function handler(req, res) {
         city: city || undefined,
         profileType: profileType || undefined,
         bio: bio || undefined,
-        geoLat: lat,
-        geoLng: lng,
+        geoLat: Number.isFinite(lat) ? Math.round(lat * 1000) / 1000 : null,
+        geoLng: Number.isFinite(lng) ? Math.round(lng * 1000) / 1000 : null,
         photos: normalizePhotos(row.photos, avatar),
         // Match probability fields
         matchProbability,
