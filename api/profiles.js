@@ -609,11 +609,13 @@ export default async function handler(req, res) {
       ? Math.round(haversineMetres(viewerLat, viewerLng, p.geoLat, p.geoLng))
       : null;
 
-    const verifiedBoost = p.is_verified ? 0.15 : 0;
+    // Photo completeness multiplier: 0 photos = 0.5x, 1 = 1.0x, 3+ = 1.2x
+    const photoMult = p.photo_count === 0 ? 0.5 : p.photo_count < 3 ? 1.0 : 1.2;
+    // Verified + 3+ photos = 1.4x
+    const trustMult = (p.is_verified && p.photo_count >= 3) ? 1.4 : p.is_verified ? 1.15 : photoMult;
     const onlineBoost = p.is_online ? 0.15 : 0;
-    const photoScore = p.photo_count === 0 ? 0.06 : p.photo_count === 1 ? 0.12 : Math.min(0.2, p.photo_count * 0.05);
     const randomness = Math.random() * 0.1;
-    const rankScore = verifiedBoost + onlineBoost + photoScore + randomness + 0.4; // base 0.4
+    const rankScore = (0.5 + onlineBoost + randomness) * trustMult;
     return { ...p, rankScore, ...(distance_m !== null ? { distance_m } : {}) };
   });
 
