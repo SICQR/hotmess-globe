@@ -137,8 +137,8 @@ export function useGhostedGrid(
         .select(`
           id, email, display_name, username, avatar_url,
           last_loc_ts, is_online,
-          age, looking_for, is_verified, city, bio,
-          last_seen
+          age, looking_for, verified, city, bio,
+          right_now_status, last_seen
         `)
         .or(`is_online.eq.true,last_seen.gte.${thirtyMinAgo}`)
         .neq('id', myId!)
@@ -188,7 +188,7 @@ export function useGhostedGrid(
         .from('profiles')
         .select(`
           id, email, display_name, username, avatar_url,
-          is_online, age, looking_for, is_verified, last_seen
+          is_online, age, looking_for, verified, last_seen
         `)
         .in('id', allUserIds)
         .not('display_name', 'is', null);
@@ -277,8 +277,7 @@ export function useGhostedGrid(
           if (!lf.some((v: string) => v.includes('hang') || v.includes('friend'))) return false;
         }
         if (filterChip === 'tonight') {
-          // right_now_status is a separate TABLE — not a column on profiles.
-          // Fall through (show all) until a JOIN is added to this query.
+          if (!p.right_now_status) return false;
         }
         return true;
       })
@@ -298,7 +297,7 @@ export function useGhostedGrid(
           avatarUrl: avatar,
           distanceM: distanceM != null ? roundDistance(distanceM) : null,
           isOnline: !!p.is_online,
-          isVerified: !!p.is_verified,
+          isVerified: !!p.verified,
           contextType,
           contextLabel,
           vibe: null,
@@ -362,7 +361,7 @@ export function useGhostedGrid(
           avatarUrl: avatar,
           distanceM: distanceM != null ? roundDistance(distanceM) : null,
           isOnline: true,
-          isVerified: !!p.is_verified,
+          isVerified: !!p.verified,
           contextType,
           contextLabel,
           vibe: null,

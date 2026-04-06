@@ -23,7 +23,7 @@ const GOLD = '#C8962C';
  * is fully configured in Supabase Dashboard → Auth → Providers → Apple.
  * Flip to `true` once configured.
  */
-const APPLE_ENABLED = false;
+const APPLE_ENABLED = true;
 
 /**
  * Returns true when running inside a social media in-app browser (WebView)

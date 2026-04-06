@@ -27,7 +27,7 @@ const spring = { type: 'spring', stiffness: 200, damping: 25 };
  * is fully configured in Supabase Dashboard -> Auth -> Providers -> Apple.
  * Flip to `true` once configured.
  */
-const APPLE_ENABLED = false;
+const APPLE_ENABLED = true;
 
 /**
  * Returns true when running inside a social media in-app browser (WebView)
@@ -94,7 +94,7 @@ function AuthButton({ icon, label, onClick, disabled, loading: isLoading }) {
 
 export default function Auth() {
   // ── View states ────────────────────────────────────────────────────────────
-  const [view, setView] = useState('chooser'); // 'chooser' | 'email' | 'magic-link-sent' | 'password-signin' | 'password-signup' | 'reset' | 'reset-sent' | 'password-update' | 'confirmation-pending'
+  const [view, setView] = useState('chooser'); // 'chooser' | 'email' | 'magic-link-sent' | 'password-signin' | 'password-signup' | 'reset' | 'reset-sent' | 'password-update' | 'confirmation-pending' | 'phone' | 'phone-verify'
 
   // ── Form state ─────────────────────────────────────────────────────────────
   const [email, setEmail] = useState('');
@@ -106,6 +106,10 @@ export default function Auth() {
   const [resending, setResending] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  // ── Phone OTP state ───────────────────────────────────────────────────────
+  const [phone, setPhone] = useState('');
+  const [otpCode, setOtpCode] = useState('');
 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -311,6 +315,59 @@ export default function Auth() {
     }
   };
 
+  // ── Phone OTP: send code ───────────────────────────────────────────────────
+  const handlePhoneSend = async (e) => {
+    e?.preventDefault();
+    const cleaned = phone.replace(/[^+\d]/g, '');
+    if (!cleaned || cleaned.length < 8) { setAuthError('Enter a valid phone number with country code (e.g. +44...)'); return; }
+    setLoading(true);
+    setAuthError('');
+    try {
+      const { error } = await supabase.auth.signInWithOtp({ phone: cleaned });
+      if (error) { setAuthError(error.message || 'Failed to send code'); setLoading(false); return; }
+      setCountdown(RESEND_COOLDOWN);
+      setView('phone-verify');
+    } catch (err) {
+      setAuthError(err.message || 'Failed to send code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Phone OTP: verify code ────────────────────────────────────────────────
+  const handlePhoneVerify = async (e) => {
+    e?.preventDefault();
+    if (!otpCode || otpCode.length < 6) { setAuthError('Enter the 6-digit code'); return; }
+    setLoading(true);
+    setAuthError('');
+    try {
+      const cleaned = phone.replace(/[^+\d]/g, '');
+      const { error } = await supabase.auth.verifyOtp({ phone: cleaned, token: otpCode, type: 'sms' });
+      if (error) { setAuthError(error.message || 'Invalid code'); setLoading(false); return; }
+      toast.success('Signed in!');
+      setTimeout(() => navigate(searchParams.get('redirect') || '/'), REDIRECT_DELAY_MS);
+    } catch (err) {
+      setAuthError(err.message || 'Verification failed');
+      setLoading(false);
+    }
+  };
+
+  // ── Phone OTP: resend code ────────────────────────────────────────────────
+  const handlePhoneResend = async () => {
+    if (resending || countdown > 0) return;
+    setResending(true);
+    try {
+      const cleaned = phone.replace(/[^+\d]/g, '');
+      const { error } = await supabase.auth.signInWithOtp({ phone: cleaned });
+      if (error) { toast.error('Couldn\'t resend. Wait a moment and try again.'); }
+      else { toast.success('Code resent'); setCountdown(RESEND_COOLDOWN); }
+    } catch (err) {
+      toast.error('Couldn\'t resend. Wait a moment and try again.');
+    } finally {
+      setResending(false);
+    }
+  };
+
   // ── Open "more auth methods" sheet ─────────────────────────────────────────
   const handleMoreMethods = () => {
     openSheet('more-auth-methods', {
@@ -323,7 +380,7 @@ export default function Auth() {
         });
       },
       onSelectMagicLink: () => { setView('email'); },
-      onSelectPhone: () => { toast('Being finished now', { description: 'Phone OTP is being set up.' }); },
+      onSelectPhone: () => { setView('phone'); },
       onSelectPassword: () => { setView('password-signin'); },
       appleEnabled: APPLE_ENABLED,
       isWebView: isInWebView(),
@@ -509,6 +566,129 @@ export default function Auth() {
                 className="w-full text-sm text-white/30 hover:text-white/50 transition-colors font-medium py-3 mt-2"
               >
                 Use a different email
+              </button>
+            </motion.div>
+          )}
+
+          {/* ────────────────────────────────────────────────────────────────── */}
+          {/* PHONE OTP: ENTER NUMBER                                            */}
+          {/* ────────────────────────────────────────────────────────────────── */}
+          {view === 'phone' && (
+            <motion.div
+              key="phone"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ duration: 0.25 }}
+            >
+              <button onClick={goBack} className="flex items-center gap-1 text-sm text-white/40 hover:text-white/60 transition-colors mb-6">
+                <ChevronLeft className="w-4 h-4" /> Back
+              </button>
+
+              <h2 className="text-2xl font-black text-white mb-1">Enter your number</h2>
+              <p className="text-white/40 text-sm mb-6">We'll text you a 6-digit code to sign in.</p>
+
+              <form onSubmit={handlePhoneSend} className="space-y-4">
+                <Input
+                  type="tel"
+                  autoComplete="tel"
+                  autoFocus
+                  placeholder="+44 7700 900000"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  disabled={loading}
+                  className="w-full bg-[#1C1C1E] border border-white/8 rounded-xl text-white placeholder:text-white/20 focus:border-[#C8962C] focus-visible:ring-0 focus-visible:ring-offset-0 disabled:opacity-50 h-12 px-4 text-lg tracking-wide"
+                />
+
+                {authError && (
+                  <p role="alert" className="text-[#FF3B30] text-xs font-medium">{authError}</p>
+                )}
+
+                <motion.button
+                  type="submit"
+                  disabled={loading}
+                  whileTap={{ scale: 0.97 }}
+                  className="w-full h-14 rounded-2xl font-black text-black text-base uppercase tracking-wide disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                  style={{ background: GOLD, boxShadow: '0 0 30px rgba(200,150,44,0.25)' }}
+                >
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                    <>Send code <ArrowRight className="w-4 h-4" /></>
+                  )}
+                </motion.button>
+              </form>
+            </motion.div>
+          )}
+
+          {/* ────────────────────────────────────────────────────────────────── */}
+          {/* PHONE OTP: VERIFY CODE                                             */}
+          {/* ────────────────────────────────────────────────────────────────── */}
+          {view === 'phone-verify' && (
+            <motion.div
+              key="phone-verify"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.25 }}
+              className="text-center"
+            >
+              <h3 className="text-xl font-black text-white mb-2">Enter your code</h3>
+              <p className="text-sm text-white/50 leading-relaxed mb-1">
+                We sent a 6-digit code to
+              </p>
+              <p className="text-base font-bold mb-6" style={{ color: GOLD }}>{phone}</p>
+
+              <form onSubmit={handlePhoneVerify} className="space-y-4">
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  autoFocus
+                  maxLength={6}
+                  placeholder="000000"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  disabled={loading}
+                  className="w-full bg-[#1C1C1E] border border-white/8 rounded-xl text-white text-center text-2xl font-mono tracking-[0.5em] placeholder:text-white/20 focus:border-[#C8962C] focus-visible:ring-0 focus-visible:ring-offset-0 disabled:opacity-50 h-14 px-4"
+                />
+
+                {authError && (
+                  <p role="alert" className="text-[#FF3B30] text-xs font-medium">{authError}</p>
+                )}
+
+                <motion.button
+                  type="submit"
+                  disabled={loading || otpCode.length < 6}
+                  whileTap={{ scale: 0.97 }}
+                  className="w-full h-14 rounded-2xl font-black text-black text-base uppercase tracking-wide disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                  style={{ background: GOLD, boxShadow: '0 0 30px rgba(200,150,44,0.25)' }}
+                >
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify'}
+                </motion.button>
+              </form>
+
+              <button
+                onClick={handlePhoneResend}
+                disabled={resending || countdown > 0}
+                className="w-full h-12 rounded-2xl font-black text-sm uppercase tracking-wider border flex items-center justify-center gap-2 disabled:opacity-40 transition-all mt-4"
+                style={{ borderColor: `${GOLD}30`, color: 'rgba(255,255,255,0.5)' }}
+              >
+                {resending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : countdown > 0 ? (
+                  `Resend in ${countdown}s`
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4" />
+                    Resend code
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => { setOtpCode(''); setAuthError(''); setView('phone'); }}
+                className="w-full text-sm text-white/30 hover:text-white/50 transition-colors font-medium py-3 mt-2"
+              >
+                Use a different number
               </button>
             </motion.div>
           )}
