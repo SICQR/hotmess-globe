@@ -93,4 +93,47 @@ export async function uploadToStorage(
   return publicUrl;
 }
 
+/**
+ * Insert a profile photo record with moderation_status: 'pending'.
+ * If isPrimary, also syncs profiles.avatar_url.
+ * On DB failure, cleans up the storage object to prevent orphans.
+ */
+export async function insertProfilePhoto(
+  profileId: string,
+  url: string,
+  position: number,
+  isPrimary: boolean,
+): Promise<void> {
+  const { error: dbError } = await supabase
+    .from('profile_photos')
+    .upsert(
+      {
+        profile_id: profileId,
+        url,
+        position,
+        is_primary: isPrimary,
+        moderation_status: 'pending',
+      },
+      { onConflict: 'profile_id,position' },
+    );
+
+  if (dbError) {
+    // Clean up orphaned storage object
+    const bucketPath = url.split('/storage/v1/object/public/')[1];
+    if (bucketPath) {
+      const [bucket, ...rest] = bucketPath.split('/');
+      await supabase.storage.from(bucket).remove([rest.join('/')]).catch(() => {});
+    }
+    throw dbError;
+  }
+
+  // Sync avatar_url for primary photo (owner-visible even while pending)
+  if (isPrimary) {
+    await supabase
+      .from('profiles')
+      .update({ avatar_url: url, updated_at: new Date().toISOString() })
+      .eq('id', profileId);
+  }
+}
+
 export { BUCKET_MAP, resolveBucket };

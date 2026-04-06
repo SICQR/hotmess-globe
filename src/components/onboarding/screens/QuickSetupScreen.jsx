@@ -11,7 +11,7 @@
  */
 import React, { useState, useRef } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
-import { uploadToStorage } from '@/lib/uploadToStorage';
+import { uploadToStorage, insertProfilePhoto } from '@/lib/uploadToStorage';
 import { Loader2, Camera, MapPin, ToggleLeft, ToggleRight, Check } from 'lucide-react';
 import OnboardingBackButton from '../OnboardingBackButton';
 
@@ -52,11 +52,8 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
         const url = await uploadToStorage(file, 'avatars', userId);
         setPhotoFile(url); // store the URL instead of File for submit
         setPhotoUploaded(true);
-        // Also write to profile_photos table (canonical multi-photo store)
-        await supabase.from('profile_photos').upsert(
-          { profile_id: userId, url, position: 0, is_primary: true },
-          { onConflict: 'profile_id,position' }
-        ).then(() => {}).catch(() => {});
+        // Write to profile_photos with moderation status
+        await insertProfilePhoto(userId, url, 0, true).catch(() => {});
       } catch (err) {
         console.warn('[QuickSetup] avatar upload failed:', err);
         setError('Photo upload failed — you can retry or continue without');
@@ -85,10 +82,7 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
           avatarUrl = await uploadToStorage(photoFile, 'avatars', userId);
           setPhotoUploaded(true);
           // Write to profile_photos on retry success
-          await supabase.from('profile_photos').upsert(
-            { profile_id: userId, url: avatarUrl, position: 0, is_primary: true },
-            { onConflict: 'profile_id,position' }
-          ).then(() => {}).catch(() => {});
+          await insertProfilePhoto(userId, avatarUrl, 0, true).catch(() => {});
         } catch (uploadErr) {
           console.warn('[QuickSetup] avatar upload failed:', uploadErr);
         } finally {

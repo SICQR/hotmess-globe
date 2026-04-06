@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Camera, X, Plus, Loader2, Image, Star, RefreshCw, ImagePlus } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
-import { uploadToStorage } from '@/lib/uploadToStorage';
+import { uploadToStorage, insertProfilePhoto } from '@/lib/uploadToStorage';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { humanizeError } from '@/lib/errorUtils';
@@ -44,19 +44,7 @@ export default function L2PhotosSheet() {
       if (!user) throw new Error('Not logged in');
 
       const publicUrl = await uploadToStorage(file, 'avatars', user.id);
-
-      const { error: dbError } = await supabase.from('profile_photos').insert({
-        profile_id: user.id,
-        url: publicUrl,
-        position: photos.length,
-        is_primary: photos.length === 0,
-      });
-      if (dbError) throw dbError;
-
-      // If this is the first photo (or primary), sync to profiles.avatar_url
-      if (photos.length === 0) {
-        await supabase.from('profiles').update({ avatar_url: publicUrl, updated_at: new Date().toISOString() }).eq('id', user.id);
-      }
+      await insertProfilePhoto(user.id, publicUrl, photos.length, photos.length === 0);
 
       await loadPhotos();
       toast.success('Photo added');
