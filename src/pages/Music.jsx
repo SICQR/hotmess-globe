@@ -2,7 +2,6 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { uploadToStorage } from '@/lib/uploadToStorage';
 import React, { useMemo, useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { } from '@/components/utils/supabaseClient';
 import { auth } from '@/components/utils/supabaseClient';
 import { Radio as RadioIcon, Music2, Disc, Play, Pause, Calendar, MapPin, ExternalLink, TrendingUp, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,7 +13,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
 import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
-import { schedule, getNextEpisode, generateICS, downloadICS } from '../components/radio/radioUtils';
 import { toast } from 'sonner';
 import { snapToGrid } from '../components/utils/locationPrivacy';
 
@@ -175,29 +173,6 @@ export default function Music() {
     refetchInterval: 60000
   });
 
-  const radioShows = schedule?.shows ?? [];
-  const showUrlFromSlug = (slug) => `/music/shows/${slug}`;
-
-  const nextUp = useMemo(() => {
-    const items = radioShows
-      .map((show) => {
-        const nextEpisode = getNextEpisode(show?.id);
-        if (!show || !nextEpisode?.date) return null;
-        return { show, nextEpisode };
-      })
-      .filter(Boolean)
-      .sort((a, b) => a.nextEpisode.date - b.nextEpisode.date);
-
-    return items.slice(0, 3);
-  }, [radioShows]);
-
-  const addEpisodeToCalendar = ({ show, nextEpisode }) => {
-    if (!show || !nextEpisode) return;
-    const ics = generateICS(show, nextEpisode);
-    const filename = `${show.slug || show.id}-${format(nextEpisode.date, 'yyyy-MM-dd')}.ics`;
-    downloadICS(ics, filename);
-    toast.success('Calendar file downloaded.');
-  };
 
   // Fetch audio releases
   const { data: releases = [] } = useQuery({
@@ -520,8 +495,8 @@ export default function Music() {
               value="shows"
               className="data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black"
             >
-              <Music2 className="w-4 h-4 mr-2" />
-              SHOWS
+              <Calendar className="w-4 h-4 mr-2" />
+              EVENTS
             </TabsTrigger>
             <TabsTrigger 
               value="releases"
@@ -561,109 +536,21 @@ export default function Music() {
             </div>
 
             <div className="mt-12">
-              <h4 className="text-2xl font-black uppercase mb-6">NEXT UP</h4>
-              <div className="grid gap-4">
-                {nextUp.length > 0 ? (
-                  nextUp.map(({ show, nextEpisode }) => (
-                    <div key={`${show.id}:${nextEpisode.date.toISOString()}`} className="bg-white/5 border-l-4 border-[#C8962C] p-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="font-black uppercase text-lg truncate">{show.title}</p>
-                          <p className="text-sm text-white/60 truncate">{show.tagline}</p>
-                        </div>
-
-                        <div className="flex items-center gap-3 sm:justify-end">
-                          <div className="text-right">
-                            <p className="text-2xl font-mono font-bold text-[#C8962C] leading-none">
-                              {nextEpisode.startTime}
-                            </p>
-                            <p className="text-xs text-white/60 uppercase tracking-wider">
-                              {format(nextEpisode.date, 'EEE d MMM')} • London
-                            </p>
-                          </div>
-
-                          <Button
-                            type="button"
-                            variant="glass"
-                            onClick={() => addEpisodeToCalendar({ show, nextEpisode })}
-                            className="border-white/40 font-black uppercase"
-                          >
-                            ADD
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8 bg-white/5 border-2 border-white/10">
-                    <p className="text-white/60 uppercase text-sm tracking-wider">Schedule coming soon</p>
-                    <Link to="/music/schedule" className="inline-block mt-4">
-                      <Button variant="glass" className="border-white/20 font-black uppercase">
-                        VIEW SCHEDULE
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </div>
+              <Link
+                to="/radio"
+                className="flex items-center justify-between w-full px-5 py-4 bg-white/5 border-2 border-white/10 hover:border-[#C8962C] transition-all"
+              >
+                <div>
+                  <p className="font-black uppercase text-sm">RADIO SCHEDULE</p>
+                  <p className="text-xs text-white/40 uppercase tracking-wider">Shows, times &amp; calendar</p>
+                </div>
+                <span className="text-[10px] uppercase tracking-widest font-mono text-[#C8962C]">View</span>
+              </Link>
             </div>
           </TabsContent>
 
           <TabsContent value="shows">
             <div className="mb-8">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                <div>
-                  <h3 className="text-3xl font-black uppercase">RADIO SHOWS</h3>
-                  <p className="text-white/60 uppercase text-sm tracking-wider">
-                    Three tentpoles. One rule: care-first.
-                  </p>
-                </div>
-                <Link to="/music/schedule" className="block w-full sm:w-auto">
-                  <Button 
-                    variant="glass"
-                    className="border-white/20 font-black uppercase w-full sm:w-auto"
-                  >
-                    VIEW SCHEDULE
-                  </Button>
-                </Link>
-              </div>
-
-              {radioShows.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                  {radioShows.slice(0, 3).map((show) => (
-                    <Link
-                      key={show.id}
-                      to={showUrlFromSlug(show.slug)}
-                      className="group"
-                    >
-                      <div className="relative bg-white/5 border-2 border-white/10 hover:border-[#C8962C] transition-all p-6 h-full">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="px-2 py-1 bg-[#C8962C] text-white text-xs font-black uppercase">
-                            SHOW
-                          </div>
-                          <ExternalLink className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" />
-                        </div>
-                        <h4 className="text-2xl font-black uppercase mb-2 group-hover:text-[#C8962C] transition-colors">
-                          {show.title}
-                        </h4>
-                        <p className="text-white/60 mb-4 text-sm">
-                          {show.tagline}
-                        </p>
-                        <div className="flex items-start gap-2 text-sm">
-                          <Calendar className="w-4 h-4 text-[#C8962C] flex-shrink-0 mt-0.5" />
-                          <span className="text-white/80">{show.schedule?.length ? `${show.schedule.length} weekly slot${show.schedule.length === 1 ? '' : 's'}` : 'Schedule coming soon'}</span>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-10 bg-white/5 border-2 border-white/10 mb-12">
-                  <RadioIcon className="w-12 h-12 mx-auto mb-3 text-white/40" />
-                  <h3 className="text-xl font-black mb-2">SHOWS COMING SOON</h3>
-                  <p className="text-white/60">Check back for the weekly grid.</p>
-                </div>
-              )}
-
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-2xl font-black uppercase">MUSIC EVENTS</h3>

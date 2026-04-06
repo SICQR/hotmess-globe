@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { Radio as RadioIcon, Calendar, ExternalLink, Play, Pause, Disc3, Mic2, Rss } from 'lucide-react';
+import { Radio as RadioIcon, Calendar, ExternalLink, Play, Pause, Mic2, Rss } from 'lucide-react';
 import { schedule } from '../components/radio/radioUtils';
 import { useRadio } from '@/contexts/RadioContext';
-import { supabase } from '@/components/utils/supabaseClient';
 import BrandBackground from '@/components/ui/BrandBackground';
 
 const LIVE_STREAM_URL = 'https://listen.radioking.com/radio/736103/stream/802454';
@@ -102,50 +101,8 @@ function ShowCard({ show, index }) {
   );
 }
 
-function ReleaseCard({ beacon }) {
-  const released = beacon.release_at ? new Date(beacon.release_at) <= new Date() : true;
-  return (
-    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex gap-4 items-start">
-      <div className="w-14 h-14 rounded-xl overflow-hidden bg-white/5 shrink-0 flex items-center justify-center">
-        {beacon.image_url
-          ? <img src={beacon.image_url} alt={beacon.title} className="w-full h-full object-cover" />
-          : <Disc3 className="w-7 h-7 text-[#C8962C]" />
-        }
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-black text-white truncate">{beacon.release_title || beacon.title}</p>
-        <p className="text-xs text-white/40 mb-2">{beacon.description || 'RAW Convict Records'}</p>
-        {released ? (
-          <Link
-            to={`${createPageUrl('MusicRelease')}?slug=${beacon.release_slug || beacon.id}`}
-            className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#C8962C] hover:underline"
-          >
-            <Play className="w-3 h-3" /> Listen Now
-          </Link>
-        ) : (
-          <span className="text-[10px] font-mono text-white/30 uppercase">
-            Coming {new Date(beacon.release_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
 export default function Radio() {
   const { togglePlay: openRadio } = useRadio();
-  const [releases, setReleases] = useState([]);
-
-  useEffect(() => {
-    supabase
-      .from('beacons')
-      .select('id,title,description,release_slug,release_title,release_at,ends_at,image_url,shopify_handle')
-      .not('release_slug', 'is', null)
-      .order('release_at', { ascending: false })
-      .limit(6)
-      .then(({ data }) => { if (data) setReleases(data); })
-      .catch(() => {});
-  }, []);
 
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden">
@@ -202,26 +159,13 @@ export default function Radio() {
 
       {/* ── Record Releases ───────────────────────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-4 pb-16">
-        <div className="flex items-center justify-between mb-5">
-          <p className="text-[10px] uppercase tracking-[0.35em] font-mono text-white/30">Record Releases</p>
-          <Link
-            to={createPageUrl('MusicRelease')}
-            className="text-[10px] uppercase tracking-widest font-mono text-[#C8962C] hover:underline"
-          >
-            See All →
-          </Link>
-        </div>
-        {releases.length === 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-24 bg-white/5 rounded-2xl animate-pulse" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {releases.map((r) => <ReleaseCard key={r.id} beacon={r} />)}
-          </div>
-        )}
+        <Link
+          to="/music"
+          className="flex items-center justify-between w-full px-5 py-4 rounded-2xl border border-white/10 hover:bg-white/5 transition-colors"
+        >
+          <span className="text-[10px] uppercase tracking-[0.35em] font-mono text-white/50">Raw Convict Records releases</span>
+          <span className="text-[10px] uppercase tracking-widest font-mono text-[#C8962C]">Explore</span>
+        </Link>
       </section>
 
       {/* ── HNHMESS embed ─────────────────────────────────────────────────── */}
