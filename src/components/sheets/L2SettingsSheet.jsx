@@ -65,8 +65,8 @@ export default function L2SettingsSheet() {
     {
       title: 'Membership',
       rows: [
-        { icon: Crown, label: 'Upgrade to Premium', onTap: () => openSheet('membership'), highlight: true },
-        { icon: Zap, label: 'Power-Ups', onTap: () => openSheet('boost-shop'), highlight: true },
+        { icon: Crown, label: 'Membership', onTap: () => openSheet('membership') },
+        { icon: Zap, label: 'Power-Ups', onTap: () => openSheet('boost-shop') },
       ],
     },
     {

@@ -263,7 +263,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
           viewed_id: viewedUid,
         });
       } catch (err) {
-        void('[ProfileSheet] View recording skipped:', err);
+        console.warn('[ProfileSheet] View recording skipped:', err);
       }
     };
 
@@ -344,9 +344,9 @@ export default function L2ProfileSheet({ email, uid, id }) {
         const { count } = await supabase
           .from('taps')
           .select('id', { count: 'exact', head: true })
-          .eq('from_email', user.email || user.id)
-          .eq('to_email', targetId)
-          .eq('type', 'save');
+          .eq('tapper_email', user.email || user.id)
+          .eq('tapped_email', targetId)
+          .eq('tap_type', 'save');
         setIsSaved((count || 0) > 0);
       } catch {}
     };
@@ -432,15 +432,15 @@ export default function L2ProfileSheet({ email, uid, id }) {
         await supabase
           .from('taps')
           .delete()
-          .eq('from_email', fromKey)
-          .eq('to_email', targetId)
-          .eq('type', 'save');
+          .eq('tapper_email', fromKey)
+          .eq('tapped_email', targetId)
+          .eq('tap_type', 'save');
         setIsSaved(false);
         toast('Removed from saved');
       } else {
         await supabase
           .from('taps')
-          .insert({ from_email: fromKey, to_email: targetId, type: 'save' });
+          .insert({ tapper_email: fromKey, tapped_email: targetId, tap_type: 'save' });
         setIsSaved(true);
         toast.success('Profile saved');
       }
@@ -884,7 +884,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
                 closeSheet();
               }
             }}
-            onFollow={() => toast.success(`Following ${name}`)}
+            onFollow={() => toast('Following — subscriptions coming soon')}
             onSubscribe={
               profileUser.userId || profileUser.authUserId
                 ? () => openSheet('creator-subscription', {

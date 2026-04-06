@@ -1,159 +1,196 @@
 /**
- * GhostedCard — Compact grid card for proximity grid.
+ * GhostedCard — Single profile card in the Ghosted grid
  *
- * Renders: photo, name, distance, context, presence indicator.
- * NEVER renders blank — always falls back to "Anonymous" / "Nearby".
- * Tap → opens preview sheet (NOT direct chat).
- * Long-press → quick action menu.
+ * Compact 3-column card: photo, name, distance, context line.
+ * Tap → ghosted-preview sheet. No direct-to-chat.
+ *
+ * ┌──────────────────┐
+ * │  [Photo 4:5]   ● │  ← online dot (green, top-right)
+ * │                   │
+ * │  Name · ✓         │  ← 13px bold, verified badge
+ * │  340m away        │  ← 11px white/40
+ * │  At Eagle  [vibe] │  ← 10px context + optional chip
+ * └──────────────────┘
  */
 
-import { memo, useCallback, useRef, useState } from 'react';
+import { memo } from 'react';
 import { motion } from 'framer-motion';
-import type { GhostedUser } from '@/lib/ghostedUtils';
-import { formatDistance } from '@/lib/ghostedUtils';
+import { BadgeCheck } from 'lucide-react';
 
-const AMBER = '#C8962C';
+// ── Types ────────────────────────────────────────────────────────────────────
 
-interface GhostedCardProps {
-  user: GhostedUser;
-  onTap: (user: GhostedUser) => void;
-  onLongPress?: (user: GhostedUser, position: { x: number; y: number }) => void;
+export interface GhostedCardProps {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  distanceM: number | null;
+  isOnline: boolean;
+  isVerified: boolean;
+  contextType: 'nearby' | 'venue' | 'radio' | 'moving' | 'live';
+  contextLabel: string;
+  vibe: string | null;
+  intent: string | null;
+  /** User email for boo state lookups */
+  email?: string | null;
+  /** Whether current user has boo'd this person */
   isBood?: boolean;
-  /** Amber ring if boosted */
-  isBoosted?: boolean;
+  /** Whether this is a mutual boo (both boo'd each other) */
+  isMutual?: boolean;
 }
 
-function GhostedCardInner({ user, onTap, onLongPress, isBood, isBoosted }: GhostedCardProps) {
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [pressing, setPressing] = useState(false);
-  const didLongPress = useRef(false);
+interface GhostedCardComponentProps extends GhostedCardProps {
+  index: number;
+  onTap: (id: string) => void;
+}
 
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    didLongPress.current = false;
-    setPressing(true);
-    const x = e.clientX;
-    const y = e.clientY;
-    longPressTimer.current = setTimeout(() => {
-      didLongPress.current = true;
-      setPressing(false);
-      onLongPress?.(user, { x, y });
-    }, 500);
-  }, [user, onLongPress]);
+// ── Intent ring colours (rings only, not CTAs) ──────────────────────────────
 
-  const handlePointerUp = useCallback(() => {
-    if (longPressTimer.current) clearTimeout(longPressTimer.current);
-    longPressTimer.current = null;
-    setPressing(false);
-    if (!didLongPress.current) {
-      onTap(user);
-    }
-  }, [user, onTap]);
+const INTENT_RING: Record<string, string> = {
+  hookup: '#FF5500',
+  hang: '#00C2E0',
+  explore: '#A899D8',
+};
 
-  const handlePointerCancel = useCallback(() => {
-    if (longPressTimer.current) clearTimeout(longPressTimer.current);
-    longPressTimer.current = null;
-    setPressing(false);
-  }, []);
+// ── Component ────────────────────────────────────────────────────────────────
 
-  // Presence dot colour
-  const dotColor = user.isMoving
-    ? AMBER
-    : user.isAtVenue
-      ? '#8B5CF6'
-      : user.isLive
-        ? '#FF5500'
-        : user.isOnline
-          ? '#34C759'
-          : 'transparent';
-
-  const showDot = dotColor !== 'transparent';
-  const distStr = formatDistance(user.distance);
+function GhostedCardInner({
+  id,
+  name,
+  avatarUrl,
+  distanceM,
+  isOnline,
+  isVerified,
+  contextType,
+  contextLabel,
+  vibe,
+  intent,
+  isBood,
+  isMutual,
+  index,
+  onTap,
+}: GhostedCardComponentProps) {
+  const intentColor = intent ? INTENT_RING[intent] : undefined;
 
   return (
-    <motion.div
-      className="relative aspect-[3/4] overflow-hidden select-none touch-manipulation"
-      style={{
-        background: '#1C1C1E',
-        borderRadius: 0,
-        ...(isBoosted ? { boxShadow: `inset 0 0 0 2px ${AMBER}` } : {}),
-      }}
-      onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerCancel}
-      onPointerLeave={handlePointerCancel}
+    <motion.button
+      className="relative w-full aspect-[4/5] rounded-xl overflow-hidden bg-white/[0.03] focus:outline-none focus:ring-2 focus:ring-[#C8962C]/50"
+      style={isMutual ? { boxShadow: '0 0 0 2px #C8962C' } : undefined}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: Math.min(index * 0.03, 0.4), duration: 0.25 }}
       whileTap={{ scale: 0.97 }}
-      transition={{ duration: 0.1 }}
+      onClick={() => onTap(id)}
+      aria-label={`View ${name}'s profile`}
     >
-      {/* Photo */}
-      {user.avatar ? (
+      {/* Photo / fallback */}
+      {avatarUrl ? (
         <img
-          src={user.avatar}
+          src={avatarUrl}
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
           loading="lazy"
-          draggable={false}
         />
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/5">
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{
+            background: 'linear-gradient(135deg, #1C1C1E 0%, #0D0D0D 100%)',
+          }}
+        >
           <span className="text-2xl font-black text-white/20">
-            {user.name.charAt(0).toUpperCase()}
+            {name.charAt(0).toUpperCase()}
           </span>
         </div>
       )}
 
-      {/* Gradient overlay at bottom */}
+      {/* Gradient overlay at bottom for text legibility */}
       <div
         className="absolute inset-x-0 bottom-0 h-2/3 pointer-events-none"
-        style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)' }}
+        style={{
+          background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)',
+        }}
       />
 
-      {/* Presence dot — top right */}
-      {showDot && (
+      {/* Online dot */}
+      {isOnline && (
         <span
-          className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full border border-black/50"
-          style={{ backgroundColor: dotColor }}
+          className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full border border-black/30"
+          style={{ backgroundColor: '#30D158' }}
+          aria-label="Online"
         />
       )}
 
-      {/* Boo'd indicator — top left */}
-      {isBood && (
+      {/* Boo / Mutual badge (top-left) */}
+      {isMutual ? (
         <span
-          className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full text-[8px] font-black"
-          style={{ background: `${AMBER}30`, color: AMBER }}
+          className="absolute top-2 left-2 z-10 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md"
+          style={{ backgroundColor: '#C8962C', color: '#000' }}
         >
-          BOO
+          Match
         </span>
+      ) : isBood ? (
+        <span
+          className="absolute top-2 left-2 z-10 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md"
+          style={{ backgroundColor: 'rgba(200,150,44,0.2)', color: '#C8962C' }}
+        >
+          Boo
+        </span>
+      ) : null}
+
+      {/* Intent ring indicator (thin border at top) */}
+      {intentColor && (
+        <div
+          className="absolute top-0 inset-x-0 h-0.5"
+          style={{ backgroundColor: intentColor }}
+        />
       )}
 
-      {/* Bottom info strip: name, distance, context */}
-      <div className="absolute inset-x-0 bottom-0 px-2 pb-2 pt-6 pointer-events-none">
-        <p className="text-[11px] font-bold text-white leading-tight truncate">
-          {user.name}
-        </p>
-        <div className="flex items-center gap-1 mt-0.5">
-          {distStr && (
-            <span className="text-[9px] font-semibold text-white/60">{distStr}</span>
-          )}
-          {distStr && user.context !== 'Nearby' && (
-            <span className="text-[9px] text-white/30">·</span>
-          )}
-          <span className="text-[9px] font-medium text-white/50 truncate">
-            {user.context}
+      {/* Text content */}
+      <div className="absolute inset-x-0 bottom-0 px-2 pb-2 flex flex-col gap-0.5">
+        {/* Name row */}
+        <div className="flex items-center gap-1">
+          <span className="text-[13px] font-bold text-white truncate leading-tight">
+            {name}
           </span>
+          {isVerified && (
+            <BadgeCheck className="w-3 h-3 flex-shrink-0 text-[#C8962C]" />
+          )}
+        </div>
+
+        {/* Distance */}
+        {distanceM != null && (
+          <span className="text-[11px] text-white/40 leading-tight">
+            {distanceM < 1000 ? `${distanceM}m` : `${(distanceM / 1000).toFixed(1)}km`}
+          </span>
+        )}
+
+        {/* Context line + vibe chip */}
+        <div className="flex items-center gap-1.5">
+          {contextType === 'moving' ? (
+            <span className="text-[10px] text-white/50 truncate leading-tight flex items-center gap-1">
+              <motion.span
+                animate={{ x: [0, 3, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                className="inline-block"
+                style={{ color: '#C8962C' }}
+              >
+                &rarr;
+              </motion.span>
+              {contextLabel}
+            </span>
+          ) : (
+            <span className="text-[10px] text-white/50 truncate leading-tight">
+              {contextLabel}
+            </span>
+          )}
+          {vibe && (
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/50 flex-shrink-0 leading-tight">
+              {vibe}
+            </span>
+          )}
         </div>
       </div>
-
-      {/* Moving arrow indicator */}
-      {user.isMoving && (
-        <motion.div
-          className="absolute top-1.5 left-1/2 -translate-x-1/2"
-          animate={{ y: [0, -3, 0] }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
-        >
-          <span className="text-[10px]" style={{ color: AMBER }}>→</span>
-        </motion.div>
-      )}
-    </motion.div>
+    </motion.button>
   );
 }
 

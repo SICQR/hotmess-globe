@@ -1,1034 +1,490 @@
 /**
- * GhostedMode - Proximity Grid (/ghosted)
+ * GhostedMode V3 — Proximity Grid (/ghosted)
  *
- * Full-screen edge-to-edge proximity grid. Think Grindr but slicker.
- * No hero banners. No stacked preview widgets. No marketing blocks.
- * Pure people discovery.
+ * Full rewrite. Three tabs: Nearby | Live | Chats.
+ * Clean grid, no stacked filters, compact hero banner.
  *
- * Hierarchy (top → bottom):
- * 1. Status row: city pill + count | GHOSTED | Go Live + Filter
- * 2. Tabs: Nearby | Live | Chats
- * 3. Sort chips: Nearby | Last Active | Newest (one light filter row)
- * 4. Grid: 3-col profile cards, infinite scroll
- *
- * Wireframe:
+ * Layout:
  * ┌─────────────────────────────────────────┐
- * │ ┌London┐ 248    GHOSTED   [Live][⚙]    │  status row
- * │ [Nearby] [Live] [Chats]                 │  tabs
- * │ [Nearby] [Last Active] [Newest]         │  sort chips
+ * │  GHOSTED    [Nearby] [Live] [Chats]  ⚙  │  sticky glassmorphic header
  * ├─────────────────────────────────────────┤
- * │┌────┐┌────┐┌────┐                      │  3-col grid
- * ││IMG ││IMG ││IMG │                       │
- * │└────┘└────┘└────┘                       │
+ * │  ┌─ Hero Banner (64px) ──────────────┐  │  brand + play btn
+ * │  └──────────────────────────────────────┘│
+ * │  [Nearby] [Online] [New] [Looking] ...  │  single-row filter chips
+ * ├─────────────────────────────────────────┤
+ * │  ┌────┐┌────┐┌────┐                    │  3-col grid, GhostedCard
+ * │  │ P1 ││ P2 ││ P3 │                    │  tap → ghosted-preview sheet
+ * │  └────┘└────┘└────┘                    │
+ * │       ... infinite scroll              │
+ * │                                         │
+ * │       [Share your vibe →]               │  FAB above nav
  * └─────────────────────────────────────────┘
+ *
+ * Data: useGhostedGrid hook (TanStack Query + Supabase)
+ * Auth: supabase.auth.getSession() — no base44
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-// useNavigate removed — Ghosted doesn't navigate, it opens sheets
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SlidersHorizontal, Ghost, X, MessageCircle, Heart, Ban, Flag, Shield } from 'lucide-react';
+import { SlidersHorizontal, Ghost, ArrowRight, MessageCircle, Music, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSheet } from '@/contexts/SheetContext';
-import { useRightNowCount } from '@/components/globe/useRealtimeBeacons';
 import { supabase } from '@/components/utils/supabaseClient';
-import { loadGhostedFilters, defaultGhostedFilters } from '@/components/sheets/L2FiltersSheet';
-import { useTaps } from '@/hooks/useTaps';
-import type { Profile } from '@/features/profilesGrid/types';
-import type { TapType } from '@/hooks/useTaps';
-// AppBanner + GhostedAmbientToggle removed — grid IS the content, no pre-content clutter
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
-import { usePowerups } from '@/hooks/usePowerups';
-import { useGPS } from '@/hooks/useGPS';
-import { calculateDistance } from '@/lib/locationUtils';
-import { Zap, Eye, Radio } from 'lucide-react';
-import { useLiveMode } from '@/contexts/LiveModeContext';
 import { useRadio } from '@/contexts/RadioContext';
-// hapticMedium import removed — haptics handled in preview sheet
+import { useGPS } from '@/hooks/useGPS';
+import { useGhostedGrid, type GhostedTab, type ChatThreadItem } from '@/hooks/useGhostedGrid';
+import { GhostedCard, type GhostedCardProps } from '@/components/ghosted/GhostedCard';
+import { GhostedHeroBanner } from '@/components/ghosted/GhostedHeroBanner';
+import { useTaps } from '@/hooks/useTaps';
 
-// Lazy load the grid component
-import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
-
-// ---- Brand constants --------------------------------------------------------
+// ── Brand constants ──────────────────────────────────────────────────────────
 const AMBER = '#C8962C';
-const CARD_BG = '#1C1C1E';
-const MUTED = '#8E8E93';
 
-// ---- Tab definitions --------------------------------------------------------
-type TabKey = 'nearby' | 'live' | 'chats';
-
-const TABS: { key: TabKey; label: string }[] = [
+// ── Tab definitions ──────────────────────────────────────────────────────────
+const TABS: { key: GhostedTab; label: string }[] = [
   { key: 'nearby', label: 'Nearby' },
   { key: 'live', label: 'Live' },
   { key: 'chats', label: 'Chats' },
 ];
 
-// Filter presets removed — cleaner UI with single filter sheet
+// ── Filter chip definitions ──────────────────────────────────────────────────
+type ChipKey = 'nearby' | 'online' | 'new' | 'looking' | 'hang' | 'tonight';
+const FILTER_CHIPS: { key: ChipKey; label: string }[] = [
+  { key: 'nearby', label: 'Nearby' },
+  { key: 'online', label: 'Online' },
+  { key: 'new', label: 'New' },
+  { key: 'looking', label: 'Looking' },
+  { key: 'hang', label: 'Hang' },
+  { key: 'tonight', label: 'Tonight' },
+];
 
-// ---- Filter key for localStorage sync ----------------------------------------
-const GHOSTED_FILTERS_KEY = 'hm_ghosted_filters';
-
-// ---- Helpers ----------------------------------------------------------------
-
-/** Count how many non-default filter values are active */
-function countActiveFilters(filters: ReturnType<typeof defaultGhostedFilters>): number {
-  const def = defaultGhostedFilters();
-  let count = 0;
-  if (filters.ageMin !== def.ageMin || filters.ageMax !== def.ageMax) count++;
-  if (filters.distanceKm !== def.distanceKm) count++;
-  if (filters.vibes.length > 0) count++;
-  if (filters.onlineOnly) count++;
-  return count;
-}
-
-// ---- Quick Action Menu (long-press) -----------------------------------------
-
-interface QuickMenuProps {
-  profile: Profile;
-  position: { x: number; y: number };
-  myEmail: string | null;
-  isTapped: (email: string, tapType: TapType) => boolean;
-  sendTap: (email: string, name: string, tapType: TapType) => Promise<boolean>;
-  onClose: () => void;
-  onMessage: (profile: Profile) => void;
-  onSave: (profile: Profile) => void;
-  onBlock: (profile: Profile) => void;
-  onReport: (profile: Profile) => void;
-}
-
-function QuickActionMenu({ profile, position, myEmail, isTapped, sendTap, onClose, onMessage, onSave, onBlock, onReport }: QuickMenuProps) {
-  const email = String((profile as any)?.email || '');
-  const name = String(profile.profileName || 'Someone');
-  const hasTapSupport = !!myEmail && !!email;
-
-  const tappedBoo = hasTapSupport ? isTapped(email, 'boo') : false;
-  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
-
-  const handleBoo = async () => {
-    if (!hasTapSupport) return;
-    await sendTap(email, name, 'boo');
-    onClose();
-  };
-
-  // Clamp position so menu stays on screen
-  const menuWidth = 200;
-  const vw = typeof window !== 'undefined' ? window.innerWidth : 390;
-  const menuX = Math.min(position.x - menuWidth / 2, vw - menuWidth - 8);
-  const clampedX = Math.max(8, menuX);
-  const clampedY = Math.max(60, position.y - 200);
-
-  return (
-    <>
-      {/* Backdrop */}
-      <motion.div
-        className="fixed inset-0 bg-black/60 z-40"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.15 }}
-        onClick={onClose}
-        aria-label="Close quick menu"
-      />
-
-      {/* Menu */}
-      <motion.div
-        className="fixed z-50 rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/50"
-        style={{
-          left: clampedX,
-          top: clampedY,
-          width: menuWidth,
-          backgroundColor: '#1C1C1E',
-        }}
-        initial={{ scale: 0.5, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.5, opacity: 0 }}
-        transition={{ type: 'spring', damping: 22, stiffness: 400 }}
-      >
-        {/* Profile preview */}
-        <div className="px-4 py-3 border-b border-white/10 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden flex-shrink-0">
-            {(profile as any)?.photos?.[0]?.url ? (
-              <img
-                src={(profile as any).photos[0].url}
-                alt=""
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white/40">
-                {name.charAt(0).toUpperCase()}
-              </div>
-            )}
-          </div>
-          <span className="text-sm font-bold text-white truncate">{name}</span>
-        </div>
-
-        {/* Boo */}
-        <button
-          onClick={handleBoo}
-          disabled={!hasTapSupport}
-          className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors disabled:opacity-40"
-          aria-label={tappedBoo ? 'Un-boo this person' : 'Boo this person'}
-        >
-          <Ghost className="w-4 h-4 text-white/60" />
-          <span className={tappedBoo ? 'text-[#C8962C]' : 'text-white'}>{tappedBoo ? 'Boo\'d' : 'Boo'}</span>
-        </button>
-
-        {/* Message */}
-        <button
-          onClick={() => { onMessage(profile); onClose(); }}
-          className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors"
-          aria-label="Message"
-        >
-          <MessageCircle className="w-4 h-4 text-white/60" />
-          <span className="text-white">Message</span>
-        </button>
-
-        {/* Save */}
-        <button
-          onClick={() => { onSave(profile); onClose(); }}
-          className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors"
-          aria-label="Save profile"
-        >
-          <Heart className="w-4 h-4 text-white/60" />
-          <span className="text-white">Save</span>
-        </button>
-
-        {/* Block */}
-        {!showBlockConfirm ? (
-          <button
-            onClick={() => setShowBlockConfirm(true)}
-            className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors border-t border-white/5"
-            aria-label="Block user"
-          >
-            <Ban className="w-4 h-4 text-red-500/70" />
-            <span className="text-red-500">Block</span>
-          </button>
-        ) : (
-          <div className="px-4 py-3 border-t border-white/5">
-            <p className="text-xs text-white/50 mb-2">Block {name}? They won't appear in your grid.</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => { onBlock(profile); onClose(); }}
-                className="flex-1 py-2 rounded-lg bg-red-500 text-black text-xs font-bold"
-              >
-                Confirm
-              </button>
-              <button
-                onClick={() => setShowBlockConfirm(false)}
-                className="flex-1 py-2 rounded-lg bg-white/10 text-white/60 text-xs font-semibold"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Report */}
-        <button
-          onClick={() => { onReport(profile); onClose(); }}
-          className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors"
-          aria-label="Report user"
-        >
-          <Flag className="w-4 h-4 text-white/40" />
-          <span className="text-white/60">Report</span>
-        </button>
-
-        {/* Cancel */}
-        <button
-          onClick={onClose}
-          className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors border-t border-white/5"
-          aria-label="Close"
-        >
-          <X className="w-4 h-4 text-white/40" />
-          <span className="text-white/60">Cancel</span>
-        </button>
-      </motion.div>
-    </>
-  );
-}
-
-// ---- Skeleton grid for loading state ----------------------------------------
-
+// ── Skeleton grid ────────────────────────────────────────────────────────────
 function GhostedSkeleton() {
   return (
-    <div className="grid grid-cols-3 gap-0.5">
+    <div className="grid grid-cols-3 gap-1 px-1">
       {Array.from({ length: 12 }).map((_, i) => (
         <motion.div
           key={`skel-${i}`}
-          className="aspect-square bg-[#1C1C1E] animate-pulse"
+          className="aspect-[4/5] rounded-xl bg-white/[0.03] animate-pulse"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: i * 0.04 }}
-        >
-          {/* Gradient shimmer */}
-          <div className="w-full h-full relative overflow-hidden">
-            <div
-              className="absolute inset-0"
-              style={{
-                background: `linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.03) 50%, transparent 60%)`,
-                animation: 'shimmer 2s infinite',
-              }}
-            />
-          </div>
-        </motion.div>
+        />
       ))}
     </div>
   );
 }
 
-// ---- Empty state ------------------------------------------------------------
-
-function GhostedEmpty({ onOpenFilters, onGoLive }: { onOpenFilters: () => void; onGoLive?: () => void }) {
-  const [referralCode, setReferralCode] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchReferralCode = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.id) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('referral_code')
-            .eq('id', user.id)
-            .single();
-          if (profile?.referral_code) {
-            setReferralCode(profile.referral_code);
-          }
-        }
-      } catch (err) {
-        console.warn('Failed to fetch referral code:', err);
-      }
-    };
-    fetchReferralCode();
-  }, []);
-
-  const handleInvite = async () => {
-    const baseUrl = `https://hotmessldn.com`;
-    const url = referralCode ? `${baseUrl}?invite=${referralCode}` : baseUrl;
-    if (navigator.share) {
-      try {
-        await navigator.share({ text: "I'm on HOTMESS — meet me tonight", url });
-      } catch { /* cancelled */ }
-    } else {
-      await navigator.clipboard.writeText(url);
-      // toast would be nice but keep it simple
-    }
+// ── Empty state ──────────────────────────────────────────────────────────────
+function GhostedEmpty({ tab }: { tab: GhostedTab }) {
+  const messages: Record<GhostedTab, { icon: string; title: string; subtitle: string }> = {
+    nearby: {
+      icon: '👻',
+      title: 'Nobody nearby yet',
+      subtitle: 'HOTMESS is growing in your area. Check back later or go live.',
+    },
+    live: {
+      icon: '✨',
+      title: 'Nobody live right now',
+      subtitle: 'Be the first to share your vibe tonight.',
+    },
+    chats: {
+      icon: '💬',
+      title: 'No conversations yet',
+      subtitle: 'Boo someone on the grid to start a chat.',
+    },
   };
+
+  const msg = messages[tab];
 
   return (
     <motion.div
-      className="col-span-3 flex flex-col items-center justify-center py-20 text-center px-8"
+      className="flex flex-col items-center justify-center py-20 text-center px-8"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <Ghost className="w-12 h-12 mb-4" style={{ color: AMBER }} />
-      <h2 className="text-lg font-black text-white mb-2">Nobody nearby yet</h2>
-      <p className="text-sm text-[#8E8E93] mb-6 max-w-[260px]">
-        Go Live so people nearby can find you
-      </p>
+      <span className="text-5xl mb-4">{msg.icon}</span>
+      <h2 className="text-lg font-black text-white mb-2">{msg.title}</h2>
+      <p className="text-sm text-[#8E8E93] max-w-[260px]">{msg.subtitle}</p>
+    </motion.div>
+  );
+}
+
+// ── Error state ──────────────────────────────────────────────────────────────
+function GhostedError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <motion.div
+      className="flex flex-col items-center justify-center py-20 text-center px-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+    >
+      <Ghost className="w-12 h-12 text-[#FF3B30] mb-4" />
+      <h2 className="text-lg font-bold text-white mb-2">Something went wrong</h2>
+      <p className="text-sm text-[#8E8E93] mb-6">{message}</p>
       <button
-        onClick={onGoLive || onOpenFilters}
-        className="h-12 px-6 text-black font-bold rounded-2xl flex items-center gap-2 active:scale-95 transition-transform"
-        style={{ backgroundColor: AMBER }}
-        aria-label="Go Live"
+        onClick={onRetry}
+        className="h-10 px-6 rounded-xl bg-[#C8962C] text-white font-semibold text-sm active:scale-95 transition-transform"
       >
-        Go Live
+        Retry
       </button>
     </motion.div>
   );
 }
 
-// ---- Main Component ---------------------------------------------------------
+// ── Chat thread row ──────────────────────────────────────────────────────────
+function ChatThreadRow({
+  thread,
+  onTap,
+}: {
+  thread: ChatThreadItem;
+  onTap: (thread: ChatThreadItem) => void;
+}) {
+  return (
+    <motion.button
+      className="w-full flex items-center gap-3 px-4 py-3 active:bg-white/5 transition-colors"
+      onClick={() => onTap(thread)}
+      whileTap={{ scale: 0.98 }}
+      aria-label={`Chat with ${thread.participantName}`}
+    >
+      {/* Avatar */}
+      <div className="relative w-12 h-12 rounded-full bg-white/5 overflow-hidden flex-shrink-0">
+        {thread.participantAvatar ? (
+          <img
+            src={thread.participantAvatar}
+            alt=""
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-lg font-bold text-white/20">
+            {thread.participantName.charAt(0).toUpperCase()}
+          </div>
+        )}
+        {thread.isOnline && (
+          <span
+            className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#050507]"
+            style={{ backgroundColor: '#30D158' }}
+          />
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 text-left">
+        <div className="flex items-center justify-between mb-0.5">
+          <span className="text-sm font-bold text-white truncate">
+            {thread.participantName}
+          </span>
+          {thread.lastMessageAt && (
+            <span className="text-[10px] text-white/30 flex-shrink-0 ml-2">
+              {formatChatTime(thread.lastMessageAt)}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-white/40 truncate">
+          {thread.lastMessage || 'No messages yet'}
+        </p>
+      </div>
+
+      {/* Unread badge */}
+      {thread.unreadCount > 0 && (
+        <span
+          className="min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center text-[10px] font-black text-black flex-shrink-0"
+          style={{ backgroundColor: AMBER }}
+        >
+          {thread.unreadCount > 99 ? '99+' : thread.unreadCount}
+        </span>
+      )}
+    </motion.button>
+  );
+}
+
+function formatChatTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d`;
+}
+
+// ── Main Component ───────────────────────────────────────────────────────────
 
 interface GhostedModeProps {
   className?: string;
 }
 
 export function GhostedMode({ className = '' }: GhostedModeProps) {
+  const navigate = useNavigate();
   const { openSheet } = useSheet();
-  const onlineCount = useRightNowCount();
-  const { isActive: isBoostActive, expiresAt: boostExpiresAt } = usePowerups();
+  const { isPlaying, currentShowName } = useRadio();
   const { position: myPosition } = useGPS();
-  const { isLive } = useLiveMode();
-  const { isPlaying: radioPlaying, currentShowName } = useRadio();
 
-  // ---- Auth + profile data ----
-  const [city, setCity] = useState('London');
+  // ── Auth email for boo state ────────────────────────────────────────────
   const [myEmail, setMyEmail] = useState<string | null>(null);
-
   useEffect(() => {
-    let cancelled = false;
-
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (cancelled) return;
-      const user = session?.user;
-      const email = user?.email || null;
-      setMyEmail(email);
-
-      if (user?.id) {
-        supabase
-          .from('profiles')
-          .select('city')
-          .eq('id', user.id)
-          .single()
-          .then(({ data: profile }) => {
-            if (cancelled) return;
-            if (profile?.city) setCity(profile.city);
-          });
-      }
+      setMyEmail(session?.user?.email ?? null);
     });
+  }, []);
+  const { isTapped, isMutualBoo } = useTaps(myEmail);
 
-    return () => { cancelled = true; };
+  // ── Tab state ────────────────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState<GhostedTab>('nearby');
+  const [activeChip, setActiveChip] = useState<ChipKey | null>(null);
+
+  // ── Data ─────────────────────────────────────────────────────────────────
+  const { cards, chatThreads, isLoading, error, refetch } = useGhostedGrid(
+    activeTab,
+    myPosition?.lat ?? null,
+    myPosition?.lng ?? null,
+    activeChip,
+  );
+
+  // ── FAB scroll-hide ──────────────────────────────────────────────────────
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [fabVisible, setFabVisible] = useState(true);
+  const lastScrollTop = useRef(0);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const currentScrollTop = el.scrollTop;
+    setFabVisible(!(currentScrollTop > lastScrollTop.current && currentScrollTop > 60));
+    lastScrollTop.current = currentScrollTop;
   }, []);
 
-  // ---- Taps (for quick menu + amber ring) ----
-  const { isTapped, sendTap } = useTaps(myEmail);
+  // ── Card tap → preview sheet ─────────────────────────────────────────────
+  const handleCardTap = useCallback(
+    (id: string) => {
+      openSheet('ghosted-preview', { uid: id });
+    },
+    [openSheet],
+  );
 
-  // ---- Filters (persisted in localStorage) ----
-  const [filters, setFilters] = useState(loadGhostedFilters);
-
-  // Re-read filters when localStorage changes (fired by L2FiltersSheet on Apply)
-  useEffect(() => {
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === GHOSTED_FILTERS_KEY) {
-        setFilters(loadGhostedFilters());
-      }
-    };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, []);
-
-  // Re-read filters on window focus (covers same-tab updates from sheet)
-  useEffect(() => {
-    const handleFocus = () => setFilters(loadGhostedFilters());
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, []);
-
-  // Also re-read on a custom event for immediate same-frame sync
-  useEffect(() => {
-    const handleCustom = () => setFilters(loadGhostedFilters());
-    window.addEventListener('hm_filters_updated', handleCustom);
-    return () => window.removeEventListener('hm_filters_updated', handleCustom);
-  }, []);
-
-  // ---- Local block list for optimistic removal ----
-  const [blockedIds, setBlockedIds] = useState<Set<string>>(new Set());
-
-  const activeFilterCount = countActiveFilters(filters);
-
-  // ---- Sort control ----
-  type SortKey = 'nearby' | 'last_active' | 'newest';
-  const [sortBy, setSortBy] = useState<SortKey>('nearby');
-
-  // ---- Active vibe tag filter (from card chip taps) ----
-  const [vibeTagFilter, setVibeTagFilter] = useState<string | null>(null);
-
-  // ---- Active tab ----
-  const [activeTab, setActiveTab] = useState<TabKey>('nearby');
-
-  // ---- Chat threads for Chats tab ----
-  const [chatThreads, setChatThreads] = useState<any[]>([]);
-
-  // ---- Profile Bump: load user IDs with active profile_bump boost ----
-  const [boostUserIds, setBoostUserIds] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    const fetchBoosted = async () => {
-      try {
-        const { data } = await supabase
-          .from('user_active_boosts')
-          .select('user_id')
-          .eq('boost_key', 'profile_bump')
-          .gt('expires_at', new Date().toISOString());
-        if (data && data.length > 0) {
-          setBoostUserIds(new Set(data.map((r: any) => r.user_id)));
-        }
-      } catch {
-        // Non-fatal
-      }
-    };
-    fetchBoosted();
-    const iv = setInterval(fetchBoosted, 60_000);
-    return () => clearInterval(iv);
-  }, []);
-
-  // ---- Chat threads for Chats tab ----
-  useEffect(() => {
-    if (activeTab !== 'chats') return;
-    let cancelled = false;
-
-    const fetchChats = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user?.id || cancelled) return;
-        const uid = session.user.id;
-        const { data } = await supabase
-          .from('chat_threads')
-          .select('*')
-          .contains('participants', [uid])
-          .order('last_message_at', { ascending: false })
-          .limit(30);
-        if (!cancelled && data) setChatThreads(data);
-      } catch {
-        // Non-fatal
-      }
-    };
-
-    fetchChats();
-    return () => { cancelled = true; };
-  }, [activeTab]);
-
-  // ---- Quick action handlers ----
-  const handleQuickMessage = useCallback((profile: Profile) => {
-    const uid = (profile as any)?.authUserId || (profile as any)?.userId || profile.id;
-    if (uid) {
+  // ── Chat thread tap ──────────────────────────────────────────────────────
+  const handleChatTap = useCallback(
+    (thread: ChatThreadItem) => {
       openSheet('chat', {
-        userId: uid,
-        title: `Chat with ${profile.profileName || 'Someone'}`,
-      });
-    }
-  }, [openSheet]);
-
-  const handleQuickSave = useCallback(async (profile: Profile) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const targetId = (profile as any)?.authUserId || (profile as any)?.userId || profile.id;
-      await supabase.from('saved_items').insert({
-        user_id: user.id,
-        item_type: 'profile',
-        item_id: targetId,
-        metadata: { title: profile.profileName || 'Profile' },
-      });
-      toast('Profile saved');
-    } catch {
-      // Duplicate save or table doesn't exist — still show feedback
-      toast('Profile saved');
-    }
-  }, []);
-
-  const handleQuickBlock = useCallback(async (profile: Profile) => {
-    const targetId = (profile as any)?.authUserId || (profile as any)?.userId || profile.id;
-    // Optimistic removal from local state
-    setBlockedIds((prev) => new Set([...prev, targetId]));
-    toast('User blocked');
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      // Write to blocks table
-      await supabase.from('blocks').insert({
-        blocker_id: user.id,
-        blocked_id: targetId,
-      }).then(() => {}).catch(() => {});
-      // Also try user_blocks for backward compat
-      const targetEmail = (profile as any)?.email || targetId;
-      await supabase.from('user_blocks').insert({
-        blocker_email: user.email || user.id,
-        blocked_email: targetEmail,
-      }).then(() => {}).catch(() => {});
-      window.dispatchEvent(new CustomEvent('hm_pull_refresh'));
-    } catch {
-      // Best-effort — user is already hidden locally
-    }
-  }, []);
-
-  const handleQuickReport = useCallback((profile: Profile) => {
-    const uid = (profile as any)?.authUserId || (profile as any)?.userId || profile.id;
-    openSheet('report', {
-      targetType: 'profile',
-      targetId: uid,
-      targetName: profile.profileName || 'this user',
-      profileId: uid,
-    });
-  }, [openSheet]);
-
-  // ---- Vibe tag click handler (from card chip) ----
-  const handleVibeTagClick = useCallback((tag: string) => {
-    setVibeTagFilter((prev) => (prev === tag ? null : tag));
-  }, []);
-
-  // ---- Sort comparator based on sortBy pill + Live tab context boost ----
-  const sortProfiles = useCallback(
-    (a: any, b: any) => {
-      // On the Live tab, boost contextual users to the top:
-      // 1. Current-show listeners  2. Moving nearby  3. At venue  4. Others
-      if (activeTab === 'live') {
-        const aListening = !!(a.radio_show || a.is_listening);
-        const bListening = !!(b.radio_show || b.is_listening);
-        const aMoving = !!(a.movement_active || a.is_moving);
-        const bMoving = !!(b.movement_active || b.is_moving);
-        const aVenue = !!(a.venue_name || a.checkin_venue);
-        const bVenue = !!(b.venue_name || b.checkin_venue);
-
-        const tierOf = (listening: boolean, moving: boolean, venue: boolean) => {
-          if (listening) return 3;
-          if (moving) return 2;
-          if (venue) return 1;
-          return 0;
-        };
-        const aTier = tierOf(aListening, aMoving, aVenue);
-        const bTier = tierOf(bListening, bMoving, bVenue);
-        if (aTier !== bTier) return bTier - aTier;
-        // Within same tier, fall through to sortBy
-      }
-
-      if (sortBy === 'nearby') {
-        const aDist = typeof a.distance_m === 'number' ? a.distance_m : Infinity;
-        const bDist = typeof b.distance_m === 'number' ? b.distance_m : Infinity;
-        if (aDist !== bDist) return aDist - bDist;
-        return (b.rankScore ?? 0) - (a.rankScore ?? 0);
-      }
-      if (sortBy === 'last_active') {
-        const aTime = a.last_seen ? new Date(a.last_seen).getTime() : 0;
-        const bTime = b.last_seen ? new Date(b.last_seen).getTime() : 0;
-        return bTime - aTime;
-      }
-      if (sortBy === 'newest') {
-        const aId = String(a.id || '');
-        const bId = String(b.id || '');
-        return bId.localeCompare(aId);
-      }
-      return 0;
-    },
-    [sortBy, activeTab],
-  );
-
-  // ---- Combined filter predicate (filters + tab + blocks) ----
-  const filterProfiles = useCallback(
-    (profile: any) => {
-      // Optimistic block: hide immediately
-      const profileId = (profile as any)?.authUserId || (profile as any)?.userId || profile.id;
-      if (blockedIds.has(profileId)) return false;
-
-      // GDPR: Exclude profiles without a display_name (safety layer)
-      const displayName = String(profile?.profileName || '').trim();
-      if (!displayName) return false;
-
-      // Distance filter — uses Haversine against viewer GPS
-      if (myPosition && filters.distanceKm < 100) {
-        const pLat = (profile as any)?.geoLat;
-        const pLng = (profile as any)?.geoLng;
-        if (typeof pLat === 'number' && typeof pLng === 'number') {
-          const distM = calculateDistance(myPosition.lat, myPosition.lng, pLat, pLng);
-          if (distM > filters.distanceKm * 1000) return false;
-        }
-      }
-
-      // Sheet filters first
-      if (filters.onlineOnly && !profile.is_online && !profile.onlineNow) return false;
-
-      if (typeof profile.age === 'number') {
-        if (profile.age < filters.ageMin || profile.age > filters.ageMax) return false;
-      }
-
-      if (filters.vibes.length > 0) {
-        const profileVibes: string[] = Array.isArray(profile.looking_for)
-          ? profile.looking_for.map((v: unknown) => String(v))
-          : [];
-        const intentStr = String(profile.intent || profile.vibe || '').toLowerCase();
-        const hasVibe = filters.vibes.some(
-          (v) =>
-            profileVibes.some((pv: string) => pv.toLowerCase().includes(v.toLowerCase())) ||
-            intentStr.includes(v.toLowerCase()),
-        );
-        if (!hasVibe) return false;
-      }
-
-      // Tab filters
-      if (activeTab === 'live') {
-        // LIVE tab: users with active presence (< 30 min), active right_now, or online
-        const lastSeen = profile.last_seen ? new Date(profile.last_seen).getTime() : 0;
-        const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000;
-        const isRecentlyActive = lastSeen > thirtyMinutesAgo;
-        const hasRightNow = !!(profile.rightNow || profile.right_now_status);
-        if (!profile.is_online && !profile.onlineNow && !isRecentlyActive && !hasRightNow) return false;
-      }
-      // 'nearby' tab: no additional filter (distance handled above)
-      // 'chats' tab: renders its own list, not the grid
-
-      // Vibe tag filter (from card chip tap)
-      if (vibeTagFilter) {
-        const scenes: string[] = Array.isArray((profile as any)?.public_attributes?.scenes)
-          ? (profile as any).public_attributes.scenes
-          : [];
-        const lookingFor: string[] = Array.isArray(profile.looking_for)
-          ? profile.looking_for.map((v: unknown) => String(v))
-          : [];
-        const allTags = [...scenes, ...lookingFor].map((t) => t.toLowerCase());
-        if (!allTags.some((t) => t.includes(vibeTagFilter.toLowerCase()))) return false;
-      }
-
-      return true;
-    },
-    [filters, activeTab, vibeTagFilter, blockedIds, myPosition],
-  );
-
-  // ---- Profile tap handler → opens preview sheet (NOT direct chat) ----
-  const handleProfileTap = useCallback(
-    (profile: Profile) => {
-      const uid = String((profile as any)?.userId || (profile as any)?.authUserId || profile.id);
-      const name = String(profile.profileName || 'Anonymous');
-      const avatar = (profile as any)?.photos?.[0]?.url || (profile as any)?.avatar_url || undefined;
-      const email = (profile as any)?.email || null;
-      const distM = (profile as any)?.distance_m ?? null;
-      const isMoving = !!(profile as any)?.movement_active || !!(profile as any)?.is_moving;
-      const movementDestination = (profile as any)?.movement_destination || (profile as any)?.destination_label || null;
-      const movementEta = (profile as any)?.movement_eta || (profile as any)?.eta || null;
-      const venueName = (profile as any)?.venue_name || (profile as any)?.checkin_venue || null;
-      const rightNow = (profile as any)?.rightNow || (profile as any)?.right_now_status || null;
-      const isOnline = !!(profile as any)?.is_online || !!(profile as any)?.onlineNow;
-
-      // Detect radio listening state (before context build so we can use it)
-      const isListening = !!(profile as any)?.radio_show || !!(profile as any)?.is_listening;
-      const radioShow = (profile as any)?.radio_show || (radioPlaying ? currentShowName : null);
-
-      // Build context string — movement > venue > listening > intent > online
-      let context = 'Nearby';
-      if (isMoving && movementEta) context = `Moving · ${movementEta}`;
-      else if (isMoving && movementDestination) context = `On the way to ${movementDestination}`;
-      else if (isMoving) context = 'Passing near you';
-      else if (venueName) context = `At ${venueName}`;
-      else if (isListening && radioShow) context = `Listening · ${radioShow}`;
-      else if (isListening) context = 'Listening';
-      else if (rightNow?.intention) context = rightNow.intention.charAt(0).toUpperCase() + rightNow.intention.slice(1);
-      else if (isOnline) context = 'Online';
-
-      // Build vibe
-      const vibe = rightNow?.intention || (profile as any)?.vibe || null;
-
-      openSheet('ghosted-preview', {
-        uid,
-        name,
-        avatar,
-        distance: distM,
-        context,
-        vibe,
-        isMoving,
-        movementDestination: isMoving ? movementDestination : undefined,
-        movementEta: isMoving ? movementEta : undefined,
-        isListening: isListening || (context === 'Listening'),
-        radioShow: radioShow || (context === 'Listening' ? currentShowName : undefined),
-        email,
+        thread: thread.id,
+        userId: thread.participantId,
+        title: `Chat with ${thread.participantName}`,
       });
     },
     [openSheet],
   );
 
-  // ---- Quick action menu (long-press) ----
-  const [quickMenu, setQuickMenu] = useState<{
-    profile: Profile;
-    position: { x: number; y: number };
-  } | null>(null);
-
-  const handleLongPress = useCallback(
-    (profile: Profile, position: { x: number; y: number }) => {
-      setQuickMenu({ profile, position });
-    },
-    [],
+  // ── Unread count for chats tab badge ─────────────────────────────────────
+  const totalUnread = useMemo(
+    () => chatThreads.reduce((sum, t) => sum + t.unreadCount, 0),
+    [chatThreads],
   );
 
-  // ---- Scroll ref for pull-to-refresh ----
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  // ---- Pull-to-refresh ----
-  const handleRefresh = useCallback(async () => {
-    // Force refetch profiles by dispatching a custom event that ProfilesGrid listens to
-    window.dispatchEvent(new CustomEvent('hm_pull_refresh'));
-    // Small delay so the user sees the spinner
-    await new Promise((r) => setTimeout(r, 800));
-  }, []);
-
-  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
-    onRefresh: handleRefresh,
-    scrollRef,
-  });
-
-  // ---- Render ----
+  // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div
       className={`h-full w-full flex flex-col ${className}`}
       style={{ background: '#050507' }}
     >
-      {/* ====== STICKY HEADER (glassmorphic) ====== */}
-      <div className="sticky top-0 z-30 border-b border-white/5" style={{ background: 'rgba(5,5,7,0.85)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
+      {/* ═══ STICKY HEADER ═══ */}
+      <div
+        className="sticky top-0 z-30 border-b border-white/5"
+        style={{
+          background: 'rgba(5,5,7,0.85)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+        }}
+      >
         <div className="px-4 pt-[env(safe-area-inset-top)]">
-          <div className="flex items-center justify-between h-14">
-            {/* Left: city pill + online count */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
-                <span className="w-2 h-2 rounded-full bg-[#34C759] animate-pulse" />
-                <span className="text-xs font-semibold text-white">{city}</span>
-              </div>
-              <span className="text-xs text-[#8E8E93] font-medium">
-                {onlineCount > 0 ? onlineCount : '--'} nearby
-              </span>
-            </div>
-
-            {/* Center: GHOSTED wordmark */}
+          {/* Top row: wordmark + tabs + filter */}
+          <div className="flex items-center justify-between h-12">
+            {/* Wordmark */}
             <h1
-              className="absolute left-1/2 -translate-x-1/2 font-black text-base tracking-[0.2em] uppercase leading-tight"
+              className="font-black text-sm tracking-[0.2em] uppercase"
               style={{ color: AMBER }}
             >
-              {activeTab === 'live' ? 'LIVE NOW' : 'GHOSTED'}
+              GHOSTED
             </h1>
 
-            {/* Right: Go Live + filter */}
-            <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => openSheet('go-live', {})}
-              className="h-7 px-2.5 rounded-full text-[10px] font-bold active:scale-95 transition-transform"
-              style={isLive
-                ? { background: `${AMBER}25`, border: `1px solid ${AMBER}50`, color: AMBER }
-                : { background: 'rgba(200,150,44,0.15)', border: '1px solid rgba(200,150,44,0.3)', color: AMBER }
-              }
-              aria-label={isLive ? 'You are live' : 'Go live'}
-            >
-              {isLive ? (
-                <span className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                  Live
-                </span>
-              ) : 'Go Live'}
-            </button>
-            <button
-              data-testid="ghosted-filter-btn"
-              onClick={() => openSheet('filters')}
-              className="relative w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 active:scale-95 transition-transform"
-              aria-label={`Open filters${activeFilterCount > 0 ? `, ${activeFilterCount} active` : ''}`}
-            >
-              <SlidersHorizontal className="w-4.5 h-4.5 text-white/70" />
-              {activeFilterCount > 0 && (
-                <span
-                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full text-black text-[10px] font-black leading-none"
-                  style={{ backgroundColor: AMBER }}
-                >
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
-            </div>
-          </div>
-
-          {/* ====== TAB STRIP ====== */}
-          <div className="flex gap-1 pb-2 overflow-x-auto scrollbar-hide -mx-4 px-4">
-            {TABS.map((tab) => {
-              const isActive = activeTab === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className="flex-shrink-0 h-9 px-4 rounded-full text-sm font-semibold transition-all active:scale-95 relative"
-                  style={
-                    isActive
-                      ? { color: '#fff' }
-                      : { color: '#8E8E93' }
-                  }
-                  aria-label={`Show ${tab.label}`}
-                  aria-pressed={isActive}
-                >
-                  {tab.label}
-                  {isActive && (
-                    <motion.div
-                      layoutId="ghosted-tab-underline"
-                      className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full"
-                      style={{ background: AMBER }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* ====== SORT CHIPS (only on grid tabs) ====== */}
-          {activeTab !== 'chats' && (
-            <div className="flex gap-1.5 pb-2 overflow-x-auto scrollbar-hide -mx-4 px-4">
-              {([
-                { key: 'nearby' as SortKey, label: 'Nearby' },
-                { key: 'last_active' as SortKey, label: 'Last Active' },
-                { key: 'newest' as SortKey, label: 'Newest' },
-              ]).map((sort) => {
-                const isActive = sortBy === sort.key;
+            {/* Segmented tabs */}
+            <div className="flex items-center bg-white/5 rounded-full p-0.5">
+              {TABS.map((tab) => {
+                const isActive = activeTab === tab.key;
                 return (
                   <button
-                    key={sort.key}
-                    onClick={() => setSortBy(sort.key)}
-                    className={`flex-shrink-0 h-7 px-3 rounded-full text-xs font-semibold transition-all active:scale-95 ${
+                    key={tab.key}
+                    onClick={() => {
+                      setActiveTab(tab.key);
+                      setActiveChip(null);
+                    }}
+                    className={`relative h-8 px-4 rounded-full text-xs font-semibold transition-all active:scale-95 ${
                       isActive
-                        ? 'bg-white/15 text-white border border-white/20'
-                        : 'text-white/30 border border-white/[0.04]'
+                        ? 'text-black'
+                        : 'text-white/50'
                     }`}
+                    style={isActive ? { backgroundColor: AMBER } : undefined}
+                    aria-label={`Show ${tab.label}`}
+                    aria-pressed={isActive}
                   >
-                    {sort.label}
-                  </button>
-                );
-              })}
-              {vibeTagFilter && (
-                <button
-                  onClick={() => setVibeTagFilter(null)}
-                  className="flex-shrink-0 h-7 px-3 rounded-full text-xs font-bold bg-[#C8962C]/20 text-[#C8962C] border border-[#C8962C]/30 flex items-center gap-1 active:scale-95 transition-all"
-                >
-                  {vibeTagFilter}
-                  <X className="w-3 h-3" />
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ====== INCOGNITO INDICATOR ====== */}
-      {isBoostActive('incognito_week') && (
-        <div className="px-4 py-2 flex items-center gap-2 border-b border-white/5" style={{ background: 'rgba(200,150,44,0.08)' }}>
-          <Eye className="w-3.5 h-3.5 text-[#C8962C]" />
-          <span className="text-xs font-bold text-[#C8962C]">You're invisible</span>
-          {boostExpiresAt('incognito_week') && (
-            <span className="text-[10px] text-white/30 ml-auto">
-              {(() => {
-                const exp = boostExpiresAt('incognito_week');
-                if (!exp) return '';
-                const m = Math.round((exp.getTime() - Date.now()) / 60000);
-                return m < 60 ? `${m}m left` : m < 1440 ? `${Math.round(m / 60)}h left` : `${Math.round(m / 1440)}d left`;
-              })()}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* ====== RADIO CONTEXT STRIP (Live tab only, when radio is playing) ====== */}
-      {activeTab === 'live' && radioPlaying && currentShowName && (
-        <div
-          className="px-4 py-2 flex items-center gap-2 border-b border-white/5"
-          style={{ background: 'rgba(0,194,224,0.06)' }}
-        >
-          <span className="w-2 h-2 rounded-full bg-[#00C2E0] animate-pulse flex-shrink-0" />
-          <Radio className="w-3.5 h-3.5 text-[#00C2E0] flex-shrink-0" />
-          <span className="text-xs font-bold text-[#00C2E0] truncate">ON AIR · {currentShowName}</span>
-          <span className="text-[10px] text-white/30 ml-auto flex-shrink-0">Listeners sorted first</span>
-        </div>
-      )}
-
-      {/* ====== CONTENT AREA ====== */}
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto scroll-momentum pb-24 relative z-10"
-        {...pullHandlers}
-      >
-        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
-
-        {/* Hero banner removed — grid IS the content. No filler. */}
-
-        {/* ====== CHATS TAB CONTENT ====== */}
-        {activeTab === 'chats' ? (
-          <div className="px-4">
-            {chatThreads.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <Ghost className="w-10 h-10 mb-3" style={{ color: AMBER }} />
-                <h3 className="text-base font-bold text-white mb-1">No Boos yet</h3>
-                <p className="text-sm mb-5" style={{ color: MUTED }}>Send one in Ghosted</p>
-                <button
-                  onClick={() => setActiveTab('nearby')}
-                  className="h-10 px-5 rounded-full text-sm font-bold active:scale-95 transition-transform"
-                  style={{ background: AMBER, color: '#000' }}
-                >
-                  Open Ghosted
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {chatThreads.map((thread: any) => (
-                  <button
-                    key={thread.id}
-                    onClick={() => openSheet('chat', { threadId: thread.id })}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl active:bg-white/5 transition-colors"
-                  >
-                    <div className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                      <Ghost className="w-5 h-5 text-white/30" />
-                    </div>
-                    <div className="flex-1 min-w-0 text-left">
-                      <p className="text-sm font-semibold text-white truncate">
-                        {thread.title || 'Chat'}
-                      </p>
-                      <p className="text-xs text-white/40 truncate">
-                        {thread.last_message || 'Start chatting...'}
-                      </p>
-                    </div>
-                    {(thread.unread_count ?? 0) > 0 && (
+                    {tab.label}
+                    {/* Unread badge on Chats tab */}
+                    {tab.key === 'chats' && totalUnread > 0 && !isActive && (
                       <span
-                        className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full text-[10px] font-black text-black"
-                        style={{ background: AMBER }}
+                        className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-0.5 flex items-center justify-center rounded-full text-black text-[8px] font-black"
+                        style={{ backgroundColor: AMBER }}
                       >
-                        {thread.unread_count}
+                        {totalUnread > 9 ? '9+' : totalUnread}
                       </span>
                     )}
                   </button>
-                ))}
-              </div>
+                );
+              })}
+            </div>
+
+            {/* Filter icon (Nearby/Live only) */}
+            {activeTab !== 'chats' && (
+              <button
+                data-testid="ghosted-filter-btn"
+                onClick={() => openSheet('filters')}
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-white/5 border border-white/10 active:scale-95 transition-transform"
+                aria-label="Open filters"
+              >
+                <SlidersHorizontal className="w-4 h-4 text-white/60" />
+              </button>
             )}
+
+            {/* Spacer for chats tab so layout doesn't shift */}
+            {activeTab === 'chats' && <div className="w-9" />}
           </div>
-        ) : (
-          /* ====== PROFILE GRID (Nearby + Live tabs) ====== */
-          <ProfilesGrid
-            onOpenProfile={handleProfileTap}
-            containerClassName="p-0"
-            cols={3}
-            showHeader={false}
-            filterProfiles={filterProfiles}
-            sortProfiles={sortProfiles}
-            viewerEmail={myEmail}
-            viewerLat={myPosition?.lat}
-            viewerLng={myPosition?.lng}
-            onLongPress={handleLongPress}
-            emptyComponent={<GhostedEmpty onOpenFilters={() => openSheet('filters')} onGoLive={() => openSheet('go-live', {})} />}
-            onVibeTagClick={handleVibeTagClick}
-            boostUserIds={boostUserIds}
-          />
+
+          {/* Filter chips (Nearby tab only) */}
+          {activeTab === 'nearby' && (
+            <div className="flex gap-1.5 pb-2 pt-1 overflow-x-auto scrollbar-hide -mx-4 px-4">
+              {FILTER_CHIPS.map((chip) => {
+                const isActive = activeChip === chip.key;
+                return (
+                  <button
+                    key={chip.key}
+                    onClick={() => setActiveChip(isActive ? null : chip.key)}
+                    className={`flex-shrink-0 h-8 px-4 rounded-full text-xs font-semibold transition-all active:scale-95 ${
+                      isActive
+                        ? 'text-black border border-transparent'
+                        : 'text-white/40 border border-white/5'
+                    }`}
+                    style={isActive ? { backgroundColor: AMBER } : { backgroundColor: 'rgba(255,255,255,0.03)' }}
+                    aria-pressed={isActive}
+                  >
+                    {chip.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ═══ SCROLLABLE CONTENT ═══ */}
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto scroll-momentum pb-24 relative z-10"
+        onScroll={handleScroll}
+      >
+        {/* Now Playing strip — display-only, links to /radio */}
+        {isPlaying && (
+          <button
+            onClick={() => navigate('/radio')}
+            className="w-full border-b border-white/5 active:opacity-80 transition-opacity"
+            style={{ backgroundColor: '#1C1C1E' }}
+          >
+            <div className="flex items-center gap-3 px-4 py-3">
+              <div className="w-8 h-8 rounded-lg bg-[#C8962C]/15 flex items-center justify-center flex-shrink-0">
+                <Music className="w-4 h-4 text-[#C8962C]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold">On Air</p>
+                <p className="text-sm text-white/80 font-bold truncate">{currentShowName || 'HOTMESS Radio'}</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-white/20 flex-shrink-0" />
+            </div>
+          </button>
+        )}
+
+        {/* Hero banner (Nearby + Live tabs only) */}
+        {activeTab !== 'chats' && <GhostedHeroBanner />}
+
+        {/* Loading state */}
+        {isLoading && <GhostedSkeleton />}
+
+        {/* Error state */}
+        {!isLoading && error && (
+          <GhostedError message={error} onRetry={refetch} />
+        )}
+
+        {/* Empty state */}
+        {!isLoading && !error && activeTab !== 'chats' && cards.length === 0 && (
+          <GhostedEmpty tab={activeTab} />
+        )}
+        {!isLoading && !error && activeTab === 'chats' && chatThreads.length === 0 && (
+          <GhostedEmpty tab="chats" />
+        )}
+
+        {/* ═══ GRID (Nearby + Live tabs) ═══ */}
+        {!isLoading && !error && activeTab !== 'chats' && cards.length > 0 && (
+          <div className="grid grid-cols-3 gap-1 px-1 pt-1">
+            {cards.map((card, i) => (
+              <GhostedCard
+                key={card.id}
+                {...card}
+                isBood={card.email ? isTapped(card.email, 'boo') : false}
+                isMutual={card.email ? isMutualBoo(card.email) : false}
+                index={i}
+                onTap={handleCardTap}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* ═══ CHAT LIST (Chats tab) ═══ */}
+        {!isLoading && !error && activeTab === 'chats' && chatThreads.length > 0 && (
+          <div className="divide-y divide-white/5">
+            {chatThreads.map((thread) => (
+              <ChatThreadRow
+                key={thread.id}
+                thread={thread}
+                onTap={handleChatTap}
+              />
+            ))}
+          </div>
         )}
       </div>
 
-      {/* ====== BOOST FAB (single purpose — no duplicate Go Live) ====== */}
-      {isBoostActive('profile_bump') && (
-        <motion.div
-          className="fixed z-20 right-4"
-          style={{ bottom: 'calc(90px + env(safe-area-inset-bottom, 0px))' }}
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-        >
-          <button
-            onClick={() => {
-              const exp = boostExpiresAt('profile_bump');
-              const m = exp ? Math.round((exp.getTime() - Date.now()) / 60000) : 0;
-              toast(`Profile Bump active - ${m < 60 ? `${m}m` : `${Math.round(m / 60)}h`} left`, {
-                style: { background: '#1C1C1E', color: '#C8962C', border: '1px solid rgba(200,150,44,0.3)' },
-              });
-            }}
-            className="h-10 w-10 rounded-full flex items-center justify-center bg-[#C8962C]/20 border border-[#C8962C]/50 shadow-lg active:scale-95 transition-transform"
-            style={{ boxShadow: '0 0 16px rgba(200,150,44,0.3)' }}
-            aria-label="Profile Bump active"
-          >
-            <Zap className="w-4 h-4 text-[#C8962C]" />
-          </button>
-        </motion.div>
-      )}
-
-      {/* ====== QUICK ACTION MENU (long-press overlay) ====== */}
+      {/* ═══ "SHARE YOUR VIBE" FAB ═══ */}
       <AnimatePresence>
-        {quickMenu && (
-          <QuickActionMenu
-            profile={quickMenu.profile}
-            position={quickMenu.position}
-            myEmail={myEmail}
-            isTapped={isTapped}
-            sendTap={sendTap}
-            onClose={() => setQuickMenu(null)}
-            onMessage={handleQuickMessage}
-            onSave={handleQuickSave}
-            onBlock={handleQuickBlock}
-            onReport={handleQuickReport}
-          />
+        {fabVisible && activeTab !== 'chats' && (
+          <motion.div
+            className="fixed z-20 left-1/2 -translate-x-1/2"
+            style={{ bottom: 'calc(90px + env(safe-area-inset-bottom, 0px))' }}
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 20, opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          >
+            <button
+              onClick={() => openSheet('social', {})}
+              className="h-12 px-6 rounded-full flex items-center gap-2 font-bold text-sm text-black shadow-lg active:scale-95 transition-transform"
+              style={{
+                backgroundColor: AMBER,
+                boxShadow: '0 8px 32px rgba(200,150,44,0.35)',
+              }}
+              aria-label="Share your vibe right now"
+            >
+              Share your vibe
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

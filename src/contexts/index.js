@@ -10,13 +10,6 @@
 // - Background only, never identities
 export { WorldPulseProvider, useWorldPulse, PULSE_TYPES as WORLD_PULSE_TYPES } from './WorldPulseContext';
 
-// LAYER 2: Now Signals (Local · Contextual · Clickable)
-// Purpose: "Something relevant to you is happening right now."
-// - Context-aware, permissioned, sparse
-// - Appears only when user is in relevant context
-// - Actionable, time-bound
-export { NowSignalProvider, useNowSignals, NOW_SIGNAL_TYPES, USER_CONTEXTS } from './NowSignalContext';
-
 // Globe visualization modes
 export { GlobeProvider, useGlobe, GLOBE_MODES } from './GlobeContext';
 

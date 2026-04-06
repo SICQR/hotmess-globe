@@ -448,7 +448,7 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
           { icon: Zap, label: 'Sweat Coins', action: () => openSheet('sweat-coins', {}) },
           { icon: Crown, label: 'Creator Subscriptions', action: () => openSheet('creator-subscription', {}) },
         ] : []),
-        { icon: Zap, label: 'Power-Ups', badge: 'NEW', action: () => openSheet('boost-shop', {}) },
+        { icon: Zap, label: 'Power-Ups', action: () => openSheet('boost-shop', {}) },
         { icon: Users, label: 'Invite Friends', action: () => openSheet('referral', {}) },
         { icon: Package, label: 'My Listings', action: () => openSheet('my-listings', {}) },
         { icon: ShoppingBag, label: 'My Orders', action: () => openSheet('my-orders', {}) },

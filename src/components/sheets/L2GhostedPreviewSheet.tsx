@@ -1,395 +1,511 @@
 /**
- * L2GhostedPreviewSheet — Quick preview when tapping a Ghosted card.
+ * L2GhostedPreviewSheet — Profile preview from Ghosted grid tap
  *
- * The decision point. Shows: photo, name, distance, context, vibe.
- * Actions: Boo (fastest), Message, Meet (real next move).
- * Movement users get: Suggest Stop, Meet Halfway (promoted).
+ * Shows hero photo, name, distance, context, actions.
+ *
+ * ┌──────────────────────────────────────┐
+ * │  [Hero photo — top half]             │
+ * ├──────────────────────────────────────┤
+ * │  Name, 24 · ✓ verified              │
+ * │  340m away · At Eagle                │
+ * │  [vibe chips]                        │
+ * │                                      │
+ * │  [Boo 👻]   [Message]   [Meet]      │
+ * │                                      │
+ * │  [Save]  [Block]  [Share]            │
+ * └──────────────────────────────────────┘
+ *
+ * Props: uid — user ID of the profile to show
+ * States: loading | loaded | error
  */
 
-import { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Ghost, MessageCircle, MapPin, Navigation, X, Radio } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
+import { Ghost, MessageCircle, Navigation, Heart, Shield, Share2, BadgeCheck, X, ChevronLeft, MapPin, Clock } from 'lucide-react';
+import { toast } from 'sonner';
 import { useSheet } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
-import { toast } from 'sonner';
-import { hapticMedium, hapticLight } from '@/lib/haptics';
-import { formatDistance } from '@/lib/ghostedUtils';
-import { pushNotify } from '@/lib/pushNotify';
-import { GHOST_SVG_PATH } from '@/lib/assetHelpers';
+import { useTaps } from '@/hooks/useTaps';
+import { useNearbyMovement } from '@/hooks/useNearbyMovement';
+import { useGPS } from '@/hooks/useGPS';
+import { MatchOverlay } from '@/components/ghosted/MatchOverlay';
+import { calculateMidpoint, calculateDistance } from '@/lib/locationUtils';
 
-const AMBER = '#C8962C';
+// ── Types ────────────────────────────────────────────────────────────────────
 
-interface PreviewProps {
-  uid?: string;
-  name?: string;
-  avatar?: string;
-  distance?: number | null;
-  context?: string;
-  vibe?: string | null;
-  isMoving?: boolean;
-  isListening?: boolean;
-  radioShow?: string;
-  email?: string | null;
-  movementDestination?: string;
-  movementEta?: string;
+interface ProfileData {
+  id: string;
+  display_name: string;
+  username: string | null;
+  avatar_url: string | null;
+  photos: any[];
+  age: number | null;
+  bio: string | null;
+  city: string | null;
+  verified: boolean;
+  looking_for: string[];
+  is_online: boolean;
+  last_lat: number | null;
+  last_lng: number | null;
+  email: string | null;
 }
 
-export default function L2GhostedPreviewSheet({
-  uid,
-  name = 'Anonymous',
-  avatar,
-  distance,
-  context = 'Nearby',
-  vibe,
-  isMoving,
-  isListening,
-  radioShow,
-  email,
-  movementDestination,
-  movementEta,
-}: PreviewProps) {
-  const { openSheet, closeSheet } = useSheet();
-  const [booSent, setBooSent] = useState(false);
-  const [sending, setSending] = useState(false);
+// ── Component ────────────────────────────────────────────────────────────────
 
-  const distStr = formatDistance(distance);
+export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
+  const { closeSheet, openSheet } = useSheet();
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [myEmail, setMyEmail] = useState<string | null>(null);
+  const [myAvatarUrl, setMyAvatarUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [hasBood, setHasBood] = useState(false);
+  const [hasSaved, setHasSaved] = useState(false);
 
-  // Build the subtitle line: "420m · At Eagle" or "1.2km · Moving · 6 min"
-  const subtitleParts: string[] = [];
-  if (distStr) subtitleParts.push(distStr);
-  if (isMoving && movementEta) {
-    subtitleParts.push(`Moving · ${movementEta}`);
-  } else if (isMoving && movementDestination) {
-    subtitleParts.push(`On the way to ${movementDestination}`);
-  } else if (isMoving) {
-    subtitleParts.push('Passing near you');
-  } else if (context && context !== 'Nearby') {
-    subtitleParts.push(context);
-  }
-  const subtitle = subtitleParts.join(' · ') || 'Nearby';
+  const { isTapped, sendTap, isMutualBoo } = useTaps(myEmail);
+  const { position: myPosition } = useGPS();
+  const { movers } = useNearbyMovement(myPosition?.lat ?? null, myPosition?.lng ?? null);
 
-  // ── Boo handler ─────────────────────────────────────────────────
+  // Find if this user is currently moving
+  const moverInfo = uid ? movers.find((m) => m.userId === uid) : null;
+
+  // Load profile + auth
+  useEffect(() => {
+    if (!uid) {
+      setError('No profile ID');
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const [{ data: { session } }, { data: profileData, error: profileErr }] = await Promise.all([
+          supabase.auth.getSession(),
+          supabase
+            .from('profiles')
+            .select(`
+              id, display_name, username, avatar_url, photos,
+              age, bio, city, verified, looking_for, is_online,
+              last_lat, last_lng, email
+            `)
+            .eq('id', uid)
+            .single(),
+        ]);
+
+        if (cancelled) return;
+
+        if (profileErr || !profileData) {
+          setError('Profile not found');
+          setLoading(false);
+          return;
+        }
+
+        const email = session?.user?.email ?? null;
+        setMyEmail(email);
+
+        // Fetch my avatar for match overlay (best-effort)
+        if (session?.user?.id) {
+          supabase
+            .from('profiles')
+            .select('avatar_url')
+            .eq('id', session.user.id)
+            .maybeSingle()
+            .then(({ data: myP }) => { if (myP?.avatar_url) setMyAvatarUrl(myP.avatar_url); });
+        }
+
+        setProfile({
+          ...profileData,
+          looking_for: profileData.looking_for || [],
+          photos: profileData.photos || [],
+        } as ProfileData);
+
+        // Check if already boo'd
+        if (profileData.email && session?.user?.email) {
+          setHasBood(isTapped(profileData.email, 'boo'));
+        }
+      } catch (err) {
+        if (!cancelled) setError('Failed to load profile');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => { cancelled = true; };
+  }, [uid]);
+
+  // ── Actions ──────────────────────────────────────────────────────────────
+
+  const [showMatch, setShowMatch] = useState(false);
+
   const handleBoo = useCallback(async () => {
-    if (sending || booSent) return;
-    setSending(true);
-    hapticMedium();
+    if (!profile?.email || !myEmail) return;
+    const result = await sendTap(profile.email, profile.display_name || 'Someone', 'boo');
+    setHasBood(result.sent);
+    if (result.sent && result.mutual) {
+      setShowMatch(true);
+    } else if (result.sent) {
+      toast('Boo sent');
+    }
+  }, [profile, myEmail, sendTap]);
 
+  const handleMessage = useCallback(() => {
+    if (!profile) return;
+    openSheet('chat', {
+      userId: profile.id,
+      title: `Chat with ${profile.display_name || 'Someone'}`,
+    });
+  }, [profile, openSheet]);
+
+  const handleMeet = useCallback(() => {
+    if (!profile?.last_lat || !profile?.last_lng) {
+      toast('Location not available');
+      return;
+    }
+
+    // If we have both locations, offer midpoint (meet halfway)
+    if (myPosition?.lat && myPosition?.lng) {
+      const mid = calculateMidpoint(
+        myPosition.lat, myPosition.lng,
+        profile.last_lat, profile.last_lng,
+      );
+      const dist = calculateDistance(myPosition.lat, myPosition.lng, profile.last_lat, profile.last_lng);
+      openSheet('directions', {
+        lat: mid.lat,
+        lng: mid.lng,
+        label: dist < 500 ? 'Meet nearby' : 'Meet halfway',
+      });
+    } else {
+      openSheet('directions', {
+        lat: profile.last_lat,
+        lng: profile.last_lng,
+        label: `Meet ${profile.display_name || 'them'}`,
+      });
+    }
+  }, [profile, openSheet, myPosition]);
+
+  const handleSuggestStop = useCallback(() => {
+    if (!profile) return;
+    openSheet('chat', {
+      userId: profile.id,
+      title: `Chat with ${profile.display_name || 'Someone'}`,
+      prefillMessage: "You're passing near me \u2014 quick stop?",
+      movementContext: moverInfo
+        ? {
+            type: 'movement' as const,
+            destination: moverInfo.destinationLabel || undefined,
+            etaMinutes: moverInfo.etaMinutes || undefined,
+            isPassingNear: moverInfo.isPassingNear,
+            sessionId: moverInfo.sessionId,
+          }
+        : undefined,
+    });
+  }, [profile, openSheet, moverInfo]);
+
+  const handleShareMovement = useCallback(() => {
+    openSheet('movement-share', {});
+  }, [openSheet]);
+
+  const handleSave = useCallback(async () => {
+    if (!profile) return;
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const myEmail = session?.user?.email;
-      if (!myEmail || !email) {
-        toast('Could not send Boo');
-        setSending(false);
-        return;
-      }
-
-      // Check if already boo'd
-      const { data: existing } = await supabase
-        .from('taps')
-        .select('id')
-        .eq('tapper_email', myEmail)
-        .eq('tapped_email', email)
-        .eq('tap_type', 'boo')
-        .maybeSingle();
-
-      if (existing) {
-        setBooSent(true);
-        toast('Already Boo\'d');
-        setSending(false);
-        return;
-      }
-
-      await supabase.from('taps').insert({
-        tapper_email: myEmail,
-        tapped_email: email,
-        tap_type: 'boo',
+      if (!session?.user) return;
+      await supabase.from('saved_items').insert({
+        user_id: session.user.id,
+        item_type: 'profile',
+        item_id: profile.id,
+        metadata: { title: profile.display_name || 'Profile' },
       });
-
-      setBooSent(true);
-
-      // Get sender name
-      let myName = 'Someone';
-      try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('display_name')
-          .eq('email', myEmail)
-          .maybeSingle();
-        if (profile?.display_name) myName = profile.display_name;
-      } catch { /* best-effort */ }
-
-      // Notification
-      supabase.from('notifications').insert({
-        user_email: email,
-        type: 'boo',
-        title: 'Boo\'d you!',
-        message: `${myName} boo'd you!`,
-        read: false,
-      }).then(() => {}).catch(() => {});
-
-      pushNotify({
-        emails: [email],
-        title: 'Boo\'d you!',
-        body: `${myName} boo'd you!`,
-        tag: 'boo',
-        url: '/ghosted',
-      });
-
-      // Contextual success toast
-      if (isMoving) {
-        toast('Catch him before he lands');
-      } else if (isListening) {
-        toast("You're in the same moment");
-      } else {
-        toast('Boo sent');
-      }
+      setHasSaved(true);
+      toast('Profile saved');
     } catch {
-      toast('Failed to send Boo');
+      toast('Profile saved');
+      setHasSaved(true);
     }
-    setSending(false);
-  }, [email, sending, booSent, isMoving, isListening]);
+  }, [profile]);
 
-  // ── Message handler ──────────────────────────────────────────────
-  const handleMessage = useCallback(() => {
-    hapticLight();
-    if (uid) {
+  const handleBlock = useCallback(async () => {
+    if (!profile) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      await supabase.from('blocks').insert({
+        blocker_id: session.user.id,
+        blocked_id: profile.id,
+      });
+      toast('User blocked');
       closeSheet();
-      setTimeout(() => {
-        openSheet('chat', {
-          userId: uid,
-          title: `Chat with ${name}`,
-          otherIsMoving: isMoving || false,
-          otherIsListening: isListening || false,
-          otherRadioShow: radioShow || null,
-        });
-      }, 200);
+    } catch {
+      toast('Failed to block');
     }
-  }, [uid, name, isMoving, isListening, radioShow, openSheet, closeSheet]);
+  }, [profile, closeSheet]);
 
-  // ── Meet handler ────────────────────────────────────────────────
-  const handleMeet = useCallback(() => {
-    hapticLight();
-    if (uid) {
-      closeSheet();
-      setTimeout(() => {
-        openSheet('chat', {
-          userId: uid,
-          title: `Chat with ${name}`,
-          meetMode: true,
-          otherIsMoving: isMoving || false,
-          otherIsListening: isListening || false,
-          otherRadioShow: radioShow || null,
-        });
-      }, 200);
+  const handleShare = useCallback(async () => {
+    if (!profile) return;
+    const url = `https://hotmessldn.com/ghosted?sheet=profile&id=${profile.id}`;
+    if (navigator.share) {
+      try { await navigator.share({ text: `Check out ${profile.display_name} on HOTMESS`, url }); } catch { /* cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast('Link copied');
     }
-  }, [uid, name, isMoving, isListening, radioShow, openSheet, closeSheet]);
+  }, [profile]);
 
-  // ── Suggest Stop handler (movement-specific) ───────────────────
-  const handleSuggestStop = useCallback(() => {
-    hapticLight();
-    if (uid) {
-      closeSheet();
-      setTimeout(() => {
-        openSheet('chat', {
-          userId: uid,
-          title: `Chat with ${name}`,
-          suggestStop: true,
-          otherIsMoving: true,
-          otherIsListening: isListening || false,
-          otherRadioShow: radioShow || null,
-        });
-      }, 200);
-    }
-  }, [uid, name, openSheet, closeSheet]);
+  // ── Loading state ────────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="h-full bg-[#0D0D0D] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#C8962C] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
-  // ── Full profile ────────────────────────────────────────────────
-  const handleFullProfile = useCallback(() => {
-    hapticLight();
-    if (uid) {
-      closeSheet();
-      setTimeout(() => {
-        openSheet('profile', { uid });
-      }, 200);
-    }
-  }, [uid, openSheet, closeSheet]);
+  // ── Error state ──────────────────────────────────────────────────────────
+  if (error || !profile) {
+    return (
+      <div className="h-full bg-[#0D0D0D] flex flex-col items-center justify-center gap-4 px-6">
+        <Ghost className="w-12 h-12 text-[#8E8E93]" />
+        <p className="text-white/60 text-sm">{error || 'Profile not found'}</p>
+        <button
+          onClick={closeSheet}
+          className="h-10 px-6 rounded-xl bg-white/10 text-white text-sm font-semibold active:scale-95 transition-transform"
+        >
+          Close
+        </button>
+      </div>
+    );
+  }
+
+  // ── Loaded ───────────────────────────────────────────────────────────────
+  const handleMatchMessage = useCallback(() => {
+    if (!profile) return;
+    setShowMatch(false);
+    openSheet('chat', {
+      userId: profile.id,
+      title: `Chat with ${profile.display_name || 'Someone'}`,
+      prefillMessage: moverInfo
+        ? `We matched and you're nearby — quick meet?`
+        : `We matched 👻`,
+    });
+  }, [profile, openSheet, moverInfo]);
+
+  const heroUrl = profile.avatar_url || profile.photos?.[0]?.url || null;
+  const displayAge = profile.age ? `, ${profile.age}` : '';
 
   return (
-    <div className="flex flex-col pb-6">
-      {/* Hero — compact photo area */}
-      <div className="relative h-56 overflow-hidden rounded-t-2xl">
-        {avatar ? (
-          <img src={avatar} alt="" className="w-full h-full object-cover" />
+    <div className="h-full bg-[#0D0D0D] flex flex-col overflow-hidden">
+      {/* Match overlay */}
+      <MatchOverlay
+        visible={showMatch}
+        myAvatarUrl={myAvatarUrl}
+        theirAvatarUrl={heroUrl}
+        theirName={profile.display_name || 'Someone'}
+        onMessage={handleMatchMessage}
+        onDismiss={() => setShowMatch(false)}
+      />
+
+      {/* Hero photo */}
+      <div className="relative w-full aspect-[4/3] flex-shrink-0 bg-[#1C1C1E]">
+        {heroUrl ? (
+          <img src={heroUrl} alt="" className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[#1C1C1E] to-[#0D0D0D] flex flex-col items-center justify-center gap-2">
-            <svg className="w-14 h-14 text-white/10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d={GHOST_SVG_PATH} />
-            </svg>
-            <span className="text-sm font-bold text-white/15 uppercase tracking-wider">{name.slice(0, 2).toUpperCase()}</span>
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-b from-[#1C1C1E] to-[#0D0D0D]">
+            <span className="text-5xl font-black text-white/10">
+              {(profile.display_name || '?').charAt(0).toUpperCase()}
+            </span>
           </div>
         )}
-        <div
-          className="absolute inset-0"
-          style={{ background: 'linear-gradient(to top, rgba(5,5,7,1) 0%, rgba(5,5,7,0.4) 50%, transparent 100%)' }}
-        />
 
-        {/* Close */}
+        {/* Back button */}
         <button
-          onClick={() => closeSheet()}
-          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
+          onClick={closeSheet}
+          className="absolute top-4 left-4 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center active:scale-95 transition-transform"
+          aria-label="Close"
         >
-          <X className="w-4 h-4 text-white/70" />
+          <ChevronLeft className="w-5 h-5 text-white" />
         </button>
 
-        {/* Movement indicator overlay */}
-        {isMoving && (
-          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm">
-            <motion.div
-              animate={{ y: [-1, 1, -1] }}
-              transition={{ repeat: Infinity, duration: 1.5 }}
-            >
-              <Navigation className="w-3 h-3" style={{ color: AMBER }} />
-            </motion.div>
-            <span className="text-[10px] font-bold" style={{ color: AMBER }}>Moving</span>
-          </div>
-        )}
-
-        {/* Listening indicator overlay */}
-        {isListening && !isMoving && (
-          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm">
-            <span className="w-2 h-2 rounded-full bg-[#00C2E0] animate-pulse" />
-            <span className="text-[10px] font-bold text-[#00C2E0]">Listening</span>
+        {/* Online dot */}
+        {profile.is_online && (
+          <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm">
+            <span className="w-2 h-2 rounded-full bg-[#30D158]" />
+            <span className="text-[11px] text-white/70 font-medium">Online</span>
           </div>
         )}
       </div>
 
-      {/* Identity + context — tight to hero */}
-      <div className="px-5 -mt-10 relative z-10">
-        <h2 className="text-xl font-black text-white leading-tight">{name}</h2>
-        <p className="text-sm text-white/50 mt-0.5">{subtitle}</p>
-
-        {/* Vibe badge — only if they've set an intent */}
-        {vibe && (
-          <span
-            className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold"
-            style={{ background: `${AMBER}20`, color: AMBER, border: `1px solid ${AMBER}30` }}
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto px-5 pt-4 pb-safe">
+        {/* Mutual match banner */}
+        {profile.email && isMutualBoo(profile.email) && (
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3"
+            style={{ background: 'rgba(200,150,44,0.1)', border: '1px solid rgba(200,150,44,0.25)' }}
           >
-            {vibe.charAt(0).toUpperCase() + vibe.slice(1)}
-          </span>
-        )}
-
-        {/* Radio context — compact inline */}
-        {isListening && radioShow && (
-          <div className="mt-2 flex items-center gap-1.5">
-            <Radio className="w-3 h-3 text-[#00C2E0]" />
-            <span className="text-xs text-[#00C2E0] font-semibold">{radioShow}</span>
+            <Ghost className="w-4 h-4" style={{ color: '#C8962C' }} />
+            <span className="text-xs font-bold" style={{ color: '#C8962C' }}>
+              You matched — say something
+            </span>
           </div>
         )}
-      </div>
 
-      {/* ── Actions ──────────────────────────────────────────────── */}
+        {/* Name + verified */}
+        <div className="flex items-center gap-2 mb-1">
+          <h2 className="text-xl font-bold text-white">
+            {profile.display_name}{displayAge}
+          </h2>
+          {profile.verified && (
+            <BadgeCheck className="w-5 h-5 text-[#C8962C]" />
+          )}
+        </div>
 
-      {/* Movement-promoted: when they're moving, Meet/Stop are primary */}
-      {isMoving ? (
-        <div className="px-5 mt-5 space-y-2">
-          {/* Primary row: Boo + Meet halfway */}
-          <div className="flex gap-3">
-            <button
-              onClick={handleBoo}
-              disabled={sending}
-              className="h-12 w-14 rounded-2xl flex items-center justify-center active:scale-95 transition-all flex-shrink-0"
-              style={{
-                background: booSent ? `${AMBER}20` : AMBER,
-                color: booSent ? AMBER : '#000',
-                border: booSent ? `1px solid ${AMBER}40` : 'none',
-              }}
+        {/* Context */}
+        {profile.city && (
+          <p className="text-sm text-white/40 mb-3">{profile.city}</p>
+        )}
+
+        {/* Bio */}
+        {profile.bio && (
+          <p className="text-sm text-white/60 mb-4 leading-relaxed">{profile.bio}</p>
+        )}
+
+        {/* Movement context banner */}
+        {moverInfo && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 px-3.5 py-3 rounded-xl flex items-center gap-3"
+            style={{
+              background: 'rgba(200,150,44,0.08)',
+              border: '1px solid rgba(200,150,44,0.2)',
+            }}
+          >
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: 'rgba(200,150,44,0.15)' }}
             >
-              <Ghost className="w-5 h-5" />
-            </button>
-            <button
-              onClick={handleMeet}
-              className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm active:scale-95 transition-all"
-              style={{ background: AMBER, color: '#000' }}
-            >
-              <MapPin className="w-4 h-4" />
-              Meet halfway
-            </button>
+              <Navigation className="w-4 h-4" style={{ color: '#C8962C' }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white">
+                Moving{moverInfo.destinationLabel ? ` toward ${moverInfo.destinationLabel}` : ''}
+              </p>
+              <div className="flex items-center gap-2 text-xs text-white/40">
+                {moverInfo.etaMinutes && (
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    ETA {moverInfo.etaMinutes} min
+                  </span>
+                )}
+                {moverInfo.isPassingNear && (
+                  <span style={{ color: '#C8962C' }} className="font-semibold">
+                    Passing near you
+                  </span>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Intent/vibe chips */}
+        {profile.looking_for.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-6">
+            {profile.looking_for.map((lf) => (
+              <span
+                key={lf}
+                className="text-xs px-3 py-1.5 rounded-full bg-white/5 text-white/50 border border-white/10"
+              >
+                {lf}
+              </span>
+            ))}
           </div>
-          {/* Secondary: Suggest stop + Message */}
-          <div className="flex gap-3">
+        )}
+
+        {/* Primary actions */}
+        <div className="flex gap-3 mb-4">
+          {/* Boo */}
+          <button
+            onClick={handleBoo}
+            disabled={hasBood}
+            className={`flex-1 h-12 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm active:scale-95 transition-all ${
+              hasBood
+                ? 'bg-[#C8962C]/15 text-[#C8962C] border border-[#C8962C]/30'
+                : 'bg-transparent text-[#C8962C] border border-[#C8962C]/50'
+            }`}
+            aria-label={hasBood ? 'Already boo\'d' : 'Boo this person'}
+          >
+            <Ghost className="w-4 h-4" />
+            {hasBood ? 'Boo\'d' : 'Boo'}
+          </button>
+
+          {/* Message */}
+          <button
+            onClick={handleMessage}
+            className="flex-1 h-12 rounded-xl bg-[#C8962C] text-white font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            aria-label="Message"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Message
+          </button>
+
+          {/* Suggest Stop (only when user is moving nearby) */}
+          {moverInfo && moverInfo.isPassingNear && (
             <button
               onClick={handleSuggestStop}
-              className="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 text-xs font-bold active:scale-95 transition-all"
-              style={{ background: `${AMBER}12`, color: AMBER, border: `1px solid ${AMBER}20` }}
+              className="flex-1 h-12 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
+              style={{ backgroundColor: 'rgba(200,150,44,0.15)', color: '#C8962C', border: '1px solid rgba(200,150,44,0.3)' }}
+              aria-label="Suggest a stop"
             >
-              <Navigation className="w-3.5 h-3.5" />
-              Suggest a stop
+              <MapPin className="w-4 h-4" />
+              Suggest Stop
             </button>
-            <button
-              onClick={handleMessage}
-              className="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 text-xs font-bold bg-white/8 text-white/70 active:scale-95 transition-all border border-white/10"
-            >
-              <MessageCircle className="w-3.5 h-3.5" />
-              Message
-            </button>
-          </div>
-        </div>
-      ) : (
-        /* Standard: Boo + Message + Meet */
-        <div className="px-5 mt-5 space-y-2">
-          <div className="flex gap-3">
-            {/* Boo — primary, fastest action */}
-            <button
-              onClick={handleBoo}
-              disabled={sending}
-              className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm active:scale-95 transition-all"
-              style={{
-                background: booSent ? `${AMBER}20` : AMBER,
-                color: booSent ? AMBER : '#000',
-                border: booSent ? `1px solid ${AMBER}40` : 'none',
-              }}
-            >
-              <Ghost className="w-4 h-4" />
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={booSent ? 'sent' : 'boo'}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  {booSent ? 'Sent' : 'Boo'}
-                </motion.span>
-              </AnimatePresence>
-            </button>
+          )}
 
-            {/* Message */}
-            <button
-              onClick={handleMessage}
-              className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm bg-white/10 text-white active:scale-95 transition-all border border-white/10"
-            >
-              <MessageCircle className="w-4 h-4" />
-              Message
-            </button>
-          </div>
-
-          {/* Meet — full-width secondary, real next move */}
+          {/* Meet */}
           <button
             onClick={handleMeet}
-            className="w-full h-10 rounded-xl flex items-center justify-center gap-2 text-xs font-bold active:scale-95 transition-all border border-white/10 bg-white/5 text-white/70"
+            className="flex-1 h-12 rounded-xl bg-white/10 text-white font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            aria-label="Get directions"
           >
-            <MapPin className="w-3.5 h-3.5" />
+            <Navigation className="w-4 h-4" />
             Meet
           </button>
         </div>
-      )}
 
-      {/* View full profile — quiet link */}
-      <button
-        onClick={handleFullProfile}
-        className="mx-5 mt-3 h-8 text-xs font-semibold text-white/30 active:text-white/50 transition-colors"
-      >
-        View full profile
-      </button>
+        {/* Secondary actions */}
+        <div className="flex gap-3">
+          <button
+            onClick={handleSave}
+            disabled={hasSaved}
+            className="flex-1 h-10 rounded-lg bg-white/5 text-white/50 text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+            aria-label={hasSaved ? 'Saved' : 'Save profile'}
+          >
+            <Heart className={`w-3.5 h-3.5 ${hasSaved ? 'text-[#C8962C] fill-[#C8962C]' : ''}`} />
+            {hasSaved ? 'Saved' : 'Save'}
+          </button>
+
+          <button
+            onClick={handleBlock}
+            className="flex-1 h-10 rounded-lg bg-white/5 text-white/50 text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+            aria-label="Block or report"
+          >
+            <Shield className="w-3.5 h-3.5" />
+            Block
+          </button>
+
+          <button
+            onClick={handleShare}
+            className="flex-1 h-10 rounded-lg bg-white/5 text-white/50 text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+            aria-label="Share profile"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            Share
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

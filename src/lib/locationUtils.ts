@@ -48,6 +48,33 @@ export function formatTravelTime(meters: number): string {
   return m > 0 ? `${h}h ${m}min` : `${h}h`;
 }
 
+/** Calculate the geographic midpoint between two lat/lng points. */
+export function calculateMidpoint(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number,
+): { lat: number; lng: number } {
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const toDeg = (rad: number) => (rad * 180) / Math.PI;
+
+  const dLng = toRad(lng2 - lng1);
+  const lat1Rad = toRad(lat1);
+  const lat2Rad = toRad(lat2);
+  const lng1Rad = toRad(lng1);
+
+  const bx = Math.cos(lat2Rad) * Math.cos(dLng);
+  const by = Math.cos(lat2Rad) * Math.sin(dLng);
+
+  const midLat = Math.atan2(
+    Math.sin(lat1Rad) + Math.sin(lat2Rad),
+    Math.sqrt((Math.cos(lat1Rad) + bx) * (Math.cos(lat1Rad) + bx) + by * by),
+  );
+  const midLng = lng1Rad + Math.atan2(by, Math.cos(lat1Rad) + bx);
+
+  return { lat: toDeg(midLat), lng: toDeg(midLng) };
+}
+
 /** Get current position as a Promise. */
 export function getUserLocation(): Promise<GeolocationPosition> {
   return new Promise((resolve, reject) => {

@@ -157,13 +157,6 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: false,
     deepLinkParams: [],
   },
-  'ghosted-preview': {
-    id: 'ghosted-preview',
-    title: 'Preview',
-    height: 'medium',
-    auth: false,
-    deepLinkParams: ['uid'],
-  },
   'go-live': {
     id: 'go-live',
     title: 'Go Live',
@@ -579,6 +572,28 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     height: 'small',
     auth: false,
     deepLinkParams: ['lat', 'lng'],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GHOSTED PREVIEW (profile tap from grid)
+  // ─────────────────────────────────────────────────────────────────────────
+  'ghosted-preview': {
+    id: 'ghosted-preview',
+    title: 'Profile',
+    height: 'large',
+    auth: false,
+    deepLinkParams: ['uid'],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // MOVEMENT SHARING
+  // ─────────────────────────────────────────────────────────────────────────
+  'movement-share': {
+    id: 'movement-share',
+    title: 'Share Movement',
+    height: 'medium',
+    auth: true,
+    deepLinkParams: [],
   },
 
   // ─────────────────────────────────────────────────────────────────────────

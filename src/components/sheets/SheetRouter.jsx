@@ -89,6 +89,7 @@ const L2VerificationSheet = lazy(() => import('./L2VerificationSheet'));
 const L2RouteSheet = lazy(() => import('./L2RouteSheet'));
 const L2GhostedPreviewSheet = lazy(() => import('./L2GhostedPreviewSheet'));
 const L2GoLiveSheet = lazy(() => import('./L2GoLiveSheet'));
+const L2MovementShareSheet = lazy(() => import('./L2MovementShareSheet'));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PLACEHOLDER FOR UNIMPLEMENTED SHEETS
@@ -227,6 +228,8 @@ const SHEET_COMPONENTS = {
   'ghosted-preview': L2GhostedPreviewSheet,
   // Go Live (unified entry point for presence + vibe + radio + movement)
   'go-live': L2GoLiveSheet,
+  // Movement sharing
+  'movement-share': L2MovementShareSheet,
 };
 
 

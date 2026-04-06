@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Phone, X, Clock } from 'lucide-react';
+import { Shield, Phone, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTonightModeContext } from '@/hooks/useTonightMode';
 import FakeCallGenerator from '@/components/safety/FakeCallGenerator';

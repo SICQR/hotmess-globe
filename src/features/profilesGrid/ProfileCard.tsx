@@ -19,7 +19,7 @@ type Props = {
   /** Check if current user has already tapped a profile email with a given tap type */
   isTapped?: (email: string, tapType: TapType) => boolean;
   /** Send or toggle a boo */
-  onSendTap?: (email: string, name: string, tapType: TapType) => Promise<boolean>;
+  onSendTap?: (email: string, name: string, tapType: TapType) => Promise<{ sent: boolean; mutual: boolean } | boolean>;
   /** Called on long-press with profile and pointer position (for quick action menu) */
   onLongPress?: (profile: Profile, position: { x: number; y: number }) => void;
   /** Active venue check-in data for tonight-vibe badge */

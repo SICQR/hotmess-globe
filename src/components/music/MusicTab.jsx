@@ -10,9 +10,10 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, ChevronDown, Disc3, X,
-  FileAudio, Headphones, ExternalLink,
+  Crown, FileAudio, Headphones, ExternalLink,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
+import { toast } from 'sonner';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
@@ -173,6 +174,53 @@ function LinkedEntityCard({ release }) {
   );
 }
 
+// ── Stem Pack Stub ───────────────────────────────────────────────────────────
+
+function StemPackStub({ release }) {
+  if (!release.stem_pack_url) return null;
+
+  return (
+    <div className="mt-4 rounded-xl border border-[#9B1B2A]/20 bg-[#9B1B2A]/5 p-4">
+      <div className="flex items-center gap-3">
+        <FileAudio className="w-5 h-5 text-[#9B1B2A]" />
+        <div className="flex-1">
+          <p className="text-xs font-bold text-white">Stem Pack Available</p>
+          <p className="text-[10px] text-white/40">
+            {release.stem_pack_price_gbp
+              ? `£${Number(release.stem_pack_price_gbp).toFixed(2)}`
+              : 'Free with membership'}
+          </p>
+        </div>
+        <button
+          onClick={() => toast('Stems coming soon')}
+          className="px-3 py-1.5 rounded-lg bg-[#9B1B2A] text-[10px] font-bold uppercase text-white active:scale-[0.97] transition-transform"
+        >
+          Get Stems
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Member Gate Banner ───────────────────────────────────────────────────────
+
+function MemberGateBanner({ onJoin }) {
+  return (
+    <div className="rounded-xl border border-[#C8962C]/20 bg-[#C8962C]/5 p-4 flex items-center gap-3">
+      <Crown className="w-5 h-5 text-[#C8962C]" />
+      <div className="flex-1">
+        <p className="text-xs font-bold text-white">Members Only</p>
+        <p className="text-[10px] text-white/40">Full tracks, stems, and downloads require membership</p>
+      </div>
+      <button
+        onClick={onJoin}
+        className="px-3 py-1.5 rounded-lg bg-[#C8962C] text-[10px] font-black uppercase text-black active:scale-[0.97] transition-transform"
+      >
+        Join
+      </button>
+    </div>
+  );
+}
 // ── Release Detail Sheet ─────────────────────────────────────────────────────
 
 function ReleaseDetailSheet({ release, tracks, onClose }) {

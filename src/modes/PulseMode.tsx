@@ -72,7 +72,7 @@ import GhostedOverlay from '@/components/ghosted/GhostedOverlay';
 import type { GhostedContext } from '@/hooks/useVenuePresence';
 import { useLiveMode } from '@/contexts/LiveModeContext';
 import { useVenueVibeMix, VIBE_CONFIG, VIBES, type Vibe } from '@/hooks/useVenueVibes';
-import { useNearbyMovement } from '@/hooks/useNearbyMovement';
+import { useNearbyMovement, type NearbyMover } from '@/hooks/useNearbyMovement';
 import { useGPS } from '@/hooks/useGPS';
 import { Navigation } from 'lucide-react';
 import { VibeMixBar } from '@/components/vibe/VibeSelector';
@@ -1259,6 +1259,7 @@ function BottomDrawer({
   onSeeAllEvents,
   sceneScoutSection,
   pulseFeedSection,
+  movementSection,
   focusedBeaconId,
   emptyState,
   moversNearby,
@@ -1290,6 +1291,7 @@ function BottomDrawer({
   radioPlaying?: boolean;
   radioShowName?: string;
   onBrowseGhosted?: () => void;
+  movementSection?: React.ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
   const controls = useAnimation();
@@ -1480,6 +1482,9 @@ function BottomDrawer({
             )}
           </section>
         )}
+
+        {/* Movement section */}
+        {movementSection}
 
         {/* ---- Events & Beacons section (Intent layer) ---- */}
         {showIntent && (eventsLoading || events.length > 0) && (
@@ -1795,7 +1800,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
   const { isPlaying: radioIsPlaying, currentShowName: radioShowName } = useRadio();
   const { enterLive } = useLiveMode();
   const { position: myPosition } = useGPS();
-  const { data: nearbyMovers = [] } = useNearbyMovement(myPosition?.lat ?? null, myPosition?.lng ?? null);
+  const { movers: nearbyMovers } = useNearbyMovement(myPosition?.lat ?? null, myPosition?.lng ?? null);
 
   // ---- Pull-to-refresh -------------------------------------------------------
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -2418,6 +2423,76 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     }
   }, [sceneScoutLoading]);
 
+  // ---- Movement data for drawer (uses nearbyMovers from above) ----------------
+
+  // ---- Movement section JSX (passed into BottomDrawer) ----------------------
+  const movementSection = nearbyMovers.length > 0 ? (
+    <section className="mb-5">
+      <div className="flex items-center gap-2 mb-2.5">
+        <div className="w-0.5 h-3.5 rounded-full" style={{ background: AMBER }} />
+        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Moving Nearby</h3>
+        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: `${AMBER}20`, color: AMBER }}>
+          {nearbyMovers.length}
+        </span>
+      </div>
+      <div className="space-y-1.5">
+        {nearbyMovers.slice(0, 5).map((mover: NearbyMover) => (
+          <button
+            key={mover.sessionId}
+            onClick={() => openSheet('ghosted-preview', { uid: mover.userId })}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl active:scale-[0.98] transition-all"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
+            aria-label={`View ${mover.displayName}`}
+          >
+            {/* Avatar */}
+            <div className="relative w-9 h-9 rounded-full bg-white/5 overflow-hidden flex-shrink-0">
+              {mover.avatarUrl ? (
+                <img src={mover.avatarUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white/20">
+                  {mover.displayName.charAt(0).toUpperCase()}
+                </div>
+              )}
+              {/* Movement indicator dot */}
+              <span
+                className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: AMBER, border: '2px solid #0D0D0D' }}
+              >
+                <Navigation className="w-1.5 h-1.5 text-black" />
+              </span>
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-xs font-bold text-white truncate">{mover.displayName}</p>
+              <p className="text-[10px] text-white/40 truncate">
+                {mover.destinationLabel ? `To ${mover.destinationLabel}` : 'On the move'}
+                {mover.etaMinutes ? ` · ${mover.etaMinutes} min` : ''}
+              </p>
+            </div>
+
+            {/* Passing near badge */}
+            {mover.isPassingNear && (
+              <span
+                className="text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                style={{ background: `${AMBER}20`, color: AMBER }}
+              >
+                Near you
+              </span>
+            )}
+
+            {/* Distance */}
+            {mover.distanceM != null && (
+              <span className="text-[10px] text-white/30 flex-shrink-0">
+                {mover.distanceM < 1000 ? `${mover.distanceM}m` : `${(mover.distanceM / 1000).toFixed(1)}km`}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+    </section>
+  ) : null;
+
   // ---- Scene Scout section JSX (passed into BottomDrawer) -------------------
   const sceneScoutSection = (
     <section className="mb-5">
@@ -2810,6 +2885,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
           onSeeAllEvents={handleSeeAllEvents}
           sceneScoutSection={sceneScoutSection}
           pulseFeedSection={pulseFeedSection}
+          movementSection={movementSection}
           focusedBeaconId={focusedBeaconId}
           emptyState={emptyState}
           moversNearby={nearbyMovers.length}
