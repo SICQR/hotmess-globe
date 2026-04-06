@@ -24,7 +24,7 @@
  * Auth: supabase.auth.getSession() — no base44
  */
 
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SlidersHorizontal, Ghost, ArrowRight, MessageCircle, Music, ChevronRight } from 'lucide-react';
@@ -36,6 +36,7 @@ import { useGPS } from '@/hooks/useGPS';
 import { useGhostedGrid, type GhostedTab, type ChatThreadItem } from '@/hooks/useGhostedGrid';
 import { GhostedCard, type GhostedCardProps } from '@/components/ghosted/GhostedCard';
 import { GhostedHeroBanner } from '@/components/ghosted/GhostedHeroBanner';
+import { useTaps } from '@/hooks/useTaps';
 
 // ── Brand constants ──────────────────────────────────────────────────────────
 const AMBER = '#C8962C';
@@ -221,6 +222,15 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
   const { openSheet } = useSheet();
   const { isPlaying, currentShowName } = useRadio();
   const { position: myPosition } = useGPS();
+
+  // ── Auth email for boo state ────────────────────────────────────────────
+  const [myEmail, setMyEmail] = useState<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setMyEmail(session?.user?.email ?? null);
+    });
+  }, []);
+  const { isTapped, isMutualBoo } = useTaps(myEmail);
 
   // ── Tab state ────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<GhostedTab>('nearby');
@@ -428,6 +438,8 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
               <GhostedCard
                 key={card.id}
                 {...card}
+                isBood={card.email ? isTapped(card.email, 'boo') : false}
+                isMutual={card.email ? isMutualBoo(card.email) : false}
                 index={i}
                 onTap={handleCardTap}
               />

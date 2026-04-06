@@ -28,6 +28,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { useTaps } from '@/hooks/useTaps';
 import { useNearbyMovement } from '@/hooks/useNearbyMovement';
 import { useGPS } from '@/hooks/useGPS';
+import { MatchOverlay } from '@/components/ghosted/MatchOverlay';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -54,12 +55,13 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
   const { closeSheet, openSheet } = useSheet();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [myEmail, setMyEmail] = useState<string | null>(null);
+  const [myAvatarUrl, setMyAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasBood, setHasBood] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
 
-  const { isTapped, sendTap } = useTaps(myEmail);
+  const { isTapped, sendTap, isMutualBoo } = useTaps(myEmail);
   const { position: myPosition } = useGPS();
   const { movers } = useNearbyMovement(myPosition?.lat ?? null, myPosition?.lng ?? null);
 
@@ -99,7 +101,19 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
           return;
         }
 
-        setMyEmail(session?.user?.email ?? null);
+        const email = session?.user?.email ?? null;
+        setMyEmail(email);
+
+        // Fetch my avatar for match overlay (best-effort)
+        if (session?.user?.id) {
+          supabase
+            .from('profiles')
+            .select('avatar_url')
+            .eq('id', session.user.id)
+            .maybeSingle()
+            .then(({ data: myP }) => { if (myP?.avatar_url) setMyAvatarUrl(myP.avatar_url); });
+        }
+
         setProfile({
           ...profileData,
           looking_for: profileData.looking_for || [],
@@ -123,11 +137,17 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
 
   // ── Actions ──────────────────────────────────────────────────────────────
 
+  const [showMatch, setShowMatch] = useState(false);
+
   const handleBoo = useCallback(async () => {
     if (!profile?.email || !myEmail) return;
     const result = await sendTap(profile.email, profile.display_name || 'Someone', 'boo');
-    setHasBood(result);
-    if (result) toast('Boo sent');
+    setHasBood(result.sent);
+    if (result.sent && result.mutual) {
+      setShowMatch(true);
+    } else if (result.sent) {
+      toast('Boo sent');
+    }
   }, [profile, myEmail, sendTap]);
 
   const handleMessage = useCallback(() => {
@@ -243,11 +263,30 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
   }
 
   // ── Loaded ───────────────────────────────────────────────────────────────
+  const handleMatchMessage = useCallback(() => {
+    if (!profile) return;
+    setShowMatch(false);
+    openSheet('chat', {
+      userId: profile.id,
+      title: `Chat with ${profile.display_name || 'Someone'}`,
+    });
+  }, [profile, openSheet]);
+
   const heroUrl = profile.avatar_url || profile.photos?.[0]?.url || null;
   const displayAge = profile.age ? `, ${profile.age}` : '';
 
   return (
     <div className="h-full bg-[#0D0D0D] flex flex-col overflow-hidden">
+      {/* Match overlay */}
+      <MatchOverlay
+        visible={showMatch}
+        myAvatarUrl={myAvatarUrl}
+        theirAvatarUrl={heroUrl}
+        theirName={profile.display_name || 'Someone'}
+        onMessage={handleMatchMessage}
+        onDismiss={() => setShowMatch(false)}
+      />
+
       {/* Hero photo */}
       <div className="relative w-full aspect-[4/3] flex-shrink-0 bg-[#1C1C1E]">
         {heroUrl ? (
@@ -280,6 +319,19 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-5 pt-4 pb-safe">
+        {/* Mutual match banner */}
+        {profile.email && isMutualBoo(profile.email) && (
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3"
+            style={{ background: 'rgba(200,150,44,0.1)', border: '1px solid rgba(200,150,44,0.25)' }}
+          >
+            <Ghost className="w-4 h-4" style={{ color: '#C8962C' }} />
+            <span className="text-xs font-bold" style={{ color: '#C8962C' }}>
+              You matched — say something
+            </span>
+          </div>
+        )}
+
         {/* Name + verified */}
         <div className="flex items-center gap-2 mb-1">
           <h2 className="text-xl font-bold text-white">

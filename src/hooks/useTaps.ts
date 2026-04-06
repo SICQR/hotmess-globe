@@ -1,9 +1,10 @@
 /**
- * useTaps — Boo interaction logic
+ * useTaps — Boo interaction logic + mutual match detection
  *
- * Loads the current user's sent boos on mount so profile cards can
- * show an amber "already boo'd" state. Provides sendBoo() to
- * toggle a boo on a target profile email.
+ * Loads SENT and RECEIVED boos on mount so we can:
+ * - Show amber "already boo'd" state on profile cards
+ * - Detect mutual boos (both A→B and B→A exist)
+ * - Trigger match celebrations on mutual detection
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -12,41 +13,61 @@ import { pushNotify } from '@/lib/pushNotify';
 
 export type TapType = 'boo';
 
-/** Composite key: `${booer_email}|${boo'd_email}` */
 type TapKey = string;
 
 const makeKey = (from: string, to: string): TapKey => `${from}|${to}|boo`;
 
 export function useTaps(myEmail: string | null) {
   const [sentTaps, setSentTaps] = useState<Set<TapKey>>(new Set());
+  /** Emails of people who boo'd ME */
+  const [receivedFrom, setReceivedFrom] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!myEmail) {
       setSentTaps(new Set());
+      setReceivedFrom(new Set());
       return;
     }
 
     let cancelled = false;
     setIsLoading(true);
 
-    supabase
-      .from('taps')
-      .select('tapped_email, tap_type')
-      .eq('tapper_email', myEmail)
-      .then(({ data, error }) => {
+    // Fetch sent AND received boos in parallel
+    Promise.all([
+      supabase
+        .from('taps')
+        .select('tapped_email')
+        .eq('tapper_email', myEmail)
+        .eq('tap_type', 'boo'),
+      supabase
+        .from('taps')
+        .select('tapper_email')
+        .eq('tapped_email', myEmail)
+        .eq('tap_type', 'boo'),
+    ])
+      .then(([sentRes, receivedRes]) => {
         if (cancelled) return;
-        if (error) {
-          console.warn('[useTaps] taps table unavailable:', error.message);
-          setIsLoading(false);
-          return;
+
+        if (sentRes.error) {
+          console.warn('[useTaps] sent query failed:', sentRes.error.message);
         }
-        const keys = new Set<TapKey>(
-          (data || []).map((row: { tapped_email: string; tap_type: string }) =>
+        if (receivedRes.error) {
+          console.warn('[useTaps] received query failed:', receivedRes.error.message);
+        }
+
+        const sentKeys = new Set<TapKey>(
+          (sentRes.data || []).map((row: { tapped_email: string }) =>
             makeKey(myEmail, row.tapped_email)
           )
         );
-        setSentTaps(keys);
+        setSentTaps(sentKeys);
+
+        const recvSet = new Set<string>(
+          (receivedRes.data || []).map((row: { tapper_email: string }) => row.tapper_email)
+        );
+        setReceivedFrom(recvSet);
+
         setIsLoading(false);
       })
       .catch(() => {
@@ -68,16 +89,36 @@ export function useTaps(myEmail: string | null) {
     [myEmail, sentTaps]
   );
 
+  /** Check if this person also boo'd us back (mutual match) */
+  const isMutualBoo = useCallback(
+    (theirEmail: string): boolean => {
+      if (!myEmail) return false;
+      const iBoodThem = sentTaps.has(makeKey(myEmail, theirEmail));
+      const theyBoodMe = receivedFrom.has(theirEmail);
+      return iBoodThem && theyBoodMe;
+    },
+    [myEmail, sentTaps, receivedFrom]
+  );
+
+  /** Check if this person has boo'd me (regardless of whether I boo'd them) */
+  const hasReceivedBoo = useCallback(
+    (theirEmail: string): boolean => receivedFrom.has(theirEmail),
+    [receivedFrom]
+  );
+
   /**
-   * Toggle a boo. Returns true = boo'd, false = un-boo'd.
+   * Toggle a boo.
+   * Returns { sent: boolean, mutual: boolean }
+   *   sent = true means boo was placed, false means it was removed
+   *   mutual = true means both users have now boo'd each other
    */
   const sendTap = useCallback(
     async (
       tappedEmail: string,
       tappedName: string,
       _tapType?: TapType
-    ): Promise<boolean> => {
-      if (!myEmail) return false;
+    ): Promise<{ sent: boolean; mutual: boolean }> => {
+      if (!myEmail) return { sent: false, mutual: false };
 
       const key = makeKey(myEmail, tappedEmail);
       const alreadyDone = sentTaps.has(key);
@@ -97,7 +138,7 @@ export function useTaps(myEmail: string | null) {
           .eq('tap_type', 'boo');
 
         if (delErr) console.warn('[useTaps] delete failed:', delErr.message);
-        return false;
+        return { sent: false, mutual: false };
       }
 
       setSentTaps((prev) => new Set(prev).add(key));
@@ -114,8 +155,11 @@ export function useTaps(myEmail: string | null) {
           next.delete(key);
           return next;
         });
-        return false;
+        return { sent: false, mutual: false };
       }
+
+      // Check for mutual boo — did they already boo us?
+      const theyBoodMe = receivedFrom.has(tappedEmail);
 
       // Resolve sender display name
       let myDisplayName: string = 'Someone';
@@ -130,37 +174,64 @@ export function useTaps(myEmail: string | null) {
         // best-effort
       }
 
-      const notifTitle = 'Boo\'d you! 👻';
-      const notifBody = `${myDisplayName} boo'd you!`;
+      if (theyBoodMe) {
+        // Mutual match! Notify both parties
+        const matchTitle = 'It\'s a match! 👻';
+        const matchBodyForThem = `You and ${myDisplayName} both boo'd each other!`;
 
-      // In-app notification
-      supabase
-        .from('notifications')
-        .insert({
-          user_email: tappedEmail,
-          type: 'boo',
+        supabase
+          .from('notifications')
+          .insert({
+            user_email: tappedEmail,
+            type: 'match',
+            title: matchTitle,
+            message: matchBodyForThem,
+            read: false,
+          })
+          .then(({ error: notifErr }) => {
+            if (notifErr) console.warn('[useTaps] match notification failed:', notifErr.message);
+          })
+          .catch(() => {});
+
+        pushNotify({
+          emails: [tappedEmail],
+          title: matchTitle,
+          body: matchBodyForThem,
+          tag: 'match',
+          url: '/ghosted',
+        });
+      } else {
+        // One-way boo notification
+        const notifTitle = 'Boo\'d you! 👻';
+        const notifBody = `${myDisplayName} boo'd you!`;
+
+        supabase
+          .from('notifications')
+          .insert({
+            user_email: tappedEmail,
+            type: 'boo',
+            title: notifTitle,
+            message: notifBody,
+            read: false,
+          })
+          .then(({ error: notifErr }) => {
+            if (notifErr) console.warn('[useTaps] notification insert failed:', notifErr.message);
+          })
+          .catch(() => {});
+
+        pushNotify({
+          emails: [tappedEmail],
           title: notifTitle,
-          message: notifBody,
-          read: false,
-        })
-        .then(({ error: notifErr }) => {
-          if (notifErr) console.warn('[useTaps] notification insert failed:', notifErr.message);
-        })
-        .catch(() => {});
+          body: notifBody,
+          tag: 'boo',
+          url: '/ghosted',
+        });
+      }
 
-      // Push notification
-      pushNotify({
-        emails: [tappedEmail],
-        title: notifTitle,
-        body: notifBody,
-        tag: 'boo',
-        url: '/ghosted',
-      });
-
-      return true;
+      return { sent: true, mutual: theyBoodMe };
     },
     [myEmail, sentTaps]
   );
 
-  return { sentTaps, isTapped, sendTap, isLoading };
+  return { sentTaps, isTapped, sendTap, isMutualBoo, hasReceivedBoo, isLoading };
 }

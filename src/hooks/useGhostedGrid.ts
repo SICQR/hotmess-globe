@@ -135,7 +135,7 @@ export function useGhostedGrid(
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select(`
-          id, display_name, username, avatar_url, photos,
+          id, email, display_name, username, avatar_url, photos,
           last_lat, last_lng, last_loc_ts, is_online,
           age, looking_for, verified, city, bio,
           right_now_status, last_seen
@@ -187,7 +187,7 @@ export function useGhostedGrid(
       const { data: profiles } = await supabase
         .from('profiles')
         .select(`
-          id, display_name, username, avatar_url, photos,
+          id, email, display_name, username, avatar_url, photos,
           last_lat, last_lng, is_online, age, looking_for, verified, last_seen
         `)
         .in('id', allUserIds)
@@ -302,6 +302,7 @@ export function useGhostedGrid(
           contextLabel,
           vibe: null,
           intent: intent ? String(intent).toLowerCase() : null,
+          email: p.email || null,
         } as GhostedCardProps;
       })
       .sort((a: GhostedCardProps, b: GhostedCardProps) => {
@@ -365,6 +366,7 @@ export function useGhostedGrid(
           contextLabel,
           vibe: null,
           intent: null,
+          email: p.email || null,
         } as GhostedCardProps;
       });
   }, [liveQuery.data, blockedIds, myLat, myLng]);
