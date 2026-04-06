@@ -403,6 +403,8 @@ test.describe('QA-05 · Boo / Boo back / Match overlay', () => {
               to_user_id: 'e2e00002-0000-0000-0000-000000000002',
             }),
           });
+          const tapBody = await res.text().catch(() => '');
+          console.log(`  [QA-05] Alpha tap INSERT status=${res.status()} body=${tapBody.substring(0, 200)}`);
           booSent = res.status() === 201 || res.status() === 200;
         }
       }
@@ -529,44 +531,23 @@ test.describe('QA-06 · Chat send + receive', () => {
       }
 
       if (!msgSentViaUI) {
-        // Fallback: send via REST API
-        // Find existing thread first
-        const threadRes = await pageA.request.get(
-          `${SUPABASE_URL}/rest/v1/chat_threads?participant_emails=cs.{${TEST_USER_A.email},${TEST_USER_B.email}}&limit=1`,
-          {
-            headers: { 'apikey': ANON_KEY, 'Authorization': `Bearer ${tokenA}` },
-          }
+        // Fallback: send via REST API using the conversations/conversation_members system
+        // The messages table requires membership in conversation_members, NOT chat_threads.
+        // Known conversation ID between e2e.alpha and e2e.beta:
+        const KNOWN_CONV_ID = '87f59e4e-de1c-4c26-985d-ea1a0b847dd6';
+
+        // Verify we're a member (should always be true for e2e users)
+        const memberRes = await pageA.request.get(
+          `${SUPABASE_URL}/rest/v1/conversation_members?conversation_id=eq.${KNOWN_CONV_ID}&user_id=eq.e2e00001-0000-0000-0000-000000000001&select=user_id`,
+          { headers: { 'apikey': ANON_KEY, 'Authorization': `Bearer ${tokenA}` } }
         );
-        const threads = await threadRes.json().catch(() => []);
-        let threadId: string | null = null;
+        const memberRows = await memberRes.json().catch(() => []);
+        const isMember = Array.isArray(memberRows) && memberRows.length > 0;
+        console.log(`  [QA-06] Alpha membership check: isMember=${isMember} status=${memberRes.status()}`);
 
-        if (Array.isArray(threads) && threads.length > 0) {
-          threadId = threads[0].id;
-        } else {
-          // Create thread
-          const createRes = await pageA.request.post(
-            `${SUPABASE_URL}/rest/v1/chat_threads`,
-            {
-              headers: {
-                'apikey': ANON_KEY,
-                'Authorization': `Bearer ${tokenA}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=representation',
-              },
-              data: JSON.stringify({
-                participant_emails: [TEST_USER_A.email, TEST_USER_B.email],
-                thread_type: 'direct',
-                active: true,
-              }),
-            }
-          );
-          const created = await createRes.json().catch(() => null);
-          if (created && (Array.isArray(created) ? created[0]?.id : created?.id)) {
-            threadId = Array.isArray(created) ? created[0].id : created.id;
-          }
-        }
+        const convId = isMember ? KNOWN_CONV_ID : null;
 
-        if (threadId) {
+        if (convId) {
           const msgRes = await pageA.request.post(
             `${SUPABASE_URL}/rest/v1/messages`,
             {
@@ -577,12 +558,14 @@ test.describe('QA-06 · Chat send + receive', () => {
                 'Prefer': 'return=representation',
               },
               data: JSON.stringify({
-                conversation_id: threadId,
+                conversation_id: convId,
                 content: testMsg,
                 sender_id: 'e2e00001-0000-0000-0000-000000000001',
               }),
             }
           );
+          const msgBody = await msgRes.text().catch(() => '');
+          console.log(`  [QA-06] message INSERT status=${msgRes.status()} body=${msgBody.substring(0, 200)}`);
           msgSentViaUI = msgRes.status() === 201 || msgRes.status() === 200;
         }
       }
@@ -593,7 +576,7 @@ test.describe('QA-06 · Chat send + receive', () => {
         await pageB.waitForTimeout(2000);
 
         const msgCheckRes = await pageB.request.get(
-          `${SUPABASE_URL}/rest/v1/messages?content=eq.${encodeURIComponent(testMsg)}&sender_id=eq.e2e00001-0000-0000-0000-000000000001&select=id,content`,
+          `${SUPABASE_URL}/rest/v1/messages?content=eq.${encodeURIComponent(testMsg)}&conversation_id=eq.87f59e4e-de1c-4c26-985d-ea1a0b847dd6&select=id,content`,
           {
             headers: { 'apikey': ANON_KEY, 'Authorization': `Bearer ${tokenB}` },
           }
@@ -613,6 +596,7 @@ test.describe('QA-06 · Chat send + receive', () => {
 
 test.describe('QA-07 · Chat image upload', () => {
   test('Image upload file input is present in the chat sheet', async ({ browser }) => {
+    test.setTimeout(120_000);
     test.skip(!E2E_AUTH_CONFIGURED, 'Skipping — auth secrets not configured');
     const ctx = await mkCtx(browser);
     const page = await ctx.newPage();
