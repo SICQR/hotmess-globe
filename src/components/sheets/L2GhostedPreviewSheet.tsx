@@ -357,7 +357,7 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
           <h2 className="text-xl font-bold text-white">
             {profile.display_name}{displayAge}
           </h2>
-          {profile.verified && (
+          {profile.is_verified && (
             <BadgeCheck className="w-5 h-5 text-[#C8962C]" />
           )}
         </div>
