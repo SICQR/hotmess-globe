@@ -77,7 +77,7 @@ export default function L2BoostShopSheet() {
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 pt-4 pb-2">
-        <h2 className="text-xl font-black text-white">⚡ POWER-UPS</h2>
+        <h2 className="text-xl font-black text-white">POWER-UPS</h2>
         <p className="text-white/40 text-sm mt-0.5">One-time purchases. No subscription needed.</p>
       </div>
       <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-3">

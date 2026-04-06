@@ -9,19 +9,17 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Crown, Check, Zap, Eye, MessageCircle, Loader2, Music, MapPin, Users, Radio } from 'lucide-react';
+import { Crown, Check, Zap, Eye, Loader2, Music, MapPin, Users } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 
 const FEATURE_ROWS = [
-  { icon: Eye,           label: 'Full Ghosted grid',      free: '3 previews', paid: 'Unlimited' },
-  { icon: MessageCircle, label: 'Messaging & taps',       free: false,        paid: true        },
-  { icon: Zap,           label: 'Tonight intention',      free: false,        paid: true        },
-  { icon: Music,         label: 'Smash Daddys library',   free: '90s preview',paid: 'Full tracks' },
-  { icon: MapPin,        label: 'Beacon drops/month',     free: '0',          paid: '3'         },
-  { icon: Users,         label: 'Personas',               free: '1',          paid: '2'         },
-  { icon: Radio,         label: 'HOTMESS Radio',          free: true,         paid: true        },
+  { icon: Eye,           label: 'Ghosted grid',           free: 'Limited',    paid: 'Full access' },
+  { icon: Zap,           label: 'Go Live / intentions',   free: false,        paid: true          },
+  { icon: Music,         label: 'Full track library',     free: '90s preview',paid: 'Unlimited'   },
+  { icon: MapPin,        label: 'Beacon drops',           free: '0/mo',       paid: '3/mo'        },
+  { icon: Users,         label: 'Personas',               free: '1',          paid: '2'           },
 ];
 
 function penceToDisplay(pence) {
@@ -105,8 +103,8 @@ export default function L2MembershipSheet() {
         <div className="w-16 h-16 rounded-2xl bg-[#C8962C]/20 border border-[#C8962C]/30 flex items-center justify-center mx-auto mb-4">
           <Crown className="w-8 h-8 text-[#C8962C]" />
         </div>
-        <h2 className="text-white font-black text-xl">Go Premium</h2>
-        <p className="text-white/50 text-sm mt-1">Unlock the full HOTMESS experience</p>
+        <h2 className="text-white font-black text-xl">Premium</h2>
+        <p className="text-white/40 text-sm mt-1">Full grid. More visibility. No limits.</p>
       </div>
 
       {/* Tier selector */}
