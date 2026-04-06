@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useRadio } from '@/components/shell/RadioContext';
+import { useRadio } from '@/contexts/RadioContext';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
@@ -81,7 +81,7 @@ async function postFormWithAuth(url, formData) {
 
 export default function Music() {
   const location = useLocation();
-  const { isRadioOpen, openRadio } = useRadio();
+  const { isPlaying: isRadioOpen, togglePlay: openRadio } = useRadio();
   const [activeTab, setActiveTab] = useState(() => {
     const path = location?.pathname ?? '';
     if (path.startsWith('/music/releases')) return 'releases';

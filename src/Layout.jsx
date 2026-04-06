@@ -11,7 +11,7 @@ import GlobalSearch from '@/components/search/GlobalSearch';
 import OfflineIndicator from '@/components/ui/OfflineIndicator';
 import EventReminders from '@/components/events/EventReminders';
 import { TaxonomyProvider } from '@/components/taxonomy/provider';
-import { RadioProvider } from '@/components/shell/RadioContext';
+// Legacy RadioProvider removed — App.jsx wraps with new RadioContext
 import ErrorBoundary from '@/components/error/ErrorBoundary';
 import PageErrorBoundary from '@/components/error/PageErrorBoundary';
 import SkipToContent from '@/components/accessibility/SkipToContent';
@@ -19,8 +19,7 @@ import { useKeyboardNav } from '@/components/accessibility/KeyboardNav';
 import { A11yAnnouncer } from '@/components/accessibility/KeyboardNav';
 import WelcomeTour from '@/components/onboarding/WelcomeTour';
 import RightNowNotifications from '@/components/discovery/RightNowNotifications';
-import PersistentRadioPlayer from '@/components/shell/PersistentRadioPlayer';
-import { useRadio } from '@/components/shell/RadioContext';
+import { useRadio } from '@/contexts/RadioContext';
 import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
 // CookieConsent removed — handled by CookieBanner in App.jsx
 import UnifiedCartDrawer from '@/components/marketplace/UnifiedCartDrawer';
@@ -51,7 +50,7 @@ function LayoutInner({ children, currentPageName }) {
   const [showSearch, setShowSearch] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { toggleRadio, isRadioOpen } = useRadio();
+  const { togglePlay: toggleRadio, isPlaying: isRadioOpen } = useRadio();
 
   // Enable OS URL sync
   useOSURLSync();
@@ -674,8 +673,7 @@ function LayoutInner({ children, currentPageName }) {
       {/* Right Now Match Notifications */}
       {user && <RightNowNotifications currentUser={user} />}
 
-      {/* Persistent Radio Player - Never Unmounts */}
-      <PersistentRadioPlayer />
+      {/* Legacy PersistentRadioPlayer removed — RadioMiniPlayer in App.jsx handles playback */}
 
       {/* Mobile Bottom Navigation — hidden on OS mode routes (OSBottomNav handles those) */}
       {!['/','','/ghosted','/pulse','/radio','/profile'].includes(pathname.replace(/\/$/, '') || '/') && (
@@ -691,10 +689,8 @@ function LayoutInner({ children, currentPageName }) {
 
 export default function Layout(props) {
   return (
-    <RadioProvider>
-      <TonightModeProvider>
-        <LayoutInner {...props} />
-      </TonightModeProvider>
-    </RadioProvider>
+    <TonightModeProvider>
+      <LayoutInner {...props} />
+    </TonightModeProvider>
   );
 }

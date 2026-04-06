@@ -6,10 +6,10 @@ import { Radio as RadioIcon, ExternalLink, Download, Clock, Heart } from 'lucide
 import { Button } from '@/components/ui/button';
 import { schedule, getNextEpisode, formatSchedule, generateICS, downloadICS } from '../components/radio/radioUtils';
 import { format } from 'date-fns';
-import { useRadio } from '../components/shell/RadioContext';
+import { useRadio } from '@/contexts/RadioContext';
 
 export default function WakeTheMess() {
-  const { openRadio } = useRadio();
+  const { togglePlay: openRadio } = useRadio();
   const show = schedule.shows[0];
   const nextEpisode = getNextEpisode(show.id);
 

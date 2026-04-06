@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Radio as RadioIcon, Calendar, ExternalLink, Play, Pause, Disc3, Mic2, Rss } from 'lucide-react';
 import { schedule } from '../components/radio/radioUtils';
-import { useRadio } from '../components/shell/RadioContext';
+import { useRadio } from '@/contexts/RadioContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import BrandBackground from '@/components/ui/BrandBackground';
 
@@ -133,7 +133,7 @@ function ReleaseCard({ beacon }) {
 }
 
 export default function Radio() {
-  const { openRadio } = useRadio();
+  const { togglePlay: openRadio } = useRadio();
   const [releases, setReleases] = useState([]);
 
   useEffect(() => {
