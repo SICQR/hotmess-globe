@@ -41,7 +41,7 @@ const INTENT_RING: Record<string, string> = {
 };
 
 export function SimpleProfileCard({
-  name,
+  name: nameProp,
   photoUrl,
   status = 'offline',
   distance,
@@ -57,12 +57,8 @@ export function SimpleProfileCard({
   onClick,
   onVibeTagClick,
 }: SimpleProfileCardProps) {
-  const initials = name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase() || 'HM';
+  const name = nameProp?.trim() || 'Anonymous';
+  const initials = name.slice(0, 2).toUpperCase();
 
   // Presence: online (green), away (amber), offline (grey)
   // status prop is already computed by ProfileCard from last_seen timestamps
@@ -85,9 +81,9 @@ export function SimpleProfileCard({
     ? distanceKm < 1
       ? `${Math.round(distanceKm * 1000)}m`
       : `${distanceKm.toFixed(1)}km`
-    : distance || null;
+    : distance || 'Nearby';
 
-  const distColor = distanceKm !== undefined
+  const distColor = distanceKm != null
     ? distanceKm < 0.5 ? '#30D158' : distanceKm < 2 ? '#FF9F0A' : 'rgba(255,255,255,0.4)'
     : 'rgba(255,255,255,0.4)';
 

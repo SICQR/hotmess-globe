@@ -182,11 +182,11 @@ export function useGlobeActivity(liveBeaconCount: number): GlobeActivityData {
       })
       .subscribe();
 
-    // 3. Preloved listings — preloved_listings INSERT → sparkle
+    // 3. Market listings — market_listings INSERT → sparkle
     const listingsChannel = supabase
       .channel('globe-listings')
       .on('postgres_changes', {
-        event: 'INSERT', schema: 'public', table: 'preloved_listings',
+        event: 'INSERT', schema: 'public', table: 'market_listings',
       }, () => {
         pushEvent({
           id: `listing-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,

@@ -3,7 +3,7 @@
  *
  * 7-step flow: Photos -> Details -> Price -> Delivery -> Review -> Publish
  *
- * Writes to `preloved_listings` (new schema with enums).
+ * Writes to `market_listings` table.
  * Chat-first: no cart, no checkout. Listing goes live, buyers message seller.
  *
  * Colour: #9E7D47 (preloved brown)

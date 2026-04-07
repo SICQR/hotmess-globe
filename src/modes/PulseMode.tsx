@@ -2097,7 +2097,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     refetchInterval: 30_000,
   });
 
-  // ---- Data: Drops Nearby (preloved_listings + music_drops) ------------------
+  // ---- Data: Drops Nearby (market_listings + music_drops) --------------------
   const {
     data: dropsNearby = [],
     isLoading: dropsLoading,
