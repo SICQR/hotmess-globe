@@ -135,10 +135,10 @@ export function useGhostedGrid(
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select(`
-          id, email, display_name, username, avatar_url, photos,
-          last_lat, last_lng, last_loc_ts, is_online,
+          id, email, display_name, username, avatar_url,
+          last_loc_ts, is_online,
           age, looking_for, is_verified, city, bio,
-          right_now_status, last_seen
+          last_seen
         `)
         .or(`is_online.eq.true,last_seen.gte.${thirtyMinAgo}`)
         .neq('id', myId!)
@@ -187,8 +187,8 @@ export function useGhostedGrid(
       const { data: profiles } = await supabase
         .from('profiles')
         .select(`
-          id, email, display_name, username, avatar_url, photos,
-          last_lat, last_lng, is_online, age, looking_for, is_verified, last_seen
+          id, email, display_name, username, avatar_url,
+          is_online, age, looking_for, is_verified, last_seen
         `)
         .in('id', allUserIds)
         .not('display_name', 'is', null);
@@ -277,7 +277,8 @@ export function useGhostedGrid(
           if (!lf.some((v: string) => v.includes('hang') || v.includes('friend'))) return false;
         }
         if (filterChip === 'tonight') {
-          if (!p.right_now_status) return false;
+          // right_now_status is a separate TABLE — not a column on profiles.
+          // Fall through (show all) until a JOIN is added to this query.
         }
         return true;
       })
