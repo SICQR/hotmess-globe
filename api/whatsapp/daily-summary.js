@@ -45,7 +45,7 @@ ${messageText}`
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'HOTMESS OS <os@hotmessldn.com>',
+      from: 'HOTMESS OS <os@send.hotmessldn.com>',
       to: 'phil@hotmessldn.com',
       subject: `📱 WhatsApp Brief — ${dateStr}`,
       html: `
