@@ -546,7 +546,7 @@ export default function OnboardingGate() {
                     } catch {}
                   }
                 }}
-                label="I confirm I am 18 years or older and understand this is a private members club for men"
+                label="I confirm I am a man aged 18 or over"
               />
             </div>
 

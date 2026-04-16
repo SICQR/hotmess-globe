@@ -123,14 +123,14 @@ export default function SignUpScreen({ isSignIn = false }) {
             <Mail className="w-7 h-7" style={{ color: GOLD }} />
           </div>
 
-          <h2 className="text-white text-xl font-black mb-2">Check your inbox</h2>
+          <h2 className="text-white text-xl font-black mb-2">Check your inbox.</h2>
           <p className="text-white/50 text-sm leading-relaxed mb-1">
-            Magic link sent to
+            Link sent to
           </p>
           <p className="text-white/80 text-sm font-semibold mb-8 break-all">{email}</p>
 
           <p className="text-white/30 text-xs mb-6">
-            Tap the link in your email to sign in. It expires in 10 minutes.
+            Tap it and you're in. Expires in 10 minutes.
           </p>
 
           {/* Resend */}
@@ -158,7 +158,7 @@ export default function SignUpScreen({ isSignIn = false }) {
             className="text-xs font-medium"
             style={{ color: 'rgba(255,255,255,0.3)' }}
           >
-            Wrong email? Start over
+            Wrong email? Start again
           </button>
         </div>
       </div>
@@ -172,10 +172,10 @@ export default function SignUpScreen({ isSignIn = false }) {
       style={{ background: '#0A0A0A' }}
     >
       <div className="w-full max-w-xs">
-        {!isSignIn && <ProgressDots current={2} total={5} />}
+        {!isSignIn && <ProgressDots current={2} total={3} />}
 
         <h2 className="text-white text-xl font-bold mb-8">
-          {isSignIn ? 'Welcome back' : 'Create your account'}
+          {isSignIn ? "You're back. Good." : "Let's get you in."}
         </h2>
 
         {/* OAuth buttons */}
@@ -242,7 +242,7 @@ export default function SignUpScreen({ isSignIn = false }) {
               opacity: loading || !email.trim() ? 0.3 : 1,
             }}
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send magic link'}
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send my link'}
           </button>
         </form>
 

@@ -1,13 +1,6 @@
 /**
- * QuickSetupScreen — Avatar upload, display name, location toggle.
- *
- * Replaces QuickProfile + Vibe + Safety + Location in the new 3-step flow.
- * Single screen, one "Let's go" button. No terms gate — covered by GDPR consent insert.
- *
- * Writes:
- *   profiles.upsert — display_name, avatar_url, has_consented_gps, onboarding_completed, onboarding_stage
- *   gdpr_consents.insert — consent_type 'onboarding_v2'
- *   presence.upsert — if location enabled
+ * QuickSetupScreen — Name, photo, location. HOTMESS tone.
+ * Name first. Photo optional and secondary. Location with clear payoff.
  */
 import React, { useState, useRef } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
@@ -44,20 +37,17 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
     setPhotoPreview(URL.createObjectURL(file));
     setPhotoUploaded(false);
     setError('');
-
-    // Upload immediately so user gets instant feedback
     if (userId) {
       setUploadingPhoto(true);
       try {
         const url = await uploadToStorage(file, 'avatars', userId);
-        setPhotoFile(url); // store the URL instead of File for submit
+        setPhotoFile(url);
         setPhotoUploaded(true);
-        // Write to profile_photos with moderation status
         await insertProfilePhoto(userId, url, 0, true).catch(() => {});
       } catch (err) {
         console.warn('[QuickSetup] avatar upload failed:', err);
         setError('Photo upload failed — you can retry or continue without');
-        setPhotoFile(file); // keep original file for retry on submit
+        setPhotoFile(file);
       } finally {
         setUploadingPhoto(false);
       }
@@ -70,18 +60,14 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
     setError('');
 
     try {
-      // 1. Avatar — already uploaded on select, or retry if File still present
       let avatarUrl = null;
       if (typeof photoFile === 'string') {
-        // Already uploaded URL
         avatarUrl = photoFile;
       } else if (photoFile instanceof File) {
-        // Upload failed earlier, retry now
         setUploadingPhoto(true);
         try {
           avatarUrl = await uploadToStorage(photoFile, 'avatars', userId);
           setPhotoUploaded(true);
-          // Write to profile_photos on retry success
           await insertProfilePhoto(userId, avatarUrl, 0, true).catch(() => {});
         } catch (uploadErr) {
           console.warn('[QuickSetup] avatar upload failed:', uploadErr);
@@ -90,7 +76,6 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
         }
       }
 
-      // 2. Get location if toggled on
       let coords = null;
       if (locationEnabled) {
         try {
@@ -106,7 +91,6 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
         }
       }
 
-      // 3. Upsert profile (only columns that exist in prod profiles table)
       await supabase.from('profiles').upsert(
         {
           id: userId,
@@ -120,16 +104,11 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
           is_online: true,
           is_visible: true,
           updated_at: new Date().toISOString(),
-          ...(coords
-            ? {
-                last_loc_ts: new Date().toISOString(),
-              }
-            : {}),
+          ...(coords ? { last_loc_ts: new Date().toISOString() } : {}),
         },
         { onConflict: 'id' }
       );
 
-      // 4. Insert GDPR consent
       await supabase.from('gdpr_consents').insert({
         user_id: userId,
         user_email: userEmail,
@@ -137,7 +116,6 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
         consented_at: new Date().toISOString(),
       });
 
-      // 5. Write presence if location enabled
       if (coords) {
         await supabase.from('user_presence').upsert(
           {
@@ -152,13 +130,11 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
         );
       }
 
-      // 6. Set localStorage for BootGuard fallbacks
       try {
         localStorage.setItem('hm_age_confirmed_v1', 'true');
         localStorage.setItem('hm_community_attested_v1', 'true');
-      } catch {
-        // localStorage unavailable
-      }
+        localStorage.setItem('hm_last_display_name', displayName.trim());
+      } catch {}
 
       onComplete();
     } catch (err) {
@@ -173,46 +149,18 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
     <div className="fixed inset-0 bg-black flex flex-col items-center justify-center px-6 overflow-y-auto">
       <OnboardingBackButton onBack={onBack} />
       <div className="w-full max-w-xs py-12">
-        <h2 className="text-white text-xl font-bold mb-8">{"You're almost in."}</h2>
 
-        {/* Avatar upload */}
-        <div className="flex flex-col items-center mb-8">
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="relative w-24 h-24 rounded-full border-2 border-dashed flex items-center justify-center overflow-hidden"
-            style={{ borderColor: photoPreview ? GOLD : '#333' }}
-            aria-label="Upload profile photo"
-          >
-            {photoPreview ? (
-              <img src={photoPreview} alt="Profile preview" className="w-full h-full object-cover" />
-            ) : (
-              <Camera className="w-6 h-6 text-white/30" />
-            )}
-            {uploadingPhoto && (
-              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                <Loader2 className="w-5 h-5 animate-spin text-white" />
-              </div>
-            )}
-            {photoUploaded && !uploadingPhoto && (
-              <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: GOLD }}>
-                <Check className="w-3.5 h-3.5 text-black" />
-              </div>
-            )}
-          </button>
-          <p className="text-center text-xs mt-2" style={{ color: photoUploaded ? GOLD : 'rgba(255,255,255,0.3)' }}>
-            {uploadingPhoto ? 'Uploading…' : photoUploaded ? 'Photo saved' : photoPreview ? 'Tap to change' : 'Add a photo (optional)'}
-          </p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handlePhotoSelect}
-            className="hidden"
-          />
+        {/* Step indicator */}
+        <div className="flex gap-2 mb-8">
+          {[0,1,2].map((i) => (
+            <span key={i} className="text-xs" style={{ color: GOLD }}>●</span>
+          ))}
         </div>
 
-        {/* Display name */}
-        <div className="mb-6">
+        <h2 className="text-white text-xl font-bold mb-8">Make yourself at home.</h2>
+
+        {/* Display name — first */}
+        <div className="mb-8">
           <input
             type="text"
             value={displayName}
@@ -227,15 +175,54 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
           <p className="text-white/20 text-xs mt-1 text-right">{displayName.length}/30</p>
         </div>
 
+        {/* Avatar upload — second, inline */}
+        <div className="flex items-center gap-4 mb-8">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="relative w-16 h-16 rounded-full border-2 border-dashed flex items-center justify-center overflow-hidden flex-shrink-0"
+            style={{ borderColor: photoPreview ? GOLD : '#333' }}
+            aria-label="Upload profile photo"
+          >
+            {photoPreview ? (
+              <img src={photoPreview} alt="Profile preview" className="w-full h-full object-cover" />
+            ) : (
+              <Camera className="w-5 h-5 text-white/30" />
+            )}
+            {uploadingPhoto && (
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                <Loader2 className="w-4 h-4 animate-spin text-white" />
+              </div>
+            )}
+            {photoUploaded && !uploadingPhoto && (
+              <div className="absolute bottom-0 right-0 w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: GOLD }}>
+                <Check className="w-3 h-3 text-black" />
+              </div>
+            )}
+          </button>
+          <div className="flex flex-col">
+            <span className="text-white/60 text-sm">
+              {uploadingPhoto ? 'Uploading…' : photoUploaded ? 'Photo saved ✓' : 'Add a photo'}
+            </span>
+            <span className="text-white/25 text-xs mt-0.5">Optional — add one later</span>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoSelect}
+            className="hidden"
+          />
+        </div>
+
         {/* Location toggle */}
-        <div className="flex items-center justify-between mb-10 py-3">
+        <div className="flex items-center justify-between mb-10 py-3 border-t border-white/5">
           <div className="flex items-center gap-2">
             <MapPin
               className="w-4 h-4 flex-shrink-0"
               style={{ color: locationEnabled ? GOLD : '#555' }}
             />
             <span className="text-white/60 text-sm leading-tight">
-              Share my location to see who's nearby
+              See who's out near you tonight
             </span>
           </div>
           <button

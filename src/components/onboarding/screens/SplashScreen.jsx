@@ -79,6 +79,17 @@ export default function SplashScreen({ onJoin, onSignIn, fastPath = false, onFas
         >
           London
         </p>
+        <p
+          className="text-[11px] font-medium tracking-[0.15em] uppercase mt-6 text-center"
+          style={{
+            color: '#ffffff',
+            opacity: ctasIn ? 0.45 : 0,
+            transition: 'opacity 0.6s ease 0.2s',
+            letterSpacing: '0.2em',
+          }}
+        >
+          Always too much. Yet never enough.
+        </p>
       </div>
 
       {/* CTAs */}
