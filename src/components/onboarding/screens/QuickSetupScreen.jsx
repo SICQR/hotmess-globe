@@ -113,10 +113,10 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
       );
 
       await supabase.from('gdpr_consents').insert({
-        user_id: userId,
         user_email: userEmail,
         consent_type: 'onboarding_v2',
-        consented_at: new Date().toISOString(),
+        granted: true,
+        granted_at: new Date().toISOString(),
       });
 
       if (coords) {
