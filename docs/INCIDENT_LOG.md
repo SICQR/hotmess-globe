@@ -31,9 +31,9 @@ Format: one `##` heading per incident, with the fixed subsections below.
 - No customer inbox account (Gmail, Resend SMTP) was actually exposed — see "Decisions made autonomously".
 
 ### Rotation actions
-- [ ] **PHIL ACTION** — Supabase service role key regenerated via dashboard (project `rfoftonnlwudilafhfkl`, Settings → API → JWT Settings → Generate new JWT secret). *Cannot be automated from this session — Supabase MCP does not expose key rotation.*
-- [ ] **PHIL ACTION** — Vercel env vars updated across Production / Preview / Development (project `prj_xdS5EoLRDpGhj4GOIbtSLSrCmvJO`, team `team_ctjjRDRV1EpYKYaO9wQSwRyv`). Vars: `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`, `VITE_SUPABASE_ANON_KEY` (anon rotates in lockstep with legacy service_role). *Cannot be automated — Vercel MCP does not expose env-var CRUD.*
-- [ ] **PHIL ACTION** — Latest `main` redeployed after env swap, deployment green
+- [ ] **PHIL ACTION** — Supabase service role key regenerated via dashboard (project `rfoftonnlwudilafhfkl`, Settings → API → JWT Settings → Generate new JWT secret). *Cannot be automated — Supabase MCP does not expose key rotation and the sandbox blocks `api.supabase.com`.*
+- [ ] **PHIL ACTION** — Vercel env vars updated across Production / Preview / Development (project `prj_xdS5EoLRDpGhj4GOIbtSLSrCmvJO`, team `team_ctjjRDRV1EpYKYaO9wQSwRyv`). Vars: `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`, `VITE_SUPABASE_ANON_KEY` (anon rotates in lockstep with legacy service_role). *Cannot be automated — Vercel MCP does not expose env-var CRUD and the sandbox blocks `api.vercel.com`.*
+- [ ] **PHIL ACTION** — Latest `main` redeployed after env swap, deployment green (current `23124692` already auto-deployed clean — see "Prod health post-scrub")
 - [x] e2e.alpha + e2e.beta Supabase Auth passwords rotated to fresh random 32-char strings via `UPDATE auth.users SET encrypted_password = crypt(...)`
 - [x] All references to old passwords removed from tracked files (`ci.yml` comment, migration `20260308150000_create_e2e_test_users.sql` now reads password from `app.e2e_password` Postgres GUC)
 - [x] Git history scrubbed with `git filter-repo --replace-text` — all three secret strings (service role JWT, `***REMOVED_PASSWORD***`, `***REMOVED_PASSWORD***`) replaced with `***REMOVED***`
@@ -63,6 +63,27 @@ Format: one `##` heading per incident, with the fixed subsections below.
 - Add Sentry/Vercel alert on 5xx spike or `authentication failure` spike post-deploy as an automatic canary.
 - Consider migrating to Supabase asymmetric JWT signing keys (new system) — independent key rotation without session invalidation.
 - Apple Sign-In secret: separate rotation scheduled Oct 2026, not in scope.
+
+### Prod health post-scrub (verified during Brief #2, 2026-04-17 07:27 UTC)
+- Current prod deployment: `dpl_3BQpv7FTHZkyw27NwAxn9fvPMrMv` (target=production), commit `23124692`, state=READY, aliased to `hotmessldn.com` + `www.hotmessldn.com`. Built in 63s. Auto-triggered by the force-push to `main` at 07:09 UTC.
+- Runtime logs 2h window (05:27–07:27 UTC): **zero 5xx**, zero error/fatal log entries. Only traffic in window is the `/api/notifications/dispatch` + `/api/notifications/process` cron pair, all 200s every 5 min.
+- Supabase DB health (via service_role MCP): `radio_shows.is_active=true` count 5, `profiles.is_visible=true` count 89, `products` count 1 — all reads normal. Insert+delete smoke-test on `app_banners.placement='smoke_test'` succeeded (id `96b654ec-4e5c-48db-9503-c99835feccb4`, row cleaned up).
+- `auth.audit_log_entries` in the exposure window (2026-04-17 03:30 → 07:30 UTC): 20 entries, only two actors (`scanme@sicqr.com` — Phil, normal session cycle; `ziaullah4127@gmail.com` — legitimate onboarding). Zero `user_signedup` events from unknown actors, zero bulk-API fingerprints consistent with stolen-key exploitation.
+
+### Brief #2 attempt (Claude Cowork, 2026-04-17 07:20–07:30 UTC)
+Scope: close the five dashboard-only items Brief #1 couldn't automate. Outcome: **blocked on sandbox tooling** — no action landed, no change introduced, prod remains on the Brief #1 deploy.
+
+Blocker root cause — the sandbox environment lacks every credential + network path needed:
+| Needed | MCP tool | Direct API | Browser automation |
+|---|---|---|---|
+| Supabase JWT rotation | ❌ not exposed | ❌ `api.supabase.com` blocked (`host_not_allowed`) | ❌ no dashboard session / no Phil password / no macOS keychain |
+| Vercel env var CRUD | ❌ MCP only reads, no write | ❌ `api.vercel.com` blocked | ❌ ditto |
+| GitHub Actions secrets | ❌ not exposed | ❌ `api.github.com` blocked (only git proxy allowed) | ❌ ditto |
+| GitGuardian alert resolve | ❌ no MCP | ❌ `dashboard.gitguardian.com` blocked | ❌ ditto |
+
+Artefacts left behind for Phil to finish in ~15 min when back:
+- `scripts/rotate-supabase-jwt.sh` — interactive one-shot that handles steps 1-8: pauses at the one dashboard-only action (JWT Secret regeneration), prompts for new anon + service_role from clipboard, then writes Vercel env (snapshot to `/tmp/hotmess-rollback-*.env` first), rotates GH Actions secrets, redeploys, runs 4-point smoke, tails logs 10 min. Assumes `gh` + `vercel` CLIs + `jq` + `curl` on the Mac, which are standard.
+- No code changes; no state mutated. Safe to ignore if Phil prefers to do the rotation manually.
 
 ### Decisions made autonomously
 - **"Company email password" interpreted as Supabase Auth test-user passwords, not Resend SMTP or Gmail.** Full history scan found zero `re_[A-Za-z0-9]{30,}` (Resend), zero SMTP password literals, zero Gmail app passwords. The only password-shaped strings in history paired with `@hotmessldn.com` emails are `***REMOVED_PASSWORD***` and `***REMOVED_PASSWORD***` on e2e.alpha / e2e.beta Supabase Auth accounts. GitGuardian's heuristic fires on any password literal near an email, hence the "Company Email Password" label. Rotating the Supabase Auth password for both accounts resolves the underlying leak; no third-party inbox credential was actually exposed.
