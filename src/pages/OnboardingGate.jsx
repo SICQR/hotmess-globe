@@ -21,7 +21,7 @@ import { humanizeError } from '@/lib/errorUtils';
 import { validateDisplayName, deriveUsernameSlug } from '@/lib/utils';
 import { AppBanner } from '@/components/banners/AppBanner';
 
-const AGE_KEY = 'hm_age_confirmed_v1';
+const AGE_KEY = 'hm_age_gate_passed';
 const GOLD = '#C8962C';
 const GOLD_HOVER = '#D4A84B';
 const TOTAL_STEPS = 8;

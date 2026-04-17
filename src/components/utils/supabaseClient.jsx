@@ -6,8 +6,8 @@ const createPageUrl = (pageName) => `/${pageName}`;
 
 // Use environment variables - set in Vercel dashboard
 // Trim to remove any accidental newlines from env vars
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://rfoftonnlwudilafhfkl.supabase.co";
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmb2Z0b25ubHd1ZGlsYWZoZmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2NTg4MTAsImV4cCI6MjA2OTIzNDgxMH0.W4g28oa8m-KkaLhgpkoyHW2fo5Jec1K-vfeRVxAhFdI";
+const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+const supabaseKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 
 if (!supabaseUrl || !supabaseKey) {
   console.error(

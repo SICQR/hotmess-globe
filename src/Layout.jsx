@@ -119,7 +119,7 @@ function LayoutInner({ children, currentPageName }) {
         // location permission, auto-apply the equivalent profile consent flags once.
         // This prevents loops where the app keeps redirecting to AccountConsents/OnboardingGate.
         try {
-          const AGE_KEY_CHECK = 'hm_age_confirmed_v1';
+          const AGE_KEY_CHECK = 'hm_age_gate_passed';
           const ageVerifiedLocal = localStorage.getItem(AGE_KEY_CHECK) === 'true';
           const locationConsent = sessionStorage.getItem('location_consent') === 'true';
           const locationPermission = sessionStorage.getItem('location_permission');

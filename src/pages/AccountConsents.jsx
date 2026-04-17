@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
 import { useCurrentUser } from '@/components/utils/queryConfig';
 
-const AGE_KEY = 'hm_age_confirmed_v1';
+const AGE_KEY = 'hm_age_gate_passed';
 
 export default function AccountConsents() {
   const navigate = useNavigate();

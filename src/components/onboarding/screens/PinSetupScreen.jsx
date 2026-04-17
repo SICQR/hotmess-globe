@@ -40,7 +40,7 @@ export default function PinSetupScreen({ onNext, onSkip }) {
       }).eq('id', user.id);
       // Set localStorage flags for BootGuard fallback
       try {
-        localStorage.setItem('hm_age_confirmed_v1', 'true');
+        localStorage.setItem('hm_age_gate_passed', 'true');
         localStorage.setItem('hm_community_attested_v1', 'true');
       } catch {}
       onNext?.();
@@ -58,7 +58,7 @@ export default function PinSetupScreen({ onNext, onSkip }) {
         updated_at: new Date().toISOString(),
       }).eq('id', user.id);
       try {
-        localStorage.setItem('hm_age_confirmed_v1', 'true');
+        localStorage.setItem('hm_age_gate_passed', 'true');
         localStorage.setItem('hm_community_attested_v1', 'true');
       } catch {}
       onSkip?.();

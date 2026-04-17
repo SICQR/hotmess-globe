@@ -31,7 +31,7 @@ export const BOOT_STATES = {
 };
 
 // Consistent localStorage key for age verification
-const AGE_KEY = 'hm_age_confirmed_v1';
+const AGE_KEY = 'hm_age_gate_passed';
 const COMMUNITY_KEY = 'hm_community_attested_v1';
 
 const getLocalAgeVerified = () => {
@@ -56,7 +56,7 @@ const getLocalCommunityAttested = () => {
 /** Keys that survive signout — user prefs that are not auth-scoped */
 const PERSIST_KEYS = new Set([
   'hm_cookie_consent_v1',
-  'hm_age_confirmed_v1',
+  'hm_age_gate_passed',
   'hm_community_attested_v1',
 ]);
 

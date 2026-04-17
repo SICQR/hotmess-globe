@@ -66,7 +66,7 @@ export default function HotmessSplash() {
 
   const handleEnter = () => {
     try {
-      localStorage.setItem('hm_age_confirmed_v1', 'true');
+      localStorage.setItem('hm_age_gate_passed', 'true');
     } catch {}
     setStage('auth');
   };

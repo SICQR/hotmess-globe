@@ -134,7 +134,7 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
       }
 
       try {
-        localStorage.setItem('hm_age_confirmed_v1', 'true');
+        localStorage.setItem('hm_age_gate_passed', 'true');
         localStorage.setItem('hm_community_attested_v1', 'true');
         localStorage.setItem('hm_last_display_name', displayName.trim());
       } catch {}

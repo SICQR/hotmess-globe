@@ -120,7 +120,12 @@
       "Bash(du -sh ~/Library/Application Support/Code/*)",
       "Bash(npm cache:*)",
       "Bash(git merge:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(grep -E \"\\\\.\\(tsx|jsx\\)$\")",
+      "Bash(open /Users/philipgizzie/hotmess-globe/HOTMESS-GoogleStitch-DesignBrief.md)",
+      "Bash(npx supabase:*)",
+      "Bash(grep -r \"SUPABASE_URL\\\\|SUPABASE_ANON\\\\|SUPABASE_SERVICE\" .env*)",
+      "Bash(curl -s -X POST https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/records-audio/hnh-mess/hnh-mess-2-remastered.wav -H 'Authorization: Bearer ***REMOVED_SERVICE_ROLE_JWT***' -H 'Content-Type: audio/wav' --data-binary '@/Users/philipgizzie/Library/Mobile Documents/com~apple~CloudDocs/Music/HNH Mess/HNH Mess 2 \\(Remastered\\).wav' -w '\\\\n%{http_code}')"
     ]
   },
   "enableAllProjectMcpServers": true,

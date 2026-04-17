@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 import { useBootGuard } from '@/contexts/BootGuardContext';
 
-const AGE_KEY = 'hm_age_confirmed_v1';
+const AGE_KEY = 'hm_age_gate_passed';
 const GOLD = '#C8962C';
 
 const springSmooth = { type: 'spring', stiffness: 200, damping: 25 };

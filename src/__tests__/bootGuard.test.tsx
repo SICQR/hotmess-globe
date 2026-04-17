@@ -200,7 +200,7 @@ describe('BootGuardContext — boot state machine', () => {
   });
 
   it('3. Session + no profile row + localStorage age flag → NEEDS_ONBOARDING', async () => {
-    localStorage.setItem('hm_age_confirmed_v1', 'true');
+    localStorage.setItem('hm_age_gate_passed', 'true');
     setupAuthWithProfile(null); // PGRST116
 
     render(
@@ -310,7 +310,7 @@ describe('BootGuardContext — boot state machine', () => {
 
   it('10. Generic DB error + localAge in localStorage → NEEDS_ONBOARDING (not READY)', async () => {
     // Before fix this would set READY — now it must set NEEDS_ONBOARDING
-    localStorage.setItem('hm_age_confirmed_v1', 'true');
+    localStorage.setItem('hm_age_gate_passed', 'true');
     setupAuthWithDbError();
 
     render(
