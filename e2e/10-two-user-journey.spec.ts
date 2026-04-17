@@ -18,10 +18,9 @@ import { bypassGates, loginAs, TEST_USER_A, TEST_USER_B, E2E_AUTH_CONFIGURED } f
 // All tests here skip when E2E_AUTH_CONFIGURED is false.
 
 const BASE = process.env.BASE_URL || 'https://hotmessldn.com';
-const IS_PROD = process.env.PROD === 'true';
-const SUPABASE_URL = IS_PROD ? 'https://rfoftonnlwudilafhfkl.supabase.co' : 'https://klsywpvncqqglhnhrjbh.supabase.co';
-const ANON_KEY = IS_PROD ? (process.env.PROD_SUPABASE_ANON_KEY ?? '') : (process.env.VITE_SUPABASE_ANON_KEY ?? '');
-const STORAGE_KEY = IS_PROD ? 'sb-rfoftonnlwudilafhfkl-auth-token' : 'sb-klsywpvncqqglhnhrjbh-auth-token';
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL ?? 'https://rfoftonnlwudilafhfkl.supabase.co';
+const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY ?? '';
+const STORAGE_KEY = 'sb-rfoftonnlwudilafhfkl-auth-token';
 
 const RED  = TEST_USER_A;
 const BLUE = TEST_USER_B;

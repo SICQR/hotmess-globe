@@ -15,6 +15,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { Loader2, Mail } from 'lucide-react';
 import { ProgressDots } from './AgeGateScreen';
+import { isWebAuthnSupported, isPasskeyRegistered, signInWithPasskey } from '@/lib/passkey';
 
 const GOLD = '#C8962C';
 
@@ -56,6 +57,13 @@ export default function SignUpScreen({ isSignIn = false }) {
     const id = setInterval(() => setCountdown((c) => c - 1), 1000);
     return () => clearInterval(id);
   }, [countdown]);
+
+  const handlePasskeySignIn = async () => {
+    setLoading(true); setError('');
+    const { error: err } = await signInWithPasskey();
+    setLoading(false);
+    if (err) setError('Face ID failed. Try another method.');
+  };
 
   const handleOAuth = async (provider) => {
     setLoading(true);
@@ -177,6 +185,18 @@ export default function SignUpScreen({ isSignIn = false }) {
         <h2 className="text-white text-xl font-bold mb-8">
           {isSignIn ? "You're back. Good." : "Let's get you in."}
         </h2>
+
+        {/* Face ID / Passkey — sign-in only, when registered */}
+        {isSignIn && isWebAuthnSupported() && isPasskeyRegistered() && (
+          <button
+            onClick={handlePasskeySignIn}
+            disabled={loading}
+            className="w-full py-4 rounded-xl font-black text-sm tracking-widest uppercase mb-6"
+            style={{ backgroundColor: GOLD, color: '#000' }}
+          >
+            Sign in with Face ID
+          </button>
+        )}
 
         {/* OAuth buttons */}
         <div className="flex flex-col gap-3 mb-8">

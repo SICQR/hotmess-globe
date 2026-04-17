@@ -12,18 +12,28 @@
  */
 import React, { useEffect, useState } from 'react';
 import { HotmessWordmark } from '@/components/brand/HotmessWordmark';
+import { supabase } from '@/components/utils/supabaseClient';
 
 const GOLD = '#C8962C';
 
 export default function SplashScreen({ onJoin, onSignIn, fastPath = false, onFastPath }) {
   const [rulesIn, setRulesIn] = useState(false);
   const [ctasIn, setCtasIn] = useState(false);
+  const [hasSession, setHasSession] = useState(false);
+  const lastName = (() => { try { return localStorage.getItem('hm_last_display_name'); } catch { return null; } })();
 
   useEffect(() => {
     // Gold rules draw in at 300ms, CTAs at 900ms
     const t1 = setTimeout(() => setRulesIn(true), 300);
     const t2 = setTimeout(() => setCtasIn(true), 900);
     return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  // Check for existing session on mount — show returning user fast-path
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) setHasSession(true);
+    });
   }, []);
 
   // Fast-path: returning user bypass (900ms then navigate)
@@ -101,24 +111,48 @@ export default function SplashScreen({ onJoin, onSignIn, fastPath = false, onFas
           transition: 'opacity 0.4s ease, transform 0.4s cubic-bezier(0.22,1,0.36,1)',
         }}
       >
-        <button
-          onClick={onJoin}
-          className="w-full py-4 rounded-xl font-black text-sm tracking-widest uppercase"
-          style={{ backgroundColor: GOLD, color: '#000' }}
-        >
-          Join
-        </button>
-        <button
-          onClick={onSignIn}
-          className="w-full py-4 rounded-xl text-sm font-semibold tracking-wide border"
-          style={{
-            color: GOLD,
-            background: 'transparent',
-            borderColor: `${GOLD}40`,
-          }}
-        >
-          Sign In
-        </button>
+        {hasSession ? (
+          <>
+            <p className="text-white/50 text-xs text-center mb-2">
+              Welcome back{lastName ? `, ${lastName}` : ''}
+            </p>
+            <button
+              onClick={onSignIn}
+              className="w-full py-4 rounded-xl font-black text-sm tracking-widest uppercase"
+              style={{ backgroundColor: GOLD, color: '#000' }}
+            >
+              Continue
+            </button>
+            <button
+              onClick={onSignIn}
+              className="w-full py-4 rounded-xl text-sm font-semibold tracking-wide border"
+              style={{ color: GOLD, background: 'transparent', borderColor: `${GOLD}40` }}
+            >
+              Not you? Sign in differently
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={onJoin}
+              className="w-full py-4 rounded-xl font-black text-sm tracking-widest uppercase"
+              style={{ backgroundColor: GOLD, color: '#000' }}
+            >
+              Join
+            </button>
+            <button
+              onClick={onSignIn}
+              className="w-full py-4 rounded-xl text-sm font-semibold tracking-wide border"
+              style={{
+                color: GOLD,
+                background: 'transparent',
+                borderColor: `${GOLD}40`,
+              }}
+            >
+              Sign In
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

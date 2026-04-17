@@ -252,10 +252,7 @@ test.describe('Suite 2: Onboarding bypass', () => {
     await waitForNav(page);
 
     const storage = await page.evaluate(() => {
-      // Check both prod and dev storage keys
-      const prodKey = localStorage.getItem('sb-rfoftonnlwudilafhfkl-auth-token');
-      const devKey = localStorage.getItem('sb-klsywpvncqqglhnhrjbh-auth-token');
-      const raw = prodKey || devKey;
+      const raw = localStorage.getItem('sb-rfoftonnlwudilafhfkl-auth-token');
       return raw ? JSON.parse(raw) : null;
     });
 
