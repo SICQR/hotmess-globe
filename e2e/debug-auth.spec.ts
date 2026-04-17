@@ -22,7 +22,7 @@ test('debug: verify localStorage injection and boot state', async ({ page }) => 
         'apikey': ANON_KEY,
         'Content-Type': 'application/json',
       },
-      data: { email: TEST_USER_A.email, password: '***REMOVED_PASSWORD***' },
+      data: { email: TEST_USER_A.email, password: TEST_USER_A.password },
       timeout: 15_000,
     }
   );

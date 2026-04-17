@@ -10,7 +10,7 @@
  * Auth secrets required for authenticated tests:
  *   VITE_SUPABASE_ANON_KEY
  *   TEST_USER_A_EMAIL    (e.g. test-red@hotmessldn.com)
- *   TEST_USER_A_PASSWORD (e.g. ***REMOVED_PASSWORD***)
+ *   TEST_USER_A_PASSWORD
  */
 
 import { test, expect, Page } from '@playwright/test';

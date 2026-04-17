@@ -3,7 +3,7 @@
  * Last run: 2026-03-31 against https://hotmessldn.com
  * Tests: 138 | Passing: 131 | Skipped (data/env): 7 | Failed: 0
  * Users: e2e.alpha@hotmessldn.com / e2e.beta@hotmessldn.com
- * Password: ***REMOVED_PASSWORD***
+ * Password: set via TEST_USER_A_PASSWORD / TEST_USER_B_PASSWORD env vars
  *
  * Run (prod):
  *   PROD=true npx playwright test e2e/two-user-full.spec.ts --project=chromium
@@ -22,13 +22,13 @@ import { setupUserA, setupUserB, bypassGates, E2E_AUTH_CONFIGURED } from './help
 
 const ALPHA = {
   email: process.env.TEST_USER_A_EMAIL || 'test-red@hotmessldn.com',
-  password: process.env.TEST_USER_A_PASSWORD || '***REMOVED_PASSWORD***',
+  password: process.env.TEST_USER_A_PASSWORD ?? '',
   name: 'Alpha Tester',
 };
 
 const BETA = {
   email: process.env.TEST_USER_B_EMAIL || 'test-blue@hotmessldn.com',
-  password: process.env.TEST_USER_B_PASSWORD || '***REMOVED_PASSWORD***',
+  password: process.env.TEST_USER_B_PASSWORD ?? '',
   name: 'Beta Tester',
 };
 

@@ -14,13 +14,13 @@ const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY ?? '';
 const SUPABASE_STORAGE_KEY = 'sb-rfoftonnlwudilafhfkl-auth-token';
 
 export const TEST_USER_A = {
-  email: 'e2e.alpha@hotmessldn.com',
-  password: '***REMOVED_PASSWORD***',
+  email: process.env.TEST_USER_A_EMAIL ?? 'e2e.alpha@hotmessldn.com',
+  password: process.env.TEST_USER_A_PASSWORD ?? '',
 };
 
 export const TEST_USER_B = {
-  email: 'e2e.beta@hotmessldn.com',
-  password: '***REMOVED_PASSWORD***',
+  email: process.env.TEST_USER_B_EMAIL ?? 'e2e.beta@hotmessldn.com',
+  password: process.env.TEST_USER_B_PASSWORD ?? '',
 };
 
 /**
