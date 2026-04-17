@@ -1,10 +1,22 @@
--- E2E test users for CI Playwright smoke tests
--- Fixed UUIDs so migration is idempotent
+-- E2E test users for CI Playwright smoke tests.
+--
+-- Password is read from the Postgres GUC `app.e2e_password` (set before running
+-- migrations in CI, or via `ALTER DATABASE postgres SET app.e2e_password = '...';`
+-- in a local dev instance). If the GUC is unset or empty, the inserts no-op so
+-- the migration stays idempotent and never writes a hardcoded password.
+--
+-- Fixed UUIDs keep the migration idempotent across re-runs.
 DO $$
 DECLARE
   uid_a uuid := '10000000-0000-0000-0000-000000000001';
   uid_b uuid := '10000000-0000-0000-0000-000000000002';
+  pw text := current_setting('app.e2e_password', true);
 BEGIN
+  IF pw IS NULL OR length(pw) = 0 THEN
+    RAISE NOTICE 'app.e2e_password GUC not set — skipping e2e user seed';
+    RETURN;
+  END IF;
+
   INSERT INTO auth.users (
     instance_id, id, aud, role, email, encrypted_password,
     email_confirmed_at, confirmation_sent_at, last_sign_in_at,
@@ -14,7 +26,7 @@ BEGIN
     confirmation_token, email_change, email_change_token_new, recovery_token
   ) VALUES (
     '00000000-0000-0000-0000-000000000000', uid_a, 'authenticated', 'authenticated',
-    'test-red@hotmessldn.com', crypt('***REMOVED_PASSWORD***', gen_salt('bf')),
+    'test-red@hotmessldn.com', crypt(pw, gen_salt('bf')),
     NOW(), NOW(), NOW(),
     '{"provider":"email","providers":["email"]}', '{"display_name":"Test Red"}',
     FALSE, NOW(), NOW(), NULL, NULL, '', '', '', ''
@@ -41,7 +53,7 @@ BEGIN
     confirmation_token, email_change, email_change_token_new, recovery_token
   ) VALUES (
     '00000000-0000-0000-0000-000000000000', uid_b, 'authenticated', 'authenticated',
-    'test-blue@hotmessldn.com', crypt('***REMOVED_PASSWORD***', gen_salt('bf')),
+    'test-blue@hotmessldn.com', crypt(pw, gen_salt('bf')),
     NOW(), NOW(), NOW(),
     '{"provider":"email","providers":["email"]}', '{"display_name":"Test Blue"}',
     FALSE, NOW(), NOW(), NULL, NULL, '', '', '', ''

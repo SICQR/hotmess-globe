@@ -1,0 +1,28 @@
+title = "hotmess-globe gitleaks config"
+
+[extend]
+useDefault = true
+
+# Allow committed public anon JWTs inside minified browser bundles.
+# Supabase anon keys are PUBLIC by design (shipped to the client); they are
+# not a leak. Service-role JWTs are never allowed.
+[[rules]]
+id = "supabase-service-role-jwt"
+description = "Supabase service_role JWT (payload contains role:service_role)"
+regex = '''eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*c2VydmljZV9yb2xl[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+'''
+tags = ["key", "supabase", "critical"]
+
+[allowlist]
+description = "Files we intentionally exempt from the default ruleset"
+paths = [
+  '''dist_old/.*''',
+  '''dist2/.*''',
+  '''package-lock\.json''',
+  '''docs/INCIDENT_LOG\.md''',
+  '''\.env\.example''',
+]
+# Supabase anon JWTs are public by design; don't flag them when they appear
+# in client-facing source or docs.
+regexes = [
+  '''eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*YW5vbg[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+''',
+]
