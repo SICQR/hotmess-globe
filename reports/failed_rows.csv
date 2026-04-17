@@ -1,0 +1,7 @@
+city,entity_type,entity_name,issue_type,reason,source_url,action_taken
+"Madrid","venue","WE Party Madrid","low_confidence","Confidence 60 — limited public data found","https://www.weparty.com","Kept in dataset as needs_manual_review"
+"São Paulo","venue","Phoenix Club SP","low_confidence","Confidence 73 — limited public data found","https://www.google.com/maps/place/Phoenix+Club+SP","Kept in dataset as needs_manual_review"
+"Mexico City","venue","Albur Bar","low_confidence","Confidence 73 — limited public data found","https://www.google.com/maps/place/Albur+Bar+Mexico+City","Kept in dataset as needs_manual_review"
+"Mexico City","venue","La Cantina Gay","low_confidence","Confidence 71 — limited public data found","https://www.google.com/maps/place/La+Cantina+Gay","Kept in dataset as needs_manual_review"
+"Bangkok","event","Songkran Special Night","past_date","Event date 2026-04-13 is in the past — kept for context","https://www.djstation.net/events","Flagged — verify or remove"
+"Madrid","venue","WE Party Madrid","no_fixed_venue","Promoter brand not a fixed venue — no stable address","https://www.weparty.com","Marked needs_manual_review — link to Fabrik or remove"
