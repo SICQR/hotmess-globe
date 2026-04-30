@@ -43,7 +43,7 @@ function url(path: string): string {
  */
 async function waitForNav(page: Page): Promise<void> {
   await page.locator('nav').first().waitFor({ state: 'visible', timeout: 15000 });
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 }
 
 /**
@@ -73,7 +73,7 @@ async function clickTab(page: Page, tabName: string): Promise<void> {
   }
 
   // Wait for navigation and network settle
-  await page.waitForLoadState('networkidle').catch(() => {});
+  await page.waitForLoadState('domcontentloaded').catch(() => {});
   await page.waitForTimeout(800);
 }
 
@@ -208,7 +208,7 @@ test.describe('Suite 1: Authentication', () => {
     const urlBefore = page.url();
 
     // Reload page
-    await page.reload({ waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'domcontentloaded' });
     await waitForNav(page);
 
     const urlAfter = page.url();
@@ -282,7 +282,7 @@ test.describe('Suite 3: Profile — Alpha', () => {
     const profileBtn = page.locator('button, a').filter({ hasText: /my profile|profile/i }).first();
     await profileBtn.click();
 
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     const bodyText = await page.textContent('body');
     expect(bodyText).toBeTruthy(); // Profile page rendered
   });
@@ -297,7 +297,7 @@ test.describe('Suite 3: Profile — Alpha', () => {
     const profileBtn = page.locator('button, a').filter({ hasText: /my profile|profile/i }).first();
     await profileBtn.click();
 
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     const bodyText = await page.textContent('body');
     expect(bodyText).toBeTruthy();
   });
@@ -312,7 +312,7 @@ test.describe('Suite 3: Profile — Alpha', () => {
     const profileBtn = page.locator('button, a').filter({ hasText: /my profile|profile/i }).first();
     await profileBtn.click();
 
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Avatar area — may be an img, a div with bg-image, or a placeholder circle
     const hasAvatar = await page.locator('[class*="avatar"], [class*="pc-grid"], img, [class*="rounded-full"]').first().isVisible({ timeout: 5000 }).catch(() => false);
     expect(hasAvatar).toBeTruthy();
@@ -328,7 +328,7 @@ test.describe('Suite 3: Profile — Alpha', () => {
     const profileBtn = page.locator('button, a').filter({ hasText: /my profile|profile/i }).first();
     await profileBtn.click();
 
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for Edit button
     const editBtn = page.locator('button').filter({ hasText: /edit|update/i }).first();
@@ -353,7 +353,7 @@ test.describe('Suite 3: Profile — Alpha', () => {
     const profileBtn = page.locator('button, a').filter({ hasText: /my profile|profile/i }).first();
     await profileBtn.click();
 
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const editBtn = page.locator('button').filter({ hasText: /edit|update/i }).first();
     if (await editBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -378,7 +378,7 @@ test.describe('Suite 3: Profile — Alpha', () => {
     const profileBtn = page.locator('button, a').filter({ hasText: /my profile|profile/i }).first();
     await profileBtn.click();
 
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const editBtn = page.locator('button').filter({ hasText: /edit|update/i }).first();
     if (await editBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -405,7 +405,7 @@ test.describe('Suite 3: Profile — Alpha', () => {
     const profileBtn = page.locator('button, a').filter({ hasText: /my profile|profile/i }).first();
     await profileBtn.click();
 
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const editBtn = page.locator('button').filter({ hasText: /edit|update/i }).first();
     if (await editBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -448,7 +448,7 @@ test.describe('Suite 3: Profile — Alpha', () => {
     const profileBtn = page.locator('button, a').filter({ hasText: /my profile|profile/i }).first();
     await profileBtn.click();
 
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const editBtn = page.locator('button').filter({ hasText: /edit|update/i }).first();
     if (await editBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -481,7 +481,7 @@ test.describe('Suite 4: Profile — Cross-user visibility', () => {
 
     // Navigate to Ghosted
     await clickTab(page, 'Ghosted');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for a profile card
     const profileCard = page.locator('[data-testid*="profile"], [role="button"]').filter({ hasText: /tester|test/ }).first();
@@ -501,7 +501,7 @@ test.describe('Suite 4: Profile — Cross-user visibility', () => {
     await waitForNav(page);
 
     await clickTab(page, 'Ghosted');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const profileCard = page.locator('[data-testid*="profile"], [role="button"]').filter({ hasText: /tester|test/ }).first();
     if (await profileCard.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -520,7 +520,7 @@ test.describe('Suite 4: Profile — Cross-user visibility', () => {
     await waitForNav(page);
 
     await clickTab(page, 'Ghosted');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const profileCard = page.locator('[data-testid*="profile"], [role="button"]').filter({ hasText: /tester|test/ }).first();
     if (await profileCard.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -540,7 +540,7 @@ test.describe('Suite 4: Profile — Cross-user visibility', () => {
     await waitForNav(page);
 
     await clickTab(page, 'Ghosted');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const profileCard = page.locator('[data-testid*="profile"], [role="button"]').filter({ hasText: /tester|test/ }).first();
     if (await profileCard.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -697,7 +697,7 @@ test.describe('Suite 5: Navigation', () => {
         await page.locator('input[type="password"]').first().fill(ALPHA.password);
         await page.locator('button').filter({ hasText: /sign|login/i }).first().click();
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         await page.waitForTimeout(1000);
 
         // Should now be at market or have been redirected there
@@ -882,7 +882,7 @@ test.describe('Suite 7: Ghosted — Proximity Grid', () => {
     await waitForNav(page);
 
     await clickTab(page, 'Ghosted');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Grid renders either profile cards (aspect-square wrappers) or "Nobody nearby" empty state
     // Both confirm the Ghosted grid component mounted successfully
@@ -905,7 +905,7 @@ test.describe('Suite 7: Ghosted — Proximity Grid', () => {
     await waitForNav(page);
 
     await clickTab(page, 'Ghosted');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Cards are aspect-square divs — check body has name-like text
     const bodyText = await page.textContent('body');
@@ -919,7 +919,7 @@ test.describe('Suite 7: Ghosted — Proximity Grid', () => {
     await waitForNav(page);
 
     await clickTab(page, 'Ghosted');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // ProfileCard uses pc-grid class for avatar display or a rounded-full placeholder
     const hasAvatar = await page.locator('[class*="pc-grid"], [class*="rounded-full"], img').first().isVisible({ timeout: 5000 }).catch(() => false);
@@ -933,7 +933,7 @@ test.describe('Suite 7: Ghosted — Proximity Grid', () => {
     await waitForNav(page);
 
     await clickTab(page, 'Ghosted');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Click the first profile card (aspect-square wrapper)
     const cards = page.locator('[class*="aspect-square"]');
@@ -954,7 +954,7 @@ test.describe('Suite 7: Ghosted — Proximity Grid', () => {
     await waitForNav(page);
 
     await clickTab(page, 'Ghosted');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const cards = page.locator('[class*="aspect-square"]');
     if (await cards.first().isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -1184,7 +1184,7 @@ test.describe('Suite 9: Music', () => {
     await waitForNav(page);
 
     await clickTab(page, 'Music');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Extra wait for React async data fetch + render cycle after network idle
     await page.waitForTimeout(2000);
 
@@ -1245,7 +1245,7 @@ test.describe('Suite 9: Music', () => {
     await waitForNav(page);
 
     await clickTab(page, 'Music');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Check for track elements
     const tracks = page.locator('[data-testid*="track"], [class*="track"]').first();
@@ -1262,7 +1262,7 @@ test.describe('Suite 9: Music', () => {
     await waitForNav(page);
 
     await clickTab(page, 'Music');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const trackBtn = page.locator('[data-testid*="track"], [role="button"]').first();
     if (await trackBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -1387,7 +1387,7 @@ test.describe('Suite 11: Two-User Messaging', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    await page.goto(url('/chats'), { waitUntil: 'networkidle' });
+    await page.goto(url('/chats'), { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(800);
 
     const bodyText = await page.locator('body').innerText().catch(() => '');
@@ -1400,7 +1400,7 @@ test.describe('Suite 11: Two-User Messaging', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    await page.goto(url('/chats'), { waitUntil: 'networkidle' });
+    await page.goto(url('/chats'), { waitUntil: 'domcontentloaded' });
     // Wait for lazy-loaded Suspense component to fully render
     await page.waitForTimeout(2000);
 
@@ -1418,7 +1418,7 @@ test.describe('Suite 11: Two-User Messaging', () => {
     await waitForNav(page);
 
     // Navigate directly to the pre-seeded e2e thread
-    await page.goto(url('/chat/e2e00003-0000-0000-0000-000000000003'), { waitUntil: 'networkidle' });
+    await page.goto(url('/chat/e2e00003-0000-0000-0000-000000000003'), { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1500);
 
     const visibleText = await page.locator('body').innerText().catch(() => '');
@@ -1431,7 +1431,7 @@ test.describe('Suite 11: Two-User Messaging', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    await page.goto(url('/chats'), { waitUntil: 'networkidle' });
+    await page.goto(url('/chats'), { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1500);
 
     // Search in conversation list
@@ -1452,7 +1452,7 @@ test.describe('Suite 11: Two-User Messaging', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    await page.goto(url('/chat/e2e00003-0000-0000-0000-000000000003'), { waitUntil: 'networkidle' });
+    await page.goto(url('/chat/e2e00003-0000-0000-0000-000000000003'), { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1500);
 
     // Chat thread should show message input
@@ -1472,7 +1472,7 @@ test.describe('Suite 11: Two-User Messaging', () => {
     const timestamp = Date.now();
     const messageText = `Hey Beta, this is Alpha testing 👋 — ${timestamp}`;
 
-    await page.goto(url('/chat/e2e00003-0000-0000-0000-000000000003'), { waitUntil: 'networkidle' });
+    await page.goto(url('/chat/e2e00003-0000-0000-0000-000000000003'), { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1500);
 
     const messageInput = page.locator('input[placeholder*="Type a message"], input[placeholder*="message"]').first();
@@ -1507,7 +1507,7 @@ test.describe('Suite 11: Two-User Messaging', () => {
     const timestamp = Date.now();
     const messageText = `Confirm message ${timestamp}`;
 
-    await page.goto(url('/chat/e2e00003-0000-0000-0000-000000000003'), { waitUntil: 'networkidle' });
+    await page.goto(url('/chat/e2e00003-0000-0000-0000-000000000003'), { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1500);
 
     const messageInput = page.locator('input[placeholder*="Type a message"], input[placeholder*="message"]').first();
@@ -1536,7 +1536,7 @@ test.describe('Suite 11: Two-User Messaging', () => {
       await bypassGates(betaPage);
       await setupUserB(betaPage);
 
-      await betaPage.goto(url('/chats'), { waitUntil: 'networkidle' });
+      await betaPage.goto(url('/chats'), { waitUntil: 'domcontentloaded' });
       await betaPage.waitForTimeout(1500);
 
       const threadList = await betaPage.textContent('body');
@@ -1561,7 +1561,7 @@ test.describe('Suite 11: Two-User Messaging', () => {
       await bypassGates(betaPage);
       await setupUserB(betaPage);
 
-      await betaPage.goto(url('/chats'), { waitUntil: 'networkidle' });
+      await betaPage.goto(url('/chats'), { waitUntil: 'domcontentloaded' });
       await betaPage.waitForTimeout(1500);
 
       // Click on a thread
@@ -1589,7 +1589,7 @@ test.describe('Suite 11: Two-User Messaging', () => {
       await bypassGates(betaPage);
       await setupUserB(betaPage);
 
-      await betaPage.goto(url('/chats'), { waitUntil: 'networkidle' });
+      await betaPage.goto(url('/chats'), { waitUntil: 'domcontentloaded' });
       await betaPage.waitForTimeout(1500);
 
       const thread = betaPage.locator('[data-testid*="thread"], [role="button"]').first();
@@ -1626,7 +1626,7 @@ test.describe('Suite 11: Two-User Messaging', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    await page.goto(url('/chats'), { waitUntil: 'networkidle' });
+    await page.goto(url('/chats'), { waitUntil: 'domcontentloaded' });
 
     // Poll up to 5s for Beta's reply (reduced from 10s to avoid 60s test timeout)
     let found = false;
@@ -1849,7 +1849,7 @@ test.describe('Suite 13: Safety Features', () => {
     const safetyBtn = page.locator('button, a').filter({ hasText: /safety/i }).first();
     if (await safetyBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
       await safetyBtn.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const bodyText = await page.textContent('body');
       expect(bodyText).toBeTruthy();
@@ -1867,7 +1867,7 @@ test.describe('Suite 13: Safety Features', () => {
     const safetyBtn = page.locator('button, a').filter({ hasText: /safety/i }).first();
     if (await safetyBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
       await safetyBtn.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const bodyText = await page.textContent('body');
       expect(bodyText).toMatch(/sos|check|contact|trusted/i);
@@ -1885,7 +1885,7 @@ test.describe('Suite 13: Safety Features', () => {
     const careBtn = page.locator('button, a').filter({ hasText: /care|hand n hand/i }).first();
     if (await careBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
       await careBtn.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const bodyText = await page.textContent('body');
       expect(bodyText).toBeTruthy();
@@ -1904,7 +1904,7 @@ test.describe('Suite 14: Settings & Account', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    await page.goto(url('/profile'), { waitUntil: 'networkidle' });
+    await page.goto(url('/profile'), { waitUntil: 'domcontentloaded' });
 
     const bodyText = await page.textContent('body');
     expect(bodyText).toBeTruthy();
@@ -1917,7 +1917,7 @@ test.describe('Suite 14: Settings & Account', () => {
     await waitForNav(page);
 
     // Settings live in ProfileMode at /profile (not a separate settings route)
-    await page.goto(url('/profile'), { waitUntil: 'networkidle' });
+    await page.goto(url('/profile'), { waitUntil: 'domcontentloaded' });
     const visibleText = await page.locator('body').innerText().catch(() => '');
     expect(visibleText).toMatch(/account|email|profile|identity|alpha/i);
   });
@@ -1928,7 +1928,7 @@ test.describe('Suite 14: Settings & Account', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    await page.goto(url('/profile'), { waitUntil: 'networkidle' });
+    await page.goto(url('/profile'), { waitUntil: 'domcontentloaded' });
     const visibleText = await page.locator('body').innerText().catch(() => '');
     expect(visibleText).toMatch(/privacy|private|visible|settings/i);
   });
@@ -1939,7 +1939,7 @@ test.describe('Suite 14: Settings & Account', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    await page.goto(url('/profile'), { waitUntil: 'networkidle' });
+    await page.goto(url('/profile'), { waitUntil: 'domcontentloaded' });
     const visibleText = await page.locator('body').innerText().catch(() => '');
     expect(visibleText).toMatch(/notification|push|alert|bell/i);
   });
@@ -1950,7 +1950,7 @@ test.describe('Suite 14: Settings & Account', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    await page.goto(url('/profile'), { waitUntil: 'networkidle' });
+    await page.goto(url('/profile'), { waitUntil: 'domcontentloaded' });
 
     // Look for a toggle switch
     const toggle = page.locator('input[type="checkbox"], [role="switch"]').first();
@@ -1970,7 +1970,7 @@ test.describe('Suite 14: Settings & Account', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    await page.goto(url('/profile'), { waitUntil: 'networkidle' });
+    await page.goto(url('/profile'), { waitUntil: 'domcontentloaded' });
     // Extra settle: ProfileMode fetches Supabase data before rendering Sign Out
     await page.waitForTimeout(3000);
 
@@ -1990,7 +1990,7 @@ test.describe('Suite 14: Settings & Account', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    await page.goto(url('/profile'), { waitUntil: 'networkidle' });
+    await page.goto(url('/profile'), { waitUntil: 'domcontentloaded' });
 
     const logoutBtn = page.locator('button').filter({ hasText: /logout|sign out|sign-out|exit/i }).first();
     if (await logoutBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -2009,7 +2009,7 @@ test.describe('Suite 14: Settings & Account', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    await page.goto(url('/profile'), { waitUntil: 'networkidle' });
+    await page.goto(url('/profile'), { waitUntil: 'domcontentloaded' });
 
     const logoutBtn = page.locator('button').filter({ hasText: /logout|sign out|sign-out|exit/i }).first();
     if (await logoutBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -2017,7 +2017,7 @@ test.describe('Suite 14: Settings & Account', () => {
       await page.waitForTimeout(2000);
 
       // Navigate to home
-      await page.goto(url('/'), { waitUntil: 'networkidle' });
+      await page.goto(url('/'), { waitUntil: 'domcontentloaded' });
 
       // Should be at auth or splash
       const pageUrl = page.url();
@@ -2043,7 +2043,7 @@ test.describe('Suite 15: Personas', () => {
     const personasBtn = page.locator('button, a').filter({ hasText: /persona/i }).first();
     if (await personasBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
       await personasBtn.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const bodyText = await page.textContent('body');
       expect(bodyText).toBeTruthy();
@@ -2057,7 +2057,7 @@ test.describe('Suite 15: Personas', () => {
     await waitForNav(page);
 
     // Navigate to /profile?action=manage-personas directly (More > Personas)
-    await page.goto(url('/profile?action=manage-personas'), { waitUntil: 'networkidle' });
+    await page.goto(url('/profile?action=manage-personas'), { waitUntil: 'domcontentloaded' });
     // Extra settle: ProfileMode + BootGuard + Supabase fetch chain takes time
     await page.waitForTimeout(4000);
 
@@ -2084,7 +2084,7 @@ test.describe('Suite 15: Personas', () => {
     const personasBtn = page.locator('button, a').filter({ hasText: /persona/i }).first();
     if (await personasBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
       await personasBtn.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const fatalErrors = errors.errors.filter(e => e.includes('TypeError') && !e.includes('pruneOldActivities') && !e.includes('filter is not a function'));
       expect(fatalErrors).toHaveLength(0);
@@ -2102,7 +2102,7 @@ test.describe('Suite 15: Personas', () => {
     const personasBtn = page.locator('button, a').filter({ hasText: /persona/i }).first();
     if (await personasBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
       await personasBtn.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const closeBtn = page.locator('button').filter({ hasText: /close|back|dismiss/i }).first();
       if (await closeBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -2133,7 +2133,7 @@ test.describe('Suite 16: Vault', () => {
     const vaultBtn = page.locator('button, a').filter({ hasText: /vault|tickets|orders/i }).first();
     if (await vaultBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
       await vaultBtn.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const bodyText = await page.textContent('body');
       expect(bodyText).toBeTruthy();
@@ -2151,7 +2151,7 @@ test.describe('Suite 16: Vault', () => {
     const vaultBtn = page.locator('button, a').filter({ hasText: /vault|tickets|orders/i }).first();
     if (await vaultBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
       await vaultBtn.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const bodyText = await page.textContent('body');
       expect(bodyText).toMatch(/ticket|order|archive/i);
@@ -2171,7 +2171,7 @@ test.describe('Suite 16: Vault', () => {
     const vaultBtn = page.locator('button, a').filter({ hasText: /vault|tickets|orders/i }).first();
     if (await vaultBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
       await vaultBtn.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const fatalErrors = errors.errors.filter(e => e.includes('TypeError') && !e.includes('pruneOldActivities') && !e.includes('filter is not a function'));
       expect(fatalErrors).toHaveLength(0);
@@ -2189,7 +2189,7 @@ test.describe('Suite 16: Vault', () => {
     const vaultBtn = page.locator('button, a').filter({ hasText: /vault|tickets|orders/i }).first();
     if (await vaultBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
       await vaultBtn.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Should show either content or empty state
       const bodyText = await page.textContent('body');
@@ -2344,7 +2344,7 @@ test.describe('Suite 18: Performance & Reliability', () => {
     await waitForNav(page);
 
     await clickTab(page, 'Home');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const fatalErrors = errors.errors.filter(e => !e.includes('ResizeObserver') && e.includes('Error'));
     expect(fatalErrors.length).toBeLessThan(3);
@@ -2359,7 +2359,7 @@ test.describe('Suite 18: Performance & Reliability', () => {
     await waitForNav(page);
 
     await clickTab(page, 'Pulse');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const fatalErrors = errors.errors.filter(e => !e.includes('ResizeObserver') && e.includes('Error'));
     expect(fatalErrors.length).toBeLessThan(3);
@@ -2374,7 +2374,7 @@ test.describe('Suite 18: Performance & Reliability', () => {
     await waitForNav(page);
 
     await clickTab(page, 'Market');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const fatalErrors = errors.errors.filter(e => !e.includes('ResizeObserver') && e.includes('Error'));
     expect(fatalErrors.length).toBeLessThan(3);
@@ -2389,7 +2389,7 @@ test.describe('Suite 18: Performance & Reliability', () => {
     await waitForNav(page);
 
     await clickTab(page, 'Music');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const fatalErrors = errors.errors.filter(e => !e.includes('ResizeObserver') && e.includes('Error'));
     expect(fatalErrors.length).toBeLessThan(3);

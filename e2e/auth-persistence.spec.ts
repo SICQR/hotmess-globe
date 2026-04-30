@@ -10,7 +10,7 @@ test.describe('Auth Session Persistence', () => {
   test('clearBadSessions does not clear valid sessions', async ({ page }) => {
     // Navigate to the app
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Check console for session clearing messages
     const consoleLogs: string[] = [];
@@ -20,7 +20,7 @@ test.describe('Auth Session Persistence', () => {
 
     // Refresh the page
     await page.reload();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Check that no valid sessions were cleared
     const badClears = consoleLogs.filter(log => 
@@ -33,7 +33,7 @@ test.describe('Auth Session Persistence', () => {
 
   test('localStorage auth token format is correct', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Check localStorage for Supabase auth keys
     const authKeys = await page.evaluate(() => {
@@ -64,7 +64,7 @@ test.describe('Auth Session Persistence', () => {
     });
     
     await page.reload();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Wait a moment for any auth redirects
     await page.waitForTimeout(2000);
@@ -76,7 +76,7 @@ test.describe('Auth Session Persistence', () => {
 
   test('pull-to-refresh CSS prevents native reload', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Check that overscroll-behavior is set
     const overscrollBehavior = await page.evaluate(() => {
@@ -97,7 +97,7 @@ test.describe('Auth Session Persistence', () => {
 
   test('env config uses consistent Supabase project', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Check that Supabase URL in the app matches expected project
     const supabaseUrl = await page.evaluate(() => {
