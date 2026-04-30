@@ -76,7 +76,7 @@ export default function L2SafetySheet() {
 
   async function loadContacts() {
     setContactsLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    let { data: { user } } = await supabase.auth.getUser();
     if (!user) { setContactsLoading(false); return; }
     const { data, error } = await supabase
       .from('trusted_contacts')
@@ -95,7 +95,7 @@ export default function L2SafetySheet() {
 
   async function loadCheckIns() {
     setCheckInsLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    let { data: { user } } = await supabase.auth.getUser();
     if (!user) { setCheckInsLoading(false); return; }
     const { data, error } = await supabase
       .from('safety_checkins')
@@ -115,7 +115,7 @@ export default function L2SafetySheet() {
     if (!form.phone.trim() && !form.email.trim())   { setFormError('Add a phone or email.'); return; }
 
     setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    let { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); setFormError('Not signed in.'); return; }
 
     const { error } = await supabase.from('trusted_contacts').insert({
@@ -139,7 +139,7 @@ export default function L2SafetySheet() {
   // ── Delete trusted contact ──────────────────────────────────────────────
   async function handleDelete(id, name) {
     setDeleting(id);
-    const { data: { user } } = await supabase.auth.getUser();
+    let { data: { user } } = await supabase.auth.getUser();
     if (!user) { setDeleting(null); return; }
     const { error } = await supabase.from('trusted_contacts').delete().eq('id', id).eq('user_id', user.id);
     setDeleting(null);
@@ -149,7 +149,7 @@ export default function L2SafetySheet() {
   // ── Log check-in ────────────────────────────────────────────────────────
   async function handleLogCheckIn() {
     setLogging(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    let { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLogging(false); return; }
 
     let location = null;
@@ -474,3 +474,4 @@ export default function L2SafetySheet() {
     </div>
   );
 }
+

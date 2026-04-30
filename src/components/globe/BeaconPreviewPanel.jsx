@@ -1,5 +1,6 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+
 import { X, MapPin, Calendar, Users, Zap, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -26,108 +27,96 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
     : createPageUrl('BeaconDetail') + '?id=' + encodeURIComponent(beacon.id);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.9, y: 20 }}
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[80] w-full max-w-md mx-4"
-    >
-      <div className="bg-black/95 border-2 border-white backdrop-blur-xl overflow-hidden">
-        {/* Header */}
-        <div 
-          className="p-4 border-b-2 border-white/20 relative"
-          style={{ backgroundColor: `${color}20` }}
-        >
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-3 p-1 hover:bg-white/10 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
+    <AnimatePresence>
+      <motion.div
+        key="beacon-preview-sheet"
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        drag="y"
+        dragConstraints={{ top: 0 }}
+        dragElastic={0.2}
+        onDragEnd={(e, { offset, velocity }) => {
+          if (offset.y > 100 || velocity.y > 500) onClose();
+        }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="fixed bottom-0 left-0 right-0 z-[200] bg-[#0A0A0A] border-t border-white/10 rounded-t-[32px] px-6 pt-4 pb-[calc(80px+env(safe-area-inset-bottom,20px))] shadow-[0_-20px_50px_rgba(0,0,0,0.8)] touch-none"
+        style={{ height: 'auto', minHeight: '40vh' }}
+      >
+        {/* Drag Handle */}
+        <div className="flex justify-center py-4">
+          <div className="w-12 h-1.5 bg-white/10 rounded-full" />
+        </div>
 
-          <div className="flex items-start gap-3 pr-8">
-            {beacon.image_url && (
-              <img
-                src={beacon.image_url}
-                alt={beacon.title}
-                className="w-16 h-16 object-cover border-2 border-white grayscale"
-              />
-            )}
-            <div className="flex-1 min-w-0">
-              <div 
-                className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-80"
-                style={{ color }}
-              >
-                {isPerson ? 'person' : beacon.kind}
-              </div>
-              <h3 className="font-black text-lg leading-tight mb-1 line-clamp-2">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#C8962C]/10 rounded-xl flex items-center justify-center">
+              <MapPin className={`w-5 h-5 ${isPerson ? 'text-[#00C2E0]' : 'text-[#C8962C]'}`} />
+            </div>
+            <div>
+              <h3 className="text-xl font-black italic tracking-tight text-white uppercase leading-none">
                 {beacon.title}
               </h3>
-              {beacon.isRightNow && (
-                <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#39FF14]/20 border border-[#39FF14] text-[#39FF14] text-[10px] font-black uppercase animate-pulse">
-                  <Zap className="w-3 h-3" />
-                  RIGHT NOW
-                </div>
-              )}
+              <p className="text-[10px] text-white/30 font-black uppercase tracking-widest mt-1">
+                {isPerson ? 'person' : beacon.kind || 'SIGNAL'}
+              </p>
             </div>
           </div>
+          <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/40 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-3">
-          {beacon.description && (
-            <p className="text-sm text-white/80 line-clamp-2">
-              {beacon.description}
-            </p>
+        <div className="space-y-6 overflow-y-auto max-h-[60vh] pointer-events-auto pb-12">
+          {(beacon.description || beacon.metadata?.description) && (
+            <div className="bg-white/5 border border-white/5 rounded-2xl p-4">
+              <p className="text-white/70 text-sm leading-relaxed font-medium">
+                {beacon.description || beacon.metadata?.description}
+              </p>
+            </div>
           )}
 
-          {/* Quick Info */}
-          <div className="flex flex-wrap gap-2 text-xs">
-            {beacon.city && (
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-white/5 border border-white/10">
-                <MapPin className="w-3 h-3 text-white/60" />
-                <span className="text-white/80">{beacon.city}</span>
-              </div>
-            )}
 
-            {beacon.event_date && (
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-white/5 border border-white/10">
-                <Calendar className="w-3 h-3 text-white/60" />
-                <span className="text-white/80">
-                  {format(new Date(beacon.event_date), 'MMM d, h:mm a')}
+          {/* Quick Info Grid */}
+          <div className="grid grid-cols-1 gap-3">
+            {(beacon.city || beacon.metadata?.city) && (
+              <div className="flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10">
+                <MapPin className="w-5 h-5 text-white/40" />
+                <span className="text-white font-black uppercase tracking-wider text-xs">
+                  {beacon.city || beacon.metadata?.city}
                 </span>
               </div>
             )}
 
-            {beacon.capacity && (
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-white/5 border border-white/10">
-                <Users className="w-3 h-3 text-white/60" />
-                <span className="text-white/80">{beacon.capacity}</span>
+            {(beacon.address || beacon.metadata?.address) ? (
+              <div className="w-full flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10">
+                <MapPin className="w-5 h-5 text-[#00C2E0]" />
+                <span className="text-white font-bold text-sm uppercase tracking-tight">
+                  {beacon.address || beacon.metadata?.address}
+                </span>
+              </div>
+            ) : (
+              <div className="w-full flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10">
+                <MapPin className="w-5 h-5 text-[#00C2E0]/40" />
+                <span className="text-white/40 font-mono text-xs tracking-widest">
+                  LOC: {Number(beacon.lat).toFixed(4)}, {Number(beacon.lng).toFixed(4)}
+                </span>
               </div>
             )}
 
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-2 pt-2">
-            <Button
-              onClick={onViewFull}
-              className="flex-1 bg-[#C8962C] hover:bg-white text-black font-black border-2 border-white"
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              {isPerson ? 'VIEW PROFILE' : 'VIEW DETAILS'}
-            </Button>
-            <Link to={detailsUrl}>
-              <Button
-                variant="outline"
-                className="border-white/20 hover:bg-white/10"
-              >
-                <ExternalLink className="w-4 h-4" />
-              </Button>
-            </Link>
+            <div className="flex flex-wrap gap-2 pt-2">
+               {beacon.isRightNow && (
+                 <span className="px-3 py-1 bg-[#00C2E0]/20 border border-[#00C2E0]/30 text-[#00C2E0] text-[10px] font-black uppercase tracking-widest">Live Now</span>
+               )}
+               {beacon.intensity > 0.7 && (
+                 <span className="px-3 py-1 bg-[#FFEB3B]/20 border border-[#FFEB3B]/30 text-[#FFEB3B] text-[10px] font-black uppercase tracking-widest">High Energy</span>
+               )}
+            </div>
           </div>
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }

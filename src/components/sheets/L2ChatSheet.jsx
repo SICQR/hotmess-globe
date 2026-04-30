@@ -13,7 +13,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import {
   Send, ArrowLeft,
   Loader2, Search, ChevronRight,
-  Camera, Mic, Video, Navigation,
+  Camera, Mic, Video, Navigation, MapPin,
   Sparkles, X, Flag, Ghost,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -56,12 +56,16 @@ const markRead = (threadId, userEmail) => {
       .single()
       .then(({ data: row }) => {
         if (!row) return;
-        const updated = { ...(row.unread_count || {}), [userEmail]: 0 };
+        const emailKey = userEmail.toLowerCase();
+        const updated = { ...(row.unread_count || {}), [emailKey]: 0 };
         supabase
           .from('chat_threads')
           .update({ unread_count: updated })
           .eq('id', threadId)
-          .then(() => {});
+          .then(({ error }) => {
+            if (error) console.error('[Chat] markRead update failed:', error.message);
+            else console.log(`[Chat] Thread ${threadId} marked read for ${emailKey}`);
+          });
       });
   }
   // Local cache: still written so useUnreadCount can read optimistically
@@ -85,40 +89,141 @@ function LocationCard({ msg, isMe, otherName }) {
     }
   }, [isExpired, pulseActive]);
 
+  const handleOpenMaps = (e) => {
+    e?.stopPropagation();
+    console.log('[LocationCard] 🗺️ Tap detected. Metadata:', msg.metadata);
+    
+    const lat = msg.metadata?.approxLat;
+    const lng = msg.metadata?.approxLng;
+    
+    if (lat && lng) {
+      const url = `https://www.google.com/maps?q=${lat},${lng}`;
+      console.log('[LocationCard] 🚀 Opening Google Maps:', url);
+      const win = window.open(url, '_blank');
+      if (!win) {
+        console.warn('[LocationCard] ⚠️ Popup blocked. Falling back to same-window redirect.');
+        window.location.href = url;
+      }
+    } else {
+      console.error('[LocationCard] ❌ Approx coordinates missing in metadata:', { lat, lng });
+      toast.error('Location data missing.');
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      onClick={handleOpenMaps}
+      className={cn(
+        'max-w-[80%] px-4 py-3 rounded-2xl border overflow-hidden transition-all duration-300 cursor-pointer active:scale-95',
+        isExpired
+          ? 'bg-white/5 border-white/10 opacity-60'
+          : isMe ? 'bg-[#C8962C]/15 border-[#C8962C]/30' : 'bg-[#1C1C1E] border-white/10',
+        msg._isUploading && 'opacity-60 blur-[1px]'
+      )}
+    >
+      <div className="flex items-center gap-2">
+        <span className={cn('text-lg transition-all duration-300', (pulseActive || msg._isUploading) && 'animate-pulse')}>📍</span>
+        <span className="text-sm font-bold text-white">
+          {msg._isUploading ? 'Locating...' : isExpired ? 'Location expired' : isMe ? 'My Location' : `${otherName}'s Location`}
+        </span>
+      </div>
+      {!isExpired && distText && !msg._isUploading && (
+        <p className="text-xs text-white/60 mt-1 ml-7">{distText}</p>
+      )}
+      {msg._isUploading && (
+        <p className="text-[10px] text-white/40 mt-1 ml-7 animate-pulse">Establishing GPS lock...</p>
+      )}
+      <div className="flex items-center justify-between mt-2 ml-7">
+        <p className="text-[10px] text-white/30">
+          {msg._isUploading ? 'Searching...' : isExpired
+            ? sentAt ? formatDistanceToNow(sentAt, { addSuffix: true }) : ''
+            : `Expires in ${minsLeft} min`}
+        </p>
+        {!msg._isUploading && !isExpired && (
+          <div className="flex items-center gap-1">
+             <span className="text-[10px] font-bold text-[#C8962C] uppercase tracking-wider">Tap for Maps</span>
+             <ChevronRight className="w-3 h-3 text-[#C8962C]" />
+          </div>
+        )}
+        {msg._isUploading && (
+          <Loader2 className="w-3 h-3 text-white/20 animate-spin" />
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+/** MapPin card — renders a static Google Map with "Get Directions" action */
+function MapPinCard({ msg, isMe, otherName }) {
+  const lat = msg.metadata?.lat;
+  const lng = msg.metadata?.lng;
+  const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || import.meta.env.GOOGLE_MAPS_API_KEY;
+  
+  const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=15&size=400x200&markers=color:red%7C${lat},${lng}&key=${GOOGLE_MAPS_API_KEY}`;
+
+  const handleOpenMaps = (e) => {
+    e?.stopPropagation();
+    console.log('[MapPinCard] 🗺️ Tap detected. Metadata:', msg.metadata);
+    
+    const lat = msg.metadata?.lat;
+    const lng = msg.metadata?.lng;
+    
+    if (lat && lng) {
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+      console.log('[MapPinCard] 🚀 Opening Google Maps:', url);
+      const win = window.open(url, '_blank');
+      if (!win) {
+        console.warn('[MapPinCard] ⚠️ Popup blocked. Falling back to same-window redirect.');
+        window.location.href = url;
+      }
+    } else {
+      console.error('[MapPinCard] ❌ Coordinates missing in metadata:', { lat, lng });
+      toast.error('Location data missing or corrupted.');
+    }
+  };
+
   return (
     <motion.div
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       className={cn(
-        'max-w-[80%] px-4 py-3 rounded-2xl border overflow-hidden transition-all duration-300',
-        isExpired
-          ? 'bg-white/5 border-white/10 opacity-60'
-          : isMe ? 'bg-[#C8962C]/15 border-[#C8962C]/30' : 'bg-[#1C1C1E] border-white/10'
+        'max-w-[85%] rounded-2xl border overflow-hidden transition-all duration-300',
+        isMe ? 'bg-[#C8962C]/15 border-[#C8962C]/30' : 'bg-[#1C1C1E] border-white/10'
       )}
     >
-      <div className="flex items-center gap-2">
-        <span className={cn('text-lg transition-all duration-300', pulseActive && 'animate-pulse')}>📍</span>
+      <div className="p-3 border-b border-white/5 flex items-center gap-2">
+        <MapPin className="w-4 h-4 text-[#C8962C]" />
         <span className="text-sm font-bold text-white">
-          {isExpired ? 'Location expired' : isMe ? 'My Location' : `${otherName}'s Location`}
+          {isMe ? 'My location' : `${otherName}'s location`}
         </span>
       </div>
-      {!isExpired && distText && (
-        <p className="text-xs text-white/60 mt-1 ml-7">{distText}</p>
-      )}
-      <div className="flex items-center justify-between mt-2 ml-7">
-        <p className="text-[10px] text-white/30">
-          {isExpired
-            ? sentAt ? formatDistanceToNow(sentAt, { addSuffix: true }) : ''
-            : `Expires in ${minsLeft} min`}
-        </p>
-        {!isExpired && (
-          <p className="text-[10px] text-[#C8962C]/60">Approximate only</p>
-        )}
+      
+      <div 
+        className="relative aspect-video bg-white/5 cursor-pointer overflow-hidden group/map"
+        onClick={handleOpenMaps}
+      >
+        <img 
+          src={mapUrl} 
+          alt="Map Pin" 
+          className="w-full h-full object-cover transition-transform duration-500 group-hover/map:scale-110" 
+        />
+        <div className="absolute inset-0 bg-black/20 group-hover/map:bg-black/0 transition-colors" />
+        <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-md rounded-md border border-white/10 opacity-0 group-hover/map:opacity-100 transition-opacity">
+          <span className="text-[10px] text-white font-bold uppercase tracking-wider">Tap to open map</span>
+        </div>
       </div>
-      {isMe && !isExpired && (
-        <p className="text-[9px] text-white/20 mt-1.5 ml-7">Shared for 1 hour. You're in control.</p>
-      )}
+
+      <button 
+        onClick={handleOpenMaps}
+        className="w-full py-3 bg-white/5 hover:bg-white/10 text-white text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+      >
+        <Navigation className="w-3.5 h-3.5" />
+        Get Directions
+      </button>
     </motion.div>
   );
 }
@@ -198,13 +303,20 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   const [resolvedToEmail, setResolvedToEmail] = useState(initialToEmail || null);
   useEffect(() => {
     if (!resolvedUserId || resolvedToEmail) return;
+    
+    // Fetch target user's email from profiles
     supabase
       .from('profiles')
       .select('email')
       .eq('id', resolvedUserId)
       .single()
       .then(({ data }) => {
-        if (data?.email) setResolvedToEmail(data.email);
+        if (data?.email) {
+          setResolvedToEmail(data.email);
+        }
+      })
+      .catch((err) => {
+        console.warn('[Chat] Target lookup failed.', err);
       });
   }, [resolvedUserId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -349,37 +461,58 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
 
     setSending(true);
     setNewMessage('');
+    console.log('[Chat] 📤 Sending message:', { text, threadId: selectedThread?.id });
+
     try {
       let thread = selectedThread;
 
-      // Create thread if it's a new conversation
+      // 1. Resolve/Create thread if it's a new conversation
       if (thread?._new) {
-        const { data: newThread, error } = await supabase
+        console.log('[Chat] 🆕 Attempting to create new thread...');
+        
+        // Double check if a thread was created while we were typing
+        const { data: existing } = await supabase
           .from('chat_threads')
-          .insert({
-            participant_emails: thread.participant_emails,
-            active: true,
-            last_message_at: new Date().toISOString(),
-          })
-          .select()
-          .single();
-        if (error) throw error;
-        thread = newThread;
-        setSelectedThread(newThread);
-        setThreads(prev => [newThread, ...prev]);
+          .select('*')
+          .contains('participant_emails', thread.participant_emails)
+          .maybeSingle();
+
+        if (existing) {
+          console.log('[Chat] ℹ️ Found existing thread, using it instead of creating new.');
+          thread = existing;
+        } else {
+          const { data: newThread, error: threadErr } = await supabase
+            .from('chat_threads')
+            .insert({
+              participant_emails: thread.participant_emails,
+              active: true,
+              last_message_at: new Date().toISOString(),
+              unread_count: {} // Initialize unread count
+            })
+            .select()
+            .single();
+
+          if (threadErr) {
+            console.error('[Chat] ❌ Thread Creation Error:', threadErr);
+            throw threadErr;
+          }
+          thread = newThread;
+          console.log('[Chat] ✅ New thread created:', thread.id);
+        }
+        
+        setSelectedThread(thread);
+        setThreads(prev => [thread, ...prev.filter(t => t.id !== thread.id)]);
 
         // Load profile for the other participant
-        const other = newThread.participant_emails.find(e => e !== currentUser.email);
+        const other = thread.participant_emails.find(e => e !== currentUser.email);
         if (other) await loadProfilesByEmail([other]);
       }
 
-      const senderProfile = profiles[currentUser.email];
-
-      // Optimistic: show message immediately before DB insert
+      // 2. Optimistic Update
       const isHighlighted = highlightNext && isBoostActive('highlighted_message');
       const now = new Date().toISOString();
       const optimisticMsg = {
-        _optimistic: true, // no `id` yet = ✓ (Sent) state
+        _optimistic: true, 
         thread_id: thread.id,
         sender_email: currentUser.email,
         content: isHighlighted ? JSON.stringify({ text, is_highlighted: true }) : text,
@@ -388,31 +521,34 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       };
       setMessages(prev => [...prev, optimisticMsg]);
 
-      // Insert to DB
+      // 3. Insert Message to DB
+      console.log('[Chat] 💾 Inserting message to DB...');
       const { error: msgError } = await supabase
         .from('chat_messages')
         .insert({
           thread_id: thread.id,
           sender_email: currentUser.email,
-          content: isHighlighted ? JSON.stringify({ text, is_highlighted: true }) : optimisticMsg.content,
+          content: isHighlighted ? JSON.stringify({ text, is_highlighted: true }) : (text || optimisticMsg.content),
           message_type: 'text',
           created_date: new Date().toISOString(),
+          metadata: {}, // Ensure metadata is present even for text messages
         });
-      if (msgError) throw msgError;
-      // Consume the highlight toggle after sending
+
+      if (msgError) {
+        console.error('[Chat] ❌ Message Insertion Error:', msgError.message, msgError.details, msgError.code);
+        throw msgError;
+      }
+
       if (isHighlighted) setHighlightNext(false);
 
-      // Mark thread read on send (DB-first via markRead helper)
-      markRead(thread.id, currentUser?.email);
-
-      // Increment unread_count for recipient + push notification
+      // 4. Update thread metadata (last message, unread counts)
       const recipientEmail = thread.participant_emails?.find(e => e !== currentUser.email);
       if (recipientEmail) {
-        // Increment unread badge for recipient
         const currentUnread = thread.unread_count || {};
-        const newUnreadCount = { ...currentUnread, [recipientEmail]: (currentUnread[recipientEmail] || 0) + 1 };
+        const emailKey = recipientEmail.toLowerCase();
+        const newUnreadCount = { ...currentUnread, [emailKey]: (currentUnread[emailKey] || 0) + 1 };
 
-        // Push notification (skip if recipient muted this thread)
+        // Push notification (async, non-blocking)
         const mutedBy = thread.muted_by || [];
         if (!mutedBy.includes(recipientEmail)) {
           const senderName = profiles[currentUser.email]?.display_name || 'Someone';
@@ -425,8 +561,8 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           });
         }
 
-        // Update thread: last_message + unread_count in one write
-        await supabase
+        console.log('[Chat] 📈 Updating thread unread counts...');
+        const { error: threadUpdateErr } = await supabase
           .from('chat_threads')
           .update({
             last_message: text.slice(0, 80),
@@ -434,35 +570,26 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
             unread_count: newUnreadCount,
           })
           .eq('id', thread.id);
+        
+        if (threadUpdateErr) {
+          console.warn('[Chat] ⚠️ Thread update warning (non-fatal):', threadUpdateErr.message);
+        }
 
-        // Keep local state in sync
         setSelectedThread(prev => prev ? { ...prev, unread_count: newUnreadCount } : prev);
-      } else {
-        // No recipient found — still update last_message
-        await supabase
-          .from('chat_threads')
-          .update({
-            last_message: text.slice(0, 80),
-            last_message_at: new Date().toISOString(),
-          })
-          .eq('id', thread.id);
       }
 
-      // Refresh messages if no realtime (new thread)
-      if (!realtimeRef.current || thread?._new) {
-        const { data } = await supabase
-          .from('chat_messages')
-          .select('*')
-          .eq('thread_id', thread.id)
-          .order('created_date', { ascending: true });
-        if (data) setMessages(data);
+      console.log('[Chat] ✨ Message sent successfully!');
+      
+      // Mark read as part of the send flow
+      markRead(thread.id, currentUser?.email);
 
-        // Subscribe now that thread exists
-        if (!realtimeRef.current) openThread(thread);
+      // Refresh if no realtime
+      if (!realtimeRef.current || thread?._new) {
+        openThread(thread);
       }
     } catch (err) {
+      console.error('[Chat] 💥 Critical Send Error:', err);
       toast.error("Couldn't send. Tap message to retry.");
-      // Mark the optimistic message as failed — don't remove it
       setMessages(prev => prev.map(m =>
         m._optimistic && m.content === text ? { ...m, _failed: true } : m
       ));
@@ -480,55 +607,66 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   const handleSendSpecial = async ({ message_type, metadata, content }) => {
     if (!currentUser?.email || sending) return;
     setSending(true);
+    console.log('[Chat] 🌟 Sending special message:', { type: message_type });
+
     try {
       let thread = selectedThread;
       if (thread?._new) {
-        const { data: newThread, error } = await supabase
+        // Shared logic with handleSend for new thread creation
+        const { data: existing } = await supabase
           .from('chat_threads')
-          .insert({
-            participant_emails: thread.participant_emails,
-            active: true,
-            last_message_at: new Date().toISOString(),
-          })
-          .select().single();
-        if (error) throw error;
-        thread = newThread;
-        setSelectedThread(newThread);
-        setThreads(prev => [newThread, ...prev]);
+          .select('*')
+          .contains('participant_emails', thread.participant_emails)
+          .maybeSingle();
+
+        if (existing) {
+          thread = existing;
+        } else {
+          const { data: newThread, error: threadErr } = await supabase
+            .from('chat_threads')
+            .insert({
+              participant_emails: thread.participant_emails,
+              active: true,
+              last_message_at: new Date().toISOString(),
+              unread_count: {}
+            })
+            .select().single();
+          if (threadErr) throw threadErr;
+          thread = newThread;
+        }
+        setSelectedThread(thread);
+        setThreads(prev => [thread, ...prev.filter(t => t.id !== thread.id)]);
       }
 
+      console.log('[Chat] 💾 Inserting special message:', { type: message_type, metadata });
       const { error: msgError } = await supabase.from('chat_messages').insert({
         thread_id: thread.id,
         sender_email: currentUser.email,
         content,
         message_type,
+        metadata, // Fix: Include metadata!
         created_date: new Date().toISOString(),
       });
-      if (msgError) throw msgError;
+      if (msgError) {
+        console.error('[Chat] ❌ Special Message Insert Error:', msgError);
+        throw msgError;
+      }
 
-      // Increment unread + push notification with smart fallback for media/location
       const recipientEmail = thread.participant_emails?.find(e => e !== currentUser.email);
       const lastMsg = message_type === 'location' ? '📍 Location shared' : message_type === 'travel' ? '🚗 On the way' : message_type === 'photo' ? '📷 Photo' : content.slice(0, 80);
 
       if (recipientEmail) {
         const currentUnread = thread.unread_count || {};
-        const newUnreadCount = { ...currentUnread, [recipientEmail]: (currentUnread[recipientEmail] || 0) + 1 };
+        const emailKey = recipientEmail.toLowerCase();
+        const newUnreadCount = { ...currentUnread, [emailKey]: (currentUnread[emailKey] || 0) + 1 };
 
-        const mutedBy = thread.muted_by || [];
-        if (!mutedBy.includes(recipientEmail)) {
-          const senderName = profiles[currentUser.email]?.display_name || 'Someone';
-          const pushBody = message_type === 'location' ? `${senderName} sent a location`
-            : message_type === 'travel' ? `${senderName} is on the way`
-            : message_type === 'photo' ? `${senderName} sent a photo`
-            : content.length > 60 ? content.slice(0, 57) + '…' : content;
-          pushNotify({
-            emails: [recipientEmail],
-            title: senderName,
-            body: pushBody,
-            tag: `chat-${thread.id}`,
-            url: `/ghosted?sheet=chat&thread=${thread.id}`,
-          });
-        }
+        pushNotify({
+          emails: [recipientEmail],
+          title: profiles[currentUser.email]?.display_name || 'Someone',
+          body: lastMsg,
+          tag: `chat-${thread.id}`,
+          url: `/ghosted?sheet=chat&thread=${thread.id}`,
+        });
 
         await supabase.from('chat_threads').update({
           last_message: lastMsg,
@@ -544,11 +682,21 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         }).eq('id', thread.id);
       }
 
+      // Manual fallback refresh to ensure message appears immediately even if Realtime is off
       const { data: msgs } = await supabase
-        .from('chat_messages').select('*').eq('thread_id', thread.id)
+        .from('chat_messages')
+        .select('*')
+        .eq('thread_id', thread.id)
         .order('created_date', { ascending: true });
-      if (msgs) setMessages(msgs);
+      
+      if (msgs) {
+        setMessages(msgs);
+        console.log('[Chat] 🔄 Manual message refresh success.');
+      }
+
+      if (!realtimeRef.current) openThread(thread);
     } catch (err) {
+      console.error('[Chat] 💥 Special Send Error:', err);
       toast.error("Couldn't send. Try again.");
     } finally {
       setSending(false);
@@ -652,6 +800,26 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   const handlePhotoUpload = async (file) => {
     if (!file || !currentUser?.email) return;
 
+    // 1. Create a local preview URL for optimistic UI
+    const previewUrl = URL.createObjectURL(file);
+    const tempId = `temp-${Date.now()}`;
+    const now = new Date().toISOString();
+
+    const optimisticPhoto = {
+      id: tempId,
+      _optimistic: true,
+      _isUploading: true,
+      thread_id: selectedThread?.id,
+      sender_email: currentUser.email,
+      content: previewUrl,
+      message_type: 'photo',
+      created_date: now,
+    };
+
+    // Add to messages immediately
+    setMessages(prev => [...prev.filter(m => m.id !== tempId), optimisticPhoto]);
+    console.log('[Chat] 🖼️ Starting optimistic photo upload...');
+
     try {
       const publicUrl = await uploadToStorage(
         file,
@@ -659,13 +827,34 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         currentUser.id || currentUser.email,
       );
 
+      console.log('[Chat] ✅ Photo uploaded to storage. Updating preview...');
+
+      // 2. Update the optimistic preview to use the real URL (prevents flicker)
+      setMessages(prev => prev.map(m => 
+        m.id === tempId ? { ...m, content: publicUrl, _isUploading: false } : m
+      ));
+
+      // 3. Send the real message to the database
       await handleSendSpecial({
         content: publicUrl,
         message_type: 'photo',
         metadata: { url: publicUrl },
       });
+
+      // 4. Finally clean up after the real message has likely arrived via realtime
+      // (or handleSendSpecial's internal refetch)
+      setTimeout(() => {
+        setMessages(prev => prev.filter(m => m.id !== tempId));
+        URL.revokeObjectURL(previewUrl);
+      }, 500);
+
     } catch (err) {
+      console.error('[Chat] Photo upload error:', err);
       toast.error("Couldn't send photo. Try again.");
+      // Mark it as failed so user can try again
+      setMessages(prev => prev.map(m => 
+        m.id === tempId ? { ...m, _isUploading: false, _failed: true } : m
+      ));
     }
   };
 
@@ -673,22 +862,54 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   const handleShareLocation = async () => {
     if (!currentUser?.email || sending) return;
     setSending(true);
+
+    const tempId = `loc-${Date.now()}`;
+    const now = new Date().toISOString();
+
+    // 0. Pre-check: App-level consent
+    const { data: profile } = await supabase.from('profiles').select('location_consent').eq('email', currentUser.email).single();
+    if (profile && profile.location_consent === false) {
+      toast.error('Location sharing is OFF in your settings. Enable it in your profile to share.', {
+        action: { label: 'Settings', onClick: () => openSheet('edit-profile') }
+      });
+      setSending(false);
+      return;
+    }
+
+    // 1. Optimistic Bubble - Show "Locating..." immediately
+    const optimisticLoc = {
+      id: tempId,
+      _optimistic: true,
+      _isUploading: true, // We repurpose this for GPS loading
+      thread_id: selectedThread?.id,
+      sender_email: currentUser.email,
+      content: '📍 Locating...',
+      message_type: 'location',
+      created_date: now,
+      metadata: {}
+    };
+    setMessages(prev => [...prev.filter(m => m.id !== tempId), optimisticLoc]);
+
     try {
       const pos = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: false, // coarse = intentional
-          timeout: 10000,
+        navigator.geolocation.getCurrentPosition(resolve, (err) => {
+          console.warn('[Chat] High accuracy failed, retrying with low accuracy...', err.message);
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: false,
+            timeout: 10000,
+          });
+        }, {
+          enableHighAccuracy: true,
+          timeout: 5000,
         });
       });
 
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
-      // Round to ~100m precision (3 decimal places) — never expose exact
       const approxLat = Math.round(lat * 1000) / 1000;
       const approxLng = Math.round(lng * 1000) / 1000;
-      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
-      // Calculate approximate distance to the other user if we have their location
       let distanceLabel = '';
       if (otherProfile?.geoLat && otherProfile?.geoLng) {
         const R = 6371;
@@ -701,34 +922,44 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         else distanceLabel = `~${Math.round(km / 5) * 5} km away`;
       }
 
-      const locationContent = JSON.stringify({
-        type: 'location',
-        approxLat,
-        approxLng,
-        distanceLabel,
-        expiresAt,
-      });
+      const content = `📍 My Location${distanceLabel ? ' — ' + distanceLabel : ''}`;
+      const metadata = { approxLat, approxLng, expiresAt, distanceLabel };
+      console.log('[Chat] 📍 Generated location metadata:', metadata);
 
+      // 2. Update optimistic bubble with real coordinates
+      setMessages(prev => prev.map(m => 
+        m.id === tempId ? { ...m, content, metadata, _isUploading: false } : m
+      ));
+
+      // 3. Send real message
+      console.log('[Chat] 📤 Sending approximate location...');
       await handleSendSpecial({
-        content: `📍 My Location${distanceLabel ? ' — ' + distanceLabel : ''}`,
+        content,
         message_type: 'location',
-        metadata: {},
+        metadata,
       });
 
-      // Write to location_shares with expiry
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.id) {
-        await supabase.from('location_shares').insert({
-          user_id: session.user.id,
-          current_lat: approxLat,
-          current_lng: approxLng,
-          active: true,
-        }).catch(() => {}); // best-effort
-      }
+      // 4. Persistence cleanup
+      setTimeout(() => {
+        setMessages(prev => prev.filter(m => m.id !== tempId));
+      }, 500);
 
       toast.success('Location shared (expires in 1 hour)');
-    } catch {
-      toast.error("Couldn't get your location. Check permissions.");
+    } catch (err) {
+      console.error('[Chat] Location share error:', err);
+      const isSecure = window.isSecureContext;
+      const origin = window.location.origin;
+      
+      console.log('[Chat] Debug Info:', { isSecure, origin, errCode: err.code });
+
+      if (!isSecure && !origin.includes('localhost')) {
+        toast.error("Geolocation requires HTTPS or localhost. Try using 'http://localhost:5173'", { duration: 10000 });
+      } else if (err.code === 1) { // PERMISSION_DENIED
+        toast.error("Browser blocked location. Reset permissions in your address bar (lock icon) and refresh.", { duration: 6000 });
+      } else {
+        toast.error("Couldn't get your location. Check GPS settings.");
+      }
+      setMessages(prev => prev.filter(m => m.id !== tempId));
     } finally {
       setSending(false);
     }
@@ -1068,7 +1299,15 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           </div>
         ) : (
           messages.map((msg, i) => {
-            const isMe = msg.sender_email === currentUser?.email;
+            const myId = currentUser?.id;
+            const myEmail = currentUser?.email?.toLowerCase();
+            
+            // Resilience: Check all possible ID and email variations from the DB
+            const isMe = 
+              (msg.sender_id && msg.sender_id === myId) || 
+              (msg.from_user_id && msg.from_user_id === myId) ||
+              (msg.sender_email && msg.sender_email.toLowerCase() === myEmail);
+            
             const isMeetpoint = msg.message_type === 'meetpoint';
             const isHighlightedMsg = !!msg.metadata?.is_highlighted;
             const isPhoto =
@@ -1116,24 +1355,37 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                 initial={{ opacity: isOptimistic ? 0.7 : 0, y: isOptimistic ? 4 : 8 }}
                 animate={{ opacity: isFailed ? 1 : isOptimistic ? 0.7 : 1, y: 0 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                className={cn('flex', isMe ? 'justify-end' : 'justify-start')}
+                className={cn('flex w-full px-2 mb-1', isMe ? 'justify-end' : 'justify-start')}
               >
                 {msg.message_type === 'travel' && msg.metadata ? (
                   <JourneyStatusCard metadata={msg.metadata} isMe={isMe} otherName={otherName} />
                 ) : msg.message_type === 'location' ? (
                   <LocationCard msg={msg} isMe={isMe} otherName={otherName} />
+                ) : (msg.message_type === 'map_pin' || msg.message_type === 'map-pin') ? (
+                  <MapPinCard msg={msg} isMe={isMe} otherName={otherName} />
                 ) : isMeetpoint && msg.metadata ? (
                   <MeetpointCard {...msg.metadata} />
                 ) : isPhoto ? (
-                  <div className={cn('max-w-[80%]', isMe ? 'items-end flex flex-col' : 'items-start flex flex-col')}>
-                    <img
-                      src={msg.content}
-                      alt="Photo"
-                      className="max-w-[200px] rounded-xl cursor-pointer border border-white/10"
-                      onClick={() => window.open(msg.content, '_blank')}
-                    />
+                  <div className={cn('max-w-[70%] md:max-w-[280px]', isMe ? 'items-end flex flex-col' : 'items-start flex flex-col')}>
+                    <div className="relative overflow-hidden rounded-2xl w-full aspect-auto">
+                      <img
+                        src={msg.content}
+                        alt="Photo"
+                        className={cn(
+                          "w-full h-auto cursor-pointer border shadow-lg transition-all duration-500 rounded-2xl", 
+                          isMe ? 'border-[#C8962C]/30' : 'border-white/10',
+                          msg._isUploading && 'opacity-40 blur-[2px] grayscale-[0.3]'
+                        )}
+                        onClick={() => !msg._isUploading && window.open(msg.content, '_blank')}
+                      />
+                      {msg._isUploading && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Loader2 className="w-8 h-8 text-white animate-spin drop-shadow-lg" />
+                        </div>
+                      )}
+                    </div>
                     {msg.created_date && (
-                      <p className="text-[10px] mt-1 opacity-40 text-white flex items-center gap-0.5">
+                      <p className="text-[10px] mt-1 opacity-40 text-white flex items-center gap-0.5 px-1">
                         {formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
                         {isMe && messageStatus && <motion.span initial={messageStatus === 'Seen' ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={messageStatus === 'Seen' ? { delay: 0.2, duration: 0.3 } : { duration: 0.15 }} className={`text-[10px] ml-1 ${messageStatus === 'Seen' ? 'text-[#C8962C] font-medium' : messageStatus === '!' ? 'text-[#FF3B30] font-bold' : 'text-white/30'}`}>{messageStatus === '!' ? '⚠ Tap to retry' : messageStatus}</motion.span>}
                       </p>
@@ -1142,14 +1394,21 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                 ) : (
                   <div
                     className={cn(
-                      'max-w-[80%] px-4 py-2.5 rounded-2xl transition-opacity',
+                      'max-w-[85%] px-4 py-2.5 rounded-[22px] shadow-lg transition-all',
                       isMe
-                        ? 'hm-bubble-sent rounded-br-sm'
-                        : 'hm-bubble-received rounded-bl-sm',
-                      isHighlightedMsg && 'ring-2 ring-[#C8962C] ring-offset-1 ring-offset-[#050507]',
-                      isFailed && 'ring-1 ring-[#FF3B30]/50',
+                        ? 'rounded-br-none'
+                        : 'rounded-bl-none',
+                      isHighlightedMsg && 'ring-2 ring-amber-500 ring-offset-2 ring-offset-black',
                     )}
-                    style={isMe && isFailed ? { background: '#1C1C1E', color: '#fff' } : isHighlightedMsg && isMe ? { background: 'linear-gradient(135deg, #CFAF6A 0%, #F2D38B 100%)' } : isHighlightedMsg && !isMe ? { background: '#1C1C1E', border: '2px solid #C8962C' } : undefined}
+                    style={{
+                      background: isMe 
+                        ? 'linear-gradient(135deg, #C8962C 0%, #E8A13D 100%)' 
+                        : 'rgba(28, 28, 30, 0.95)',
+                      color: isMe ? '#000' : '#fff',
+                      alignSelf: isMe ? 'flex-end' : 'flex-start',
+                      marginLeft: isMe ? 'auto' : '0',
+                      border: isMe ? 'none' : '1px solid rgba(255,255,255,0.08)'
+                    }}
                     onClick={isFailed ? () => {
                       // Remove failed message and retry
                       setMessages(prev => prev.filter(m => m !== msg));

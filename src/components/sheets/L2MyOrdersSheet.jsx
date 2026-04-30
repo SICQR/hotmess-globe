@@ -16,7 +16,7 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/components/utils/supabaseClient';
 import {
   Package, ShoppingBag, Loader2, Truck,
-  CheckCircle2, Clock, XCircle, CreditCard, AlertCircle,
+  CheckCircle2, Clock, XCircle, CreditCard, AlertCircle, RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -38,7 +38,11 @@ const STATUS_CONFIG = {
 function StatusBadge({ status }) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
   return (
-    <span className={cn('text-[10px] font-black uppercase px-2 py-0.5 rounded-full', cfg.color, cfg.bg)}>
+    <span className={cn(
+      'text-[9px] font-black uppercase px-2.5 py-1 rounded-full border border-current opacity-90',
+      cfg.color,
+      cfg.bg
+    )}>
       {cfg.label}
     </span>
   );
@@ -81,8 +85,8 @@ function OrderCard({ order, isSeller, onMarkShipped, onMarkDelivered, onTap }) {
           </p>
         </div>
 
-        <div className="text-right flex-shrink-0">
-          <p className="text-[#C8962C] font-black text-base">
+        <div className="flex flex-col items-end justify-start gap-1.5 flex-shrink-0">
+          <p className="text-[#C8962C] font-black text-lg leading-none">
             {displayTotal != null ? `£${Number(displayTotal).toFixed(2)}` : '--'}
           </p>
           <StatusBadge status={order.status} />
@@ -148,13 +152,13 @@ export default function L2MyOrdersSheet() {
     },
   });
 
-  const { data: buyingOrders = [], isLoading: buyLoading } = useQuery({
+  const { data: buyingOrders = [], isLoading: buyLoading, refetch: refetchBuying } = useQuery({
     queryKey: ['my-buying-orders', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       const { data, error } = await supabase
         .from('orders')
-        .select('*, order_items(product_name, price_gbp)')
+        .select('*')
         .eq('buyer_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -162,15 +166,17 @@ export default function L2MyOrdersSheet() {
       return data || [];
     },
     enabled: !!user?.id,
+    staleTime: 0,
+    gcTime: 0,
   });
 
-  const { data: sellingOrders = [], isLoading: sellLoading } = useQuery({
+  const { data: sellingOrders = [], isLoading: sellLoading, refetch: refetchSelling } = useQuery({
     queryKey: ['my-selling-orders', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       const { data, error } = await supabase
         .from('orders')
-        .select('*, order_items(product_name, price_gbp)')
+        .select('*')
         .eq('seller_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -178,6 +184,8 @@ export default function L2MyOrdersSheet() {
       return data || [];
     },
     enabled: !!user?.id,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const updateStatus = useMutation({
@@ -201,8 +209,9 @@ export default function L2MyOrdersSheet() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Tabs */}
-      <div className="flex border-b border-white/10">
+      {/* Tabs + Refresh */}
+      <div className="flex border-b border-white/10 items-center">
+        <div className="flex flex-1">
         {[
           { key: 'buying', label: 'Buying', icon: ShoppingBag, count: buyingOrders.length },
           { key: 'selling', label: 'Selling', icon: Package, count: sellingOrders.length },
@@ -229,10 +238,19 @@ export default function L2MyOrdersSheet() {
             )}
           </button>
         ))}
+        </div>
+        {/* Refresh button */}
+        <button
+          onClick={() => { refetchBuying(); refetchSelling(); }}
+          className="px-3 py-3.5 text-[#C8962C] active:rotate-180 transition-transform duration-300"
+          title="Refresh orders"
+        >
+          <RefreshCw className={cn('w-4 h-4', (buyLoading || sellLoading) && 'animate-spin')} />
+        </button>
       </div>
 
       {/* Order list */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+      <div className="px-4 py-4">
         {isLoading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="w-6 h-6 text-[#C8962C] animate-spin" />

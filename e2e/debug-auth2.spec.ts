@@ -20,7 +20,7 @@ test('debug2: in-browser profile fetch and onboarding_completed check', async ({
       `https://rfoftonnlwudilafhfkl.supabase.co/auth/v1/token?grant_type=password`,
       {
         headers: { 'apikey': ANON_KEY, 'Content-Type': 'application/json' },
-        data: { email: process.env.TEST_USER_A_EMAIL ?? 'e2e.alpha@hotmessldn.com', password: process.env.TEST_USER_A_PASSWORD ?? '' },
+        data: { email: 'e2e.alpha@hotmessldn.com', password: 'HotmessE2E2026!' },
         timeout: 15_000,
       }
     );

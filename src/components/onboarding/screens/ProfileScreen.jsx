@@ -28,7 +28,7 @@ export default function ProfileScreen({ onNext, onSkip }) {
   const handleSubmit = async () => {
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       const attrs = {};
       if (pronouns) attrs.pronouns = pronouns;
       if (orientation) attrs.sexual_orientation = orientation;
@@ -83,3 +83,4 @@ export default function ProfileScreen({ onNext, onSkip }) {
     </div>
   );
 }
+

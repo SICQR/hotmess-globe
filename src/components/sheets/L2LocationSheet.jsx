@@ -27,7 +27,7 @@ export default function L2LocationSheet() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
       const { data } = await supabase
         .from('profiles')
@@ -47,7 +47,7 @@ export default function L2LocationSheet() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       await supabase.from('profiles').update({
         location: city.trim() || null,
@@ -205,3 +205,4 @@ export default function L2LocationSheet() {
     </div>
   );
 }
+

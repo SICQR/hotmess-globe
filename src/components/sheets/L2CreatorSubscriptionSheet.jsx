@@ -79,7 +79,7 @@ export default function L2CreatorSubscriptionSheet({ creatorId, creatorName, pri
   async function loadData() {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setCurrentUser(user);
 
@@ -369,3 +369,4 @@ export default function L2CreatorSubscriptionSheet({ creatorId, creatorName, pri
     </div>
   );
 }
+

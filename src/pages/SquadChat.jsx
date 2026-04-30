@@ -8,10 +8,11 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Link } from 'react-router-dom';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { createPageUrl } from '../utils';
+import { useLocalPullToRefresh } from '@/hooks/useLocalPullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
+
+
 import { toast } from 'sonner';
 import SquadChallenges from '../components/squads/SquadChallenges';
 
@@ -40,16 +41,19 @@ export default function SquadChat() {
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries();
   }, [queryClient]);
-  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+
+  const { pullDistance, isRefreshing } = useLocalPullToRefresh({
     onRefresh: handleRefresh,
     scrollRef,
   });
+
+
 
   useEffect(() => {
     const fetchUser = async () => {
       const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
       if (!ok) return;
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
       setCurrentUser(user);
     };
@@ -184,8 +188,9 @@ export default function SquadChat() {
           <div className="lg:col-span-2">
             <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden flex flex-col" style={{ height: '600px' }}>
               {/* Messages */}
-              <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum p-4 space-y-4" {...pullHandlers}>
+              <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum p-4 space-y-4">
                 <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
+
                 {!chatThread ? (
                   <div className="text-center py-12 text-white/40">
                     <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />

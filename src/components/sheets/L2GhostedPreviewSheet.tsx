@@ -21,10 +21,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Ghost, MessageCircle, Navigation, Heart, Shield, Share2, BadgeCheck, X, ChevronLeft, MapPin, Clock } from 'lucide-react';
+import { Ghost, MessageCircle, Navigation, Heart, Shield, Share2, BadgeCheck, X, ChevronLeft, MapPin, Clock, Car } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSheet } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
+import { useCurrentUser } from '@/components/utils/queryConfig';
 import { useTaps } from '@/hooks/useTaps';
 import { useNearbyMovement } from '@/hooks/useNearbyMovement';
 import { useGPS } from '@/hooks/useGPS';
@@ -63,12 +64,15 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
   const [hasBood, setHasBood] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
 
-  const { isTapped, sendTap, isMutualBoo } = useTaps(myUserId, myEmail);
+  const { isTapped, sendTap, isMutualBoo, dailyBoos } = useTaps(myUserId, myEmail);
   const { position: myPosition } = useGPS();
   const { movers } = useNearbyMovement(myPosition?.lat ?? null, myPosition?.lng ?? null);
 
   // Find if this user is currently moving
   const moverInfo = uid ? movers.find((m) => m.userId === uid) : null;
+
+  const { data: currentUser } = useCurrentUser();
+  const isPremium = currentUser?.membership_tier && !currentUser.membership_tier.toLowerCase().includes('mess — free') && currentUser.membership_tier.toLowerCase() !== 'mess';
 
   // Load profile + auth
   useEffect(() => {
@@ -82,26 +86,43 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
 
     const load = async () => {
       try {
-        const [{ data: { session } }, { data: profileData, error: profileErr }] = await Promise.all([
-          supabase.auth.getSession(),
-          supabase
-            .from('profiles')
-            .select(`
-              id, display_name, username, avatar_url, photos,
-              age, bio, city, verified, looking_for, is_online,
-              last_lat, last_lng, email
-            `)
-            .eq('id', uid)
-            .single(),
-        ]);
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        let profileData = null;
+        let profileErr = null;
+
+        // Fetch using exact columns known to exist in useGhostedGrid
+        const { data, error } = await supabase
+          .from('profiles')
+          .select(`
+            id, display_name, username, avatar_url,
+            age, bio, city, is_verified, looking_for, is_online,
+            email
+          `)
+          .eq('id', uid)
+          .maybeSingle();
+        
+        profileData = data;
+        profileErr = error;
+
+        // Graceful fallback if that fails
+        if (profileErr || !profileData) {
+           console.warn('[GhostedPreview] Advanced fetch failed, trying basic...', profileErr?.message);
+           const { data: basicData, error: basicErr } = await supabase
+             .from('profiles')
+             .select(`id, display_name, username, avatar_url, bio, is_online, email`)
+             .eq('id', uid)
+             .maybeSingle();
+
+           if (basicErr || !basicData) {
+             setError('Profile not found');
+             setLoading(false);
+             return;
+           }
+           profileData = basicData;
+        }
 
         if (cancelled) return;
-
-        if (profileErr || !profileData) {
-          setError('Profile not found');
-          setLoading(false);
-          return;
-        }
 
         const email = session?.user?.email ?? null;
         setMyEmail(email);
@@ -120,7 +141,8 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
         setProfile({
           ...profileData,
           looking_for: profileData.looking_for || [],
-          photos: profileData.photos || [],
+          photos: [], // Deprecated column, fall back to empty
+          verified: !!profileData.is_verified,
         } as ProfileData);
 
         // Check if already boo'd (by user ID)
@@ -136,7 +158,7 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
 
     load();
     return () => { cancelled = true; };
-  }, [uid]);
+  }, [uid, isTapped]);
 
   // ── Actions ──────────────────────────────────────────────────────────────
 
@@ -144,6 +166,15 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
 
   const handleBoo = useCallback(async () => {
     if (!uid || !myUserId) return;
+
+    if (!isPremium && dailyBoos >= 3 && !hasBood) {
+      openSheet('premium-gate', { 
+        title: 'Upgrade to HOTMESS for more BOOs — £7.99/mo',
+        reason: 'boo_limit'
+      });
+      return;
+    }
+
     const result = await sendTap(uid, profile?.display_name || 'Someone', 'boo');
     setHasBood(result.sent);
     if (result.sent && result.mutual) {
@@ -151,15 +182,33 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
     } else if (result.sent) {
       toast('Boo sent');
     }
-  }, [uid, myUserId, profile, sendTap]);
+  }, [uid, myUserId, profile, sendTap, isPremium, dailyBoos, hasBood, openSheet]);
 
   const handleMessage = useCallback(() => {
-    if (!profile) return;
+    if (!profile || !uid) return;
+    
+    // Safety check: Cannot message mock profiles without emails
+    if (!profile.email) {
+      toast.error('This user hasn\'t set up their profile for messaging yet.');
+      return;
+    }
+    
+    // Core messaging logic:
+    // Premium users can message anyone. Free users MUST have a mutual BOO to message.
+    if (!isPremium && !isMutualBoo(uid)) {
+      openSheet('premium-gate', { 
+        title: 'Upgrade to HOTMESS to send messages — £7.99/mo',
+        reason: 'messaging'
+      });
+      return;
+    }
+
     openSheet('chat', {
       userId: profile.id,
+      to: profile.email,
       title: `Chat with ${profile.display_name || 'Someone'}`,
     });
-  }, [profile, openSheet]);
+  }, [profile, uid, isPremium, isMutualBoo, openSheet]);
 
   const handleMeet = useCallback(() => {
     if (!profile?.last_lat || !profile?.last_lng) {
@@ -192,6 +241,7 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
     if (!profile) return;
     openSheet('chat', {
       userId: profile.id,
+      to: profile.email,
       title: `Chat with ${profile.display_name || 'Someone'}`,
       prefillMessage: "You're passing near me \u2014 quick stop?",
       movementContext: moverInfo
@@ -245,6 +295,40 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
     }
   }, [profile, closeSheet]);
 
+  const handleUber = useCallback(() => {
+    if (!profile?.last_lat || !profile?.last_lng) {
+      toast('Location not available');
+      return;
+    }
+    const url = `uber://?action=setPickup&pickup=my_location&dropoff[latitude]=${profile.last_lat}&dropoff[longitude]=${profile.last_lng}`;
+    window.location.href = url;
+  }, [profile]);
+
+  const handleShareLocation = useCallback(async () => {
+    if (!profile || !myUserId || !myPosition) {
+       if (!myPosition) toast('We need your GPS location first');
+       return;
+    }
+    
+    try {
+      await supabase.from('location_shares').insert({
+        sender_id: myUserId,
+        receiver_id: profile.id,
+        lat: myPosition.lat,
+        lng: myPosition.lng
+      });
+      openSheet('chat', {
+        userId: profile.id,
+        to: profile.email,
+        title: `Chat with ${profile.display_name || 'Someone'}`,
+        prefillMessage: "📍 I shared my current location with you"
+      });
+      toast('Location shared to chat');
+    } catch {
+      toast('Failed to share location');
+    }
+  }, [profile, myUserId, myPosition, currentUser, openSheet]);
+
   const handleShare = useCallback(async () => {
     if (!profile) return;
     const url = `https://hotmessldn.com/ghosted?sheet=profile&id=${profile.id}`;
@@ -255,6 +339,19 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
       toast('Link copied');
     }
   }, [profile]);
+
+  const handleMatchMessage = useCallback(() => {
+    if (!profile) return;
+    setShowMatch(false);
+    openSheet('chat', {
+      userId: profile.id,
+      to: profile.email,
+      title: `Chat with ${profile.display_name || 'Someone'}`,
+      prefillMessage: moverInfo
+        ? `We matched and you're nearby — quick meet?`
+        : `We matched 👻`,
+    });
+  }, [profile, openSheet, moverInfo]);
 
   // ── Loading state ────────────────────────────────────────────────────────
   if (loading) {
@@ -282,23 +379,12 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
   }
 
   // ── Loaded ───────────────────────────────────────────────────────────────
-  const handleMatchMessage = useCallback(() => {
-    if (!profile) return;
-    setShowMatch(false);
-    openSheet('chat', {
-      userId: profile.id,
-      title: `Chat with ${profile.display_name || 'Someone'}`,
-      prefillMessage: moverInfo
-        ? `We matched and you're nearby — quick meet?`
-        : `We matched 👻`,
-    });
-  }, [profile, openSheet, moverInfo]);
 
   const heroUrl = profile.avatar_url || profile.photos?.[0]?.url || null;
   const displayAge = profile.age ? `, ${profile.age}` : '';
 
   return (
-    <div className="h-full bg-[#0D0D0D] flex flex-col overflow-hidden">
+    <div className="h-full w-full bg-[#0D0D0D] flex flex-col md:flex-row overflow-hidden">
       {/* Match overlay */}
       <MatchOverlay
         visible={showMatch}
@@ -310,9 +396,9 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
       />
 
       {/* Hero photo */}
-      <div className="relative w-full aspect-[4/3] flex-shrink-0 bg-[#1C1C1E]">
+      <div className="relative w-full aspect-[4/5] max-h-[55vh] flex-shrink-0 bg-[#1C1C1E] md:max-h-none md:w-[400px] md:h-full md:aspect-auto">
         {heroUrl ? (
-          <img src={heroUrl} alt="" className="w-full h-full object-cover" />
+          <img src={heroUrl} alt="" className="w-full h-full object-cover object-center" />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-b from-[#1C1C1E] to-[#0D0D0D]">
             <span className="text-5xl font-black text-white/10">
@@ -334,13 +420,13 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
         {profile.is_online && (
           <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm">
             <span className="w-2 h-2 rounded-full bg-[#30D158]" />
-            <span className="text-[11px] text-white/70 font-medium">Online</span>
+            <span className="text-[11px] text-white/70 font-black uppercase tracking-widest">ONLINE</span>
           </div>
         )}
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-5 pt-4 pb-safe">
+      <div className="flex-1 overflow-y-auto px-5 pt-4 pb-safe md:w-1/2 md:px-8 md:pt-8 md:flex md:flex-col">
         {/* Mutual match banner */}
         {uid && isMutualBoo(uid) && (
           <div
@@ -348,8 +434,8 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
             style={{ background: 'rgba(200,150,44,0.1)', border: '1px solid rgba(200,150,44,0.25)' }}
           >
             <Ghost className="w-4 h-4" style={{ color: '#C8962C' }} />
-            <span className="text-xs font-bold" style={{ color: '#C8962C' }}>
-              You matched — say something
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: '#C8962C' }}>
+              YOU MATCHED — SAY SOMETHING
             </span>
           </div>
         )}
@@ -392,19 +478,19 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
               <Navigation className="w-4 h-4" style={{ color: '#C8962C' }} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white">
-                Moving{moverInfo.destinationLabel ? ` toward ${moverInfo.destinationLabel}` : ''}
+              <p className="text-[11px] font-black text-white uppercase tracking-widest">
+                MOVING{moverInfo.destinationLabel ? ` TOWARD ${moverInfo.destinationLabel.toUpperCase()}` : ''}
               </p>
-              <div className="flex items-center gap-2 text-xs text-white/40">
+              <div className="flex items-center gap-2 text-[10px] text-white/40 font-bold uppercase tracking-wider">
                 {moverInfo.etaMinutes && (
                   <span className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
-                    ETA {moverInfo.etaMinutes} min
+                    ETA {moverInfo.etaMinutes} MIN
                   </span>
                 )}
                 {moverInfo.isPassingNear && (
-                  <span style={{ color: '#C8962C' }} className="font-semibold">
-                    Passing near you
+                  <span style={{ color: '#C8962C' }} className="font-black">
+                    PASSING NEAR YOU
                   </span>
                 )}
               </div>
@@ -440,40 +526,61 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
             aria-label={hasBood ? 'Already boo\'d' : 'Boo this person'}
           >
             <Ghost className="w-4 h-4" />
-            {hasBood ? 'Boo\'d' : 'Boo'}
+            {hasBood ? "BOO'D" : "BOO"}
           </button>
 
           {/* Message */}
           <button
             onClick={handleMessage}
-            className="flex-1 h-12 rounded-xl bg-[#C8962C] text-white font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
-            aria-label="Message"
+            className="flex-1 h-12 rounded-xl bg-[#C8962C] text-white font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-[0_4px_12px_rgba(200,150,44,0.3)]"
+            aria-label="MESSAGE"
           >
             <MessageCircle className="w-4 h-4" />
-            Message
+            MESSAGE
           </button>
 
           {/* Suggest Stop (only when user is moving nearby) */}
           {moverInfo && moverInfo.isPassingNear && (
             <button
               onClick={handleSuggestStop}
-              className="flex-1 h-12 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
+              className="flex-1 h-12 rounded-xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
               style={{ backgroundColor: 'rgba(200,150,44,0.15)', color: '#C8962C', border: '1px solid rgba(200,150,44,0.3)' }}
               aria-label="Suggest a stop"
             >
               <MapPin className="w-4 h-4" />
-              Suggest Stop
+              SUGGEST STOP
             </button>
           )}
 
           {/* Meet */}
           <button
             onClick={handleMeet}
-            className="flex-1 h-12 rounded-xl bg-white/10 text-white font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            className="flex-1 h-12 rounded-xl bg-white/10 text-white font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
             aria-label="Get directions"
           >
             <Navigation className="w-4 h-4" />
-            Meet
+            MEET
+          </button>
+        </div>
+
+        {/* Transport & Location actions */}
+        <div className="flex gap-3 mb-4">
+          <button
+            onClick={handleShareLocation}
+            className="flex-1 h-12 rounded-xl bg-white/5 text-[#30D158] font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            aria-label="Share Location"
+          >
+            <MapPin className="w-4 h-4" />
+            SHARE LOCATION
+          </button>
+
+          <button
+            onClick={handleUber}
+            className="flex-1 h-12 rounded-xl bg-white/5 text-white font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            aria-label="Uber"
+          >
+            <Car className="w-4 h-4" />
+            UBER
           </button>
         </div>
 
@@ -486,25 +593,25 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
             aria-label={hasSaved ? 'Saved' : 'Save profile'}
           >
             <Heart className={`w-3.5 h-3.5 ${hasSaved ? 'text-[#C8962C] fill-[#C8962C]' : ''}`} />
-            {hasSaved ? 'Saved' : 'Save'}
+            {hasSaved ? 'SAVED' : 'SAVE'}
           </button>
 
           <button
             onClick={handleBlock}
-            className="flex-1 h-10 rounded-lg bg-white/5 text-white/50 text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
-            aria-label="Block or report"
+            className="flex-1 h-10 rounded-lg bg-white/5 text-white/50 font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+            aria-label="BLOCK"
           >
             <Shield className="w-3.5 h-3.5" />
-            Block
+            BLOCK
           </button>
 
           <button
             onClick={handleShare}
-            className="flex-1 h-10 rounded-lg bg-white/5 text-white/50 text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
-            aria-label="Share profile"
+            className="flex-1 h-10 rounded-lg bg-white/5 text-white/50 font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+            aria-label="SHARE"
           >
             <Share2 className="w-3.5 h-3.5" />
-            Share
+            SHARE
           </button>
         </div>
       </div>

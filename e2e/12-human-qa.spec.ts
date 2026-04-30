@@ -25,10 +25,17 @@ import {
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-const BASE = process.env.BASE_URL ?? 'https://hotmessldn.com';
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL ?? 'https://rfoftonnlwudilafhfkl.supabase.co';
-const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY ?? '';
-const STORAGE_KEY = 'sb-rfoftonnlwudilafhfkl-auth-token';
+const IS_PROD = process.env.PROD === 'true';
+const BASE = IS_PROD ? 'https://hotmessldn.com' : 'http://127.0.0.1:5173';
+const SUPABASE_URL = IS_PROD
+  ? 'https://rfoftonnlwudilafhfkl.supabase.co'
+  : (process.env.VITE_SUPABASE_URL ?? 'https://klsywpvncqqglhnhrjbh.supabase.co');
+const ANON_KEY = IS_PROD
+  ? (process.env.PROD_SUPABASE_ANON_KEY ?? '')
+  : (process.env.VITE_SUPABASE_ANON_KEY ?? '');
+const STORAGE_KEY = IS_PROD
+  ? 'sb-rfoftonnlwudilafhfkl-auth-token'
+  : 'sb-klsywpvncqqglhnhrjbh-auth-token';
 
 const MOBILE = { width: 390, height: 844 };
 const GEO_LONDON = { latitude: 51.5074, longitude: -0.1278 };

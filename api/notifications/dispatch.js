@@ -62,11 +62,18 @@ export default async function handler(req, res) {
     // Dev/preview without secret — allow through for testing
   }
 
+  const waToken = process.env.WHATSAPP_ACCESS_TOKEN ? process.env.WHATSAPP_ACCESS_TOKEN.trim() : null;
+  const waPhone = process.env.WHATSAPP_PHONE_NUMBER_ID ? process.env.WHATSAPP_PHONE_NUMBER_ID.trim() : null;
+  console.log('[dispatch] Env Check - WA_PHONE:', waPhone, 'WA_TOKEN starts with:', waToken ? waToken.substring(0, 10) : null);
+
   const { error, serviceClient } = getSupabaseServerClients();
   if (error) return json(res, 500, { error });
 
   // Pull a small batch to keep execution time bounded.
   const nowIso = new Date().toISOString();
+
+  const { data: allItems } = await serviceClient.from('notification_outbox').select('id, status, channel, send_at, metadata').order('send_at', { ascending: false }).limit(10);
+  console.log('[dispatch] All outbox items:', allItems);
 
   const { data: items, error: loadError } = await serviceClient
     .from('notification_outbox')
@@ -77,11 +84,12 @@ export default async function handler(req, res) {
     .limit(25);
 
   if (loadError) {
+    console.error('[dispatch] loadError:', loadError);
     // If the table doesn't exist yet (42P01), return empty result instead of 500
     if (loadError.code === '42P01' || (loadError.message && loadError.message.includes('does not exist'))) {
-      return json(res, 200, { queued: 0, sent: 0, failed: 0, note: 'notification_outbox table not created yet' });
+      return json(res, 200, { queued: 0, sent: 0, failed: 0, note: `notification_outbox table not created yet. Error: ${loadError.message}` });
     }
-    return json(res, 500, { error: loadError.message || 'Failed to load outbox' });
+    return json(res, 500, { error: loadError.message || 'Failed to load outbox', code: loadError.code });
   }
 
   let sent = 0;
@@ -152,6 +160,61 @@ export default async function handler(req, res) {
         continue;
       }
 
+      if (channel === 'whatsapp') {
+        const phone = item.metadata?.contact_phone || item.metadata?.phone;
+        if (!phone) throw new Error('Phone number required for WhatsApp channel');
+
+        // Clean phone number (remove +, spaces, etc.)
+        const cleanPhone = phone.replace(/\D/g, '');
+
+        const waRes = await fetch(`https://graph.facebook.com/v17.0/${waPhone}/messages`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${waToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            to: cleanPhone,
+            type: 'template',
+            template: {
+              name: 'safety_alert_v1',
+              language: { code: 'en_GB' },
+              components: [
+                {
+                  type: 'body',
+                  parameters: [
+                    { type: 'text', text: item.metadata?.user_name || 'Your friend' },
+                    { type: 'text', text: item.message || 'needs assistance' },
+                    { type: 'text', text: item.metadata?.location_str || 'Location unavailable' }
+                  ]
+                }
+              ]
+            }
+          }),
+        });
+
+        if (!waRes.ok) {
+          const text = await waRes.text();
+          let errorData;
+          try {
+            errorData = JSON.parse(text);
+          } catch {
+            errorData = { raw: text };
+          }
+          throw new Error(`WhatsApp API error (${waRes.status}): ${JSON.stringify(errorData)}`);
+        }
+
+        const { error: updateError } = await serviceClient
+          .from('notification_outbox')
+          .update({ status: 'sent', sent_at: nowIso })
+          .eq('id', item.id);
+
+        if (updateError) throw updateError;
+        sent += 1;
+        continue;
+      }
+
       // Email channel: not configured yet
       const { error: updateError } = await serviceClient
         .from('notification_outbox')
@@ -160,10 +223,21 @@ export default async function handler(req, res) {
 
       if (updateError) throw updateError;
       failed += 1;
-    } catch {
+    } catch (err) {
+      console.error('[dispatch] Error processing item:', item.id, err);
+      await serviceClient
+        .from('notification_outbox')
+        .update({ status: 'failed', metadata: { ...(item.metadata || {}), error: err.message } })
+        .eq('id', item.id);
       failed += 1;
     }
   }
 
-  return json(res, 200, { queued: (items || []).length, sent, failed });
+  return json(res, 200, {
+    queued: (items || []).length,
+    sent,
+    failed,
+    total_in_db: (allItems || []).length,
+    debug: allItems 
+  });
 }

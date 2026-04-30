@@ -2,18 +2,22 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
+  Home,
   Globe, 
   ShoppingBag, 
-  LayoutGrid,
+  Ghost,
   User,
-  Radio,
+  MessageCircle,
+  Menu,
 } from 'lucide-react';
+import { useUnreadCount } from '@/hooks/useUnreadCount';
+import { useSheet } from '@/contexts/SheetContext';
 
 /**
  * BottomNav — L1 HUD Navigation (z-50)
  * 
  * RULES:
- * 1. Exactly 5 modes: Ghosted, Pulse, Market, Radio, Profile
+ * 1. Exactly 6 modes: Home, Pulse, Ghosted, Shop, Profile, More
  * 2. 44px minimum touch targets (WCAG 2.1)
  * 3. No nested navigation or modals
  * 4. Active state indicated by color + top bar
@@ -22,26 +26,31 @@ import {
 
 // Mode configuration
 const MODES = [
-  { id: 'ghosted', path: '/', label: 'Ghosted', icon: LayoutGrid, color: '#C8962C' },
+  { id: 'home', path: '/', label: 'Home', icon: Home, color: '#FFFFFF' },
   { id: 'pulse', path: '/pulse', label: 'Pulse', icon: Globe, color: '#00C2E0' },
-  { id: 'market', path: '/market', label: 'Market', icon: ShoppingBag, color: '#C8962C' },
-  { id: 'radio', path: '/radio', label: 'Radio', icon: Radio, color: '#39FF14', hasLive: true },
+  { id: 'ghosted', path: '/ghosted', label: 'Ghosted', icon: Ghost, color: '#C8962C' },
+  { id: 'market', path: '/market', label: 'Shop', icon: ShoppingBag, color: '#C8962C' },
+  { id: 'messages', path: '#', label: 'Inbox', icon: MessageCircle, color: '#FFFFFF', isSheetAction: 'chat' },
   { id: 'profile', path: '/profile', label: 'Profile', icon: User, color: '#FFFFFF' },
+  { id: 'more', path: '/more', label: 'More', icon: Menu, color: '#FFFFFF' },
 ];
 
 // Determine active mode from pathname
 function getActiveMode(pathname) {
-  if (pathname === '/' || pathname.startsWith('/ghosted') || pathname.startsWith('/social')) return 'ghosted';
-  if (pathname.startsWith('/pulse') || pathname.startsWith('/globe') || pathname.startsWith('/events')) return 'pulse';
-  if (pathname.startsWith('/market') || pathname.startsWith('/shop') || pathname.startsWith('/preloved')) return 'market';
-  if (pathname.startsWith('/radio') || pathname.startsWith('/music')) return 'radio';
-  if (pathname.startsWith('/profile') || pathname.startsWith('/settings') || pathname.startsWith('/account')) return 'profile';
-  return 'ghosted';
+  if (pathname === '/' || pathname.startsWith('/home')) return 'home';
+  if (pathname.startsWith('/pulse')) return 'pulse';
+  if (pathname.startsWith('/ghosted')) return 'ghosted';
+  if (pathname.startsWith('/market')) return 'market';
+  if (pathname.startsWith('/profile')) return 'profile';
+  if (pathname.startsWith('/more')) return 'more';
+  return 'home';
 }
 
 export default function BottomNav() {
   const location = useLocation();
   const activeMode = getActiveMode(location.pathname);
+  const { unreadCount } = useUnreadCount();
+  const { openSheet } = useSheet();
 
   return (
     <nav 
@@ -59,6 +68,12 @@ export default function BottomNav() {
             <Link
               key={mode.id}
               to={mode.path}
+              onClick={(e) => {
+                if (mode.isSheetAction) {
+                  e.preventDefault();
+                  openSheet(mode.isSheetAction);
+                }
+              }}
               className="relative flex flex-col items-center justify-center flex-1 min-w-[64px] min-h-[48px] touch-manipulation"
               aria-current={isActive ? 'page' : undefined}
               aria-label={mode.label}
@@ -94,6 +109,16 @@ export default function BottomNav() {
                   className="absolute top-2.5 right-1/2 translate-x-5 w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"
                   aria-label="Live"
                 />
+              )}
+
+              {/* Unread Message Badge */}
+              {mode.id === 'messages' && unreadCount > 0 && (
+                <span 
+                  className="absolute top-1.5 right-1/2 translate-x-3 bg-[#FF3B30] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-black shadow-sm"
+                  style={{ animation: 'bounce 0.5s ease' }}
+                >
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
               )}
             </Link>
           );

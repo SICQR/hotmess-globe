@@ -22,7 +22,7 @@ export default function L2BoostShopSheet() {
 
   const load = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       const [{ data: bt }, { data: ab }] = await Promise.all([
         supabase.from('user_boost_types').select('*').order('price_pence'),
         supabase.from('user_active_boosts').select('boost_key,expires_at').eq('user_id', user.id).gt('expires_at', new Date().toISOString()),
@@ -121,3 +121,4 @@ export default function L2BoostShopSheet() {
     </div>
   );
 }
+

@@ -39,7 +39,7 @@ export default function L2GhostedSheet() {
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
       return { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email };
@@ -171,13 +171,13 @@ export default function L2GhostedSheet() {
                 <Zap className={cn('w-6 h-6', isLive ? 'text-black' : 'text-white/40')} />
               </div>
               <div>
-                <h3 className="text-lg font-black text-white">
+                <h3 className="text-lg font-black text-white uppercase tracking-tight">
                   {isLive ? 'YOU ARE LIVE' : 'GO LIVE'}
                 </h3>
-                <p className="text-xs text-white/60">
+                <p className="text-xs text-white/60 uppercase tracking-widest">
                   {isLive 
-                    ? `Expires ${formatDistanceToNow(new Date(myStatus.expires_at), { addSuffix: true })}`
-                    : 'Let others know you\'re available'
+                    ? `EXPIRES ${formatDistanceToNow(new Date(myStatus.expires_at), { addSuffix: true })}`
+                    : 'LET OTHERS KNOW YOU\'RE AVAILABLE'
                   }
                 </p>
               </div>
@@ -199,7 +199,7 @@ export default function L2GhostedSheet() {
                   key={opt.value}
                   onClick={() => setSelectedDuration(opt.value)}
                   className={cn(
-                    'flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all',
+                    'flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all uppercase',
                     selectedDuration === opt.value
                       ? 'bg-[#39FF14] text-black'
                       : 'bg-white/10 text-white/60 hover:bg-white/20'
@@ -220,8 +220,8 @@ export default function L2GhostedSheet() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 bg-[#39FF14] rounded-full animate-pulse" />
-            <span className="text-white font-bold">{usersWithStatus.length}</span>
-            <span className="text-white/60 text-sm">people live right now</span>
+            <span className="text-white font-black">{usersWithStatus.length}</span>
+            <span className="text-white/60 text-[10px] font-black uppercase tracking-widest">PEOPLE LIVE RIGHT NOW</span>
           </div>
           <Button
             variant="ghost"
@@ -237,7 +237,7 @@ export default function L2GhostedSheet() {
       <SheetDivider />
 
       {/* Users Grid */}
-      <SheetSection title="Right Now">
+      <SheetSection title="RIGHT NOW">
         {usersLoading ? (
           <div className="flex justify-center py-8">
             <Loader2 className="w-6 h-6 text-[#C8962C] animate-spin" />
@@ -245,8 +245,8 @@ export default function L2GhostedSheet() {
         ) : usersWithStatus.length === 0 ? (
           <div className="text-center py-12">
             <Clock className="w-12 h-12 text-white/20 mx-auto mb-4" />
-            <p className="text-white/40 font-bold">No one live right now</p>
-            <p className="text-white/20 text-sm mt-1">Be the first!</p>
+            <p className="text-white/40 font-black uppercase tracking-widest">NO ONE LIVE RIGHT NOW</p>
+            <p className="text-white/20 text-[10px] font-bold uppercase tracking-[0.2em] mt-1">BE THE FIRST!</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -355,3 +355,4 @@ export default function L2GhostedSheet() {
     </div>
   );
 }
+

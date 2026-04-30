@@ -6,8 +6,8 @@
  */
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
+import { useSheet } from '@/contexts/SheetContext';
 
 const GOLD = '#C8962C';
 const HNH_RED = '#C41230';
@@ -36,11 +36,11 @@ const PRODUCTS = [
 ];
 
 export function HNHMarketHero({ className = '' }: { className?: string }) {
-  const navigate = useNavigate();
+  const { openSheet } = useSheet();
 
   const handleAdd = (handle: string) => {
-    // Navigate to Shopify product page — /p/:handle is the canonical route
-    navigate(`/p/${handle}`);
+    // Open product sheet — source 'shopify' triggers handle-based fetch
+    openSheet('product', { handle, source: 'shopify' });
   };
 
   return (
@@ -96,11 +96,11 @@ export function HNHMarketHero({ className = '' }: { className?: string }) {
             )}
 
             {/* Product image */}
-            <div className="flex items-center justify-center pt-5 pb-2" style={{ height: 120 }}>
+            <div className="flex items-center justify-center p-6 aspect-square bg-[#0D0D0F]">
               <img
                 src={p.image}
                 alt={`${p.name} ${p.size}`}
-                className="h-full w-auto object-contain"
+                className="h-full w-full object-contain hover:scale-110 transition-transform duration-700"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.opacity = '0';
                 }}
@@ -108,29 +108,29 @@ export function HNHMarketHero({ className = '' }: { className?: string }) {
             </div>
 
             {/* Info */}
-            <div className="px-3 pb-3 flex-1 flex flex-col justify-between">
-              <div>
-                <p className="text-white/50 text-[10px] font-semibold">{p.name}</p>
-                <p className="text-white font-black text-sm">{p.size}</p>
-                <p className="font-black text-sm mt-0.5" style={{ color: GOLD }}>
+            <div className="p-4 flex-1 flex flex-col justify-between bg-black">
+              <div className="mb-4">
+                <p className="text-[#C8962C] text-[9px] font-black uppercase tracking-widest">{p.name}</p>
+                <h4 className="text-white font-black text-sm uppercase tracking-tighter">{p.size} Edition</h4>
+                <p className="font-black text-sm mt-1 text-white/50">
                   {p.price}
                 </p>
               </div>
               <button
                 onClick={() => handleAdd(p.handle)}
-                className="mt-2.5 w-full flex items-center justify-center gap-1.5 rounded-xl py-2 text-[11px] font-black uppercase tracking-wider transition-opacity active:opacity-70"
+                className="w-full flex items-center justify-center gap-2 rounded-xl py-3 text-[11px] font-black uppercase tracking-[0.15em] transition-all active:scale-[0.98]"
                 style={
                   p.featured
                     ? { background: GOLD, color: '#000' }
                     : {
-                        background: 'rgba(200,150,44,0.15)',
-                        border: `1px solid ${GOLD}30`,
-                        color: GOLD,
+                        background: 'rgba(255,255,255,0.05)',
+                        border: `1px solid rgba(255,255,255,0.1)`,
+                        color: '#FFF',
                       }
                 }
               >
-                <ShoppingBag className="w-3 h-3" />
-                Add to bag
+                <ShoppingBag className="w-3.5 h-3.5" />
+                Select
               </button>
             </div>
           </div>

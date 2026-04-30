@@ -60,7 +60,7 @@ export default function RightNowModal({ isOpen, onClose, intent: intentProp = 'e
   useEffect(() => {
     if (!isOpen) return;
     const checkLive = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { data } = await supabase
         .from('right_now_status')
@@ -92,7 +92,7 @@ export default function RightNowModal({ isOpen, onClose, intent: intentProp = 'e
   const handleEndLive = async () => {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       await supabase
         .from('right_now_status')
@@ -110,7 +110,7 @@ export default function RightNowModal({ isOpen, onClose, intent: intentProp = 'e
   const goLive = async () => {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error('Not logged in'); return; }
 
       const durationMs = duration === 0
@@ -463,3 +463,4 @@ export default function RightNowModal({ isOpen, onClose, intent: intentProp = 'e
     </AnimatePresence>
   );
 }
+

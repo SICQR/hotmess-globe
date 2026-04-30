@@ -89,26 +89,46 @@ export default function CreatePrelovedSheet({ open, onClose, currentUser }) {
       }
 
       // Insert listing
-      const { error: insertError } = await supabase.from('market_listings').insert({
-        seller_id: currentUser.id,
-        title: form.title.trim(),
-        description: form.description.trim(),
-        price: Number(form.price),
-        currency: 'GBP',
-        category: form.category,
-        brand: form.brand.trim() || null,
-        size: form.size.trim() || null,
-        condition: form.condition,
-        images: imageUrls,
-        status: 'active',
-        location_country: 'GB',
-        shipping_available: form.shipping_available,
-        local_pickup: form.local_pickup,
-      });
+      const { data: listing, error: insertError } = await supabase
+        .from('market_listings')
+        .insert({
+          seller_id: currentUser.id,
+          title: form.title.trim(),
+          description: form.description.trim(),
+          price_pence: Math.round(Number(form.price) * 100),
+          currency: 'GBP',
+          category: form.category,
+          brand: form.brand.trim() || null,
+          size: form.size.trim() || null,
+          condition: form.condition,
+          status: 'active',
+          listing_type: 'preloved',
+          quantity_available: 1,
+        })
+        .select()
+        .single();
 
       if (insertError) throw insertError;
 
-      toast.success('Listing submitted for review');
+      // Insert media records
+      if (imageUrls.length > 0) {
+        const mediaRecords = imageUrls.map((url, idx) => ({
+          listing_id: listing.id,
+          storage_path: url,
+          sort: idx,
+          alt: `${form.title} photo ${idx + 1}`
+        }));
+
+        const { error: mediaError } = await supabase
+          .from('market_listing_media')
+          .insert(mediaRecords);
+
+        if (mediaError) console.error('Media insert error:', mediaError);
+      }
+
+      toast.success('Listing is now live!');
+      resetForm();
+      onClose();
       resetForm();
       onClose();
     } catch (err) {

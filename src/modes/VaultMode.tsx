@@ -12,9 +12,8 @@ import {
   Package, ShoppingBag, Ticket, Lock, Loader2,
   QrCode, Trophy, Heart
 } from 'lucide-react';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { format } from 'date-fns';
+
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { cn } from '@/lib/utils';
@@ -79,10 +78,7 @@ export default function VaultMode() {
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries();
   }, [queryClient]);
-  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
-    onRefresh: handleRefresh,
-    scrollRef,
-  });
+
 
   const { data: user } = useQuery({
     queryKey: ['current-user'],
@@ -246,8 +242,8 @@ export default function VaultMode() {
       </div>
 
       {/* Items list */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum" {...pullHandlers}>
-        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum">
+
         {isLoading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="w-6 h-6 text-[#C8962C] animate-spin" />

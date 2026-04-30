@@ -22,7 +22,7 @@ export default function CreateBeaconBiz() {
     }
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       await supabase.from('beacons').insert({
         owner_id: user.id,
         type: 'event',
@@ -100,3 +100,4 @@ export default function CreateBeaconBiz() {
     </div>
   );
 }
+

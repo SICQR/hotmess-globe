@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { supabase } from '@/components/utils/supabaseClient';
+
 import { Send, Sparkles, Loader2, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,10 +26,7 @@ export default function Chat() {
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries();
   }, [queryClient]);
-  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
-    onRefresh: handleRefresh,
-    scrollRef,
-  });
+
   const { data: beacons = [] } = useQuery({
     queryKey: ['beacons'],
     queryFn: () => supabase.from('beacons').select('*').eq({ active: true }, '-created_date'),
@@ -45,7 +41,7 @@ export default function Chat() {
       try {
         const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
         if (!ok) return;
-        const { data: { user } } = await supabase.auth.getUser();
+        let { data: { user } } = await supabase.auth.getUser();
       let currentUser; if (!user) { currentUser = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); currentUser = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
         setUser(currentUser);
         // Welcome message
@@ -150,8 +146,8 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
         </div>
       </div>
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum p-4 md:p-6" {...pullHandlers}>
-        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum p-4 md:p-6">
+
         <div className="max-w-4xl mx-auto space-y-4">
           <AnimatePresence>
             {messages.map((message) => (

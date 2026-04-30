@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS movement_updates (
   approx_lng DOUBLE PRECISION,
   heading_degrees INTEGER,
   eta_minutes INTEGER,
-  timestamp TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 ALTER TABLE movement_updates ENABLE ROW LEVEL SECURITY;
@@ -64,13 +64,13 @@ SELECT
   mu.approx_lng,
   mu.heading_degrees,
   mu.eta_minutes AS latest_eta,
-  mu.timestamp AS last_update
+  mu.created_at AS last_update
 FROM movement_sessions ms
 JOIN profiles p ON p.id = ms.user_id
 LEFT JOIN LATERAL (
   SELECT * FROM movement_updates
   WHERE session_id = ms.id
-  ORDER BY timestamp DESC LIMIT 1
+  ORDER BY created_at DESC LIMIT 1
 ) mu ON true
 WHERE ms.active = true
   AND (ms.expires_at IS NULL OR ms.expires_at > now())

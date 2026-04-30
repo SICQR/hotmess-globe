@@ -25,7 +25,7 @@ test.describe('Auth Session Persistence', () => {
     // Check that no valid sessions were cleared
     const badClears = consoleLogs.filter(log => 
       log.includes('[clearBadSessions] Removed:') && 
-      log.includes('rfoftonnlwudilafhfkl')
+      log.includes('klsywpvncqqglhnhrjbh')
     );
     
     expect(badClears.length).toBe(0);
@@ -110,7 +110,7 @@ test.describe('Auth Session Persistence', () => {
     // This test documents which project should be active
     // If this fails, there's an env mismatch
     if (supabaseUrl !== 'unknown') {
-      expect(supabaseUrl).toContain('rfoftonnlwudilafhfkl');
+      expect(supabaseUrl).toContain('klsywpvncqqglhnhrjbh');
     }
   });
 });

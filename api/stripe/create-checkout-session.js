@@ -19,29 +19,33 @@ const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' }) : null;
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
-    return res.status(405).json({ error: 'Method not allowed' });
+    res.statusCode = 405;
+    return res.end(JSON.stringify({ error: 'Method not allowed' }));
   }
 
   if (!stripe) {
-    return res.status(503).json({
+    res.statusCode = 503;
+    return res.end(JSON.stringify({
       error: 'Stripe not configured',
-      detail: 'Add STRIPE_SECRET_KEY in Vercel → Settings → Environment Variables',
-    });
+      detail: 'Add STRIPE_SECRET_KEY in .env or Vercel Settings',
+    }));
   }
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    return res.status(503).json({ error: 'Supabase not configured' });
+    res.statusCode = 503;
+    return res.end(JSON.stringify({ error: 'Supabase not configured' }));
   }
 
   // Auth via Bearer token
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    res.statusCode = 401;
+    return res.end(JSON.stringify({ error: 'Unauthorized' }));
   }
 
   const token = authHeader.slice(7);
@@ -53,10 +57,27 @@ export default async function handler(req, res) {
   } = await supabase.auth.getUser(token);
 
   if (authError || !user) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    res.statusCode = 401;
+    return res.end(JSON.stringify({ error: 'Unauthorized' }));
   }
 
-  const body = req.body || {};
+  // ── Manual Body Parsing (Required for local Node/Vite dev) ────────────────
+  let body = {};
+  if (req.method === 'POST') {
+    try {
+      const chunks = [];
+      for await (const chunk of req) {
+        chunks.push(chunk);
+      }
+      const data = Buffer.concat(chunks).toString();
+      if (data) body = JSON.parse(data);
+    } catch (e) {
+      console.error('Body parse error:', e);
+      // Fallback to req.body if it exists (for Vercel)
+      body = req.body || {};
+    }
+  }
+
   const { type } = body;
 
   // Resolve origin for redirect URLs
@@ -72,82 +93,115 @@ export default async function handler(req, res) {
     .eq('id', user.id)
     .single();
 
-  // ── Preloved order checkout ──────────────────────────────────────────────
-  if (type === 'preloved_order') {
-    const { listing_id, price_gbp, title, order_id } = body;
-    if (!listing_id || !price_gbp) {
-      return res.status(400).json({ error: 'listing_id and price_gbp required' });
-    }
+  // ── Preloved or Shopify order checkout ──────────────────────────────────────────────
+  if (type === 'preloved_order' || type === 'shopify_order') {
+    const { listing_id, price_gbp, title, order_id, items: lineItems } = body;
+    
+    // items from frontend (optional but preferred for multi-item carts)
+    const normalizedLines = lineItems?.length > 0 
+      ? lineItems.map((i, idx) => {
+          const rawPrice = i.price || (idx === 0 ? price_gbp : 0);
+          const unit_amount = Math.round(Number(rawPrice || 0) * 100);
+          
+          if (!unit_amount || unit_amount <= 0) {
+            throw new Error(`Item "${i.title || 'Unknown'}" has an invalid price: ${rawPrice}`);
+          }
 
-    const amountInPence = Math.round(Number(price_gbp) * 100);
-    if (!amountInPence || amountInPence <= 0) {
-      return res.status(400).json({ error: 'Invalid price' });
-    }
-
-    try {
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        mode: 'payment',
-        customer_email: user.email,
-        line_items: [
+          return {
+            price_data: {
+              currency: 'gbp',
+              unit_amount,
+              product_data: {
+                name: i.title || 'Item',
+                description: type === 'shopify_order' ? 'HOTMESS Merch' : 'Preloved item',
+              },
+            },
+            quantity: i.qty || 1,
+          };
+        })
+      : [
           {
             price_data: {
               currency: 'gbp',
-              unit_amount: amountInPence,
+              unit_amount: Math.round(Number(price_gbp || 0) * 100),
               product_data: {
-                name: title || 'Preloved Item',
-                description: 'Preloved item from HOTMESS Market',
+                name: title || (type === 'shopify_order' ? 'Merch Order' : 'Preloved Item'),
+                description: type === 'shopify_order' ? 'HOTMESS Merch' : 'Preloved item from HOTMESS Market',
               },
             },
             quantity: 1,
           },
-        ],
+        ];
+
+    if (!normalizedLines[0].price_data.unit_amount || normalizedLines[0].price_data.unit_amount <= 0) {
+      res.statusCode = 400;
+      return res.end(JSON.stringify({ error: 'Checkout total cannot be zero.' }));
+    }
+
+    try {
+      const session = await stripe.checkout.sessions.create({
+        ui_mode: 'embedded',
+        payment_method_types: ['card'],
+        mode: 'payment',
+        customer_email: user.email,
+        line_items: normalizedLines,
         metadata: {
           user_id: user.id,
           user_email: user.email ?? '',
           user_name: profile?.display_name ?? '',
-          type: 'preloved_order',
-          listing_id: String(listing_id),
+          type,
           order_id: order_id ? String(order_id) : '',
         },
-        success_url: `${origin}/market?purchase=success&listing=${encodeURIComponent(listing_id)}`,
-        cancel_url: `${origin}/market`,
-        allow_promotion_codes: false,
+        return_url: type === 'shopify_order' 
+          ? `${origin}/market?purchase=success&type=shop&order_id=${order_id}&session_id={CHECKOUT_SESSION_ID}`
+          : `${origin}/market?purchase=success&listing=${encodeURIComponent(listing_id || '')}&order_id=${order_id}&session_id={CHECKOUT_SESSION_ID}`,
+        allow_promotion_codes: true,
       });
 
-      return res.status(200).json({ url: session.url });
+      res.statusCode = 200;
+      return res.end(JSON.stringify({ clientSecret: session.client_secret }));
     } catch (err) {
-      console.error('[preloved-checkout] Stripe error:', err?.message);
-      return res.status(500).json({ error: 'Failed to create checkout session', detail: err?.message });
+      console.error(`[${type}-checkout] Stripe error:`, err?.message);
+      res.statusCode = 500;
+      return res.end(JSON.stringify({ error: 'Failed to create checkout session', detail: err?.message }));
     }
   }
 
   // ── Membership checkout (default) ────────────────────────────────────────
   const { tierId } = body;
   if (!tierId) {
-    return res.status(400).json({ error: 'tierId required' });
+    res.statusCode = 400;
+    return res.end(JSON.stringify({ error: 'tierId required' }));
   }
 
-  // Fetch the tier
-  const { data: tier, error: tierError } = await supabase
-    .from('membership_tiers')
-    .select('id, name, price')
-    .eq('id', Number(tierId))
-    .single();
+  // Fetch the tier — robust lookup by ID or NAME
+  let query = supabase.from('membership_tiers').select('id, name, price');
+  if (isNaN(Number(tierId))) {
+    // If it's a string (e.g. 'plus', 'pro'), match by name
+    query = query.eq('name', String(tierId).toLowerCase());
+  } else {
+    query = query.eq('id', Number(tierId));
+  }
+  
+  const { data: tier, error: tierError } = await query.maybeSingle();
 
   if (tierError || !tier) {
-    return res.status(404).json({ error: 'Tier not found' });
+    console.error(`[membership-checkout] Tier not found for input: ${tierId}`);
+    res.statusCode = 404;
+    return res.end(JSON.stringify({ error: 'Tier not found in database' }));
   }
 
   const priceInPence = Math.round(Number(tier.price));
   if (!priceInPence || priceInPence <= 0) {
-    return res.status(400).json({ error: 'Free tier — no checkout needed' });
+    res.statusCode = 400;
+    return res.end(JSON.stringify({ error: 'Free tier — no checkout needed' }));
   }
 
   try {
     const session = await stripe.checkout.sessions.create({
+      ui_mode: 'embedded',
       payment_method_types: ['card'],
-      mode: 'payment',
+      mode: 'subscription',
       customer_email: user.email,
       line_items: [
         {
@@ -156,7 +210,10 @@ export default async function handler(req, res) {
             unit_amount: priceInPence,
             product_data: {
               name: `HOTMESS ${tier.name.replace(/_/g, ' ').toUpperCase()} Membership`,
-              description: `One-time activation of HOTMESS ${tier.name} tier`,
+              description: `Recurring HOTMESS ${tier.name} subscription`,
+            },
+            recurring: {
+              interval: 'month',
             },
           },
           quantity: 1,
@@ -170,14 +227,15 @@ export default async function handler(req, res) {
         tier_name: tier.name,
         type: 'membership',
       },
-      success_url: `${origin}/more/settings?membership=success&tier=${encodeURIComponent(tier.name)}&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/more/settings?membership=cancelled`,
+      return_url: `${origin}/more/settings?membership=success&tier=${encodeURIComponent(tier.name)}&session_id={CHECKOUT_SESSION_ID}`,
       allow_promotion_codes: true,
     });
 
-    return res.status(200).json({ url: session.url });
+    res.statusCode = 200;
+    return res.end(JSON.stringify({ clientSecret: session.client_secret }));
   } catch (err) {
     console.error('[membership-checkout] Stripe error:', err?.message);
-    return res.status(500).json({ error: 'Failed to create checkout session', detail: err?.message });
+    res.statusCode = 500;
+    return res.end(JSON.stringify({ error: 'Failed to create checkout session', detail: err?.message }));
   }
 }

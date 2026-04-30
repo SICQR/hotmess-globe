@@ -103,11 +103,11 @@ export default function StandardProfileView({ user, currentUser, isHandshakeConn
 
         {/* Main photo */}
         <div className="relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-black/30">
-          {activeIsPremium ? (
+          {activeIsPremium && !(isOwnProfile || currentUser?.profile_type === 'premium' || currentUser?.business_type === 'premium') ? (
             <div className="w-full h-full bg-gradient-to-br from-[#C8962C]/15 to-[#C8962C]/15 border border-[#C8962C]/40 flex items-center justify-center">
               <div className="text-center">
-                <div className="text-3xl mb-2">🔒</div>
-                <div className="text-xs text-[#C8962C] font-black uppercase">Premium</div>
+                <Crown className="w-12 h-12 text-[#C8962C] mb-2 mx-auto" />
+                <div className="text-xs text-[#C8962C] font-black uppercase">Premium Only</div>
               </div>
             </div>
           ) : (

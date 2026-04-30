@@ -23,6 +23,7 @@ export function useTaps(myUserId: string | null, myEmail?: string | null) {
   const [sentTaps, setSentTaps] = useState<Set<TapKey>>(new Set());
   /** User IDs of people who boo'd ME */
   const [receivedFrom, setReceivedFrom] = useState<Set<string>>(new Set());
+  const [dailyBoos, setDailyBoos] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -39,7 +40,7 @@ export function useTaps(myUserId: string | null, myEmail?: string | null) {
     Promise.all([
       supabase
         .from('taps')
-        .select('to_user_id, tapped_email')
+        .select('to_user_id, tapped_email, created_at')
         .eq('from_user_id', myUserId)
         .eq('tap_type', 'boo'),
       supabase
@@ -58,12 +59,21 @@ export function useTaps(myUserId: string | null, myEmail?: string | null) {
           console.warn('[useTaps] received query failed:', receivedRes.error.message);
         }
 
+        const todayStr = new Date().toISOString().split('T')[0];
+        let todayCount = 0;
+
         const sentKeys = new Set<TapKey>(
           (sentRes.data || [])
             .filter((row) => row.to_user_id)
-            .map((row) => makeKey(myUserId, row.to_user_id))
+            .map((row) => {
+              if (row.created_at && row.created_at.startsWith(todayStr)) {
+                todayCount++;
+              }
+              return makeKey(myUserId, row.to_user_id)
+            })
         );
         setSentTaps(sentKeys);
+        setDailyBoos(todayCount);
 
         const recvSet = new Set<string>(
           (receivedRes.data || [])
@@ -247,5 +257,5 @@ export function useTaps(myUserId: string | null, myEmail?: string | null) {
     [myUserId, myEmail, sentTaps, receivedFrom]
   );
 
-  return { sentTaps, isTapped, sendTap, isMutualBoo, hasReceivedBoo, isLoading };
+  return { sentTaps, isTapped, sendTap, isMutualBoo, hasReceivedBoo, dailyBoos, isLoading };
 }

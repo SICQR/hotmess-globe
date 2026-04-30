@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PageShell from '@/components/shell/PageShell';
+import { useCurrentUser } from '@/components/utils/queryConfig';
 
 const PERSONA_TYPES = [
   {
@@ -166,6 +167,12 @@ const PersonaCard = ({ persona, index }) => {
 };
 
 export default function PersonaFeatures() {
+  const { data: user } = useCurrentUser();
+  const isPremium = user?.profile_type === 'premium' || 
+                    user?.business_type === 'premium' || 
+                    user?.subscription_tier === 'ELITE' ||
+                    user?.membership_tier === 'MESS — PREMIUM';
+
   return (
     <div className="min-h-screen bg-black text-white pb-20">
       <PageShell
@@ -203,12 +210,14 @@ export default function PersonaFeatures() {
                   Customize Your Persona
                 </Button>
               </Link>
-              <Link to="/MembershipUpgrade">
-                <Button variant="outline" size="lg" className="font-black uppercase border-white/20">
-                  <Crown className="w-4 h-4 mr-2" />
-                  Upgrade to Premium
-                </Button>
-              </Link>
+              {!isPremium && (
+                <Link to="/MembershipUpgrade">
+                  <Button variant="outline" size="lg" className="font-black uppercase border-white/20">
+                    <Crown className="w-4 h-4 mr-2" />
+                    Upgrade to Premium
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </motion.div>
@@ -366,7 +375,7 @@ export default function PersonaFeatures() {
               </ul>
               <Link to="/MembershipUpgrade" className="block mt-6">
                 <Button variant="hot" className="w-full font-black uppercase">
-                  Upgrade Now
+                  {isPremium ? 'YOUR CURRENT PLAN' : 'Upgrade Now'}
                 </Button>
               </Link>
             </div>

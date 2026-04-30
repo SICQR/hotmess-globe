@@ -82,7 +82,7 @@ export function useCreateListing() {
 
   return useMutation({
     mutationFn: async (listing) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -107,7 +107,7 @@ export function useMyListings() {
   return useQuery({
     queryKey: ['my-ticket-listings'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
       const { data, error } = await supabase
@@ -130,7 +130,7 @@ export function useTicketThread(listingId) {
   return useQuery({
     queryKey: ['ticket-thread', listingId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
       // Get or create thread
@@ -173,7 +173,7 @@ export function useSendTicketMessage() {
 
   return useMutation({
     mutationFn: async ({ threadId, content }) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -204,7 +204,7 @@ export function useMyPurchases() {
   return useQuery({
     queryKey: ['my-ticket-purchases'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
       const { data, error } = await supabase
@@ -229,7 +229,7 @@ export function useMySales() {
   return useQuery({
     queryKey: ['my-ticket-sales'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
       const { data, error } = await supabase
@@ -255,7 +255,7 @@ export function useInitiatePurchase() {
 
   return useMutation({
     mutationFn: async ({ listingId, quantity = 1 }) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       // Check chat requirement
@@ -346,3 +346,4 @@ export function useSaveListing() {
 }
 
 export default useTicketListings;
+

@@ -260,20 +260,20 @@ test.describe('Ghosted Mode — Full User-to-User Journey', () => {
 
     // User A: get session token
     const sessionA = await pageA.evaluate(() => {
-      const raw = localStorage.getItem('sb-rfoftonnlwudilafhfkl-auth-token');
+      const raw = localStorage.getItem('sb-klsywpvncqqglhnhrjbh-auth-token');
       return raw ? JSON.parse(raw) : null;
     });
 
     // User B: get session token
     const sessionB = await pageB.evaluate(() => {
-      const raw = localStorage.getItem('sb-rfoftonnlwudilafhfkl-auth-token');
+      const raw = localStorage.getItem('sb-klsywpvncqqglhnhrjbh-auth-token');
       return raw ? JSON.parse(raw) : null;
     });
 
     expect(sessionA?.access_token).toBeTruthy();
     expect(sessionB?.access_token).toBeTruthy();
 
-    const supabaseUrl = 'https://rfoftonnlwudilafhfkl.supabase.co';
+    const supabaseUrl = 'https://klsywpvncqqglhnhrjbh.supabase.co';
     const anonKey = process.env.VITE_SUPABASE_ANON_KEY ?? '';
 
     // Step 1: Find or create a chat thread between test-red and test-blue
@@ -364,15 +364,15 @@ test.describe('Ghosted Mode — Full User-to-User Journey', () => {
     const timestamp = Date.now();
     const replyMessage = `E2E reply from B ${timestamp}`;
 
-    const supabaseUrl = 'https://rfoftonnlwudilafhfkl.supabase.co';
+    const supabaseUrl = 'https://klsywpvncqqglhnhrjbh.supabase.co';
     const anonKey = process.env.VITE_SUPABASE_ANON_KEY ?? '';
 
     const sessionA = await pageA.evaluate(() => {
-      const raw = localStorage.getItem('sb-rfoftonnlwudilafhfkl-auth-token');
+      const raw = localStorage.getItem('sb-klsywpvncqqglhnhrjbh-auth-token');
       return raw ? JSON.parse(raw) : null;
     });
     const sessionB = await pageB.evaluate(() => {
-      const raw = localStorage.getItem('sb-rfoftonnlwudilafhfkl-auth-token');
+      const raw = localStorage.getItem('sb-klsywpvncqqglhnhrjbh-auth-token');
       return raw ? JSON.parse(raw) : null;
     });
 
@@ -434,16 +434,16 @@ test.describe('Ghosted Mode — Full User-to-User Journey', () => {
   // ── 7. Read receipts: User B marks as read, User A sees it ──────────────
 
   test('8. User B marks message as read, read_by[] updates', async () => {
-    const supabaseUrl = 'https://rfoftonnlwudilafhfkl.supabase.co';
+    const supabaseUrl = 'https://klsywpvncqqglhnhrjbh.supabase.co';
     const anonKey = process.env.VITE_SUPABASE_ANON_KEY ?? '';
 
     const sessionB = await pageB.evaluate(() => {
-      const raw = localStorage.getItem('sb-rfoftonnlwudilafhfkl-auth-token');
+      const raw = localStorage.getItem('sb-klsywpvncqqglhnhrjbh-auth-token');
       return raw ? JSON.parse(raw) : null;
     });
 
     const sessionA = await pageA.evaluate(() => {
-      const raw = localStorage.getItem('sb-rfoftonnlwudilafhfkl-auth-token');
+      const raw = localStorage.getItem('sb-klsywpvncqqglhnhrjbh-auth-token');
       return raw ? JSON.parse(raw) : null;
     });
 
@@ -499,11 +499,11 @@ test.describe('Ghosted Mode — Full User-to-User Journey', () => {
   // ── 8. Boo: User A boos User B ─────────────────────────────────────────
 
   test('9. User A sends a boo to User B via taps table', async () => {
-    const supabaseUrl = 'https://rfoftonnlwudilafhfkl.supabase.co';
+    const supabaseUrl = 'https://klsywpvncqqglhnhrjbh.supabase.co';
     const anonKey = process.env.VITE_SUPABASE_ANON_KEY ?? '';
 
     const sessionA = await pageA.evaluate(() => {
-      const raw = localStorage.getItem('sb-rfoftonnlwudilafhfkl-auth-token');
+      const raw = localStorage.getItem('sb-klsywpvncqqglhnhrjbh-auth-token');
       return raw ? JSON.parse(raw) : null;
     });
 
@@ -545,11 +545,11 @@ test.describe('Ghosted Mode — Full User-to-User Journey', () => {
   // ── 9. User B sees the boo in their taps ────────────────────────────────
 
   test('10. User B can see the boo from User A', async () => {
-    const supabaseUrl = 'https://rfoftonnlwudilafhfkl.supabase.co';
+    const supabaseUrl = 'https://klsywpvncqqglhnhrjbh.supabase.co';
     const anonKey = process.env.VITE_SUPABASE_ANON_KEY ?? '';
 
     const sessionB = await pageB.evaluate(() => {
-      const raw = localStorage.getItem('sb-rfoftonnlwudilafhfkl-auth-token');
+      const raw = localStorage.getItem('sb-klsywpvncqqglhnhrjbh-auth-token');
       return raw ? JSON.parse(raw) : null;
     });
 
@@ -572,11 +572,11 @@ test.describe('Ghosted Mode — Full User-to-User Journey', () => {
   // ── 10. Chat thread metadata updated (last_message) ─────────────────────
 
   test('11. Chat thread last_message is updated after message send', async () => {
-    const supabaseUrl = 'https://rfoftonnlwudilafhfkl.supabase.co';
+    const supabaseUrl = 'https://klsywpvncqqglhnhrjbh.supabase.co';
     const anonKey = process.env.VITE_SUPABASE_ANON_KEY ?? '';
 
     const sessionA = await pageA.evaluate(() => {
-      const raw = localStorage.getItem('sb-rfoftonnlwudilafhfkl-auth-token');
+      const raw = localStorage.getItem('sb-klsywpvncqqglhnhrjbh-auth-token');
       return raw ? JSON.parse(raw) : null;
     });
 
@@ -607,11 +607,11 @@ test.describe('Ghosted Mode — Full User-to-User Journey', () => {
   // ── 11. RLS isolation: User B can't read User A's unrelated threads ─────
 
   test('12. RLS: User B cannot access threads they are not a participant in', async () => {
-    const supabaseUrl = 'https://rfoftonnlwudilafhfkl.supabase.co';
+    const supabaseUrl = 'https://klsywpvncqqglhnhrjbh.supabase.co';
     const anonKey = process.env.VITE_SUPABASE_ANON_KEY ?? '';
 
     const sessionB = await pageB.evaluate(() => {
-      const raw = localStorage.getItem('sb-rfoftonnlwudilafhfkl-auth-token');
+      const raw = localStorage.getItem('sb-klsywpvncqqglhnhrjbh-auth-token');
       return raw ? JSON.parse(raw) : null;
     });
 
@@ -657,11 +657,11 @@ test.describe('Ghosted Mode — Full User-to-User Journey', () => {
   // ── 13. Cleanup: delete test message ────────────────────────────────────
 
   test('14. Cleanup: remove E2E test messages', async () => {
-    const supabaseUrl = 'https://rfoftonnlwudilafhfkl.supabase.co';
+    const supabaseUrl = 'https://klsywpvncqqglhnhrjbh.supabase.co';
     const anonKey = process.env.VITE_SUPABASE_ANON_KEY ?? '';
 
     const sessionA = await pageA.evaluate(() => {
-      const raw = localStorage.getItem('sb-rfoftonnlwudilafhfkl-auth-token');
+      const raw = localStorage.getItem('sb-klsywpvncqqglhnhrjbh-auth-token');
       return raw ? JSON.parse(raw) : null;
     });
 

@@ -7,7 +7,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Activity, Ghost, ShoppingBag, User, Music, LayoutGrid } from 'lucide-react';
+import { Home, Activity, Ghost, ShoppingBag, LayoutGrid, Music, User, MessageCircle } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { OSMode, MODES, MODE_ORDER, getModeFromPath } from '@/modes';
 import { useUnreadCount } from '@/hooks/useUnreadCount';
@@ -26,6 +26,7 @@ const ICONS: Record<OSMode, React.FC<{ className?: string }>> = {
   music: Music,
   profile: User,
   more: LayoutGrid,
+  inbox: MessageCircle,
 };
 
 interface OSBottomNavProps {
@@ -36,7 +37,7 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const currentMode = getModeFromPath(location.pathname);
-  const { unreadCount, clearTapsBadge } = useUnreadCount();
+  const { unreadCount, clearTapsBadge, fetchChatCount } = useUnreadCount();
   const { notifCount, clearNotifBadge } = useNotifCount();
   const { openSheet } = useSheet();
   const [showSwitcher, setShowSwitcher] = useState(false);
@@ -49,9 +50,17 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
     return () => {
       try {
         scrollPositions.current[location.pathname] = window.scrollY;
-      } catch {}
+      } catch { }
     };
   }, [location.pathname]);
+
+  // Auto-clear taps badge and refresh chat count when entering Ghosted mode
+  useEffect(() => {
+    if (currentMode === 'ghosted') {
+      clearTapsBadge();
+      fetchChatCount?.();
+    }
+  }, [currentMode, clearTapsBadge, fetchChatCount]);
 
   const handleModeChange = (mode: OSMode) => {
     if (mode === currentMode) {
@@ -64,9 +73,8 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
     // Save current scroll position
     try {
       scrollPositions.current[location.pathname] = window.scrollY;
-    } catch {}
-    // Clear the taps badge whenever user navigates to Ghosted
-    if (mode === 'ghosted') clearTapsBadge();
+    } catch { }
+
     navigate(MODES[mode].path);
     // Restore scroll position for target route
     requestAnimationFrame(() => {
@@ -95,7 +103,7 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
 
   return (
     <>
-      <nav
+    <nav
         className={`fixed bottom-0 left-0 right-0 z-50 bg-[#0D0D0D]/95 backdrop-blur-xl border-t border-white/8 ${className}`}
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}
       >
@@ -139,18 +147,11 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </button>
                     )}
-                    {modeId === 'more' && notifCount > 0 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          clearNotifBadge();
-                          openSheet('notification-inbox', {});
-                        }}
-                        className="absolute -top-1 -right-1 w-4 h-4 bg-[#C8962C] border-2 border-black text-black text-[9px] font-black rounded-full flex items-center justify-center leading-none"
-                        aria-label="View notifications"
-                      >
-                        {notifCount > 9 ? '9+' : notifCount}
-                      </button>
+
+                    {modeId === 'inbox' && unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#FF3B30] text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none" style={{ animation: 'bounce 0.5s ease' }}>
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
                     )}
                   </motion.div>
                 ) : (
@@ -169,27 +170,19 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </button>
                     )}
-                    {modeId === 'more' && notifCount > 0 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          clearNotifBadge();
-                          openSheet('notification-inbox', {});
-                        }}
-                        className="absolute -top-1 -right-1 w-4 h-4 bg-[#C8962C] text-black text-[9px] font-black rounded-full flex items-center justify-center leading-none"
-                        aria-label="View notifications"
-                      >
-                        {notifCount > 9 ? '9+' : notifCount}
-                      </button>
+
+                    {modeId === 'inbox' && unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#FF3B30] text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none" style={{ animation: 'bounce 0.5s ease' }}>
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
                     )}
                   </div>
                 )}
 
                 {/* Label */}
                 <span
-                  className={`text-[10px] mt-1 font-medium transition-colors duration-200 ${
-                    isActive ? 'text-[#C8962C]' : 'text-white/30'
-                  }`}
+                  className={`text-[10px] mt-1 font-medium transition-colors duration-200 ${isActive ? 'text-[#C8962C]' : 'text-white/30'
+                    }`}
                 >
                   {mode.label}
                 </span>

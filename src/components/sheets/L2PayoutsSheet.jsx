@@ -34,7 +34,7 @@ export default function L2PayoutsSheet() {
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['supabase-user'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       return user;
     },
   });
@@ -322,3 +322,4 @@ export default function L2PayoutsSheet() {
     </div>
   );
 }
+

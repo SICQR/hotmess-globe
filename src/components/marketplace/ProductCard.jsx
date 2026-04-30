@@ -47,7 +47,7 @@ export default function ProductCard({ product, index = 0 }) {
       try {
         const isAuth = await supabase.auth.getSession().then(r => !!r.data.session);
         if (isAuth) {
-          const { data: { user } } = await supabase.auth.getUser();
+          let { data: { user } } = await supabase.auth.getUser();
       if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
           // Keeping this for potential future badges; purchases are disabled for now.
           void user;

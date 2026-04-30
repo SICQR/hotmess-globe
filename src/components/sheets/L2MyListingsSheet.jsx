@@ -58,86 +58,89 @@ function ListingActions({ listing, onAction, acting }) {
   const canMarkSold = isLive || isPaused;
 
   return (
-    <div className="relative">
+    <div className="flex items-center gap-1.5">
       <button
-        onClick={() => setOpen(o => !o)}
-        className="p-2 bg-white/5 rounded-lg active:bg-white/10 transition-colors"
-        aria-label="Listing actions"
+        onClick={() => onAction(listing.id, 'edit')}
+        className="p-2 bg-white/5 rounded-lg active:bg-white/10 transition-colors flex items-center gap-1.5 px-3"
       >
-        <MoreHorizontal className="w-4 h-4 text-white/40" />
+        <Edit className="w-3.5 h-3.5" style={{ color: PRELOVED_BROWN }} />
+        <span className="text-[10px] font-bold text-white/40 uppercase">Edit</span>
       </button>
 
-      <AnimatePresence>
-        {open && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50"
-              onClick={() => setOpen(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: -4 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: -4 }}
-              transition={{ duration: 0.15 }}
-              className="absolute right-0 top-10 z-50 w-48 bg-[#1C1C1E] border border-white/10 rounded-xl overflow-hidden shadow-xl"
-            >
-              {canPause && (
-                <button
-                  onClick={() => { setOpen(false); onAction(listing.id, 'pause'); }}
-                  disabled={acting}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-white/70 hover:bg-white/5 transition-colors"
-                >
-                  <Pause className="w-4 h-4 text-[#FF9500]" /> Pause listing
-                </button>
-              )}
-              {canUnpause && (
-                <button
-                  onClick={() => { setOpen(false); onAction(listing.id, 'unpause'); }}
-                  disabled={acting}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-white/70 hover:bg-white/5 transition-colors"
-                >
-                  <Play className="w-4 h-4 text-[#30D158]" /> Resume listing
-                </button>
-              )}
-              {canMarkSold && (
-                <button
-                  onClick={() => { setOpen(false); onAction(listing.id, 'sold'); }}
-                  disabled={acting}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-white/70 hover:bg-white/5 transition-colors"
-                >
-                  <CheckCircle className="w-4 h-4" style={{ color: PRELOVED_BROWN }} /> Mark sold
-                </button>
-              )}
-              <button
-                onClick={() => { setOpen(false); onAction(listing.id, 'edit'); }}
-                disabled={acting}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-white/70 hover:bg-white/5 transition-colors"
+      <div className="relative">
+        <button
+          onClick={() => setOpen(o => !o)}
+          className="p-2 bg-white/5 rounded-lg active:bg-white/10 transition-colors"
+          aria-label="Listing actions"
+        >
+          <MoreHorizontal className="w-4 h-4 text-white/40" />
+        </button>
+
+        <AnimatePresence>
+          {open && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50"
+                onClick={() => setOpen(false)}
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: -4 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 top-10 z-50 w-48 bg-[#1C1C1E] border border-white/10 rounded-xl overflow-hidden shadow-xl"
               >
-                <Edit className="w-4 h-4 text-white/40" /> Edit
-              </button>
-              <button
-                onClick={() => { setOpen(false); onAction(listing.id, 'view'); }}
-                disabled={acting}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-white/70 hover:bg-white/5 transition-colors"
-              >
-                <Eye className="w-4 h-4 text-white/40" /> View listing
-              </button>
-              {canDelete && (
+                {canPause && (
+                  <button
+                    onClick={() => { setOpen(false); onAction(listing.id, 'pause'); }}
+                    disabled={acting}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-white/70 hover:bg-white/5 transition-colors"
+                  >
+                    <Pause className="w-4 h-4 text-[#FF9500]" /> Pause listing
+                  </button>
+                )}
+                {canUnpause && (
+                  <button
+                    onClick={() => { setOpen(false); onAction(listing.id, 'unpause'); }}
+                    disabled={acting}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-white/70 hover:bg-white/5 transition-colors"
+                  >
+                    <Play className="w-4 h-4 text-[#30D158]" /> Resume listing
+                  </button>
+                )}
+                {canMarkSold && (
+                  <button
+                    onClick={() => { setOpen(false); onAction(listing.id, 'sold'); }}
+                    disabled={acting}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-white/70 hover:bg-white/5 transition-colors"
+                  >
+                    <CheckCircle className="w-4 h-4" style={{ color: PRELOVED_BROWN }} /> Mark sold
+                  </button>
+                )}
                 <button
-                  onClick={() => { setOpen(false); onAction(listing.id, 'delete'); }}
+                  onClick={() => { setOpen(false); onAction(listing.id, 'view'); }}
                   disabled={acting}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-red-400/80 hover:bg-red-500/5 transition-colors border-t border-white/[0.06]"
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-white/70 hover:bg-white/5 transition-colors"
                 >
-                  <Trash2 className="w-4 h-4" /> Delete
+                  <Eye className="w-4 h-4 text-white/40" /> View listing
                 </button>
-              )}
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+                {canDelete && (
+                  <button
+                    onClick={() => { setOpen(false); onAction(listing.id, 'delete'); }}
+                    disabled={acting}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-red-400/80 hover:bg-red-500/5 transition-colors border-t border-white/[0.06]"
+                  >
+                    <Trash2 className="w-4 h-4" /> Delete
+                  </button>
+                )}
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
@@ -286,7 +289,7 @@ export default function L2MyListingsSheet() {
       </div>
 
       {/* Listings */}
-      <div className="flex-1 overflow-y-auto">
+      <div>
         {listings.length === 0 ? (
           <div className="text-center py-12 px-4">
             <Package className="w-10 h-10 text-white/10 mx-auto mb-3" />
@@ -320,9 +323,9 @@ export default function L2MyListingsSheet() {
                 >
                   <div className="flex items-start gap-3 p-3">
                     {/* Thumbnail */}
-                    {(listing.cover_image_url || (listing.images && listing.images[0])) ? (
+                    {listing.cover_image_url ? (
                       <img
-                        src={listing.cover_image_url || listing.images[0]}
+                        src={listing.cover_image_url}
                         alt={listing.title}
                         className="w-14 h-14 rounded-lg object-cover flex-shrink-0 border border-white/[0.06]"
                       />
@@ -337,7 +340,7 @@ export default function L2MyListingsSheet() {
                       <p className="text-white font-bold text-sm truncate">{listing.title}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="font-black text-sm" style={{ color: PRELOVED_BROWN }}>
-                          {'\u00a3'}{listing.price_gbp || listing.price || 0}
+                          {'\u00a3'}{listing.price_pence ? (listing.price_pence / 100).toFixed(2) : (listing.price_gbp || listing.price || 0)}
                         </span>
                         <StatusBadge status={listing.status} />
                       </div>

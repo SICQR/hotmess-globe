@@ -52,8 +52,9 @@ const transitionVariants = {
  */
 const routeTransitionMap = {
   '/': 'slideUp',
-  '/pulse': 'drop',
-  '/globe': 'drop',
+  '/pulse': 'slideUp',
+  '/globe': 'slideUp',
+
   '/ghosted': 'slideUp',
   '/social': 'slideUp',
   '/social/*': 'slideUp',
@@ -111,11 +112,19 @@ export function PageTransition({ children, className }) {
   const transitionType = getTransitionForRoute(pathname);
   const variant = transitionVariants[transitionType] || transitionVariants.slideUp;
 
+  // Only animate if the pathname has actually changed to prevent blinking on state updates
+  const prevPathname = React.useRef(pathname);
+  const isChanging = prevPathname.current !== pathname;
+  
+  React.useEffect(() => {
+    prevPathname.current = pathname;
+  }, [pathname]);
+
   return (
-    <AnimatePresence mode="wait" initial={false}>
+    <AnimatePresence mode="popLayout" initial={false}>
       <motion.div
         key={pathname}
-        initial={variant.initial}
+        initial={isChanging ? variant.initial : false}
         animate={variant.animate}
         exit={variant.exit}
         transition={variant.transition}
@@ -126,6 +135,7 @@ export function PageTransition({ children, className }) {
     </AnimatePresence>
   );
 }
+
 
 /**
  * PageTransitionOverlay - Full-screen transition overlay

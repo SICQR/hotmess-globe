@@ -189,11 +189,25 @@ export default function Auth() {
     setAuthError('');
     try {
       const sanitizedEmail = email.replace(/[^\x00-\x7F]/g, '').trim();
-      const { error } = await supabase.auth.signInWithOtp({
-        email: sanitizedEmail,
-        options: { emailRedirectTo: window.location.origin + '/auth/callback' },
+      
+      // Use our custom magic link API to get the Noir template via Resend
+      const response = await fetch('/api/auth/magic-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: sanitizedEmail,
+          redirectTo: window.location.origin + '/auth/callback'
+        }),
       });
-      if (error) { setAuthError(error.message || 'Failed to send magic link'); setLoading(false); return; }
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        setAuthError(result.error || 'Failed to send magic link');
+        setLoading(false);
+        return;
+      }
+
       setPendingEmail(sanitizedEmail);
       setCountdown(RESEND_COOLDOWN);
       setView('magic-link-sent');
@@ -209,12 +223,21 @@ export default function Auth() {
     if (!pendingEmail || resending || countdown > 0) return;
     setResending(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: pendingEmail,
-        options: { emailRedirectTo: window.location.origin + '/auth/callback' },
+      const response = await fetch('/api/auth/magic-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: pendingEmail,
+          redirectTo: window.location.origin + '/auth/callback'
+        }),
       });
-      if (error) { toast.error('Couldn\'t resend. Wait a moment and try again.'); }
-      else { toast.success('Magic link resent'); setCountdown(RESEND_COOLDOWN); }
+
+      if (!response.ok) {
+        toast.error('Couldn\'t resend. Wait a moment and try again.');
+      } else {
+        toast.success('Magic link resent');
+        setCountdown(RESEND_COOLDOWN);
+      }
     } catch (err) {
       toast.error('Couldn\'t resend. Wait a moment and try again.');
     } finally {

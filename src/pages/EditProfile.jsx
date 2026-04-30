@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
-import { uploadToStorage } from '@/lib/uploadToStorage';
+import { uploadToStorage, insertProfilePhoto } from '@/lib/uploadToStorage';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { ArrowLeft, Save, User, Upload, Plus, X, Users as UsersIcon, Image as ImageIcon, Video as VideoIcon, Crown, Palette } from 'lucide-react';
@@ -105,7 +105,7 @@ export default function EditProfile() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        let { data: { user } } = await supabase.auth.getUser();
       if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
         setCurrentUser(user);
         setBio(user.bio || '');
@@ -176,7 +176,7 @@ export default function EditProfile() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       await supabase.auth.updateUser({ data });
@@ -199,11 +199,16 @@ export default function EditProfile() {
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       const publicUrl = await uploadToStorage(file, 'avatars', authUser.id);
+      
+      // Update profile immediately
+      await insertProfilePhoto(authUser.id, publicUrl, 0, true);
+      
       setAvatarUrl(publicUrl);
-      toast.success('Avatar uploaded!');
+      queryClient.invalidateQueries(['users']);
+      toast.success('Avatar updated immediately!');
     } catch (error) {
-      logger.error('Avatar upload failed in EditProfile', { error: error.message });
-      toast.error('Upload failed');
+      console.error('[EditProfile] Avatar upload failed:', error);
+      toast.error(`Upload failed: ${error.message}`);
     } finally {
       setUploading(false);
     }
@@ -1131,3 +1136,4 @@ export default function EditProfile() {
     </div>
   );
 }
+

@@ -7,10 +7,15 @@ import { buildUberDeepLink } from '@/utils/uberDeepLink';
 import { Button } from '@/components/ui/button';
 import { buildProfileRecText, recommendTravelModes } from '@/utils/travelRecommendations';
 import { useNavigate } from 'react-router-dom';
+import { Camera, Loader2 } from 'lucide-react';
+import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage, insertProfilePhoto } from '@/lib/uploadToStorage';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
-export default function ProfileHeader({ user, isOwnProfile, currentUser, travelEtas }) {
+export default function ProfileHeader({ profileUser: user, isOwnProfile, currentUser, travelEtas }) {
   const navigate = useNavigate();
-  const profileType = user?.profile_type || 'standard';
+  const profileType = user?.profile_type || user?.business_type || 'standard';
   const themeGradient = {
     'default': 'from-[#C8962C] to-[#C8962C]',
     'cyber': 'from-[#00C2E0] to-[#39FF14]',
@@ -109,6 +114,44 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser, travelE
     navigate(`/directions?${qs.toString()}`);
   };
 
+  const queryClient = useQueryClient();
+  const [isUploading, setIsUploading] = React.useState(false);
+  const fileInputRef = React.useRef(null);
+
+  const handleAvatarClick = () => {
+    if (isOwnProfile && !isUploading) {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentUser?.id) return;
+
+    setIsUploading(true);
+    const toastId = toast.loading('Uploading photo...');
+
+    try {
+      // 1. Upload to storage
+      const url = await uploadToStorage(file, 'avatars', currentUser.id);
+      
+      // 2. Update profiles table and profile_photos
+      await insertProfilePhoto(currentUser.id, url, 0, true);
+      
+      // 3. Invalidate queries to refresh UI everywhere
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-user-by-param'] });
+      queryClient.invalidateQueries({ queryKey: ['current-user'] });
+      
+      toast.success('Profile photo updated!', { id: toastId });
+    } catch (err) {
+      console.error('[ProfileHeader] Upload failed:', err);
+      toast.error(err?.message || 'Failed to upload photo', { id: toastId });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <div className={`relative h-80 border-b border-white/10 bg-gradient-to-br ${themeGradient}/20`}>
       {/* Banner for sellers */}
@@ -126,12 +169,42 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser, travelE
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className={`w-32 h-32 bg-gradient-to-br ${themeGradient} flex items-center justify-center border-4 border-white shadow-2xl overflow-hidden`}
+            className={`relative w-32 h-32 bg-gradient-to-br ${themeGradient} flex items-center justify-center border-4 border-white shadow-2xl overflow-hidden ${isOwnProfile ? 'cursor-pointer group' : ''}`}
+            onClick={handleAvatarClick}
           >
             {user?.avatar_url ? (
-              <img src={user.avatar_url} alt={user.username || 'Profile'} className="w-full h-full object-cover" />
+              <img src={user.avatar_url} alt={user.username || 'Profile'} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
             ) : (
               <span className="text-5xl font-bold">{user?.username?.[0] || user?.display_name?.[0] || 'U'}</span>
+            )}
+
+            {isOwnProfile && (
+              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex flex-col items-center justify-center text-white">
+                {isUploading ? (
+                  <Loader2 className="w-8 h-8 animate-spin" />
+                ) : (
+                  <div className="flex flex-col items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="w-8 h-8 mb-1" />
+                    <span className="text-[10px] font-black uppercase">Change</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {isOwnProfile && !isUploading && (
+              <div className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center text-black md:hidden">
+                <Camera className="w-4 h-4" />
+              </div>
+            )}
+            
+            {isOwnProfile && (
+              <input 
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileChange}
+              />
             )}
           </motion.div>
 

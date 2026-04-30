@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
-import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield, Radio as RadioIcon } from 'lucide-react';
+import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield, Radio as RadioIcon, ChevronRight } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { updatePresence } from '@/api/presence';
 import SafetyFAB from '@/components/safety/SafetyFAB';
@@ -28,19 +28,17 @@ import { TonightModeProvider } from '@/hooks/useTonightMode';
 import { useOSURLSync } from '@/os';
 
       const PRIMARY_NAV = [
-        { name: 'HOME', icon: Home, path: 'Home' },
-        { name: 'PULSE', icon: GlobeIcon, path: 'Pulse' },
-        { name: 'EVENTS', icon: CalendarIcon, path: 'Events' },
-        { name: 'MARKET', icon: ShoppingBag, path: 'Marketplace', href: '/market' },
-        { name: 'SOCIAL', icon: Users, path: 'Social', showBadge: true },
-        { name: 'MUSIC', icon: RadioIcon, path: 'Music' },
-        { name: 'MORE', icon: Menu, path: 'More' },
+        { name: 'HOME', icon: Home, path: 'Home', href: '/' },
+        { name: 'PULSE', icon: GlobeIcon, path: 'Pulse', href: '/pulse' },
+        { name: 'GHOSTED', icon: Users, path: 'Ghosted', href: '/ghosted' },
+        { name: 'SHOP', icon: ShoppingBag, path: 'Marketplace', href: '/market' },
+        { name: 'MORE', icon: Menu, path: 'More', href: '/more' },
       ];
 
       const SECONDARY_NAV = [];
 
 // OS mode paths — Layout is a pass-through on these (OSBottomNav + mode components handle the chrome)
-const OS_MODE_PATHS = ['/', '/ghosted', '/pulse', '/radio', '/profile', '/market'];
+const OS_MODE_PATHS = ['/', '/ghosted', '/pulse', '/market', '/more', '/profile'];
 const isOSModePath = (p) =>
   OS_MODE_PATHS.some((m) => p === m || p.startsWith(m + '/'));
 
@@ -94,7 +92,7 @@ function LayoutInner({ children, currentPageName }) {
           return;
         }
 
-        const { data: { user } } = await supabase.auth.getUser();
+        let { data: { user } } = await supabase.auth.getUser();
         if (!user) {
           setUser(null);
           return;
@@ -119,7 +117,7 @@ function LayoutInner({ children, currentPageName }) {
         // location permission, auto-apply the equivalent profile consent flags once.
         // This prevents loops where the app keeps redirecting to AccountConsents/OnboardingGate.
         try {
-          const AGE_KEY_CHECK = 'hm_age_gate_passed';
+          const AGE_KEY_CHECK = 'hm_age_confirmed_v1';
           const ageVerifiedLocal = localStorage.getItem(AGE_KEY_CHECK) === 'true';
           const locationConsent = sessionStorage.getItem('location_consent') === 'true';
           const locationPermission = sessionStorage.getItem('location_permission');
@@ -201,6 +199,7 @@ function LayoutInner({ children, currentPageName }) {
           currentPageName !== 'OnboardingGate' &&
           currentPageName !== 'AccountConsents' &&
           currentPageName !== 'AgeGate' &&
+          currentPageName !== 'Settings' &&
           (!currentUser?.has_agreed_terms || !currentUser?.has_consented_data)
         ) {
           navigate(createPageUrl('OnboardingGate'));
@@ -210,6 +209,7 @@ function LayoutInner({ children, currentPageName }) {
         // Check if profile setup is incomplete
         if (
           currentPageName !== 'Profile' &&
+          currentPageName !== 'Settings' &&
           currentPageName !== 'OnboardingGate' &&
           currentPageName !== 'AccountConsents' &&
           currentPageName !== 'AgeGate' &&
@@ -331,8 +331,21 @@ function LayoutInner({ children, currentPageName }) {
 
   // On OS mode routes, render children only — no old header/nav/chrome
   // (placed after all hooks to satisfy Rules of Hooks)
+  // On OS mode routes, render children with proper safety padding so they aren't hidden by bars
   if (isOSModePath(pathname)) {
-    return <>{children}</>;
+    return (
+      <div className="flex flex-col min-h-screen bg-black overflow-x-hidden transition-all duration-300">
+        {/* Top spacer for the marquee/banner - Balanced with App.jsx offset */}
+        <div className="h-10 flex-shrink-0" /> 
+
+        <main className="flex-1 w-full max-w-lg mx-auto md:ml-64 relative px-4 md:px-0">
+          {children}
+        </main>
+
+        {/* Bottom spacer for the navigation bar - Balanced with App.jsx offset */}
+        <div className="h-20 flex-shrink-0" />
+      </div>
+    );
   }
 
   const isActive = (pageName) => currentPageName === pageName;
@@ -353,14 +366,14 @@ function LayoutInner({ children, currentPageName }) {
           <A11yAnnouncer />
           <OfflineIndicator />
           {user && currentPageName === 'Home' && <WelcomeTour />}
-        <div className="min-h-[100svh] bg-black text-white">
+        <div className="h-full overflow-y-auto bg-black text-white">
       {shouldShowChrome && (
         <>
           {/* Mobile Header */}
-          <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-b border-white/10 pt-[env(safe-area-inset-top)]">
+          <div className="md:hidden fixed top-[44px] left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-b border-white/10 pt-[env(safe-area-inset-top)]">
             <div className="flex items-center justify-between px-4 py-3">
               <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
-                HOTMESS
+                HOT<span className="text-[#C8962C]">MESS</span>
               </Link>
               <div className="flex items-center gap-2">
                 <Link
@@ -408,8 +421,26 @@ function LayoutInner({ children, currentPageName }) {
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="md:hidden fixed inset-0 z-40 bg-black/95 backdrop-blur-xl pt-[calc(4rem+env(safe-area-inset-top))]">
-              <div className="flex flex-col p-4">
+            <div className="md:hidden fixed inset-0 z-40 bg-black/95 backdrop-blur-xl pt-[calc(7.5rem+env(safe-area-inset-top))] overflow-y-auto">
+              <div className="flex flex-col p-4 pb-32">
+                {/* Mobile Profile Section */}
+                {user && (
+                  <div 
+                    className="flex items-center gap-3 px-3 py-4 mb-6 bg-white/5 border border-white/10 rounded-2xl"
+                  >
+                    <div className="w-12 h-12 bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center flex-shrink-0 border-2 border-white rounded-full overflow-hidden">
+                      {user.avatar_url ? (
+                        <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-lg font-bold">{user.full_name?.[0] || 'U'}</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-base font-black truncate text-white">{user.full_name}</p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Admin Link - Mobile */}
                 {user && user.role === 'admin' && (
                   <Link
@@ -512,7 +543,7 @@ function LayoutInner({ children, currentPageName }) {
           )}
 
           {/* Desktop Sidebar - Smart Nav */}
-          <div className="hidden md:flex md:fixed md:left-0 md:top-0 md:bottom-0 md:w-56 md:flex-col md:bg-black md:backdrop-blur-xl md:border-r-2 md:border-white md:z-40">
+          <div className="hidden md:flex md:fixed md:left-0 md:top-11 md:bottom-20 md:w-64 md:flex-col md:bg-black md:backdrop-blur-xl md:border-r md:border-white/10 md:z-40 pb-4">
             <div className="p-4 border-b-2 border-white/20">
               <div className="flex items-center justify-between mb-1">
                 <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
@@ -596,28 +627,16 @@ function LayoutInner({ children, currentPageName }) {
                 </nav>
 
             <div className="p-3 border-t-2 border-white/20">
-              <div className="mb-3 border border-white/10 bg-white/5 p-2">
-                <p className="text-[9px] text-white/40 font-black uppercase tracking-widest mb-2">Quick Links</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <Link to={createPageUrl('Radio')} className="flex items-center gap-2 px-2 py-2 border border-white/10 hover:border-white/30 hover:bg-white/5 transition-all">
-                    <RadioIcon className="w-3 h-3" />
-                    <span className="text-[10px] font-black uppercase tracking-wider">Radio</span>
-                  </Link>
-                  <Link to={createPageUrl('Care')} className="flex items-center gap-2 px-2 py-2 border border-white/10 hover:border-white/30 hover:bg-white/5 transition-all">
-                    <Shield className="w-3 h-3" />
-                    <span className="text-[10px] font-black uppercase tracking-wider">Care</span>
-                  </Link>
-                  <Link to={createPageUrl('Settings')} className="flex items-center gap-2 px-2 py-2 border border-white/10 hover:border-white/30 hover:bg-white/5 transition-all">
-                    <Settings className="w-3 h-3" />
-                    <span className="text-[10px] font-black uppercase tracking-wider">Settings</span>
-                  </Link>
-                </div>
-              </div>
+              {/* Profile/Auth section maintained at bottom */}
               {user ? (
                 <>
                   <Link to={createPageUrl('Settings')} className="flex items-center gap-2 hover:opacity-80 transition-opacity mb-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center flex-shrink-0 border-2 border-white">
-                      <span className="text-xs font-bold">{user.full_name?.[0] || 'U'}</span>
+                    <div className="w-8 h-8 bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center flex-shrink-0 border-2 border-white rounded-full overflow-hidden">
+                      {user.avatar_url ? (
+                        <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xs font-bold">{user.full_name?.[0] || 'U'}</span>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-black truncate">{user.full_name}</p>
@@ -651,7 +670,7 @@ function LayoutInner({ children, currentPageName }) {
           isPulsePage
             ? 'min-w-0'
             : shouldShowChrome
-              ? 'md:ml-56 pt-[calc(3.5rem+env(safe-area-inset-top))] pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pt-0 md:pb-0 min-w-0'
+              ? 'md:ml-64 pt-[calc(4rem+env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))] md:pt-14 md:pb-0 min-w-0'
               : 'min-w-0'
         }
         role="main"
@@ -694,3 +713,4 @@ export default function Layout(props) {
     </TonightModeProvider>
   );
 }
+

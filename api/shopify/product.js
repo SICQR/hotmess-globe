@@ -35,11 +35,7 @@ export default async function handler(req, res) {
   const { apiVersion } = getStorefrontConfig();
 
   const requested = normalizeHandle(handle);
-  const { allowed } = getAllowedHandles();
-
-  if (!allowed.has(requested)) {
-    return json(res, 404, { error: 'Product not allowed', handle });
-  }
+  // Allowed check removed to support all Shopify products
   const query = `#graphql
     query ProductByHandle($handle: String!) {
       productByHandle(handle: $handle) {
@@ -57,6 +53,10 @@ export default async function handler(req, res) {
             altText
           }
         }
+        options {
+          name
+          values
+        }
         variants(first: 25) {
           nodes {
             id
@@ -69,6 +69,10 @@ export default async function handler(req, res) {
             compareAtPrice {
               amount
               currencyCode
+            }
+            selectedOptions {
+              name
+              value
             }
           }
         }

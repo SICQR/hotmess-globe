@@ -6,6 +6,7 @@ import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger 
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/components/utils/supabaseClient';
 
 const money = (amount, currency) => {
   const n = Number(amount);
@@ -30,6 +31,8 @@ export function ShopCartPanel({ showTitle = true } = {}) {
 
   const lines = cart?.lines?.nodes || [];
   const currency = cart?.cost?.totalAmount?.currencyCode || cart?.cost?.subtotalAmount?.currencyCode || 'GBP';
+
+
 
   const subtotal = useMemo(() => money(cart?.cost?.subtotalAmount?.amount, currency), [cart?.cost?.subtotalAmount?.amount, currency]);
   const total = useMemo(() => money(cart?.cost?.totalAmount?.amount, currency), [cart?.cost?.totalAmount?.amount, currency]);

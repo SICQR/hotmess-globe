@@ -130,7 +130,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
       return { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email };
@@ -145,7 +145,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
     queryKey: ['profile-sheet', email, resolvedUid],
     queryFn: async () => {
       if (!email && !resolvedUid) {
-        const { data: { user } } = await supabase.auth.getUser();
+        let { data: { user } } = await supabase.auth.getUser();
         if (!user) return null;
         const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
         return { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email };
@@ -192,22 +192,32 @@ export default function L2ProfileSheet({ email, uid, id }) {
 
   // Travel times calculation
   useEffect(() => {
-    if (!profileUser?.has_consented_gps) return;
-    if (!profileUser?.last_lat || !profileUser?.last_lng) return;
-
-    // Get viewer's location from currentUser or geolocation
+    // Get viewer's location and consent
     const getViewerCoords = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        let { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
-        const { data: myProfile } = await supabase.from('profiles')
-          .select('last_lat,last_lng')
-          .eq('id', user.id)
-          .single();
-        if (!myProfile?.last_lat || !myProfile?.last_lng) return;
+        
+        // Fetch viewer's consent and profile user's consent from profiles table
+        const [viewerResult, profileResult] = await Promise.all([
+          supabase.from('profiles').select('location_consent, last_lat, last_lng').eq('id', user.id).single(),
+          supabase.from('profiles').select('location_consent, last_lat, last_lng').eq('id', profileUser.id).single()
+        ]);
 
-        const destLat = profileUser.last_lat;
-        const destLng = profileUser.last_lng;
+        if (!viewerResult.data?.location_consent || !profileResult.data?.location_consent) {
+          console.log('[Profile] 🛡️ Location consent missing for one or both users');
+          setTravelTimes(null);
+          return;
+        }
+
+        const myProfile = viewerResult.data;
+        if (!myProfile?.last_lat || !myProfile?.last_lng) {
+          console.log('[Profile] 📍 Viewer has no stored coordinates');
+          return;
+        }
+
+        const destLat = profileResult.data?.last_lat;
+        const destLng = profileResult.data?.last_lng;
         const originLat = myProfile.last_lat;
         const originLng = myProfile.last_lng;
 
@@ -256,7 +266,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
 
     const recordView = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        let { data: { user } } = await supabase.auth.getUser();
         if (!user?.id) return;
         if (viewedUid === user.id) return; // own profile — belt-and-suspenders check
 
@@ -351,7 +361,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
     if (!profileUser?.auth_user_id && !profileUser?.id) return;
     const checkSaved = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        let { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
         const targetId = profileUser.auth_user_id || profileUser.id;
         const { count } = await supabase
@@ -436,7 +446,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
     if (isSaving) return;
     setIsSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error('Sign in to save profiles'); return; }
       const targetId = profileUser.auth_user_id || profileUser.id;
 
@@ -463,6 +473,86 @@ export default function L2ProfileSheet({ email, uid, id }) {
     }
   };
 
+  const handleShareLocation = async () => {
+    if (!profileUser?.id || !myUserId || !myEmail) return;
+
+    const toastId = toast.loading('Establishing GPS lock...');
+    try {
+      // 0. Check consent first
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('location_consent')
+        .eq('id', user.id)
+        .single();
+      
+      if (profile && profile.location_consent === false) {
+        toast.error('Location sharing is disabled in your profile settings.', {
+          id: toastId,
+          action: { label: 'Enable', onClick: () => openSheet(SHEET_TYPES.EDIT_PROFILE) }
+        });
+        return;
+      }
+
+      // 1. Get current position
+      const pos = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+        });
+      });
+
+      // 2. Resolve/Create thread
+      let { data: thread } = await supabase
+        .from('chat_threads')
+        .select('id, participant_emails, unread_count')
+        .contains('participant_emails', [myEmail, profileUser.email])
+        .maybeSingle();
+
+      if (!thread) {
+        const { data: newThread, error: threadErr } = await supabase
+          .from('chat_threads')
+          .insert({
+            participant_emails: [myEmail, profileUser.email],
+            active: true,
+            last_message_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+        if (threadErr) throw threadErr;
+        thread = newThread;
+      }
+
+      // 3. Send map-pin message
+      const { error: msgError } = await supabase
+        .from('chat_messages')
+        .insert({
+          thread_id: thread.id,
+          sender_email: myEmail,
+          message_type: 'map-pin',
+          content: '📍 Shared my location',
+          created_date: new Date().toISOString(),
+          metadata: {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy: pos.coords.accuracy,
+          }
+        });
+      if (msgError) throw msgError;
+
+      toast.success('Location shared in chat! 📍', { id: toastId });
+      
+      // Optionally open the chat sheet
+      openSheet(SHEET_TYPES.CHAT, {
+        thread: thread.id,
+        userId: profileUser.id,
+        title: `Chat with ${name}`
+      });
+
+    } catch (err) {
+      toast.error(err.message || 'Could not share location', { id: toastId });
+    }
+  };
+
   const handleVideoCall = () => {
     if (!profileUser?.auth_user_id && !profileUser?.id) return;
     openSheet(SHEET_TYPES.VIDEO, {
@@ -485,7 +575,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
     if (!currentUser || !profileUser) return;
     setIsBlocking(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       // Write to user_blocks (canonical table — read by api/profiles.js for grid filtering)
@@ -750,7 +840,8 @@ export default function L2ProfileSheet({ email, uid, id }) {
             )}
             {(distance || etaMin) && (
               <span className="text-white/40 text-sm">
-                {distance ? `${distance < 1 ? `${Math.round(distance * 1000)} m` : `${distance.toFixed(1)} km`} away` : ''}
+                {distance ? `${(distance / 1.60934).toFixed(1)} mi away` : ''}
+                {profileUser.location_area ? ` in ${profileUser.location_area}` : ''}
                 {etaMin ? ` · ${etaMin} min` : ''}
               </span>
             )}
@@ -780,6 +871,32 @@ export default function L2ProfileSheet({ email, uid, id }) {
         )}
       </div>
 
+      {/* ── Location Action Bar ────────────────────────────────────────── */}
+      <div className="flex gap-2 px-4 py-2">
+        <button
+          onClick={handleShareLocation}
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold active:scale-95 transition-all"
+        >
+          <MapPin className="w-4 h-4 text-[#C8962C]" />
+          Share My Location
+        </button>
+        {travelTimes?.uber && (
+          <button
+            onClick={() => openSheet?.('uber', { 
+              lat: profileUser.last_lat, 
+              lng: profileUser.last_lng, 
+              label: profileUser.display_name, 
+              travelTimes, 
+              profileUser 
+            })}
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold active:scale-95 transition-all"
+          >
+            <Car className="w-4 h-4 text-[#00C2E0]" />
+            Get Uber
+          </button>
+        )}
+      </div>
+
       {/* ── Bio ────────────────────────────────────────────────────────── */}
       {profileUser?.bio && (
         <div className="px-4 py-2">
@@ -803,14 +920,6 @@ export default function L2ProfileSheet({ email, uid, id }) {
               <span className="text-[#00C2E0] font-black text-sm mt-0.5">{Math.round(travelTimes.bicycling.durationSeconds/60)}m</span>
               <span className="text-white/30 text-[9px]">bike</span>
             </div>
-          )}
-          {travelTimes.uber && (
-            <button onClick={()=>openSheet?.('uber',{lat:profileUser.last_lat,lng:profileUser.last_lng,label:profileUser.display_name,travelTimes,profileUser})}
-              className="flex-1 flex flex-col items-center py-2 rounded-xl bg-white/8 border border-white/15">
-              <Car className="w-4 h-4 text-white" />
-              <span className="text-white font-black text-sm mt-0.5">{Math.round(travelTimes.uber.durationSeconds/60)}m</span>
-              <span className="text-white/30 text-[9px]">uber</span>
-            </button>
           )}
         </div>
       )}
@@ -1035,7 +1144,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
               onClick={async () => {
                 setShowMoreMenu(false);
                 try {
-                  const { data: { user } } = await supabase.auth.getUser();
+                  let { data: { user } } = await supabase.auth.getUser();
                   if (!user || !profileUser) return;
                   const allPhotos = [];
                   const seen = new Set();
@@ -1133,3 +1242,4 @@ export default function L2ProfileSheet({ email, uid, id }) {
     </div>
   );
 }
+

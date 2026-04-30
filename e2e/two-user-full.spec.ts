@@ -3,7 +3,7 @@
  * Last run: 2026-03-31 against https://hotmessldn.com
  * Tests: 138 | Passing: 131 | Skipped (data/env): 7 | Failed: 0
  * Users: e2e.alpha@hotmessldn.com / e2e.beta@hotmessldn.com
- * Password: set via TEST_USER_A_PASSWORD / TEST_USER_B_PASSWORD env vars
+ * Password: HotmessE2E2026!
  *
  * Run (prod):
  *   PROD=true npx playwright test e2e/two-user-full.spec.ts --project=chromium
@@ -22,13 +22,13 @@ import { setupUserA, setupUserB, bypassGates, E2E_AUTH_CONFIGURED } from './help
 
 const ALPHA = {
   email: process.env.TEST_USER_A_EMAIL || 'test-red@hotmessldn.com',
-  password: process.env.TEST_USER_A_PASSWORD ?? '',
+  password: process.env.TEST_USER_A_PASSWORD || 'Hotmess2026!',
   name: 'Alpha Tester',
 };
 
 const BETA = {
   email: process.env.TEST_USER_B_EMAIL || 'test-blue@hotmessldn.com',
-  password: process.env.TEST_USER_B_PASSWORD ?? '',
+  password: process.env.TEST_USER_B_PASSWORD || 'Hotmess2026!',
   name: 'Beta Tester',
 };
 
@@ -252,7 +252,10 @@ test.describe('Suite 2: Onboarding bypass', () => {
     await waitForNav(page);
 
     const storage = await page.evaluate(() => {
-      const raw = localStorage.getItem('sb-rfoftonnlwudilafhfkl-auth-token');
+      // Check both prod and dev storage keys
+      const prodKey = localStorage.getItem('sb-rfoftonnlwudilafhfkl-auth-token');
+      const devKey = localStorage.getItem('sb-klsywpvncqqglhnhrjbh-auth-token');
+      const raw = prodKey || devKey;
       return raw ? JSON.parse(raw) : null;
     });
 

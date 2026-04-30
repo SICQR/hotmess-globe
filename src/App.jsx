@@ -24,6 +24,7 @@ import PrivacyHub from '@/pages/legal/PrivacyHub';
 import { AboutPage, LegalPage, AccessibilityPage, PrivacyPolicyPage, RemixLicensePage, CommercialLicensePage, CreatorAgreementPage, DMCAPage, LocationDisclosurePage, AIDisclosurePage } from '@/pages/legal/LegalPages';
 import { CookieBanner } from '@/components/legal/CookieBanner';
 import { I18nProvider } from '@/contexts/I18nContext';
+import { TonightModeProvider } from '@/hooks/useTonightMode';
 import { WorldPulseProvider } from '@/contexts/WorldPulseContext';
 import { PageTransition } from '@/components/lux/PageTransition';
 import { PageLoadingSkeleton } from '@/components/skeletons/PageSkeletons';
@@ -31,8 +32,10 @@ import UnifiedGlobe from '@/components/globe/UnifiedGlobe';
 import { SheetProvider, useSheet } from '@/contexts/SheetContext';
 import SheetRouter from '@/components/sheets/SheetRouter';
 import { SOSProvider, useSOSContext } from '@/contexts/SOSContext';
-import { SOSButton } from '@/components/sos/SOSButton';
+import { CheckinTimerProvider } from '@/contexts/CheckinTimerContext';
+import SafetyFAB from '@/components/safety/SafetyFAB';
 import SOSOverlay from '@/components/interrupts/SOSOverlay';
+import FakeCallGenerator from '@/components/safety/FakeCallGenerator';
 import SafetyRecoveryScreen from '@/components/safety/SafetyRecoveryScreen';
 import ShakeSOS from '@/components/sos/ShakeSOS';
 import IncomingCallBanner from '@/components/calls/IncomingCallBanner';
@@ -50,6 +53,7 @@ import { RadioMiniPlayer } from '@/components/radio/RadioMiniPlayer';
 import { MusicPlayerProvider } from '@/contexts/MusicPlayerContext';
 import { MusicMiniPlayer } from '@/components/music/MusicMiniPlayer';
 import { GlobalTicker } from '@/components/banners/GlobalTicker';
+import { TopHUD } from '@/components/shell/TopHUD';
 import { MovementStatusCard } from '@/components/movement/MovementStatusCard';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useRetentionPush } from '@/hooks/useRetentionPush';
@@ -57,14 +61,18 @@ import { useDeepLinkSheet } from '@/hooks/useDeepLinkSheet';
 import { usePresenceHeartbeat } from '@/hooks/usePresenceHeartbeat';
 import { useSwipeBack } from '@/hooks/useSwipeBack';
 import AuthCallback from '@/pages/auth/callback';
+import { supabase } from '@/components/utils/supabaseClient';
+import { syncLocation } from '@/utils/locationService';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+
 
 // ── 6 core OS modes: eagerly loaded so tab switching is instant ────────────
 import HomeMode    from '@/modes/HomeMode';
 import GhostedMode from '@/modes/GhostedMode';
-import PulseMode   from '@/modes/PulseMode';
+import GlobePage   from '@/pages/Globe';
 import RadioMode   from '@/modes/RadioMode';
 import ProfileMode from '@/modes/ProfileMode';
-import { MarketMode } from '@/modes/MarketMode';
+import MarketMode  from '@/modes/MarketMode';
 import MusicTab    from '@/components/music/MusicTab';
 // Secondary routes: keep lazy (not in primary nav, rarely accessed on first open)
 const EventsMode  = lazy(() => import('@/modes/EventsMode'));
@@ -74,7 +82,9 @@ const ModerationPage = lazy(() => import('@/pages/admin/ModerationPage'));
 const SOSPage = lazy(() => import('@/pages/SOSPage'));
 const FakeCallPage = lazy(() => import('@/pages/FakeCallPage'));
 const SafetyPage = lazy(() => import('@/pages/Safety'));
+const SafePage = lazy(() => import('@/pages/SafePage'));
 const SafetySeedScreen = lazy(() => import('@/components/onboarding/screens/SafetySeedScreen'));
+const MusicMode = lazy(() => import('@/modes/MusicMode'));
 import MorePage from '@/pages/MorePage';
 const CarePage = lazy(() => import('@/pages/CarePage'));
 import AftercareNudge from '@/components/safety/AftercareNudge';
@@ -367,10 +377,14 @@ const MarketCollectionRedirect = () => {
  * BootRouter handles all the gating logic now.
  */
 const AuthenticatedApp = () => {
+  const location = useLocation();
   // Handle Stripe redirect after successful boost purchase
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     const bs = p.get('boost_success');
+    const ms = p.get('membership');
+    const tier = p.get('tier');
+
     if (bs) {
       const L = {
         globe_glow: 'Globe Glow', profile_bump: 'Profile Bump', vibe_blast: 'Vibe Blast',
@@ -379,270 +393,93 @@ const AuthenticatedApp = () => {
       toast.success(`${L[bs] || 'Boost'} activated! ⚡`);
       window.history.replaceState({}, '', window.location.pathname);
     }
+
+    if (ms === 'success' && tier) {
+      const fulfill = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const tierKey = tier.toLowerCase();
+          await supabase.from('profiles').update({
+            membership_tier: tierKey,
+            is_verified: true
+          }).eq('id', user.id);
+
+          await supabase.from('memberships').upsert({
+            user_id: user.id,
+            tier_name: tierKey,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'user_id' });
+
+          toast.success(`Welcome to ${tier.toUpperCase()}! Active now. 👑`);
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      };
+      fulfill();
+    }
   }, []);
 
   // Render the main app with LED Brutalist page transitions
   return (
-    <PageTransition>
-      <Routes>
-      {/* V1.5 canonical routes (Bible) - OS 5-Mode Structure */}
+    <PageTransition location={location}>
+      <Routes location={location} key={location.pathname}>
+      {/* OS 5-Mode Structure: Home | Pulse | Ghosted | Shop | More */}
       
-      {/* HOME - Dashboard */}
+      {/* 1. HOME */}
       <Route path="/" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><HomeMode /></Suspense>} />
-      {/* GHOSTED - Proximity Grid */}
-      <Route path="/ghosted" element={<Suspense fallback={<PageLoadingSkeleton type="profiles" />}><GhostedMode /></Suspense>} />
       
-      {/* Auth & Onboarding (unchanged) */}
+      {/* 2. PULSE (The signal starts here) */}
+      <Route path="/pulse" element={<Suspense fallback={<PageLoadingSkeleton type="events" />}><GlobePage /></Suspense>} />
+
+      <Route path="/globe" element={<Navigate to="/pulse" replace />} />
+      <Route path="/events" element={<Navigate to="/pulse" replace />} />
+      <Route path="/events/*" element={<Navigate to="/pulse" replace />} />
+      
+      {/* 3. GHOSTED (Teaser / Music-led) */}
+      <Route path="/ghosted" element={<Suspense fallback={<PageLoadingSkeleton type="profiles" />}><GhostedMode /></Suspense>} />
+      <Route path="/social" element={<Navigate to="/ghosted" replace />} />
+      <Route path="/social/*" element={<Navigate to="/ghosted" replace />} />
+      
+      {/* 4. SHOP (Unified Commerce) */}
+      <Route path="/market" element={<Suspense fallback={<PageLoadingSkeleton type="products" />}><MarketMode /></Suspense>} />
+      <Route path="/market/*" element={<Suspense fallback={<PageLoadingSkeleton type="products" />}><MarketMode /></Suspense>} />
+      <Route path="/shop" element={<Navigate to="/market" replace />} />
+      <Route path="/shop/*" element={<Navigate to="/market" replace />} />
+      <Route path="/marketplace" element={<Navigate to="/market" replace />} />
+      <Route path="/p/:handle" element={<ShopProductRoute />} />
+      
+      {/* 5. MORE (Radio, Care, Settings, Legal) */}
+      <Route path="/more" element={<Suspense fallback={null}><MorePage /></Suspense>} />
+      <Route path="/radio" element={<Navigate to="/more" replace />} />
+      <Route path="/music" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><MusicMode /></Suspense>} />
+      <Route path="/care" element={<Navigate to="/more" replace />} />
+      <Route path="/more/*" element={<Suspense fallback={null}><MorePage /></Suspense>} />
+      <Route path="/safety" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><SafetyPage /></Suspense>} />
+      <Route path="/safety/*" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><SafetyPage /></Suspense>} />
+      <Route path="/safe" element={<Suspense fallback={null}><SafePage /></Suspense>} />
+
+      
+      {/* AUTH & INFRASTRUCTURE */}
       <Route path="/auth" element={<PageRoute pageKey="Auth" />} />
       <Route path="/auth/*" element={<PageRoute pageKey="Auth" />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/onboarding" element={<PageRoute pageKey="OnboardingGate" />} />
       <Route path="/onboarding/*" element={<PageRoute pageKey="OnboardingGate" />} />
       
-      {/* PULSE - Mode (no Layout) */}
-      <Route path="/pulse" element={<Suspense fallback={<PageLoadingSkeleton type="events" />}><PulseMode /></Suspense>} />
-      <Route path="/globe" element={<Navigate to="/pulse" replace />} />
-      <Route path="/events" element={<Suspense fallback={null}><EventsMode /></Suspense>} />
-      <Route path="/events/*" element={<Suspense fallback={null}><EventsMode /></Suspense>} />
-      <Route path="/events/:id" element={<EventDetailRedirect />} />
-      {/* Market (canonical) -> MarketMode (no Layout) */}
-      {/* Specific sub-routes MUST come before the wildcard */}
-      <Route path="/market/creators/checkout" element={<CreatorsCheckoutRoute />} />
-      <Route path="/market/creators/checkout-success" element={<CreatorsCheckoutSuccessRoute />} />
-      <Route path="/market" element={<Suspense fallback={<PageLoadingSkeleton type="products" />}><MarketMode /></Suspense>} />
-      <Route path="/market/*" element={<Suspense fallback={<PageLoadingSkeleton type="products" />}><MarketMode /></Suspense>} />
-      <Route path="/social" element={<Navigate to="/ghosted" replace />} />
-      <Route path="/social/discover" element={<Navigate to="/ghosted" replace />} />
-      <Route path="/social/inbox" element={<PageRoute pageKey="Messages" />} />
-      <Route path="/social/u/:id" element={<SocialUserRedirect />} />
-      <Route path="/social/t/:threadId" element={<SocialThreadRedirect />} />
-      <Route path="/chat/meetup" element={<Suspense fallback={null}><ChatMeetupPage /></Suspense>} />
-      <Route path="/chat/:threadId" element={<Suspense fallback={null}><ChatMeetupPage /></Suspense>} />
-      <Route path="/chats" element={<Suspense fallback={null}><ChatHistoryPage /></Suspense>} />
+      {/* SETTINGS (Accessible via More) */}
+      <Route path="/settings" element={<PageRoute pageKey="Settings" />} />
+      <Route path="/settings/*" element={<PageRoute pageKey="Settings" />} />
+      <Route path="/profile" element={<Navigate to="/settings" replace />} />
       
-      {/* Example screens (design system demos) */}
-      <Route path="/examples/chat" element={<Suspense fallback={null}><ChatWithMapExample /></Suspense>} />
-      <Route path="/examples/ghosted" element={<Suspense fallback={null}><GhostedGridExample /></Suspense>} />
-      <Route path="/examples/market" element={<Suspense fallback={null}><MarketExample /></Suspense>} />
-      
-      {/* Auth screens - fully wired to Supabase */}
-      <Route path="/examples/auth/welcome" element={<Suspense fallback={null}><WelcomeScreen /></Suspense>} />
-      <Route path="/examples/auth/login" element={<Suspense fallback={null}><LoginScreen /></Suspense>} />
-      <Route path="/examples/auth/signup" element={<Suspense fallback={null}><SignUpScreen /></Suspense>} />
-      <Route path="/examples/auth/forgot" element={<Suspense fallback={null}><ForgotPasswordScreen /></Suspense>} />
-      <Route path="/examples/auth/join-code" element={<Suspense fallback={null}><JoinCodeScreen /></Suspense>} />
-      <Route path="/examples/auth/profile-setup" element={<Suspense fallback={null}><ProfileSetupScreen /></Suspense>} />
-      
-      {/* RADIO - Mode (no Layout) */}
-      <Route path="/radio" element={<Suspense fallback={<PageLoadingSkeleton />}><RadioMode /></Suspense>} />
-      <Route path="/radio/schedule" element={<Suspense fallback={<PageLoadingSkeleton />}><RadioMode /></Suspense>} />
-      <Route path="/radio/live" element={<Suspense fallback={<PageLoadingSkeleton />}><RadioMode /></Suspense>} />
-      <Route path="/music" element={<Suspense fallback={<PageLoadingSkeleton />}><MusicTab /></Suspense>} />
-      <Route path="/music/live" element={<Navigate to="/radio" replace />} />
-      <Route path="/music/shows" element={<Navigate to="/radio/schedule" replace />} />
-      <Route path="/music/shows/:show/episodes" element={<Navigate to="/radio/schedule" replace />} />
-      <Route path="/music/shows/:show/episodes/:id" element={<Navigate to="/radio/schedule" replace />} />
-      <Route path="/music/shows/:slug" element={<ShowHeroRedirect />} />
-      <Route path="/music/schedule" element={<Navigate to="/radio/schedule" replace />} />
-      <Route path="/music/releases" element={<Navigate to="/radio" replace />} />
-      <Route path="/music/releases/:slug" element={<PageRoute pageKey="MusicRelease" />} />
-      <Route path="/music/tracks" element={<Navigate to="/radio" replace />} />
-      <Route path="/music/tracks/:id" element={<Navigate to="/radio" replace />} />
-      <Route path="/music/playlists" element={<Navigate to="/radio" replace />} />
-      <Route path="/music/playlists/:id" element={<Navigate to="/radio" replace />} />
-      <Route path="/music/artists" element={<Navigate to="/radio" replace />} />
-      <Route path="/music/artists/:id" element={<Navigate to="/radio" replace />} />
-      <Route path="/music/clips/:id" element={<Navigate to="/radio" replace />} />
-      
-      {/* PROFILE - Mode (no Layout) */}
-      <Route path="/profile" element={<Suspense fallback={null}><ProfileMode /></Suspense>} />
-      <Route path="/profile/edit" element={<Suspense fallback={null}><ProfileMode /></Suspense>} />
-      <Route path="/profile/:id" element={<Suspense fallback={null}><ProfileMode /></Suspense>} />
-      
-      <Route path="/hnhmess" element={<PageRoute pageKey="Hnhmess" />} />
-      <Route path="/more" element={<Suspense fallback={null}><MorePage /></Suspense>} />
-      <Route path="/directions" element={<PageRoute pageKey="Directions" />} />
-      
-      {/* Auth sub-routes */}
-      <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route path="/auth/sign-in" element={<PageRoute pageKey="Auth" />} />
-      <Route path="/auth/sign-up" element={<PageRoute pageKey="Auth" />} />
-      <Route path="/auth/magic-link" element={<PageRoute pageKey="Auth" />} />
-      <Route path="/auth/verify" element={<PageRoute pageKey="Auth" />} />
-      <Route path="/auth/reset" element={<PageRoute pageKey="Auth" />} />
-      
-      {/* Onboarding sub-routes (main /onboarding declared above) */}
-      <Route path="/onboarding/consent" element={<PageRoute pageKey="Onboarding" />} />
-      <Route path="/onboarding/profile" element={<PageRoute pageKey="Onboarding" />} />
-      <Route path="/onboarding/preferences" element={<PageRoute pageKey="Onboarding" />} />
-
-      {/* Headless Shopify shop routes */}
-      {/* Legacy/alias shop routes (keep URLs working) */}
-      <Route path="/shop" element={<Navigate to="/market" replace />} />
-      <Route path="/shop/:handle" element={<LegacyShopCollectionRedirect />} />
-      <Route path="/p/:handle" element={<ShopProductRoute />} />
-      <Route path="/cart" element={<ShopCartRoute />} />
-      <Route path="/checkout/start" element={<ShopCheckoutStartRoute />} />
-      <Route path="/checkout" element={<Navigate to="/market" replace />} />
-
-      {/* Features / USP Pages */}
-      <Route path="/features" element={<PageRoute pageKey="Features" />} />
-      <Route path="/features/manifesto" element={<PageRoute pageKey="FeaturesManifesto" />} />
-      <Route path="/features/safety" element={<PageRoute pageKey="SafetyFeatures" />} />
-      <Route path="/features/events" element={<PageRoute pageKey="EventsFeatures" />} />
-      <Route path="/features/social" element={<PageRoute pageKey="SocialFeatures" />} />
-      <Route path="/features/music" element={<PageRoute pageKey="RadioFeatures" />} />
-      <Route path="/features/radio" element={<PageRoute pageKey="RadioFeatures" />} />
-      <Route path="/features/personas" element={<PageRoute pageKey="PersonaFeatures" />} />
-      <Route path="/features/profiles" element={<PageRoute pageKey="PersonaFeatures" />} />
-
-      {/* Legal */}
+      {/* LEGAL (Accessible via More) */}
       <Route path="/legal/privacy" element={<LegalPrivacyRoute />} />
       <Route path="/legal/terms" element={<LegalTermsRoute />} />
-      <Route path="/legal/privacy-hub" element={<LegalPrivacyHubRoute />} />
-      <Route path="/legal/about" element={<AboutPage />} />
-      <Route path="/legal/accessibility" element={<AccessibilityPage />} />
-      <Route path="/legal/remix-license" element={<RemixLicensePage />} />
-      <Route path="/legal/commercial-license" element={<CommercialLicensePage />} />
-      <Route path="/legal/creator-agreement" element={<CreatorAgreementPage />} />
-      <Route path="/legal/dmca" element={<DMCAPage />} />
-      <Route path="/legal/location" element={<LocationDisclosurePage />} />
-      <Route path="/legal/ai" element={<AIDisclosurePage />} />
-      <Route path="/about" element={<AboutPage />} />
-      <Route path="/accessibility" element={<AccessibilityPage />} />
-      <Route path="/legal" element={<Navigate to="/legal/privacy" replace />} />
-      <Route path="/terms" element={<PageRoute pageKey="TermsOfService" />} />
-      <Route path="/privacy" element={<PageRoute pageKey="PrivacyPolicy" />} />
-      <Route path="/guidelines" element={<PageRoute pageKey="CommunityGuidelines" />} />
-      <Route path="/contact" element={<PageRoute pageKey="Contact" />} />
+      <Route path="/legal/*" element={<AboutPage />} />
 
-      {/* Orders and market aliases */}
-      <Route path="/orders" element={<OrdersRedirect />} />
-      <Route path="/orders/:id" element={<OrderByIdRedirect />} />
-      <Route path="/orders/:id/tracking" element={<OrderTrackingRedirect />} />
-      <Route path="/returns" element={<ReturnsRedirect />} />
-      
-      {/* Social profile routes */}
-      <Route path="/social/u/:email" element={<ProfileRedirect />} />
-
-      {/* Bible-friendly /more/* tool routes (aliases) */}
-      <Route path="/more/beacons" element={<PageRoute pageKey="Beacons" />} />
-      <Route path="/more/beacons/new" element={<PageRoute pageKey="CreateBeacon" />} />
-      <Route path="/more/beacons/:id" element={<EventDetailRedirect />} />
-      <Route path="/more/beacons/:id/edit" element={<EditBeaconRedirect />} />
-      <Route path="/more/stats" element={<PageRoute pageKey="Stats" />} />
-      <Route path="/more/vault" element={<Suspense fallback={null}><VaultMode /></Suspense>} />
-      <Route path="/vault" element={<Suspense fallback={null}><VaultMode /></Suspense>} />
-      <Route path="/vault/*" element={<Suspense fallback={null}><VaultMode /></Suspense>} />
-      <Route path="/more/challenges" element={<PageRoute pageKey="Challenges" />} />
-      <Route path="/more/settings" element={<PageRoute pageKey="Settings" />} />
-      <Route path="/more/care" element={<Suspense fallback={null}><CarePage /></Suspense>} />
-
-      {/* Settings */}
-      <Route path="/settings" element={<PageRoute pageKey="Settings" />} />
-      <Route path="/settings/privacy" element={<PageRoute pageKey="Settings" />} />
-      <Route path="/settings/notifications" element={<PageRoute pageKey="Settings" />} />
-      <Route path="/settings/account" element={<PageRoute pageKey="Settings" />} />
-
-      {/* SOS + Fake Call — deep-linkable safety shortcuts */}
-      <Route path="/sos" element={<Suspense fallback={null}><SOSPage /></Suspense>} />
-      <Route path="/fake-call" element={<Suspense fallback={null}><FakeCallPage /></Suspense>} />
-
-      {/* Care — Hand N Hand wellbeing */}
-      <Route path="/care" element={<Suspense fallback={null}><CarePage /></Suspense>} />
-
-      {/* Safety — mobile-first, no desktop sidebar wrapper */}
-      <Route path="/safety/setup" element={<Suspense fallback={null}><SafetySeedScreen standalone /></Suspense>} />
-      <Route path="/safety/*" element={<Suspense fallback={null}><SafetyPage /></Suspense>} />
-      <Route path="/safety/report" element={<Suspense fallback={null}><SafetyPage /></Suspense>} />
-      <Route path="/safety/resources" element={<PageRoute pageKey="Care" />} />
-      <Route path="/calendar/*" element={<PageRoute pageKey="Calendar" />} />
-      <Route path="/v/:slug" element={<Suspense fallback={<PageLoadingSkeleton />}><VenueCheckin /></Suspense>} />
-      <Route path="/scan/*" element={<PageRoute pageKey="Scan" />} />
-      <Route path="/community/*" element={<PageRoute pageKey="Community" />} />
-      <Route path="/leaderboard/*" element={<PageRoute pageKey="Leaderboard" />} />
-
-      {/* Notifications/account aliases */}
-      <Route path="/notifications" element={<Navigate to={createPageUrl('Settings')} replace />} />
-      <Route path="/notifications/*" element={<Navigate to={createPageUrl('Settings')} replace />} />
-      <Route path="/notifications/settings" element={<PageRoute pageKey="Settings" />} />
-      <Route path="/account" element={<Navigate to={createPageUrl('Settings')} replace />} />
-      <Route path="/account/profile" element={<Navigate to={createPageUrl('EditProfile')} replace />} />
-      <Route path="/account/membership" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
-      <Route path="/account/upgrade" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
-      <Route path="/account/billing" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
-      <Route path="/account/receipts" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
-      <Route path="/account/delete" element={<PageRoute pageKey="AccountDeletion" />} />
-      <Route path="/account/export" element={<PageRoute pageKey="DataExport" />} />
-      <Route path="/account/consents" element={<PageRoute pageKey="AccountConsents" />} />
-      <Route path="/account/data" element={<Navigate to={createPageUrl('AccountConsents')} replace />} />
-      <Route path="/account/data/*" element={<Navigate to={createPageUrl('AccountConsents')} replace />} />
-
-      {/* Help & Support */}
-      <Route path="/help" element={<PageRoute pageKey="HelpCenter" />} />
-      <Route path="/support" element={<PageRoute pageKey="Contact" />} />
-      
-      {/* Membership & Pricing */}
-      <Route path="/membership" element={<PageRoute pageKey="MembershipUpgrade" />} />
-      <Route path="/upgrade" element={<PageRoute pageKey="MembershipUpgrade" />} />
-      <Route path="/pricing" element={<PageRoute pageKey="Pricing" />} />
-      <Route path="/fees" element={<PageRoute pageKey="Pricing" />} />
-      
-      {/* Admin dashboard */}
-      <Route path="/admin" element={<PageRoute pageKey="AdminDashboard" />} />
-      <Route path="/admin/moderation" element={<Suspense fallback={null}><ModerationPage /></Suspense>} />
-      <Route path="/admin/*" element={<PageRoute pageKey="AdminDashboard" />} />
-
-      {/* Business dashboard */}
-      <Route path="/biz" element={<PageRoute pageKey="BusinessDashboard" />} />
-      <Route path="/biz/dashboard" element={<PageRoute pageKey="BusinessDashboard" />} />
-      <Route path="/biz/analytics" element={<PageRoute pageKey="BusinessAnalytics" />} />
-      <Route path="/biz/onboarding" element={<PageRoute pageKey="BusinessOnboarding" />} />
-      <Route path="/biz/venue" element={<PageRoute pageKey="BusinessVenue" />} />
-      <Route path="/biz/create-beacon" element={<CreateBeaconBiz />} />
-
-      {/* Legacy lowercase routes -> canonical V1.5 routes */}
-      {/* /radio and /radio/schedule already declared above as PageRoutes (no duplicate needed) */}
-      <Route path="/connect" element={<Navigate to={createPageUrl('Social')} replace />} />
-      <Route path="/connect/*" element={<Navigate to={createPageUrl('Social')} replace />} />
-      <Route path="/marketplace" element={<Navigate to="/market" replace />} />
-      <Route path="/marketplace/p/:handle" element={<ShopProductRoute />} />
-      {/* /more/beacons/* routes declared above at lines 410-413 */}
-      <Route path="/age" element={<PageRoute pageKey="AgeGate" />} />
-      <Route path="/safety" element={<Suspense fallback={null}><SafetyPage /></Suspense>} />
-      <Route path="/calendar" element={<PageRoute pageKey="Calendar" />} />
-      <Route path="/scan" element={<PageRoute pageKey="Scan" />} />
-      <Route path="/saved" element={<PageRoute pageKey="Bookmarks" />} />
-      <Route path="/leaderboard" element={<PageRoute pageKey="Leaderboard" />} />
-      <Route path="/community" element={<PageRoute pageKey="Community" />} />
-      <Route path="/profiles" element={<PageRoute pageKey="ProfilesGrid" />} />
-
-      {/* Seller / Creator / Tickets — explicit routes for pages that exist */}
-      <Route path="/seller-dashboard" element={<Suspense fallback={null}><SellerDashboard /></Suspense>} />
-      <Route path="/seller-onboarding" element={<Suspense fallback={null}><SellerOnboarding /></Suspense>} />
-      <Route path="/creator" element={<Suspense fallback={null}><CreatorDashboard /></Suspense>} />
-      <Route path="/creator/upload" element={<Suspense fallback={null}><CreatorDashboard /></Suspense>} />
-      <Route path="/creator/settings" element={<Suspense fallback={null}><CreatorDashboard /></Suspense>} />
-      <Route path="/creator/payout" element={<Suspense fallback={null}><ComingSoon /></Suspense>} />
-      <Route path="/tickets" element={<Suspense fallback={null}><TicketsPage /></Suspense>} />
-      <Route path="/tickets/new" element={<Suspense fallback={null}><TicketsPage /></Suspense>} />
-      <Route path="/tickets/:id" element={<Suspense fallback={null}><TicketDetailPage /></Suspense>} />
-      <Route path="/tickets/chat/:id" element={<Suspense fallback={null}><TicketChatPage /></Suspense>} />
-      <Route path="/profile/optimize" element={<Suspense fallback={null}><ComingSoon /></Suspense>} />
-
-      {/* Backward-compatible auto-generated /PageName routes */}
+      {/* Fallback auto-generated /PageName routes for internal createPageUrl() redirects */}
       {Object.entries(Pages).map(([path, Page]) => {
-        if (isProdBuild && !LEGACY_PAGE_ROUTE_ALLOWLIST.has(path)) {
-          return null;
-        }
-
-        if (path === 'Marketplace') {
-          return <Route key={path} path={`/${path}`} element={<Navigate to="/market" replace />} />;
-        }
-
-        if (path === 'ProductDetail') {
-          return <Route key={path} path={`/${path}`} element={<ProductDetailGate />} />;
-        }
-
+        // Skip explicitly declared canonical routes to avoid duplicate logic
+        if (['Home', 'Pulse', 'Ghosted', 'Market', 'More', 'Auth'].includes(path)) return null;
+        
         return (
           <Route
             key={path}
@@ -655,6 +492,7 @@ const AuthenticatedApp = () => {
           />
         );
       })}
+      
       <Route path="*" element={<PageNotFound />} />
       </Routes>
     </PageTransition>
@@ -668,37 +506,34 @@ function App() {
     <I18nProvider>
       <AuthProvider>
         <PinLockProvider>
-          <BootGuardProvider>
+          <TonightModeProvider>
+            <BootGuardProvider>
             <QueryClientProvider client={queryClientInstance}>
               <WorldPulseProvider>
                 <ShopCartProvider>
                   <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                     <SOSProvider>
-                      <SheetProvider>
-                        <NavigationTracker />
-                        <GlobeProvider>
-                          <BootRouter>
-                            {/*
-                              L0-L3 Layered OS Architecture
-                              - UnifiedGlobe is persistent, never unmounts
-                              - All navigation happens via SheetContext
-                              - Router only handles URL sync, not page mounts
-                            */}
-                            <RadioProvider>
-                              <LiveModeProvider>
-                                <MusicPlayerProvider>
-                                  <PersonaProvider>
+                      <CheckinTimerProvider>
+                        <SheetProvider>
+                        <RadioProvider>
+                          <NavigationTracker />
+                          <LiveModeProvider>
+                            <MusicPlayerProvider>
+                              <PersonaProvider>
+                                <GlobeProvider>
+                                  <BootRouter>
                                     <OSArchitecture />
-                                  </PersonaProvider>
-                                </MusicPlayerProvider>
-                              </LiveModeProvider>
-                            </RadioProvider>
-                          </BootRouter>
-                        </GlobeProvider>
-                        {/* L2 Sheet System - Renders over everything, outside route remount boundary */}
-                        <SheetRouter />
+                                  </BootRouter>
+                                  {/* L2 Sheet System - Renders over everything, outside route remount boundary */}
+                                  <SheetRouter />
+                                </GlobeProvider>
+                              </PersonaProvider>
+                            </MusicPlayerProvider>
+                          </LiveModeProvider>
+                        </RadioProvider>
                       </SheetProvider>
-                    </SOSProvider>
+                    </CheckinTimerProvider>
+                  </SOSProvider>
                   </Router>
                 </ShopCartProvider>
               </WorldPulseProvider>
@@ -707,6 +542,7 @@ function App() {
               <PinLockOverlay />
             </QueryClientProvider>
           </BootGuardProvider>
+          </TonightModeProvider>
         </PinLockProvider>
       </AuthProvider>
     </I18nProvider>
@@ -721,6 +557,11 @@ function App() {
  * @returns {JSX.Element} The layered OS shell containing globe, app routes, mini player, navigation, interrupts, and cookie banner.
  */
 function OSArchitecture() {
+  const { isAuthenticated } = useBootGuard();
+  const { sosActive, showRecovery, triggerSOS, clearSOS, dismissRecovery } = useSOSContext();
+  const location = useLocation();
+  const { closeSheet, sheetStack } = useSheet();
+
   // Initialize dynamic viewport height for mobile browsers
   useViewportHeight();
   // Register service worker + request push permission on first load
@@ -733,10 +574,15 @@ function OSArchitecture() {
   usePresenceHeartbeat();
   // iOS-style edge swipe to go back
   useSwipeBack();
-  const { sosActive, showRecovery, triggerSOS, clearSOS, dismissRecovery } = useSOSContext();
-  const { isAuthenticated } = useBootGuard();
-  const location = useLocation();
-  const { closeSheet, sheetStack } = useSheet();
+  const { pullProgress, isRefreshing } = usePullToRefresh();
+
+
+  // Part B: Sync location on app open (once per mount)
+  useEffect(() => {
+    if (isAuthenticated) {
+      syncLocation();
+    }
+  }, [isAuthenticated]);
 
   // Aftercare nudge state for check-in expiry
   const [showAftercare, setShowAftercare] = useState(false);
@@ -811,27 +657,54 @@ function OSArchitecture() {
     }
   }, []);
 
-  // Hide mini player when on /radio — full player is visible there
-  const onRadioRoute = location.pathname === '/radio' || location.pathname.startsWith('/radio/');
+  const onRadioActive = location.pathname.startsWith('/more/radio') || location.pathname === '/radio';
 
   return (
     <div className="hotmess-os relative h-dvh w-full overflow-hidden bg-[#050507]">
-      {/* L0: Persistent Globe Layer (Z-0) */}
-      <UnifiedGlobe />
+      {/* Pull to Refresh Indicator */}
+      {pullProgress > 0 && (
+        <div 
+          className="fixed top-0 left-0 right-0 z-[1000] pointer-events-none flex flex-col items-center pt-2"
+          style={{ opacity: pullProgress }}
+        >
+          <div 
+            className="h-1 bg-[#C8962C] shadow-[0_0_15px_#C8962C] transition-all duration-75 rounded-full" 
+            style={{ width: `${Math.min(pullProgress * 60, 100)}%` }}
+          />
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#C8962C] mt-2 opacity-60">
+            {pullProgress >= 1 ? 'Release to refresh' : 'Pull to refresh'}
+          </span>
+        </div>
+      )}
 
-      {/* L1-L3: Everything else — absolute, covers globe, full-height */}
-      <div className="absolute inset-0 z-10 h-full w-full">
+      {/* L0: Persistent Globe Layer (Z-0) - Removed, now handled by route */}
+
+
+      {/* L1-L3: Everything else — absolute, covers globe, explicitly ends above bottom nav */}
+      <div 
+        className="absolute inset-x-0 z-10 w-full"
+        style={{ 
+          top: 'calc(44px + env(safe-area-inset-top, 0px))',
+          bottom: 'calc(64px + max(env(safe-area-inset-bottom), 8px))'
+        }}
+      >
         <AuthenticatedApp />
       </div>
 
+      {/* L1: Top HUD (Z-50) — Unified Logo + Notifs + Avatar */}
+      <TopHUD />
+
+      {/* Global Ticker — sits just below TopHUD */}
+      <GlobalTicker className="fixed top-12 left-0 right-0 z-[60]" />
+
       {/* Radio Mini Player — sits just above OSBottomNav (Z-40) */}
-      <RadioMiniPlayer hidden={onRadioRoute} />
+      <RadioMiniPlayer hidden={onRadioActive} />
+
 
       {/* Music Mini Player — sits just above radio player or nav (Z-50) */}
       <MusicMiniPlayer />
 
-      {/* Global Ticker — scrolling banner strip above nav */}
-      <GlobalTicker className="fixed left-0 right-0 z-[45]" style={{ bottom: '83px' }} />
+      {/* Global Ticker was moved to the very top to prevent hiding Shopping buttons */}
 
       {/* Movement Status Card — floats above nav when sharing movement (Z-50) */}
       {isAuthenticated && <MovementStatusCard />}
@@ -842,25 +715,23 @@ function OSArchitecture() {
       {/* L2.5: Live Mode Overlay — unified presence layer (Z-110) */}
       <LiveModeOverlay />
 
-      {/* L3: SOS long-press trigger — auth only (Z-190) — above mini player (83+56=139px) */}
-      {isAuthenticated && (
-        <SOSButton
-          className="fixed bottom-[148px] right-3 z-[190]"
-          onTrigger={triggerSOS}
-        />
-      )}
-
       {/* L3: Shake-to-SOS — auth only */}
       {isAuthenticated && <ShakeSOS />}
 
+      {/* Invisible Safety FAB — sits over OSBottomNav (Z-120) */}
+      <SafetyFAB />
+
       {/* L3: SOS Overlay — blocks entire OS, stops all sharing (Z-200) */}
-      {sosActive && <SOSOverlay onClose={clearSOS} />}
+      {/* SOS Overlay removed — now silent */}
 
       {/* Post-safety recovery screen — z-[205], shown after SOS dismissed */}
       {showRecovery && <SafetyRecoveryScreen />}
 
       {/* Incoming call banner — auth only */}
       {isAuthenticated && <IncomingCallBanner />}
+
+      {/* The Exit Generator (Persistent listener) */}
+      {isAuthenticated && <div className="hidden"><FakeCallGenerator /></div>}
 
       {/* Aftercare nudge — triggered by check-in expiry */}
       <AftercareNudge isOpen={showAftercare} onClose={() => setShowAftercare(false)} />

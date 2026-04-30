@@ -19,9 +19,12 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLongPress } from '@/hooks/useLongPress';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import PersonaSwitcherSheet from '@/components/sheets/PersonaSwitcherSheet';
+import { useLocalPullToRefresh } from '@/hooks/useLocalPullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
+
+
+
 import { isGamificationEnabled } from '@/lib/featureFlags';
 import {
   User,
@@ -220,10 +223,13 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries();
   }, [queryClient]);
-  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+
+  const { pullDistance, isRefreshing } = useLocalPullToRefresh({
     onRefresh: handleRefresh,
     scrollRef,
   });
+
+
 
   // Auto-open persona switcher when navigated with ?action=manage-personas
   useEffect(() => {
@@ -275,9 +281,10 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
       const { data } = await supabase
         .from('right_now_status')
         .select('intent, expires_at')
-        .eq('user_email', user.email)
+        .eq('user_id', user.id)
         .gte('expires_at', new Date().toISOString())
         .maybeSingle();
+
 
       return data;
     },
@@ -424,7 +431,7 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
 
   // ---- Menu sections --------------------------------------------------------
 
-  const userTier = profile?.business_type || '';
+  const userTier = (profile?.subscription_tier || profile?.membership_tier || profile?.profile_type || '').toLowerCase();
 
   const menuSections: MenuSection[] = [
     {
@@ -523,9 +530,10 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
         ref={scrollRef}
         className={`h-full w-full overflow-y-auto scroll-momentum pb-36 ${className}`}
         style={{ background: ROOT_BG }}
-        {...pullHandlers}
       >
         <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
+
+
         {/* ---- Hero Section ------------------------------------------------- */}
         <div
           className="relative pt-10 pb-6 flex flex-col items-center"
@@ -587,7 +595,7 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
 
               {/* Avatar circle */}
               <div
-                className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center"
+                className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center relative"
                 style={{
                   background: 'rgba(255,255,255,0.06)',
                   border: '2px solid rgba(255,255,255,0.1)',
@@ -604,6 +612,14 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
                 ) : (
                   <User className="w-8 h-8 text-white/30" />
                 )}
+                
+                {/* Floating Edit Icon on Avatar */}
+                <div 
+                  onClick={(e) => { e.stopPropagation(); openSheet('edit-profile'); }}
+                  className="absolute bottom-0 right-0 w-7 h-7 bg-[#C8962C] rounded-full flex items-center justify-center border-2 border-[#1C1C1E] shadow-lg active:scale-90 transition-transform cursor-pointer z-20"
+                >
+                  <Edit3 className="w-3.5 h-3.5 text-black" />
+                </div>
               </div>
 
               {/* Verified badge */}
@@ -655,6 +671,17 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
               Not sharing right now
             </span>
           )}
+
+          {/* ── Edit Profile CTA ─────────────────────────────────────────── */}
+          <button
+            onClick={() => openSheet('edit-profile')}
+            className="mt-3 flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-black active:scale-95 transition-transform"
+            style={{ background: AMBER }}
+            aria-label="Edit your profile"
+          >
+            <Edit3 className="w-4 h-4" />
+            Edit Profile
+          </button>
         </div>
 
         {/* ---- Quick Stats Row ---------------------------------------------- */}

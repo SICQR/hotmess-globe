@@ -30,9 +30,9 @@ interface Notif {
   id: string;
   type: string;
   title: string;
-  message: string;
-  link?: string;
-  metadata: Record<string, unknown>;
+  body: string;
+  link: string | null;
+  metadata: any;
   read: boolean;
   created_at: string;
 }
@@ -68,18 +68,30 @@ export default function L2NotificationInboxSheet() {
   const load = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.email || !mountedRef.current) return;
+      if (!user?.email || !mountedRef.current) {
+        console.warn('[Inbox] No user email found or component unmounted');
+        return;
+      }
       setUserEmail(user.email);
+
+      console.log('[Inbox] Looking for notifications for:', user.email);
 
       const { data, error } = await supabase
         .from('notifications')
-        .select('id, type, title, message, link, metadata, read, created_at')
+        .select('id, type, title, body, link, metadata, read, created_at')
         .eq('user_email', user.email)
         .order('created_at', { ascending: false })
         .limit(60);
 
-      if (!error && data && mountedRef.current) setNotifs(data as Notif[]);
-    } catch { /* non-fatal */ }
+      if (error) {
+        console.error('[Inbox] Fetch error:', error.message);
+      } else {
+        console.log('[Inbox] Notifications found:', data?.length || 0);
+        if (data && mountedRef.current) setNotifs(data as Notif[]);
+      }
+    } catch (err: any) { 
+      console.error('[Inbox] Critical error:', err.message);
+    }
     finally { if (mountedRef.current) setLoading(false); }
   }, []);
 
@@ -90,6 +102,7 @@ export default function L2NotificationInboxSheet() {
       .update({ read: true })
       .eq('user_email', email)
       .eq('read', false);
+
     // Optimistically update local state
     if (mountedRef.current) {
       setNotifs(prev => prev.map(n => ({ ...n, read: true })));
@@ -116,7 +129,7 @@ export default function L2NotificationInboxSheet() {
           const n = payload.new as Notif & { user_email?: string };
           // Only show if it's for this user
           if (userEmail && n.user_email !== userEmail) return;
-          setNotifs(prev => [{ ...n, read: true }, ...prev]);
+          setNotifs(prev => [{ ...n, read: false }, ...prev]);
         }
       )
       .subscribe();
@@ -216,7 +229,7 @@ export default function L2NotificationInboxSheet() {
       )}
 
       {/* Notification list */}
-      <div className="flex flex-col divide-y divide-white/[0.05] overflow-y-auto">
+      <div className="flex flex-col divide-y divide-white/[0.05]">
         <AnimatePresence initial={false}>
           {notifs.map((n) => {
             const { Icon, color, bg } = typeConfig(n.type);
@@ -257,7 +270,7 @@ export default function L2NotificationInboxSheet() {
                     <span className="text-[10px] text-white/25 flex-shrink-0">{timeAgo}</span>
                   </div>
                   <p className="text-xs text-white/45 mt-0.5 leading-snug line-clamp-2">
-                    {n.message}
+                    {n.body}
                   </p>
                   {tappable && (
                     <p className="text-[10px] mt-1" style={{ color: `${color}99` }}>

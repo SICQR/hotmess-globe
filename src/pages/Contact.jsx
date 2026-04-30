@@ -37,7 +37,7 @@ export default function Contact() {
 
     try {
       // Get current user if logged in
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
 
       // Create support ticket
       const { error: insertError } = await supabase
@@ -300,3 +300,4 @@ export default function Contact() {
     </div>
   );
 }
+

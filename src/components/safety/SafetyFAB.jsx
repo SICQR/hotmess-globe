@@ -15,39 +15,8 @@ import { Button } from '@/components/ui/button';
 import { useTonightModeContext } from '@/hooks/useTonightMode';
 import FakeCallGenerator from '@/components/safety/FakeCallGenerator';
 import CheckInTimerModal from '@/components/safety/CheckInTimerModal';
-import { useCheckinTimer } from '@/hooks/useCheckinTimer';
+import { useCheckinTimer } from '@/contexts/CheckinTimerContext';
 import { useSOSContext } from '@/contexts/SOSContext';
-
-/**
- * SOS Progress Ring — SVG circle that fills during long-press.
- */
-function SOSProgressRing({ progress }) {
-  const radius = 27;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (progress / 100) * circumference;
-
-  return (
-    <svg
-      className="absolute inset-0 -rotate-90 pointer-events-none"
-      width="48"
-      height="48"
-      viewBox="0 0 56 56"
-    >
-      <circle
-        cx="28" cy="28" r={radius}
-        fill="none" stroke="rgba(255,59,48,0.2)" strokeWidth="2.5"
-      />
-      <circle
-        cx="28" cy="28" r={radius}
-        fill="none" stroke="#FF3B30" strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        style={{ transition: 'stroke-dashoffset 30ms linear' }}
-      />
-    </svg>
-  );
-}
 
 export default function SafetyFAB() {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -55,58 +24,104 @@ export default function SafetyFAB() {
   const [showCheckinTimer, setShowCheckinTimer] = useState(false);
   const tonightMode = useTonightModeContext();
   const { isActive: timerActive, secondsLeft } = useCheckinTimer();
-  const { triggerSOS } = useSOSContext();
+  console.log('[SafetyFAB] timerActive:', timerActive);
 
   const isTonight = tonightMode?.isTonight ?? false;
 
-  // ── Long-press SOS (3 seconds) ──────────────────────────────────────────────
-  const SOS_HOLD_MS = 3000;
+  // ── Invisible Gestures Logic ──────────────────────────────────────────────
+  const { triggerSOS, triggerTheExit, triggerTheDisappear } = useSOSContext();
+  const [tapCount, setTapCount] = useState(0);
+  const tapTimerRef = useRef(null);
+
+  const HOLD_EXIT_MS = 1500;
+  const HOLD_DISAPPEAR_MS = 3000;
   const [holdProgress, setHoldProgress] = useState(0);
   const [isHolding, setIsHolding] = useState(false);
   const holdStartRef = useRef(null);
   const rafRef = useRef(null);
-  const sosTriggeredRef = useRef(false);
+  const thresholdReachedRef = useRef({ exit: false, disappear: false });
+
+  // Triple Tap Handler
+  const handleTap = useCallback(() => {
+    console.log(`[SafetyFAB] Tap count: ${tapCount + 1}`);
+    setTapCount(prev => {
+      const next = prev + 1;
+      if (next === 3) {
+        console.log('[SafetyFAB] SOS TRIGGERED (Triple Tap)');
+        if (navigator?.vibrate) navigator.vibrate([50, 30, 50]);
+        triggerSOS({ silent: true });
+        return 0;
+      }
+      return next;
+    });
+
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = setTimeout(() => {
+      setTapCount(0);
+      console.log('[SafetyFAB] Tap sequence reset');
+    }, 600);
+  }, [triggerSOS, tapCount]);
 
   const startHold = useCallback((e) => {
-    if (e.type === 'touchstart') e.preventDefault();
     holdStartRef.current = performance.now();
-    sosTriggeredRef.current = false;
     setIsHolding(true);
     setHoldProgress(0);
 
     const tick = () => {
       if (!holdStartRef.current) return;
       const elapsed = performance.now() - holdStartRef.current;
-      const pct = Math.min((elapsed / SOS_HOLD_MS) * 100, 100);
+      
+      // Haptic signals at thresholds
+      if (elapsed >= HOLD_EXIT_MS && !thresholdReachedRef.current.exit) {
+        if (navigator?.vibrate) navigator.vibrate(50);
+        thresholdReachedRef.current.exit = true;
+      }
+      if (elapsed >= HOLD_DISAPPEAR_MS && !thresholdReachedRef.current.disappear) {
+        if (navigator?.vibrate) navigator.vibrate([100, 50, 100]);
+        thresholdReachedRef.current.disappear = true;
+      }
+
+      // Calculate progress based on the longest hold (Disappear)
+      const pct = Math.min((elapsed / HOLD_DISAPPEAR_MS) * 100, 100);
       setHoldProgress(pct);
 
-      if (pct >= 100 && !sosTriggeredRef.current) {
-        sosTriggeredRef.current = true;
-        setIsHolding(false);
-        setHoldProgress(0);
-        holdStartRef.current = null;
-        if (navigator?.vibrate) navigator.vibrate([200, 100, 200]);
-        triggerSOS();
-        return;
-      }
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
-  }, [triggerSOS]);
+  }, []);
 
   const cancelHold = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    const wasHolding = isHolding;
     const elapsed = holdStartRef.current ? performance.now() - holdStartRef.current : 0;
     holdStartRef.current = null;
+    thresholdReachedRef.current = { exit: false, disappear: false };
     setIsHolding(false);
     setHoldProgress(0);
 
-    // Short tap (< 300ms) → toggle menu
-    if (wasHolding && !sosTriggeredRef.current && elapsed < 300) {
-      setIsExpanded((prev) => !prev);
+    // 1. Short tap (< 300ms) → Handle Triple Tap or Menu
+    if (elapsed < 300) {
+      handleTap();
+      // Only toggle menu if it's not the middle of a triple tap? 
+      // Actually, menu is fine for short tap.
+      if (tapCount === 0) {
+        // Delay menu slightly to see if another tap comes
+        setTimeout(() => {
+          if (tapCount === 0) setIsExpanded(prev => !prev);
+        }, 200);
+      }
+      return;
     }
-  }, [isHolding]);
+
+    // 2. The Exit (1.5s)
+    if (elapsed >= HOLD_EXIT_MS && elapsed < HOLD_DISAPPEAR_MS) {
+      if (navigator?.vibrate) navigator.vibrate(100);
+      triggerTheExit();
+    } 
+    // 3. The Disappear (3s+)
+    else if (elapsed >= HOLD_DISAPPEAR_MS) {
+      triggerTheDisappear();
+    }
+  }, [handleTap, tapCount, triggerTheExit, triggerTheDisappear]);
 
   useEffect(() => {
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
@@ -123,9 +138,7 @@ export default function SafetyFAB() {
   return (
     <>
       {/* FAB + menu */}
-      <div className={`fixed z-[60] transition-all duration-300 ${
-        isTonight ? 'bottom-24 left-4' : 'bottom-20 left-4'
-      }`}>
+      <div className="fixed z-[150] bottom-24 left-6">
         <AnimatePresence>
           {isExpanded && (
             <motion.div
@@ -147,11 +160,10 @@ export default function SafetyFAB() {
                 </Button>
                 <Button
                   variant="ghost"
-                  className={`w-full justify-start h-10 text-sm ${
-                    timerActive
-                      ? 'text-[#00C2E0] bg-[#00C2E0]/5'
-                      : 'text-white/80 hover:bg-white/5 hover:text-white'
-                  }`}
+                  className={`w-full justify-start h-10 text-sm ${timerActive
+                    ? 'text-[#00C2E0] bg-[#00C2E0]/5'
+                    : 'text-white/80 hover:bg-white/5 hover:text-white'
+                    }`}
                   onClick={() => { setShowCheckinTimer(true); setIsExpanded(false); }}
                 >
                   <Clock className="w-4 h-4 mr-2.5 text-[#00C2E0]" />
@@ -176,41 +188,34 @@ export default function SafetyFAB() {
         </AnimatePresence>
 
         <div className="relative">
-          {/* Active timer ring — subtle */}
-          {timerActive && !isHolding && (
-            <motion.div
-              className="absolute -inset-1 rounded-full pointer-events-none"
-              style={{ border: '1.5px solid rgba(0,194,224,0.25)' }}
-              animate={{ scale: [1, 1.3], opacity: [0.5, 0] }}
-              transition={{ duration: 2.5, repeat: Infinity, ease: 'easeOut' }}
-            />
-          )}
-          {/* SOS hold progress ring */}
-          {isHolding && holdProgress > 0 && (
-            <SOSProgressRing progress={holdProgress} />
-          )}
           <Button
             onMouseDown={startHold}
             onMouseUp={cancelHold}
             onMouseLeave={cancelHold}
             onTouchStart={startHold}
             onTouchEnd={cancelHold}
-            className={`rounded-full w-12 h-12 shadow-md transition-all select-none ${
-              isHolding
-                ? 'bg-red-500/20 border-2 border-red-500 scale-110'
-                : timerActive
-                ? 'bg-[#1C1C1E] border border-[#00C2E0]/30'
-                : 'bg-[#1C1C1E] border border-white/10'
-            }`}
+            className={`relative z-10 rounded-full w-12 h-12 shadow-md transition-all select-none bg-[#1C1C1E] ${
+              timerActive
+                ? 'border border-[#00C2E0]/30'
+                : 'border border-white/10'
+              }`}
           >
             <Shield className={`w-5 h-5 ${
-              isHolding
-                ? 'text-red-400'
-                : timerActive
+              timerActive
                 ? 'text-[#00C2E0]/70'
                 : 'text-white/40'
-            }`} />
+              }`} />
           </Button>
+
+          {/* Active timer ring — visible */}
+          {timerActive && !isHolding && (
+            <motion.div
+              className="absolute -inset-2 rounded-full pointer-events-none z-0"
+              style={{ border: '2px solid rgba(0,194,224,0.6)' }}
+              animate={{ scale: [1, 1.4], opacity: [1, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
+            />
+          )}
         </div>
       </div>
 

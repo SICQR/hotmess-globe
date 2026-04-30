@@ -1,29 +1,12 @@
-# ── Env / secrets ───────────────────────────────────────────────────────────
-.env
+# Env files
 .env.local
-.env.development
-.env.development.local
-.env.preview
-.env.preview.local
-.env.production
-.env.production.local
-.env.test
-.env.test.local
+#env
+.env
 .env.*
+.env.local
 .env.*.local
-# DO NOT gitignore .env.example — it holds placeholders only.
-!.env.example
 
-# ── Auth / token files ──────────────────────────────────────────────────────
-.github_token
-.supabase_token
-*.pem
-*.key
-*.p8
-*.p12
-*.pfx
-
-# ── Logs ────────────────────────────────────────────────────────────────────
+# Logs
 logs
 *.log
 npm-debug.log*
@@ -32,22 +15,23 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# ── Build artefacts ─────────────────────────────────────────────────────────
 node_modules
 dist
 dist-ssr
 dist-test
 *.local
 
-# ── Testing output ──────────────────────────────────────────────────────────
+# Playwright
 playwright-report/
 test-results/
+
+# Vitest coverage
 coverage/
 
-# ── Supabase CLI local state ────────────────────────────────────────────────
+# Supabase CLI local state
 supabase/.temp/
 
-# ── Editor / OS ─────────────────────────────────────────────────────────────
+# Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -58,18 +42,14 @@ supabase/.temp/
 *.sln
 *.sw?
 
-# ── Vercel ──────────────────────────────────────────────────────────────────
+.env
 .vercel
+.env*.local
 
-# ── Local media / large binaries ────────────────────────────────────────────
+# Local media/assets (avoid accidentally committing large binaries)
 HNH Mess 2 (Remastered).mp3
 
-# ── Duplicate nested repo artifacts (local-only) ────────────────────────────
+# Duplicate nested repo artifacts (local-only)
 hotmess-globe/
-
-# ── Claude Code local state ─────────────────────────────────────────────────
-# Everything under .claude/ is developer-local — settings, worktrees, skills,
-# agent memory — and frequently contains tokens or transient shell history.
-.claude/
-.codex/
-.swarm/
+.github_token
+.supabase_token

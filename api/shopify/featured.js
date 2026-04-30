@@ -42,6 +42,10 @@ export default async function handler(req, res) {
     tags
     featuredImage { url altText }
     images(first: 10) { nodes { url altText } }
+    options {
+      name
+      values
+    }
     variants(first: 25) {
       nodes {
         id
@@ -49,6 +53,10 @@ export default async function handler(req, res) {
         availableForSale
         price { amount currencyCode }
         compareAtPrice { amount currencyCode }
+        selectedOptions {
+          name
+          value
+        }
       }
     }
   `;

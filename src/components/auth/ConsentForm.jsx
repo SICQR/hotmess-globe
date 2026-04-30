@@ -86,7 +86,7 @@ export default function ConsentForm({ user, onAccepted }) {
         consent_version: CONSENT_VERSION,
         consent_timestamp: new Date().toISOString(),
         is_18_plus: true,
-      }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
+      }; let { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
       toast.success('Welcome to HOTMESS');
       onAccepted();
     } catch (error) {
@@ -200,3 +200,4 @@ export default function ConsentForm({ user, onAccepted }) {
     </div>
   );
 }
+

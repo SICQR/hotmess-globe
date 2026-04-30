@@ -1,494 +1,227 @@
-/**
- * GhostedMode V3 — Proximity Grid (/ghosted)
- *
- * Full rewrite. Three tabs: Nearby | Live | Chats.
- * Clean grid, no stacked filters, compact hero banner.
- *
- * Layout:
- * ┌─────────────────────────────────────────┐
- * │  GHOSTED    [Nearby] [Live] [Chats]  ⚙  │  sticky glassmorphic header
- * ├─────────────────────────────────────────┤
- * │  ┌─ Hero Banner (64px) ──────────────┐  │  brand + play btn
- * │  └──────────────────────────────────────┘│
- * │  [Nearby] [Online] [New] [Looking] ...  │  single-row filter chips
- * ├─────────────────────────────────────────┤
- * │  ┌────┐┌────┐┌────┐                    │  3-col grid, GhostedCard
- * │  │ P1 ││ P2 ││ P3 │                    │  tap → ghosted-preview sheet
- * │  └────┘└────┘└────┘                    │
- * │       ... infinite scroll              │
- * │                                         │
- * │       [Share your vibe →]               │  FAB above nav
- * └─────────────────────────────────────────┘
- *
- * Data: useGhostedGrid hook (TanStack Query + Supabase)
- * Auth: supabase.auth.getSession() — no base44
- */
-
-import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { SlidersHorizontal, Ghost, ArrowRight, MessageCircle, Music, ChevronRight } from 'lucide-react';
-import { toast } from 'sonner';
-import { useSheet } from '@/contexts/SheetContext';
-import { supabase } from '@/components/utils/supabaseClient';
-import { useRadio } from '@/contexts/RadioContext';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Radio, Lock, ChevronRight, Play, Users, MessageCircle } from 'lucide-react';
+import { TrackPlayer } from '@/components/music/TrackPlayer';
+import { useGhostedGrid } from '@/hooks/useGhostedGrid';
 import { useGPS } from '@/hooks/useGPS';
-import { useGhostedGrid, type GhostedTab, type ChatThreadItem } from '@/hooks/useGhostedGrid';
-import { GhostedCard, type GhostedCardProps } from '@/components/ghosted/GhostedCard';
-import { GhostedHeroBanner } from '@/components/ghosted/GhostedHeroBanner';
+import { useSheet } from '@/contexts/SheetContext';
 import { useTaps } from '@/hooks/useTaps';
+import { useUnreadCount } from '@/hooks/useUnreadCount';
+import { GhostedCard } from '@/components/ghosted/GhostedCard';
+import { supabase } from '@/components/utils/supabaseClient';
 
-// ── Brand constants ──────────────────────────────────────────────────────────
-const AMBER = '#C8962C';
+import LocationConsentScreen from '@/components/onboarding/screens/LocationConsentScreen';
 
-// ── Tab definitions ──────────────────────────────────────────────────────────
-const TABS: { key: GhostedTab; label: string }[] = [
-  { key: 'nearby', label: 'Nearby' },
-  { key: 'live', label: 'Live' },
-  { key: 'chats', label: 'Chats' },
-];
-
-// ── Filter chip definitions ──────────────────────────────────────────────────
-type ChipKey = 'nearby' | 'online' | 'new' | 'looking' | 'hang' | 'tonight';
-const FILTER_CHIPS: { key: ChipKey; label: string }[] = [
-  { key: 'nearby', label: 'Nearby' },
-  { key: 'online', label: 'Online' },
-  { key: 'new', label: 'New' },
-  { key: 'looking', label: 'Looking' },
-  { key: 'hang', label: 'Hang' },
-  { key: 'tonight', label: 'Tonight' },
-];
-
-// ── Skeleton grid ────────────────────────────────────────────────────────────
-function GhostedSkeleton() {
-  return (
-    <div className="grid grid-cols-3 gap-1 px-1">
-      {Array.from({ length: 12 }).map((_, i) => (
-        <motion.div
-          key={`skel-${i}`}
-          className="aspect-[4/5] rounded-xl bg-white/[0.03] animate-pulse"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: i * 0.04 }}
-        />
-      ))}
-    </div>
-  );
-}
-
-// ── Empty state ──────────────────────────────────────────────────────────────
-function GhostedEmpty({ tab }: { tab: GhostedTab }) {
-  const messages: Record<GhostedTab, { icon: string; title: string; subtitle: string }> = {
-    nearby: {
-      icon: '👻',
-      title: 'Nobody nearby yet',
-      subtitle: 'HOTMESS is growing in your area. Check back later or go live.',
-    },
-    live: {
-      icon: '✨',
-      title: 'Nobody live right now',
-      subtitle: 'Be the first to share your vibe tonight.',
-    },
-    chats: {
-      icon: '💬',
-      title: 'No conversations yet',
-      subtitle: 'Boo someone on the grid to start a chat.',
-    },
-  };
-
-  const msg = messages[tab];
-
-  return (
-    <motion.div
-      className="flex flex-col items-center justify-center py-20 text-center px-8"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-    >
-      <span className="text-5xl mb-4">{msg.icon}</span>
-      <h2 className="text-lg font-black text-white mb-2">{msg.title}</h2>
-      <p className="text-sm text-[#8E8E93] max-w-[260px]">{msg.subtitle}</p>
-    </motion.div>
-  );
-}
-
-// ── Error state ──────────────────────────────────────────────────────────────
-function GhostedError({ message, onRetry }: { message: string; onRetry: () => void }) {
-  return (
-    <motion.div
-      className="flex flex-col items-center justify-center py-20 text-center px-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-    >
-      <Ghost className="w-12 h-12 text-[#FF3B30] mb-4" />
-      <h2 className="text-lg font-bold text-white mb-2">Something went wrong</h2>
-      <p className="text-sm text-[#8E8E93] mb-6">{message}</p>
-      <button
-        onClick={onRetry}
-        className="h-10 px-6 rounded-xl bg-[#C8962C] text-white font-semibold text-sm active:scale-95 transition-transform"
-      >
-        Retry
-      </button>
-    </motion.div>
-  );
-}
-
-// ── Chat thread row ──────────────────────────────────────────────────────────
-function ChatThreadRow({
-  thread,
-  onTap,
-}: {
-  thread: ChatThreadItem;
-  onTap: (thread: ChatThreadItem) => void;
-}) {
-  return (
-    <motion.button
-      className="w-full flex items-center gap-3 px-4 py-3 active:bg-white/5 transition-colors"
-      onClick={() => onTap(thread)}
-      whileTap={{ scale: 0.98 }}
-      aria-label={`Chat with ${thread.participantName}`}
-    >
-      {/* Avatar */}
-      <div className="relative w-12 h-12 rounded-full bg-white/5 overflow-hidden flex-shrink-0">
-        {thread.participantAvatar ? (
-          <img
-            src={thread.participantAvatar}
-            alt=""
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-lg font-bold text-white/20">
-            {thread.participantName.charAt(0).toUpperCase()}
-          </div>
-        )}
-        {thread.isOnline && (
-          <span
-            className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#050507]"
-            style={{ backgroundColor: '#30D158' }}
-          />
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0 text-left">
-        <div className="flex items-center justify-between mb-0.5">
-          <span className="text-sm font-bold text-white truncate">
-            {thread.participantName}
-          </span>
-          {thread.lastMessageAt && (
-            <span className="text-[10px] text-white/30 flex-shrink-0 ml-2">
-              {formatChatTime(thread.lastMessageAt)}
-            </span>
-          )}
-        </div>
-        <p className="text-xs text-white/40 truncate">
-          {thread.lastMessage || 'No messages yet'}
-        </p>
-      </div>
-
-      {/* Unread badge */}
-      {thread.unreadCount > 0 && (
-        <span
-          className="min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center text-[10px] font-black text-black flex-shrink-0"
-          style={{ backgroundColor: AMBER }}
-        >
-          {thread.unreadCount > 99 ? '99+' : thread.unreadCount}
-        </span>
-      )}
-    </motion.button>
-  );
-}
-
-function formatChatTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'now';
-  if (mins < 60) return `${mins}m`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d`;
-}
-
-// ── Main Component ───────────────────────────────────────────────────────────
-
-interface GhostedModeProps {
-  className?: string;
-}
-
-export function GhostedMode({ className = '' }: GhostedModeProps) {
-  const navigate = useNavigate();
+export default function GhostedMode() {
+  const { position } = useGPS();
   const { openSheet } = useSheet();
-  const { isPlaying, currentShowName } = useRadio();
-  const { position: myPosition } = useGPS();
+  const [filter, setFilter] = React.useState<'nearby' | 'recent'>('recent');
+  const [showLocationGating, setShowLocationGating] = React.useState(false);
+  const [locationConsent, setLocationConsent] = React.useState<boolean | null>(null);
 
-  // ── Auth user for boo state ────────────────────────────────────────────
-  const [myUserId, setMyUserId] = useState<string | null>(null);
-  useEffect(() => {
+  const { cards, isLoading, refetch } = useGhostedGrid(
+    filter === 'nearby' ? 'nearby' : 'live', 
+    position?.lat ?? null, 
+    position?.lng ?? null, 
+    null
+  );
+  
+  const [myUserId, setMyUserId] = React.useState<string | null>(null);
+  const [myEmail, setMyEmail] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setMyUserId(session?.user?.id ?? null);
+      if (session?.user) {
+        setMyUserId(session.user.id);
+        setMyEmail(session.user.email ?? null);
+        
+        // Fetch location consent status from profiles table
+        supabase.from('profiles')
+          .select('location_consent')
+          .eq('id', session.user.id)
+          .maybeSingle()
+          .then(({ data, error }) => {
+            if (error) console.error('[Ghosted] Error fetching consent:', error);
+            setLocationConsent(!!data?.location_consent);
+          });
+      }
     });
   }, []);
-  const { isTapped, isMutualBoo } = useTaps(myUserId);
 
-  // ── Tab state ────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState<GhostedTab>('nearby');
-  const [activeChip, setActiveChip] = useState<ChipKey | null>(null);
+  const handleToggleNearby = () => {
+    if (locationConsent === true) {
+      setFilter(filter === 'nearby' ? 'recent' : 'nearby');
+    } else if (locationConsent === false) {
+      setShowLocationGating(true);
+    }
+    // If null, we are still loading, do nothing yet
+  };
 
-  // ── Data ─────────────────────────────────────────────────────────────────
-  const { cards, chatThreads, isLoading, error, refetch } = useGhostedGrid(
-    activeTab,
-    myPosition?.lat ?? null,
-    myPosition?.lng ?? null,
-    activeChip,
-  );
+  const handleLocationAllow = async () => {
+    if (!myUserId) {
+      console.error('[Ghosted] No user ID for consent update');
+      return;
+    }
+    
+    // Update profiles table
+    const { error } = await supabase.from('profiles').update({
+      location_consent: true,
+      location_consent_at: new Date().toISOString()
+    }).eq('id', myUserId);
+    
+    if (error) {
+      console.error('[Ghosted] Error saving consent to profiles:', error);
+      alert('Failed to save location choice: ' + (error.message || 'Unknown error'));
+      return;
+    }
+    
+    setLocationConsent(true);
+    setShowLocationGating(false);
+    setFilter('nearby');
+    
+    // Trigger GPS
+    navigator.geolocation.getCurrentPosition(
+      () => refetch(),
+      (err) => console.warn('[Ghosted] Geolocation trigger failed:', err)
+    );
+  };
 
-  // ── FAB scroll-hide ──────────────────────────────────────────────────────
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [fabVisible, setFabVisible] = useState(true);
-  const lastScrollTop = useRef(0);
+  const { isTapped, isMutualBoo } = useTaps(myUserId, myEmail);
 
-  const handleScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const currentScrollTop = el.scrollTop;
-    setFabVisible(!(currentScrollTop > lastScrollTop.current && currentScrollTop > 60));
-    lastScrollTop.current = currentScrollTop;
-  }, []);
+  // Generate random heights for music visualizer bars
+  const bars = Array.from({ length: 16 }).map((_, i) => ({
+    id: i,
+    height: 10 + Math.random() * 20,
+    delay: Math.random() * 0.5,
+    duration: 0.8 + Math.random() * 0.8,
+  }));
 
-  // ── Card tap → preview sheet ─────────────────────────────────────────────
-  const handleCardTap = useCallback(
-    (id: string) => {
-      openSheet('ghosted-preview', { uid: id });
-    },
-    [openSheet],
-  );
+  const { unreadCount } = useUnreadCount();
 
-  // ── Chat thread tap ──────────────────────────────────────────────────────
-  const handleChatTap = useCallback(
-    (thread: ChatThreadItem) => {
-      openSheet('chat', {
-        thread: thread.id,
-        userId: thread.participantId,
-        title: `Chat with ${thread.participantName}`,
-      });
-    },
-    [openSheet],
-  );
-
-  // ── Unread count for chats tab badge ─────────────────────────────────────
-  const totalUnread = useMemo(
-    () => chatThreads.reduce((sum, t) => sum + t.unreadCount, 0),
-    [chatThreads],
-  );
-
-  // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <div
-      className={`h-full w-full flex flex-col ${className}`}
-      style={{ background: '#050507' }}
-    >
-      {/* ═══ STICKY HEADER ═══ */}
-      <div
-        className="sticky top-0 z-30 border-b border-white/5"
-        style={{
-          background: 'rgba(5,5,7,0.85)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
+    <div className="relative h-full w-full bg-[#050507] flex flex-col overflow-hidden">
+      
+      {/* Scrollable Container */}
+      <div 
+        className="flex-1 overflow-y-auto pt-6 pb-24 px-1"
+        style={{ 
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none'
         }}
       >
-        <div className="px-4 pt-[env(safe-area-inset-top)]">
-          {/* Top row: wordmark + tabs + filter */}
-          <div className="flex items-center justify-between h-12">
-            {/* Wordmark */}
-            <h1
-              className="font-black text-sm tracking-[0.2em] uppercase"
-              style={{ color: AMBER }}
-            >
-              GHOSTED
-            </h1>
+        <style dangerouslySetInnerHTML={{__html: `::-webkit-scrollbar { display: none; }`}} />
 
-            {/* Segmented tabs */}
-            <div className="flex items-center bg-white/5 rounded-full p-0.5">
-              {TABS.map((tab) => {
-                const isActive = activeTab === tab.key;
-                return (
-                  <button
-                    key={tab.key}
-                    onClick={() => {
-                      setActiveTab(tab.key);
-                      setActiveChip(null);
-                    }}
-                    className={`relative h-8 px-4 rounded-full text-xs font-semibold transition-all active:scale-95 ${
-                      isActive
-                        ? 'text-black'
-                        : 'text-white/50'
-                    }`}
-                    style={isActive ? { backgroundColor: AMBER } : undefined}
-                    aria-label={`Show ${tab.label}`}
-                    aria-pressed={isActive}
-                  >
-                    {tab.label}
-                    {/* Unread badge on Chats tab */}
-                    {tab.key === 'chats' && totalUnread > 0 && !isActive && (
-                      <span
-                        className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-0.5 flex items-center justify-center rounded-full text-black text-[8px] font-black"
-                        style={{ backgroundColor: AMBER }}
-                      >
-                        {totalUnread > 9 ? '9+' : totalUnread}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Filter icon (Nearby/Live only) */}
-            {activeTab !== 'chats' && (
-              <button
-                data-testid="ghosted-filter-btn"
-                onClick={() => openSheet('filters')}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-white/5 border border-white/10 active:scale-95 transition-transform"
-                aria-label="Open filters"
-              >
-                <SlidersHorizontal className="w-4 h-4 text-white/60" />
-              </button>
-            )}
-
-            {/* Spacer for chats tab so layout doesn't shift */}
-            {activeTab === 'chats' && <div className="w-9" />}
+        <div className="px-4 mb-4 text-center mt-6">
+          
+          {/* Subtle Visualizer (Ghosted Music Hook) */}
+          <div className="flex items-center justify-center gap-[3px] mb-8 h-8 opacity-50">
+            {bars.map((bar) => (
+              <motion.div
+                key={bar.id}
+                className="w-1 bg-[#C8962C] rounded-full mix-blend-screen"
+                initial={{ height: 4 }}
+                animate={{ height: [4, bar.height, 4] }}
+                transition={{
+                  duration: bar.duration,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: bar.delay
+                }}
+              />
+            ))}
           </div>
 
-          {/* Filter chips (Nearby tab only) */}
-          {activeTab === 'nearby' && (
-            <div className="flex gap-1.5 pb-2 pt-1 overflow-x-auto scrollbar-hide -mx-4 px-4">
-              {FILTER_CHIPS.map((chip) => {
-                const isActive = activeChip === chip.key;
-                return (
-                  <button
-                    key={chip.key}
-                    onClick={() => setActiveChip(isActive ? null : chip.key)}
-                    className={`flex-shrink-0 h-8 px-4 rounded-full text-xs font-semibold transition-all active:scale-95 ${
-                      isActive
-                        ? 'text-black border border-transparent'
-                        : 'text-white/40 border border-white/5'
-                    }`}
-                    style={isActive ? { backgroundColor: AMBER } : { backgroundColor: 'rgba(255,255,255,0.03)' }}
-                    aria-pressed={isActive}
-                  >
-                    {chip.label}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          <h2 className="text-[26px] font-black text-white px-4 leading-[1.1] tracking-tight mb-2 uppercase">
+            Some messages don’t come back.
+          </h2>
+          <p className="text-white/40 text-[10px] font-black tracking-[0.2em] mb-8 uppercase">
+            You felt that.
+          </p>
+
+          <TrackPlayer 
+            trackTitle="GHOSTED — VOL 1"
+            trackSource="https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/records-audio/1764584744541-Ghosted%20(are%20you%20looking_)%20blended%20version%20(Remastered).mp3" 
+            artistName="GHOSTED"
+            className="mb-8"
+            themeColor="#C8962C"
+          />
+
+          {/* Filter Chips */}
+          <div className="flex justify-center gap-4 mb-8">
+            <button 
+              onClick={() => setFilter('recent')}
+              className={`px-6 py-2 rounded-full text-[10px] font-black tracking-widest uppercase transition-all ${filter === 'recent' ? 'bg-white text-black' : 'bg-white/5 text-white/40'}`}
+            >
+              Recent
+            </button>
+            <button 
+              onClick={handleToggleNearby}
+              className={`px-6 py-2 rounded-full text-[10px] font-black tracking-widest uppercase transition-all border ${filter === 'nearby' ? 'bg-[#C8962C] border-[#C8962C] text-black' : 'bg-transparent border-white/10 text-white/40'}`}
+            >
+              Nearby
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* ═══ SCROLLABLE CONTENT ═══ */}
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto scroll-momentum pb-24 relative z-10"
-        onScroll={handleScroll}
-      >
-        {/* Now Playing strip — display-only, links to /radio */}
-        {isPlaying && (
-          <button
-            onClick={() => navigate('/radio')}
-            className="w-full border-b border-white/5 active:opacity-80 transition-opacity"
-            style={{ backgroundColor: '#1C1C1E' }}
+        {/* The Live Grid */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-8 h-8 border-2 border-[#C8962C]/30 border-t-[#C8962C] rounded-full animate-spin" />
+          </div>
+        ) : cards.length === 0 ? (
+          <motion.div
+            className="text-center py-16"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
           >
-            <div className="flex items-center gap-3 px-4 py-3">
-              <div className="w-8 h-8 rounded-lg bg-[#C8962C]/15 flex items-center justify-center flex-shrink-0">
-                <Music className="w-4 h-4 text-[#C8962C]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold">On Air</p>
-                <p className="text-sm text-white/80 font-bold truncate">{currentShowName || 'HOTMESS Radio'}</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-white/20 flex-shrink-0" />
-            </div>
-          </button>
-        )}
-
-        {/* Hero banner (Nearby + Live tabs only) */}
-        {activeTab !== 'chats' && <GhostedHeroBanner />}
-
-        {/* Loading state */}
-        {isLoading && <GhostedSkeleton />}
-
-        {/* Error state */}
-        {!isLoading && error && (
-          <GhostedError message={error} onRetry={refetch} />
-        )}
-
-        {/* Empty state */}
-        {!isLoading && !error && activeTab !== 'chats' && cards.length === 0 && (
-          <GhostedEmpty tab={activeTab} />
-        )}
-        {!isLoading && !error && activeTab === 'chats' && chatThreads.length === 0 && (
-          <GhostedEmpty tab="chats" />
-        )}
-
-        {/* ═══ GRID (Nearby + Live tabs) ═══ */}
-        {!isLoading && !error && activeTab !== 'chats' && cards.length > 0 && (
-          <div className="grid grid-cols-3 gap-1 px-1 pt-1">
+            <Users className="w-10 h-10 mx-auto mb-4" style={{ color: 'rgba(255,255,255,0.12)' }} />
+            <p className="text-white/25 text-sm font-medium">
+              It's quiet around here.
+            </p>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-3 gap-1 px-0.5">
             {cards.map((card, i) => (
               <GhostedCard
                 key={card.id}
                 {...card}
-                isBood={card.email ? isTapped(card.email, 'boo') : false}
-                isMutual={card.email ? isMutualBoo(card.email) : false}
                 index={i}
-                onTap={handleCardTap}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* ═══ CHAT LIST (Chats tab) ═══ */}
-        {!isLoading && !error && activeTab === 'chats' && chatThreads.length > 0 && (
-          <div className="divide-y divide-white/5">
-            {chatThreads.map((thread) => (
-              <ChatThreadRow
-                key={thread.id}
-                thread={thread}
-                onTap={handleChatTap}
+                isBood={isTapped(card.id, 'boo')}
+                isMutual={isMutualBoo(card.id)}
+                onTap={(id) => openSheet('ghosted-preview', { uid: id })}
               />
             ))}
           </div>
         )}
       </div>
 
-      {/* ═══ "SHARE YOUR VIBE" FAB ═══ */}
-      <AnimatePresence>
-        {fabVisible && activeTab !== 'chats' && (
-          <motion.div
-            className="fixed z-20 left-1/2 -translate-x-1/2"
-            style={{ bottom: 'calc(90px + env(safe-area-inset-bottom, 0px))' }}
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 20, opacity: 0 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          >
-            <button
-              onClick={() => openSheet('social', {})}
-              className="h-12 px-6 rounded-full flex items-center gap-2 font-bold text-sm text-black shadow-lg active:scale-95 transition-transform"
-              style={{
-                backgroundColor: AMBER,
-                boxShadow: '0 8px 32px rgba(200,150,44,0.35)',
-              }}
-              aria-label="Share your vibe right now"
-            >
-              Share your vibe
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Floating Inbox/Messages button — shifted specifically into GhostedMode per Zia's request */}
+      <motion.button
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => openSheet('chat')}
+        className="absolute bottom-6 right-6 w-14 h-14 bg-[#C8962C] rounded-full flex items-center justify-center shadow-[0_8px_32px_rgba(200,150,44,0.3)] z-[50]"
+      >
+        <div className="relative">
+          <MessageCircle className="w-6 h-6 text-black" strokeWidth={2.5} />
+          {/* Subtle indicator if unread */}
+          {unreadCount > 0 && (
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[#C8962C] animate-pulse" />
+          )}
+        </div>
+      </motion.button>
+
+      {/* Location Permission Gating Overlay */}
+      {showLocationGating && (
+        <div className="z-[100]">
+          <LocationConsentScreen 
+            onAllow={handleLocationAllow} 
+            onSkip={() => setShowLocationGating(false)} 
+            progress={0} 
+          />
+        </div>
+      )}
     </div>
   );
 }
-
-export default GhostedMode;

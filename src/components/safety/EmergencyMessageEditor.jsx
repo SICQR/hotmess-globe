@@ -13,7 +13,7 @@ export default function EmergencyMessageEditor() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
       setCurrentUser(user);
       setMessage(user.emergency_message || '');
@@ -24,7 +24,7 @@ export default function EmergencyMessageEditor() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const updatePayload = { emergency_message: message }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
+      const updatePayload = { emergency_message: message }; let { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
       toast.success('Emergency message saved');
       setEditing(false);
     } catch (error) {
@@ -66,7 +66,7 @@ export default function EmergencyMessageEditor() {
             className="bg-white/5 border-white/20 text-white h-32"
           />
           <p className="text-xs text-white/40">
-            This message will be sent to your trusted contacts when you activate the panic button.
+            This message will be sent to your trusted contacts when you activate the silent SOS gesture.
             Your location will be automatically included.
           </p>
           <div className="flex gap-2">

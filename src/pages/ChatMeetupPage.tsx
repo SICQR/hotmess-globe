@@ -8,8 +8,10 @@
 import { useRef, useCallback } from 'react';
 import { motion } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { useLocalPullToRefresh } from '@/hooks/useLocalPullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
+
+
 import { FaMapMarkerAlt, FaLocationArrow, FaUber, FaShareAlt, FaChevronLeft, FaEllipsisV, FaHome, FaCompass, FaRegComments, FaUser } from 'react-icons/fa'
 import ChatMapCard from '@/components/chat/ChatMapCard';
 
@@ -37,10 +39,13 @@ export default function ChatMeetupPage() {
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries();
   }, [queryClient]);
-  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+
+  const { pullDistance, isRefreshing } = useLocalPullToRefresh({
     onRefresh: handleRefresh,
     scrollRef,
   });
+
+
 
   return (
     <div className="relative min-h-screen bg-dark text-light font-sans flex flex-col">
@@ -64,8 +69,9 @@ export default function ChatMeetupPage() {
       </section>
 
       {/* Chat Bubbles */}
-      <main ref={scrollRef} className="flex-1 px-4 py-2 flex flex-col gap-3 overflow-y-auto scroll-momentum" {...pullHandlers}>
+      <main ref={scrollRef} className="flex-1 px-4 py-2 flex flex-col gap-3 overflow-y-auto scroll-momentum">
         <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
+
         {messages.map((msg, idx) => (
           <motion.div
             initial={{ opacity: 0, y: 30 }}

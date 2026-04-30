@@ -38,7 +38,7 @@ export default function L2CreateEventSheet({ editId, ...editProps }) {
 
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Please log in');
 
       const payload = {
@@ -245,3 +245,4 @@ export default function L2CreateEventSheet({ editId, ...editProps }) {
     </div>
   );
 }
+

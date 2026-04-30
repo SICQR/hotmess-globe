@@ -47,7 +47,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM || 'HOTMESS <noreply@hotmess.london>',
+        from: process.env.EMAIL_FROM || 'HOTMESS <onboarding@resend.dev>',
         to: [to],
         subject,
         html: html || `<pre style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; white-space: pre-wrap;">${body}</pre>`,

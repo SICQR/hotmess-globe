@@ -11,7 +11,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { ShoppingBag, X, Plus, Minus, Loader2, Tag } from 'lucide-react';
+import { ShoppingBag, X, Plus, Minus, Loader2, Tag, CheckSquare, Square } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import { supabase } from '@/components/utils/supabaseClient';
@@ -22,7 +22,7 @@ export default function L2CartSheet() {
   const { cart, isLoading, updateLineQuantity, removeLine, beginCheckout } = useShopCart();
 
   // Shopify lines
-  const shopifyLines = cart?.lines?.edges?.map(e => e.node) || [];
+  const shopifyLines = cart?.lines?.nodes || [];
   const shopifyTotal = parseFloat(cart?.cost?.totalAmount?.amount || '0');
   const currency = cart?.cost?.totalAmount?.currencyCode || 'GBP';
 
@@ -61,6 +61,43 @@ export default function L2CartSheet() {
   const prelovedTotal = prelovedItems.reduce((sum, i) => sum + (i.price || 0) * (i.qty || 1), 0);
   const combinedTotal = shopifyTotal + prelovedTotal;
   const totalItemCount = shopifyLines.length + prelovedItems.length;
+
+  // ---- Selection State ----
+  const [selectedIds, setSelectedIds] = useState(new Set());
+
+  const handleToggleSelect = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const allItemIds = [
+    ...shopifyLines.map(l => l.id),
+    ...prelovedItems.map(i => i.id)
+  ];
+  
+  const allSelected = allItemIds.length > 0 && selectedIds.size === allItemIds.length;
+
+  const handleToggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(allItemIds));
+    }
+  };
+
+  const activeShopifyLines = shopifyLines.filter(line => selectedIds.has(line.id));
+  const activePrelovedItems = prelovedItems.filter(item => selectedIds.has(item.id));
+
+  const activeShopifyTotal = activeShopifyLines.reduce((sum, line) => {
+    return sum + (parseFloat(line.merchandise?.price?.amount || line.merchandise?.price || '0') * (line.quantity || 1));
+  }, 0);
+  const activePrelovedTotal = activePrelovedItems.reduce((sum, i) => sum + ((i.price || 0) * (i.qty || 1)), 0);
+  const activeCombinedTotal = activeShopifyTotal + activePrelovedTotal;
+  const activeItemCount = activeShopifyLines.length + activePrelovedItems.length;
 
   // ---- Shopify cart handlers ----
   const handleShopifyQty = async (lineId, currentQty, delta) => {
@@ -113,17 +150,41 @@ export default function L2CartSheet() {
 
   // ---- Checkout handlers ----
   const handleShopifyCheckout = () => {
-    try {
-      beginCheckout();
-    } catch (err) {
-      toast.error(err?.message || 'Checkout unavailable');
-    }
+    openSheet('checkout', {
+      cartItems: activeShopifyLines.map(line => ({
+        id: line.id,
+        variantId: line.merchandise?.id,
+        title: line.merchandise?.product?.title || line.merchandise?.title || 'Item',
+        price: parseFloat(line.merchandise?.price?.amount || line.merchandise?.price || '0'),
+        qty: line.quantity,
+        source: 'shopify'
+      })),
+      total: activeShopifyTotal
+    });
   };
 
   const handlePrelovedCheckout = () => {
     openSheet('checkout', {
-      cartItems: prelovedItems,
-      total: prelovedTotal,
+      cartItems: activePrelovedItems,
+      total: activePrelovedTotal,
+    });
+  };
+
+  const handleCheckoutAll = () => {
+    const allItems = [
+      ...activeShopifyLines.map(line => ({
+        id: line.id,
+        variantId: line.merchandise?.id,
+        title: line.merchandise?.product?.title || line.merchandise?.title || 'Item',
+        price: parseFloat(line.merchandise?.price?.amount || line.merchandise?.price || '0'),
+        qty: line.quantity,
+        source: 'shopify'
+      })),
+      ...activePrelovedItems
+    ];
+    openSheet('checkout', {
+      cartItems: allItems,
+      total: activeCombinedTotal,
     });
   };
 
@@ -150,6 +211,19 @@ export default function L2CartSheet() {
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto">
 
+        {/* ── Select All Toggle ── */}
+        <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between sticky top-0 bg-[#050507]/90 backdrop-blur-md z-10">
+          <button 
+            onClick={handleToggleSelectAll}
+            className="flex items-center gap-2 text-sm text-white/70 active:scale-95 transition-transform"
+          >
+            {allSelected ? <CheckSquare className="w-5 h-5 text-[#C8962C]" /> : <Square className="w-5 h-5 text-white/30" />}
+            <span className="font-bold uppercase tracking-wider text-xs">
+              {allSelected ? 'Deselect All' : 'Select All'}
+            </span>
+          </button>
+        </div>
+
         {/* ── Shopify items ── */}
         {shopifyLines.length > 0 && (
           <div>
@@ -162,12 +236,23 @@ export default function L2CartSheet() {
                 const variant = line.merchandise;
                 const imageUrl = variant?.image?.url || variant?.product?.featuredImage?.url;
                 const title = variant?.product?.title || variant?.title || 'Item';
-                const linePrice = parseFloat(line.cost?.totalAmount?.amount || '0');
                 const qty = line.quantity || 1;
+                const pricePerItem = parseFloat(variant?.price?.amount || '0');
+                const lineTotal = pricePerItem * qty;
 
                 return (
                   <div key={line.id} className="px-4 py-4 flex items-center gap-3">
-                    <div className="w-14 h-14 rounded-xl bg-[#1C1C1E] flex-shrink-0 overflow-hidden">
+                    <button 
+                      onClick={() => handleToggleSelect(line.id)}
+                      className="mr-0 mt-0.5 active:scale-90 transition-transform flex-shrink-0"
+                    >
+                      {selectedIds.has(line.id) ? (
+                        <CheckSquare className="w-5 h-5 text-[#C8962C]" />
+                      ) : (
+                        <Square className="w-5 h-5 text-white/30" />
+                      )}
+                    </button>
+                    <div className="w-14 h-14 rounded-xl bg-[#1C1C1E] flex-shrink-0 overflow-hidden border border-white/5">
                       {imageUrl
                         ? <img src={imageUrl} alt="" className="w-full h-full object-cover" />
                         : <div className="w-full h-full flex items-center justify-center">
@@ -179,8 +264,9 @@ export default function L2CartSheet() {
                       {variant?.title && variant.title !== 'Default Title' && (
                         <p className="text-white/40 text-[10px]">{variant.title}</p>
                       )}
-                      <p className="text-[#C8962C] text-xs mt-0.5">
-                        {currency} {linePrice.toFixed(2)}
+                      <p className="text-[#C8962C] text-xs mt-0.5 font-bold">
+                        {currency} {lineTotal.toFixed(2)}
+                        {qty > 1 && <span className="text-white/30 font-normal ml-1">({qty} × {pricePerItem.toFixed(2)})</span>}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
@@ -224,6 +310,16 @@ export default function L2CartSheet() {
             <div className="divide-y divide-white/5">
               {prelovedItems.map(item => (
                 <div key={item.id} className="px-4 py-4 flex items-center gap-3">
+                  <button 
+                    onClick={() => handleToggleSelect(item.id)}
+                    className="mr-0 mt-0.5 active:scale-90 transition-transform flex-shrink-0"
+                  >
+                    {selectedIds.has(item.id) ? (
+                      <CheckSquare className="w-5 h-5 text-[#C8962C]" />
+                    ) : (
+                      <Square className="w-5 h-5 text-white/30" />
+                    )}
+                  </button>
                   <div className="w-14 h-14 rounded-xl bg-[#1C1C1E] flex-shrink-0 overflow-hidden">
                     {item.image
                       ? <img src={item.image} alt="" className="w-full h-full object-cover" />
@@ -268,23 +364,37 @@ export default function L2CartSheet() {
       {/* ── Total & Checkout ── */}
       <div className="px-4 py-4 border-t border-white/10 bg-black/50 backdrop-blur-sm">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-white/40 text-xs">{totalItemCount} {totalItemCount === 1 ? 'item' : 'items'}</span>
-          {shopifyLines.length > 0 && prelovedItems.length > 0 && (
+          <span className="text-white/40 text-xs">{activeItemCount} selected</span>
+          {activeShopifyLines.length > 0 && activePrelovedItems.length > 0 && (
             <span className="text-white/30 text-[10px]">
-              Shop £{shopifyTotal.toFixed(2)} + Preloved £{prelovedTotal.toFixed(2)}
+              Shop £{activeShopifyTotal.toFixed(2)} + Preloved £{activePrelovedTotal.toFixed(2)}
             </span>
           )}
         </div>
         <div className="flex items-center justify-between mb-4">
-          <span className="text-white font-bold text-sm">Subtotal</span>
+          <span className="text-white font-bold text-sm">Selected Total</span>
           <span className="text-[#C8962C] font-black text-xl">
-            £{combinedTotal.toFixed(2)}
+            £{activeCombinedTotal.toFixed(2)}
           </span>
         </div>
 
-        {/* Checkout buttons — one per source */}
+        {/* Checkout buttons — unified in-app */}
         <div className="space-y-2">
-          {shopifyLines.length > 0 && (
+          {activeCombinedTotal === 0 ? (
+            <button
+              disabled
+              className="w-full bg-white/10 text-white/40 font-black text-sm rounded-2xl py-4 transition-transform"
+            >
+              Select items to checkout
+            </button>
+          ) : activeShopifyLines.length > 0 && activePrelovedItems.length > 0 ? (
+             <button
+                onClick={handleCheckoutAll}
+                className="w-full bg-[#C8962C] text-black font-black text-sm rounded-2xl py-4 active:scale-95 transition-transform"
+              >
+                Checkout All Selected · £{activeCombinedTotal.toFixed(2)}
+              </button>
+          ) : activeShopifyLines.length > 0 ? (
             <button
               onClick={handleShopifyCheckout}
               disabled={isLoading}
@@ -292,15 +402,14 @@ export default function L2CartSheet() {
             >
               {isLoading
                 ? <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-                : `Checkout Shop (${shopifyLines.length} ${shopifyLines.length === 1 ? 'item' : 'items'})`}
+                : `Checkout Shop (£${activeShopifyTotal.toFixed(2)})`}
             </button>
-          )}
-          {prelovedItems.length > 0 && (
+          ) : (
             <button
               onClick={handlePrelovedCheckout}
-              className="w-full bg-white/10 text-white font-black text-sm rounded-2xl py-4 active:scale-95 transition-transform border border-white/10"
+              className="w-full bg-[#C8962C] text-black font-black text-sm rounded-2xl py-4 active:scale-95 transition-transform"
             >
-              Checkout Preloved ({prelovedItems.length} {prelovedItems.length === 1 ? 'item' : 'items'})
+              Checkout Preloved (£${activePrelovedTotal.toFixed(2)})
             </button>
           )}
         </div>

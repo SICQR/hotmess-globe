@@ -1,8 +1,8 @@
 import { getEnv, json, normalizeShopDomain } from './_utils.js';
 
 export const getStorefrontConfig = () => {
-  const shopDomain = normalizeShopDomain(getEnv('SHOPIFY_SHOP_DOMAIN', ['SHOPIFY_STORE_URL', 'SHOPIFY_DOMAIN']));
-  const tokenRaw = getEnv('SHOPIFY_API_STOREFRONT_ACCESS_TOKEN', ['SHOPIFY_STOREFRONT_ACCESS_TOKEN']);
+  const shopDomain = normalizeShopDomain(getEnv('SHOPIFY_SHOP_DOMAIN', ['SHOPIFY_STORE_DOMAIN', 'SHOPIFY_STORE_URL', 'SHOPIFY_DOMAIN']));
+  const tokenRaw = getEnv('SHOPIFY_API_STOREFRONT_ACCESS_TOKEN', ['SHOPIFY_STOREFRONT_TOKEN', 'SHOPIFY_STOREFRONT_ACCESS_TOKEN']);
   const token = tokenRaw && !String(tokenRaw).startsWith('shpat_') ? String(tokenRaw).trim() : null;
   const apiVersion = String(getEnv('SHOPIFY_STOREFRONT_API_VERSION') || '2024-10').trim();
 
@@ -14,8 +14,8 @@ export const ensureStorefrontConfigured = (res) => {
 
   if (!shopDomain || !token) {
     const extra = !shopDomain
-      ? 'Set SHOPIFY_SHOP_DOMAIN (or SHOPIFY_STORE_URL / SHOPIFY_DOMAIN).'
-      : 'Set SHOPIFY_API_STOREFRONT_ACCESS_TOKEN (preferred) or SHOPIFY_STOREFRONT_ACCESS_TOKEN.';
+      ? 'Set SHOPIFY_SHOP_DOMAIN (or SHOPIFY_STORE_DOMAIN / SHOPIFY_STORE_URL / SHOPIFY_DOMAIN).'
+      : 'Set SHOPIFY_API_STOREFRONT_ACCESS_TOKEN (preferred) or SHOPIFY_STOREFRONT_TOKEN / SHOPIFY_STOREFRONT_ACCESS_TOKEN.';
 
     json(res, 500, {
       error: 'Shopify Storefront API not configured',

@@ -7,7 +7,7 @@
  * Uses SHEET_REGISTRY from /src/lib/sheetSystem.ts for configuration.
  */
 
-import React, { Suspense, lazy, useEffect, useRef } from 'react';
+import React, { Suspense, lazy, useEffect, useRef, Component } from 'react';
 import { useSheet } from '@/contexts/SheetContext';
 import { SHEET_REGISTRY, getSheetHeight } from '@/lib/sheetSystem';
 import L2SheetContainer from './L2SheetContainer';
@@ -90,6 +90,7 @@ const L2RouteSheet = lazy(() => import('./L2RouteSheet'));
 const L2GhostedPreviewSheet = lazy(() => import('./L2GhostedPreviewSheet'));
 const L2GoLiveSheet = lazy(() => import('./L2GoLiveSheet'));
 const L2MovementShareSheet = lazy(() => import('./L2MovementShareSheet'));
+const L2RadioPlayerSheet = lazy(() => import('./L2RadioPlayerSheet'));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PLACEHOLDER FOR UNIMPLEMENTED SHEETS
@@ -105,6 +106,48 @@ function PlaceholderSheet({ sheetType }) {
       <code className="text-xs text-white/30 bg-white/5 px-2 py-1 rounded">sheet={sheetType}</code>
     </div>
   );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SHEET ERROR BOUNDARY — prevents sheet crashes from killing the whole app
+// ═══════════════════════════════════════════════════════════════════════════
+
+class SheetErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, info) {
+    console.error('[SheetErrorBoundary] Sheet crashed:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center h-64 px-6 text-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
+            <span className="text-2xl">⚠️</span>
+          </div>
+          <div>
+            <p className="text-white font-bold mb-1">Something went wrong</p>
+            <p className="text-white/40 text-sm">{this.state.error?.message || 'Could not load this panel'}</p>
+          </div>
+          <button
+            onClick={() => this.setState({ hasError: false, error: null })}
+            className="px-4 py-2 bg-[#C8962C] text-black text-sm font-bold rounded-xl"
+          >
+            Try Again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 
@@ -173,6 +216,7 @@ const SHEET_COMPONENTS = {
   'favorites': L2FavoritesSheet,
   'beacon': L2BeaconSheet,
   'schedule': L2ScheduleSheet,
+  'radio-player': L2RadioPlayerSheet,
   'show': L2ScheduleSheet,
   'order': L2OrderSheet,
   'emergency-contact': L2EmergencyContactSheet,
@@ -283,9 +327,11 @@ export default function SheetRouter() {
       subtitle={subtitle}
       height={height}
     >
-      <Suspense fallback={<SheetLoading />}>
-        <Component {...sheetProps} />
-      </Suspense>
+      <SheetErrorBoundary key={activeSheet}>
+        <Suspense fallback={<SheetLoading />}>
+          <Component {...sheetProps} />
+        </Suspense>
+      </SheetErrorBoundary>
     </L2SheetContainer>
   );
 }

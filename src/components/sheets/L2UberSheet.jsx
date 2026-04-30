@@ -19,23 +19,41 @@ export default function L2UberSheet({ lat, lng, label, travelTimes, profileUser 
   const uberUrl = lat && lng ? buildUberDeepLink({ dropoffLat: lat, dropoffLng: lng, dropoffNickname: label }) : null;
 
   const handleBookUber = () => {
-    if (uberUrl) window.open(uberUrl, '_blank');
+    if (!uberUrl) return;
+
+    // 1. Try deep link
+    window.location.href = uberUrl;
+
+    // 2. Fallback to web after a short delay if deep link didn't work
+    // (Note: This is the standard "App vs Web" detection trick)
+    setTimeout(() => {
+      const webParams = new URLSearchParams({
+        action: 'setPickup',
+        pickup: 'my_location',
+        'dropoff[latitude]': lat,
+        'dropoff[longitude]': lng,
+        'dropoff[nickname]': label || 'Destination',
+      });
+      window.open(`https://m.uber.com/?${webParams}`, '_blank');
+    }, 500);
   };
 
   const handleSendETA = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!profileUser?.id) { toast.error('No recipient'); return; }
       const { data: thread } = await supabase.from('chat_threads')
-        .select('id')
-        .or(`and(user1_id.eq.${user.id},user2_id.eq.${profileUser.id}),and(user1_id.eq.${profileUser.id},user2_id.eq.${user.id})`)
+        .select('id, participant_emails')
+        .contains('participant_emails', [user.email, profileUser.email])
         .limit(1).maybeSingle();
+      
       if (thread) {
-        await supabase.from('messages').insert({
+        await supabase.from('chat_messages').insert({
           thread_id: thread.id,
-          sender_id: user.id,
+          sender_email: user.email,
           message_type: 'uber_eta_share',
           content: `🚗 On my way! Estimated arrival: ${etaMins ?? '?'} min (Uber)`,
+          created_date: new Date().toISOString(),
           metadata: { mode: 'uber', eta_seconds: travelTimes?.uber?.durationSeconds, dest_lat: lat, dest_lng: lng },
         });
         toast.success('ETA sent!');
@@ -79,3 +97,4 @@ export default function L2UberSheet({ lat, lng, label, travelTimes, profileUser 
     </div>
   );
 }
+

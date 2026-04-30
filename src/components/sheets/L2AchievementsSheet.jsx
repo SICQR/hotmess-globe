@@ -72,7 +72,7 @@ export default function L2AchievementsSheet() {
 
   async function loadAchievements() {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    let { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
 
     // Load full catalog + user's unlocks in parallel
@@ -180,3 +180,4 @@ export default function L2AchievementsSheet() {
     </div>
   );
 }
+

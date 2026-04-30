@@ -1,104 +1,109 @@
+import { useState, useEffect, useRef } from 'react';
+import { toast } from 'sonner';
+
 /**
- * usePullToRefresh — Pull-down-to-refresh for scrollable containers
- *
- * Grindr / Instagram pattern: pull down past threshold → spinner → reload.
- * Requires a scroll container ref and a refresh callback.
- *
- * Returns:
- * - pullDistance: current pull distance (for animating spinner)
- * - isRefreshing: true while onRefresh promise is pending
- * - handlers: attach to the scroll container (onTouchStart, onTouchMove, onTouchEnd)
+ * usePullToRefresh — Global gesture for site reload
+ * 
+ * Detects downward swipe from top. Shows progress. Reloads window.
  */
-
-import { useCallback, useRef, useState } from 'react';
-import { hapticMedium } from '@/lib/haptics';
-
-const THRESHOLD = 80; // px to pull before triggering refresh
-const MAX_PULL = 120; // max visual distance
-
-interface UsePullToRefreshOptions {
-  onRefresh: () => Promise<void> | void;
-  /** Ref to the scroll container element */
-  scrollRef: React.RefObject<HTMLElement | null>;
-  /** Whether pull-to-refresh is enabled (default true) */
-  enabled?: boolean;
-}
-
-export function usePullToRefresh({
-  onRefresh,
-  scrollRef,
-  enabled = true,
-}: UsePullToRefreshOptions) {
-  const [pullDistance, setPullDistance] = useState(0);
+export function usePullToRefresh(options: { disabled?: boolean } = {}) {
+  const { disabled = false } = options;
+  const [pullProgress, setPullProgress] = useState(0); // 0 to 1
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  
   const startY = useRef(0);
+  const currentY = useRef(0);
   const isPulling = useRef(false);
-  const didTriggerHaptic = useRef(false);
+  const THRESHOLD = 120; // pixels to pull before refresh
 
-  const onTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      if (!enabled || isRefreshing) return;
-      const el = scrollRef.current;
-      if (!el || el.scrollTop > 5) return; // only at top of scroll
-      startY.current = e.touches[0].clientY;
-      isPulling.current = true;
-      didTriggerHaptic.current = false;
-    },
-    [enabled, isRefreshing, scrollRef]
-  );
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      if (disabled) return;
+      
+      const target = e.target as HTMLElement;
 
-  const onTouchMove = useCallback(
-    (e: React.TouchEvent) => {
+      // SAFETY: Bail if touch starts inside a sheet, modal, or fixed overlay
+      // We check for specific roles and common sheet classes
+      let check = target;
+      while (check && check !== document.body) {
+        const style = window.getComputedStyle(check);
+        const isFixed = style.position === 'fixed' || style.position === 'absolute';
+        const zIndex = parseInt(style.zIndex, 10);
+        
+        // If we are touching something elevated (z-index > 50) that is fixed/absolute, 
+        // it's likely a sheet or overlay.
+        if (isFixed && zIndex >= 50) return;
+        
+        // Explicit sheet check
+        if (check.hasAttribute('data-sheet') || check.getAttribute('role') === 'dialog') return;
+        
+        if (check.scrollTop > 0) return; // Existing scroll check
+        check = check.parentElement as HTMLElement;
+      }
+      
+      const isAtTop = window.scrollY <= 0;
+
+
+      if (isAtTop) {
+        startY.current = e.touches[0].pageY;
+        isPulling.current = true;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
       if (!isPulling.current || isRefreshing) return;
-      const el = scrollRef.current;
-      if (!el || el.scrollTop > 5) {
+      
+      currentY.current = e.touches[0].pageY;
+      const diff = currentY.current - startY.current;
+      
+      if (diff > 0) {
+        // Prevent default browser behavior (bouncing)
+        if (e.cancelable) e.preventDefault();
+        
+        const progress = Math.min(diff / THRESHOLD, 1.2);
+        setPullProgress(progress);
+      } else {
+        setPullProgress(0);
         isPulling.current = false;
-        setPullDistance(0);
-        return;
       }
+    };
 
-      const delta = e.touches[0].clientY - startY.current;
-      if (delta < 0) {
-        setPullDistance(0);
-        return;
+    const handleTouchEnd = () => {
+      if (!isPulling.current) return;
+      
+      const diff = currentY.current - startY.current;
+      if (diff >= THRESHOLD) {
+        setIsRefreshing(true);
+        setPullProgress(1);
+        
+        // Final gold toast + reload
+        toast.loading('Refreshing HOTMESS...', { 
+          duration: 2000,
+          style: { background: '#000', color: '#C8962C', border: '1px solid #C8962C' }
+        });
+        
+        setTimeout(() => {
+          window.location.reload();
+        }, 800);
+      } else {
+        setPullProgress(0);
       }
+      
+      isPulling.current = false;
+    };
 
-      // Rubber-band effect — diminishing returns past threshold
-      const clamped = Math.min(delta * 0.5, MAX_PULL);
-      setPullDistance(clamped);
+    window.addEventListener('touchstart', handleTouchStart, { passive: false });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd);
 
-      // Haptic when crossing threshold
-      if (clamped >= THRESHOLD && !didTriggerHaptic.current) {
-        didTriggerHaptic.current = true;
-        hapticMedium();
-      }
-    },
-    [isRefreshing, scrollRef]
-  );
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isRefreshing, disabled]);
 
-  const onTouchEnd = useCallback(async () => {
-    if (!isPulling.current) return;
-    isPulling.current = false;
 
-    if (pullDistance >= THRESHOLD && !isRefreshing) {
-      setIsRefreshing(true);
-      setPullDistance(THRESHOLD * 0.6); // Hold at spinner position
-      try {
-        await onRefresh();
-      } catch {
-        // swallow — caller handles errors
-      } finally {
-        setIsRefreshing(false);
-        setPullDistance(0);
-      }
-    } else {
-      setPullDistance(0);
-    }
-  }, [pullDistance, isRefreshing, onRefresh]);
-
-  return {
-    pullDistance,
-    isRefreshing,
-    handlers: { onTouchStart, onTouchMove, onTouchEnd },
-  };
+  return { pullProgress, isRefreshing };
 }

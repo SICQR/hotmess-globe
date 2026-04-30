@@ -16,7 +16,7 @@ export default function L2BlockedSheet() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
 
       // Read from user_blocks (email-based, canonical table)
@@ -62,7 +62,7 @@ export default function L2BlockedSheet() {
       if (error) throw error;
 
       // Also clean up profile_blocklist_users (legacy, best-effort)
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase
           .from('profile_blocklist_users')
@@ -139,3 +139,4 @@ export default function L2BlockedSheet() {
     </div>
   );
 }
+

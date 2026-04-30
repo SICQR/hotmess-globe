@@ -120,7 +120,7 @@ export default function SelfieVerificationFlow({ onComplete, onDismiss }) {
 
   const submitVerification = async (poseBlob) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       // Upload selfie
@@ -331,3 +331,4 @@ export default function SelfieVerificationFlow({ onComplete, onDismiss }) {
 
   return null;
 }
+

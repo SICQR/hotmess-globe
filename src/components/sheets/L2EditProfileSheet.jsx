@@ -1,449 +1,641 @@
 /**
- * L2EditProfileSheet — Full profile editor
+ * L2EditProfileSheet — Grindr-style all-in-one profile editor
  *
- * Sections: About · Physical · Sexuality & Vibe · Safer Sex · Visibility
+ * All fields in one scrollable sheet:
+ *   • Profile photo (large, tappable → upload)
+ *   • Display name
+ *   • Bio / About me
+ *   • Age
+ *   • Pronouns (pill selector)
+ *   • Area / Location
+ *   • Instagram handle + SoundCloud URL
+ *   • Membership tier (display + upgrade button)
  *
- * Writes to:
- *   profiles.display_name / bio / location / avatar_url / is_visible / public_attributes
- *   user_private_profile — sensitive fields (sti_status, last_tested, condom_preference)
+ * Save button at top-right → saves all in one call → shows confirmation → closes
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { uploadToStorage } from '@/lib/uploadToStorage';
-import { updateProfile } from '@/lib/data';
-import {
-  Camera, Loader2, CheckCircle, Eye, EyeOff, MapPin, User,
-  ChevronDown, ChevronUp,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { humanizeError } from '@/lib/errorUtils';
 import { useSheet } from '@/contexts/SheetContext';
-import { cn, validateDisplayName } from '@/lib/utils';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  Camera, Loader2, CheckCircle, User, MapPin,
+  Instagram, Music, Crown, ChevronRight, Save, Plus, Check
+} from 'lucide-react';
+import { usePersona } from '@/contexts/PersonaContext';
+import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const PRONOUNS_OPTS = ['he/him', 'she/her', 'they/them', 'he/they', 'she/they', 'any'];
-const BODY_TYPE_OPTS = ['slim', 'athletic', 'average', 'muscular', 'stocky', 'bear', 'chubby'];
-const ETHNICITY_OPTS = ['Asian', 'Black', 'Latino / Hispanic', 'Middle Eastern', 'Mixed', 'South Asian', 'White', 'Other'];
-const ORIENTATION_OPTS = ['Gay', 'Bisexual', 'Queer', 'Pansexual', 'Fluid', 'Other'];
-const POSITION_OPTS = ['Top', 'Vers Top', 'Versatile', 'Vers Bottom', 'Bottom', 'Side', 'No preference'];
-const LOOKING_FOR_OPTS = ['Hookup', 'Hang', 'Explore', 'Relationship', 'Friends', 'Networking'];
-const HOSTING_OPTS = ['Can host', "Can't host", 'Depends'];
-const STI_STATUS_OPTS = ['Negative', 'Negative — on PrEP', 'Positive — undetectable', 'Positive', 'Prefer not to say'];
-const LAST_TESTED_OPTS = ['< 1 month ago', '1–3 months ago', '3–6 months ago', '6–12 months ago', '> 1 year ago', 'Never tested'];
-const CONDOM_OPTS = ['Always', 'Sometimes', 'PrEP / other prevention', 'Prefer not to say'];
+const AMBER = '#C8962C';
+const PRONOUNS = ['He/Him', 'She/Her', 'They/Them', 'He/They', 'She/They', 'Any'];
 
-const FieldLabel = ({ children }) => (
-  <label className="text-[10px] uppercase tracking-[0.12em] font-black text-white/40 block mb-2">
-    {children}
-  </label>
-);
+// ── helpers ────────────────────────────────────────────────────────────────────
 
-const CharCount = ({ current, max }) => (
-  <p className="text-white/20 text-[10px] text-right mt-1">{current}/{max}</p>
-);
+function cn(...classes) {
+  return classes.filter(Boolean).join(' ');
+}
 
-const PillSelect = ({ options, value, onChange }) => (
-  <div className="flex flex-wrap gap-2">
-    {options.map(opt => (
-      <button key={opt} type="button" onClick={() => onChange(value === opt ? '' : opt)}
-        className={cn('px-3 py-1.5 rounded-full text-xs font-semibold transition-all border',
-          value === opt
-            ? 'bg-[#C8962C] text-black border-[#C8962C]'
-            : 'bg-white/5 text-white/50 border-white/10 active:bg-white/10'
-        )}>
-        {opt}
-      </button>
-    ))}
-  </div>
-);
-
-const MultiPillSelect = ({ options, values, onChange }) => {
-  const toggle = (opt) => onChange(
-    values.includes(opt) ? values.filter(v => v !== opt) : [...values, opt]
+function FieldLabel({ children }) {
+  return (
+    <label className="text-[10px] uppercase tracking-[0.14em] font-black text-white/40 block mb-2">
+      {children}
+    </label>
   );
+}
+
+function Field({ children, className = '' }) {
+  return <div className={cn('mb-5', className)}>{children}</div>;
+}
+
+function TextInput({ value, onChange, placeholder, maxLength, type = 'text', ...rest }) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      maxLength={maxLength}
+      className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#C8962C]/60 text-sm transition-colors"
+      {...rest}
+    />
+  );
+}
+
+function TextArea({ value, onChange, placeholder, maxLength, rows = 3 }) {
+  return (
+    <textarea
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      maxLength={maxLength}
+      rows={rows}
+      className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#C8962C]/60 text-sm transition-colors resize-none"
+    />
+  );
+}
+
+function PronounPills({ value, onChange }) {
   return (
     <div className="flex flex-wrap gap-2">
-      {options.map(opt => (
-        <button key={opt} type="button" onClick={() => toggle(opt)}
-          className={cn('px-3 py-1.5 rounded-full text-xs font-semibold transition-all border',
-            values.includes(opt)
+      {PRONOUNS.map(p => (
+        <button
+          key={p}
+          type="button"
+          onClick={() => onChange(value === p ? '' : p)}
+          className={cn(
+            'px-3 py-1.5 rounded-full text-xs font-bold border transition-all',
+            value === p
               ? 'bg-[#C8962C] text-black border-[#C8962C]'
               : 'bg-white/5 text-white/50 border-white/10 active:bg-white/10'
-          )}>
-          {opt}
+          )}
+        >
+          {p}
         </button>
       ))}
     </div>
   );
-};
+}
 
-const Section = ({ title, children, defaultOpen = true }) => {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <div className="border-b border-white/6 last:border-b-0">
-      <button type="button" onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between py-4 px-4">
-        <span className="text-[10px] uppercase tracking-[0.15em] font-black text-[#C8962C]">{title}</span>
-        {open ? <ChevronUp className="w-4 h-4 text-white/30" /> : <ChevronDown className="w-4 h-4 text-white/30" />}
-      </button>
-      {open && <div className="px-4 pb-5 space-y-5">{children}</div>}
-    </div>
-  );
-};
+// ── Main component ─────────────────────────────────────────────────────────────
 
 export default function L2EditProfileSheet() {
-  const { closeSheet } = useSheet();
+  const { closeSheet, openSheet } = useSheet();
+  const { personas, activePersona, loadPersonas, switchPersona, isLoading: personaLoading } = usePersona();
+  const queryClient = useQueryClient();
   const avatarInputRef = useRef(null);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [avatarUploading, setAvatarUploading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [userId, setUserId] = useState(null);
 
-  const [pub, setPub] = useState({
-    display_name: '',
-    bio: '',
-    location: '',
-    avatar_url: '',
-    is_visible: true,
-  });
+  // Form state
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [bio, setBio] = useState('');
+  const [age, setAge] = useState('');
+  const [pronouns, setPronouns] = useState('');
+  const [location, setLocation] = useState('');
+  const [instagram, setInstagram] = useState('');
+  const [soundcloud, setSoundcloud] = useState('');
+  const [membershipTier, setMembershipTier] = useState('MESS — Free');
+  const [locationConsent, setLocationConsent] = useState(false);
+  const [lastSync, setLastSync] = useState(null);
 
-  // Public attributes (stored in profiles.public_attributes JSONB — visible to others)
-  const [attrs, setAttrs] = useState({
-    pronouns: '',
-    height_cm: '',
-    body_type: '',
-    ethnicity: [],
-    sexual_orientation: '',
-    position: '',
-    looking_for: [],
-    hosting: '',
-  });
-
-  // Sensitive (stored in user_private_profile — self only)
-  const [sensitive, setSensitive] = useState({
-    sti_status: '',
-    last_tested: '',
-    condom_preference: '',
-  });
-
-  const setPub_ = useCallback((key, val) => setPub(p => ({ ...p, [key]: val })), []);
-  const setAttrs_ = useCallback((key, val) => setAttrs(p => ({ ...p, [key]: val })), []);
-  const setSensitive_ = useCallback((key, val) => setSensitive(p => ({ ...p, [key]: val })), []);
+  // ── Load ─────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     const load = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!user) { setLoading(false); return; }
+        setUserId(user.id);
 
-        const [pubRes, privRes] = await Promise.all([
-          supabase
+        // 1. Try fetching everything
+        let { data: p, error: pErr } = await supabase
+          .from('profiles')
+          .select('display_name, bio, location, avatar_url, age, public_attributes, membership_tier, location_consent, location_consent_at')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        // 2. Fallback if the above failed (likely due to missing columns in DB)
+        if (pErr) {
+          console.warn('[EditProfile] Advanced fetch failed, trying basic...', pErr.message);
+          const { data: basic } = await supabase
             .from('profiles')
-            .select('display_name, bio, location, avatar_url, is_visible, public_attributes')
+            .select('display_name, bio, location, avatar_url, membership_tier, profile_type, business_type')
             .eq('id', user.id)
-            .single(),
-          supabase
-            .from('user_private_profile')
-            .select('sti_status, last_tested, condom_preference')
-            .eq('auth_user_id', user.id)
-            .maybeSingle(),
-        ]);
-
-        if (pubRes.data) {
-          const d = pubRes.data;
-          setPub({
-            display_name: d.display_name || '',
-            bio: d.bio || '',
-            location: d.location || '',
-            avatar_url: d.avatar_url || '',
-            is_visible: d.is_visible !== false,
-          });
-          const pa = d.public_attributes || {};
-          setAttrs({
-            pronouns: pa.pronouns || '',
-            height_cm: pa.height_cm ? String(pa.height_cm) : '',
-            body_type: pa.body_type || '',
-            ethnicity: pa.ethnicity || [],
-            sexual_orientation: pa.sexual_orientation || '',
-            position: pa.position || '',
-            looking_for: pa.looking_for || [],
-            hosting: pa.hosting || '',
-          });
+            .maybeSingle();
+          p = basic;
         }
 
-        if (privRes.data) {
-          const d = privRes.data;
-          setSensitive({
-            sti_status: d.sti_status || '',
-            last_tested: d.last_tested || '',
-            condom_preference: d.condom_preference || '',
-          });
+        if (p) {
+          setDisplayName(p.display_name || '');
+          setBio(p.bio || '');
+          setLocation(p.location || '');
+          setAvatarUrl(p.avatar_url || '');
+          setAge(p.age ? String(p.age) : '');
+          
+          let tier = p.membership_tier || p.subscription_tier || p.profile_type || 'MESS';
+          if (tier.toLowerCase().startsWith('mess — ')) tier = tier.split(' — ')[1];
+          setMembershipTier(tier.toUpperCase());
+
+          // Social links/Attributes
+          const pa = p.public_attributes || {};
+          const social = pa.social_links || {};
+          setInstagram(social.instagram || pa.instagram || '');
+          setSoundcloud(social.soundcloud || pa.soundcloud || '');
+          setPronouns(pa.pronouns || '');
+          setLocationConsent(p.location_consent || false);
+          setLastSync(p.location_consent_at || null);
         }
+
+        // 3. Try private profile for pronouns if not found
+        supabase.from('user_private_profile')
+          .select('pronouns')
+          .eq('auth_user_id', user.id)
+          .maybeSingle()
+          .then(({ data }) => {
+            if (data?.pronouns) setPronouns(data.pronouns);
+          });
+
+      } catch (err) {
+        console.error('[EditProfileSheet] load error:', err);
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, []);
+    if (userId) loadPersonas(userId);
+  }, [userId]);
 
-  const uploadAvatar = async (file) => {
+  // ── Avatar upload ─────────────────────────────────────────────────────────────
+
+  const handleAvatarChange = useCallback(async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+    e.target.value = '';
+
     setAvatarUploading(true);
+    const toastId = toast.loading('Uploading photo...');
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const publicUrl = await uploadToStorage(file, 'avatars', user.id);
-      setPub_('avatar_url', publicUrl);
-      toast.success('Photo updated');
-    } catch {
-      toast.error('Photo upload failed');
+      const publicUrl = await uploadToStorage(file, 'avatars', userId);
+
+      // Persist to profiles + profile_photos
+      await Promise.allSettled([
+        supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', userId),
+        supabase.from('profile_photos').upsert(
+          { user_id: userId, profile_id: userId, url: publicUrl, position: 0, is_avatar: true },
+          { onConflict: 'user_id,position' }
+        ),
+      ]);
+
+      setAvatarUrl(publicUrl);
+      toast.success('Photo updated ✅', { id: toastId });
+      // Invalidate so Ghosted grid reflects the change immediately
+      await queryClient.invalidateQueries({ queryKey: ['profiles'] });
+    } catch (err) {
+      toast.error(err?.message || 'Photo upload failed', { id: toastId });
     } finally {
       setAvatarUploading(false);
     }
-  };
+  }, [userId, queryClient]);
 
-  const handleSave = async () => {
-    const validation = validateDisplayName(pub.display_name);
-    if (!validation.isValid) return toast.error(validation.error);
+  // ── Save ──────────────────────────────────────────────────────────────────────
+
+  const handleSave = useCallback(async () => {
+    if (!userId) return;
+    const trimmedName = displayName.trim();
+    if (!trimmedName || trimmedName.length < 2) {
+      toast.error('Display name must be at least 2 characters');
+      return;
+    }
+
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not logged in');
+      const ageNum = age ? parseInt(age, 10) : null;
+      const locationVal = location.trim() || null;
 
-      // Build public_attributes payload
-      const public_attributes = {
-        ...(attrs.pronouns && { pronouns: attrs.pronouns }),
-        ...(attrs.height_cm && { height_cm: parseInt(attrs.height_cm, 10) }),
-        ...(attrs.body_type && { body_type: attrs.body_type }),
-        ...(attrs.ethnicity.length && { ethnicity: attrs.ethnicity }),
-        ...(attrs.sexual_orientation && { sexual_orientation: attrs.sexual_orientation }),
-        ...(attrs.position && { position: attrs.position }),
-        ...(attrs.looking_for.length && { looking_for: attrs.looking_for }),
-        ...(attrs.hosting && { hosting: attrs.hosting }),
+      // Merge existing public_attributes so we don't wipe fields we don't manage here
+      const { data: existing } = await supabase
+        .from('profiles')
+        .select('public_attributes, social_links')
+        .eq('id', userId)
+        .maybeSingle();
+
+      const pa = existing?.public_attributes || {};
+      const updatedPa = {
+        ...pa,
+        ...(pronouns ? { pronouns } : {}),
+        social_links: {
+          ...(pa.social_links || {}),
+          ...(instagram.trim() ? { instagram: instagram.trim() } : {}),
+          ...(soundcloud.trim() ? { soundcloud: soundcloud.trim() } : {}),
+        },
       };
 
-      // Save core fields to profiles — city mirrors location for grid filtering
-      const locationVal = pub.location.trim() || undefined;
-      const result = await updateProfile({
-        display_name: pub.display_name.trim(),
-        bio: pub.bio.trim() || undefined,
-        location: locationVal,
-        city: locationVal,
-        avatar_url: pub.avatar_url || undefined,
-        is_visible: pub.is_visible,
-      });
-      if (!result) throw new Error('Failed to save profile');
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          display_name: trimmedName,
+          bio: bio.trim() || null,
+          location: locationVal,
+          city: locationVal,
+          ...(ageNum && ageNum > 0 ? { age: ageNum } : {}),
+          public_attributes: updatedPa,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId);
 
-      // Save public_attributes separately (column may not exist in older DB schemas)
-      if (Object.keys(public_attributes).length > 0) {
-        const { error: paError } = await supabase
-          .from('profiles')
-          .update({ public_attributes })
-          .eq('id', user.id);
-        if (paError) console.warn('[edit-profile] public_attributes save skipped:', paError.message);
-      }
+      if (error) throw error;
 
-      // Save sensitive fields to user_private_profile
-      if (sensitive.sti_status || sensitive.last_tested || sensitive.condom_preference) {
-        const { error: privError } = await supabase
+      // Save pronouns to private profile (optional — non-fatal if table doesn't exist)
+      if (pronouns) {
+        await supabase
           .from('user_private_profile')
-          .upsert({
-            auth_user_id: user.id,
-            sti_status: sensitive.sti_status || null,
-            last_tested: sensitive.last_tested || null,
-            condom_preference: sensitive.condom_preference || null,
-            updated_at: new Date().toISOString(),
-          }, { onConflict: 'auth_user_id' });
-        if (privError) throw privError;
+          .upsert(
+            { auth_user_id: userId, pronouns, updated_at: new Date().toISOString() },
+            { onConflict: 'auth_user_id' }
+          )
+          .then(null, () => { }); // silent fail
       }
+
+      // Invalidate all profile caches so Ghosted grid updates immediately
+      await queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      await queryClient.invalidateQueries({ queryKey: ['profile-mode-current'] });
+      await queryClient.invalidateQueries({ queryKey: ['control-deck-you'] });
 
       setSaved(true);
+      toast.success('Profile updated ✅');
       setTimeout(() => closeSheet(), 1200);
     } catch (err) {
-      toast.error(humanizeError(err, 'Failed to save'));
+      toast.error(err?.message || 'Failed to save profile');
     } finally {
       setSaving(false);
     }
+  }, [userId, displayName, bio, age, pronouns, location, instagram, soundcloud, queryClient, closeSheet]);
+
+  const handleLocationToggle = async () => {
+    if (!userId) return;
+    const newState = !locationConsent;
+    setLocationConsent(newState);
+
+    try {
+      const update = { 
+        location_consent: newState,
+        updated_at: new Date().toISOString()
+      };
+
+      if (!newState) {
+        // Clear coordinates when turning OFF
+        update.last_lat = null;
+        update.last_lng = null;
+        update.location = null;
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update(update)
+        .eq('id', userId);
+
+      if (error) throw error;
+      
+      if (newState) {
+        toast.success('Location sharing enabled');
+        // Trigger an immediate browser GPS lock to populate last_lat/lng
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            console.log('[EditProfile] 📍 Initial lock success after toggle');
+            // useGPS will pick this up via the 'sync-location' event or interval
+            window.dispatchEvent(new CustomEvent('sync-location', { detail: pos }));
+          },
+          (err) => console.warn('[EditProfile] ⚠️ Initial lock failed:', err.message),
+          { enableHighAccuracy: false, timeout: 5000 }
+        );
+      } else {
+        toast('Location sharing disabled');
+      }
+      
+      await queryClient.invalidateQueries({ queryKey: ['profiles'] });
+    } catch (err) {
+      setLocationConsent(!newState); // revert on error
+      toast.error('Could not update location settings');
+    }
   };
 
-  const heightDisplay = () => {
-    const cm = parseInt(attrs.height_cm, 10);
-    if (!cm || isNaN(cm)) return '';
-    const totalIn = cm / 2.54;
-    const ft = Math.floor(totalIn / 12);
-    const ins = Math.round(totalIn % 12);
-    return ` (${ft}'${ins}")`;
-  };
+  // ── Loading state ─────────────────────────────────────────────────────────────
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-20">
+      <div className="flex items-center justify-center py-20">
         <Loader2 className="w-6 h-6 text-[#C8962C] animate-spin" />
       </div>
     );
   }
 
+  // ── Render ────────────────────────────────────────────────────────────────────
+
   return (
     <div className="flex flex-col h-full">
+      {/* Top save bar */}
+      {/* Header handled by Sheet parent, but let's keep a nice padding or subhead if needed */}
+      <div className="flex items-center justify-center px-4 py-1.5 opacity-20">
+        <div className="w-12 h-1 rounded-full bg-white" />
+      </div>
+
+      {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
 
-        {/* Avatar */}
-        <div className="flex flex-col items-center gap-2 pt-5 pb-4 border-b border-white/6">
-          <button type="button" onClick={() => avatarInputRef.current?.click()} className="relative group">
-            <div className="w-24 h-24 rounded-full overflow-hidden bg-white/8 border-2 border-white/15">
-              {pub.avatar_url
-                ? <img src={pub.avatar_url} alt="" className="w-full h-full object-cover" />
-                : <div className="w-full h-full flex items-center justify-center"><User className="w-10 h-10 text-white/20" /></div>}
+        {/* ── Photo ─────────────────────────────────────────────────────────── */}
+        <div className="flex flex-col items-center gap-3 pt-6 pb-5 border-b border-white/6">
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleAvatarChange}
+          />
+          <button
+            type="button"
+            onClick={() => avatarInputRef.current?.click()}
+            disabled={avatarUploading}
+            className="relative group"
+            aria-label="Change profile photo"
+          >
+            {/* Avatar */}
+            <div className="w-28 h-28 rounded-full overflow-hidden bg-white/8 border-2 border-white/15 group-hover:border-[#C8962C]/60 transition-colors">
+              {avatarUrl
+                ? <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                : <div className="w-full h-full flex items-center justify-center"><User className="w-12 h-12 text-white/20" /></div>
+              }
             </div>
+            {/* Overlay */}
             <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity flex items-center justify-center">
-              {avatarUploading ? <Loader2 className="w-6 h-6 text-white animate-spin" /> : <Camera className="w-6 h-6 text-white" />}
+              {avatarUploading
+                ? <Loader2 className="w-7 h-7 text-white animate-spin" />
+                : <Camera className="w-7 h-7 text-white" />}
             </div>
-            <div className="absolute -inset-1 rounded-full border-2 border-[#C8962C] opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity" />
+            {/* Amber ring */}
+            <div className="absolute -inset-1 rounded-full border-2 border-[#C8962C] opacity-0 group-hover:opacity-100 transition-opacity" />
           </button>
-          <p className="text-white/25 text-xs">Tap to change photo</p>
-          <input ref={avatarInputRef} type="file" accept="image/*" className="hidden"
-            onChange={e => { const f = e.target.files?.[0]; if (f) uploadAvatar(f); e.target.value = ''; }} />
+
+          <p className="text-white/30 text-xs">
+            {avatarUploading ? 'Uploading...' : 'Tap to change photo'}
+          </p>
         </div>
 
-        {/* About */}
-        <Section title="About">
-          <div>
+        {/* ── Fields ────────────────────────────────────────────────────────── */}
+        <div className="px-4 pt-5 pb-8 space-y-1">
+
+          {/* Display Name */}
+          <Field>
             <FieldLabel>Display Name *</FieldLabel>
-            <input value={pub.display_name} onChange={e => setPub_('display_name', e.target.value)}
-              placeholder="How you appear to others" maxLength={40}
-              className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#C8962C]/50 text-sm" />
-            <CharCount current={pub.display_name.length} max={40} />
-          </div>
+            <TextInput
+              value={displayName}
+              onChange={e => setDisplayName(e.target.value)}
+              placeholder="How you appear to others"
+              maxLength={40}
+            />
+            <p className="text-white/20 text-[10px] text-right mt-1">{displayName.length}/40</p>
+          </Field>
 
-          <div>
-            <FieldLabel>Bio</FieldLabel>
-            <textarea value={pub.bio} onChange={e => setPub_('bio', e.target.value)}
-              placeholder="Tell people about yourself..." rows={3} maxLength={300}
-              className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#C8962C]/50 text-sm resize-none" />
-            <CharCount current={pub.bio.length} max={300} />
-          </div>
+          {/* Bio */}
+          <Field>
+            <FieldLabel>About Me</FieldLabel>
+            <TextArea
+              value={bio}
+              onChange={e => setBio(e.target.value)}
+              placeholder="Tell people about yourself..."
+              maxLength={300}
+              rows={3}
+            />
+            <p className="text-white/20 text-[10px] text-right mt-1">{bio.length}/300</p>
+          </Field>
 
-          <div>
-            <FieldLabel>City</FieldLabel>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-              <input value={pub.location} onChange={e => setPub_('location', e.target.value)}
-                placeholder="London, Berlin, Amsterdam..." maxLength={60}
-                className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl pl-9 pr-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#C8962C]/50 text-sm" />
+          {/* Age + Pronouns side by side */}
+          <div className="flex gap-3 mb-5">
+            <div className="w-28 flex-shrink-0">
+              <FieldLabel>Age</FieldLabel>
+              <TextInput
+                type="number"
+                value={age}
+                onChange={e => setAge(e.target.value)}
+                placeholder="e.g. 28"
+                min={18}
+                max={99}
+              />
+            </div>
+            <div className="flex-1">
+              <FieldLabel>Area / Location</FieldLabel>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                <input
+                  type="text"
+                  value={location}
+                  onChange={e => setLocation(e.target.value)}
+                  placeholder="East London, Soho..."
+                  maxLength={60}
+                  className="w-full bg-white/[0.06] border border-white/10 rounded-xl pl-9 pr-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#C8962C]/60 text-sm transition-colors"
+                />
+              </div>
             </div>
           </div>
 
-          <div>
+          {/* Pronouns */}
+          <Field>
             <FieldLabel>Pronouns</FieldLabel>
-            <PillSelect options={PRONOUNS_OPTS} value={attrs.pronouns} onChange={v => setAttrs_('pronouns', v)} />
-          </div>
-        </Section>
+            <PronounPills value={pronouns} onChange={setPronouns} />
+          </Field>
 
-        {/* Physical */}
-        <Section title="Physical">
-          <div>
-            <FieldLabel>Height (cm){heightDisplay()}</FieldLabel>
-            <input type="number" min={140} max={220} value={attrs.height_cm}
-              onChange={e => setAttrs_('height_cm', e.target.value)} placeholder="e.g. 178"
-              className="w-32 bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#C8962C]/50 text-sm" />
-          </div>
+          {/* Divider */}
+          <div className="h-px bg-white/6 my-2" />
 
-          <div>
-            <FieldLabel>Body Type</FieldLabel>
-            <PillSelect options={BODY_TYPE_OPTS} value={attrs.body_type} onChange={v => setAttrs_('body_type', v)} />
-          </div>
+          {/* Social Links */}
+          <Field>
+            <FieldLabel>Instagram</FieldLabel>
+            <div className="relative">
+              <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+              <input
+                type="text"
+                value={instagram}
+                onChange={e => setInstagram(e.target.value)}
+                placeholder="@yourhandle"
+                maxLength={60}
+                className="w-full bg-white/[0.06] border border-white/10 rounded-xl pl-9 pr-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#C8962C]/60 text-sm transition-colors"
+              />
+            </div>
+          </Field>
 
-          <div>
-            <FieldLabel>Ethnicity (select all that apply)</FieldLabel>
-            <MultiPillSelect options={ETHNICITY_OPTS} values={attrs.ethnicity} onChange={v => setAttrs_('ethnicity', v)} />
-          </div>
-        </Section>
+          <Field>
+            <FieldLabel>SoundCloud</FieldLabel>
+            <div className="relative">
+              <Music className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+              <input
+                type="url"
+                value={soundcloud}
+                onChange={e => setSoundcloud(e.target.value)}
+                placeholder="soundcloud.com/yourname"
+                maxLength={120}
+                className="w-full bg-white/[0.06] border border-white/10 rounded-xl pl-9 pr-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#C8962C]/60 text-sm transition-colors"
+              />
+            </div>
+          </Field>
 
-        {/* Sexuality & Vibe */}
-        <Section title="Sexuality & Vibe">
-          <div>
-            <FieldLabel>Sexual Orientation</FieldLabel>
-            <PillSelect options={ORIENTATION_OPTS} value={attrs.sexual_orientation} onChange={v => setAttrs_('sexual_orientation', v)} />
-          </div>
-
-          <div>
-            <FieldLabel>Position</FieldLabel>
-            <PillSelect options={POSITION_OPTS} value={attrs.position} onChange={v => setAttrs_('position', v)} />
-          </div>
-
-          <div>
-            <FieldLabel>Looking For (select all that apply)</FieldLabel>
-            <MultiPillSelect options={LOOKING_FOR_OPTS} values={attrs.looking_for} onChange={v => setAttrs_('looking_for', v)} />
-          </div>
-
-          <div>
-            <FieldLabel>Hosting</FieldLabel>
-            <PillSelect options={HOSTING_OPTS} value={attrs.hosting} onChange={v => setAttrs_('hosting', v)} />
-          </div>
-        </Section>
-
-        {/* Safer Sex */}
-        <Section title="Safer Sex" defaultOpen={false}>
-          <p className="text-white/30 text-xs -mt-1 mb-1">Only visible to people you match with.</p>
-
-          <div>
-            <FieldLabel>HIV / STI Status</FieldLabel>
-            <PillSelect options={STI_STATUS_OPTS} value={sensitive.sti_status} onChange={v => setSensitive_('sti_status', v)} />
-          </div>
-
-          <div>
-            <FieldLabel>Last Tested</FieldLabel>
-            <PillSelect options={LAST_TESTED_OPTS} value={sensitive.last_tested} onChange={v => setSensitive_('last_tested', v)} />
-          </div>
-
-          <div>
-            <FieldLabel>Condom Preference</FieldLabel>
-            <PillSelect options={CONDOM_OPTS} value={sensitive.condom_preference} onChange={v => setSensitive_('condom_preference', v)} />
-          </div>
-        </Section>
-
-        {/* Visibility */}
-        <Section title="Visibility">
-          <div className="bg-[#1C1C1E] rounded-2xl border border-white/8 p-4">
+          {/* Location Privacy Toggle */}
+          <div className="py-4 px-4 bg-white/[0.04] border border-white/8 rounded-2xl mb-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                {pub.is_visible
-                  ? <Eye className="w-5 h-5 text-[#C8962C] flex-shrink-0" />
-                  : <EyeOff className="w-5 h-5 text-white/30 flex-shrink-0" />}
+                <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-blue-500" />
+                </div>
                 <div>
-                  <p className="text-white font-semibold text-sm">
-                    {pub.is_visible ? 'Visible on Ghosted' : 'Hidden from Ghosted'}
-                  </p>
-                  <p className="text-white/40 text-xs mt-0.5">
-                    {pub.is_visible ? 'Others can find and message you' : "Ghost mode — invisible to others"}
+                  <p className="text-sm font-bold text-white">Share my location</p>
+                  <p className="text-[10px] text-white/40 uppercase tracking-wider">
+                    {locationConsent ? 'ON' : 'OFF'} 
+                    {lastSync && locationConsent && ` — Last synced: ${new Date(lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                   </p>
                 </div>
               </div>
-              <button type="button" onClick={() => setPub_('is_visible', !pub.is_visible)}
-                className={cn('w-12 h-6 rounded-full transition-all relative flex-shrink-0', pub.is_visible ? 'bg-[#C8962C]' : 'bg-white/15')}>
-                <span className={cn('absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all', pub.is_visible ? 'left-6' : 'left-0.5')} />
+              <button
+                type="button"
+                onClick={handleLocationToggle}
+                className={cn(
+                  "w-11 h-6 rounded-full transition-colors relative",
+                  locationConsent ? "bg-[#C8962C]" : "bg-white/10"
+                )}
+              >
+                <div className={cn(
+                  "absolute top-1 w-4 h-4 rounded-full bg-white transition-all shadow-sm",
+                  locationConsent ? "left-6" : "left-1"
+                )} />
+              </button>
+            </div>
+            <p className="mt-3 text-[10px] text-white/30 leading-relaxed">
+              When ON, your distance and general area are shown to nearby members. Your exact house number is never shared.
+            </p>
+          </div>
+
+          {/* Divider */}
+          <div className="h-px bg-white/6 my-2" />
+
+          {/* Personas Section */}
+          <div className="pt-2">
+            <FieldLabel>Manage Personas</FieldLabel>
+            <div className="space-y-2">
+              {personas.map(persona => {
+                const isActive = persona.id === activePersona?.id;
+                return (
+                  <button
+                    key={persona.id}
+                    onClick={() => switchPersona(persona.id)}
+                    className={cn(
+                      "w-full flex items-center gap-3 p-3 rounded-xl border transition-all active:scale-[0.98]",
+                      isActive ? "bg-[#C8962C]/10 border-[#C8962C]/30" : "bg-white/5 border-white/10"
+                    )}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden border border-white/10">
+                      {persona.avatar_url ? (
+                        <img src={persona.avatar_url} className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-4 h-4 text-white/40" />
+                      )}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="text-sm font-bold text-white">{persona.display_name}</p>
+                      <p className="text-[10px] uppercase text-[#C8962C]">{persona.persona_type}</p>
+                    </div>
+                    {isActive && <Check className="w-4 h-4 text-[#C8962C]" />}
+                  </button>
+                )
+              })}
+              <button 
+                onClick={() => openSheet('create-persona')}
+                className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-white/20 text-white/40 hover:text-white/60 transition-all active:scale-[0.98]"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="text-xs font-bold uppercase tracking-wider">Add New Persona</span>
               </button>
             </div>
           </div>
-        </Section>
 
-        <div className="h-6" />
+          <div className="h-px bg-white/6 my-2" />
+
+          {/* Membership */}
+          <div className="bg-white/[0.04] border border-white/8 rounded-2xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${AMBER}20` }}>
+                <Crown className="w-5 h-5" style={{ color: AMBER }} />
+              </div>
+              <div>
+                <FieldLabel>Membership</FieldLabel>
+                <p className="text-white text-sm font-bold">{membershipTier} MEMBER</p>
+              </div>
+            </div>
+            {membershipTier?.toUpperCase() !== 'VENUE' ? (
+              <button
+                type="button"
+                onClick={() => openSheet('membership')}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-black shadow-lg hover:brightness-110 active:scale-95 transition-all"
+                style={{ background: AMBER }}
+              >
+                Upgrade <ChevronRight className="w-3 h-3" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => openSheet('membership')}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold text-white/50 border border-white/10"
+              >
+                Manage
+              </button>
+            )}
+          </div>
+
+        </div>
       </div>
 
-      {/* Save bar */}
+      {/* Bottom save bar (redundant but convenient on mobile) */}
       <div className="px-4 py-4 border-t border-white/8 bg-black/70 backdrop-blur-md">
-        <button type="button" onClick={handleSave}
-          disabled={!validateDisplayName(pub.display_name).isValid || saving || avatarUploading}
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving || avatarUploading || !displayName.trim() || displayName.trim().length < 2}
           className={cn(
             'w-full py-4 font-black uppercase tracking-wide rounded-2xl text-sm transition-all',
             saved
-              ? 'bg-[#30D158]/20 text-[#30D158] border border-[#30D158]/30'
-              : validateDisplayName(pub.display_name).isValid
+              ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+              : displayName.trim().length >= 2
                 ? 'bg-[#C8962C] text-black active:scale-[0.98]'
                 : 'bg-white/5 text-white/20 cursor-not-allowed'
-          )}>
+          )}
+        >
           {saving
             ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Saving...</span>
             : saved
-              ? <span className="flex items-center justify-center gap-2"><CheckCircle className="w-4 h-4" /> Saved!</span>
+              ? <span className="flex items-center justify-center gap-2"><CheckCircle className="w-4 h-4" /> Profile Updated ✅</span>
               : 'Save Profile'}
         </button>
       </div>
