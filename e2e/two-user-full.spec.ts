@@ -275,14 +275,7 @@ test.describe('Suite 3: Profile — Alpha', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    // Navigate to More tab
-    await clickTab(page, 'More');
-
-    // Click on My Profile
-    const profileBtn = page.locator('button, a').filter({ hasText: /my profile|profile/i }).first();
-    await profileBtn.click();
-
-    await page.waitForLoadState('domcontentloaded');
+    await page.goto(url('/profile'), { waitUntil: 'domcontentloaded' });
     const bodyText = await page.textContent('body');
     expect(bodyText).toBeTruthy(); // Profile page rendered
   });
@@ -293,11 +286,7 @@ test.describe('Suite 3: Profile — Alpha', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    await clickTab(page, 'More');
-    const profileBtn = page.locator('button, a').filter({ hasText: /my profile|profile/i }).first();
-    await profileBtn.click();
-
-    await page.waitForLoadState('domcontentloaded');
+    await page.goto(url('/profile'), { waitUntil: 'domcontentloaded' });
     const bodyText = await page.textContent('body');
     expect(bodyText).toBeTruthy();
   });
@@ -308,11 +297,7 @@ test.describe('Suite 3: Profile — Alpha', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    await clickTab(page, 'More');
-    const profileBtn = page.locator('button, a').filter({ hasText: /my profile|profile/i }).first();
-    await profileBtn.click();
-
-    await page.waitForLoadState('domcontentloaded');
+    await page.goto(url('/profile'), { waitUntil: 'domcontentloaded' });
     // Avatar area — may be an img, a div with bg-image, or a placeholder circle
     const hasAvatar = await page.locator('[class*="avatar"], [class*="pc-grid"], img, [class*="rounded-full"]').first().isVisible({ timeout: 5000 }).catch(() => false);
     expect(hasAvatar).toBeTruthy();
@@ -324,11 +309,7 @@ test.describe('Suite 3: Profile — Alpha', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    await clickTab(page, 'More');
-    const profileBtn = page.locator('button, a').filter({ hasText: /my profile|profile/i }).first();
-    await profileBtn.click();
-
-    await page.waitForLoadState('domcontentloaded');
+    await page.goto(url('/profile'), { waitUntil: 'domcontentloaded' });
 
     // Look for Edit button
     const editBtn = page.locator('button').filter({ hasText: /edit|update/i }).first();
@@ -349,11 +330,7 @@ test.describe('Suite 3: Profile — Alpha', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    await clickTab(page, 'More');
-    const profileBtn = page.locator('button, a').filter({ hasText: /my profile|profile/i }).first();
-    await profileBtn.click();
-
-    await page.waitForLoadState('domcontentloaded');
+    await page.goto(url('/profile'), { waitUntil: 'domcontentloaded' });
 
     const editBtn = page.locator('button').filter({ hasText: /edit|update/i }).first();
     if (await editBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -374,11 +351,7 @@ test.describe('Suite 3: Profile — Alpha', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    await clickTab(page, 'More');
-    const profileBtn = page.locator('button, a').filter({ hasText: /my profile|profile/i }).first();
-    await profileBtn.click();
-
-    await page.waitForLoadState('domcontentloaded');
+    await page.goto(url('/profile'), { waitUntil: 'domcontentloaded' });
 
     const editBtn = page.locator('button').filter({ hasText: /edit|update/i }).first();
     if (await editBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -401,11 +374,7 @@ test.describe('Suite 3: Profile — Alpha', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    await clickTab(page, 'More');
-    const profileBtn = page.locator('button, a').filter({ hasText: /my profile|profile/i }).first();
-    await profileBtn.click();
-
-    await page.waitForLoadState('domcontentloaded');
+    await page.goto(url('/profile'), { waitUntil: 'domcontentloaded' });
 
     const editBtn = page.locator('button').filter({ hasText: /edit|update/i }).first();
     if (await editBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -444,11 +413,7 @@ test.describe('Suite 3: Profile — Alpha', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    await clickTab(page, 'More');
-    const profileBtn = page.locator('button, a').filter({ hasText: /my profile|profile/i }).first();
-    await profileBtn.click();
-
-    await page.waitForLoadState('domcontentloaded');
+    await page.goto(url('/profile'), { waitUntil: 'domcontentloaded' });
 
     const editBtn = page.locator('button').filter({ hasText: /edit|update/i }).first();
     if (await editBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
