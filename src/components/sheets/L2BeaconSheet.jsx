@@ -68,7 +68,7 @@ function BeaconCreator({ onSuccess }) {
   useEffect(() => {
     const checkLimit = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        let { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
@@ -119,7 +119,7 @@ function BeaconCreator({ onSuccess }) {
     if (!coords) return toast.error('Location required — tap Retry to get it');
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Please log in to drop a beacon');
 
       const now = new Date();
@@ -561,7 +561,7 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
   const handleCheckinConfirm = async () => {
     setCheckingIn(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error('Please sign in'); return; }
 
       const now     = new Date();
@@ -933,3 +933,4 @@ export default function L2BeaconSheet({ beaconId, beacon }) {
 
   return <BeaconCreator onSuccess={closeSheet} />;
 }
+

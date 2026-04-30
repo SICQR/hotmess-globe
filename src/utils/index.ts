@@ -28,7 +28,10 @@ export function createPageUrl(pageName: string) {
 
         Beacons: '/more/beacons',
         CreateBeacon: '/more/beacons/new',
+        BeaconDetail: '/pulse/detail',
+        Profile: '/settings/profile',
     };
+
 
     const [base, query] = pageName.split('?');
     const basePath = routeMap[base] ?? '/' + base.replace(/ /g, '-');

@@ -197,7 +197,7 @@ export default function SupportTicketManagement() {
     setSendingResponse(true);
     try {
       // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
 
       // Insert response
       const { error: responseError } = await supabase
@@ -539,3 +539,4 @@ export default function SupportTicketManagement() {
     </div>
   );
 }
+

@@ -5,29 +5,45 @@
 
 import { Page, test } from '@playwright/test';
 
-// Single project — rfoftonnlwudilafhfkl (dev Supabase project klsywpvncqqglhnhrjbh is deleted)
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL ?? 'https://rfoftonnlwudilafhfkl.supabase.co';
+// When PROD=true, use production Supabase project; otherwise dev
+const IS_PROD = process.env.PROD === 'true';
 
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY ?? '';
+const SUPABASE_URL = IS_PROD
+  ? 'https://rfoftonnlwudilafhfkl.supabase.co'
+  : (process.env.VITE_SUPABASE_URL ?? 'https://klsywpvncqqglhnhrjbh.supabase.co');
+
+const SUPABASE_ANON_KEY = IS_PROD
+  ? (process.env.PROD_SUPABASE_ANON_KEY ?? '')
+  : (process.env.VITE_SUPABASE_ANON_KEY ?? '');
 
 // Derived from project ref: sb-<ref>-auth-token
-const SUPABASE_STORAGE_KEY = 'sb-rfoftonnlwudilafhfkl-auth-token';
+// Confirmed via: createClient(url, key).auth.storageKey
+const SUPABASE_STORAGE_KEY = IS_PROD
+  ? `sb-rfoftonnlwudilafhfkl-auth-token`
+  : `sb-klsywpvncqqglhnhrjbh-auth-token`;
 
 export const TEST_USER_A = {
-  email: process.env.TEST_USER_A_EMAIL ?? 'e2e.alpha@hotmessldn.com',
-  password: process.env.TEST_USER_A_PASSWORD ?? '',
+  // When PROD=true, use the production test user; otherwise use dev test user
+  email: IS_PROD ? 'e2e.alpha@hotmessldn.com' : (process.env.TEST_USER_A_EMAIL || 'test-red@hotmessldn.com'),
+  password: IS_PROD ? 'HotmessE2E2026!' : (process.env.TEST_USER_A_PASSWORD || 'Hotmess2026!'),
 };
 
 export const TEST_USER_B = {
-  email: process.env.TEST_USER_B_EMAIL ?? 'e2e.beta@hotmessldn.com',
-  password: process.env.TEST_USER_B_PASSWORD ?? '',
+  email: IS_PROD ? 'e2e.beta@hotmessldn.com' : (process.env.TEST_USER_B_EMAIL || 'test-blue@hotmessldn.com'),
+  password: IS_PROD ? 'HotmessE2E2026!' : (process.env.TEST_USER_B_PASSWORD || 'Hotmess2026!'),
 };
 
 /**
- * True only when VITE_SUPABASE_ANON_KEY is set and non-empty.
- * GitHub Actions must have this secret configured.
+ * True only when all secrets required for authenticated tests are present and non-empty.
+ * For PROD (rfoftonnlwudilafhfkl), check for PROD_SUPABASE_ANON_KEY env var.
+ * For DEV (klsywpvncqqglhnhrjbh), use VITE_SUPABASE_ANON_KEY.
  */
-export const E2E_AUTH_CONFIGURED = !!(process.env.VITE_SUPABASE_ANON_KEY?.trim());
+export const E2E_AUTH_CONFIGURED =
+  IS_PROD
+    ? !!(process.env.PROD_SUPABASE_ANON_KEY?.trim())
+    : !!(process.env.VITE_SUPABASE_ANON_KEY?.trim()) &&
+        !!(process.env.TEST_USER_A_EMAIL?.trim()) &&
+        !!(process.env.TEST_USER_A_PASSWORD?.trim());
 
 /**
  * Sets localStorage flags to bypass age gate and onboarding.

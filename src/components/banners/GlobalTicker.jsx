@@ -67,10 +67,10 @@ export function GlobalTicker({ className = '' }) {
 
   return (
     <div
-      className={`w-full overflow-hidden bg-[#0D0D0D]/95 backdrop-blur-sm border-t border-white/5 ${className}`}
-      style={{ height: '36px', flexShrink: 0 }}
+      className={`w-full overflow-hidden bg-[#0D0D0D]/95 backdrop-blur-sm border-b border-white/5 ${className}`}
+      style={{ height: 'calc(36px + env(safe-area-inset-top))', paddingTop: 'env(safe-area-inset-top)', flexShrink: 0 }}
     >
-      <div className="ticker-track flex items-center h-full whitespace-nowrap">
+      <div className="ticker-track flex items-center h-[36px] whitespace-nowrap">
         <div className="ticker-content inline-flex items-center animate-ticker">
           {tickerContent}
           {tickerContent}

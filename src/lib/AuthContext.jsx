@@ -49,7 +49,8 @@ export const AuthProvider = ({ children }) => {
   const checkUserAuth = useCallback(async () => {
     try {
       // Now check if the user is authenticated
-      setIsLoadingAuth(true);
+      // We skip setting isLoadingAuth(true) here because setting it to true on every background
+      // token refresh causes the entire React component tree to flicker or crash.
       const isAuth = await supabase.auth.getSession().then(r => !!r.data.session);
       if (!isAuth) {
         setUser(null);
@@ -59,8 +60,24 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      let currentUser; if (!user) { currentUser = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); currentUser = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
+      let { data: { user } } = await supabase.auth.getUser();
+      let currentUser;
+      if (!user) {
+        currentUser = null;
+      } else {
+        const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+        
+        // Sync email to profile if missing (helps with chat routing)
+        if (user.email && (!profile || !profile.email)) {
+          await supabase.from("profiles").upsert({ 
+            id: user.id, 
+            email: user.email,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'id' });
+        }
+
+        currentUser = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email };
+      };
       setUser(currentUser || null);
       setIsAuthenticated(!!currentUser);
 
@@ -165,3 +182,4 @@ export const useAuth = () => {
 
   return context;
 };
+

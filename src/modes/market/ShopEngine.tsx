@@ -1,48 +1,61 @@
 /**
- * ShopEngine - HNH MESS + Official Merch (/market or /market/shop)
- *
- * Behavior: Direct checkout via Shopify. Add to cart -> Stripe.
- * Colour: #C8962C (amber)
- * Data: Shopify headless + internal products table
+ * ShopEngine — Shopify + Internal Products
  */
 
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence, type Variants } from 'framer-motion';
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ShoppingBag, Package, Heart, RefreshCw } from 'lucide-react';
-import { useSheet } from '@/contexts/SheetContext';
-import { isBrandVisible, BRAND_CONFIG } from '@/config/brands';
-import { HNHMarketHero } from '@/components/home/HNHMarketHero';
-import { HNHMessStrip } from '@/components/home/HNHMessStrip';
-import { AppBanner } from '@/components/banners/AppBanner';
-import { CardMoreButton } from '@/components/ui/CardMoreButton';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
+  ShoppingBag,
+  Heart,
+  Loader2,
+  RefreshCw,
+  Package,
+} from 'lucide-react';
+import { useSheet } from '@/contexts/SheetContext';
+import { useShopCart } from '@/features/shop/cart/ShopCartContext';
+import {
+  Product,
+  ProductFilters,
   getShopifyProducts,
   getInternalProducts,
   getProductsByBrand,
-  type Product,
-  type ProductFilters,
 } from '@/lib/data/market';
+import { HNHMarketHero } from '@/components/home/HNHMarketHero';
+import { BRAND_CONFIG } from '@/config/brands';
+import { HNHMessStrip } from '@/components/home/HNHMessStrip';
+import { AppBanner } from '@/components/banners/AppBanner';
+
 
 const AMBER = '#C8962C';
-const PAGE_SIZE = 20;
-
-const gridItemVariants: Variants = {
-  hidden: { opacity: 0, y: 16 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.03, duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] },
-  }),
-};
+const PAGE_SIZE = 12;
 
 function ShimmerBox({ className = '' }: { className?: string }) {
   return <div className={`animate-pulse rounded-xl bg-white/[0.06] ${className}`} />;
 }
 
-function ShopProductCard({ product, index, onTap }: { product: Product; index: number; onTap: () => void }) {
+interface ShopProductCardProps {
+  product: Product;
+  index: number;
+  onTap: () => void;
+}
+
+function ShopProductCard({ product, index, onTap }: ShopProductCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
-  const symbol = product.currency === 'GBP' ? '\u00a3' : '$';
+  const { addItem, cart } = useShopCart();
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
+
+  const symbol = product.currency === 'GBP' ? '£' : '$';
+
+  const gridItemVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 0.3, ease: 'easeOut' },
+    },
+  };
 
   return (
     <motion.div
@@ -50,117 +63,98 @@ function ShopProductCard({ product, index, onTap }: { product: Product; index: n
       initial="hidden"
       animate="visible"
       variants={gridItemVariants}
-      layout
-      className="relative bg-[#1C1C1E] rounded-xl overflow-hidden border border-white/[0.06] group"
+      className="relative bg-black rounded-xl overflow-hidden border border-white/5 group"
     >
       <button
         onClick={onTap}
-        className="relative block w-full aspect-[3/4] bg-white/[0.03] overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#C8962C]"
+        className="relative block w-full aspect-[4/5] bg-white/[0.03] overflow-hidden focus:outline-none"
         aria-label={`View ${product.title}`}
       >
         {product.images[0] ? (
           <img
             src={product.images[0]}
             alt={product.title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-cover grayscale-[0.2] transition-all duration-700 group-hover:grayscale-0 group-hover:scale-110"
             loading="lazy"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <ShoppingBag className="w-10 h-10 text-white/[0.08]" />
+            <ShoppingBag className="w-8 h-8 text-white/5" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
-        {/* Shop badge */}
-        <span
-          className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
-          style={{ background: 'rgba(200,150,44,0.85)', color: '#000' }}
-        >
-          Shop
-        </span>
-
-        {product.compareAtPrice != null && product.compareAtPrice > product.price && (
-          <span className="absolute bottom-10 right-2 px-2 py-0.5 bg-[#FF3B30] rounded-full text-[9px] font-bold text-white uppercase tracking-wider">
-            Sale
+        {/* Brand Tag */}
+        {(product as any).vendor && (
+          <span
+            className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest bg-black/40 backdrop-blur-sm text-[#C8962C] border border-[#C8962C]/20"
+          >
+            {(product as any).vendor}
           </span>
         )}
-
-        <CardMoreButton
-          itemType="product"
-          itemId={product.id}
-          title={product.title}
-          className="absolute top-2 right-2"
-        />
 
         <span
           role="button"
           tabIndex={0}
           onClick={(e) => { e.stopPropagation(); setIsFavorite(prev => !prev); }}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsFavorite(prev => !prev); } }}
-          aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-          className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
+          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/40 active:scale-90 transition-all hover:text-red-500"
         >
-          <Heart className={`w-4 h-4 transition-colors ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white/40'}`} />
+          <Heart className={`w-3.5 h-3.5 transition-colors ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
         </span>
       </button>
 
-      <button onClick={onTap} className="w-full text-left p-3 focus:outline-none">
-        <h3 className="text-sm font-bold text-white leading-tight line-clamp-1">{product.title}</h3>
-        <div className="flex items-baseline gap-1.5 mt-1">
-          <span className="font-black text-base leading-none" style={{ color: AMBER }}>
-            {symbol}{product.price.toFixed(2)}
-          </span>
-          {product.compareAtPrice != null && product.compareAtPrice > product.price && (
-            <span className="text-white/30 text-xs line-through">
-              {symbol}{product.compareAtPrice.toFixed(2)}
+      <div className="w-full p-2.5 pb-3">
+        <button onClick={onTap} className="w-full text-left focus:outline-none mb-1.5">
+          <h3 className="text-[11px] font-black text-white/90 leading-tight line-clamp-1 uppercase tracking-tight">{product.title}</h3>
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className="font-black text-xs text-[#C8962C]">
+              {symbol}{product.price.toFixed(2)}
             </span>
-          )}
-        </div>
-        {/* Direct checkout CTA */}
-        <div
-          className="mt-2 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-black active:scale-95 transition-transform hm-gold-gradient"
-        >
-          Add to bag
-        </div>
-      </button>
+          </div>
+        </button>
+      </div>
     </motion.div>
   );
 }
 
-interface ShopEngineProps {
-  search: string;
-  className?: string;
-}
-
-export function ShopEngine({ search, className = '' }: ShopEngineProps) {
+export function ShopEngine({ search, className = '' }: { search: string; className?: string }) {
   const { openSheet } = useSheet();
   const queryClient = useQueryClient();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [brandFilter, setBrandFilter] = useState<string | null>(null);
+  const [productTypeFilter, setProductTypeFilter] = useState<string>('all');
 
   const filters: ProductFilters = useMemo(
     () => ({ source: 'shopify', search: search || undefined }),
     [search],
   );
 
-  const { data: products = [], isLoading, isError } = useQuery<Product[]>({
+  const { data: allFetchedProducts = [], isLoading, isError } = useQuery<Product[]>({
     queryKey: brandFilter
       ? ['shop-brand', brandFilter, search]
       : ['shop-products', filters],
     queryFn: () => {
       if (brandFilter) return getProductsByBrand(brandFilter);
-      return Promise.all([getShopifyProducts(filters), getInternalProducts(filters)])
-        .then(([s, i]) => [...i, ...s]);
+      return getShopifyProducts(filters);
     },
     staleTime: 2 * 60 * 1000,
   });
 
+  const availableTypes = useMemo(() => {
+    const types = [...new Set(allFetchedProducts.map(p => p.category).filter(Boolean))] as string[];
+    return types;
+  }, [allFetchedProducts]);
+
+  const products = useMemo(() => {
+    if (productTypeFilter === 'all') return allFetchedProducts;
+    return allFetchedProducts.filter(p => p.category === productTypeFilter);
+  }, [allFetchedProducts, productTypeFilter]);
+
   const visibleProducts = useMemo(() => products.slice(0, visibleCount), [products, visibleCount]);
   const hasMore = visibleCount < products.length;
 
-  // Infinite scroll
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el || !hasMore) return;
@@ -176,26 +170,53 @@ export function ShopEngine({ search, className = '' }: ShopEngineProps) {
     return () => el.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [filters, brandFilter]);
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [filters, brandFilter, productTypeFilter]);
 
-  const featuredProduct = useMemo(() => {
-    if (search || brandFilter) return null;
-    return products[0] ?? null;
-  }, [products, search, brandFilter]);
 
-  const gridProducts = useMemo(() => {
-    if (!featuredProduct) return visibleProducts;
-    return visibleProducts.filter(p => p.id !== featuredProduct.id);
-  }, [visibleProducts, featuredProduct]);
+
+  const gridProducts = visibleProducts;
 
   const activeBrandName = brandFilter ? (BRAND_CONFIG[brandFilter]?.name ?? brandFilter.toUpperCase()) : null;
 
   return (
-    <div ref={scrollRef} className={`flex-1 overflow-y-auto scroll-momentum pb-32 ${className}`}>
-      {/* HNH MESS hero */}
-      {!search && !brandFilter && <HNHMarketHero />}
-      {!search && !brandFilter && <HNHMessStrip className="mt-2" />}
-      <AppBanner placement="market_lube" variant="card" className="mx-4 mt-2" />
+    <div
+      ref={scrollRef}
+      className={`flex-1 overflow-y-auto scroll-momentum pb-32 ${className}`}
+      style={{
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'rgba(200,150,44,0.3) transparent',
+        touchAction: 'pan-y',
+        overscrollBehaviorY: 'contain',
+      }}
+    >
+
+
+      {/* Dynamic Product Type Filters */}
+      <div className="px-4 pt-5 pb-2 flex gap-2 overflow-x-auto scrollbar-hide">
+        <button
+          onClick={() => setProductTypeFilter('all')}
+          className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border whitespace-nowrap transition-all active:scale-95 ${
+            productTypeFilter === 'all'
+              ? 'bg-[#C8962C] border-[#C8962C] text-black'
+              : 'bg-white/5 border-white/5 text-white/40 hover:text-white hover:border-white/10'
+          }`}
+        >
+          All
+        </button>
+        {availableTypes.map(type => (
+          <button
+            key={type}
+            onClick={() => setProductTypeFilter(type)}
+            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border whitespace-nowrap transition-all active:scale-95 ${
+              productTypeFilter === type
+                ? 'bg-[#C8962C] border-[#C8962C] text-black'
+                : 'bg-white/5 border-white/5 text-white/40 hover:text-white hover:border-white/10'
+            }`}
+          >
+            {type}
+          </button>
+        ))}
+      </div>
 
       {isLoading && (
         <div className="grid grid-cols-2 gap-3 px-4 pt-4">
@@ -226,12 +247,12 @@ export function ShopEngine({ search, className = '' }: ShopEngineProps) {
       )}
 
       {!isLoading && !isError && products.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-24 px-8">
-          <div className="w-16 h-16 rounded-2xl bg-[#1C1C1E] flex items-center justify-center mb-4">
+        <div className="flex flex-col items-center justify-center py-24 px-8 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-[#1C1C1E] flex items-center justify-center mb-4 mx-auto">
             <ShoppingBag className="w-8 h-8 text-white/10" />
           </div>
-          <h3 className="text-lg font-bold text-white mb-1">Nothing in the shop yet</h3>
-          <p className="text-sm text-center text-white/40">Official merch and HNH MESS products land here.</p>
+          <h3 className="text-lg font-bold text-white mb-1 uppercase tracking-tight">No match found</h3>
+          <p className="text-sm text-white/40">Try a different filter or check back later.</p>
         </div>
       )}
 
@@ -247,15 +268,13 @@ export function ShopEngine({ search, className = '' }: ShopEngineProps) {
                   { key: 'high', label: 'HIGH' },
                   { key: 'hungmess', label: 'HUNGMESS' },
                   { key: 'superhung', label: 'SUPERHUNG' },
-                  { key: 'superraw', label: 'SUPERRAW' },
-                  { key: 'hnhMess', label: 'HNH MESS' },
-                ] as const).filter(b => isBrandVisible(b.key)).map(b => {
+                ] as const).map(b => {
                   const isActive = brandFilter === b.key;
                   return (
                     <button
                       key={b.key}
-                      onClick={() => setBrandFilter(prev => prev === b.key ? null : b.key)}
-                      className={`h-8 px-3 rounded-full text-[10px] font-black uppercase tracking-wider whitespace-nowrap active:scale-95 transition-all ${
+                      onClick={() => setBrandFilter(isActive ? null : b.key)}
+                      className={`h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all active:scale-95 ${
                         isActive ? 'text-black border border-[#C8962C]' : 'bg-[#1C1C1E] border border-white/10 text-white/70'
                       }`}
                       style={isActive ? { backgroundColor: AMBER } : undefined}
@@ -271,8 +290,8 @@ export function ShopEngine({ search, className = '' }: ShopEngineProps) {
 
           {/* Section header */}
           <div className="px-4 pt-3 pb-1 flex items-center justify-between">
-            <h2 className="text-white font-bold text-sm">
-              {brandFilter ? activeBrandName : 'Just dropped'}
+            <h2 className="text-white font-black text-xs uppercase tracking-widest text-white/30">
+              {brandFilter ? activeBrandName : productTypeFilter === 'all' ? 'All Products' : productTypeFilter}
             </h2>
             {brandFilter && (
               <button
@@ -284,41 +303,9 @@ export function ShopEngine({ search, className = '' }: ShopEngineProps) {
             )}
           </div>
 
-          {/* Featured banner */}
-          {featuredProduct && (
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mx-4 mt-2 mb-3"
-            >
-              <button
-                onClick={() => openSheet('product', { product: featuredProduct, source: 'shopify' })}
-                className="relative w-full h-[180px] rounded-2xl overflow-hidden bg-[#1C1C1E] block text-left"
-                aria-label={`Featured: ${featuredProduct.title}`}
-              >
-                {featuredProduct.images[0] ? (
-                  <img src={featuredProduct.images[0]} alt={featuredProduct.title} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-white/[0.03]">
-                    <Package className="w-16 h-16 text-white/[0.08]" />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider" style={{ backgroundColor: AMBER, color: '#000' }}>
-                  Featured
-                </span>
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="text-white font-bold text-lg leading-tight line-clamp-1">{featuredProduct.title}</h3>
-                  <span className="text-[#C8962C] font-extrabold text-xl">
-                    {featuredProduct.currency === 'GBP' ? '\u00a3' : '$'}{featuredProduct.price.toFixed(2)}
-                  </span>
-                </div>
-              </button>
-            </motion.div>
-          )}
 
           {/* Product grid */}
-          <div className="grid grid-cols-2 gap-3 px-4 pt-1">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 px-4 pt-1">
             {gridProducts.map((product, i) => (
               <ShopProductCard
                 key={product.id}

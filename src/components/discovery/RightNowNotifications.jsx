@@ -6,26 +6,38 @@ import { toast } from 'sonner';
 export default function RightNowNotifications({ currentUser }) {
   const { data: rightNowUsers = [] } = useQuery({
     queryKey: ['right-now-active'],
-    queryFn: () => supabase.from('right_now_status').select('*').gte('expires_at', new Date().toISOString()),
+    queryFn: async () => {
+      const res = await supabase.from('right_now_status').select('*').gte('expires_at', new Date().toISOString());
+      return res.data || [];
+    },
     enabled: !!currentUser,
     refetchInterval: 30000 // Check every 30 seconds
   });
 
   const { data: userTags = [] } = useQuery({
     queryKey: ['user-tags', currentUser?.email],
-    queryFn: () => supabase.from('user_tags').select('*'),
+    queryFn: async () => {
+      const res = await supabase.from('user_tags').select('*').eq('user_email', currentUser.email);
+      return res.data || [];
+    },
     enabled: !!currentUser
   });
 
   const { data: allUserTags = [] } = useQuery({
     queryKey: ['all-user-tags'],
-    queryFn: () => supabase.from('user_tags').select('*'),
+    queryFn: async () => {
+      const res = await supabase.from('user_tags').select('*');
+      return res.data || [];
+    },
     enabled: !!currentUser,
   });
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => supabase.from('profiles').select('*'),
+    queryFn: async () => {
+      const res = await supabase.from('profiles').select('*');
+      return res.data || [];
+    },
     enabled: !!currentUser,
   });
 

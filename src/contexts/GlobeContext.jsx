@@ -141,7 +141,11 @@ export function GlobeProvider({ children }) {
     };
   }, [emitPulse]);
 
+  // Persistent rotation for the 3D globe
+  const rotationRef = useRef({ lat: 20, lng: 0, altitude: 2.5 });
+
   const value = {
+
     // Existing
     mode,
     setMode,
@@ -167,7 +171,9 @@ export function GlobeProvider({ children }) {
     setFocusedPlace,
     ghostedContext,
     setGhostedContext,
+    rotationRef,
   };
+
 
   return (
     <GlobeContext.Provider value={value}>

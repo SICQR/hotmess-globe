@@ -125,6 +125,7 @@ export default function L2SellSheet() {
   const [category, setCategory] = useState('');
   const [condition, setCondition] = useState('good');
   const [price, setPrice] = useState('');
+  const [quantity, setQuantity] = useState(1);
   const [openToOffers, setOpenToOffers] = useState(false);
   const [deliveryType, setDeliveryType] = useState('');
   const [pickupNotes, setPickupNotes] = useState('');
@@ -238,16 +239,26 @@ export default function L2SellSheet() {
           .select('display_name, avatar_url, email')
           .eq('id', userId)
           .single();
-        await supabase.from('market_sellers').insert({
+        
+        const { error: sellerError } = await supabase.from('market_sellers').insert({
+          id: userId,
           owner_id: userId,
           display_name: profile?.display_name || 'Seller',
           avatar_url: profile?.avatar_url || null,
           email: profile?.email || '',
           status: 'active',
-        }).then(null, () => {});
+        });
+
+        if (sellerError && sellerError.code !== '23505') { // 23505 is unique violation (already exists)
+          console.error('[market] seller create error:', sellerError);
+          throw sellerError;
+        }
       }
 
-      // Insert listing — new schema fields
+      // Insert listing — align with DB schema
+      const finalQuantity = Math.max(1, parseInt(quantity.toString()) || 1);
+      console.log('[market] Publishing listing:', { title, price, finalQuantity, cover: imageUrls[0] });
+
       const { data: listing, error } = await supabase
         .from('market_listings')
         .insert({
@@ -255,10 +266,10 @@ export default function L2SellSheet() {
           title: title.trim(),
           description: description.trim(),
           category: category,
-          condition: condition, // maps to item_condition if column renamed, or condition
-          price: parseFloat(price), // maps to price_gbp if column renamed, or price
-          images: imageUrls,
-          status: 'active', // go live immediately
+          condition: condition,
+          price_pence: Math.round(parseFloat(price) * 100),
+          quantity: finalQuantity,
+          status: 'active',
           delivery_type: deliveryType || 'both',
           open_to_offers: openToOffers,
           pickup_notes: pickupNotes.trim() || null,
@@ -267,17 +278,32 @@ export default function L2SellSheet() {
         })
         .select('id')
         .single();
+      
+      if (error) {
+        console.error('[market] listing insert error:', error);
+        throw error;
+      }
 
-      if (error) throw error;
-
-      // Insert individual images with sort order
+      // Insert individual images into market_listing_media (standard storage table)
       if (listing?.id && imageUrls.length > 0) {
-        const imageRows = imageUrls.map((url, i) => ({
+        const mediaRows = imageUrls.map((url, i) => ({
+          listing_id: listing.id,
+          storage_path: url,
+          sort: i,
+        }));
+        await supabase.from('market_listing_media').insert(mediaRows).then(null, (e) => {
+           console.warn('[market] media insert skipped or failed:', e.message);
+        });
+      }
+
+      // legacy support: also insert into preloved_listing_images if it exists
+      if (listing?.id && imageUrls.length > 0) {
+        const legacyImageRows = imageUrls.map((url, i) => ({
           listing_id: listing.id,
           image_url: url,
           sort_order: i,
         }));
-        await supabase.from('preloved_listing_images').insert(imageRows).then(null, () => {});
+        await supabase.from('preloved_listing_images').insert(legacyImageRows).then(null, () => {});
       }
 
       setPublished(true);
@@ -385,7 +411,7 @@ export default function L2SellSheet() {
       <StepBar current={step} total={STEPS.length} />
 
       {/* Step body */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1">
         <AnimatePresence mode="wait">
           {/* ── STEP 1: Photos ─────────────────────────────────────── */}
           {stepName === 'photos' && (
@@ -557,6 +583,25 @@ export default function L2SellSheet() {
                     className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl pl-10 pr-4 py-4 text-white text-2xl font-black focus:outline-none transition-colors"
                     style={{ fontSize: '24px', borderColor: price && parseFloat(price) > 0 ? 'rgba(158,125,71,0.3)' : undefined }}
                   />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs uppercase tracking-widest text-white/40 font-black block mb-1.5">Quantity Available</label>
+                <div className="flex items-center gap-4 bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-3">
+                  <button 
+                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                    className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-xl font-bold text-white active:scale-95"
+                  >
+                    -
+                  </button>
+                  <span className="flex-1 text-center text-xl font-black text-white">{quantity}</span>
+                  <button 
+                    onClick={() => setQuantity(q => q + 1)}
+                    className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-xl font-bold text-white active:scale-95"
+                  >
+                    +
+                  </button>
                 </div>
               </div>
 

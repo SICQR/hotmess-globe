@@ -19,7 +19,7 @@ import { motion, type Variants } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   MessageCircle, Heart, Package, RefreshCw,
-  MapPin, Truck, Flag, BookmarkPlus, Shield,
+  MapPin, Truck, Flag, BookmarkPlus, Shield, Plus,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { CardMoreButton } from '@/components/ui/CardMoreButton';
@@ -29,6 +29,7 @@ import {
   type Product,
   type ProductFilters,
 } from '@/lib/data/market';
+
 
 const PRELOVED_BROWN = '#9E7D47';
 const PAGE_SIZE = 20;
@@ -112,7 +113,6 @@ function PrelovedProductCard({ product, index, onTap, onMessage, onSave }: {
       initial="hidden"
       animate="visible"
       variants={gridItemVariants}
-      layout
       className="relative bg-[#1C1C1E] rounded-xl overflow-hidden border border-white/[0.06] group"
     >
       <button
@@ -120,19 +120,23 @@ function PrelovedProductCard({ product, index, onTap, onMessage, onSave }: {
         className="relative block w-full aspect-[3/4] bg-white/[0.03] overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#9E7D47]"
         aria-label={`View ${product.title}`}
       >
-        {product.images[0] ? (
+        {/* Placeholder Fallback */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-white/[0.05] to-transparent">
+          <Package className="w-12 h-12 text-white/10 mb-2" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/20">Photo Loading</span>
+        </div>
+
+        {/* Real Image */}
+        {product.images && product.images.length > 0 && (
           <img
             src={product.images[0]}
             alt={product.title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             loading="lazy"
           />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Package className="w-10 h-10 text-white/[0.08]" />
-          </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
 
         {/* Preloved badge */}
         <span
@@ -300,8 +304,31 @@ export function PrelovedEngine({ search, className = '' }: PrelovedEngineProps) 
     } catch { /* noop */ }
   }, []);
 
+
+
   return (
-    <div ref={scrollRef} className={`flex-1 overflow-y-auto scroll-momentum pb-32 ${className}`}>
+    <div
+      ref={scrollRef}
+      className={`flex-1 overflow-y-auto scroll-momentum pb-32 ${className}`}
+      style={{
+        touchAction: 'pan-y',
+        overscrollBehaviorY: 'contain',
+      }}
+    >
+
+      {/* Header Actions */}
+      <div className="px-4 mt-6 flex items-center justify-between">
+        <h1 className="text-xl font-black text-white uppercase tracking-tight">Marketplace</h1>
+        <button
+          onClick={() => openSheet('sell', {})}
+          className="h-10 px-5 rounded-2xl flex items-center gap-2 active:scale-95 transition-transform font-black text-xs uppercase"
+          style={{ backgroundColor: PRELOVED_BROWN, color: '#000' }}
+        >
+          <Plus className="w-4 h-4" />
+          Sell something
+        </button>
+      </div>
+
       {/* Trust banner */}
       {!search && (
         <div className="mx-4 mt-4 mb-2 px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center gap-2">
@@ -423,7 +450,7 @@ export function PrelovedEngine({ search, className = '' }: PrelovedEngineProps) 
               {categoryFilter ? ` in ${CATEGORIES.find(c => c.value === categoryFilter)?.label ?? categoryFilter}` : ''}
             </h2>
           </div>
-          <div className="grid grid-cols-2 gap-3 px-4 pt-1">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 px-4 pt-1">
             {visibleProducts.map((product, i) => (
               <PrelovedProductCard
                 key={product.id}

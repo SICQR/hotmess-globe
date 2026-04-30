@@ -1,23 +1,27 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
-import { Shield, UserPlus, Clock, Phone, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Shield, UserPlus, Clock, Phone, AlertTriangle, CheckCircle, ArrowLeft } from 'lucide-react';
+import { useLocalPullToRefresh } from '@/hooks/useLocalPullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
+import { useSOSContext } from '@/contexts/SOSContext';
+
 import EmergencyMessageEditor from '../components/safety/EmergencyMessageEditor';
 import CheckInTimerCustomizer from '../components/safety/CheckInTimerCustomizer';
 import AftercareNudge from '../components/safety/AftercareNudge';
 
 export default function Safety() {
   const navigate = useNavigate();
+  const { triggerSOS } = useSOSContext();
   const [currentUser, setCurrentUser] = useState(null);
   const [contactName, setContactName] = useState('');
   const [contactPhone, setContactPhone] = useState('');
@@ -30,10 +34,13 @@ export default function Safety() {
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries();
   }, [queryClient]);
-  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+
+  const { pullDistance, isRefreshing } = useLocalPullToRefresh({
     onRefresh: handleRefresh,
     scrollRef,
   });
+
+
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -195,17 +202,18 @@ export default function Safety() {
       </div>
 
       {/* Scrollable content */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum px-4 py-4 pb-24" {...pullHandlers}>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum px-4 py-4 pb-24">
         <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
+
         {/* Quick actions — clear hierarchy: SOS primary, Fake Call secondary */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           <button
-            onClick={() => navigate('/sos')}
+            onClick={() => triggerSOS()}
             className="py-3.5 font-bold text-sm rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2"
             style={{ background: 'rgba(255,59,48,0.12)', color: '#FF3B30', border: '1px solid rgba(255,59,48,0.25)' }}
           >
-            <AlertTriangle className="w-4 h-4" />
-            SOS
+            <Shield className="w-4 h-4" />
+            SILENT SOS
           </button>
           <button
             onClick={() => navigate('/fake-call')}
@@ -397,10 +405,10 @@ export default function Safety() {
                   How safety works
                 </h3>
                 <ul className="space-y-2 text-xs text-white/40 leading-relaxed">
-                  <li>Hold the shield button (bottom-left) for 3 seconds to trigger SOS. Your location is shared with trusted contacts.</li>
-                  <li>Check-in timers alert contacts if you're overdue. Set one before you go out.</li>
-                  <li>Location is approximate only — never exact address — and only shared during active check-ins or SOS.</li>
-                  <li>Custom emergency messages can be pre-written in Settings above.</li>
+                  <li><strong>SILENT SOS:</strong> Triple-tap the shield button (bottom-left) to trigger a silent SOS. Your location is shared immediately.</li>
+                  <li><strong>THE EXIT:</strong> Long-press (2s) the shield button for an immediate fake incoming call to leave any situation.</li>
+                  <li><strong>THE DISAPPEAR:</strong> Long-press (4s+) the shield button to stealth-wipe local app data and hide your activity.</li>
+                  <li><strong>THE WINDOW:</strong> Check-in timers alert contacts if you're overdue. Your contacts are notified via WhatsApp.</li>
                 </ul>
               </div>
             </div>

@@ -21,7 +21,7 @@ export default function Bookmarks() {
           window.location.href = "/auth";
           return;
         }
-        const { data: { user } } = await supabase.auth.getUser();
+        let { data: { user } } = await supabase.auth.getUser();
       let currentUser; if (!user) { currentUser = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); currentUser = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
         setUser(currentUser);
       } catch (error) {

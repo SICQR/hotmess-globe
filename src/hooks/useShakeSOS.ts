@@ -23,7 +23,7 @@ const STORAGE_KEY      = 'hm_shake_sos_v1';
 const SHAKE_THRESHOLD  = 25;   // m/s² — deliberate shake
 const SHAKE_WINDOW_MS  = 1500; // rolling window for 3 shakes
 const SHAKE_DEBOUNCE   = 300;  // min ms between counted shakes
-const COUNTDOWN_START  = 5;    // seconds before SOS fires
+const COUNTDOWN_START  = 0;    // Trigger immediately after shakes for stealth
 
 export type ShakePermission = 'unknown' | 'granted' | 'denied' | 'not_applicable';
 

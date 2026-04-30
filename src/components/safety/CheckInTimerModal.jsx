@@ -10,13 +10,13 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, X, Check, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { useCheckinTimer } from '@/hooks/useCheckinTimer';
+import { useCheckinTimer } from '@/contexts/CheckinTimerContext';
 
 const PRESETS = [
+  { minutes: 1,   label: '1 min' },
+  { minutes: 2,   label: '2 min' },
   { minutes: 30,  label: '30 min' },
   { minutes: 60,  label: '1 hour' },
-  { minutes: 120, label: '2 hours' },
-  { minutes: 180, label: '3 hours' },
 ];
 
 function fmt(seconds) {

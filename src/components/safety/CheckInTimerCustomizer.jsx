@@ -13,7 +13,7 @@ export default function CheckInTimerCustomizer() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
       setCurrentUser(user);
       setCustomTimers(user.custom_check_in_timers || []);
@@ -36,7 +36,7 @@ export default function CheckInTimerCustomizer() {
     const newTimers = [...customTimers, { hours, label: newLabel.trim() }];
     
     try {
-      const updatePayload = { custom_check_in_timers: newTimers }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
+      const updatePayload = { custom_check_in_timers: newTimers }; let { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
       setCustomTimers(newTimers);
       setNewHours('');
       setNewLabel('');
@@ -49,7 +49,7 @@ export default function CheckInTimerCustomizer() {
   const removeTimer = async (index) => {
     const newTimers = customTimers.filter((_, i) => i !== index);
     try {
-      const updatePayload = { custom_check_in_timers: newTimers }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
+      const updatePayload = { custom_check_in_timers: newTimers }; let { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
       setCustomTimers(newTimers);
       toast.success('Timer removed');
     } catch (error) {

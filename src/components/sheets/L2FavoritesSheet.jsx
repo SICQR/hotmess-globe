@@ -15,7 +15,7 @@ export default function L2FavoritesSheet() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
 
       const { data } = await supabase
@@ -32,7 +32,7 @@ export default function L2FavoritesSheet() {
   }, []);
 
   const handleRemove = async (favoritedId) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    let { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     await supabase.from('user_favorites').delete()
       .eq('user_id', user.id)
@@ -114,3 +114,4 @@ export default function L2FavoritesSheet() {
     </div>
   );
 }
+

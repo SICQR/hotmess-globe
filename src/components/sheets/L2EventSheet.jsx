@@ -61,7 +61,7 @@ export default function L2EventSheet({ id }) {
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
       return { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email };
@@ -495,3 +495,4 @@ export default function L2EventSheet({ id }) {
     </div>
   );
 }
+

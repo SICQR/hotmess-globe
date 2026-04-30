@@ -55,7 +55,7 @@ export default function L2SquadsSheet() {
 
   async function loadData() {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    let { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
     setCurrentUser(user);
 
@@ -97,7 +97,7 @@ export default function L2SquadsSheet() {
     setError('');
     if (!form.name.trim()) { setError('Squad name is required.'); return; }
     setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    let { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); return; }
 
     // Insert squad
@@ -302,3 +302,4 @@ export default function L2SquadsSheet() {
     </div>
   );
 }
+

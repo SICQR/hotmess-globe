@@ -46,7 +46,6 @@ const CONDITION_COLORS = {
 function PrelovedCard({ item, index }) {
   const navigate = useNavigate();
   const conditionColor = CONDITION_COLORS[item.condition] || '#C8962C';
-  const firstImage = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null;
 
   return (
     <motion.div
@@ -57,22 +56,14 @@ function PrelovedCard({ item, index }) {
     >
       <OSCard>
         <div
-          className="h-48 flex items-center justify-center relative"
-          style={{ backgroundColor: `${conditionColor}20` }}
+          className="h-48 flex flex-col items-center justify-center relative bg-white/[0.03]"
         >
-          {firstImage ? (
-            <LazyImage
-              src={firstImage}
-              alt={item.title}
-              className="w-full h-full object-cover"
-              containerClassName="w-full h-full"
-            />
-          ) : (
-            <ShoppingBag className="w-20 h-20" style={{ color: conditionColor }} />
-          )}
+          <ShoppingBag className="w-12 h-12 text-white/10 mb-2" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/20">Preloved</span>
+          
           {/* Condition badge */}
           <div className="absolute top-3 right-3">
-            <OSCardBadge color={conditionColor}>{item.condition}</OSCardBadge>
+            <OSCardBadge color={conditionColor}>{item.condition || 'Preloved'}</OSCardBadge>
           </div>
         </div>
 
@@ -179,7 +170,7 @@ export default function Marketplace() {
         const isAuth = await supabase.auth.getSession().then(r => !!r.data.session);
         if (!isAuth) return;
 
-        const { data: { user } } = await supabase.auth.getUser();
+        let { data: { user } } = await supabase.auth.getUser();
       if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
         setCurrentUser(user);
       } catch (error) {
@@ -203,13 +194,8 @@ export default function Marketplace() {
   const { data: prelovedItems = [], isLoading: prelovedLoading } = useQuery({
     queryKey: ['preloved-listings'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('market_listings')
-        .select('*')
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data;
+      const { getPrelovedProducts } = await import('@/lib/data/market');
+      return getPrelovedProducts();
     },
   });
 
@@ -427,7 +413,6 @@ export default function Marketplace() {
       addShopifyItem({ variantId, quantity: 1 })
         .then(() => {
           toast.success('Added to cart!');
-          openCartDrawer('shopify');
         })
         .catch((error) => toast.error(error?.message || 'Failed to add to cart'));
       return;
@@ -437,7 +422,6 @@ export default function Marketplace() {
       addToCart({ productId: product.id, quantity: 1, currentUser: null })
         .then(() => {
           toast.success('Added to cart! Sign in at checkout to complete.');
-          openCartDrawer('creators');
         })
         .catch((error) => toast.error(error?.message || 'Failed to add to cart'));
       return;
@@ -812,7 +796,7 @@ export default function Marketplace() {
                 description="Be the first to list something! Tap the + button above to sell your preloved gear."
               />
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {prelovedItems.map((item, idx) => (
                   <PrelovedCard key={item.id} item={item} index={idx} />
                 ))}

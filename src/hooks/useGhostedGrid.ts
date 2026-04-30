@@ -76,8 +76,9 @@ function deriveContext(
   }
   // Online with distance
   if (profile.is_online && distanceM != null) {
-    if (distanceM < 100) return { contextType: 'nearby', contextLabel: 'Very close' };
-    return { contextType: 'nearby', contextLabel: `${roundDistance(distanceM)}m away` };
+    const miles = distanceM / 1609.34;
+    if (miles < 0.1) return { contextType: 'nearby', contextLabel: 'Very close' };
+    return { contextType: 'nearby', contextLabel: `${miles.toFixed(1)} mi away` };
   }
   // Recently active
   if (profile.last_seen) {
@@ -125,28 +126,20 @@ export function useGhostedGrid(
   // ── Nearby profiles ───────────────────────────────────────────────────────
   const nearbyQuery = useQuery({
     queryKey: ['ghosted-nearby', myId, myLat, myLng, filterChip],
-    enabled: tab === 'nearby' && !!myId,
+    enabled: tab === 'nearby' && !!myId && myLat != null && myLng != null,
     staleTime: 30_000,
     refetchInterval: 30_000,
     queryFn: async () => {
-      // Fetch profiles active in last 30 min
-      const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
-
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select(`
-          id, email, display_name, username, avatar_url,
-          last_loc_ts, is_online,
-          age, looking_for, is_verified, city, bio,
-          last_seen
-        `)
-        .or(`is_online.eq.true,last_seen.gte.${thirtyMinAgo}`)
-        .neq('id', myId!)
-        .not('display_name', 'is', null)
-        .limit(150);
+      const { data, error } = await supabase.rpc('get_nearby_ghosted', {
+        viewer_id: myId,
+        viewer_lng: myLng,
+        viewer_lat: myLat,
+        radius_meters: 80467, // 50 miles
+        limit_count: 100
+      });
 
       if (error) throw new Error(error.message);
-      return profiles || [];
+      return data || [];
     },
   });
 
@@ -161,8 +154,9 @@ export function useGhostedGrid(
       const now = new Date().toISOString();
       const { data: rnRows } = await supabase
         .from('right_now_status')
-        .select('user_id, status_type, venue_id, expires_at')
+        .select('user_id, intent, expires_at')
         .gte('expires_at', now);
+
 
       const userIds = (rnRows || []).map((r: any) => r.user_id).filter((id: string) => id !== myId);
 
@@ -348,10 +342,11 @@ export function useGhostedGrid(
             contextLabel = 'Moving';
           }
         } else {
-          const statusType = p._rnStatus?.status_type || '';
+          const statusType = p._rnStatus?.intent || '';
           contextLabel = statusType
             ? statusType.charAt(0).toUpperCase() + statusType.slice(1)
             : 'Live';
+
         }
 
         const avatar = p.avatar_url || p.photos?.[0]?.url || null;

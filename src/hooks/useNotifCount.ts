@@ -21,7 +21,7 @@ export function useNotifCount(): { notifCount: number; clearNotifBadge: () => vo
 
   const clearNotifBadge = useCallback(() => {
     if (mountedRef.current) setNotifCount(0);
-    // Mark all as read in the DB (fire-and-forget)
+    // Mark all as read in the DB using the 'read' boolean column
     if (emailRef.current) {
       supabase
         .from('notifications')

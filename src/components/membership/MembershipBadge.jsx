@@ -3,40 +3,40 @@ import { Crown, Zap, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const TIER_CONFIG = {
-  free: {
-    name: 'BASIC',
+  mess: {
+    name: 'MESS',
     icon: Star,
     color: 'text-white/60',
     bgColor: 'bg-white/10',
     borderColor: 'border-white/20',
   },
-  basic: {
-    name: 'BASIC',
-    icon: Star,
-    color: 'text-white/60',
-    bgColor: 'bg-white/10',
-    borderColor: 'border-white/20',
-  },
-  plus: {
-    name: 'PLUS',
+  hotmess: {
+    name: 'HOTMESS',
     icon: Zap,
     color: 'text-[#C8962C]',
     bgColor: 'bg-[#C8962C]/20',
     borderColor: 'border-[#C8962C]',
   },
-  pro: {
-    name: 'CHROME',
+  connected: {
+    name: 'CONNECTED',
     icon: Crown,
-    color: 'text-[#00C2E0]',
-    bgColor: 'bg-[#00C2E0]/20',
-    borderColor: 'border-[#00C2E0]',
+    color: 'text-cyan-400',
+    bgColor: 'bg-cyan-400/20',
+    borderColor: 'border-cyan-400',
   },
-  chrome: {
-    name: 'CHROME',
+  promoter: {
+    name: 'PROMOTER',
     icon: Crown,
-    color: 'text-[#00C2E0]',
-    bgColor: 'bg-[#00C2E0]/20',
-    borderColor: 'border-[#00C2E0]',
+    color: 'text-purple-400',
+    bgColor: 'bg-purple-400/20',
+    borderColor: 'border-purple-400',
+  },
+  venue: {
+    name: 'VENUE',
+    icon: Crown,
+    color: 'text-red-500',
+    bgColor: 'bg-red-500/20',
+    borderColor: 'border-red-500',
   },
 };
 

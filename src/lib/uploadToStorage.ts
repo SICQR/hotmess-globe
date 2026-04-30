@@ -6,19 +6,19 @@ import { supabase } from '@/components/utils/supabaseClient';
  */
 const BUCKET_MAP: Record<string, string> = {
   // Audio uploads (radio, music)
-  audio:            'records-audio',
+  audio: 'records-audio',
   // Event / venue images
-  'event-images':   'records-covers',
+  'event-images': 'records-covers',
   // Chat photo / file attachments
   'chat-attachments': 'chat-uploads',
   // General media (product photos, profile assets, misc)
-  media:            'messmarket-images',
+  media: 'messmarket-images',
   // Profile avatars — same bucket in prod
-  avatars:          'avatars',
+  avatars: 'avatars',
   // Preloved listing images
   'listing-images': 'messmarket-images',
   // General uploads (Go Live photos, beacon images, product form, disputes)
-  uploads:          'messmarket-images',
+  uploads: 'messmarket-images',
 };
 
 /**
@@ -63,32 +63,52 @@ export async function uploadToStorage(
 ): Promise<string> {
   // Client-side validation for image uploads
   if (!options?.skipValidation && file.type.startsWith('image/')) {
-    if (file.size > 5 * 1024 * 1024) throw new Error('File must be under 5 MB');
+    if (file.size > 10 * 1024 * 1024) throw new Error('File must be under 10 MB');
     if (file.size < 1024) throw new Error('File too small — may be corrupt');
 
-    const { width, height } = await getImageDimensions(file);
-    if (width < 200 || height < 200) {
-      throw new Error('Image must be at least 200 × 200 pixels');
-    }
-    const ratio = width / height;
-    if (ratio > 4 || ratio < 0.25) {
-      throw new Error('Image aspect ratio is too extreme (max 4:1)');
+    try {
+      const { width, height } = await getImageDimensions(file);
+      if (width < 50 || height < 50) {
+        throw new Error('Image must be at least 50 × 50 pixels');
+      }
+      const ratio = width / height;
+      if (ratio > 10 || ratio < 0.1) {
+        throw new Error('Image aspect ratio is too extreme');
+      }
+    } catch (dimError) {
+      console.warn('Could not validate image dimensions:', dimError);
+      // Fall through; validation is best-effort
     }
   }
 
   const resolvedBucket = resolveBucket(bucket);
   const ext = file.name.includes('.') ? file.name.split('.').pop() : 'bin';
-  const path = `${userId}/${Date.now()}.${ext}`;
+  const path = `${userId}/${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`;
 
-  const { error } = await supabase.storage
+  console.log(`[storage] 📤 Uploading to bucket: "${resolvedBucket}" (logical: "${bucket}")`);
+  console.log(`[storage] 📂 Path: ${path}`);
+
+  const { data: uploadData, error } = await supabase.storage
     .from(resolvedBucket)
-    .upload(path, file, { upsert: options?.upsert ?? true });
+    .upload(path, file, {
+      upsert: options?.upsert ?? true,
+      contentType: file.type || 'application/octet-stream',
+      cacheControl: '3600'
+    });
 
-  if (error) throw error;
+  if (error) {
+    console.error(`[storage] ❌ Upload FAILED to "${resolvedBucket}":`, error);
+    console.error('Checklist: 1. Does bucket exist? 2. Is there an INSERT policy for authenticated users?');
+    throw error;
+  }
+
+  console.log('[storage] ✅ Upload Success:', uploadData);
 
   const { data: { publicUrl } } = supabase.storage
     .from(resolvedBucket)
     .getPublicUrl(path);
+
+  if (!publicUrl) throw new Error('Failed to generate public URL');
 
   return publicUrl;
 }
@@ -122,7 +142,7 @@ export async function insertProfilePhoto(
     const bucketPath = url.split('/storage/v1/object/public/')[1];
     if (bucketPath) {
       const [bucket, ...rest] = bucketPath.split('/');
-      await supabase.storage.from(bucket).remove([rest.join('/')]).catch(() => {});
+      await supabase.storage.from(bucket).remove([rest.join('/')]).catch(() => { });
     }
     throw dbError;
   }

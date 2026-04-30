@@ -37,12 +37,18 @@ import {
   Eye,
   Lock,
   MapPin,
+  ShoppingBag,
+  Clock,
+  CheckCircle2,
+  Truck,
+  Package,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useBootGuard } from '@/contexts/BootGuardContext';
 import { supabase } from '@/components/utils/supabaseClient';
+import { toast } from 'sonner';
 
-type AdminTab = 'signals' | 'incidents' | 'moderation' | 'density' | 'sellers';
+type AdminTab = 'signals' | 'incidents' | 'moderation' | 'density' | 'sellers' | 'orders';
 
 // ---- Amber spinner ----
 function AmberSpinner({ size = 'w-8 h-8' }: { size?: string }) {
@@ -65,7 +71,7 @@ export default function L2AdminSheet() {
   useEffect(() => {
     const checkAdmin = async () => {
       // First check local profile
-      if (profile?.is_admin || profile?.role === 'admin') {
+      if (profile?.is_admin || profile?.role === 'admin' || profile?.role === 'operator') {
         setIsAdmin(true);
         return;
       }
@@ -131,6 +137,7 @@ export default function L2AdminSheet() {
     { id: 'moderation', label: 'Reports', icon: Shield },
     { id: 'density', label: 'Density', icon: Activity },
     { id: 'sellers', label: 'Sellers', icon: Store },
+    { id: 'orders', label: 'Orders', icon: ShoppingBag },
   ];
 
   return (
@@ -184,7 +191,8 @@ export default function L2AdminSheet() {
         {activeTab === 'incidents' && <IncidentsTab />}
         {activeTab === 'moderation' && <ModerationTab />}
         {activeTab === 'density' && <DensityTab />}
-        {activeTab === 'sellers' && <SellersTab />}
+        { activeTab === 'sellers' && <SellersTab /> }
+        { activeTab === 'orders' && <OrdersTab /> }
       </div>
     </div>
   );
@@ -671,7 +679,7 @@ function SellersTab() {
                   {(listing.category as string) || 'Uncategorized'} &middot; {(listing.condition as string) || ''}
                 </p>
                 <p className="text-xs font-bold text-[#C8962C]">
-                  {listing.price != null ? `\u00A3${listing.price}` : ''}
+                  £{Number(listing.price ?? listing.price_gbp ?? 0).toFixed(2)}
                 </p>
               </div>
               {listing.seller_id && (
@@ -683,6 +691,206 @@ function SellersTab() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// =========================================================================
+// ORDERS TAB
+// =========================================================================
+
+function OrdersTab() {
+  const [orders, setOrders] = useState<Array<Record<string, any>>>([]);
+  const [loading, setLoading] = useState(true);
+  const { openSheet } = useSheet();
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      if (!error) setOrders(data || []);
+    } catch (err) {
+      console.error('[Admin] Orders fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchOrders(); }, []);
+
+  const markAllPaid = async () => {
+    const pending = orders.filter(o => o.status === 'pending_payment');
+    if (pending.length === 0) { toast.success('No pending orders to fix!'); return; }
+    setLoading(true);
+    const ids = pending.map(o => o.id);
+    const { error } = await supabase
+      .from('orders')
+      .update({ status: 'paid', updated_at: new Date().toISOString() })
+      .in('id', ids);
+    if (error) {
+      toast.error('Failed: ' + error.message);
+      setLoading(false);
+      return;
+    }
+    setOrders(prev => prev.map(o => ids.includes(o.id) ? { ...o, status: 'paid' } : o));
+    toast.success(`✅ Marked ${pending.length} order(s) as Paid!`);
+    setLoading(false);
+  };
+
+  const updateStatus = async (orderId: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', orderId);
+      if (error) throw error;
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
+      toast.success('Order status updated');
+
+      const targetOrder = orders.find(o => o.id === orderId);
+      if (targetOrder?.buyer_email) {
+        fetch('/api/email/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: targetOrder.buyer_email,
+            subject: `HOTMESS Order Update: ${status.toUpperCase()}`,
+            html: `<div style="font-family: sans-serif; padding: 20px; background: #111; color: #fff; max-width: 600px; margin: 0 auto; border-radius: 12px;">
+              <h2 style="color: #C8962C; font-weight: 900;">Order Update</h2>
+              <p>Your order <strong>#${orderId.slice(-6).toUpperCase()}</strong> is now: <span style="background: #C8962C; color: #000; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; text-transform: uppercase;">${status}</span>.</p>
+              <p style="color: #888; font-size: 12px; margin-top: 30px;">This is an automated message from the HOTMESS Marketplace.</p>
+            </div>`
+          })
+        }).catch(console.error);
+      }
+    } catch (err) {
+      toast.error('Failed to update order');
+    }
+  };
+
+  const STATUS_CONFIG: Record<string, any> = {
+    pending_payment: { label: 'Awaiting', color: 'text-amber-400', bg: 'bg-amber-400/10' },
+    paid: { label: 'Paid', color: 'text-green-400', bg: 'bg-green-400/10' },
+    shipped: { label: 'Shipped', color: 'text-blue-400', bg: 'bg-blue-400/10' },
+    delivered: { label: 'Done', color: 'text-[#C8962C]', bg: 'bg-[#C8962C]/10' },
+  };
+
+  const totals = {
+    all: orders.length,
+    paid: orders.filter(o => o.status === 'paid').length,
+    pending: orders.filter(o => o.status === 'pending_payment').length,
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold uppercase text-[#8E8E93]">Marketplace Orders</h3>
+        <div className="flex items-center gap-2">
+          {totals.pending > 0 && (
+            <button
+              onClick={markAllPaid}
+              className="text-[9px] font-black uppercase px-2 py-1 rounded-lg bg-green-400/20 text-green-400 border border-green-400/30 active:scale-95 transition-transform"
+            >
+              Fix All ({totals.pending})
+            </button>
+          )}
+          <button onClick={fetchOrders} className="text-[#C8962C] transition-transform active:rotate-180">
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-[#1C1C1E] rounded-xl p-3 border border-white/5">
+          <p className="text-xl font-black text-white">{totals.all}</p>
+          <p className="text-[10px] font-bold text-[#8E8E93] uppercase">Total</p>
+        </div>
+        <div className="bg-[#1C1C1E] rounded-xl p-3 border border-white/5">
+          <p className="text-xl font-black text-green-400">{totals.paid}</p>
+          <p className="text-[10px] font-bold text-[#8E8E93] uppercase">Paid</p>
+        </div>
+        <div className="bg-[#1C1C1E] rounded-xl p-3 border border-white/5">
+          <p className="text-xl font-black text-amber-400">{totals.pending}</p>
+          <p className="text-[10px] font-bold text-[#8E8E93] uppercase">Awaiting</p>
+        </div>
+      </div>
+
+      <div className="space-y-3 pb-8">
+        {loading && orders.length === 0 ? (
+          <div className="flex flex-col items-center py-12">
+            <AmberSpinner />
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="text-center py-12 bg-white/5 rounded-2xl border border-dashed border-white/10">
+            <ShoppingBag className="w-8 h-8 text-white/10 mx-auto mb-2" />
+            <p className="text-xs text-white/30 uppercase font-black">No orders found</p>
+          </div>
+        ) : (
+          orders.map((order) => {
+            const cfg = STATUS_CONFIG[order.status] || { label: order.status, color: 'text-white/40', bg: 'bg-white/5' };
+            return (
+              <div 
+                key={order.id} 
+                onClick={() => openSheet('order', { orderId: order.id, fromAdmin: true })}
+                className="bg-[#1C1C1E] rounded-xl border border-white/[0.06] p-4 flex items-center justify-between active:scale-[0.98] transition-transform cursor-pointer"
+              >
+                <div className="flex flex-col gap-0.5 min-w-0 text-left">
+                  <p className="text-white font-black text-sm truncate">#{order.id.slice(-6).toUpperCase()}</p>
+                  <p className="text-white/30 text-[10px] uppercase font-bold tracking-tight">
+                    {new Date(order.created_at).toLocaleDateString()} · {order.buyer_name || order.buyer_email?.split('@')[0] || 'User'}
+                  </p>
+                  <p className="text-[#C8962C]/50 text-[9px] uppercase font-black">
+                    Seller: {order.seller_id?.slice(0,8)}...
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="text-[#C8962C] font-black text-sm">£{(order.total_gbp || 0).toFixed(2)}</p>
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${cfg.color} ${cfg.bg}`}>
+                      {cfg.label}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    {order.status === 'pending_payment' && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); updateStatus(order.id, 'paid'); }}
+                        title="Mark Paid"
+                        className="w-8 h-8 rounded-lg bg-green-400/20 flex items-center justify-center border border-green-400/30 active:scale-90 transition-transform"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-green-400" />
+                      </button>
+                    )}
+                    {order.status === 'paid' && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); updateStatus(order.id, 'shipped'); }}
+                        title="Mark Shipped"
+                        className="w-8 h-8 rounded-lg bg-blue-400/20 flex items-center justify-center border border-blue-400/30 active:scale-90 transition-transform"
+                      >
+                        <Truck className="w-4 h-4 text-blue-400" />
+                      </button>
+                    )}
+                    {order.status === 'shipped' && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); updateStatus(order.id, 'delivered'); }}
+                        title="Mark Delivered"
+                        className="w-8 h-8 rounded-lg bg-[#C8962C]/20 flex items-center justify-center border border-[#C8962C]/30 active:scale-90 transition-transform"
+                      >
+                        <Package className="w-4 h-4 text-[#C8962C]" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }

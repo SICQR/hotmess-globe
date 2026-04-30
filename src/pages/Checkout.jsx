@@ -68,7 +68,7 @@ export default function Checkout() {
           return;
         }
 
-        const { data: { user } } = await supabase.auth.getUser();
+        let { data: { user } } = await supabase.auth.getUser();
       if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
         setCurrentUser(user);
       } catch (error) {
@@ -101,6 +101,36 @@ export default function Checkout() {
         // Non-fatal: keep guest cart local if merge fails.
       });
   }, [currentUser?.email, queryClient]);
+
+  // AUTO-APPLY 10% FIRST PURCHASE DISCOUNT
+  useEffect(() => {
+    if (!currentUser?.email || appliedPromo) return;
+    
+    const applyFirstPurchaseDiscount = async () => {
+      const storageKey = `fp_checked_xp_${currentUser.email}`;
+      try {
+        if (sessionStorage.getItem(storageKey)) return;
+        sessionStorage.setItem(storageKey, 'true');
+      } catch {
+        // ignore
+      }
+
+      const { count, error } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .eq('buyer_email', currentUser.email);
+        
+      if (count === 0 && !error) {
+        const promo = PROMO_CODES['HOTMESS10'];
+        if (promo) {
+          setAppliedPromo({ ...promo, code: 'HOTMESS10' });
+          toast.success("First purchase 10% discount auto-applied!");
+        }
+      }
+    };
+    
+    applyFirstPurchaseDiscount();
+  }, [currentUser?.email, appliedPromo]);
 
   const { data: cartItems = [] } = useQuery({
     queryKey: ['cart', currentUser?.email || 'guest'],
@@ -265,7 +295,8 @@ export default function Checkout() {
       }
 
       // CRITICAL: Fetch fresh data and validate atomically
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
+      let freshUser;
       if (!user) { freshUser = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); freshUser = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
       const currentXP = freshUser.xp || 0;
       
@@ -323,7 +354,7 @@ export default function Checkout() {
 
         // Step 2: Deduct XP after inventory is reserved (safer order)
         const newXP = currentXP - totalXP;
-        const updatePayload = { xp: newXP }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
+        const updatePayload = { xp: newXP }; let { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
 
         // Step 3: Create orders (safe to do now that inventory & XP are locked)
         for (const [seller, items] of Object.entries(sellers)) {
@@ -391,7 +422,7 @@ export default function Checkout() {
         
         // Rollback XP
         try {
-          const updatePayload = { xp: currentXP }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
+          const updatePayload = { xp: currentXP }; let { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
         } catch (rollbackError) {
           console.error('XP rollback failed:', rollbackError);
         }

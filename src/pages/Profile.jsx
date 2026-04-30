@@ -570,7 +570,7 @@ export default function Profile() {
         seller_tagline: profileType === 'seller' ? sellerTagline.trim() : null,
         seller_bio: profileType === 'seller' ? sellerBio.trim() : null,
         shop_banner_url: profileType === 'seller' ? shopBannerUrl.trim() : null,
-      }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
+      }; let { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
       toast.success('Profile complete!');
 
       const next = typeof nextParam === 'string' ? nextParam.trim() : '';
@@ -1267,3 +1267,4 @@ export default function Profile() {
     </ErrorBoundary>
   );
 }
+

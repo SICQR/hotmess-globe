@@ -29,15 +29,24 @@ export default function NotificationCenter({ currentUser }) {
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', currentUser?.email],
-    queryFn: () => {
+    queryFn: async () => {
+      let res;
       if (currentUser?.role === 'admin') {
-        return supabase.from('notifications').select('*').eq(
-          { user_email: ['admin', currentUser.email] },
-          '-created_date',
-          50
-        );
+        res = await supabase
+          .from('notifications')
+          .select('*')
+          .in('user_email', ['admin', currentUser.email])
+          .order('created_date', { ascending: false })
+          .limit(50);
+      } else {
+        res = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_email', currentUser.email)
+          .order('created_date', { ascending: false })
+          .limit(50);
       }
-      return supabase.from('notifications').select('*').eq({ user_email: currentUser.email }, '-created_date', 50);
+      return res.data || [];
     },
     enabled: !!currentUser,
     refetchInterval: 60000, // Fallback poll every 60 seconds (reduced since we have real-time)

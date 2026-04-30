@@ -6,16 +6,16 @@
  */
 
 const BRAND_COLORS = {
-  primary: '#C8962C',
-  secondary: '#050507',
-  accent: '#C8962C',
-  dark: '#050507',
+  primary: '#FFFFFF',
+  secondary: '#000000',
+  accent: '#FFFFFF',
+  dark: '#000000',
   lightText: '#FFFFFF',
   mutedText: '#8E8E93',
 };
 
 /**
- * Base email template wrapper
+ * Base email template wrapper - "Noir" Design
  */
 function emailWrapper(content, preheader = '') {
   return `
@@ -40,65 +40,73 @@ function emailWrapper(content, preheader = '') {
     }
     .header {
       text-align: center;
-      padding: 40px 0 20px;
-      border-bottom: 2px solid ${BRAND_COLORS.primary};
+      padding: 60px 0 40px;
     }
     .logo {
       font-size: 32px;
       font-weight: 900;
-      letter-spacing: 2px;
-      color: ${BRAND_COLORS.primary};
+      letter-spacing: 4px;
+      color: #FFFFFF;
+      text-transform: uppercase;
     }
     .content {
-      padding: 40px 20px;
+      padding: 0 20px 60px;
     }
     .button {
       display: inline-block;
-      padding: 14px 32px;
-      background-color: ${BRAND_COLORS.primary};
-      color: #FFFFFF;
+      padding: 16px 40px;
+      background-color: #FFFFFF;
+      color: #000000;
       text-decoration: none;
-      font-weight: bold;
+      font-weight: 900;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      border-radius: 0;
+      letter-spacing: 2px;
+      font-size: 14px;
     }
     .footer {
       text-align: center;
-      padding: 20px;
+      padding: 40px 20px;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
-      font-size: 12px;
-      color: ${BRAND_COLORS.mutedText};
+      font-size: 11px;
+      color: #555555;
+      letter-spacing: 1px;
     }
     .info-box {
-      background-color: rgba(255, 255, 255, 0.05);
-      border-left: 4px solid ${BRAND_COLORS.primary};
-      padding: 16px;
-      margin: 20px 0;
+      background-color: #0A0A0A;
+      border: 1px solid #222;
+      padding: 24px;
+      margin: 32px 0;
     }
     a {
-      color: ${BRAND_COLORS.primary};
+      color: #FFFFFF;
+      text-decoration: underline;
+    }
+    h1, h2, h3 {
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 0;
     }
   </style>
 </head>
 <body>
-  <div style="display:none;font-size:1px;color:${BRAND_COLORS.dark};line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+  <div style="display:none;font-size:1px;color:#000000;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
     ${preheader}
   </div>
   <div class="container">
     <div class="header">
       <div class="logo">HOTMESS</div>
-      <div style="font-size: 10px; letter-spacing: 2px; color: ${BRAND_COLORS.mutedText};">LONDON OS</div>
+      <div style="font-size: 9px; letter-spacing: 3px; color: #444; margin-top: 8px;">LONDON OS • SPRINT 2</div>
     </div>
     <div class="content">
       ${content}
     </div>
     <div class="footer">
-      <p>© ${new Date().getFullYear()} HOTMESS London OS Limited</p>
-      <p>18+ • Consent-first • Care always</p>
-      <p>
-        <a href="https://hotmess.london/privacy" style="color: ${BRAND_COLORS.mutedText};">Privacy Policy</a> •
-        <a href="https://hotmess.london/terms" style="color: ${BRAND_COLORS.mutedText};">Terms of Service</a>
+      <p>HOTMESS LONDON OS LIMITED</p>
+      <p>18+ • CONSENT-FIRST • NO CHAOS AT THE DOOR</p>
+      <p style="margin-top: 20px;">
+        <a href="https://hotmess.london/privacy" style="color: #444;">PRIVACY</a> •
+        <a href="https://hotmess.london/terms" style="color: #444;">TERMS</a>
       </p>
     </div>
   </div>
@@ -108,297 +116,125 @@ function emailWrapper(content, preheader = '') {
 }
 
 /**
- * Welcome Email - Sent when user signs up
+ * EMAIL 1: Magic Link Email
  */
-export function welcomeEmail(userName) {
+export function magicLinkEmail(link) {
   const content = `
-    <h1 style="color: ${BRAND_COLORS.primary}; text-transform: uppercase; font-size: 28px;">Welcome to HOTMESS!</h1>
-    <p>Hey ${userName || 'there'},</p>
-    <p>Welcome to the global nightlife OS. You're now part of a community that prioritizes consent, safety, and authentic connections.</p>
+    <h1>Sign in to HOTMESS</h1>
+    <p style="font-size: 16px; line-height: 1.6; margin-bottom: 32px; color: #CCCCCC;">
+      Tap the button below to sign in to your account instantly. This link is valid for 15 minutes.
+    </p>
+    <div style="text-align: center; margin: 48px 0;">
+      <a href="${link}" class="button">SIGN IN NOW</a>
+    </div>
+    <p style="color: #555555; font-size: 12px; line-height: 1.4; text-align: center;">
+      If you didn't request this, you can safely ignore this email.
+    </p>
+  `;
+  return emailWrapper(content, 'Your HOTMESS sign-in link');
+}
+
+/**
+ * EMAIL 2: Membership Confirmation
+ */
+export function membershipConfirmation(tierName) {
+  const content = `
+    <h1>Welcome to ${tierName}</h1>
+    <p style="font-size: 16px; line-height: 1.6; margin-bottom: 24px; color: #CCCCCC;">
+      Your membership is now active. You have unlocked premium access to the HOTMESS ecosystem.
+    </p>
     
     <div class="info-box">
-      <h3 style="margin-top: 0; text-transform: uppercase; font-size: 14px; letter-spacing: 1px;">Quick Start Guide:</h3>
-      <ul style="margin: 0; padding-left: 20px;">
-        <li>Complete your profile to connect with others</li>
-        <li>Explore events happening near you</li>
-        <li>Check out the marketplace for tickets and merch</li>
-        <li>Set up safety check-ins before meeting people</li>
+      <h3 style="font-size: 12px; color: #666; margin-bottom: 16px;">UNLOCKED FEATURES:</h3>
+      <ul style="padding-left: 20px; color: #FFFFFF; line-height: 2;">
+        <li>Full Messaging & Ghosted Access</li>
+        <li>Priority Event Discovery</li>
+        <li>Unlimited Boos & Connections</li>
+        <li>Exclusive ${tierName} Profile Badge</li>
       </ul>
     </div>
     
-    <p style="text-align: center; margin: 30px 0;">
-      <a href="https://hotmess.london/profile/setup" class="button">Complete Your Profile</a>
+    <p style="font-size: 16px; line-height: 1.6; margin-bottom: 32px; color: #CCCCCC;">
+      Your status has been updated across the OS. Open the app to start your session.
     </p>
     
-    <p>Questions? Check out our <a href="https://hotmess.london/help">Help Center</a> or reach out to <a href="mailto:support@hotmess.london">support@hotmess.london</a>.</p>
-    
-    <p>See you out there,<br><strong>The HOTMESS Team</strong></p>
+    <div style="text-align: center; margin: 48px 0;">
+      <a href="https://hotmess.london" class="button">OPEN THE APP</a>
+    </div>
   `;
-  return emailWrapper(content, 'Welcome to HOTMESS - Complete your profile and start exploring');
+  return emailWrapper(content, `Welcome to HOTMESS ${tierName}`);
 }
 
 /**
- * Support Ticket Created - Confirmation for user
+ * EMAIL 3: Shopify Order Confirmation
  */
-export function supportTicketCreated(ticketNumber, subject, category) {
-  const content = `
-    <h1 style="color: ${BRAND_COLORS.primary}; text-transform: uppercase; font-size: 28px;">Support Ticket Created</h1>
-    <p>We've received your support request and our team is on it.</p>
-    
-    <div class="info-box">
-      <p style="margin: 5px 0;"><strong>Ticket #:</strong> ${ticketNumber}</p>
-      <p style="margin: 5px 0;"><strong>Subject:</strong> ${subject}</p>
-      <p style="margin: 5px 0;"><strong>Category:</strong> ${category}</p>
-    </div>
-    
-    <p><strong>What happens next?</strong></p>
-    <ul>
-      <li>Our team will review your ticket within 24-48 hours</li>
-      <li>Safety concerns are prioritized and addressed within 24 hours</li>
-      <li>You'll receive an email when we respond</li>
-    </ul>
-    
-    <p style="text-align: center; margin: 30px 0;">
-      <a href="https://hotmess.london/contact" class="button">View Ticket</a>
-    </p>
-    
-    <p>Need urgent help? Email us at <a href="mailto:support@hotmess.london">support@hotmess.london</a> or for safety issues: <a href="mailto:safety@hotmess.london">safety@hotmess.london</a></p>
-  `;
-  return emailWrapper(content, `Support ticket #${ticketNumber} received`);
-}
-
-/**
- * Support Ticket Response - Admin responded to ticket
- */
-export function supportTicketResponse(ticketNumber, subject, adminName, responsePreview) {
-  const content = `
-    <h1 style="color: ${BRAND_COLORS.primary}; text-transform: uppercase; font-size: 28px;">New Response to Your Ticket</h1>
-    <p>Our support team has responded to your ticket.</p>
-    
-    <div class="info-box">
-      <p style="margin: 5px 0;"><strong>Ticket #:</strong> ${ticketNumber}</p>
-      <p style="margin: 5px 0;"><strong>Subject:</strong> ${subject}</p>
-      <p style="margin: 5px 0;"><strong>From:</strong> ${adminName || 'HOTMESS Support'}</p>
-    </div>
-    
-    <div style="background-color: rgba(255, 255, 255, 0.03); padding: 16px; margin: 20px 0; border-radius: 4px;">
-      <p style="margin: 0; color: ${BRAND_COLORS.mutedText}; font-style: italic;">
-        ${responsePreview?.substring(0, 200)}${responsePreview?.length > 200 ? '...' : ''}
-      </p>
-    </div>
-    
-    <p style="text-align: center; margin: 30px 0;">
-      <a href="https://hotmess.london/contact" class="button">View Full Response</a>
-    </p>
-  `;
-  return emailWrapper(content, `New response to ticket #${ticketNumber}`);
-}
-
-/**
- * Subscription Confirmation - User upgraded membership
- */
-export function subscriptionConfirmation(tierName, price, billingCycle) {
-  const content = `
-    <h1 style="color: ${BRAND_COLORS.primary}; text-transform: uppercase; font-size: 28px;">Subscription Confirmed!</h1>
-    <p>Thank you for upgrading to <strong>${tierName}</strong>. Your premium features are now active.</p>
-    
-    <div class="info-box">
-      <p style="margin: 5px 0;"><strong>Plan:</strong> ${tierName}</p>
-      <p style="margin: 5px 0;"><strong>Price:</strong> ${price}/${billingCycle}</p>
-      <p style="margin: 5px 0;"><strong>Next billing date:</strong> ${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
-    </div>
-    
-    <p><strong>Your ${tierName} benefits:</strong></p>
-    ${tierName.toUpperCase() === 'PLUS' ? `
-      <ul>
-        <li>2x XP Multiplier on all actions</li>
-        <li>Stealth Mode (browse anonymously)</li>
-        <li>Blurred profile viewers</li>
-        <li>Priority in Right Now feed</li>
-        <li>Exclusive PLUS badge</li>
-      </ul>
-    ` : tierName.toUpperCase() === 'CHROME' ? `
-      <ul>
-        <li>Everything in PLUS</li>
-        <li>5x XP Multiplier</li>
-        <li>See who viewed your profile (unmasked)</li>
-        <li>Premium support</li>
-        <li>Early access to new features</li>
-        <li>Exclusive CHROME badge</li>
-      </ul>
-    ` : ''}
-    
-    <p style="text-align: center; margin: 30px 0;">
-      <a href="https://hotmess.london/membership" class="button">Manage Subscription</a>
-    </p>
-    
-    <p style="font-size: 12px; color: ${BRAND_COLORS.mutedText};">
-      You can cancel your subscription at any time from your account settings. 
-      Your access will continue until the end of your billing period.
-    </p>
-  `;
-  return emailWrapper(content, `Welcome to ${tierName} membership!`);
-}
-
-/**
- * Payment Receipt - Successful payment
- */
-export function paymentReceipt(orderNumber, items, total, date) {
+export function shopifyOrderConfirmation(orderId, items = [], total = 'N/A') {
   const itemsHtml = items.map(item => `
-    <tr>
-      <td style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);">${item.name}</td>
-      <td style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${item.quantity}</td>
-      <td style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${item.price}</td>
-    </tr>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #1A1A1A; padding-bottom: 12px;">
+      <span style="color: #FFFFFF;">${item.title || item.name} x ${item.qty || item.quantity}</span>
+      <span style="color: #FFFFFF; font-weight: bold;">${item.price}</span>
+    </div>
   `).join('');
 
   const content = `
-    <h1 style="color: ${BRAND_COLORS.primary}; text-transform: uppercase; font-size: 28px;">Payment Receipt</h1>
-    <p>Thank you for your purchase!</p>
+    <h1>Order Confirmed</h1>
+    <p style="font-size: 16px; line-height: 1.6; margin-bottom: 32px; color: #CCCCCC;">
+      Your HOTMESS order is confirmed and is being processed for fulfillment.
+    </p>
     
     <div class="info-box">
-      <p style="margin: 5px 0;"><strong>Order #:</strong> ${orderNumber}</p>
-      <p style="margin: 5px 0;"><strong>Date:</strong> ${date || new Date().toLocaleDateString()}</p>
+      <p style="font-size: 11px; color: #555; margin-bottom: 20px;">ORDER #${orderId.toUpperCase()}</p>
+      ${itemsHtml}
+      <div style="display: flex; justify-content: space-between; margin-top: 20px; border-top: 2px solid #FFFFFF; padding-top: 20px;">
+        <span style="color: #FFFFFF; font-weight: 900;">TOTAL</span>
+        <span style="color: #FFFFFF; font-weight: 900;">${total}</span>
+      </div>
     </div>
     
-    <table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
-      <thead>
-        <tr style="border-bottom: 2px solid ${BRAND_COLORS.primary};">
-          <th style="padding: 12px; text-align: left; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">Item</th>
-          <th style="padding: 12px; text-align: right; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">Qty</th>
-          <th style="padding: 12px; text-align: right; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">Price</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${itemsHtml}
-        <tr>
-          <td colspan="2" style="padding: 12px; font-weight: bold; text-transform: uppercase;">Total</td>
-          <td style="padding: 12px; text-align: right; font-weight: bold; color: ${BRAND_COLORS.primary};">${total}</td>
-        </tr>
-      </tbody>
-    </table>
+    <div style="margin: 32px 0;">
+      <h3 style="font-size: 12px; color: #666; margin-bottom: 8px;">FULFILLMENT:</h3>
+      <p style="font-size: 14px; color: #FFFFFF;">3-5 Business Days (Tracked)</p>
+    </div>
     
-    <p style="text-align: center; margin: 30px 0;">
-      <a href="https://hotmess.london/orders" class="button">View Order Details</a>
-    </p>
-    
-    <p style="font-size: 12px; color: ${BRAND_COLORS.mutedText};">
-      Questions about your order? Contact us at <a href="mailto:support@hotmess.london">support@hotmess.london</a>
-    </p>
+    <div style="text-align: center; margin: 48px 0;">
+      <a href="https://hotmess.london/orders" class="button">TRACK ORDER</a>
+    </div>
   `;
-  return emailWrapper(content, `Receipt for order #${orderNumber}`);
+  return emailWrapper(content, 'Your HOTMESS order is confirmed');
 }
 
 /**
- * Safety Check-in Reminder - Remind user about safety check-in
+ * EMAIL 4: Preloved Sale Confirmation (Buyer)
  */
-export function safetyCheckInReminder(userName, checkInTime, meetingDetails) {
+export function prelovedSaleConfirmation(itemName, price, sellerName) {
   const content = `
-    <h1 style="color: ${BRAND_COLORS.accent}; text-transform: uppercase; font-size: 28px;">Safety Check-in Reminder</h1>
-    <p>Hey ${userName},</p>
-    <p>This is your friendly reminder about your upcoming safety check-in.</p>
-    
-    <div class="info-box" style="border-left-color: ${BRAND_COLORS.accent};">
-      <p style="margin: 5px 0;"><strong>Check-in time:</strong> ${checkInTime}</p>
-      ${meetingDetails ? `<p style="margin: 5px 0;"><strong>Meeting:</strong> ${meetingDetails}</p>` : ''}
-    </div>
-    
-    <p><strong>How it works:</strong></p>
-    <ul>
-      <li>At the scheduled time, you'll receive a notification</li>
-      <li>Confirm you're safe with a simple tap</li>
-      <li>If you don't respond, your emergency contacts will be notified</li>
-    </ul>
-    
-    <p style="text-align: center; margin: 30px 0;">
-      <a href="https://hotmess.london/care" class="button">Manage Safety Settings</a>
+    <h1>You bought ${itemName}</h1>
+    <p style="font-size: 16px; line-height: 1.6; margin-bottom: 32px; color: #CCCCCC;">
+      Successfully purchased from the Preloved Marketplace.
     </p>
-    
-    <p style="color: ${BRAND_COLORS.accent};">Your safety is our priority. Always meet in public places and trust your instincts.</p>
-  `;
-  return emailWrapper(content, 'Safety check-in reminder');
-}
-
-/**
- * Event RSVP Confirmation - User RSVPed to event
- */
-export function eventRSVPConfirmation(eventName, eventDate, eventLocation, eventUrl) {
-  const content = `
-    <h1 style="color: ${BRAND_COLORS.secondary}; text-transform: uppercase; font-size: 28px;">You're Going!</h1>
-    <p>Your RSVP has been confirmed.</p>
-    
-    <div class="info-box" style="border-left-color: ${BRAND_COLORS.secondary};">
-      <h3 style="margin: 0 0 10px 0; color: ${BRAND_COLORS.secondary}; text-transform: uppercase;">${eventName}</h3>
-      <p style="margin: 5px 0;"><strong>Date:</strong> ${eventDate}</p>
-      <p style="margin: 5px 0;"><strong>Location:</strong> ${eventLocation}</p>
-    </div>
-    
-    <p><strong>Before you go:</strong></p>
-    <ul>
-      <li>Set up a safety check-in for peace of mind</li>
-      <li>Review the event details and dress code</li>
-      <li>Invite friends to join you</li>
-    </ul>
-    
-    <p style="text-align: center; margin: 30px 0;">
-      <a href="${eventUrl}" class="button">View Event Details</a>
-    </p>
-  `;
-  return emailWrapper(content, `RSVP confirmed: ${eventName}`);
-}
-
-/**
- * Password Reset Email
- */
-export function passwordResetEmail(resetLink, userName) {
-  const content = `
-    <h1 style="color: ${BRAND_COLORS.primary}; text-transform: uppercase; font-size: 28px;">Reset Your Password</h1>
-    <p>Hey ${userName || 'there'},</p>
-    <p>We received a request to reset your password. Click the button below to create a new password.</p>
-    
-    <p style="text-align: center; margin: 30px 0;">
-      <a href="${resetLink}" class="button">Reset Password</a>
-    </p>
-    
-    <div class="info-box" style="border-left-color: #FFA500;">
-      <p style="margin: 0; color: #FFA500;">
-        <strong>⚠️ Security Notice:</strong> This link will expire in 1 hour. 
-        If you didn't request this, please ignore this email and your password will remain unchanged.
-      </p>
-    </div>
-    
-    <p style="font-size: 12px; color: ${BRAND_COLORS.mutedText};">
-      For security reasons, we cannot tell you what your current password is. 
-      We can only help you reset it to a new one.
-    </p>
-  `;
-  return emailWrapper(content, 'Reset your HOTMESS password');
-}
-
-/**
- * Admin notification for new support ticket
- */
-export function adminNewTicketNotification(ticketNumber, userEmail, subject, category, priority, message) {
-  const priorityColor = priority === 'urgent' ? '#FF0000' : priority === 'high' ? '#FFA500' : '#FFFFFF';
-  
-  const content = `
-    <h1 style="color: ${BRAND_COLORS.primary}; text-transform: uppercase; font-size: 28px;">New Support Ticket</h1>
     
     <div class="info-box">
-      <p style="margin: 5px 0;"><strong>Ticket #:</strong> ${ticketNumber}</p>
-      <p style="margin: 5px 0;"><strong>From:</strong> ${userEmail}</p>
-      <p style="margin: 5px 0;"><strong>Subject:</strong> ${subject}</p>
-      <p style="margin: 5px 0;"><strong>Category:</strong> ${category}</p>
-      <p style="margin: 5px 0;"><strong>Priority:</strong> <span style="color: ${priorityColor};">${priority.toUpperCase()}</span></p>
+      <div style="margin-bottom: 24px;">
+        <p style="font-size: 11px; color: #555; margin: 0 0 4px 0;">ITEM</p>
+        <p style="font-size: 18px; font-weight: 900; margin: 0;">${itemName}</p>
+      </div>
+      <div style="margin-bottom: 24px;">
+        <p style="font-size: 11px; color: #555; margin: 0 0 4px 0;">PRICE</p>
+        <p style="font-size: 18px; font-weight: 900; margin: 0;">${price}</p>
+      </div>
+      <div>
+        <p style="font-size: 11px; color: #555; margin: 0 0 4px 0;">SELLER</p>
+        <p style="font-size: 16px; margin: 0;">${sellerName}</p>
+      </div>
     </div>
     
-    <div style="background-color: rgba(255, 255, 255, 0.03); padding: 16px; margin: 20px 0; border-radius: 4px;">
-      <p style="margin: 0; white-space: pre-wrap;">${message?.substring(0, 500)}${message?.length > 500 ? '...' : ''}</p>
-    </div>
-    
-    <p style="text-align: center; margin: 30px 0;">
-      <a href="https://hotmess.london/admin" class="button">View in Admin Dashboard</a>
+    <p style="font-size: 14px; line-height: 1.6; color: #888;">
+      Arranging collection or shipping? Message the seller directly in the Ghosted tab.
     </p>
+    
+    <div style="text-align: center; margin: 48px 0;">
+      <a href="https://hotmess.london/ghosted" class="button">MESSAGE SELLER</a>
+    </div>
   `;
-  return emailWrapper(content, `[${priority.toUpperCase()}] New support ticket #${ticketNumber}`);
+  return emailWrapper(content, `You bought ${itemName}`);
 }

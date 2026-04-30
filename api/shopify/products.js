@@ -125,6 +125,11 @@ const PRODUCT_FIELDS = `
   tags
   featuredImage { url altText }
   images(first: 10) { nodes { url altText } }
+  vendor
+  options {
+    name
+    values
+  }
   variants(first: 25) {
     nodes {
       id
@@ -132,6 +137,10 @@ const PRODUCT_FIELDS = `
       availableForSale
       price { amount currencyCode }
       compareAtPrice { amount currencyCode }
+      selectedOptions {
+        name
+        value
+      }
     }
   }
 `;

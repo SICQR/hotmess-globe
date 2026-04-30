@@ -8,12 +8,17 @@ import {
   cartUpdateLines,
 } from '@/features/shop/api/shopifyStorefront';
 
+import { toast } from 'sonner';
+import { supabase } from '@/components/utils/supabaseClient';
+
 const STORAGE_KEY = 'shopify_cart_id_v1';
 
 const isDisallowedCheckoutHost = (url) => {
   try {
     const u = new URL(String(url));
     const host = (u.host || '').toLowerCase();
+    const isBranded = host === 'shop.hotmessldn.com' || host === 'hotmessldn.com';
+    if (isBranded) return false;
     return host.includes('myshopify.com') || host.includes('shopify.com') || host.includes('shop.app');
   } catch {
     return false;
@@ -117,20 +122,75 @@ export function ShopCartProvider({ children }) {
   const addItem = useCallback(
     async ({ variantId, quantity = 1 }) => {
       const qty = Number.isFinite(Number(quantity)) ? Number(quantity) : 1;
+      const isMock = String(variantId || '').startsWith('mock_');
+
+      // 1. MOCK FALLBACK: If it's a mock variant, manage locally
+      if (isMock) {
+        setCart((prev) => {
+          const currentLines = prev?.lines?.nodes || [];
+          const existing = currentLines.find((l) => l.merchandise?.id === variantId);
+          
+          let nextLines;
+          if (existing) {
+            nextLines = currentLines.map((l) => 
+              l.merchandise?.id === variantId ? { ...l, quantity: l.quantity + qty } : l
+            );
+          } else {
+            nextLines = [...currentLines, {
+              id: `line_${Math.random().toString(36).slice(2)}`,
+              quantity: qty,
+              merchandise: {
+                id: variantId,
+                price: { amount: '10.00', currencyCode: 'GBP' }, // fallback
+                product: { title: 'Internal Product', handle: 'internal' }
+              }
+            }];
+          }
+
+          const subtotal = nextLines.reduce((acc, l) => acc + (parseFloat(l.merchandise.price.amount) * l.quantity), 0);
+
+          return {
+            ...prev,
+            id: prev?.id || 'mock_cart',
+            totalQuantity: (prev?.totalQuantity || 0) + qty,
+            lines: { nodes: nextLines },
+            cost: {
+              subtotalAmount: { amount: subtotal.toFixed(2), currencyCode: 'GBP' },
+              totalAmount: { amount: subtotal.toFixed(2), currencyCode: 'GBP' }
+            }
+          };
+        });
+        toast.success("Added to local cart (Mock Mode)");
+        return;
+      }
+
+      // 2. STANDARD SHOPIFY FETCH
       const lines = [{ variantId, quantity: qty }];
-
-      // Always add via cartLinesAdd to avoid accidentally double-adding
-      // when a cart is created with initial lines.
-      const current = cart?.id ? cart : await ensureCart();
-      if (!current?.id) throw new Error('Missing cart id');
-
+      
       setIsLoading(true);
       setLastError(null);
+
       try {
-        const data = await cartAddLines({ cartId: current.id, lines });
+        if (!cart?.id) {
+          const created = await ensureCart({ initialLines: lines });
+          return created;
+        }
+
+        const data = await cartAddLines({ cartId: cart.id, lines });
         setCart(data?.cart || null);
         return data?.cart || null;
       } catch (err) {
+        // If Shopify is dead, convert this cart to a Mock cart
+        if (err?.payload?.notConfigured || err?.status === 404 || err?.message?.includes('not configured')) {
+           setCart((prev) => ({
+             ...prev,
+             id: 'mock_cart_recovery',
+             totalQuantity: (prev?.totalQuantity || 0) + qty,
+             lines: { nodes: [...(prev?.lines?.nodes || []), { id: 'err_line', quantity: qty, merchandise: { id: variantId, price: { amount: '10.00' }, product: { title: 'Recovery Item' } } }] }
+           }));
+           toast.info("Shopify unconfigured - using local sandbox");
+           return;
+        }
         setLastError(err);
         throw err;
       } finally {
@@ -182,6 +242,7 @@ export function ShopCartProvider({ children }) {
     setLastError(null);
     try {
       const data = await cartApplyDiscountCode({ cartId: cart.id, code });
+      console.log('[Shopify] applied code result:', data?.cart?.discountCodes);
       setCart(data?.cart || null);
       return data?.cart || null;
     } catch (err) {
@@ -196,6 +257,56 @@ export function ShopCartProvider({ children }) {
     persistCartId(null);
     setCart(null);
   }, [persistCartId]);
+  const checkedEmailsRef = useRef(new Set());
+
+  // ── AUTO-APPLY 10% FIRST PURCHASE DISCOUNT ────────────────────────────────
+  useEffect(() => {
+    const applyDiscount = async () => {
+      // 1. Basic checks
+      if (!cart?.id) return;
+      const lines = cart?.lines?.nodes || [];
+      if (lines.length === 0) return;
+      
+      // If already has this discount, stop.
+      if (cart?.discountCodes?.some(d => d.code === 'HOTMESS10' && d.applicable)) return;
+
+      // 2. Who is the current user?
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser?.email) return;
+
+      // Prevent redundant checks if we already looked this email up in this session
+      if (checkedEmailsRef.current.has(authUser.email)) return;
+      checkedEmailsRef.current.add(authUser.email);
+
+      // 3. Have they actually completed a payment before?
+      try {
+        const { count, error } = await supabase
+          .from('orders')
+          .select('id', { count: 'exact', head: true })
+          .eq('buyer_email', authUser.email)
+          .in('status', ['paid', 'shipped', 'delivered']);
+
+        if (error) {
+          console.error('[Discount] Supabase query error:', error.message);
+          return;
+        }
+
+        if (count === 0) {
+          console.log('[Discount] New user detected. Applying HOTMESS10...');
+          await applyDiscountCode({ code: 'HOTMESS10' });
+          toast.success("First purchase 10% discount auto-applied!");
+        } else {
+          console.log(`[Discount] Returning user found (${count} orders). No discount.`);
+        }
+      } catch (err) {
+        console.error('[Discount] Unexpected error:', err);
+      }
+    };
+
+    applyDiscount();
+  }, [cart?.id, cart?.lines?.nodes?.length, cart?.discountCodes, applyDiscountCode]);
+
+
 
   const getCheckoutUrlOrThrow = useCallback(
     ({ allowUnbranded = false } = {}) => {

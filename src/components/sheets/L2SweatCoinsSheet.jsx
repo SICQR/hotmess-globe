@@ -91,7 +91,7 @@ export default function L2SweatCoinsSheet() {
 
   async function loadWallet() {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    let { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
 
     const { data, error } = await supabase
@@ -233,3 +233,4 @@ export default function L2SweatCoinsSheet() {
     </div>
   );
 }
+

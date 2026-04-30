@@ -323,6 +323,13 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: false,
     deepLinkParams: [],
   },
+  'radio-player': {
+    id: 'radio-player',
+    title: 'Radio',
+    height: 'full',
+    auth: false,
+    deepLinkParams: [],
+  },
   'show': {
     id: 'show',
     title: 'Show',

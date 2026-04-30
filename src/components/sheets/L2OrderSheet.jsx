@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Package, Truck, CheckCircle, Clock, QrCode, Loader2, MapPin,
-  MessageCircle, CreditCard, XCircle,
+  MessageCircle, CreditCard, XCircle, Shield,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
@@ -79,37 +79,76 @@ function StatusTimeline({ currentStatus }) {
   );
 }
 
-export default function L2OrderSheet({ orderId }) {
+export default function L2OrderSheet({ orderId, fromAdmin }) {
   const [order, setOrder] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [updating, setUpdating] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { openSheet } = useSheet();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setCurrentUserId(session?.user?.id || null);
+      if (session?.user?.id) {
+        setCurrentUserId(session.user.id);
+        // Add admin check fetch
+        supabase.from('profiles').select('is_admin, role').eq('id', session.user.id).single()
+          .then(({ data }) => {
+            if (data?.is_admin || data?.role === 'admin') setIsAdmin(true);
+          });
+      }
     });
   }, []);
 
   useEffect(() => {
     if (!orderId) { setLoading(false); return; }
-    Promise.all([
-      supabase
-        .from('orders')
-        .select('id, created_at, total_gbp, status, tracking_number, shipping_address, buyer_email, buyer_id, seller_id, items, updated_at')
-        .eq('id', orderId)
-        .single(),
-      supabase
-        .from('order_items')
-        .select('id, product_name, price_gbp, quantity')
-        .eq('order_id', orderId),
-    ]).then(([{ data: orderData }, { data: itemsData }]) => {
+
+    const fetchData = async () => {
+      console.log('[L2OrderSheet] Fetching data for orderId:', orderId);
+      setFetchError(null);
+      
+      const { data: orderData, error: orderErr } = await supabase
+          .from('orders')
+          .select('id, created_at, total_gbp, status, tracking_number, shipping_address, buyer_email, buyer_name, buyer_id, seller_id, items, updated_at')
+          .eq('id', orderId)
+          .single();
+      
+      if (orderErr) {
+        console.error('[L2OrderSheet] Order Fetch Error:', orderErr);
+        setFetchError(orderErr.message);
+      }
+
+      const { data: itemsData, error: itemsErr } = await supabase
+          .from('order_items')
+          .select('id, product_name, price_gbp, quantity')
+          .eq('order_id', orderId);
+      
+      if (itemsErr) console.error('[L2OrderSheet] Items Fetch Error:', itemsErr);
+
       setOrder(orderData);
       setItems(itemsData || []);
       setLoading(false);
-    });
+    };
+
+    fetchData();
+
+    // ---- Real-time subscription: auto-update when status changes in DB ----
+    const channel = supabase
+      .channel(`order-${orderId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'orders',
+        filter: `id=eq.${orderId}`,
+      }, (payload) => {
+        // Merge the new values into state instantly
+        setOrder(prev => prev ? { ...prev, ...payload.new } : payload.new);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [orderId]);
 
   const updateStatus = async (newStatus) => {
@@ -123,6 +162,22 @@ export default function L2OrderSheet({ orderId }) {
       if (error) throw error;
       setOrder(prev => ({ ...prev, status: newStatus }));
       toast.success(`Order marked as ${newStatus}`);
+
+      if (order.buyer_email) {
+        fetch('/api/email/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: order.buyer_email,
+            subject: `HOTMESS Order Update: ${newStatus.toUpperCase()}`,
+            html: `<div style="font-family: sans-serif; padding: 20px; background: #111; color: #fff; max-width: 600px; margin: 0 auto; border-radius: 12px;">
+              <h2 style="color: #C8962C; font-weight: 900;">Order Update</h2>
+              <p>Your order <strong>#${order.id.slice(-6).toUpperCase()}</strong> is now: <span style="background: #C8962C; color: #000; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; text-transform: uppercase;">${newStatus}</span>.</p>
+              <p style="color: #888; font-size: 12px; margin-top: 30px;">This is an automated message from the HOTMESS Marketplace.</p>
+            </div>`
+          })
+        }).catch(console.error);
+      }
     } catch {
       toast.error('Failed to update order');
     } finally {
@@ -143,6 +198,11 @@ export default function L2OrderSheet({ orderId }) {
       <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
         <Package className="w-10 h-10 text-[#C8962C]/20 mb-3" />
         <p className="text-white/50 font-bold text-sm">Order not found</p>
+        {fetchError && (
+          <p className="text-red-400/50 text-[10px] mt-2 bg-red-400/5 px-3 py-1.5 rounded-lg border border-red-400/10 font-mono">
+            {fetchError}
+          </p>
+        )}
       </div>
     );
   }
@@ -154,7 +214,7 @@ export default function L2OrderSheet({ orderId }) {
   const counterpartyId = isSeller ? order.buyer_id : order.seller_id;
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto">
+    <div className="flex flex-col">
       {/* Order header */}
       <div className="px-4 pt-4 pb-2">
         <div className="bg-[#1C1C1E] rounded-xl border border-white/[0.06] p-4">
@@ -165,14 +225,29 @@ export default function L2OrderSheet({ orderId }) {
               <p className="text-white/40 text-xs mt-1">
                 {format(new Date(order.created_at), 'd MMM yyyy · h:mm a')}
               </p>
+              <p className="text-white/60 text-[10px] mt-1 uppercase font-bold tracking-tight">
+                For: {order.buyer_name || order.buyer_email || 'Buyer'}
+              </p>
             </div>
-            <div className="flex flex-col items-end gap-1">
-              <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${statusCfg.color} ${statusCfg.bg}`}>
+            <div className="flex flex-col items-end gap-1.5">
+              <span className={`text-[11px] font-black uppercase px-3 py-1 rounded-full ${statusCfg.color} ${statusCfg.bg} border border-current opacity-90`}>
                 {statusCfg.label}
               </span>
-              <p className="text-[#C8962C] font-black text-lg">£{(order.total_gbp || 0).toFixed(2)}</p>
+              <p className="text-[#C8962C] font-black text-xl">£{(order.total_gbp || 0).toFixed(2)}</p>
             </div>
           </div>
+          
+          {order.status === 'paid' && (
+            <div className="mt-4 pt-4 border-t border-white/5 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-green-400/20 flex items-center justify-center border border-green-400/30">
+                <CheckCircle className="w-5 h-5 text-green-400" />
+              </div>
+              <div>
+                <p className="text-white font-black text-sm">Payment Confirmed</p>
+                <p className="text-white/40 text-[10px]">Funds are secured via Stripe</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -220,9 +295,11 @@ export default function L2OrderSheet({ orderId }) {
                 {item.quantity > 1 && (
                   <span className="text-white/30 text-xs">x{item.quantity}</span>
                 )}
-                <span className="text-[#C8962C] font-black text-sm">£{((item.price_gbp || 0) * (item.quantity || 1)).toFixed(2)}</span>
-              </div>
-            ))}
+                  <span className="text-[#C8962C] font-black text-sm">
+                    £{((item.price_gbp || item.price || 0) * (item.quantity || item.qty || 1)).toFixed(2)}
+                  </span>
+                </div>
+              ))}
           </div>
         </div>
       )}
@@ -237,8 +314,10 @@ export default function L2OrderSheet({ orderId }) {
                 <div className="w-8 h-8 rounded-lg bg-[#C8962C]/10 flex items-center justify-center flex-shrink-0">
                   <Package className="w-4 h-4 text-[#C8962C]" />
                 </div>
-                <span className="flex-1 text-white text-sm truncate">{item.title || 'Item'}</span>
-                <span className="text-[#C8962C] font-black text-sm">£{((item.price || 0) * (item.qty || 1)).toFixed(2)}</span>
+                <span className="flex-1 text-white text-sm truncate">{item.title || item.product_name || item.name || 'Item'}</span>
+                <span className="text-[#C8962C] font-black text-sm">
+                  £{((item.price || item.price_gbp || 0) * (item.qty || item.quantity || 1)).toFixed(2)}
+                </span>
               </div>
             ))}
           </div>
@@ -283,6 +362,39 @@ export default function L2OrderSheet({ orderId }) {
             <MessageCircle className="w-4 h-4 text-[#C8962C]" />
             Message {isSeller ? 'Buyer' : 'Seller'}
           </motion.button>
+        )}
+
+        {/* Admin Overrides */}
+        {isAdmin && fromAdmin && (
+          <div className="pt-4 mt-4 border-t border-white/5 space-y-2">
+            <p className="text-[10px] uppercase font-black text-[#C8962C] mb-2 tracking-widest text-center opacity-50">Admin Controls</p>
+            <div className="grid grid-cols-2 gap-2">
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={() => updateStatus('paid')}
+                disabled={updating}
+                className="col-span-2 bg-green-500/20 text-green-400 border border-green-500/30 font-black text-xs rounded-xl py-3 flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <CheckCircle className="w-4 h-4" /> Force Mark Paid
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={() => updateStatus('shipped')}
+                disabled={updating}
+                className="bg-blue-500/20 text-blue-400 border border-blue-400/30 font-black text-xs rounded-xl py-3 flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <Truck className="w-4 h-4" /> Ship
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={() => updateStatus('delivered')}
+                disabled={updating}
+                className="bg-[#C8962C]/20 text-[#C8962C] border border-[#C8962C]/30 font-black text-xs rounded-xl py-3 flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <Package className="w-4 h-4" /> Deliver
+              </motion.button>
+            </div>
+          </div>
         )}
 
         {/* QR */}

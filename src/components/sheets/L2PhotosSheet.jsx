@@ -23,7 +23,7 @@ export default function L2PhotosSheet() {
   }, []);
 
   const loadPhotos = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    let { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
 
     const { data } = await supabase
@@ -40,7 +40,7 @@ export default function L2PhotosSheet() {
     setUploading(true);
     setUploadError(null);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not logged in');
 
       const publicUrl = await uploadToStorage(file, 'avatars', user.id);
@@ -80,7 +80,7 @@ export default function L2PhotosSheet() {
 
   const handleSetPrimary = async (id) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       await supabase.from('profile_photos').update({ is_primary: false }).eq('profile_id', user.id);
       await supabase.from('profile_photos').update({ is_primary: true }).eq('id', id);
       // Sync avatar_url on profiles table so grid API fallback works
@@ -217,3 +217,4 @@ export default function L2PhotosSheet() {
     </div>
   );
 }
+

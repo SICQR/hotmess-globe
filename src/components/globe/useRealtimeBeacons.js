@@ -18,33 +18,29 @@ const BEACON_TYPES = {
 };
 
 // Convert presence rows to beacon format for EnhancedGlobe3D
-// Presence rows may carry a `metadata` JSONB column with display_name,
-// avatar_url, bio, city baked in at upsert time. Extract those so any
-// consumer (globe pins, "Who's Out RN", etc.) can render user info
-// without a separate profiles join.
 function presenceToBeacon(presence) {
-  if (!presence.geo) return null;
+  // PostGIS location column: POINT(lng lat)
+  let lat = presence.last_lat;
+  let lng = presence.last_lng;
 
-  // Parse geo (could be GeoJSON or WKT)
-  let lat, lng;
-  if (presence.geo?.coordinates) {
-    [lng, lat] = presence.geo.coordinates;
-  } else if (typeof presence.geo === 'string') {
-    const match = presence.geo.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i);
-    if (match) {
-      lng = parseFloat(match[1]);
-      lat = parseFloat(match[2]);
+  if (!lat || !lng) {
+    if (typeof presence.location === 'string') {
+      const match = presence.location.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i);
+      if (match) {
+        lng = parseFloat(match[1]);
+        lat = parseFloat(match[2]);
+      }
+    } else if (presence.location?.coordinates) {
+      [lng, lat] = presence.location.coordinates;
     }
   }
 
   if (typeof lat !== 'number' || typeof lng !== 'number') return null;
 
-  // Extract metadata fields (display_name, avatar_url, bio, city)
-  const meta = presence.metadata && typeof presence.metadata === 'object' ? presence.metadata : {};
-  const displayName = String(meta.display_name || meta.username || '').trim();
-  const avatarUrl = String(meta.avatar_url || '').trim();
-  const bio = String(meta.bio || '').trim();
-  const city = String(meta.city || '').trim();
+  // Extract metadata (usually baked in via heartbeat or profile join)
+  const meta = presence.metadata || {};
+  const displayName = String(presence.display_name || meta.display_name || '').trim();
+  const avatarUrl = String(presence.avatar_url || meta.avatar_url || '').trim();
 
   return {
     id: `presence:${presence.user_id}`,
@@ -58,11 +54,7 @@ function presenceToBeacon(presence) {
     isRightNow: true,
     title: displayName || 'Live Now',
     type: BEACON_TYPES.SOCIAL,
-    // Metadata passthrough for card/avatar rendering
-    displayName: displayName || undefined,
     avatarUrl: avatarUrl || undefined,
-    bio: bio || undefined,
-    city: city || undefined,
   };
 }
 
@@ -84,7 +76,7 @@ function eventToBeacon(event) {
 }
 
 /**
- * Hook to get realtime beacons from presence + events tables
+ * Hook to get realtime beacons from user_presence + events tables
  * Returns beacons in format compatible with existing EnhancedGlobe3D
  */
 export function useRealtimeBeacons() {
@@ -96,11 +88,12 @@ export function useRealtimeBeacons() {
   const loadInitial = useCallback(async () => {
     const now = new Date().toISOString();
 
-    // Load active presence
+    // Load active presence from user_presence (only if is_online)
     try {
       const { data: presence } = await supabase
-        .from('presence')
+        .from('user_presence')
         .select('*')
+        .eq('is_online', true)
         .gt('expires_at', now);
       
       if (presence) {
@@ -113,24 +106,57 @@ export function useRealtimeBeacons() {
       console.warn('[RealtimeBeacons] Presence load failed:', e);
     }
 
-    // Load active events
+    // Load all active beacons from beacons table (all kinds)
     try {
-      const { data: events } = await supabase
+      // Join with profiles to check location_consent
+      const { data: activeBeacons, error: fetchError } = await supabase
         .from('beacons')
-        .select('*')
-        .eq('kind', 'event')
-        .lte('starts_at', now)
-        .gte('ends_at', now);
+        .select('*');
       
-      if (events) {
-        const beacons = events
-          .map(eventToBeacon)
+      if (fetchError) {
+        console.error('[Pulse] Database fetch failed:', fetchError);
+        setLoading(false);
+        return;
+      }
+
+      
+      if (activeBeacons) {
+        console.log(`[Pulse] Found ${activeBeacons.length} beacons in DB`);
+        const beacons = activeBeacons
+          .map(b => {
+            const lat = b.lat || b.geo_lat || b.latitude;
+            const lng = b.lng || b.geo_lng || b.longitude;
+            
+            if (!lat || !lng) return null;
+
+            // Filter by expiration date if it exists
+            if (b.ends_at && new Date(b.ends_at) < new Date()) return null;
+
+            // Map any beacon type to the format expected by EnhancedGlobe3D
+            const visual = (b.type || b.kind || 'social').toLowerCase();
+            return {
+              ...b,
+              id: `beacon:${b.id}`,
+              lat: Number(lat),
+              lng: Number(lng),
+              kind: visual,
+              mode: visual,
+              intensity: b.intensity || 0.5,
+              active: true,
+              title: b.title || b.metadata?.title || 'Signal',
+              type: visual,
+            };
+          })
           .filter(Boolean);
+
+        console.log(`[Pulse] Final mapped beacons: ${beacons.length}`, beacons);
         setEventBeacons(beacons);
       }
+
     } catch (e) {
-      console.warn('[RealtimeBeacons] Events load failed:', e);
+      console.warn('[RealtimeBeacons] Beacons load failed:', e);
     }
+
 
     setLoading(false);
   }, []);
@@ -139,16 +165,16 @@ export function useRealtimeBeacons() {
   useEffect(() => {
     loadInitial();
 
-    // Presence channel
+    // user_presence channel
     const presenceChannel = supabase
-      .channel('presence-beacons')
+      .channel('user-presence-beacons')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'presence' },
+        { event: '*', schema: 'public', table: 'user_presence' },
         (payload) => {
-          if (payload.eventType === 'DELETE') {
+          if (payload.eventType === 'DELETE' || !payload.new.is_online) {
             setPresenceBeacons(prev => 
-              prev.filter(b => b.id !== `presence:${payload.old.user_id}`)
+              prev.filter(b => b.id !== `presence:${payload.old?.user_id || payload.new?.user_id}`)
             );
           } else {
             const beacon = presenceToBeacon(payload.new);
@@ -168,22 +194,48 @@ export function useRealtimeBeacons() {
       )
       .subscribe();
 
-    // Events channel
-    const eventsChannel = supabase
-      .channel('events-beacons')
+    // Beacons channel (ALL kinds)
+    const beaconsChannel = supabase
+      .channel('all-beacons-realtime')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'beacons' },
-        (payload) => {
+        async (payload) => {
           if (payload.eventType === 'DELETE') {
             setEventBeacons(prev => 
-              prev.filter(b => b.id !== `event:${payload.old.id}`)
+              prev.filter(b => b.id !== `beacon:${payload.old.id}`)
             );
           } else {
-            const beacon = eventToBeacon(payload.new);
-            if (beacon) {
+            // For new/updated beacons, we need to check consent
+            // Realtime payload doesn't include joins, so we do a quick lookup
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('location_consent')
+              .eq('id', payload.new.owner_id)
+              .single();
+
+            const b = payload.new;
+            const lat = b.lat || b.geo_lat || b.latitude;
+            const lng = b.lng || b.geo_lng || b.longitude;
+            
+            if (lat && lng && new Date(b.ends_at) > new Date()) {
+              const visual = (b.type || b.kind || 'social').toLowerCase();
+              const beacon = {
+                ...b,
+                id: `beacon:${b.id}`,
+                lat: Number(lat),
+                lng: Number(lng),
+                kind: visual,
+                mode: visual,
+                intensity: b.intensity || 0.5,
+                active: true,
+                title: b.title || b.metadata?.title || 'Signal',
+                type: visual,
+              };
+
               setEventBeacons(prev => {
-                const existing = prev.findIndex(b => b.id === beacon.id);
+
+                const existing = prev.findIndex(item => item.id === beacon.id);
                 if (existing >= 0) {
                   const updated = [...prev];
                   updated[existing] = beacon;
@@ -191,6 +243,9 @@ export function useRealtimeBeacons() {
                 }
                 return [...prev, beacon];
               });
+            } else {
+              // If consent revoked or expired, remove it
+              setEventBeacons(prev => prev.filter(item => item.id !== `beacon:${payload.new.id}`));
             }
           }
         }
@@ -200,8 +255,9 @@ export function useRealtimeBeacons() {
     // Cleanup
     return () => {
       supabase.removeChannel(presenceChannel);
-      supabase.removeChannel(eventsChannel);
+      supabase.removeChannel(beaconsChannel);
     };
+
   }, [loadInitial]);
 
   // Combine all beacons
@@ -217,42 +273,40 @@ export function useRealtimeBeacons() {
 }
 
 /**
- * Hook to get "Right Now" count from presence table
+ * Hook to get "Right Now" count from user_presence table
  */
 export function useRightNowCount() {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
     const fetchCount = async () => {
-      const now = new Date().toISOString();
+      // 5 minutes ago
+      const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
       const { count } = await supabase
-        .from('presence')
+        .from('profiles')
         .select('*', { count: 'exact', head: true })
-        .gt('expires_at', now);
+        .gt('last_seen_at', cutoff);
       
       setCount(count || 0);
     };
 
     fetchCount();
 
-    // Refresh every 10 seconds
-    const interval = setInterval(fetchCount, 10000);
-
-    // Subscribe to changes
+    // Subscribe to profile changes for real-time member count
     const channel = supabase
-      .channel('presence-count')
+      .channel('online-members-count')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'presence' },
+        { event: 'UPDATE', schema: 'public', table: 'profiles' },
         () => fetchCount()
       )
       .subscribe();
 
     return () => {
-      clearInterval(interval);
       supabase.removeChannel(channel);
     };
   }, []);
+
 
   return count;
 }

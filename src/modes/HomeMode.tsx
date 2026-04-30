@@ -37,12 +37,14 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { motionTokens, getMotion, useReducedMotion } from '@/lib/motionTokens';
 import RightNowModal from '@/components/globe/RightNowModal';
 import { trackEvent } from '@/components/utils/analytics';
+import { TrackPlayer } from '@/components/music/TrackPlayer';
 
 // ── Brand tokens ────────────────────────────────────────────────────────────
 const AMBER = '#C8962C';
 const ROOT_BG = '#050507';
 const MUTED = '#8E8E93';
 const TEAL = '#00C2E0';
+const MESS_TRACK_URL = 'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/records-audio/hnh-mess-2-remastered.wav';
 
 // ── Lane config ─────────────────────────────────────────────────────────────
 const LANES = [
@@ -59,7 +61,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
   const navigate = useNavigate();
   const { openSheet } = useSheet();
   const { profile } = useBootGuard();
-  const { isPlaying: radioPlaying, currentShowName, togglePlay } = useRadio();
+  const { isPlaying: radioPlaying, activeUrl, togglePlay, setCurrentShowName, currentShowName } = useRadio();
   const reduced = useReducedMotion();
 
   const [showRightNow, setShowRightNow] = useState(false);
@@ -147,14 +149,21 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
       className={`h-full w-full flex flex-col overflow-hidden ${className}`}
       style={{ background: ROOT_BG }}
     >
-      <div className="flex-1 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div
+        className="flex-1 overflow-y-auto"
+        style={{
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'rgba(200,150,44,0.3) transparent',
+        }}
+      >
 
         {/* ================================================================ */}
         {/* 1. HERO — Compact, signal-integrated, single CTA               */}
         {/* ================================================================ */}
         <section
-          className="relative w-full flex flex-col justify-end px-6 pb-6"
-          style={{ height: 260 }}
+          className="relative w-full flex flex-col justify-end px-6 pt-6 pb-6"
+          style={{ minHeight: 160 }}
         >
           {/* Radial gold glow */}
           <motion.div
@@ -362,85 +371,87 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         )}
 
         {/* ================================================================ */}
-        {/* 5. SECONDARY STRIP — HNH MESS + Radio, compressed             */}
+        {/* 5. HNH MESS PROMO CARD                                         */}
         {/* ================================================================ */}
-        <section className="px-5 pb-5 space-y-2">
-          {/* HNH MESS — compact row */}
-          <button
-            onClick={() => {
-              trackEvent('home_cta_tap', { cta: 'hnh_shop' });
-              navigate('/market');
-            }}
-            className="w-full rounded-xl px-4 py-3 flex items-center justify-between active:scale-[0.98] transition-transform"
-            style={{ background: 'rgba(255,255,255,0.03)' }}
-            aria-label="Shop HNH MESS"
-          >
-            <div className="flex items-center gap-3">
-              <ShoppingBag className="w-4 h-4" style={{ color: AMBER }} />
-              <div className="text-left">
-                <p className="text-white font-bold text-sm leading-tight">HNH MESS</p>
-                <p className="text-[11px]" style={{ color: MUTED }}>Lube + essentials. From £10.</p>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.2)' }} />
-          </button>
+        <section className="px-5 pb-5">
+          <div className="rounded-2xl overflow-hidden relative hm-depth border border-white/10 p-5 bg-gradient-to-b from-[#1A1A1C] to-[#121214]">
 
-          {/* Radio — compact row */}
-          <div
-            className="rounded-xl px-4 py-3 flex items-center justify-between"
-            style={{ background: 'rgba(0,194,224,0.03)' }}
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <Radio className="w-4 h-4 flex-shrink-0" style={{ color: TEAL }} />
-              <div className="text-left min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-white font-bold text-sm leading-tight">HOTMESS Radio</p>
-                  {radioPlaying && (
-                    <span className="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0" style={{ background: TEAL }} />
-                  )}
+            <div className="flex gap-4 mb-5">
+              {/* Left Column: Text */}
+              <div className="flex-1 flex flex-col justify-center">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="hm-badge">HNH MESS</span>
+                  {radioPlaying && <span className="hm-badge-outline" style={{ borderColor: TEAL, color: TEAL }}>Live</span>}
                 </div>
-                <p className="text-[11px] truncate" style={{ color: MUTED }}>
-                  {radioPlaying && currentShowName ? currentShowName : 'Live shows + mixes'}
+                <h2 className="text-[20px] font-black text-white leading-[1.05] mb-2 tracking-tight block">
+                  Care hits different<br />when it’s dirty.
+                </h2>
+                <p className="text-white/50 text-[11px] font-medium leading-relaxed max-w-[140px]">
+                  Lube. Aftercare. Radio. No shame. No pretending.
                 </p>
               </div>
+
+              {/* Right Column: Portrait Image Frame */}
+              <div className="w-32 h-44 rounded-xl overflow-hidden flex-shrink-0 border border-white/10 relative shadow-2xl shadow-black bg-black">
+                <img
+                  src="/images/HNHMESS HERO.PNG"
+                  alt="HNH MESS Lube"
+                  className="w-full h-full object-cover object-[center_60%] opacity-90"
+                />
+                <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+              </div>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+
+            {/* Track Player */}
+            <div className="mb-5">
+              <TrackPlayer
+                trackTitle="HNH MESS — Remastered"
+                trackSource={MESS_TRACK_URL}
+                artistName="HOTMESS RECORDS"
+                minimal={true}
+                className="bg-black/40 border-white/5"
+                themeColor={AMBER}
+              />
+            </div>
+
+            {/* CTAs */}
+            <div className="flex items-center gap-3 mb-5">
               <motion.button
-                whileTap={{ scale: 0.9 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => {
-                  trackEvent('home_cta_tap', { cta: 'radio_listen' });
-                  togglePlay();
+                  trackEvent('home_cta_tap', { cta: 'hnh_mess_get_messy' });
+                  navigate('/market');
                 }}
-                className="w-8 h-8 rounded-full flex items-center justify-center"
-                style={{ background: TEAL }}
-                aria-label={radioPlaying ? 'Pause radio' : 'Play radio'}
+                className="flex-1 bg-white/5 border border-white/10 text-white font-black text-xs h-12 rounded-xl flex items-center justify-center gap-1.5"
               >
-                {radioPlaying ? (
-                  <Pause className="w-3.5 h-3.5 text-black" />
-                ) : (
-                  <Play className="w-3.5 h-3.5 text-black" />
-                )}
+                Get the products <ChevronRight className="w-3.5 h-3.5" />
               </motion.button>
+
               <motion.button
-                whileTap={{ scale: 0.9 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => {
-                  trackEvent('home_cta_tap', { cta: 'radio_page' });
-                  navigate('/radio');
+                  openSheet('shop-cart');
                 }}
-                className="w-8 h-8 rounded-full flex items-center justify-center"
-                style={{ background: 'rgba(255,255,255,0.06)' }}
-                aria-label="Full radio player"
+                className="flex-shrink-0 w-12 h-12 bg-[#C8962C] text-black rounded-xl flex items-center justify-center shadow-lg shadow-[#C8962C]/20"
               >
-                <ChevronRight className="w-3.5 h-3.5 text-white/40" />
+                <ShoppingBag className="w-5 h-5" />
               </motion.button>
             </div>
+
+            {/* Stigma & Nudge Footer */}
+            <div className="flex items-end justify-between pt-4 border-t border-white/10">
+              <p className="text-white/70 text-[10px] font-bold tracking-wide italic">
+                You don’t get to skip aftercare.
+              </p>
+              <div className="flex items-center gap-1 text-[#C8962C] text-[9px] font-black uppercase tracking-widest text-right">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#C8962C] animate-pulse" />
+                First run.
+              </div>
+            </div>
+
           </div>
         </section>
 
-        {/* ================================================================ */}
-        {/* 6. SPACER — nav clearance                                      */}
-        {/* ================================================================ */}
-        <div className="h-24" />
 
       </div>
 

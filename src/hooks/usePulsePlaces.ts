@@ -7,7 +7,8 @@ export interface PulsePlace {
   id: string;
   slug: string;
   name: string;
-  type: 'city' | 'zone' | 'club' | 'curated';
+  type: 'city' | 'zone' | 'club' | 'curated' | 'recovery';
+
   country: string | null;
   lat: number;
   lng: number;
@@ -55,6 +56,8 @@ export function usePulsePlacesByType() {
   const zones    = places.filter(p => p.type === 'zone');
   const clubs    = places.filter(p => p.type === 'club');
   const curated  = places.filter(p => p.type === 'curated');
+  const recovery = places.filter(p => p.type === 'recovery');
 
-  return { cities, zones, clubs, curated, allPlaces: places, ...rest };
+  return { cities, zones, clubs, curated, recovery, allPlaces: places, ...rest };
+
 }

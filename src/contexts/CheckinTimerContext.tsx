@@ -1,19 +1,14 @@
 /**
- * useCheckinTimer
+ * CheckinTimerContext
  *
- * Client-side safety check-in timer backed by localStorage.
- * Survives page refreshes. Auto-alerts trusted contacts via
- * notification_outbox when deadline passes without user responding.
- *
- * Storage key: hm_checkin_v1
- * Shape: { deadline: ISOString, durationMinutes: number, userId: string }
+ * Global provider for the safety check-in timer.
+ * Ensures all components (FAB, Hub, Modals) see the same countdown state.
  */
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 
 const STORAGE_KEY = 'hm_checkin_v1';
-// How long after expiry we still fire (user may have had the tab closed)
 const GRACE_MS = 30 * 60 * 1000; // 30 minutes
 
 interface StoredTimer {
@@ -22,7 +17,7 @@ interface StoredTimer {
   userId: string;
 }
 
-export interface CheckinTimerState {
+export interface CheckinTimerContextType {
   isActive: boolean;
   secondsLeft: number;
   durationMinutes: number;
@@ -31,13 +26,15 @@ export interface CheckinTimerState {
   clearTimer: () => void;
 }
 
+const CheckinTimerContext = createContext<CheckinTimerContextType | undefined>(undefined);
+
 function readStored(): StoredTimer | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
+    console.log('[CheckinTimerContext] readStored raw:', raw);
     if (!raw) return null;
     const parsed: StoredTimer = JSON.parse(raw);
     const expiredMs = Date.now() - new Date(parsed.deadline).getTime();
-    // Discard if expired beyond grace window (stale from a previous session)
     if (expiredMs > GRACE_MS) {
       localStorage.removeItem(STORAGE_KEY);
       return null;
@@ -48,8 +45,12 @@ function readStored(): StoredTimer | null {
   }
 }
 
-export function useCheckinTimer(): CheckinTimerState {
-  const [stored, setStored] = useState<StoredTimer | null>(() => readStored());
+export const CheckinTimerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [stored, setStored] = useState<StoredTimer | null>(() => {
+    const s = readStored();
+    console.log('[CheckinTimerContext] Initial stored state:', s);
+    return s;
+  });
   const [secondsLeft, setSecondsLeft] = useState(0);
   const firedRef = useRef(false);
 
@@ -62,15 +63,12 @@ export function useCheckinTimer(): CheckinTimerState {
   const fireAlert = useCallback(async () => {
     if (firedRef.current) return;
     firedRef.current = true;
-
-    // Dispatch custom event for check-in expiry
     window.dispatchEvent(new CustomEvent('hm:checkin-expired'));
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Try to get GPS
       let location: { lat: number; lng: number } | null = null;
       if (navigator.geolocation) {
         try {
@@ -82,17 +80,12 @@ export function useCheckinTimer(): CheckinTimerState {
             })
           );
           location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        } catch { /* GPS unavailable — alert still fires */ }
+        } catch { /* ignored */ }
       }
 
-      const locStr = location
-        ? `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`
-        : 'Location unavailable';
-      const mapsUrl = location
-        ? `https://maps.google.com/?q=${location.lat},${location.lng}`
-        : null;
+      const locStr = location ? `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}` : 'Location unavailable';
+      const mapsUrl = location ? `https://maps.google.com/?q=${location.lat},${location.lng}` : null;
 
-      // Create audit record
       await supabase.from('safety_checkins').insert({
         user_email: user.email,
         user_id: user.id,
@@ -102,10 +95,9 @@ export function useCheckinTimer(): CheckinTimerState {
         note: 'Auto-triggered: user-set check-in timer expired without response',
       });
 
-      // Get trusted contacts
       const { data: contacts } = await supabase
         .from('trusted_contacts')
-        .select('contact_email, contact_name')
+        .select('contact_email, contact_phone, contact_name')
         .eq('user_id', user.id)
         .eq('notify_on_checkin', true);
 
@@ -113,50 +105,55 @@ export function useCheckinTimer(): CheckinTimerState {
         `Your friend missed their HOTMESS safety check-in timer.`,
         `Last known location: ${locStr}`,
         mapsUrl ? `Map: ${mapsUrl}` : null,
-        `Please check on them.`,
       ].filter(Boolean).join('\n');
 
-      // Alert each trusted contact
       for (const contact of contacts || []) {
-        if (!contact.contact_email) continue;
-        await supabase.from('notification_outbox').insert({
-          user_email: contact.contact_email,
-          notification_type: 'trusted_contact_alert',
-          title: 'HOTMESS Safety — Check-in missed',
-          message: alertMsg,
-          channel: 'email',
-          metadata: {
-            type: 'timer_missed',
-            user_id: user.id,
-            user_email: user.email,
-            location,
-          },
-        });
-      }
+        // WhatsApp Alert
+        if (contact.contact_phone) {
+          console.log('[CheckinTimerContext] Sending WhatsApp to:', contact.contact_phone);
+          const { error: waErr } = await supabase.from('notification_outbox').insert({
+            user_email: contact.contact_email || user.email,
+            notification_type: 'trusted_contact_alert',
+            title: 'HOTMESS Safety — Check-in missed',
+            message: `Your friend ${user.email} missed their safety check-in. Last location: ${locStr}`,
+            channel: 'whatsapp',
+            metadata: { 
+              type: 'timer_missed', 
+              user_id: user.id, 
+              user_name: user.email, // fallback to email as name for now
+              location,
+              location_str: locStr,
+              contact_phone: contact.contact_phone
+            },
+          });
+          if (waErr) console.error('[CheckinTimerContext] WhatsApp outbox error:', waErr);
+          else console.log('[CheckinTimerContext] WhatsApp outbox entry created');
+        }
 
-      // Self notification (in-app)
-      await supabase.from('notification_outbox').insert({
-        user_email: user.email,
-        notification_type: 'safety_checkin_urgent',
-        title: 'Check-in timer expired',
-        message: `Your check-in timer expired. ${(contacts || []).length} trusted contact(s) have been alerted.`,
-        channel: 'in_app',
-        metadata: { trigger: 'user_timer_expired', location },
-      });
+        // Email Fallback
+        if (contact.contact_email) {
+          await supabase.from('notification_outbox').insert({
+            user_email: contact.contact_email,
+            notification_type: 'trusted_contact_alert',
+            title: 'HOTMESS Safety — Check-in missed',
+            message: alertMsg,
+            channel: 'email',
+            metadata: { type: 'timer_missed', user_id: user.id, location },
+          });
+        }
+      }
     } catch (err) {
-      console.error('[useCheckinTimer] fireAlert error:', err);
+      console.error('[CheckinTimerContext] fireAlert error:', err);
     } finally {
       clearTimer();
     }
   }, [clearTimer]);
 
-  // Countdown tick
   useEffect(() => {
     if (!stored) {
       setSecondsLeft(0);
       return;
     }
-
     const update = () => {
       const remaining = Math.floor((new Date(stored.deadline).getTime() - Date.now()) / 1000);
       if (remaining <= 0) {
@@ -166,29 +163,41 @@ export function useCheckinTimer(): CheckinTimerState {
         setSecondsLeft(remaining);
       }
     };
-
-    update(); // immediate first tick
+    update();
     const id = setInterval(update, 1000);
     return () => clearInterval(id);
   }, [stored, fireAlert]);
 
   const setTimer = useCallback(async (minutes: number) => {
+    console.log('[CheckinTimerContext] Setting timer:', minutes);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not logged in');
 
     const deadline = new Date(Date.now() + minutes * 60 * 1000).toISOString();
-    const timer: StoredTimer = { deadline, durationMinutes: minutes, userId: user.id };
+    const timer = { deadline, durationMinutes: minutes, userId: user.id };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(timer));
     setStored(timer);
     firedRef.current = false;
   }, []);
 
-  return {
-    isActive: !!stored,
-    secondsLeft,
-    durationMinutes: stored?.durationMinutes ?? 0,
-    deadline: stored ? new Date(stored.deadline) : null,
-    setTimer,
-    clearTimer,
-  };
-}
+  return (
+    <CheckinTimerContext.Provider value={{
+      isActive: !!stored,
+      secondsLeft,
+      durationMinutes: stored?.durationMinutes ?? 0,
+      deadline: stored ? new Date(stored.deadline) : null,
+      setTimer,
+      clearTimer
+    }}>
+      {children}
+    </CheckinTimerContext.Provider>
+  );
+};
+
+export const useCheckinTimer = () => {
+  const context = useContext(CheckinTimerContext);
+  if (!context) {
+    throw new Error('useCheckinTimer must be used within a CheckinTimerProvider');
+  }
+  return context;
+};

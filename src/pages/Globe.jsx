@@ -22,6 +22,9 @@ import { useProfileOpener } from '@/lib/profile';
 import LocationShopPanel from '../components/globe/LocationShopPanel';
 import { usePulsePlacesByType } from '@/hooks/usePulsePlaces';
 import { useVenueIntensity } from '@/hooks/useVenueIntensity';
+import BeaconDropModal from '../components/globe/BeaconDropModal';
+import { MapPin, X } from 'lucide-react';
+
 
 // ── City coords for programmatic flyTo ──────────────────────────────────────
 const CITY_COORDS = {
@@ -49,13 +52,34 @@ function LayersSheet({ open, onClose, activeLayer, setActiveLayer }) {
   if (!open) return null;
   return (
     <motion.div
-      initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+      initial={{ y: '100%' }} 
+      animate={{ y: 0 }} 
+      exit={{ y: '100%' }}
+      drag="y"
+      dragConstraints={{ top: 0 }}
+      dragElastic={0.2}
+      onDragEnd={(e, { offset, velocity }) => {
+        if (offset.y > 100 || velocity.y > 500) onClose();
+      }}
       transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-      className="fixed inset-x-0 bottom-0 z-[80] bg-black/95 border-t border-white/10 rounded-t-3xl"
-      style={{ padding: '16px 16px calc(20px + env(safe-area-inset-bottom, 0px))' }}
+      className="fixed inset-x-0 bottom-0 z-[200] bg-[#0A0A0A] border-t border-white/10 rounded-t-[32px] px-6 pt-4 pb-[calc(80px+env(safe-area-inset-bottom,20px))] touch-none"
     >
-      <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
-      <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-4">Globe Layers</h3>
+      <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-8" />
+      
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-[#C8962C]/10 rounded-xl flex items-center justify-center">
+            <Layers className="w-5 h-5 text-[#C8962C]" />
+          </div>
+          <h3 className="text-xl font-black italic tracking-tight text-white uppercase">Globe Layers</h3>
+        </div>
+        <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/40">
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+
+
       <div className="space-y-1">
         {LAYER_DEFS.map(({ key, label, color }) => (
           <div key={key} className="flex items-center justify-between py-2.5">
@@ -90,6 +114,7 @@ export default function GlobePage({ embedded = false }) {
   const { openProfile } = useProfileOpener();
   const { openSheet } = useSheet();
   const [showLayersSheet, setShowLayersSheet] = useState(false);
+  const [showBeaconModal, setShowBeaconModal] = useState(false);
 
   // ── GlobeContext bridge ──────────────────────────────────────────────────
   const {
@@ -103,11 +128,19 @@ export default function GlobePage({ embedded = false }) {
     setActiveLayer,
     amplifiedBeaconIds,
     setFocusedPlace,
+    rotationRef,
   } = useGlobe();
 
-  // Realtime presence beacons from presence table (TTL-based)
-  const { beacons: presenceBeacons, presenceCount } = useRealtimeBeacons();
-  const rightNowCount = useRightNowCount();
+
+  // Beacons and Presence Count from Realtime hooks
+  const { beacons: realtimeBeacons, loading: rawBeaconsLoading } = useRealtimeBeacons();
+  // Only show loading on the very first mount, never on realtime updates
+  const [beaconsLoading, setBeaconsLoading] = useState(true);
+  useEffect(() => {
+    if (!rawBeaconsLoading) setBeaconsLoading(false);
+  }, [rawBeaconsLoading]);
+
+  const onlineMemberCount = useRightNowCount();
 
   // Realtime locations (spikes) and routes (arcs) from dedicated tables
   const { locations: realtimeLocations } = useRealtimeLocations();
@@ -116,40 +149,11 @@ export default function GlobePage({ embedded = false }) {
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
       return { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email };
     },
-  });
-
-  // Fetch beacons from Supabase beacons table
-  const { data: beacons = [], isLoading: beaconsLoading } = useQuery({
-    queryKey: ['beacons'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('beacons')
-        .select('id, code, type, beacon_category, title, status, geo_lat, geo_lng, city_slug, globe_color, globe_pulse_type, globe_size_base, intensity, checkin_count, venue_id, ends_at, owner_id, starts_at, description, active')
-        .eq('status', 'active')
-        .not('geo_lat', 'is', null);
-      if (error) {
-        console.warn('[Globe] beacons query error:', error.message);
-        return [];
-      }
-      // Normalize to shape expected by EnhancedGlobe3D
-      const now = new Date();
-      return (data ?? [])
-        .filter((b) => !b.ends_at || new Date(b.ends_at) > now)
-        .map((b) => ({
-          ...b,
-          lat: Number(b.geo_lat),
-          lng: Number(b.geo_lng),
-          kind: b.type,
-          mode: b.beacon_category === 'venue' ? 'venue' : 'user',
-          active: true,
-        }));
-    },
-    refetchInterval: 30000,
   });
 
   // Live city heat from night_pulse_realtime (polled every 60s)
@@ -174,111 +178,15 @@ export default function GlobePage({ embedded = false }) {
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 
-  const { data: rightNowUsers = [] } = useQuery({
-    queryKey: ['right-now-users-globe'],
-    queryFn: async () => {
-      // Read directly from Supabase — this is where RightNowModal writes
-      const { data: statuses, error } = await supabase
-        .from('right_now_status')
-        .select('*')
-        .eq('active', true)
-        .gt('expires_at', new Date().toISOString())
-        .limit(100);
-      if (error) throw error;
-
-      return (statuses || [])
-        .filter(s => s.location?.lat && s.location?.lng)
-        .map(s => ({
-          id: `rightnow-${s.id}`,
-          title: 'Right Now',
-          description: s.preferences?.logistics?.join(', ') || 'Available now',
-          lat: s.location.lat,
-          lng: s.location.lng,
-          mode: 'hookup',
-          kind: 'hookup',
-          intensity: 1,
-          active: true,
-          isRightNow: true,
-          user_id: s.user_id,
-        }));
-    },
-    refetchInterval: 30000,
-  });
-
-  // Real-time subscriptions for beacons
-  useEffect(() => {
-    const channel = supabase
-      .channel('beacons-realtime')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'beacons' },
-        (payload) => {
-          queryClient.setQueryData(['beacons'], (old = []) => {
-            if (payload.new.active) {
-              const b = payload.new;
-              const normalized = {
-                ...b,
-                lat:    Number(b.geo_lat),
-                lng:    Number(b.geo_lng),
-                kind:   b.type,
-                mode:   b.beacon_category === 'venue' ? 'venue' : 'user',
-                active: true,
-              };
-              return [normalized, ...old];
-            }
-            return old;
-          });
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'beacons' },
-        (payload) => {
-          queryClient.setQueryData(['beacons'], (old = []) => {
-            return old.map(beacon => 
-              beacon.id === payload.new.id ? payload.new : beacon
-            );
-          });
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'beacons' },
-        (payload) => {
-          queryClient.setQueryData(['beacons'], (old = []) => {
-            return old.filter(beacon => beacon.id !== payload.old.id);
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
-
-  // Real-time: right_now_status changes → immediately re-fetch Right Now beacons
-  useEffect(() => {
-    const channel = supabase
-      .channel('right-now-status-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'right_now_status' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['right-now-users-globe'] });
-      })
-      .subscribe();
-    return () => supabase.removeChannel(channel);
-  }, [queryClient]);
-
   // Real-time subscriptions for user activities
   useEffect(() => {
     // Fetch recent activities
     const fetchActivities = async () => {
       try {
-        const activities = await supabase.from('user_activity').select('*').eq(
-          { visible: true },
-          '-created_date',
-          50
-        );
-        setUserActivities(activityTracker.pruneOldActivities(activities));
+        const { data: activities } = await supabase.from('user_activity').select('*').order('created_date', { ascending: false }).limit(50);
+        if (activities) {
+          setUserActivities(activityTracker.pruneOldActivities(activities));
+        }
       } catch (error) {
         console.error('Failed to fetch activities:', error);
       }
@@ -340,7 +248,10 @@ export default function GlobePage({ embedded = false }) {
   const autoZoomedRef = React.useRef(false);
 
   // Pulse Places: cultural anchor layer (cities, zones, clubs, curated)
-  const { cities: placeCities, zones: placeZones, clubs: placeClubs, curated: placeCurated, allPlaces: pulsePlaces } = usePulsePlacesByType();
+  const { cities: placeCities, zones: placeZones, clubs: placeClubs, curated: placeCurated, recovery, allPlaces: pulsePlaces } = usePulsePlacesByType();
+  console.log('[Globe] Recovery data from hook:', recovery?.length || 0);
+
+
 
   // Venue intensity: time-weighted check-in counts with 5-level system
   const { intensityMap: venueIntensity } = useVenueIntensity();
@@ -373,7 +284,7 @@ export default function GlobePage({ embedded = false }) {
   });
 
   // Living Globe: activity reactor (seed heat + venue glow)
-  const liveBeaconCount = (rightNowUsers?.length ?? 0) + (beacons?.length ?? 0);
+  const liveBeaconCount = realtimeBeacons?.length ?? 0;
   const globeActivity = useGlobeActivity(liveBeaconCount);
 
   const showPeoplePins = activeLayers.includes('people');
@@ -461,50 +372,10 @@ export default function GlobePage({ embedded = false }) {
 
   // Filter beacons by mode, type, intensity, recency, and search (must be before conditional return)
   const filteredBeacons = useMemo(() => {
-    const toNumberOrNull = (value) => {
-      const n = Number(value);
-      return Number.isFinite(n) ? n : null;
-    };
-
-    const normalizeBeacon = (b) => {
-      if (!b || typeof b !== 'object') return null;
-
-      const lat = toNumberOrNull(b.lat ?? b.latitude ?? b?.location?.lat);
-      const lng = toNumberOrNull(b.lng ?? b.lon ?? b.longitude ?? b?.location?.lng);
-
-      return {
-        ...b,
-        lat,
-        lng,
-        created_date: b.created_date || b.created_at || b.updated_date || b.updated_at || null,
-      };
-    };
-
-    // Combine regular beacons with Right Now users
-    const beaconsList = (Array.isArray(beacons) ? beacons : [])
-      .map(normalizeBeacon)
-      .filter(Boolean)
-      .filter((b) => {
-        // Keep semantics close to the old query (`active:true` + `status:'published'`)
-        // without requiring those columns to exist.
-        const isActive = b.active !== false;
-        const status = b.status ? String(b.status).toLowerCase() : null;
-        const isPublished = status ? status === 'published' : true;
-
-        const isShadow = !!b.is_shadow;
-        const canSeeShadow = String(currentUser?.role || '').toLowerCase() === 'admin';
-        if (isShadow && !canSeeShadow) return false;
-
-        return isActive && isPublished;
-      })
-      .filter((b) => Number.isFinite(b.lat) && Number.isFinite(b.lng));
-
-    const rightNowList = Array.isArray(rightNowUsers) ? rightNowUsers : [];
-
+    // The useRealtimeBeacons hook already handles user_presence and beacons table
+    // with location_consent filtering and real-time updates.
+    const beaconsList = Array.isArray(realtimeBeacons) ? realtimeBeacons : [];
     const peopleList = showPeoplePins ? nearbyPeoplePins : [];
-
-    // Realtime presence beacons from presence table
-    const realtimePresence = Array.isArray(presenceBeacons) ? presenceBeacons : [];
 
     // Realtime location spikes from `locations` table — convert to beacon format
     const locationSpikes = (Array.isArray(realtimeLocations) ? realtimeLocations : [])
@@ -515,13 +386,12 @@ export default function GlobePage({ embedded = false }) {
         mode:   'location',
         active: true,
         ts:     new Date(l.created_at || Date.now()).getTime(),
-        // Preserve shopify_handles so LocationShopPanel can pick them up
         shopify_handles: l.shopify_handles || [],
       }));
 
-    let filtered = [...beaconsList, ...rightNowList, ...peopleList, ...realtimePresence, ...locationSpikes].map(b => ({
+    let filtered = [...beaconsList, ...peopleList, ...locationSpikes].map(b => ({
       ...b,
-      ts: b.ts ?? new Date(b.created_date || Date.now()).getTime(),
+      ts: b.ts ?? new Date(b.created_date || b.created_at || Date.now()).getTime(),
     }));
 
     // Apply search filter first
@@ -576,7 +446,7 @@ export default function GlobePage({ embedded = false }) {
     if (!activeLayer.market)  filtered = filtered.filter(b => b.type !== 'market' && b.kind !== 'market');
 
     return filtered;
-  }, [beacons, rightNowUsers, activeMode, beaconType, minIntensity, recencyFilter, searchResults, radiusSearch, nearbyPeoplePins, showPeoplePins, currentUser?.role, presenceBeacons, realtimeLocations, activeLayer]);
+  }, [realtimeBeacons, activeMode, beaconType, minIntensity, recencyFilter, searchResults, radiusSearch, nearbyPeoplePins, showPeoplePins, realtimeLocations, activeLayer]);
 
   // Sort by most recent
   const recentActivity = useMemo(() => {
@@ -610,6 +480,8 @@ export default function GlobePage({ embedded = false }) {
       return;
     }
 
+    // Open the quick preview card for regular beacons
+    setPreviewBeacon(beacon);
     setLocationShopBeacon(null);
 
     // Route to beacon sheet based on beacon_category
@@ -619,9 +491,11 @@ export default function GlobePage({ embedded = false }) {
       return;
     }
     if (category === 'user' && beacon?.owner_id) {
-      openSheet('beacon', { beaconId: beacon.id, beacon });
+      // Don't open sheet automatically for regular users, just show preview
+      // openSheet('beacon', { beaconId: beacon.id, beacon });
       return;
     }
+
 
     // Fallback: show preview panel for unrecognized beacons
     setPreviewBeacon(beacon);
@@ -674,7 +548,7 @@ export default function GlobePage({ embedded = false }) {
     ctxSetSelectedCity(city.name);
 
     // Filter beacons by city
-    const cityBeacons = beacons.filter(b => b.city === city.name);
+    const cityBeacons = realtimeBeacons.filter(b => b.city === city.name);
     setSearchResults({
       query: city.name,
       beacons: cityBeacons,
@@ -688,7 +562,7 @@ export default function GlobePage({ embedded = false }) {
       lat: city.lat,
       lng: city.lng
     });
-  }, [beacons, setCameraCity, ctxSetSelectedCity]);
+  }, [realtimeBeacons, setCameraCity, ctxSetSelectedCity]);
 
   const handleClose = useCallback(() => {
     setSelectedBeacon(null);
@@ -746,27 +620,20 @@ export default function GlobePage({ embedded = false }) {
     activityTracker.setEnabled(newVisibility);
   }, [activityVisibility]);
 
-  if (beaconsLoading || citiesLoading) {
-    return (
-      <div className="relative w-full min-h-screen bg-black flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-[#C8962C]/30 border-t-[#C8962C] rounded-full animate-spin" />
-          <p className="text-white/60 text-sm tracking-wider uppercase">Loading Pulse...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <ErrorBoundary>
-      <div className="relative w-full min-h-screen bg-black overflow-hidden">
-        {/* Globe - Full Screen */}
-        <div className="relative w-full h-screen">
+      <div className="relative w-full h-full bg-black overflow-hidden">
+        <div className="relative w-full h-full">
+
+
+
           <EnhancedGlobe3D
             ref={globeRef}
             beacons={filteredBeacons}
             cities={cities}
             pulsePlaces={pulsePlaces}
+            rotationRef={rotationRef}
+
             venueIntensity={venueIntensity}
             venueVibes={venueVibes}
             activeLayers={debouncedLayers}
@@ -780,7 +647,13 @@ export default function GlobePage({ embedded = false }) {
               handleBeaconClick(beacon);
               setFocusedBeaconId(beacon.id);
             }}
+            onRecoveryClick={(place) => {
+              setPreviewBeacon({ ...place, title: place.name, beacon_category: 'venue' });
+            }}
+
+            recoveryPins={recovery}
             onCityClick={(city) => {
+
               handleCityClick(city);
               setCameraCity(city.name);
               ctxSetSelectedCity(city.name);
@@ -804,58 +677,119 @@ export default function GlobePage({ embedded = false }) {
             focusedBeaconId={focusedBeaconId}
             amplifiedBeaconIds={amplifiedBeaconIds}
             className="w-full h-full"
+            autoRotate={false}
           />
-      </div>
 
-      {/* ── Minimal header: Layers button only ──────────────────────── */}
-      <div className="absolute top-3 right-3 z-30">
-        <button
-          onClick={() => setShowLayersSheet(true)}
-          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-black/80 border border-white/10 backdrop-blur-xl active:scale-95 transition-transform"
-          aria-label="Toggle layers"
-        >
-          <Layers className="w-5 h-5 text-white/70" />
-        </button>
-      </div>
+        </div>
 
-      {/* Beacon Preview Panel */}
-      {previewBeacon && (
-        <BeaconPreviewPanel
-          beacon={previewBeacon}
-          onClose={() => setPreviewBeacon(null)}
-          onViewFull={handleViewFullDetails}
-        />
-      )}
+        {/* ── Header Title ─────────────────────────────────────────── */}
+        <div className="absolute top-16 left-0 right-0 z-20 pointer-events-none text-center">
+          <motion.h1 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter mix-blend-plus-lighter drop-shadow-2xl"
+          >
+            Pulse
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-white/60 font-bold tracking-tight text-xs uppercase mt-1"
+          >
+            The signal starts here.
+          </motion.p>
+        </div>
 
-      {/* Location Shop Panel — Shopify products pinned to a globe location */}
-      {locationShopBeacon && (
-        <LocationShopPanel
-          location={locationShopBeacon}
-          onClose={() => setLocationShopBeacon(null)}
-        />
-      )}
+        {/* ── Mobile UI Overlays ─────────────────────────── */}
+        {/* Members Online Badge - Pushed lower */}
+        <div className="absolute top-[calc(140px+env(safe-area-inset-top,0px))] left-4 z-30 pointer-events-none">
+          <div className="px-3 py-1.5 bg-black/60 border border-white/20 backdrop-blur-md rounded-full flex items-center gap-2 pointer-events-auto shadow-lg">
+            <div className="w-2 h-2 rounded-full bg-[#39FF14] animate-pulse shadow-[0_0_8px_#39FF14]" />
+            <span className="text-[10px] font-black text-white uppercase tracking-widest">{onlineMemberCount} MEMBERS ONLINE</span>
+          </div>
+        </div>
 
-      {/* Real-time City Data Overlay */}
-      {showCityOverlay && (
-        <CityDataOverlay
-          selectedCity={selectedCity?.name || null}
-          onCitySelect={(cityName) => {
-            const city = cities.find(c => c.name === cityName);
-            if (city) handleCityClick(city);
+        {/* Layers Toggle Button - Pulled right after the banner */}
+        <div className="absolute top-[calc(65px+env(safe-area-inset-top,0px))] right-4 z-30 pointer-events-none">
+          <button 
+            onClick={() => setShowLayersSheet(true)}
+            className="p-3 bg-black/60 border border-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-black transition-all pointer-events-auto shadow-lg"
+          >
+            <Layers className="w-5 h-5" />
+          </button>
+        </div>
+
+
+
+
+
+
+
+        {/* Beacon Preview Panel */}
+        {previewBeacon && (
+          <BeaconPreviewPanel
+            beacon={previewBeacon}
+            onClose={() => setPreviewBeacon(null)}
+            onViewFull={handleViewFullDetails}
+          />
+        )}
+
+        {/* Location Shop Panel — Shopify products pinned to a globe location */}
+        {locationShopBeacon && (
+          <LocationShopPanel
+            location={locationShopBeacon}
+            onClose={() => setLocationShopBeacon(null)}
+          />
+        )}
+
+        {/* Real-time City Data Overlay */}
+        {showCityOverlay && (
+          <CityDataOverlay
+            selectedCity={selectedCity?.name || null}
+            onCitySelect={(cityName) => {
+              const city = cities.find(c => c.name === cityName);
+              if (city) handleCityClick(city);
+            }}
+            onDismiss={() => setShowCityOverlay(false)}
+          />
+        )}
+
+        {/* UI Overlays */}
+        <div key="beacon-fab" className="absolute bottom-[calc(76px+env(safe-area-inset-bottom,0px))] right-6 z-[70]">
+
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowBeaconModal(true)}
+            className="w-16 h-16 bg-[#C8962C] rounded-2xl flex items-center justify-center shadow-[0_15px_35px_-12px_rgba(200,150,44,0.6)] border border-white/30 overflow-hidden group backdrop-blur-md"
+          >
+            <div className="absolute inset-0 bg-gradient-to-tr from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <MapPin className="w-7 h-7 text-black" />
+          </motion.button>
+        </div>
+
+
+        <BeaconDropModal 
+          key="beacon-modal"
+          isOpen={showBeaconModal} 
+          onClose={() => setShowBeaconModal(false)}
+          onComplete={() => {
+            queryClient.invalidateQueries({ queryKey: ['beacons'] });
+            queryClient.invalidateQueries({ queryKey: ['pulse-places'] });
           }}
-          onDismiss={() => setShowCityOverlay(false)}
-        />
-      )}
 
-      {/* Layers sheet */}
-      <AnimatePresence>
+        />
+
         <LayersSheet
+          key="layers-sheet"
           open={showLayersSheet}
           onClose={() => setShowLayersSheet(false)}
           activeLayer={activeLayer}
           setActiveLayer={setActiveLayer}
         />
-      </AnimatePresence>
+
       </div>
     </ErrorBoundary>
   );

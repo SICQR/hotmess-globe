@@ -29,7 +29,7 @@ export default function L2EmergencyContactSheet() {
 
   async function loadContacts() {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    let { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
 
     const { data, error: fetchError } = await supabase
@@ -51,7 +51,7 @@ export default function L2EmergencyContactSheet() {
     if (!form.contact_phone.trim()) { setError('Phone number is required.'); return; }
 
     setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    let { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); setError('Not signed in.'); return; }
 
     const { error: insertError } = await supabase
@@ -77,7 +77,7 @@ export default function L2EmergencyContactSheet() {
   // ─── Delete contact ───────────────────────────────────────────────────────
   async function handleDelete(contactId) {
     setDeleting(contactId);
-    const { data: { user } } = await supabase.auth.getUser();
+    let { data: { user } } = await supabase.auth.getUser();
     if (!user) { setDeleting(null); return; }
 
     await supabase
@@ -241,3 +241,4 @@ export default function L2EmergencyContactSheet() {
     </div>
   );
 }
+

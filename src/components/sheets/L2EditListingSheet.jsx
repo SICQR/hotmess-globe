@@ -7,10 +7,12 @@
  * Delete -> set status = 'archived'.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Loader2, Trash2, Save, Camera, X } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import { useSheet } from '@/contexts/SheetContext';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 const CONDITIONS = [
@@ -32,6 +34,8 @@ const CATEGORIES = [
 
 export default function L2EditListingSheet({ listingId, listing: listingProp }) {
   const { closeSheet } = useSheet();
+  const queryClient = useQueryClient();
+  const photoInputRef = useRef(null);
   const [loading, setLoading] = useState(!listingProp);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -40,20 +44,44 @@ export default function L2EditListingSheet({ listingId, listing: listingProp }) 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
+  const [quantity, setQuantity] = useState(1);
   const [condition, setCondition] = useState('good');
   const [category, setCategory] = useState('Clothing');
   const [photos, setPhotos] = useState([]);
-  const [id, setId] = useState(listingId || listingProp?.id || null);
+  const [status, setStatus] = useState('active');
+  const [userId, setUserId] = useState(null);
+  const [id, setId] = useState(null);
+
+  // Clean ID helper
+  const cleanId = (rawId) => {
+    if (!rawId) return null;
+    return String(rawId).replace('preloved_', '');
+  };
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setUserId(data?.session?.user?.id));
+  }, []);
 
   // Load listing data if not passed as prop
   useEffect(() => {
+    const targetId = cleanId(listingId || listingProp?.id);
+    if (!targetId) { setLoading(false); return; }
+    setId(targetId);
+
     if (listingProp) {
       setTitle(listingProp.title || '');
       setDescription(listingProp.description || '');
-      setPrice(String(listingProp.price || ''));
+      setPrice(String((listingProp.price_pence ? listingProp.price_pence / 100 : listingProp.price) || ''));
+      setQuantity(listingProp.quantity || 1);
       setCondition(listingProp.condition || 'good');
       setCategory(listingProp.category || 'Clothing');
-      setPhotos(Array.isArray(listingProp.images) ? listingProp.images : []);
+      setStatus(listingProp.status || 'active');
+      
+      const imgList = Array.isArray(listingProp.images) ? [...listingProp.images] : [];
+      if (listingProp.cover_image_url && !imgList.includes(listingProp.cover_image_url)) {
+        imgList.unshift(listingProp.cover_image_url);
+      }
+      setPhotos(imgList);
       setId(listingProp.id);
       setLoading(false);
       return;
@@ -64,15 +92,29 @@ export default function L2EditListingSheet({ listingId, listing: listingProp }) 
       const { data, error } = await supabase
         .from('market_listings')
         .select('*')
-        .eq('id', listingId)
+        .eq('id', targetId)
         .single();
       if (data) {
+        // OWNERSHIP CHECK
+        const { data: { session } } = await supabase.auth.getSession();
+        const currentUid = session?.user?.id;
+        if (data.seller_id !== currentUid) {
+          alert('🚫 OWNERSHIP WARNING\nListing Seller: ' + data.seller_id + '\nYou are logged in as: ' + currentUid + '\n\nThis is why the update is failing!');
+        }
+
         setTitle(data.title || '');
         setDescription(data.description || '');
-        setPrice(String(data.price || ''));
+        setPrice(String((data.price_pence ? data.price_pence / 100 : data.price) || ''));
+        setQuantity(data.quantity || 1);
         setCondition(data.condition || 'good');
         setCategory(data.category || 'Clothing');
-        setPhotos(Array.isArray(data.images) ? data.images : []);
+        setStatus(data.status || 'active');
+        
+        const imgList = Array.isArray(data.images) ? [...data.images] : [];
+        if (data.cover_image_url && !imgList.includes(data.cover_image_url)) {
+          imgList.unshift(data.cover_image_url);
+        }
+        setPhotos(imgList);
         setId(data.id);
       }
       if (error) toast.error('Failed to load listing');
@@ -84,28 +126,38 @@ export default function L2EditListingSheet({ listingId, listing: listingProp }) 
   const handleSave = async () => {
     if (!title.trim()) { toast.error('Title is required'); return; }
     if (!price || isNaN(Number(price)) || Number(price) <= 0) { toast.error('Enter a valid price'); return; }
-    if (!id) { toast.error('Listing not found'); return; }
+    if (!id) { toast.error('Listing ID missing'); return; }
 
     setSaving(true);
-    const { error } = await supabase
+    
+    // Explicit debug log
+    const updateData = {
+      title: title.trim(),
+      description: description.trim(),
+      price_pence: Math.round(Number(price) * 100),
+      quantity: Math.max(0, parseInt(quantity.toString()) || 0),
+      status: status, // Matches our LIVE/SOLD toggle
+      condition,
+      category,
+      cover_image_url: photos[0] || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase
       .from('market_listings')
-      .update({
-        title: title.trim(),
-        description: description.trim(),
-        price: Number(price),
-        condition,
-        category,
-        images: photos,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', id);
+      .update(updateData)
+      .eq('id', id)
+      .select();
 
     setSaving(false);
+
     if (error) {
       console.error('[edit-listing] save error:', error.message);
-      toast.error('Failed to save changes');
+      toast.error('Save failed: ' + error.message);
     } else {
-      toast.success('Listing updated');
+      queryClient.invalidateQueries({ queryKey: ['my-preloved-listings'] });
+      queryClient.invalidateQueries({ queryKey: ['marketplace-sheet'] });
+      toast.success('Listing updated successfully!');
       closeSheet();
     }
   };
@@ -123,6 +175,22 @@ export default function L2EditListingSheet({ listingId, listing: listingProp }) 
     } else {
       toast.success('Listing removed');
       closeSheet();
+    }
+  };
+
+  const handlePhotoSelect = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    
+    const toastId = toast.loading('Uploading photo...');
+    try {
+      const url = await uploadToStorage(files[0], 'listing-images', userId);
+      setPhotos(prev => [...prev, url]);
+      toast.success('Photo added', { id: toastId });
+    } catch (err) {
+      toast.error('Upload failed: ' + err.message, { id: toastId });
+    } finally {
+      e.target.value = '';
     }
   };
 
@@ -158,11 +226,18 @@ export default function L2EditListingSheet({ listingId, listing: listingProp }) 
               </div>
             ))}
             <button
-              className="w-20 h-20 rounded-xl bg-[#1C1C1E] border border-dashed border-white/10 flex items-center justify-center flex-shrink-0"
-              onClick={() => toast('Photo upload is being finished now')}
+              className="w-20 h-20 rounded-xl bg-[#1C1C1E] border border-dashed border-white/10 flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform"
+              onClick={() => photoInputRef.current?.click()}
             >
               <Camera className="w-5 h-5 text-white/20" />
             </button>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoSelect}
+            />
           </div>
         </div>
 
@@ -204,6 +279,58 @@ export default function L2EditListingSheet({ listingId, listing: listingProp }) 
               className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl pl-8 pr-4 py-3 text-white placeholder-white/25 text-sm focus:outline-none focus:border-[#C8962C]/60 transition-colors"
             />
           </div>
+        </div>
+
+        {/* Quantity */}
+        <div>
+          <label className="text-xs uppercase tracking-widest text-white/30 font-black mb-2 block">Quantity Available</label>
+          <div className="flex items-center gap-4 bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-2">
+            <button 
+              onClick={() => setQuantity(q => Math.max(1, q - 1))}
+              className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-lg font-bold text-white active:scale-95"
+            >
+              -
+            </button>
+            <span className="flex-1 text-center text-lg font-black text-white">{quantity}</span>
+            <button 
+              onClick={() => setQuantity(q => q + 1)}
+              className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-lg font-bold text-white active:scale-95"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        {/* Status Toggle */}
+        <div>
+          <label className="text-xs uppercase tracking-widest text-white/30 font-black mb-2 block">Listing Status</label>
+          <div className="flex gap-2">
+            <button
+              onClick={() => { setStatus('active'); if(quantity < 1) setQuantity(1); }}
+              className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-2 ${
+                status === 'active' || status === 'live'
+                  ? 'bg-[#30D158]/20 text-[#30D158] border border-[#30D158]/30'
+                  : 'bg-white/5 text-white/40 grayscale'
+              }`}
+            >
+              <div className={`w-2 h-2 rounded-full ${status === 'active' || status === 'live' ? 'bg-[#30D158] shadow-[0_0_8px_#30D158]' : 'bg-white/20'}`} />
+              LIVE
+            </button>
+            <button
+              onClick={() => setStatus('sold')}
+              className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-2 ${
+                status === 'sold'
+                  ? 'bg-[#C8962C]/20 text-[#C8962C] border border-[#C8962C]/30'
+                  : 'bg-white/5 text-white/40 grayscale'
+              }`}
+            >
+              <div className={`w-2 h-2 rounded-full ${status === 'sold' ? 'bg-[#C8962C] shadow-[0_0_8px_#C8962C]' : 'bg-white/20'}`} />
+              SOLD
+            </button>
+          </div>
+          <p className="text-[10px] text-white/20 mt-2 px-1">
+            {status === 'sold' ? 'Listing is hidden from marketplace.' : 'Listing is visible and can be purchased.'}
+          </p>
         </div>
 
         {/* Condition */}

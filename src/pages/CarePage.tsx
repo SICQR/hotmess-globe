@@ -7,8 +7,10 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, Phone, Shield, Wind } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { useLocalPullToRefresh } from '@/hooks/useLocalPullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
+
+
 
 const GOLD = '#C8962C';
 
@@ -32,10 +34,13 @@ export default function CarePage() {
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries();
   }, [queryClient]);
-  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+
+  const { pullDistance, isRefreshing } = useLocalPullToRefresh({
     onRefresh: handleRefresh,
     scrollRef,
   });
+
+
 
   return (
     <div className="h-full w-full flex flex-col text-white" style={{ background: '#050507' }}>
@@ -64,8 +69,9 @@ export default function CarePage() {
       </div>
 
       {/* Content */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum px-4 py-6 pb-24 space-y-8" {...pullHandlers}>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum px-4 py-6 pb-24 space-y-8">
         <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
+
         {/* Intro */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}

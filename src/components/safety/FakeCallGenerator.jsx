@@ -1,76 +1,89 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
-import { Phone, PhoneOff, X, Clock, Shield } from 'lucide-react';
+import { Phone, PhoneOff, X, Clock, Shield, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/components/utils/supabaseClient';
 
 /**
- * FakeCallGenerator - Safety feature for escaping awkward/unsafe situations
+ * FakeCallGenerator - "The Exit" Implementation
  * 
- * Simulates an incoming phone call with:
- * - Customizable caller name
- * - Delay timer (5s, 30s, 1min, 5min)
- * - Realistic vibration pattern
- * - Full-screen incoming call UI
- * - "Answer" redirects to safety/care page
+ * Requirements (v5 Final):
+ * - Platform-matched visuals (iOS vs Android)
+ * - Caller Logic: Trusted Contact (if available) or 'HOTMESS Concierge'
+ * - Trigger: Immediate via event or scheduled
  */
 
-const VIBRATION_PATTERN = [200, 100, 200, 100, 200, 500]; // Realistic phone ring
-
-const PRESET_CALLERS = [
-  { name: 'Mum', emoji: '👩' },
-  { name: 'Best Friend', emoji: '🧑‍🤝‍🧑' },
-  { name: 'Work', emoji: '💼' },
-  { name: 'Flatmate', emoji: '🏠' },
-  { name: 'Partner', emoji: '❤️' },
-];
+const VIBRATION_PATTERN = [200, 100, 200, 100, 200, 500];
 
 const DELAY_OPTIONS = [
   { label: 'Now', seconds: 0 },
-  { label: '5 sec', seconds: 5 },
-  { label: '30 sec', seconds: 30 },
+  { label: '15s', seconds: 15 },
   { label: '1 min', seconds: 60 },
   { label: '5 min', seconds: 300 },
 ];
 
 export default function FakeCallGenerator({ onClose, compact = false }) {
   const navigate = useNavigate();
-  const [callerName, setCallerName] = useState('Mum');
-  const [selectedDelay, setSelectedDelay] = useState(5);
+  const [callerName, setCallerName] = useState('HOTMESS Concierge');
+  const [trustedContacts, setTrustedContacts] = useState([]);
+  const [selectedDelay, setSelectedDelay] = useState(0);
   const [isScheduled, setIsScheduled] = useState(false);
   const [countdown, setCountdown] = useState(null);
   const [showIncomingCall, setShowIncomingCall] = useState(false);
-  const [callAnswered, setCallAnswered] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
   
   const timerRef = useRef(null);
   const vibrationRef = useRef(null);
-  const audioRef = useRef(null);
 
-  // Cleanup on unmount
+  // 1. Detect Platform
   useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (vibrationRef.current) clearInterval(vibrationRef.current);
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      navigator.vibrate?.(0);
-    };
+    setIsIOS(/iPhone|iPad|iPod/i.test(navigator.userAgent));
   }, []);
 
-  const scheduleCall = () => {
-    setIsScheduled(true);
-    setCountdown(selectedDelay);
+  // 2. Fetch Trusted Contacts for Caller Selection
+  useEffect(() => {
+    const fetchContacts = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from('trusted_contacts').select('contact_name').limit(4);
+      if (data && data.length > 0) {
+        setTrustedContacts(data);
+        setCallerName(data[0].contact_name);
+      }
+    };
+    fetchContacts();
+  }, []);
 
-    if (selectedDelay === 0) {
+  // 3. Listen for Global Trigger Event (Silent SOS -> Fake Call)
+  useEffect(() => {
+    const handleGlobalTrigger = (e) => {
+      const delay = e.detail?.delay ?? 0;
+      if (delay === 0) {
+        triggerCall();
+      } else {
+        setSelectedDelay(delay);
+        scheduleCall(delay);
+      }
+    };
+    window.addEventListener('hm:trigger-fake-call', handleGlobalTrigger);
+    return () => window.removeEventListener('hm:trigger-fake-call', handleGlobalTrigger);
+  }, [callerName]);
+
+  const scheduleCall = (delayOverride) => {
+    const delay = delayOverride ?? selectedDelay;
+    setIsScheduled(true);
+    setCountdown(delay);
+
+    if (delay === 0) {
       triggerCall();
       return;
     }
 
+    if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -86,194 +99,66 @@ export default function FakeCallGenerator({ onClose, compact = false }) {
   const triggerCall = () => {
     setShowIncomingCall(true);
     
-    // Start vibration pattern (repeating)
     const vibrateLoop = () => {
-      if (navigator.vibrate) {
-        navigator.vibrate(VIBRATION_PATTERN);
-      }
+      if (navigator.vibrate) navigator.vibrate(VIBRATION_PATTERN);
     };
     vibrateLoop();
-    vibrationRef.current = setInterval(vibrateLoop, 1500);
-
-    // Try to play ringtone (browser may block autoplay)
-    try {
-      // Use a simple oscillator as fallback ringtone
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.value = 440;
-      oscillator.type = 'sine';
-      gainNode.gain.value = 0.3;
-      
-      oscillator.start();
-      
-      // Ring pattern
-      const ringPattern = () => {
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime + 0.5);
-      };
-      
-      const ringInterval = setInterval(ringPattern, 1000);
-      
-      audioRef.current = {
-        pause: () => {
-          oscillator.stop();
-          clearInterval(ringInterval);
-          audioContext.close();
-        }
-      };
-    } catch (e) {
-      // Audio not supported, vibration will still work
-    }
-  };
-
-  // Caller scripts — each preset has a natural opening line
-  const CALLER_SCRIPTS = {
-    Mum: "Hey love, just checking in — are you okay?",
-    'Best Friend': "Oi, where are you? I'm outside!",
-    Work: "Hi, sorry to call late — quick question about tomorrow.",
-    Flatmate: "Hey, you left the oven on. Are you coming back?",
-    Partner: "Babe? I'm worried, you haven't texted back.",
-  };
-
-  const answerCall = () => {
-    setCallAnswered(true);
-    stopRinging();
-
-    // Brief "answered" state with script, then redirect to safety
-    setTimeout(() => {
-      navigate('/safety');
-    }, 3000);
-  };
-
-  const declineCall = () => {
-    stopRinging();
-    setShowIncomingCall(false);
-    setIsScheduled(false);
-    setCountdown(null);
+    vibrationRef.current = setInterval(vibrateLoop, 2000);
   };
 
   const stopRinging = () => {
-    if (vibrationRef.current) {
-      clearInterval(vibrationRef.current);
-      vibrationRef.current = null;
-    }
+    if (vibrationRef.current) clearInterval(vibrationRef.current);
     navigator.vibrate?.(0);
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
   };
 
-  const cancelScheduled = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
+  const handleDecline = () => {
+    stopRinging();
+    setShowIncomingCall(false);
     setIsScheduled(false);
-    setCountdown(null);
+    onClose?.();
   };
 
-  const formatTime = (seconds) => {
-    if (seconds < 60) return `${seconds}s`;
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+  const handleAnswer = () => {
+    stopRinging();
+    // Answer state (Connected), then redirect to safety/care
+    setTimeout(() => {
+      setShowIncomingCall(false);
+      navigate('/safety');
+      onClose?.();
+    }, 2000);
   };
 
-  // Full-screen incoming call overlay with createPortal
   if (showIncomingCall) {
     return createPortal(
-      <motion.div
-        initial={{ opacity: 0, scale: 1.03 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[200] flex flex-col bg-[#0d0d0d]"
-        style={{ paddingTop: 'env(safe-area-inset-top,0px)', paddingBottom: 'env(safe-area-inset-bottom,0px)' }}
-      >
-        <div className="flex-1 flex flex-col items-center justify-center gap-4">
-          <div className="relative">
-            <div className="w-28 h-28 rounded-full bg-white/10 flex items-center justify-center text-6xl">
-              {PRESET_CALLERS?.find(c=>c.name===callerName)?.emoji||'📞'}
-            </div>
-            {[1,2,3].map(i=>(
-              <motion.div key={i} initial={{scale:1,opacity:0.4}} animate={{scale:1+i*0.3,opacity:0}}
-                transition={{duration:2,repeat:Infinity,delay:i*0.5,ease:'easeOut'}}
-                className="absolute inset-0 rounded-full border-2 border-[#39FF14]" />
-            ))}
-          </div>
-          <div className="text-center">
-            <p className="text-white font-black text-3xl">{callerName}</p>
-            <p className="text-[#C8962C] text-sm font-bold tracking-widest mt-1">HOTMESS</p>
-            {callAnswered ? (
-              <p className="text-white/60 text-sm mt-3 italic max-w-[260px] text-center">
-                "{CALLER_SCRIPTS[callerName] || "Hey, you okay? I just wanted to check in."}"
-              </p>
-            ) : (
-              <p className="text-white/40 text-xs mt-1">incoming call…</p>
-            )}
-          </div>
-        </div>
-        {!callAnswered ? (
-          <div className="flex justify-around items-center px-12 pb-16">
-            <div className="flex flex-col items-center gap-2">
-              <button onClick={declineCall}
-                className="w-16 h-16 rounded-full bg-[#C0392B] flex items-center justify-center">
-                <PhoneOff className="w-7 h-7 text-white" />
-              </button>
-              <span className="text-white/50 text-xs">Decline</span>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <button onClick={answerCall}
-                className="w-16 h-16 rounded-full bg-[#39FF14] flex items-center justify-center">
-                <Phone className="w-7 h-7 text-black" />
-              </button>
-              <span className="text-white/50 text-xs">Answer</span>
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-center items-center px-12 pb-16">
-            <p className="text-[#39FF14]/60 text-xs font-bold animate-pulse">Connected</p>
-          </div>
-        )}
-      </motion.div>,
+      <IncomingCallUI 
+        callerName={callerName} 
+        isIOS={isIOS} 
+        onAnswer={handleAnswer} 
+        onDecline={handleDecline} 
+      />,
       document.body
     );
   }
 
-  // Scheduled state - waiting for call
   if (isScheduled) {
     return (
-      <div className={cn(
-        "bg-black border-2 border-[#39FF14] p-6",
-        compact ? "rounded-lg" : ""
-      )}>
+      <div className="bg-[#1C1C1E] border border-[#C8962C]/30 p-6 rounded-2xl shadow-2xl">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-full bg-[#39FF14]/20 flex items-center justify-center">
-            <Clock className="w-6 h-6 text-[#39FF14]" />
+          <div className="w-10 h-10 rounded-full bg-[#C8962C]/10 flex items-center justify-center animate-pulse">
+            <Clock className="w-5 h-5 text-[#C8962C]" />
           </div>
           <div>
-            <h3 className="font-black text-white">CALL SCHEDULED</h3>
-            <p className="text-sm text-white/60">From: {callerName}</p>
+            <h3 className="font-black text-white text-sm uppercase tracking-wider">Call Pending</h3>
+            <p className="text-xs text-white/40">From: {callerName}</p>
           </div>
         </div>
-
-        <div className="text-center py-6">
-          <div className="text-5xl font-black text-[#39FF14] mb-2">
-            {formatTime(countdown)}
-          </div>
-          <p className="text-white/40 text-sm">until incoming call</p>
+        <div className="text-center py-4">
+          <span className="text-4xl font-black text-[#C8962C]">{countdown}s</span>
         </div>
-
-        <p className="text-xs text-white/40 text-center mb-4">
-          Put your phone face-up. The call will appear automatically.
-        </p>
-
-        <Button
-          onClick={cancelScheduled}
-          variant="outline"
-          className="w-full border-white/20 text-white hover:bg-white/10"
+        <Button 
+          variant="ghost" 
+          onClick={() => setIsScheduled(false)} 
+          className="w-full text-white/40 text-xs hover:text-white"
         >
           Cancel
         </Button>
@@ -281,125 +166,182 @@ export default function FakeCallGenerator({ onClose, compact = false }) {
     );
   }
 
-  // Setup state
   return (
-    <div className={cn(
-      "bg-black",
-      compact ? "" : "border-2 border-[#C8962C] p-6"
-    )}>
+    <div className={cn("bg-[#1C1C1E] rounded-2xl p-6 shadow-2xl border border-white/5", compact ? "" : "w-full max-w-sm mx-auto")}>
       {!compact && (
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-[#C8962C]/20 flex items-center justify-center">
-              <Shield className="w-6 h-6 text-[#C8962C]" />
-            </div>
-            <div>
-              <h3 className="font-black text-white uppercase">Fake Call</h3>
-              <p className="text-xs text-white/60">Escape awkward situations</p>
-            </div>
-          </div>
-          {onClose && (
-            <button onClick={onClose} className="text-white/40 hover:text-white">
-              <X className="w-5 h-5" />
-            </button>
-          )}
+          <h3 className="font-black text-white text-lg uppercase tracking-tight">The Exit</h3>
+          <button onClick={onClose} className="p-1 text-white/20 hover:text-white transition-colors">
+            <X className="w-5 h-5" />
+          </button>
         </div>
       )}
 
-      {/* Caller Name */}
-      <div className="mb-4">
-        <label className="text-xs text-white/60 uppercase tracking-wider font-bold mb-2 block">
-          Caller Name
-        </label>
-        <Input
-          value={callerName}
-          onChange={(e) => setCallerName(e.target.value)}
-          placeholder="Enter name..."
-          className="bg-white/5 border-white/20 text-white"
-        />
-        
-        {/* Quick presets */}
-        <div className="flex flex-wrap gap-2 mt-2">
-          {PRESET_CALLERS.map((preset) => (
-            <button
-              key={preset.name}
-              onClick={() => setCallerName(preset.name)}
+      <div className="space-y-4">
+        <div>
+          <label className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2 block">Caller</label>
+          <div className="grid grid-cols-2 gap-2">
+            <button 
+              onClick={() => setCallerName('HOTMESS Concierge')}
               className={cn(
-                "px-3 py-1.5 text-xs font-bold border-2 transition-all",
-                callerName === preset.name
-                  ? "bg-[#C8962C] border-[#C8962C] text-black"
-                  : "bg-transparent border-white/20 text-white/60 hover:border-white/40"
+                "px-3 py-2 text-[11px] font-bold border rounded-lg transition-all",
+                callerName === 'HOTMESS Concierge' ? "bg-[#C8962C] border-[#C8962C] text-black" : "bg-white/5 border-white/10 text-white/40"
               )}
             >
-              {preset.emoji} {preset.name}
+              Concierge
             </button>
-          ))}
+            {trustedContacts.map(c => (
+              <button 
+                key={c.contact_name}
+                onClick={() => setCallerName(c.contact_name)}
+                className={cn(
+                  "px-3 py-2 text-[11px] font-bold border rounded-lg transition-all",
+                  callerName === c.contact_name ? "bg-[#C8962C] border-[#C8962C] text-black" : "bg-white/5 border-white/10 text-white/40"
+                )}
+              >
+                {c.contact_name}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Delay Selection */}
-      <div className="mb-6">
-        <label className="text-xs text-white/60 uppercase tracking-wider font-bold mb-2 block">
-          Call In
-        </label>
-        <div className="grid grid-cols-5 gap-2">
-          {DELAY_OPTIONS.map((option) => (
-            <button
-              key={option.seconds}
-              onClick={() => setSelectedDelay(option.seconds)}
-              className={cn(
-                "py-2 text-xs font-bold border-2 transition-all",
-                selectedDelay === option.seconds
-                  ? "bg-[#C8962C] border-[#C8962C] text-black"
-                  : "bg-transparent border-white/20 text-white/60 hover:border-white/40"
-              )}
-            >
-              {option.label}
-            </button>
-          ))}
+        <div>
+          <label className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2 block">Wait Duration</label>
+          <div className="grid grid-cols-4 gap-2">
+            {DELAY_OPTIONS.map(opt => (
+              <button 
+                key={opt.seconds}
+                onClick={() => setSelectedDelay(opt.seconds)}
+                className={cn(
+                  "py-2 text-[11px] font-bold border rounded-lg transition-all",
+                  selectedDelay === opt.seconds ? "bg-[#C8962C] border-[#C8962C] text-black" : "bg-white/5 border-white/10 text-white/40"
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* How it works */}
-      <div className="bg-white/5 border border-white/10 p-3 mb-4 text-xs text-white/60">
-        <p className="font-bold text-white/80 mb-1">HOW IT WORKS</p>
-        <p>
-          Your phone will ring with a fake incoming call. Answer to be taken to the Safety Hub, 
-          or decline to dismiss. Perfect for exiting uncomfortable situations gracefully.
-        </p>
+        <Button 
+          onClick={() => scheduleCall()}
+          className="w-full h-14 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-[#C8962C] transition-all mt-4"
+        >
+          Activate Exit
+        </Button>
       </div>
-
-      {/* Schedule Button */}
-      <Button
-        onClick={scheduleCall}
-        className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-black py-6"
-      >
-        <Phone className="w-5 h-5 mr-2" />
-        {selectedDelay === 0 ? 'CALL NOW' : `CALL IN ${formatTime(selectedDelay)}`}
-      </Button>
     </div>
   );
 }
 
 /**
- * FakeCallButton - Compact trigger button for quick access
+ * Platform-Matched Incoming Call UI
  */
-export function FakeCallButton({ onClick, className }) {
-  return (
-    <motion.button
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={onClick}
-      className={cn(
-        "flex items-center gap-2 px-4 py-3 bg-white/5 border-2 border-[#C8962C]/50 hover:border-[#C8962C] transition-all",
-        className
-      )}
-    >
-      <Phone className="w-5 h-5 text-[#C8962C]" />
-      <div className="text-left">
-        <p className="text-sm font-black text-white">FAKE CALL</p>
-        <p className="text-[10px] text-white/60">Escape safely</p>
+function IncomingCallUI({ callerName, isIOS, onAnswer, onDecline }) {
+  const [connected, setConnected] = useState(false);
+
+  const handleAnswer = () => {
+    setConnected(true);
+    onAnswer();
+  };
+
+  if (isIOS) {
+    return (
+      <div className="fixed inset-0 z-[1000] bg-gray-900/40 backdrop-blur-3xl flex flex-col items-center justify-between py-20 px-8 text-white font-sans select-none overflow-hidden">
+        <div className="text-center mt-4">
+          <h2 className="text-3xl font-normal mb-1">{callerName}</h2>
+          <p className="text-lg opacity-80">{connected ? '00:01' : 'mobile'}</p>
+        </div>
+
+        {!connected ? (
+          <div className="w-full flex justify-between items-center px-4 mb-10">
+            <div className="flex flex-col items-center gap-2">
+              <button onClick={onDecline} className="w-18 h-18 rounded-full bg-[#FF3B30] flex items-center justify-center active:bg-[#FF3B30]/70 transition-colors">
+                <PhoneOff className="w-8 h-8 fill-current" />
+              </button>
+              <span className="text-xs font-medium">Decline</span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <button onClick={handleAnswer} className="w-18 h-18 rounded-full bg-[#4CD964] flex items-center justify-center active:bg-[#4CD964]/70 transition-colors">
+                <Phone className="w-8 h-8 fill-current" />
+              </button>
+              <span className="text-xs font-medium">Accept</span>
+            </div>
+          </div>
+        ) : (
+          <div className="w-full grid grid-cols-3 gap-y-10 px-4 mb-12 opacity-60">
+             {[
+               {icon: MessageCircle, label: 'mute'},
+               {icon: MessageCircle, label: 'keypad'},
+               {icon: MessageCircle, label: 'speaker'},
+               {icon: MessageCircle, label: 'add call'},
+               {icon: MessageCircle, label: 'FaceTime'},
+               {icon: MessageCircle, label: 'contacts'}
+             ].map(item => (
+               <div key={item.label} className="flex flex-col items-center gap-1">
+                 <div className="w-14 h-14 rounded-full border border-white/20 flex items-center justify-center">
+                    <item.icon className="w-6 h-6" />
+                 </div>
+                 <span className="text-[10px]">{item.label}</span>
+               </div>
+             ))}
+             <div className="col-start-2 flex flex-col items-center mt-4">
+                <button onClick={onDecline} className="w-18 h-18 rounded-full bg-[#FF3B30] flex items-center justify-center">
+                  <PhoneOff className="w-8 h-8 fill-current" />
+                </button>
+             </div>
+          </div>
+        )}
       </div>
-    </motion.button>
+    );
+  }
+
+  // Stock Android Implementation
+  return (
+    <div className="fixed inset-0 z-[1000] bg-[#121212] flex flex-col items-center justify-between py-16 px-10 text-white font-sans select-none">
+       <div className="text-center mt-12">
+          <div className="w-20 h-20 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-4xl font-bold mb-4 mx-auto">
+            {callerName[0]}
+          </div>
+          <h2 className="text-2xl font-medium mb-1">{callerName}</h2>
+          <p className="text-sm text-gray-400">Incoming call</p>
+       </div>
+
+       {!connected ? (
+         <div className="w-full flex flex-col items-center gap-12 mb-12">
+            <div className="relative w-full h-24 flex items-center justify-center">
+               <motion.div 
+                 animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0.1, 0.3] }}
+                 transition={{ duration: 2, repeat: Infinity }}
+                 className="absolute w-20 h-20 rounded-full border-4 border-blue-400"
+               />
+               <div className="z-10 w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center shadow-xl">
+                  <Phone className="w-8 h-8 text-white" />
+               </div>
+            </div>
+            <div className="w-full flex justify-between items-center px-4">
+              <button onClick={onDecline} className="flex flex-col items-center gap-2">
+                <div className="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center">
+                  <PhoneOff className="w-6 h-6" />
+                </div>
+                <span className="text-[11px] text-gray-400">Dismiss</span>
+              </button>
+              <button onClick={handleAnswer} className="flex flex-col items-center gap-2">
+                <div className="w-14 h-14 rounded-full bg-green-600 flex items-center justify-center">
+                  <Phone className="w-6 h-6" />
+                </div>
+                <span className="text-[11px] text-gray-400">Answer</span>
+              </button>
+            </div>
+         </div>
+       ) : (
+         <div className="w-full flex flex-col items-center mb-12">
+            <p className="text-blue-400 text-sm font-bold mb-10">Connected</p>
+            <button onClick={onDecline} className="w-18 h-18 rounded-full bg-red-600 flex items-center justify-center">
+              <PhoneOff className="w-8 h-8" />
+            </button>
+         </div>
+       )}
+    </div>
   );
 }

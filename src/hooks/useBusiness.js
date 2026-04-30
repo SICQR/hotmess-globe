@@ -25,7 +25,7 @@ export function useMyBusiness() {
 
     const fetch = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        let { data: { user } } = await supabase.auth.getUser();
         if (!user || cancelled) return;
 
         const { data, error: err } = await supabase
@@ -411,3 +411,4 @@ export function useActiveSignals(cityId = null) {
 
   return { signals };
 }
+

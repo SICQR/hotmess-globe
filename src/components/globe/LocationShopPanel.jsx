@@ -52,14 +52,23 @@ export default function LocationShopPanel({ location, onClose }) {
     <AnimatePresence>
       <motion.div
         key="location-shop-panel"
-        initial={{ y: '100%', opacity: 0 }}
-        animate={{ y: 0,      opacity: 1 }}
-        exit={{    y: '100%', opacity: 0 }}
-        transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-        className="fixed bottom-0 left-0 right-0 z-[80] max-h-[70vh] flex flex-col bg-black/95 backdrop-blur-xl border-t border-white/10 rounded-t-2xl overflow-hidden"
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{    y: '100%' }}
+        drag="y"
+        dragConstraints={{ top: 0 }}
+        dragElastic={0.2}
+        onDragEnd={(e, { offset, velocity }) => {
+          if (offset.y > 100 || velocity.y > 500) onClose();
+        }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="fixed bottom-0 left-0 right-0 z-[200] max-h-[85vh] flex flex-col bg-black border-t-2 border-x-2 border-[#C8962C] shadow-[0_-20px_50px_rgba(0,0,0,0.8)] touch-none"
       >
-        {/* Handle */}
-        <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mt-3 mb-1" />
+        {/* Drag Handle */}
+        <div className="flex justify-center py-4">
+          <div className="w-16 h-1.5 bg-white/20 rounded-full" />
+        </div>
+
 
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">

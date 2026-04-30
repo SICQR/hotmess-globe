@@ -27,6 +27,8 @@ export interface Product {
   available: boolean;
   quantity?: number;
   variants?: ProductVariant[];
+  vendor?: string;
+  options?: { name: string; values: string[] }[];
   metadata?: Record<string, unknown>;
   createdAt?: string;
   updatedAt?: string;
@@ -38,6 +40,7 @@ export interface ProductVariant {
   price: number;
   available: boolean;
   sku?: string;
+  selectedOptions?: { name: string; value: string }[];
 }
 
 export interface ProductFilters {
@@ -71,21 +74,37 @@ interface PrelovedListing {
   seller?: { display_name?: string; avatar_url?: string };
 }
 
-function normalizePrelovedProduct(listing: PrelovedListing): Product {
+function normalizePrelovedProduct(listing: any): Product {
+  // Convert price_pence to decimal pounds if needed
+  const price = typeof listing.price_pence === 'number' 
+    ? listing.price_pence / 100 
+    : (listing.price || 0);
+
+  // Priority: 1. cover_image_url, 2. images array, 3. null
+  let images = (listing.images && listing.images.length > 0) ? [...listing.images] : [];
+  if (listing.cover_image_url && !images.includes(listing.cover_image_url)) {
+    images.unshift(listing.cover_image_url);
+  }
+  
+  if (images.length === 0) {
+    // If absolutely no image, return a generic placeholder that isn't a specific product like a shirt
+    images = ['https://images.unsplash.com/photo-1586769852836-bc069f19e1b6?auto=format&fit=crop&q=80&w=800']; // Search/Box placeholder
+  }
+
   return {
     id: `preloved_${listing.id}`,
     source: 'preloved',
     title: listing.title,
     description: listing.description,
-    price: listing.price,
-    currency: 'GBP',
-    images: listing.images || [],
+    price: price,
+    currency: listing.currency || 'GBP',
+    images: images,
     category: listing.category,
     condition: listing.condition as Product['condition'],
     sellerId: listing.seller_id,
     sellerName: listing.seller?.display_name,
     sellerAvatar: listing.seller?.avatar_url,
-    available: listing.status === 'active',
+    available: listing.status === 'active' || listing.status === 'live',
     createdAt: listing.created_at,
     updatedAt: listing.updated_at,
   };
@@ -97,16 +116,20 @@ export async function getPrelovedProducts(filters: ProductFilters = {}): Promise
     let query = supabase
       .from('market_listings')
       .select('*')
-      .eq('status', 'active');
+      .neq('status', 'deleted');
+
+    // Filter by 'active' or 'live' status
+    query = query.or('status.eq.active,status.eq.live');
 
     if (filters.category) {
       query = query.eq('category', filters.category);
     }
     if (filters.minPrice !== undefined) {
-      query = query.gte('price', filters.minPrice);
+      // filters.minPrice comes in as pounds, convert to pence for query
+      query = query.gte('price_pence', filters.minPrice * 100);
     }
     if (filters.maxPrice !== undefined) {
-      query = query.lte('price', filters.maxPrice);
+      query = query.lte('price_pence', filters.maxPrice * 100);
     }
     if (filters.condition) {
       query = query.eq('condition', filters.condition);
@@ -131,17 +154,34 @@ export async function getPrelovedProducts(filters: ProductFilters = {}): Promise
       return [];
     }
 
-    // Step 2: fetch sellers from market_sellers (has display_name populated for shop identities)
-    const ids = [...new Set((listings || []).map(l => l.seller_id).filter(Boolean))];
-    const { data: sellers } = ids.length
-      ? await supabase.from('market_sellers').select('owner_id, display_name, avatar_url').in('owner_id', ids)
-      : { data: [] };
+    if (!listings?.length) return [];
 
-    const sellerMap = Object.fromEntries((sellers || []).map(s => [s.owner_id, s]));
+    // Step 2: Fetch media and sellers in parallel
+    const listingIds = listings.map(l => l.id);
+    const sellerIds = [...new Set(listings.map(l => l.seller_id).filter(Boolean))];
 
-    // Step 3: normalize and attach seller data
-    return (listings || []).map(l => {
-      const listing = { ...l, seller: sellerMap[l.seller_id] ?? null };
+    const [mediaResponse, sellersResponse] = await Promise.all([
+      supabase.from('market_listing_media').select('listing_id, storage_path').in('listing_id', listingIds).order('sort', { ascending: true }),
+      sellerIds.length 
+        ? supabase.from('market_sellers').select('id, display_name, logo_url').in('id', sellerIds)
+        : Promise.resolve({ data: [] })
+    ]);
+
+    const mediaMap: Record<string, string[]> = {};
+    (mediaResponse.data || []).forEach(m => {
+      if (!mediaMap[m.listing_id]) mediaMap[m.listing_id] = [];
+      mediaMap[m.listing_id].push(m.storage_path);
+    });
+
+    const sellerMap = Object.fromEntries((sellersResponse.data || []).map(s => [s.id, s]));
+
+    // Step 3: normalize and attach seller/media data
+    return listings.map(l => {
+      const listing = { 
+        ...l, 
+        images: mediaMap[l.id] || [],
+        seller: sellerMap[l.seller_id] || null 
+      };
       return normalizePrelovedProduct(listing);
     });
   } catch (error) {
@@ -185,9 +225,11 @@ interface ShopifyProduct {
   featuredImage?: { url: string; altText?: string };
   images: any; // Can be { url }[] or { nodes: { url }[] }
   productType?: string;
+  vendor?: string;
   tags?: string[];
   availableForSale?: boolean;
   variants?: any; // Can be flat array or { nodes: [...] }
+  options?: { name: string; values: string[] }[];
 }
 
 function normalizeShopifyProduct(product: ShopifyProduct): Product {
@@ -215,15 +257,15 @@ function normalizeShopifyProduct(product: ShopifyProduct): Product {
       ? parseFloat(firstVariant.compareAtPrice.amount)
       : undefined;
 
-  // Extract images — handle both { url }[] and { nodes: [{ url }] } formats
-  const imageList: string[] = Array.isArray(product.images)
-    ? product.images.map((img: any) => typeof img === 'string' ? img : img.url)
-    : product.images?.nodes?.map((img: any) => img.url) || [];
+  // Extract images — handle both featuredImage and the full images list
+  const allImageUrls: string[] = [
+    product.featuredImage?.url,
+    ...(Array.isArray(product.images)
+      ? product.images.map((img: any) => typeof img === 'string' ? img : img.url)
+      : product.images?.nodes?.map((img: any) => img.url) || [])
+  ].filter(Boolean) as string[];
 
-  // If no images from the images field, try featuredImage
-  if (imageList.length === 0 && product.featuredImage?.url) {
-    imageList.push(product.featuredImage.url);
-  }
+  const imageList = Array.from(new Set(allImageUrls));
 
   // Determine availability — check product-level flag or any variant
   const available = product.availableForSale !== undefined
@@ -248,7 +290,10 @@ function normalizeShopifyProduct(product: ShopifyProduct): Product {
       price: parseFloat(v.price?.amount || '0'),
       available: v.availableForSale,
       sku: v.sku,
+      selectedOptions: v.selectedOptions,
     })),
+    vendor: product.vendor,
+    options: product.options,
     metadata: { handle: product.handle },
   };
 }
@@ -340,6 +385,12 @@ function normalizeInternalProduct(row: InternalProduct): Product {
       ageVerifiedOnly: row.age_verified_only,
       contentRating: row.content_rating,
     },
+    variants: [{
+      id: `mock_variant_${row.id}`,
+      title: 'Default',
+      price: row.price_gbp,
+      available: true
+    }]
   };
 }
 

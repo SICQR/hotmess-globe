@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTicketThread, useTicketMessages, useSendTicketMessage, useInitiatePurchase } from '@/hooks/useTickets';
 import { useQueryClient } from '@tanstack/react-query';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
+
 import { supabase } from '@/components/utils/supabaseClient';
 
 export default function TicketChat() {
@@ -18,10 +17,7 @@ export default function TicketChat() {
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries();
   }, [queryClient]);
-  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
-    onRefresh: handleRefresh,
-    scrollRef,
-  });
+
 
   const { thread, isLoading: threadLoading } = useTicketThread(null, threadId);
   const { messages, isLoading: messagesLoading, refetch } = useTicketMessages(threadId);
@@ -139,8 +135,8 @@ export default function TicketChat() {
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum p-4" {...pullHandlers}>
-        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum p-4">
+
         <div className="mx-auto max-w-2xl space-y-4">
           {/* System message */}
           <div className="rounded-lg bg-white/5 p-3 text-center text-sm text-white/60">

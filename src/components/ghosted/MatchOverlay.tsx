@@ -83,10 +83,10 @@ export function MatchOverlay({
             transition={{ delay: 0.35 }}
           >
             <h2 className="text-3xl font-black text-white uppercase tracking-tight mb-2">
-              It's a match
+              IT'S A MATCH
             </h2>
-            <p className="text-sm text-white/50">
-              You and {theirName} both boo'd each other
+            <p className="text-[11px] font-black text-white/50 uppercase tracking-[0.2em]">
+              YOU AND {theirName.toUpperCase()} BOTH BOO'D EACH OTHER
             </p>
           </motion.div>
 
@@ -103,7 +103,7 @@ export function MatchOverlay({
             }}
           >
             <MessageCircle className="w-5 h-5" />
-            Send a message
+            SEND A MESSAGE
           </motion.button>
         </motion.div>
       )}

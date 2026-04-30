@@ -138,7 +138,13 @@ export default function L2FiltersSheet({ onApply, initialFilters = {}, context }
   if (isDiscovery) {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
+        <div 
+          className="flex-1 overflow-y-auto px-4 py-4 space-y-6"
+          style={{
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'rgba(200,150,44,0.3) transparent',
+          }}
+        >
 
           {/* Online Only toggle */}
           <div>
@@ -279,7 +285,13 @@ export default function L2FiltersSheet({ onApply, initialFilters = {}, context }
   // ── Market mode (legacy) ────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
+      <div 
+        className="flex-1 overflow-y-auto px-4 py-4 space-y-6"
+        style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'rgba(200,150,44,0.3) transparent',
+        }}
+      >
 
         {/* Category */}
         <div>

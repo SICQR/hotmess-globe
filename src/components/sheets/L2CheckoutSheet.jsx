@@ -14,16 +14,25 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import { toast } from 'sonner';
+import { loadStripe } from '@stripe/stripe-js';
+import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 export default function L2CheckoutSheet({ id, cartItems, total }) {
   const { closeSheet, openSheet } = useSheet();
   const { beginCheckout } = useShopCart();
   const [product, setProduct] = useState(null);
+  
+  // NEW LOG: See exactly what props are coming in the door
+  console.log('[Checkout] Sheet opened with props:', { id, cartItems, total });
+
   const [loading, setLoading] = useState(!!id);
   const [processing, setProcessing] = useState(false);
-  const [step, setStep] = useState('review'); // 'review' | 'payment' | 'success'
+  const [step, setStep] = useState('review'); // 'review' | 'payment' | 'stripe_embedded' | 'success'
   const [paymentMethod, setPaymentMethod] = useState(null); // 'stripe' | 'p2p'
   const [orderCreated, setOrderCreated] = useState(null);
+  const [clientSecret, setClientSecret] = useState('');
 
   const [form, setForm] = useState({
     fullName: '',
@@ -37,12 +46,24 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
   useEffect(() => {
     if (!id) { setLoading(false); return; }
     const load = async () => {
-      const { data } = await supabase
+      setLoading(true);
+      const cleanId = id.replace('preloved_', '');
+      console.log('[Checkout] Searching for item:', { original: id, clean: cleanId });
+      
+      const { data, error } = await supabase
         .from('market_listings')
-        .select('id, title, price, images, seller_id')
-        .eq('id', id)
-        .single();
-      if (data) setProduct(data);
+        .select('*')
+        .or(`id.eq.${cleanId},id.eq.${id}`)
+        .maybeSingle();
+
+      if (error) {
+        console.error('[Checkout] Database error while fetching product:', error);
+      } else if (data) {
+        console.log('[Checkout] Product LOADED successfully:', data);
+        setProduct(data);
+      } else {
+        console.warn('[Checkout] Product NOT found in database for either ID. Check if it was deleted.');
+      }
       setLoading(false);
     };
     load();
@@ -57,7 +78,15 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
 
   const set = (key, value) => setForm(f => ({ ...f, [key]: value }));
 
-  const orderTotal = total || product?.price || 0;
+  const [lockedTotal, setLockedTotal] = useState(total || 0);
+
+  useEffect(() => {
+    if (total > 0 && lockedTotal === 0) {
+      setLockedTotal(total);
+    }
+  }, [total]);
+
+  const orderTotal = lockedTotal || product?.price || total || 0;
   const items = cartItems || (product ? [{ id: product.id, title: product.title, price: product.price, qty: 1, source: 'preloved', seller_id: product.seller_id }] : []);
 
   // Determine cart composition
@@ -73,31 +102,7 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
       return;
     }
 
-    // If Shopify items present, redirect to Shopify checkout
-    if (hasShopify && !hasPreloved) {
-      try {
-        beginCheckout();
-        toast.success('Redirecting to checkout...');
-        closeSheet();
-      } catch (err) {
-        toast.error(err?.message || 'Checkout unavailable');
-      }
-      return;
-    }
-
-    // If mixed cart, guide user
-    if (hasShopify && hasPreloved) {
-      toast('Complete Shopify items first, then preloved items separately', { duration: 4000 });
-      try {
-        beginCheckout();
-        closeSheet();
-      } catch (err) {
-        toast.error(err?.message || 'Checkout unavailable');
-      }
-      return;
-    }
-
-    // Preloved only → proceed to payment step
+    // Both Shopify and Preloved items now proceed to the internal payment step
     setStep('payment');
   };
 
@@ -105,39 +110,92 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
     const user = session?.user;
     if (!user) { toast.error('Please log in'); return null; }
 
-    const { data: order, error: orderErr } = await supabase.from('orders').insert({
-      buyer_id: user.id,
-      buyer_email: form.email,
-      total_gbp: orderTotal,
-      status,
-      shipping_address: `${form.addressLine1}, ${form.city}, ${form.postcode}, ${form.country}`,
-      items: prelovedItems.map(i => ({ id: i.id, title: i.title, price: i.price, qty: i.qty })),
-    }).select('id').single();
-
-    if (orderErr) throw orderErr;
-
-    // Notify seller(s)
-    const sellerIds = [...new Set(prelovedItems.map(i => i.seller_id).filter(Boolean))];
-    for (const sellerId of sellerIds) {
-      const { data: sellerProfile } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('id', sellerId)
-        .single();
-
-      if (sellerProfile?.email) {
-        await supabase.from('notifications').insert({
-          user_email: sellerProfile.email,
-          type: 'order',
-          title: 'New Order!',
-          message: `${form.fullName || 'A buyer'} ordered from you — £${orderTotal.toFixed(2)}`,
-          metadata: { order_id: order?.id, buyer_email: form.email },
-          read: false,
-        }).then(null, () => {});
+    // EMERGENCY FALLBACK: If product is still null, try to fetch it one last time right now
+    let activeProduct = product;
+    if (!activeProduct && id) {
+      console.log('[Checkout] Emergency product fetch starting for ID:', id);
+      const cleanId = id.toString().replace('preloved_', '');
+      const { data } = await supabase.from('market_listings').select('*').eq('id', cleanId).maybeSingle();
+      if (data) {
+        console.log('[Checkout] Emergency fetch SUCCESS:', data.title);
+        activeProduct = data;
+      } else {
+        console.warn('[Checkout] Emergency fetch FAILED for ID:', cleanId);
       }
     }
 
-    return order;
+    // Ensure we have a valid items array for the database
+    const finalItems = (items && items.length > 0) 
+      ? items 
+      : (activeProduct ? [{ 
+          id: activeProduct.id, 
+          title: activeProduct.title, 
+          price: activeProduct.price || activeProduct.price_gbp || (activeProduct.price_pence ? activeProduct.price_pence/100 : 0), 
+          qty: 1, 
+          source: 'preloved', 
+          seller_id: activeProduct.seller_id 
+        }] : []);
+
+    const payload = {
+      p_buyer_id: user.id,
+      p_buyer_email: form.email,
+      p_total_gbp: orderTotal || (activeProduct?.price || 0),
+      p_shipping_address: `${form.addressLine1}, ${form.city}, ${form.postcode}, ${form.country}`,
+      p_items: finalItems.map(i => ({ 
+        id: i.id, 
+        title: i.title || 'Item', 
+        price: i.price || 0, 
+        qty: i.qty || 1,
+        source: i.source || 'preloved',
+        seller_id: i.seller_id || activeProduct?.seller_id || null,
+        variantId: i.variantId || null
+      })),
+      p_status: status
+    };
+
+    console.log('[Checkout] Final RPC Payload:', payload);
+
+    // Use RPC to bypass the schema cache issues
+    const { data: orderId, error: orderErr } = await supabase.rpc('create_unified_order', payload);
+
+    if (orderErr) {
+      console.error('Order RPC Error:', orderErr);
+      throw orderErr;
+    }
+
+    console.log('[Checkout] Order created successfully. ID:', orderId);
+
+    // FIX: Force listing status update to counteract any automatic "sold" logic in the RPC
+    if (activeProduct?.id) {
+      const cleanId = activeProduct.id.toString().replace('preloved_', '');
+      const { data: latestStock } = await supabase
+        .from('market_listings')
+        .select('quantity, status')
+        .eq('id', cleanId)
+        .single();
+      
+      if (latestStock) {
+        const purchasedQty = finalItems[0]?.qty || 1;
+        const newQty = Math.max(0, (latestStock.quantity || 1) - purchasedQty);
+        
+        const updates = { 
+          quantity: newQty,
+          status: newQty > 0 ? (latestStock.status === 'sold' ? 'active' : latestStock.status) : 'sold',
+          updated_at: new Date().toISOString()
+        };
+
+        // If the RPC already marked it as sold, we force it back to active if newQty > 0
+        if (newQty > 0) {
+          updates.status = 'active';
+        }
+
+        await supabase.from('market_listings').update(updates).eq('id', cleanId);
+        console.log('[Checkout] Global status/stock fix applied:', updates);
+      }
+    }
+
+    // Return a mock order object that matches what legacy code expects
+    return { id: orderId };
   };
 
   // Stripe payment: create order then redirect to Stripe Checkout
@@ -145,48 +203,56 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
     setProcessing(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      
+      // Create local order record in Supabase
       const order = await createOrderRecord(session, 'pending_payment');
       if (!order) { setProcessing(false); return; }
 
-      // Create Stripe Checkout Session for preloved item
-      const firstItem = prelovedItems[0];
+      // Determine the payload based on cart contents
+      const payload = {
+        type: hasShopify ? 'shopify_order' : 'preloved_order',
+        order_id: order.id,
+        items: items.map(i => ({
+          title: i.title,
+          price: i.price,
+          qty: i.qty,
+          variantId: i.variantId || null,
+        })),
+        price_gbp: orderTotal,
+      };
+
       const res = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({
-          type: 'preloved_order',
-          listing_id: firstItem?.id || id,
-          price_gbp: orderTotal,
-          title: firstItem?.title || 'Preloved Item',
-          order_id: order.id,
-        }),
+        body: JSON.stringify(payload),
       });
 
-      if (res.ok) {
-        const { url } = await res.json();
-        if (url) {
-          // Clear preloved cart items from Supabase
-          if (session?.user) {
-            await supabase.from('cart_items').delete().eq('auth_user_id', session.user.id).eq('source', 'preloved');
-          }
-          window.location.href = url; // Redirect to Stripe hosted checkout
-          return;
-        }
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.detail || errJson.error || 'Checkout initialization failed');
       }
 
-      // Stripe not available — fallback to P2P
-      toast('Stripe unavailable right now — arrange payment with seller via chat', { duration: 4000 });
-      setOrderCreated(order);
-      if (session?.user) {
-        await supabase.from('cart_items').delete().eq('auth_user_id', session.user.id).eq('source', 'preloved').catch(() => {});
+      const { clientSecret: secret } = await res.json();
+      if (secret) {
+        // Store order so onComplete can mark it paid
+        setOrderCreated(order);
+        // Clear cart items
+        if (hasShopify) {
+          localStorage.removeItem('shopify_cart_id');
+        }
+        if (hasPreloved && session?.user) {
+          await supabase.from('cart_items').delete().eq('auth_user_id', session.user.id).eq('source', 'preloved');
+        }
+        setClientSecret(secret);
+        setStep('stripe_embedded');
+        return;
       }
-      setStep('success');
     } catch (err) {
       console.error('Stripe checkout error:', err);
-      toast.error('Payment processing failed. Try arranging with seller.');
+      toast.error(err.message || 'Payment processing failed');
     } finally {
       setProcessing(false);
     }
@@ -199,6 +265,34 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
       const { data: { session } } = await supabase.auth.getSession();
       const order = await createOrderRecord(session, 'pending_payment');
       if (!order) { setProcessing(false); return; }
+
+      // Update stock/quantity instead of just marking as sold
+      if (id) {
+        const cleanId = id.toString().replace('preloved_', '');
+        const { data: currentListing } = await supabase
+          .from('market_listings')
+          .select('quantity, status')
+          .eq('id', cleanId)
+          .single();
+
+        if (currentListing) {
+          const currentQty = currentListing.quantity || 1;
+          const purchasedQty = items[0]?.qty || 1;
+          const newQty = Math.max(0, currentQty - purchasedQty);
+          
+          const updates = { 
+            quantity: newQty,
+            updated_at: new Date().toISOString()
+          };
+          
+          if (newQty <= 0) {
+            updates.status = 'sold';
+          }
+
+          await supabase.from('market_listings').update(updates).eq('id', cleanId);
+          console.log('[Checkout] Inventory updated:', { previous: currentQty, now: newQty });
+        }
+      }
 
       setOrderCreated(order);
       if (session?.user) {
@@ -272,6 +366,108 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
           </button>
         </div>
       </motion.div>
+    );
+  }
+
+  // ---- STRIPE EMBEDDED CHECKOUT ----
+  if (step === 'stripe_embedded' && clientSecret) {
+    const handlePaymentComplete = async () => {
+      console.log('[Stripe] onComplete callback fired. Marking order as paid...');
+      // Mark order as paid directly — works even without webhooks in local dev
+      if (orderCreated?.id) {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // Update 'orders' table with seller_id linkage
+        // We use the activeProduct info we got during or before the payment
+        const finalSellerId = product?.seller_id || orderCreated?.seller_id;
+        
+        const { error: err1 } = await supabase
+          .from('orders')
+          .update({ 
+            status: 'paid', 
+            seller_id: finalSellerId,
+            updated_at: new Date().toISOString() 
+          })
+          .eq('id', orderCreated.id);
+        
+        if (err1) console.error('[Stripe] Failed to update orders table:', err1.message);
+        else console.log('[Stripe] successfully updated orders table to paid');
+
+        // Update 'product_orders' table to paid
+        const { error: err2 } = await supabase
+          .from('product_orders')
+          .update({ status: 'paid', updated_at: new Date().toISOString() })
+          .eq('order_id', orderCreated.id);
+        
+        if (err2) console.warn('[Stripe] product_orders status update error:', err2.message);
+        else console.log('[Stripe] successfully updated product_orders table to paid');
+
+        // Update stock/quantity instead of just forcing SOLD
+        const listingId = product?.id || id?.toString().replace('preloved_', '');
+        if (listingId) {
+          const { data: currentListing } = await supabase
+            .from('market_listings')
+            .select('quantity, status')
+            .eq('id', listingId)
+            .single();
+
+          if (currentListing) {
+            const currentQty = currentListing.quantity || 1;
+            const purchasedQty = items[0]?.qty || 1;
+            const newQty = Math.max(0, currentQty - purchasedQty);
+            
+            const updates = { 
+              quantity: newQty,
+              updated_at: new Date().toISOString()
+            };
+            
+            if (newQty <= 0) {
+              updates.status = 'sold';
+            }
+
+            await supabase
+              .from('market_listings')
+              .update(updates)
+              .eq('id', listingId)
+              .then(null, (e) => console.warn('[Stripe] stock update failed:', e.message));
+            
+            console.log('[Checkout] Stripe Inventory updated:', { previous: currentQty, now: newQty });
+          }
+        }
+
+        // Clear cart
+        if (session?.user) {
+          await supabase.from('cart_items').delete().eq('auth_user_id', session.user.id);
+          console.log('[Stripe] cleared cart_items in DB');
+        }
+        try { 
+          localStorage.removeItem('shopify_cart_id_v1'); 
+          localStorage.removeItem('shopify_cart_id');
+          console.log('[Stripe] cleared shopify_cart_id from localStorage');
+        } catch(e) {}
+
+        toast.success('Payment confirmed! Your order is now paid.');
+      } else {
+        console.warn('[Stripe] No orderCreated.id found during onComplete. This is bad.');
+      }
+      setStep('success');
+    };
+
+    return (
+      <div className="flex flex-col h-full bg-[#1C1C1E]">
+        <div className="p-4 border-b border-white/5 flex items-center justify-between">
+          <h2 className="text-white font-black">Secure Checkout</h2>
+          <button onClick={() => setStep('payment')} className="text-white/40 text-xs">Back</button>
+        </div>
+        <div className="flex-1 overflow-y-auto min-h-[400px]">
+          <EmbeddedCheckoutProvider 
+            stripe={stripePromise} 
+            options={{ clientSecret, onComplete: handlePaymentComplete }}
+          >
+            <EmbeddedCheckout />
+          </EmbeddedCheckoutProvider>
+        </div>
+      </div>
     );
   }
 

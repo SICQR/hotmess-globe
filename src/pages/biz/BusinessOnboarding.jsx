@@ -55,7 +55,7 @@ export default function BusinessOnboarding() {
     setSubmitting(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No authenticated user');
 
       const tier = businessType === 'venue' ? 'venue' : 'promoter';
@@ -328,3 +328,4 @@ export default function BusinessOnboarding() {
     </div>
   );
 }
+

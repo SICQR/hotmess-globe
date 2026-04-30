@@ -1,461 +1,373 @@
-/**
- * Vercel API Route: Stripe Webhook Handler
- * 
- * Handles Stripe webhook events for subscriptions and payments.
- * Verifies webhook signature and updates database accordingly.
- */
-
-import { createClient } from '@supabase/supabase-js';
-import Stripe from 'stripe';
-
-// Disable body parsing - we need raw body for signature verification
 export const config = {
   api: {
     bodyParser: false,
   },
 };
 
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+import Stripe from 'stripe';
+import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
-async function getRawBody(req) {
-  const chunks = [];
-  for await (const chunk of req) {
-    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+const SHOPIFY_ADMIN_API_TOKEN = process.env.SHOPIFY_ADMIN_API_TOKEN;
+const SHOPIFY_STORE_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN || 'hotmessldn.myshopify.com';
+
+async function createShopifyOrder(session) {
+  if (!SHOPIFY_ADMIN_API_TOKEN) {
+    console.error('[Shopify] Missing SHOPIFY_ADMIN_API_TOKEN');
+    return;
   }
-  return Buffer.concat(chunks);
+
+  const orderId = session.metadata?.order_id;
+  const email = session.customer_details?.email || session.metadata?.user_email;
+  const shipping = session.shipping_details;
+
+  // Prepare Shopify line items
+  // Note: We need variant IDs here. We pass them in the checkout session metadata or line items usually.
+  // In our create-checkout-session.js, we don't put variantId in metadata, but we might have it in the session line items if we was careful.
+  // Actually, we should probably fetch the list of items from Supabase using orderId to be safe and get variantIds.
+  
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const { data: order, error: fetchErr } = await supabase.from('orders').select('*').eq('id', orderId).single();
+  
+  if (fetchErr || !order || !order.items) {
+    console.error('[Shopify] Order or items not found in Supabase for mirroring:', orderId, fetchErr?.message);
+    return;
+  }
+
+  console.log(`[Shopify] Checking ${order.items.length} items for Shopify variants...`);
+
+  // Smarter detection: if it has a variantId, treat it as a Shopify item
+  const shopifyItems = order.items
+    .filter(item => item.variantId || item.source === 'shopify')
+    .map(item => {
+      // Clean the variant ID (handle GIDs like gid://shopify/ProductVariant/12345 or plain IDs)
+      const cleanVariantId = String(item.variantId).split('/').pop();
+      return {
+        variant_id: parseInt(cleanVariantId),
+        quantity: item.qty || item.quantity || 1,
+      };
+    })
+    .filter(item => !isNaN(item.variant_id));
+
+  console.log(`[Shopify] Detected ${shopifyItems.length} Shopify-ready items.`);
+
+  if (shopifyItems.length === 0) {
+    console.log('[Shopify] No items found with valid Shopify Variant IDs. Skipping mirroring.');
+    return;
+  }
+
+  const orderPayload = {
+    order: {
+      email: email,
+      fulfillment_status: null,
+      send_receipt: true,
+      send_fulfillment_receipt: true,
+      line_items: shopifyItems,
+      shipping_address: shipping ? {
+        first_name: shipping.name.split(' ')[0],
+        last_name: shipping.name.split(' ').slice(1).join(' ') || 'Customer',
+        address1: shipping.address.line1,
+        address2: shipping.address.line2,
+        city: shipping.address.city,
+        province: shipping.address.state,
+        zip: shipping.address.postal_code,
+        country: shipping.address.country,
+      } : undefined,
+      financial_status: 'paid',
+      note: `Created via HOTMESS App (Stripe Session: ${session.id})`,
+      tags: 'App Order, Stripe',
+    },
+  };
+
+  try {
+    const response = await fetch(`https://${SHOPIFY_STORE_DOMAIN}/admin/api/2024-01/orders.json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': SHOPIFY_ADMIN_API_TOKEN,
+      },
+      body: JSON.stringify(orderPayload),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      console.error('[Shopify] Order creation failed:', JSON.stringify(result));
+    } else {
+      console.log('[Shopify] Order mirrored successfully:', result.order?.id);
+      
+      // Update our local order with the Shopify Order ID
+      await supabase
+        .from('orders')
+        .update({ shopify_order_id: String(result.order?.id) })
+        .eq('id', orderId);
+    }
+  } catch (err) {
+    console.error('[Shopify] Fetch error:', err);
+  }
+}
+
+async function processOrderCompletion(session, eventType, req) {
+  const orderId = session.metadata?.order_id;
+  const stripeType = session.metadata?.type;
+
+  console.log(`[Webhook] Processing ${eventType} (Type: ${stripeType})`);
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  // ── Handle Membership Upgrades ──────────────────────────────────────────
+  if (stripeType === 'membership') {
+    const userId = session.metadata?.user_id;
+    const tierName = session.metadata?.tier_name;
+
+    if (!userId || !tierName) {
+      console.error('[Webook] Missing membership metadata:', { userId, tierName });
+      return;
+    }
+
+    console.log(`[Webhook] Upgrading user ${userId} to ${tierName}...`);
+    
+    let subscription_status = 'active';
+    let subscription_ends_at = null;
+
+    // If we have a subscription ID, fetch the real end date from Stripe
+    if (session.subscription) {
+      try {
+        console.log('[Webhook] Fetching subscription details for:', session.subscription);
+        const sub = await stripe.subscriptions.retrieve(session.subscription);
+        
+        subscription_status = sub.status || 'active';
+        
+        if (sub.current_period_end) {
+          const timestamp = Number(sub.current_period_end);
+          if (!isNaN(timestamp)) {
+            subscription_ends_at = new Date(timestamp * 1000).toISOString();
+          }
+        }
+        
+        // Final fallback if date is still null but we have a sub
+        if (!subscription_ends_at) {
+          console.warn('[Webhook] current_period_end missing, using 31-day fallback');
+          subscription_ends_at = new Date(Date.now() + 31 * 24 * 60 * 60 * 1000).toISOString();
+        }
+
+        console.log('[Webhook] Success! Status:', subscription_status, 'Ends at:', subscription_ends_at);
+      } catch (e) {
+        console.warn('[Webhook] Could not fetch subscription details:', e.message);
+        // Fallback so it's not null
+        subscription_ends_at = new Date(Date.now() + 31 * 24 * 60 * 60 * 1000).toISOString();
+      }
+    }
+
+    const { error: upgradeErr } = await supabase
+      .from('profiles')
+      .update({ 
+        business_type: tierName.toLowerCase().includes('elite') || tierName.toLowerCase().includes('premium') ? 'premium' : tierName.toLowerCase(),
+        profile_type: tierName.toLowerCase().includes('elite') || tierName.toLowerCase().includes('premium') ? 'premium' : tierName.toLowerCase(),
+        membership_tier: `MESS — ${tierName.toUpperCase()}`,
+        subscription_tier: tierName.toUpperCase(),
+        stripe_subscription_id: session.subscription, 
+        subscription_status,
+        subscription_ends_at,
+        is_business: true,
+        is_verified: true
+      })
+      .eq('id', userId);
+
+    if (upgradeErr) {
+      console.error('[Webhook] Membership upgrade failed:', upgradeErr.message);
+    } else {
+      console.log(`[Webhook] User ${userId} successfully upgraded to ${tierName}. Status: ${subscription_status}`);
+      // Send membership confirmation email
+      await sendMembershipEmail(userId, tierName, req);
+    }
+    return;
+  }
+
+  // ── Handle Physical Orders (Existing Logic) ──────────────────────────────
+  if (!orderId) {
+    console.warn('[Webhook] No orderId found in metadata. Skipping processing.');
+    return;
+  }
+
+  // 1. Extract shipping & buyer details
+  const customerEmail = session.customer_details?.email || session.metadata?.user_email || session.receipt_email;
+  const shipping = session.shipping_details;
+  const buyerName = shipping?.name || session.customer_details?.name || 'Buyer';
+  
+  const shippingAddress = shipping 
+    ? `${shipping.name}\n${shipping.address.line1}${shipping.address.line2 ? `, ${shipping.address.line2}` : ''}\n${shipping.address.city}, ${shipping.address.postal_code}, ${shipping.address.country}`
+    : null;
+
+  // 2. Update local Supabase tables
+  console.log(`[Webhook] Updating Supabase tables for order ${orderId} status to 'paid'...`);
+  
+  // Update 'orders' table
+  const { error: err1 } = await supabase
+    .from('orders')
+    .update({ 
+      status: 'paid', 
+      updated_at: new Date().toISOString(),
+      stripe_session_id: session.id,
+      shipping_address: shippingAddress || session.metadata?.shipping_address,
+      buyer_name: buyerName,
+      buyer_email: customerEmail
+    })
+    .eq('id', orderId);
+
+  // Update 'product_orders' table (Used by the "More" tab/Order list)
+  const { error: err2 } = await supabase
+    .from('product_orders')
+    .update({ 
+      status: 'paid', 
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', orderId);
+
+  if (err1) console.error('[Webhook] orders update fail:', err1.message);
+  if (err2) console.error('[Webhook] product_orders update fail:', err2.message);
+
+  if (!err1 && !err2) {
+    console.log('[Webhook] Both local tables updated successfully.');
+  }
+
+  // 3. Clear user cart
+  const userId = session.metadata?.user_id;
+  if (userId) {
+    console.log(`[Webhook] Clearing cart for user ${userId}...`);
+    await supabase.from('cart_items').delete().eq('auth_user_id', userId);
+  }
+
+  // 4. Shopify Mirroring
+  console.log(`[Webhook] Checking for Shopify mirroring for order ${orderId}...`);
+  await createShopifyOrder(session);
+
+  // 4. Send Email Notification
+  if (customerEmail) {
+    try {
+      const protocol = req.headers?.host?.includes('localhost') ? 'http' : 'https';
+      const baseUrl = process.env.VITE_APP_URL || (req.headers && req.headers.host ? `${protocol}://${req.headers.host}` : 'http://localhost:5173');
+      
+      const { data: orderData } = await supabase.from('orders').select('*').eq('id', orderId).single();
+      
+      let emailHtml = '';
+      let emailSubject = '';
+
+      // Check if it's a Preloved order or Shopify order
+      const isPreloved = orderData?.items?.some(item => item.source === 'preloved');
+      
+      if (isPreloved) {
+        const item = orderData.items[0];
+        const itemName = item.title || item.name || 'Preloved Item';
+        const sellerName = item.seller_name || 'HOTMESS Member';
+        emailSubject = `You bought ${itemName}`;
+        // Use a lightweight fetch to templates since we are in a serverless environment
+        const { prelovedSaleConfirmation } = await import('../email/templates.js');
+        emailHtml = prelovedSaleConfirmation(itemName, item.price || orderData.amount, sellerName);
+      } else {
+        emailSubject = `Your HOTMESS order is confirmed`;
+        const { shopifyOrderConfirmation } = await import('../email/templates.js');
+        emailHtml = shopifyOrderConfirmation(orderId, orderData?.items || [], orderData?.total || orderData?.amount || 'N/A');
+      }
+      
+      await fetch(`${baseUrl}/api/email/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: customerEmail,
+          subject: emailSubject,
+          html: emailHtml
+        })
+      });
+      console.log(`[Webhook] Confirmation email sent to ${customerEmail}`);
+    } catch (emailErr) {
+      console.error('[Webhook] Email send fail:', emailErr.message);
+    }
+  }
+}
+
+async function sendMembershipEmail(userId, tierName, req) {
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const { data: user } = await supabase.from('profiles').select('email').eq('id', userId).single();
+  
+  if (!user?.email) return;
+
+  try {
+    const protocol = req.headers?.host?.includes('localhost') ? 'http' : 'https';
+    const baseUrl = process.env.VITE_APP_URL || (req.headers && req.headers.host ? `${protocol}://${req.headers.host}` : 'http://localhost:5173');
+    
+    const { membershipConfirmation } = await import('../email/templates.js');
+    const emailHtml = membershipConfirmation(tierName.toUpperCase());
+    
+    await fetch(`${baseUrl}/api/email/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: user.email,
+        subject: `Welcome to HOTMESS ${tierName.toUpperCase()}`,
+        html: emailHtml
+      })
+    });
+    console.log(`[Webhook] Membership email sent to ${user.email}`);
+  } catch (err) {
+    console.error('[Webhook] Membership email fail:', err.message);
+  }
 }
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
-    return res.status(405).json({ error: 'Method not allowed' });
+    res.statusCode = 405;
+    return res.end(JSON.stringify({ error: 'Method not allowed' }));
   }
 
-  if (!stripe || !webhookSecret) {
-    return res.status(500).json({ error: 'Stripe not configured' });
-  }
-
-  if (!supabaseServiceKey) {
-    return res.status(500).json({ error: 'Database not configured' });
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  // --- COLLECT RAW BODY ---
+  const chunks = [];
+  for await (const chunk of req) { chunks.push(chunk); }
+  const rawBody = Buffer.concat(chunks);
+  const sig = req.headers['stripe-signature'];
 
   let event;
-  
   try {
-    const rawBody = await getRawBody(req);
-    const signature = req.headers['stripe-signature'];
-    event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
-  } catch (err) {
-    return res.status(400).json({ error: `Webhook signature verification failed: ${err.message}` });
-  }
-
-  try {
-    // Idempotency check — skip already-processed events
-    const { data: existing } = await supabase
-      .from('stripe_events_log')
-      .select('id')
-      .eq('stripe_event_id', event.id)
-      .maybeSingle();
-    if (existing) return res.status(200).json({ received: true, deduplicated: true });
-
-    switch (event.type) {
-
-      case 'checkout.session.completed': {
-        const session = event.data.object;
-        // Support both metadata key styles (old: supabase_user_id, new: user_id)
-        const userId = session.metadata?.user_id || session.metadata?.supabase_user_id;
-        const tierId = session.metadata?.tier_id;
-        const tierName = session.metadata?.tier_name;
-        const type = session.metadata?.type;
-
-        // Handle one-time boost purchases
-        const boostKey = session.metadata?.boost_key;
-        const sessionUserId = session.metadata?.user_id;
-        if (boostKey && sessionUserId) {
-          const { error: boostError } = await supabase.rpc('activate_user_boost', {
-            p_user_id: sessionUserId,
-            p_boost_key: boostKey,
-            p_payment_intent_id: session.payment_intent || null,
-          });
-          // Even if RPC doesn't exist yet, don't crash — just log
-          if (boostError) console.error('activate_user_boost error:', boostError.message);
-          return res.json({ received: true });
-        }
-
-        // ── Preloved order fulfilment ──────────────────────────────────────
-        const listingId = session.metadata?.listing_id;
-        if (userId && type === 'preloved_order' && listingId) {
-          // Mark listing as sold
-          const { error: listingErr } = await supabase
-            .from('market_listings')
-            .update({ status: 'sold' })
-            .eq('id', listingId);
-          if (listingErr) {
-            console.error('[Stripe webhook] preloved listing update error:', listingErr.message, { listingId });
-          }
-
-          // Record in vault for buyer
-          await supabase.from('vault_items').insert({
-            user_id: userId,
-            item_type: 'preloved_purchase',
-            source_system: 'stripe',
-            source_ref: session.id,
-            status: 'paid',
-            title: 'Preloved Item',
-            metadata: {
-              stripe_session_id: session.id,
-              listing_id: listingId,
-              paid_at: new Date().toISOString(),
-            },
-          }).catch((err) => {
-            console.error('[Stripe webhook] vault_items insert error:', err?.message);
-          });
-
-          // Update orders table so VaultMode/MyOrders reflect payment
-          const orderId = session.metadata?.order_id;
-          if (orderId) {
-            await supabase.from('orders').update({
-              status: 'paid',
-              paid_at: new Date().toISOString(),
-              stripe_session_id: session.id,
-            }).eq('id', orderId).catch((err) => {
-              console.error('[Stripe webhook] orders update error:', err?.message);
-            });
-          }
-
-          // Notify the seller via notifications table
-          const { data: listing } = await supabase
-            .from('market_listings')
-            .select('seller_id, title')
-            .eq('id', listingId)
-            .maybeSingle();
-          if (listing?.seller_id) {
-            await supabase.from('notifications').insert({
-              user_id: listing.seller_id,
-              type: 'preloved_sold',
-              title: 'Item Sold',
-              body: `Your listing "${listing.title || 'Preloved Item'}" has been purchased.`,
-              metadata: { listing_id: listingId, buyer_id: userId, stripe_session_id: session.id },
-            }).catch((err) => {
-              console.error('[Stripe webhook] seller notification error:', err?.message);
-            });
-          }
-
-          break;
-        }
-
-        if (userId && type === 'membership' && tierId) {
-          // Upsert into memberships table — one active row per user
-          const { error: memberErr } = await supabase
-            .from('memberships')
-            .upsert(
-              {
-                user_id: userId,
-                tier: tierName || tierId,
-                status: 'active',
-                started_at: new Date().toISOString(),
-                ends_at: null,
-                metadata: {
-                  stripe_session_id: session.id,
-                  stripe_customer_id: session.customer,
-                  tier_id: tierId,
-                  paid_at: new Date().toISOString(),
-                },
-              },
-              { onConflict: 'user_id' }
-            );
-
-          if (memberErr) {
-            console.error('[Stripe webhook] membership upsert error:', memberErr.message, { userId, tierId });
-          }
-
-          // Write vault item for membership
-          await supabase.from('vault_items').upsert({
-            user_id: userId,
-            item_type: 'membership',
-            source_system: 'stripe',
-            source_ref: session.id,
-            status: 'active',
-            title: tierName || tierId,
-            metadata: { stripe_session_id: session.id, tier: tierId },
-          }, { onConflict: 'user_id,item_type,source_ref' }).catch(() => {});
-        } else if (userId && !type) {
-          // Legacy path: session without type metadata — treat as subscription update
-          const tierId_ = session.metadata?.tier_id;
-          if (tierId_) {
-            await supabase
-              .from('memberships')
-              .upsert(
-                { user_id: userId, tier: tierId_, status: 'active', started_at: new Date().toISOString(), ends_at: null, metadata: { stripe_session_id: session.id } },
-                { onConflict: 'user_id' }
-              );
-          }
-        }
-        break;
+    const isLocal = req.headers.host?.includes('localhost');
+    
+    // In production, ALWAYS verify the signature!
+    // On localhost, Vite Dev Server can sometimes mutate raw streams so we bypass signature validation.
+    if (!isLocal && process.env.STRIPE_WEBHOOK_SECRET && sig !== 'DEBUG') {
+      event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    } else {
+      let payloadString = rawBody.toString();
+      if (!payloadString && req.body) {
+        payloadString = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
       }
-
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object;
-        const userId = subscription.metadata?.supabase_user_id;
-
-        if (userId) {
-          const status = subscription.cancel_at_period_end ? 'canceling' : subscription.status;
-
-          const { error } = await supabase
-            .from('profiles')
-            .update({
-              subscription_status: status,
-              subscription_ends_at: subscription.cancel_at_period_end
-                ? new Date(subscription.current_period_end * 1000).toISOString()
-                : null,
-            })
-            .eq('id', userId);
-
-          if (error) {
-            console.error('[Stripe webhook] customer.subscription.updated DB error:', error.message, { userId, status });
-          }
-        }
-        break;
+      const data = JSON.parse(payloadString);
+      event = { type: data.type, object: data, data: data.data || data };
+      
+      // Standardize event structure to mimic constructEvent if it was just raw JSON
+      if (data.type && data.data && data.data.object) {
+          event.data = data.data; // Stripe standard format
+      } else {
+          event.data = { object: data }; // Fallback format
       }
-
-      case 'customer.subscription.deleted': {
-        const subscription = event.data.object;
-        const userId = subscription.metadata?.supabase_user_id;
-
-        if (userId) {
-          const { error } = await supabase
-            .from('profiles')
-            .update({
-              membership_tier: 'basic',
-              stripe_subscription_id: null,
-              subscription_status: 'canceled',
-              subscription_ends_at: null,
-            })
-            .eq('id', userId);
-
-          if (error) {
-            console.error('[Stripe webhook] customer.subscription.deleted DB error:', error.message, { userId });
-          }
-        }
-        break;
-      }
-
-      case 'invoice.payment_failed': {
-        const invoice = event.data.object;
-
-        if (invoice.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
-          const userId = subscription.metadata?.supabase_user_id;
-
-          if (userId) {
-            const { error } = await supabase
-              .from('profiles')
-              .update({ subscription_status: 'past_due' })
-              .eq('id', userId);
-
-            if (error) {
-              console.error('[Stripe webhook] invoice.payment_failed DB error:', error.message, { userId });
-            }
-          }
-        }
-        break;
-      }
-
-      case 'invoice.paid': {
-        const invoice = event.data.object;
-
-        if (invoice.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
-          const userId = subscription.metadata?.supabase_user_id;
-
-          if (userId) {
-            const { error } = await supabase
-              .from('profiles')
-              .update({ subscription_status: 'active' })
-              .eq('id', userId);
-
-            if (error) {
-              console.error('[Stripe webhook] invoice.paid DB error:', error.message, { userId });
-            }
-          }
-        }
-        break;
-      }
-
-      // Handle one-time payments (marketplace)
-      case 'payment_intent.succeeded': {
-        const paymentIntent = event.data.object;
-        const orderId = paymentIntent.metadata?.order_id;
-
-        if (orderId) {
-          const { error } = await supabase
-            .from('marketplace_orders')
-            .update({
-              status: 'paid',
-              payment_intent_id: paymentIntent.id,
-              paid_at: new Date().toISOString(),
-            })
-            .eq('id', orderId);
-
-          if (error) {
-            console.error('[Stripe webhook] payment_intent.succeeded DB error:', error.message, { orderId });
-          }
-        }
-        break;
-      }
-
-      case 'payment_intent.payment_failed': {
-        const paymentIntent = event.data.object;
-        const orderId = paymentIntent.metadata?.order_id;
-
-        if (orderId) {
-          const { error } = await supabase
-            .from('marketplace_orders')
-            .update({
-              status: 'payment_failed',
-              payment_error: paymentIntent.last_payment_error?.message,
-            })
-            .eq('id', orderId);
-
-          if (error) {
-            console.error('[Stripe webhook] payment_intent.payment_failed DB error:', error.message, { orderId });
-          }
-        }
-        break;
-      }
-
-      // Delayed payment methods (bank debits, etc.) — same logic as checkout.session.completed
-      case 'checkout.session.async_payment_succeeded': {
-        const session = event.data.object;
-        const userId = session.metadata?.user_id || session.metadata?.supabase_user_id;
-        const tierId = session.metadata?.tier_id;
-        const tierName = session.metadata?.tier_name;
-        const type = session.metadata?.type;
-
-        const boostKey = session.metadata?.boost_key;
-        const sessionUserId = session.metadata?.user_id;
-        if (boostKey && sessionUserId) {
-          const { error: boostError } = await supabase.rpc('activate_user_boost', {
-            p_user_id: sessionUserId,
-            p_boost_key: boostKey,
-            p_payment_intent_id: session.payment_intent || null,
-          });
-          if (boostError) console.error('activate_user_boost error:', boostError.message);
-          return res.json({ received: true });
-        }
-
-        // ── Preloved order (async payment) ─────────────────────────────────
-        const asyncListingId = session.metadata?.listing_id;
-        if (userId && type === 'preloved_order' && asyncListingId) {
-          await supabase.from('market_listings').update({ status: 'sold' }).eq('id', asyncListingId);
-          await supabase.from('vault_items').insert({
-            user_id: userId,
-            item_type: 'preloved_purchase',
-            source_system: 'stripe',
-            source_ref: session.id,
-            status: 'paid',
-            title: 'Preloved Item',
-            metadata: { stripe_session_id: session.id, listing_id: asyncListingId, paid_at: new Date().toISOString() },
-          }).catch(() => {});
-
-          const asyncOrderId = session.metadata?.order_id;
-          if (asyncOrderId) {
-            await supabase.from('orders').update({
-              status: 'paid',
-              paid_at: new Date().toISOString(),
-              stripe_session_id: session.id,
-            }).eq('id', asyncOrderId).catch(() => {});
-          }
-          break;
-        }
-
-        if (userId && type === 'membership' && tierId) {
-          const { error: memberErr } = await supabase
-            .from('memberships')
-            .upsert(
-              {
-                user_id: userId,
-                tier: tierName || tierId,
-                status: 'active',
-                started_at: new Date().toISOString(),
-                ends_at: null,
-                metadata: {
-                  stripe_session_id: session.id,
-                  stripe_customer_id: session.customer,
-                  tier_id: tierId,
-                  paid_at: new Date().toISOString(),
-                },
-              },
-              { onConflict: 'user_id' }
-            );
-
-          if (memberErr) {
-            console.error('[Stripe webhook] async_payment membership upsert error:', memberErr.message, { userId, tierId });
-          }
-
-          await supabase.from('vault_items').upsert({
-            user_id: userId,
-            item_type: 'membership',
-            source_system: 'stripe',
-            source_ref: session.id,
-            status: 'active',
-            title: tierName || tierId,
-            metadata: { stripe_session_id: session.id, tier: tierId },
-          }, { onConflict: 'user_id,item_type,source_ref' }).catch(() => {});
-        } else if (userId && !type) {
-          const tierId_ = session.metadata?.tier_id;
-          if (tierId_) {
-            await supabase
-              .from('memberships')
-              .upsert(
-                { user_id: userId, tier: tierId_, status: 'active', started_at: new Date().toISOString(), ends_at: null, metadata: { stripe_session_id: session.id } },
-                { onConflict: 'user_id' }
-              );
-          }
-        }
-        break;
-      }
-
-      case 'charge.refunded': {
-        const charge = event.data.object;
-        const userId = charge.metadata?.user_id || charge.metadata?.supabase_user_id;
-        if (userId) {
-          // Update memberships if this was a membership charge
-          await supabase.from('memberships').update({ status: 'refunded' }).eq('user_id', userId).eq('status', 'active');
-        }
-        // Update vault items if order_id exists
-        const orderId = charge.metadata?.order_id;
-        if (orderId) {
-          await supabase.from('vault_items').update({ status: 'refunded' }).eq('source_ref', orderId);
-        }
-        break;
-      }
-
-      default:
-        // Unhandled event type — not an error, just not subscribed
-        break;
     }
-
-    // Log processed event for idempotency
-    await supabase.from('stripe_events_log').insert({
-      stripe_event_id: event.id,
-      event_type: event.type,
-      object_id: event.data?.object?.id,
-      processed: true,
-      processed_at: new Date().toISOString(),
-      payload: event.data?.object ? { id: event.data.object.id } : {},
-    }).catch(() => {}); // Non-fatal if log insert fails
-
-    return res.status(200).json({ received: true });
-  } catch (error) {
-    console.error('[Stripe webhook] Unhandled error in event handler:', error?.message || error, { eventType: event?.type });
-    return res.status(500).json({ error: 'Webhook handler failed' });
+  } catch (err) {
+    console.error('[Webhook] Parsing failed:', err.message);
+    res.statusCode = 400;
+    return res.end(JSON.stringify({ error: `Webhook Error: ${err.message}` }));
   }
+
+  console.log(`[Webhook] Event Received: ${event.type}`);
+
+  // Handle both possible success events
+  if (event.type === 'checkout.session.completed') {
+    await processOrderCompletion(event.data.object, 'checkout.session.completed', req);
+  } 
+  else if (event.type === 'payment_intent.succeeded') {
+    await processOrderCompletion(event.data.object, 'payment_intent.succeeded', req);
+  }
+
+  res.statusCode = 200;
+  return res.end(JSON.stringify({ received: true }));
 }

@@ -21,7 +21,7 @@ export default function ReportButton({ itemType, itemId, variant = 'ghost' }) {
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
       await supabase.from('reports').insert({
         reporter_id: user.id,

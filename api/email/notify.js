@@ -55,6 +55,50 @@ export default async function handler(req, res) {
     let emailResult;
 
     switch (type) {
+      case 'magic_link': {
+        const { userEmail, link } = data;
+        if (!userEmail || !link) {
+          json(res, 400, { error: 'Missing required data for magic_link' });
+          return;
+        }
+        const html = templates.magicLinkEmail(link);
+        emailResult = await sendEmail(userEmail, 'Your HOTMESS sign-in link', html);
+        break;
+      }
+
+      case 'membership_confirmation': {
+        const { userEmail, tierName } = data;
+        if (!userEmail || !tierName) {
+          json(res, 400, { error: 'Missing required data for membership_confirmation' });
+          return;
+        }
+        const html = templates.membershipConfirmation(tierName);
+        emailResult = await sendEmail(userEmail, `Welcome to HOTMESS ${tierName.toUpperCase()}`, html);
+        break;
+      }
+
+      case 'shopify_order': {
+        const { userEmail, orderId, items, total } = data;
+        if (!userEmail || !orderId) {
+          json(res, 400, { error: 'Missing required data for shopify_order' });
+          return;
+        }
+        const html = templates.shopifyOrderConfirmation(orderId, items || [], total || 'N/A');
+        emailResult = await sendEmail(userEmail, 'Your HOTMESS order is confirmed', html);
+        break;
+      }
+
+      case 'preloved_sale': {
+        const { userEmail, itemName, price, sellerName } = data;
+        if (!userEmail || !itemName) {
+          json(res, 400, { error: 'Missing required data for preloved_sale' });
+          return;
+        }
+        const html = templates.prelovedSaleConfirmation(itemName, price, sellerName);
+        emailResult = await sendEmail(userEmail, `You bought ${itemName}`, html);
+        break;
+      }
+
       case 'ticket_created_user': {
         // Send confirmation to user
         const { userEmail, ticketNumber, subject, category } = data;
@@ -138,14 +182,14 @@ export default async function handler(req, res) {
       }
 
       case 'subscription_confirmation': {
-        // Send subscription confirmation
+        // Send subscription confirmation (LEGACY - using membership_confirmation now but keeping for compat)
         const { userEmail, tierName, price, billingCycle } = data;
         if (!userEmail || !tierName) {
           json(res, 400, { error: 'Missing required data for subscription_confirmation' });
           return;
         }
 
-        const html = templates.subscriptionConfirmation(tierName, price, billingCycle || 'month');
+        const html = templates.membershipConfirmation(tierName);
         emailResult = await sendEmail(
           userEmail,
           `Welcome to ${tierName} Membership!`,
@@ -162,7 +206,8 @@ export default async function handler(req, res) {
           return;
         }
 
-        const html = templates.paymentReceipt(orderNumber, items, total, date);
+        // Adapted to order confirmation Noir style
+        const html = templates.shopifyOrderConfirmation(orderNumber, items, total);
         emailResult = await sendEmail(
           userEmail,
           `Receipt for Order #${orderNumber}`,

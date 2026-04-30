@@ -15,13 +15,16 @@ import {
   Camera, MapPin, Users, Zap,
   Heart, ShoppingBag, Ticket, CalendarDays, Bookmark,
   Bell, Lock, Eye, HelpCircle, Crown, FileText,
+  Pause, Play, Volume2, VolumeX,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { supabase } from '@/components/utils/supabaseClient';
+
 import { useSheet } from '@/contexts/SheetContext';
+import { RadioProvider, useRadio, STREAM_URL_BASE } from '@/contexts/RadioContext';
+import { RadioMiniPlayer } from '@/components/radio/RadioMiniPlayer';
+import { Radio as RadioIcon } from 'lucide-react';
 
 const GOLD = '#C8962C';
 
@@ -61,83 +64,7 @@ function timeAgoShort(ts: number): string {
   return `${Math.round(hrs / 24)}d ago`;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SAFETY — TIERED PROGRESSION
-// ═══════════════════════════════════════════════════════════════════════════
 
-type SafetyTier = 'unsafe' | 'basic' | 'ready' | 'full';
-
-interface SafetyState {
-  contactCount: number;
-  hasFakeCall: boolean;
-  locationSharing: boolean;
-  alertsOn: boolean;
-  loaded: boolean;
-}
-
-function useSafetyState(userId: string | null): SafetyState {
-  const [state, setState] = useState<SafetyState>({
-    contactCount: 0, hasFakeCall: false, locationSharing: false, alertsOn: false, loaded: false,
-  });
-
-  useEffect(() => {
-    if (!userId) return;
-    Promise.allSettled([
-      supabase.from('trusted_contacts').select('id', { count: 'exact', head: true }).eq('user_id', userId),
-      supabase.from('profiles').select('notification_prefs').eq('id', userId).single(),
-    ]).then(([contactsRes, profileRes]) => {
-      const contactCount = contactsRes.status === 'fulfilled' ? (contactsRes.value.count ?? 0) : 0;
-      const prefs = profileRes.status === 'fulfilled' ? profileRes.value.data?.notification_prefs : null;
-      setState({
-        contactCount,
-        hasFakeCall: !!prefs?.fake_call_enabled,
-        locationSharing: !!prefs?.location_sharing,
-        alertsOn: !!prefs?.push_enabled,
-        loaded: true,
-      });
-    });
-  }, [userId]);
-
-  return state;
-}
-
-function getSafetyTier(s: SafetyState): SafetyTier {
-  if (!s.loaded) return 'unsafe';
-  const score = (s.contactCount > 0 ? 1 : 0) + (s.hasFakeCall ? 1 : 0) + (s.locationSharing ? 1 : 0) + (s.alertsOn ? 1 : 0);
-  if (score === 0) return 'unsafe';
-  if (score <= 1) return 'basic';
-  if (score <= 3) return 'ready';
-  return 'full';
-}
-
-const SAFETY_TIER_CONFIG: Record<SafetyTier, { label: string; color: string; glow: boolean }> = {
-  unsafe: { label: 'Unsafe', color: '#FF3B30', glow: true },
-  basic: { label: 'Basic', color: '#FF9500', glow: false },
-  ready: { label: 'Ready', color: '#30D158', glow: false },
-  full: { label: 'Fully Set', color: '#30D158', glow: false },
-};
-
-function getSafetySubtitle(s: SafetyState, tier: SafetyTier): string {
-  if (!s.loaded) return 'Checking...';
-  if (tier === 'full') return `${s.contactCount} contacts · Alerts on · Location sharing`;
-  const parts: string[] = [];
-  if (s.contactCount > 0) parts.push(`${s.contactCount} contact${s.contactCount > 1 ? 's' : ''}`);
-  else parts.push('No contacts');
-  if (!s.alertsOn) parts.push('Alerts off');
-  if (!s.hasFakeCall) parts.push('No fake call');
-  return parts.join(' · ');
-}
-
-/** Next step prompt for Safety */
-function getSafetyNextAction(s: SafetyState, tier: SafetyTier): string | null {
-  if (!s.loaded) return null;
-  if (tier === 'full') return null;
-  if (s.contactCount === 0) return 'Add a trusted contact to unlock Basic';
-  if (!s.alertsOn) return 'Turn on alerts to upgrade';
-  if (!s.hasFakeCall) return 'Set up fake call to reach Ready';
-  if (!s.locationSharing) return 'Enable location sharing for full protection';
-  return null;
-}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // YOU — PROFILE COMPLETENESS + NEXT ACTION
@@ -244,7 +171,7 @@ function useActivityState(userId: string | null): ActivityState {
       const [tapsRes, listingsRes, ordersRes, eventsRes] = await Promise.allSettled([
         supabase.from('taps').select('id', { count: 'exact', head: true }).eq('tapped_id', userId).gte('created_at', today.toISOString()),
         supabase.from('market_listings').select('id', { count: 'exact', head: true }).eq('seller_id', userId).in('status', ['live', 'active']),
-        supabase.from('product_orders').select('id', { count: 'exact', head: true }).eq('buyer_id', userId).in('status', ['pending', 'processing']),
+        supabase.from('product_orders').select('id', { count: 'exact', head: true }).eq('buyer_id', userId).in('status', ['pending', 'processing', 'pending_payment']),
         supabase.from('events').select('id', { count: 'exact', head: true }).gte('starts_at', now).or(`created_by.eq.${userId}`),
       ]);
 
@@ -257,7 +184,7 @@ function useActivityState(userId: string | null): ActivityState {
       };
     },
     enabled: !!userId,
-    staleTime: 30_000,
+    staleTime: 0,
   });
 
   return data ?? { tapCount: 0, liveListings: 0, pendingOrders: 0, upcomingEvents: 0, loaded: false };
@@ -307,22 +234,26 @@ function useSystemState(userId: string | null): SystemState {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('notification_prefs, privacy_settings, subscription_tier')
+        .select('notification_prefs, privacy_settings, subscription_tier, subscription_status')
         .eq('id', userId)
         .single();
 
       const prefs = profile?.notification_prefs;
       const privacy = profile?.privacy_settings;
       const tier = profile?.subscription_tier || 'FREE';
+      const isCanceling = profile?.subscription_status === 'canceling';
 
       let privacyLevel: 'public' | 'limited' | 'private' = 'public';
       if (privacy?.hide_online_status && privacy?.hide_distance) privacyLevel = 'private';
       else if (privacy?.hide_online_status || privacy?.hide_distance) privacyLevel = 'limited';
 
+      let membershipTier = tier === 'FREE' ? 'Free' : tier === 'CHROME' ? 'Chrome' : tier === 'ELITE' ? 'Elite' : tier;
+      if (isCanceling) membershipTier = `${membershipTier} (Canceling)`;
+
       return {
         notificationsOn: prefs?.push_enabled !== false,
         privacyLevel,
-        membershipTier: tier === 'FREE' ? 'Free' : tier === 'CHROME' ? 'Chrome' : tier === 'ELITE' ? 'Elite' : tier,
+        membershipTier,
         loaded: true,
       };
     },
@@ -357,27 +288,14 @@ interface Nudge {
 }
 
 function useNudge(
-  safety: SafetyState,
-  safetyTier: SafetyTier,
   you: YouState,
   activity: ActivityState,
   navigate: (path: string) => void,
   openSheet: (type: string, props?: Record<string, unknown>) => void,
 ): Nudge | null {
   return useMemo(() => {
-    // Priority 1: Safety incomplete
-    if (safety.loaded && safetyTier === 'unsafe') {
-      const id = 'safety_unsafe';
-      if (!localStorage.getItem(NUDGE_DISMISS_PREFIX + id)) {
-        return {
-          id,
-          section: 'safety',
-          text: 'Your safety profile is empty — add a trusted contact',
-          accent: '#FF3B30',
-          action: () => navigate('/safety'),
-        };
-      }
-    }
+
+
 
     // Priority 2: Profile < 60%
     if (you.loaded && you.completeness < 60) {
@@ -413,7 +331,7 @@ function useNudge(
     }
 
     return null;
-  }, [safety, safetyTier, you, activity, navigate, openSheet]);
+  }, [you, activity, navigate, openSheet]);
 }
 
 function dismissNudge(id: string) {
@@ -658,10 +576,6 @@ export default function MorePage() {
   }, []);
 
   // ── Live state hooks ──────────────────────────────────────────────────
-  const safety = useSafetyState(userId);
-  const safetyTier = getSafetyTier(safety);
-  const safetyConfig = SAFETY_TIER_CONFIG[safetyTier];
-
   const you = useYouState(userId);
   const activity = useActivityState(userId);
   const system = useSystemState(userId);
@@ -670,49 +584,39 @@ export default function MorePage() {
   const lastAction = useMemo(() => getLastAction(), []);
 
   // Nudge system
-  const nudge = useNudge(safety, safetyTier, you, activity, navigate, openSheet);
+  const nudge = useNudge(you, activity, navigate, openSheet);
   const showNudge = nudge && !nudgeDismissed;
 
   // Next-action prompts per section
-  const safetyNext = getSafetyNextAction(safety, safetyTier);
   const youNext = getYouNextAction(you);
   const activityNext = getActivityNextAction(activity);
 
-  const handleRefresh = useCallback(async () => {
-    await queryClient.invalidateQueries();
-  }, [queryClient]);
 
-  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
-    onRefresh: handleRefresh,
-    scrollRef,
-  });
 
   // ── Quick items with live counts ──────────────────────────────────────
 
   const youItems: QuickItem[] = useMemo(() => [
-    { icon: User, label: 'Edit Profile', onTap: () => openSheet('edit-profile'), accent: GOLD },
-    { icon: Camera, label: 'Photos', count: you.photoCount, onTap: () => openSheet('photos'), accent: GOLD },
-    { icon: Users, label: 'Personas', onTap: () => navigate('/profile?action=manage-personas'), accent: GOLD },
-    { icon: MapPin, label: 'Location', onTap: () => openSheet('location'), accent: GOLD },
-  ], [you.photoCount, openSheet, navigate]);
-
-  const activityItems: QuickItem[] = useMemo(() => [
     { icon: Heart, label: 'Taps', count: activity.tapCount, onTap: () => openSheet('taps'), accent: '#FF5500' },
-    { icon: ShoppingBag, label: 'My Listings', count: activity.liveListings, onTap: () => openSheet('my-listings'), accent: '#9E7D47' },
     { icon: Ticket, label: 'Orders', count: activity.pendingOrders, onTap: () => openSheet('my-orders'), accent: GOLD },
-    { icon: CalendarDays, label: 'Events', count: activity.upcomingEvents, onTap: () => openSheet('events'), accent: '#00C2E0' },
+    { icon: ShoppingBag, label: 'My Listings', count: activity.liveListings, onTap: () => openSheet('my-listings'), accent: '#9E7D47' },
     { icon: Bookmark, label: 'Saved', onTap: () => openSheet('favorites'), accent: GOLD },
-    { icon: Zap, label: 'Power-Ups', onTap: () => openSheet('boost-shop'), accent: GOLD },
+    { icon: CalendarDays, label: 'Events', count: activity.upcomingEvents, onTap: () => openSheet('events'), accent: '#00C2E0' },
   ], [activity, openSheet]);
 
-  const systemItems: QuickItem[] = useMemo(() => [
-    { icon: Eye, label: 'Privacy', onTap: () => openSheet('privacy') },
-    { icon: Bell, label: 'Notifications', onTap: () => openSheet('notifications') },
-    { icon: Lock, label: 'Blocked', onTap: () => openSheet('blocked') },
-    { icon: HelpCircle, label: 'Help & Support', onTap: () => openSheet('help') },
+  const featureItems: QuickItem[] = useMemo(() => [
+    { icon: RadioIcon, label: 'Radio', onTap: () => openSheet('radio-player'), accent: GOLD },
+    { icon: Shield, label: 'Safety', onTap: () => navigate('/safety'), accent: '#FF3B30' },
+    { icon: Zap, label: 'Power-Ups', onTap: () => openSheet('boost-shop'), accent: GOLD },
+  ], [openSheet, navigate]);
+
+  const accountItems: QuickItem[] = useMemo(() => [
     { icon: Crown, label: 'Membership', onTap: () => openSheet('membership'), accent: GOLD },
-    { icon: FileText, label: 'Legal & Data', onTap: () => openSheet('legal') },
-  ], [openSheet]);
+    { icon: Eye, label: 'Privacy', onTap: () => navigate('/settings') },
+    { icon: Bell, label: 'Notifications', onTap: () => navigate('/settings') },
+    { icon: Lock, label: 'Blocked', onTap: () => openSheet('blocked') },
+    { icon: HelpCircle, label: 'Help', onTap: () => navigate('/HelpCenter') },
+    { icon: Settings, label: 'Settings', onTap: () => navigate('/settings') },
+  ], [navigate, openSheet]);
 
   return (
     <div className="h-full w-full flex flex-col" style={{ background: '#050507' }}>
@@ -730,99 +634,57 @@ export default function MorePage() {
       </div>
 
       {/* Sections */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum pb-24" {...pullHandlers}>
-        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
-        <div className="px-4 py-4 space-y-4">
+      <div 
+        ref={scrollRef} 
+        className="flex-1 overflow-y-auto scroll-momentum pb-24"
+        style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'rgba(200,150,44,0.3) transparent',
+        }}
+      >
 
-          {/* ── NUDGE (single, priority-based) ───────────────────── */}
-          <AnimatePresence>
-            {showNudge && nudge && (
-              <NudgeCard
-                nudge={nudge}
-                onDismiss={() => {
-                  dismissNudge(nudge.id);
-                  setNudgeDismissed(true);
-                }}
-              />
-            )}
-          </AnimatePresence>
+        <div className="px-4 py-6 space-y-10">
+          
+          {/* ── YOU SECTION ────────────────────────────────────────── */}
+          <section className="space-y-4">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#C8962C] px-1">You</h2>
+            <QuickRow items={youItems} delay={0.1} />
+          </section>
 
-          {/* ── 1. SAFETY ─────────────────────────────────────────── */}
-          <SectionCard
-            title="Safety"
-            subtitle={getSafetySubtitle(safety, safetyTier)}
-            nextAction={safetyNext}
-            icon={Shield}
-            accent="#FF3B30"
-            badge={{ text: safetyConfig.label, color: safetyConfig.color }}
-            onTap={() => navigate('/safety')}
-            delay={0}
-            elevated
-            glow={safetyConfig.glow}
-          />
+          {/* ── FEATURES SECTION ────────────────────────────────────── */}
+          <section className="space-y-4">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#C8962C] px-1">Features</h2>
+            <QuickRow items={featureItems} delay={0.2} />
+          </section>
 
-          {/* ── 2. YOU ────────────────────────────────────────────── */}
-          <SectionCard
-            title="You"
-            subtitle={getYouSubtitle(you)}
-            nextAction={youNext}
-            icon={User}
-            accent={GOLD}
-            onTap={() => navigate('/profile')}
-            onNextTap={() => openSheet(you.missingSheet || 'edit-profile')}
-            delay={0.04}
-            progress={you.completeness}
-          />
-          <QuickRow items={youItems} delay={0.06} />
+          {/* ── ACCOUNT SECTION ─────────────────────────────────────── */}
+          <section className="space-y-4">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#C8962C] px-1">Account</h2>
+            <QuickRow items={accountItems} delay={0.3} />
+          </section>
 
-          {/* ── 3. ACTIVITY ───────────────────────────────────────── */}
-          <SectionCard
-            title="Activity"
-            subtitle={getActivitySubtitle(activity, lastAction)}
-            nextAction={activityNext}
-            icon={Activity}
-            accent="#00C2E0"
-            onTap={() => openSheet('taps')}
-            onNextTap={() => {
-              if (activity.tapCount > 0) openSheet('taps');
-              else if (activity.liveListings > 0) openSheet('my-listings');
-              else navigate('/ghosted');
-            }}
-            delay={0.08}
-          />
-          <QuickRow items={activityItems} delay={0.10} />
-
-          {/* ── 4. SYSTEM ─────────────────────────────────────────── */}
-          <SectionCard
-            title="System"
-            subtitle={getSystemSubtitle(system)}
-            icon={Settings}
-            accent="#8E8E93"
-            onTap={() => openSheet('settings')}
-            delay={0.12}
-          />
-          <QuickRow items={systemItems} delay={0.14} />
-
-          {/* ── Care ──────────────────────────────────────────────── */}
+          {/* ── Care Nudge ─────────────────────────────────────────── */}
           <motion.button
             onClick={() => navigate('/care')}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.16 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full flex items-center gap-3 p-4 rounded-2xl bg-[#1C1C1E]/40 border border-white/[0.04] transition-all text-left"
+            transition={{ delay: 0.4 }}
+            className="w-full flex items-center gap-3 p-5 rounded-3xl bg-white/[0.03] border border-white/5 text-left"
           >
-            <div className="w-8 h-8 rounded-lg bg-[#C8962C]/10 flex items-center justify-center">
-              <Heart className="w-4 h-4" style={{ color: GOLD }} />
+            <div className="w-10 h-10 rounded-xl bg-[#C8962C]/10 flex items-center justify-center">
+              <Heart className="w-5 h-5 text-[#C8962C]" />
             </div>
-            <div className="flex-1 min-w-0">
-              <span className="text-xs font-bold text-white/50">Hand N Hand</span>
-              <span className="text-[10px] text-white/25 ml-2">Aftercare + wellbeing</span>
+            <div className="flex-1">
+              <p className="text-xs font-bold text-white/60">Hand N Hand Aftercare</p>
+              <p className="text-[10px] text-white/30 uppercase tracking-widest mt-0.5">Resources & Wellbeing</p>
             </div>
-            <ChevronRight className="w-3.5 h-3.5 text-white/10 flex-shrink-0" />
+            <ChevronRight className="w-4 h-4 text-white/10" />
           </motion.button>
+
         </div>
       </div>
+      {/* Localized Mini Player (only visible here) */}
+      <RadioMiniPlayer />
     </div>
   );
 }

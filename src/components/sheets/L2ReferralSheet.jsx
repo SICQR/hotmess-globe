@@ -11,7 +11,7 @@ export default function L2ReferralSheet() {
   useEffect(() => { load(); }, []);
 
   const load = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    let { data: { user } } = await supabase.auth.getUser();
     const { data: p } = await supabase.from('profiles').select('referral_code').eq('id', user.id).single();
     if (p?.referral_code) setCode(p.referral_code);
     const [{ count: inv }, { count: joined }] = await Promise.all([
@@ -64,3 +64,4 @@ export default function L2ReferralSheet() {
     </div>
   );
 }
+

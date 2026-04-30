@@ -561,6 +561,16 @@ function localApiRoutes() {
             });
         }
 
+        if (path === '/api/email/notify' && method === 'POST') {
+          return importFresh('./api/email/notify.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load notify handler' }));
+            });
+        }
+
         if (path === '/api/notifications/process' && (method === 'GET' || method === 'POST')) {
           return importFresh('./api/notifications/process.js')
             .then((handler) => handler(req, res))
@@ -777,6 +787,16 @@ function localApiRoutes() {
               res.statusCode = 500;
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify({ error: error?.message || 'auth/telegram/verify handler error' }));
+            });
+        }
+
+        if (path === '/api/auth/magic-link' && method === 'POST') {
+          return importFresh('./api/auth/magic-link.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'auth/magic-link handler error' }));
             });
         }
 

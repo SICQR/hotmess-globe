@@ -33,7 +33,7 @@ export default function VideoCallModal({
   const startCall = async () => {
     setStarting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error('Not logged in'); return; }
 
       const newCallId = `call_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -150,3 +150,4 @@ export default function VideoCallModal({
     </AnimatePresence>
   );
 }
+

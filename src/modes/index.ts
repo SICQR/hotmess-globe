@@ -9,7 +9,7 @@
  * 5. Profile - User settings + safety + listings
  */
 
-export type OSMode = 'home' | 'ghosted' | 'pulse' | 'market' | 'radio' | 'music' | 'profile' | 'more';
+export type OSMode = 'home' | 'ghosted' | 'pulse' | 'market' | 'radio' | 'music' | 'profile' | 'more' | 'inbox';
 
 export interface ModeConfig {
   id: OSMode;
@@ -44,9 +44,16 @@ export const MODES: Record<OSMode, ModeConfig> = {
   market: {
     id: 'market',
     path: '/market',
-    label: 'Market',
+    label: 'Shop',
     icon: 'shopping-bag',
     description: 'Shop + Preloved + Creator gear',
+  },
+  inbox: {
+    id: 'inbox',
+    path: '#',
+    label: 'Inbox',
+    icon: 'message-circle',
+    description: 'Direct messages',
   },
   radio: {
     id: 'radio',
@@ -78,7 +85,7 @@ export const MODES: Record<OSMode, ModeConfig> = {
   },
 };
 
-export const MODE_ORDER: OSMode[] = ['home', 'pulse', 'ghosted', 'market', 'music', 'more'];
+export const MODE_ORDER: OSMode[] = ['home', 'pulse', 'ghosted', 'music', 'market', 'more'];
 
 export function getModeFromPath(pathname: string): OSMode {
   // Check exact matches first

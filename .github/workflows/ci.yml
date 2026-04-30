@@ -75,10 +75,10 @@ jobs:
           #
           #   VITE_SUPABASE_URL          https://klsywpvncqqglhnhrjbh.supabase.co
           #   VITE_SUPABASE_ANON_KEY     <anon key — Supabase dashboard → Project Settings → API → anon/public>
-          #   TEST_USER_A_EMAIL          <CI test user email — e.g. e2e.alpha@hotmessldn.com>
-          #   TEST_USER_A_PASSWORD       <strong random string — generate with `openssl rand -base64 24`>
-          #   TEST_USER_B_EMAIL          <CI test user email — e.g. e2e.beta@hotmessldn.com>
-          #   TEST_USER_B_PASSWORD       <strong random string — generate with `openssl rand -base64 24`>
+          #   TEST_USER_A_EMAIL          test-red@hotmessldn.com
+          #   TEST_USER_A_PASSWORD       Hotmess2026!
+          #   TEST_USER_B_EMAIL          test-blue@hotmessldn.com
+          #   TEST_USER_B_PASSWORD       Hotmess2026!
           #
           # Without VITE_SUPABASE_ANON_KEY + TEST_USER_A_* the auth E2E tests
           # will skip (E2E_AUTH_CONFIGURED = false) rather than hard-fail.

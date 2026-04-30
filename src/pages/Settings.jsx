@@ -136,7 +136,7 @@ export default function Settings() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        let { data: { user } } = await supabase.auth.getUser();
       let currentUser; if (!user) { currentUser = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); currentUser = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
         if (!currentUser) {
           // If the session is missing/expired, bounce to Auth instead of crashing.
@@ -161,7 +161,7 @@ export default function Settings() {
 
     setUploading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       const publicUrl = await uploadToStorage(file, 'avatars', user.id);
       setAvatarUrl(publicUrl);
       const updatePayload = { avatar_url: publicUrl }; await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
@@ -179,7 +179,7 @@ export default function Settings() {
       const updatePayload = { 
         full_name: fullName,
         location_privacy_mode: locationPrivacy
-      }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
+      }; let { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
       toast.success('Settings saved successfully');
     } catch (error) {
       console.error('Failed to save:', error);
@@ -200,7 +200,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-8">
+    <div className="bg-black text-white p-0 px-4 md:p-8">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <motion.div
@@ -221,17 +221,9 @@ export default function Settings() {
           transition={{ delay: 0.1 }}
           className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
         >
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <User className="w-5 h-5 text-[#C8962C]" />
-              <h2 className="text-xl font-bold uppercase tracking-wider">Profile</h2>
-            </div>
-            <Link to={createPageUrl('EditProfile')}>
-              <Button variant="outline" className="border-white/20 text-white">
-                <Edit className="w-4 h-4 mr-2" />
-                Edit Full Profile
-              </Button>
-            </Link>
+          <div className="flex items-center gap-3 mb-6">
+            <User className="w-5 h-5 text-[#C8962C]" />
+            <h2 className="text-xl font-bold uppercase tracking-wider">Profile</h2>
           </div>
 
           <div className="space-y-6">
@@ -535,3 +527,4 @@ export default function Settings() {
     </div>
   );
 }
+

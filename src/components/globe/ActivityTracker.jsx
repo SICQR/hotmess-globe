@@ -23,7 +23,7 @@ class ActivityTracker {
       const isAuth = await supabase.auth.getSession().then(r => !!r.data.session);
       if (!isAuth) return;
       
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         // user not found - return early or handle
       } else {

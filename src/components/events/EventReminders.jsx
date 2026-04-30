@@ -9,11 +9,10 @@ export default function EventReminders({ currentUser }) {
   const { data: upcomingRsvps = [] } = useQuery({
     queryKey: ['upcoming-rsvps', currentUser?.email],
     queryFn: async () => {
-      const rsvps = await supabase.from('event_rsvps').select('*').eq({
-        user_email: currentUser.email,
-        status: 'going'
-      });
-      return rsvps;
+      const rsvps = await supabase.from('event_rsvps').select('*')
+        .eq('user_email', currentUser.email)
+        .eq('status', 'going');
+      return rsvps.data || [];
     },
     enabled: !!currentUser,
     refetchInterval: 5 * 60000 // Check every 5 minutes (reduced from 1min)
@@ -21,7 +20,12 @@ export default function EventReminders({ currentUser }) {
 
   const { data: allEvents = [] } = useQuery({
     queryKey: ['events'],
-    queryFn: () => supabase.from('beacons').select('*').eq({ kind: 'event', active: true })
+    queryFn: async () => {
+      const res = await supabase.from('beacons').select('*')
+        .eq('kind', 'event')
+        .eq('active', true);
+      return res.data || [];
+    }
   });
 
   const sendReminderMutation = useMutation({

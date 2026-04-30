@@ -59,7 +59,7 @@ export default function CreateBeacon() {
       }
       
       // Mark as shadow beacon for non-admin users
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
       if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
       if (user.role !== 'admin') {
         data.is_shadow = true;

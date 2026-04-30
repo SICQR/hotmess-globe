@@ -29,7 +29,7 @@ export function UnifiedGlobe() {
   // Full interactive 3D globe on Pulse route only.
   // Bottom constrained to 83px so Three.js canvas never steals touch events from nav.
   return (
-    <div className="absolute z-0" style={{ top: 0, left: 0, right: 0, bottom: '83px', pointerEvents: 'auto' }}>
+    <div className="absolute z-0" style={{ top: 'calc(36px + env(safe-area-inset-top, 0px))', left: 0, right: 0, bottom: '83px', pointerEvents: 'auto' }}>
       <Suspense fallback={
         <div className="w-full h-full bg-black flex items-center justify-center">
           <div className="w-10 h-10 border-2 border-white/20 border-t-[#C8962C] rounded-full animate-spin" />
