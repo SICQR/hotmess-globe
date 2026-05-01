@@ -887,6 +887,17 @@ function localApiRoutes() {
             });
         }
 
+        // ── Admin revenue dashboard (local dev) ──────────────────────────────
+        if (path === '/api/admin/revenue' && method === 'GET') {
+          return importFresh('./api/admin/revenue.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'admin/revenue handler error' }));
+            });
+        }
+
         // ── Admin safety switch ─────────────────────────────────────────────
         if (path === '/api/admin/safety-switch' && (method === 'GET' || method === 'POST')) {
           return importFresh('./api/admin/safety-switch.js')
