@@ -4,7 +4,7 @@
  * Operator sees own actions only. Admin sees all.
  * Flag: v6_night_operator_panel
  */
-import { verifyOperator, supabaseAdmin } from '../_verify.js';
+import { verifyOperator, supabaseAdmin } from './_verify.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
