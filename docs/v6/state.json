@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-05-01T00:00:00Z",
+  "updated_by": "initial-seed",
+  "build_summary": {
+    "total_chunks": 22,
+    "merged": 0,
+    "in_review": 0,
+    "in_progress": 0,
+    "ci_failing": 0,
+    "not_started": 22
+  },
+  "current_phase": "PHASE 0 — pre-start (waiting for Cowork acknowledgement)",
+  "current_chunk": null,
+  "next_chunk": "00",
+  "blocking_chunk_01": [
+    "feature_flags table not yet live",
+    "v6_all_off kill switch not yet verified",
+    "audit logging not yet tested",
+    "Phil sign-off on Chunk 00 PR not yet received"
+  ],
+  "chunks": [
+    { "id": "00",  "name": "Feature Flag infra",        "status": "not-started", "branch": "feat/v6-00-flags",                  "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": [] },
+    { "id": "00A", "name": "Global Flag Safety Rule",   "status": "not-started", "branch": "feat/v6-00a-flag-safety",           "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["00"] },
+    { "id": "00B", "name": "Kill Switch v6_all_off",    "status": "not-started", "branch": "feat/v6-00b-kill-switch",           "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["00", "00A"] },
+    { "id": "01",  "name": "Runtime Isolation",         "status": "not-started", "branch": "feat/v6-01-isolation",              "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["00", "00A", "00B"] },
+    { "id": "02",  "name": "Support Proximity schema", "status": "not-started", "branch": "feat/v6-02-support-proximity",      "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["01"] },
+    { "id": "03",  "name": "AA System (stateless)",     "status": "not-started", "branch": "feat/v6-03-aa-system",              "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["01"] },
+    { "id": "04a", "name": "Care as Kink — Active",     "status": "not-started", "branch": "feat/v6-04a-care-active",           "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["02"] },
+    { "id": "04b", "name": "Care as Kink — Support",    "status": "not-started", "branch": "feat/v6-04b-care-support",          "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["04a"] },
+    { "id": "05",  "name": "Meet Flow",                 "status": "not-started", "branch": "feat/v6-05-meet-flow",              "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["04a", "03"] },
+    { "id": "06",  "name": "First 5 Minutes",           "status": "not-started", "branch": "feat/v6-06-first-five-minutes",     "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["01"] },
+    { "id": "07",  "name": "Night Operator Panel",      "status": "not-started", "branch": "feat/v6-07-night-operator",         "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["01"] },
+    { "id": "08",  "name": "Proximity Nav v2",          "status": "not-started", "branch": "feat/v6-08-proximity-nav-v2",       "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["00"] },
+    { "id": "09",  "name": "Market v2",                 "status": "not-started", "branch": "feat/v6-09-market-v2",              "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["00"] },
+    { "id": "10",  "name": "Events alignment",          "status": "not-started", "branch": "feat/v6-10-events",                 "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": [] },
+    { "id": "11",  "name": "Profile Proximity Card",    "status": "not-started", "branch": "feat/v6-11-profile-proximity",      "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["00"] },
+    { "id": "12",  "name": "Content Policy",            "status": "not-started", "branch": "feat/v6-12-content-policy",         "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["00"] },
+    { "id": "13",  "name": "AI Layer",                  "status": "not-started", "branch": "feat/v6-13-ai-layer",               "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["01"] },
+    { "id": "14",  "name": "Proximity Failure",         "status": "not-started", "branch": "feat/v6-14-proximity-failure",      "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["05"] },
+    { "id": "15",  "name": "Sound of the Night",        "status": "not-started", "branch": "feat/v6-15-sound-of-the-night",     "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["00"] },
+    { "id": "16",  "name": "HNH MESS GTM",              "status": "not-started", "branch": "feat/v6-16-hnh-mess-gtm",           "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["00"] },
+    { "id": "17a", "name": "Notifications hardening",   "status": "not-started", "branch": "feat/v6-17a-notifications",         "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": [] },
+    { "id": "17b", "name": "Legal/GDPR enforcement",    "status": "not-started", "branch": "feat/v6-17b-legal-gdpr",             "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": [] },
+    { "id": "17c", "name": "Analytics instrumentation", "status": "not-started", "branch": "feat/v6-17c-analytics",             "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": [] },
+    { "id": "18",  "name": "Spec alignment sweep",      "status": "not-started", "branch": "feat/v6-18-spec-alignment",         "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["all"] },
+    { "id": "19",  "name": "Pre-launch + relaunch",     "status": "not-started", "branch": "feat/v6-19-pre-launch",             "pr": null, "ci_status": null, "preview_url": null, "merged_at": null, "depends_on": ["all"] }
+  ],
+  "infra": {
+    "supabase_advisor_errors": null,
+    "supabase_advisor_warns": null,
+    "stripe_events_24h": null,
+    "profiles_total": null,
+    "paid_members": null,
+    "last_advisor_check": null,
+    "live_site_status": null,
+    "latest_deployment": {
+      "state": null,
+      "sha": null,
+      "url": null,
+      "created_at": null,
+      "branch": null
+    }
+  },
+  "flags": [],
+  "funnel": {
+    "stages": {},
+    "captured_at": null
+  },
+  "ramp": {
+    "current": "pre-launch",
+    "next": "phil_only",
+    "history": []
+  },
+  "recent_activity": [
+    {
+      "kind": "system",
+      "icon": "◆",
+      "what": "v6 build state.json initialised. Cowork should update this file after every chunk.",
+      "actor": "claude-opus",
+      "when": "2026-05-01T00:00:00Z"
+    }
+  ],
+  "metadata": {
+    "repo": "SICQR/hotmess-globe",
+    "parent_branch": "main",
+    "build_branch": "feat/v6-spec-build",
+    "rollback_tag": "pre-ziaullah-merge-snapshot",
+    "vercel_project_id": "prj_xdS5EoLRDpGhj4GOIbtSLSrCmvJO",
+    "vercel_team_id": "team_ctjjRDRV1EpYKYaO9wQSwRyv",
+    "supabase_project": "rfoftonnlwudilafhfkl",
+    "live_domain": "hotmessldn.com"
+  }
+}
