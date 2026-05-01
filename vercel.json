@@ -7,6 +7,14 @@
     "lhr1",
     "iad1"
   ],
+  "env": {
+    "STRIPE_BOOST_GLOBE_GLOW_PRICE_ID": "price_1TSG4FFD4E2lo8AphdaOGmdA",
+    "STRIPE_BOOST_PROFILE_BUMP_PRICE_ID": "price_1TSG4JFD4E2lo8ApmEzQHWrg",
+    "STRIPE_BOOST_VIBE_BLAST_PRICE_ID": "price_1TSG4MFD4E2lo8ApBKaJsOWy",
+    "STRIPE_BOOST_INCOGNITO_PRICE_ID": "price_1TSG4QFD4E2lo8ApWoTaJ8WJ",
+    "STRIPE_BOOST_EXTRA_BEACON_PRICE_ID": "price_1TSG4TFD4E2lo8ApStwEZkws",
+    "STRIPE_BOOST_HIGHLIGHTED_MSG_PRICE_ID": "price_1TSG4XFD4E2lo8ApZsYrpuxL"
+  },
   "crons": [
     {
       "path": "/api/events/cron",
