@@ -538,79 +538,167 @@ export function DMCAPage() {
 export function PrivacyPolicyPage() {
   return (
     <LegalPageLayout title="Privacy Policy">
-      <p><em>Last updated: February 2026</em></p>
-
-      <h2>1. Information We Collect</h2>
-      <p>We collect information you provide directly:</p>
-      <ul>
-        <li>Account information (email, display name, photos)</li>
-        <li>Profile information (bio, preferences, location)</li>
-        <li>Messages and content you share</li>
-        <li>Transaction data for purchases</li>
-      </ul>
-
-      <p>We automatically collect:</p>
-      <ul>
-        <li>Device information</li>
-        <li>Location data (with your permission)</li>
-        <li>Usage analytics</li>
-      </ul>
-
-      <h2>2. How We Use Your Information</h2>
-      <ul>
-        <li>To provide and improve the Service</li>
-        <li>To match you with nearby users</li>
-        <li>To send notifications about activity</li>
-        <li>To process transactions</li>
-        <li>To ensure safety and security</li>
-      </ul>
-
-      <h2>3. Data Sharing</h2>
+      <p><em>Last updated: May 2026</em></p>
       <p>
-        We do not sell your personal data. We may share data with:
-      </p>
-      <ul>
-        <li>Service providers (hosting, payments, analytics)</li>
-        <li>Law enforcement when legally required</li>
-        <li>Other users as part of the Service (e.g., your profile)</li>
-      </ul>
-
-      <h2>4. Your Rights (GDPR)</h2>
-      <p>If you're in the UK/EU, you have the right to:</p>
-      <ul>
-        <li>Access your personal data</li>
-        <li>Correct inaccurate data</li>
-        <li>Delete your data</li>
-        <li>Export your data</li>
-        <li>Object to processing</li>
-        <li>Withdraw consent</li>
-      </ul>
-      <p>
-        To exercise these rights, go to Settings → Privacy → Data Export or 
-        email <a href="mailto:privacy@hotmessldn.com">privacy@hotmessldn.com</a>
+        HOTMESS London OS Limited (&ldquo;HOTMESS&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;) operates the HOTMESS platform
+        (website and mobile app). This policy explains what data we collect, why, and
+        your rights over it. We are registered in England and Wales and act as data
+        controller under UK GDPR.
       </p>
 
-      <h2>5. Data Retention</h2>
+      <h2>1. Data We Collect</h2>
+
+      <h3>Account &amp; Profile</h3>
+      <ul>
+        <li>Email address (required — account creation and login)</li>
+        <li>Display name, bio, profile photo</li>
+        <li>Optional profile fields: preferences, relationship style, sexual orientation</li>
+        <li>Age verification confirmation (18+ gate)</li>
+      </ul>
+
+      <h3>Location</h3>
+      <ul>
+        <li>
+          <strong>Precise location</strong> (with your permission) — used for the live globe,
+          Meet flow, venue check-ins, and journey sharing. Your exact position is
+          never shown to other users — all public-facing locations are
+          grid-snapped to approximately 500 metres.
+        </li>
+        <li>
+          <strong>Coarse location</strong> — city-level, for event discovery and radio features.
+        </li>
+      </ul>
+      <p>You can revoke location permission in device Settings at any time.</p>
+
+      <h3>Photos &amp; Camera</h3>
       <p>
-        We retain your data while your account is active. After deletion, we 
-        remove your data within 30 days (except where legally required to retain).
+        We access your camera and photo library only when you choose to upload a photo
+        (profile picture, Right Now post, or market listing). All uploads are
+        automatically scanned for illegal content (see section 6) before display.
       </p>
 
-      <h2>6. Security</h2>
+      <h3>Messages &amp; Content</h3>
+      <ul>
+        <li>Messages sent between users</li>
+        <li>Right Now posts and presence signals</li>
+        <li>Listings and posts you create</li>
+      </ul>
+
+      <h3>Payments</h3>
       <p>
-        We use encryption, secure protocols, and access controls to protect 
-        your data. However, no system is 100% secure.
+        Payments are processed by Stripe. HOTMESS stores only transaction metadata
+        (tier, amount, timestamp, Stripe customer ID). We never see or store your
+        card number, CVV, or bank details.
       </p>
 
-      <h2>7. Cookies</h2>
+      <h3>Device &amp; Usage</h3>
+      <ul>
+        <li>Device type and OS version</li>
+        <li>Push notification token (if you grant permission)</li>
+        <li>Feature interactions and crash reports — used to improve the app</li>
+        <li>IP address and access timestamps</li>
+      </ul>
+
+      <h2>2. How We Use Your Data</h2>
+      <ul>
+        <li><strong>Provide the Service</strong> — matching, globe, Meet, radio, market, safety features</li>
+        <li><strong>Safety &amp; security</strong> — SOS routing, CSAM scanning, abuse detection, legal compliance</li>
+        <li><strong>Notifications</strong> — safety alerts, activity, and marketing (marketing requires your consent)</li>
+        <li><strong>Payments</strong> — subscription management, boost activation, order fulfilment</li>
+        <li><strong>AI features</strong> — Wingman and Scene Scout use your approximate location and profile context when you invoke them. AI features are opt-in and can be disabled in Settings → AI.</li>
+        <li><strong>Analytics</strong> — aggregate usage patterns to improve the product. We do not build individual behavioural profiles for advertising.</li>
+      </ul>
+
+      <h2>3. Image Scanning</h2>
       <p>
-        We use cookies for authentication, preferences, and analytics. See our 
-        Cookie Banner for options.
+        All user-uploaded images are automatically scanned before display using two
+        independent layers:
+      </p>
+      <ul>
+        <li><strong>Microsoft PhotoDNA</strong> — matches against known child sexual abuse material (CSAM) databases</li>
+        <li><strong>Cloudflare AI</strong> — classifies explicit adult content</li>
+      </ul>
+      <p>
+        This scanning is required by law and by our platform policies. Images that
+        fail detection are removed immediately. CSAM detections are reported to the
+        National Center for Missing &amp; Exploited Children (NCMEC) and relevant UK
+        authorities as required. Scan results are never used for advertising.
       </p>
 
-      <h2>8. Contact</h2>
+      <h2>4. Data Sharing</h2>
+      <p>We do not sell your personal data. We share data only with:</p>
+      <ul>
+        <li><strong>Service providers</strong> — Supabase (hosting/database), Vercel (infrastructure), Stripe (payments), Shopify (marketplace), Cloudflare (scanning/CDN), Anthropic (AI features), Microsoft Azure (PhotoDNA)</li>
+        <li><strong>Other users</strong> — your public profile, approximate location, and posts are visible to other HOTMESS members according to your visibility settings</li>
+        <li><strong>Law enforcement</strong> — when legally required, or to protect against serious harm</li>
+      </ul>
+      <p>All third-party processors are contractually bound to GDPR-compliant data handling.</p>
+
+      <h2>5. Your Rights (UK/EU GDPR)</h2>
+      <p>You have the right to:</p>
+      <ul>
+        <li><strong>Access</strong> — request a copy of your data</li>
+        <li><strong>Rectification</strong> — correct inaccurate data</li>
+        <li><strong>Erasure</strong> — delete your account and data</li>
+        <li><strong>Portability</strong> — export your data in a machine-readable format</li>
+        <li><strong>Restriction</strong> — limit how we process your data</li>
+        <li><strong>Objection</strong> — object to processing based on legitimate interests</li>
+        <li><strong>Withdraw consent</strong> — at any time, for consent-based processing (e.g. marketing)</li>
+      </ul>
       <p>
-        Data Protection Officer: <a href="mailto:privacy@hotmessldn.com">privacy@hotmessldn.com</a>
+        Exercise these rights in <strong>Settings → Privacy</strong>, or email{' '}
+        <a href="mailto:privacy@hotmessldn.com">privacy@hotmessldn.com</a>.
+        We respond within 30 days.
+      </p>
+      <p>
+        You may also lodge a complaint with the UK Information Commissioner&apos;s
+        Office (ICO) at <a href="https://ico.org.uk">ico.org.uk</a>.
+      </p>
+
+      <h2>6. Data Retention</h2>
+      <ul>
+        <li>Account data — retained while your account is active</li>
+        <li>After deletion — removed within 30 days (except legally required retention)</li>
+        <li>Right Now posts — expire automatically (maximum 24 hours)</li>
+        <li>Safety logs (SOS, check-ins) — retained for 90 days for legal compliance</li>
+        <li>Transaction records — retained for 7 years (UK tax law)</li>
+        <li>Blocked CSAM scan records — retained permanently as required by law</li>
+      </ul>
+
+      <h2>7. Security</h2>
+      <p>
+        We use encryption in transit (TLS 1.2+), encrypted storage, row-level
+        security on all database tables, and strict access controls. Authentication
+        is managed by Supabase with industry-standard JWT tokens. No system is
+        100% secure — if you suspect a breach, contact{' '}
+        <a href="mailto:security@hotmessldn.com">security@hotmessldn.com</a>.
+      </p>
+
+      <h2>8. Cookies &amp; Tracking</h2>
+      <p>
+        We use strictly necessary cookies for authentication and session management.
+        Analytics cookies are optional — see the Cookie Banner on first visit.
+        We do not use advertising cookies or third-party tracking pixels.
+      </p>
+
+      <h2>9. Children</h2>
+      <p>
+        HOTMESS is strictly 18+. We do not knowingly collect data from anyone under
+        18. If you believe a minor has created an account, contact{' '}
+        <a href="mailto:safety@hotmessldn.com">safety@hotmessldn.com</a> immediately.
+      </p>
+
+      <h2>10. Changes to This Policy</h2>
+      <p>
+        We may update this policy. Material changes will be notified via in-app
+        notice. Continued use after 30 days constitutes acceptance.
+      </p>
+
+      <h2>11. Contact</h2>
+      <p>
+        <strong>Data Protection Officer</strong><br />
+        <a href="mailto:privacy@hotmessldn.com">privacy@hotmessldn.com</a><br />
+        HOTMESS London OS Limited, England &amp; Wales
       </p>
     </LegalPageLayout>
   );
