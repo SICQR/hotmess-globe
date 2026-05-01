@@ -6,7 +6,7 @@
  * Confirmation level: HIGH
  * Flag: v6_night_operator_panel
  */
-import { verifyOperator, supabaseAdmin } from '../_verify.js';
+import { verifyOperator, supabaseAdmin } from './_verify.js';
 
 const SOS_COOLDOWN_MS = 30 * 60 * 1000;
 
