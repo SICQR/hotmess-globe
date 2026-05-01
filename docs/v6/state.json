@@ -1,18 +1,18 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-05-01T03:15:00Z",
+  "updated_at": "2026-05-01T03:30:00Z",
   "updated_by": "cowork",
   "build_summary": {
     "total_chunks": 22,
-    "merged": 1,
-    "in_review": 1,
-    "in_progress": 0,
+    "merged": 2,
+    "in_review": 0,
+    "in_progress": 1,
     "ci_failing": 0,
-    "not_started": 20
+    "not_started": 19
   },
   "current_phase": "PHASE 1 \u2014 Foundations",
-  "current_chunk": "01",
-  "next_chunk": "02",
+  "current_chunk": "02",
+  "next_chunk": "03",
   "blocking_chunk_01": [],
   "chunks": [
     {
@@ -56,12 +56,12 @@
     {
       "id": "01",
       "name": "Runtime Isolation",
-      "status": "in-review",
+      "status": "merged",
       "branch": "feat/v6-01-isolation",
       "pr": 192,
-      "ci_status": "pending",
+      "ci_status": "passing",
       "preview_url": "https://hotmess-globe-git-feat-v6-01-isolation-phils-projects-59e621aa.vercel.app",
-      "merged_at": null,
+      "merged_at": "2026-05-01T03:25:00Z",
       "depends_on": [
         "00",
         "00A",
@@ -71,7 +71,7 @@
     {
       "id": "02",
       "name": "Support Proximity schema",
-      "status": "not-started",
+      "status": "in-progress",
       "branch": "feat/v6-02-support-proximity",
       "pr": null,
       "ci_status": null,
@@ -345,10 +345,10 @@
     "live_site_status": "healthy",
     "latest_deployment": {
       "state": "READY",
-      "sha": "d3fe0730",
+      "sha": "cd2fbbc9",
       "url": "https://hotmess-globe-git-feat-v6-01-isolation-phils-projects-59e621aa.vercel.app",
       "created_at": "2026-05-01T03:00:00Z",
-      "branch": "feat/v6-01-isolation"
+      "branch": "feat/v6-spec-build"
     }
   },
   "flags": [
@@ -481,6 +481,20 @@
     "history": []
   },
   "recent_activity": [
+    {
+      "kind": "chunk_start",
+      "icon": "\u25b6",
+      "what": "Chunk 02 starting \u2014 Support Proximity schema (lifestyle + support_preferences, v6_support_proximity_ui flag)",
+      "actor": "cowork",
+      "when": "2026-05-01T03:30:00Z"
+    },
+    {
+      "kind": "pr_merge",
+      "icon": "\u2713",
+      "what": "PR #192 merged: Chunk 01 Runtime Isolation \u2192 feat/v6-spec-build (sha cd2fbbc9)",
+      "actor": "phil",
+      "when": "2026-05-01T03:25:00Z"
+    },
     {
       "kind": "pr_open",
       "icon": "\u25b6",
