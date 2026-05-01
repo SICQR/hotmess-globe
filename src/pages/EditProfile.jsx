@@ -102,6 +102,20 @@ export default function EditProfile() {
     enabled: !!currentUser
   });
 
+  // READY_LIMITED: bio, vibe, looking_for hidden until user receives first Boo (incoming tap)
+  const { data: incomingTapCount = 0 } = useQuery({
+    queryKey: ['incoming-tap-count', currentUser?.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('taps')
+        .select('*', { count: 'exact', head: true })
+        .eq('target_user_id', currentUser.id);
+      return count ?? 0;
+    },
+    enabled: !!currentUser?.id,
+  });
+  const isReadyLimited = incomingTapCount === 0;
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -594,15 +608,24 @@ export default function EditProfile() {
                   />
                 </div>
               </div>
-              <Textarea
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                placeholder="Tell the night about yourself..."
-                rows={4}
-                maxLength={300}
-                className="bg-white/5 border-2 border-white/20 text-white"
-              />
-              <p className="text-xs text-white/40 mt-2 font-mono">{bio.length}/300</p>
+              {isReadyLimited ? (
+                <div className="border-2 border-dashed border-white/20 p-4 text-center">
+                  <p className="text-xs text-white/40 uppercase tracking-widest mb-1">Bio locked</p>
+                  <p className="text-xs text-white/30">Complete a match to unlock your full profile</p>
+                </div>
+              ) : (
+                <>
+                  <Textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    placeholder="Tell the night about yourself..."
+                    rows={4}
+                    maxLength={300}
+                    className="bg-white/5 border-2 border-white/20 text-white"
+                  />
+                  <p className="text-xs text-white/40 mt-2 font-mono">{bio.length}/300</p>
+                </>
+              )}
             </div>
 
             {/* Rest of existing form sections... */}
@@ -637,22 +660,29 @@ export default function EditProfile() {
             {/* Vibes */}
             <div className="bg-black border-2 border-white p-6">
               <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block">Preferred Vibes</Label>
-              <div className="flex flex-wrap gap-2">
-                {VIBE_OPTIONS.map(vibe => (
-                  <button
-                    key={vibe}
-                    type="button"
-                    onClick={() => toggleVibe(vibe)}
-                    className={`px-4 py-2 text-xs font-black uppercase border-2 transition-all ${
-                      preferredVibes.includes(vibe)
-                        ? 'bg-[#C8962C] border-[#C8962C] text-black'
-                        : 'bg-white/5 border-white/20 text-white/60 hover:border-white/40'
-                    }`}
-                  >
-                    {vibe}
-                  </button>
-                ))}
-              </div>
+              {isReadyLimited ? (
+                <div className="border-2 border-dashed border-white/20 p-4 text-center">
+                  <p className="text-xs text-white/40 uppercase tracking-widest mb-1">Locked</p>
+                  <p className="text-xs text-white/30">Complete a match to unlock your full profile</p>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {VIBE_OPTIONS.map(vibe => (
+                    <button
+                      key={vibe}
+                      type="button"
+                      onClick={() => toggleVibe(vibe)}
+                      className={`px-4 py-2 text-xs font-black uppercase border-2 transition-all ${
+                        preferredVibes.includes(vibe)
+                          ? 'bg-[#C8962C] border-[#C8962C] text-black'
+                          : 'bg-white/5 border-white/20 text-white/60 hover:border-white/40'
+                      }`}
+                    >
+                      {vibe}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Event Preferences */}
@@ -999,28 +1029,35 @@ export default function EditProfile() {
 
               <div className="mb-6">
                 <p className="text-xs text-white/60 mb-3 uppercase">Looking for</p>
-                <div className="flex flex-wrap gap-2">
-                  {['Chat', 'Dates', 'Mates', 'Play', 'Friends', 'Something ongoing'].map(option => (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => {
-                        if (lookingFor.includes(option)) {
-                          setLookingFor(lookingFor.filter(o => o !== option));
-                        } else {
-                          setLookingFor([...lookingFor, option]);
-                        }
-                      }}
-                      className={`px-3 py-2 text-xs font-bold uppercase border-2 ${
-                        lookingFor.includes(option)
-                          ? 'bg-[#C8962C] border-[#C8962C] text-black'
-                          : 'bg-white/5 border-white/20 text-white/60'
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
+                {isReadyLimited ? (
+                  <div className="border-2 border-dashed border-white/20 p-4 text-center">
+                    <p className="text-xs text-white/40 uppercase tracking-widest mb-1">Locked</p>
+                    <p className="text-xs text-white/30">Complete a match to unlock your full profile</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {['Chat', 'Dates', 'Mates', 'Play', 'Friends', 'Something ongoing'].map(option => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => {
+                          if (lookingFor.includes(option)) {
+                            setLookingFor(lookingFor.filter(o => o !== option));
+                          } else {
+                            setLookingFor([...lookingFor, option]);
+                          }
+                        }}
+                        className={`px-3 py-2 text-xs font-bold uppercase border-2 ${
+                          lookingFor.includes(option)
+                            ? 'bg-[#C8962C] border-[#C8962C] text-black'
+                            : 'bg-white/5 border-white/20 text-white/60'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>
