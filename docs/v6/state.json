@@ -1,45 +1,40 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-05-01T01:39:11Z",
+  "updated_at": "2026-05-01T03:15:00Z",
   "updated_by": "cowork",
   "build_summary": {
     "total_chunks": 22,
-    "merged": 0,
-    "in_review": 3,
+    "merged": 1,
+    "in_review": 1,
     "in_progress": 0,
     "ci_failing": 0,
-    "not_started": 19
+    "not_started": 20
   },
-  "current_phase": "PHASE 0 \u2014 Chunk 00 in review (PR #191)",
-  "current_chunk": "00",
-  "next_chunk": "01 (blocked until Chunk 00 approved)",
-  "blocking_chunk_01": [
-    "feature_flags table not yet live",
-    "v6_all_off kill switch not yet verified",
-    "audit logging not yet tested",
-    "Phil sign-off on Chunk 00 PR not yet received"
-  ],
+  "current_phase": "PHASE 1 \u2014 Foundations",
+  "current_chunk": "01",
+  "next_chunk": "02",
+  "blocking_chunk_01": [],
   "chunks": [
     {
       "id": "00",
       "name": "Feature Flag infra",
-      "status": "in-review",
+      "status": "merged",
       "branch": "feat/v6-00-flags",
       "pr": 191,
-      "ci_status": null,
-      "preview_url": "https://hotmess-globe-git-feat-v6-00-flags-phils-projects-59e621aa.vercel.app",
-      "merged_at": null,
+      "ci_status": "passing",
+      "preview_url": "https://hotmess-globe-git-feat-v6-spec-build-phils-projects-59e621aa.vercel.app",
+      "merged_at": "2026-05-01T01:00:00Z",
       "depends_on": []
     },
     {
       "id": "00A",
       "name": "Global Flag Safety Rule",
-      "status": "in-review",
-      "branch": "feat/v6-00a-flag-safety",
+      "status": "merged",
+      "branch": "feat/v6-00-flags",
       "pr": 191,
-      "ci_status": null,
-      "preview_url": "https://hotmess-globe-git-feat-v6-00-flags-phils-projects-59e621aa.vercel.app",
-      "merged_at": null,
+      "ci_status": "passing",
+      "preview_url": "https://hotmess-globe-git-feat-v6-spec-build-phils-projects-59e621aa.vercel.app",
+      "merged_at": "2026-05-01T01:00:00Z",
       "depends_on": [
         "00"
       ]
@@ -47,12 +42,12 @@
     {
       "id": "00B",
       "name": "Kill Switch v6_all_off",
-      "status": "in-review",
-      "branch": "feat/v6-00b-kill-switch",
+      "status": "merged",
+      "branch": "feat/v6-00-flags",
       "pr": 191,
-      "ci_status": null,
-      "preview_url": "https://hotmess-globe-git-feat-v6-00-flags-phils-projects-59e621aa.vercel.app",
-      "merged_at": null,
+      "ci_status": "passing",
+      "preview_url": "https://hotmess-globe-git-feat-v6-spec-build-phils-projects-59e621aa.vercel.app",
+      "merged_at": "2026-05-01T01:00:00Z",
       "depends_on": [
         "00",
         "00A"
@@ -61,11 +56,11 @@
     {
       "id": "01",
       "name": "Runtime Isolation",
-      "status": "not-started",
+      "status": "in-review",
       "branch": "feat/v6-01-isolation",
-      "pr": null,
-      "ci_status": null,
-      "preview_url": null,
+      "pr": 192,
+      "ci_status": "pending",
+      "preview_url": "https://hotmess-globe-git-feat-v6-01-isolation-phils-projects-59e621aa.vercel.app",
       "merged_at": null,
       "depends_on": [
         "00",
@@ -341,111 +336,139 @@
     }
   ],
   "infra": {
-    "supabase_advisor_errors": null,
-    "supabase_advisor_warns": null,
-    "stripe_events_24h": null,
-    "profiles_total": null,
-    "paid_members": null,
-    "last_advisor_check": null,
-    "live_site_status": null,
+    "supabase_advisor_errors": 0,
+    "supabase_advisor_warns": 0,
+    "stripe_events_24h": 0,
+    "profiles_total": 50,
+    "paid_members": 0,
+    "last_advisor_check": "2026-05-01T01:00:00Z",
+    "live_site_status": "healthy",
     "latest_deployment": {
-      "state": null,
-      "sha": null,
-      "url": null,
-      "created_at": null,
-      "branch": null
+      "state": "READY",
+      "sha": "d3fe0730",
+      "url": "https://hotmess-globe-git-feat-v6-01-isolation-phils-projects-59e621aa.vercel.app",
+      "created_at": "2026-05-01T03:00:00Z",
+      "branch": "feat/v6-01-isolation"
     }
   },
   "flags": [
     {
       "key": "v6_all_off",
-      "cohort": "phil_only",
-      "globally": false,
-      "user_count": 0
+      "cohort": "off",
+      "global": false,
+      "user_ids": []
     },
     {
       "key": "v6_aa_system",
       "cohort": "phil_only",
-      "globally": false,
-      "user_count": 1
+      "global": false,
+      "user_ids": [
+        "302040e5-c2ac-4fb3-a192-70598aa7b962"
+      ]
     },
     {
       "key": "v6_care_as_kink_active",
       "cohort": "phil_only",
-      "globally": false,
-      "user_count": 1
+      "global": false,
+      "user_ids": [
+        "302040e5-c2ac-4fb3-a192-70598aa7b962"
+      ]
     },
     {
       "key": "v6_care_as_kink_support",
       "cohort": "phil_only",
-      "globally": false,
-      "user_count": 1
-    },
-    {
-      "key": "v6_content_policy",
-      "cohort": "phil_only",
-      "globally": false,
-      "user_count": 1
-    },
-    {
-      "key": "v6_first_five_minutes",
-      "cohort": "phil_only",
-      "globally": false,
-      "user_count": 1
-    },
-    {
-      "key": "v6_hnh_mess_gtm",
-      "cohort": "phil_only",
-      "globally": false,
-      "user_count": 1
-    },
-    {
-      "key": "v6_market_v2",
-      "cohort": "phil_only",
-      "globally": false,
-      "user_count": 1
+      "global": false,
+      "user_ids": [
+        "302040e5-c2ac-4fb3-a192-70598aa7b962"
+      ]
     },
     {
       "key": "v6_meet_flow",
       "cohort": "phil_only",
-      "globally": false,
-      "user_count": 1
+      "global": false,
+      "user_ids": [
+        "302040e5-c2ac-4fb3-a192-70598aa7b962"
+      ]
+    },
+    {
+      "key": "v6_first_five_minutes",
+      "cohort": "phil_only",
+      "global": false,
+      "user_ids": [
+        "302040e5-c2ac-4fb3-a192-70598aa7b962"
+      ]
     },
     {
       "key": "v6_night_operator",
       "cohort": "phil_only",
-      "globally": false,
-      "user_count": 1
-    },
-    {
-      "key": "v6_profile_proximity_card",
-      "cohort": "phil_only",
-      "globally": false,
-      "user_count": 1
-    },
-    {
-      "key": "v6_proximity_failure",
-      "cohort": "phil_only",
-      "globally": false,
-      "user_count": 1
+      "global": false,
+      "user_ids": [
+        "302040e5-c2ac-4fb3-a192-70598aa7b962"
+      ]
     },
     {
       "key": "v6_proximity_nav_v2",
       "cohort": "phil_only",
-      "globally": false,
-      "user_count": 1
+      "global": false,
+      "user_ids": [
+        "302040e5-c2ac-4fb3-a192-70598aa7b962"
+      ]
     },
     {
-      "key": "v6_sound_of_the_night",
+      "key": "v6_market_v2",
       "cohort": "phil_only",
-      "globally": false,
-      "user_count": 1
+      "global": false,
+      "user_ids": [
+        "302040e5-c2ac-4fb3-a192-70598aa7b962"
+      ]
     },
     {
       "key": "v6_support_proximity_ui",
       "cohort": "phil_only",
-      "globally": false,
-      "user_count": 1
+      "global": false,
+      "user_ids": [
+        "302040e5-c2ac-4fb3-a192-70598aa7b962"
+      ]
+    },
+    {
+      "key": "v6_content_policy",
+      "cohort": "phil_only",
+      "global": false,
+      "user_ids": [
+        "302040e5-c2ac-4fb3-a192-70598aa7b962"
+      ]
+    },
+    {
+      "key": "v6_proximity_failure",
+      "cohort": "phil_only",
+      "global": false,
+      "user_ids": [
+        "302040e5-c2ac-4fb3-a192-70598aa7b962"
+      ]
+    },
+    {
+      "key": "v6_sound_of_the_night",
+      "cohort": "phil_only",
+      "global": false,
+      "user_ids": [
+        "302040e5-c2ac-4fb3-a192-70598aa7b962"
+      ]
+    },
+    {
+      "key": "v6_hnh_mess_gtm",
+      "cohort": "phil_only",
+      "global": false,
+      "user_ids": [
+        "302040e5-c2ac-4fb3-a192-70598aa7b962"
+      ]
+    },
+    {
+      "key": "v6_profile_proximity_card",
+      "cohort": "phil_only",
+      "global": false,
+      "user_ids": [
+        "302040e5-c2ac-4fb3-a192-70598aa7b962"
+      ]
     }
   ],
   "funnel": {
@@ -459,18 +482,32 @@
   },
   "recent_activity": [
     {
-      "kind": "db",
-      "icon": "\u25c6",
-      "what": "feature_flags + feature_flag_audit_log tables live in Supabase. 15 flags seeded. Phil role set to admin.",
+      "kind": "pr_open",
+      "icon": "\u25b6",
+      "what": "PR #192 opened: Chunk 01 Runtime Isolation \u2192 feat/v6-spec-build",
       "actor": "cowork",
-      "when": "2026-05-01T01:39:11Z"
+      "when": "2026-05-01T03:15:00Z"
     },
     {
-      "kind": "pr_opened",
+      "kind": "db",
       "icon": "\u25c6",
-      "what": "Chunk 00 PR #191 opened \u2014 feature flag infra + 00A safety rule + 00B kill switch. 15 flags seeded phil_only. Awaiting Phil review.",
+      "what": "isolation_audit_log table created (append-only). operator_role created. RLS enforced.",
       "actor": "cowork",
-      "when": "2026-05-01T01:39:11Z"
+      "when": "2026-05-01T03:10:00Z"
+    },
+    {
+      "kind": "code",
+      "icon": "\u25c6",
+      "what": "Chunk 01 commit d3fe0730: FIELD_MANIFEST + sanitiseForAI + 9 isolation tests",
+      "actor": "cowork",
+      "when": "2026-05-01T03:05:00Z"
+    },
+    {
+      "kind": "pr_merge",
+      "icon": "\u2713",
+      "what": "PR #191 merged: Chunk 00 Feature Flags (feature_flags table + FlagsAdmin + v6_all_off kill switch)",
+      "actor": "phil",
+      "when": "2026-05-01T01:00:00Z"
     },
     {
       "kind": "system",
