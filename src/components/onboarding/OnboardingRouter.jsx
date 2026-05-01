@@ -19,6 +19,10 @@
  *   complete → /ghosted (BootRouter intercepts, never reaches here)
  */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useV6Flag as useFlag } from '@/hooks/useV6Flag';
+import { track } from '@/lib/analytics';
+import First5MinutesFlow from './First5MinutesFlow';
+
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useBootGuard } from '@/contexts/BootGuardContext';
@@ -68,6 +72,21 @@ const MAX_PROFILE_RETRIES = 5;
 const PROFILE_RETRY_BASE_MS = 400;
 
 export default function OnboardingRouter() {
+  // v6 First 5 Minutes — flag hooks (f5m_hooks_v2)
+  const f5mEnabled = useFlag('v6_first_five_minutes');
+  const [profileStage, setProfileStage] = React.useState(null);
+  useEffect(() => {
+    if (!f5mEnabled) return;
+    import('@/components/utils/supabaseClient').then(({ supabase: sb }) => {
+      sb.auth.getUser().then(({ data: { user } }) => {
+        if (!user) { setProfileStage('start'); return; }
+        sb.from('profiles').select('onboarding_stage').eq('id', user.id).single()
+          .then(({ data }) => setProfileStage(data?.onboarding_stage || 'start'));
+      });
+    });
+  }, [f5mEnabled]);
+
+
   const { session, profile, refetchProfile } = useBootGuard();
   const navigate = useNavigate();
   const [screen, setScreen] = useState(null);
@@ -277,21 +296,33 @@ export default function OnboardingRouter() {
 
   const handleQuickSetupComplete = () => {
     // QuickSetup done → advance to Profile details screen
+    track('onboarding_stage_completed', 'onboarding', 'quick_setup');
     goTo(SCREENS.PROFILE);
   };
 
   const handleProfileComplete = () => {
     // Profile details done → advance to PIN setup
+    track('onboarding_stage_completed', 'onboarding', 'profile_complete');
     goTo(SCREENS.PIN_SETUP);
   };
 
   const handlePinComplete = async () => {
     // PIN is the final step — onboarding_completed is now true in DB
+    track('onboarding_stage_completed', 'onboarding', 'pin_complete');
+    track('profile_complete', 'onboarding');
     if (refetchProfile) {
       await refetchProfile();
     }
     navigate('/ghosted', { replace: true });
   };
+
+  // v6 F5M — render intercept (all hooks above, safe to return here)
+  if (f5mEnabled) {
+    if (profileStage === null) return null; // still loading profile stage
+    if (profileStage === 'start' || profileStage?.startsWith('f5m_')) {
+      return <First5MinutesFlow initialStage={profileStage} />;
+    }
+  }
 
   // Loading state
   if (!screen || !sessionReady) {

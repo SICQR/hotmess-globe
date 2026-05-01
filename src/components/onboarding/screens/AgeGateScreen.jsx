@@ -4,6 +4,7 @@
  */
 import React, { useState } from 'react';
 import BlockedScreen from './BlockedScreen';
+import { track } from '@/lib/analytics';
 
 const GOLD = '#C8962C';
 
@@ -30,6 +31,8 @@ export default function AgeGateScreen({ onComplete }) {
   const handleContinue = () => {
     if (!confirmed) return;
     try { localStorage.setItem('hm_age_gate_passed', 'true'); } catch {}
+    // Chunk 17c: instrument age gate pass
+    track('age_gate_passed', 'onboarding');
     onComplete();
   };
 

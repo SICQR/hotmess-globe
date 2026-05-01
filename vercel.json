@@ -31,6 +31,14 @@
     {
       "path": "/api/whatsapp/daily-summary",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/support/sync-meetings",
+      "schedule": "0 3 * * 0"
+    },
+    {
+      "path": "/api/cron/data-retention",
+      "schedule": "0 2 * * *"
     }
   ],
   "routes": [

@@ -91,6 +91,8 @@ const L2GhostedPreviewSheet = lazy(() => import('./L2GhostedPreviewSheet'));
 const L2GoLiveSheet = lazy(() => import('./L2GoLiveSheet'));
 const L2MovementShareSheet = lazy(() => import('./L2MovementShareSheet'));
 const L2RadioPlayerSheet = lazy(() => import('./L2RadioPlayerSheet'));
+const L2CareSheet = lazy(() => import('./L2CareSheet'));
+const L2MeetSheet = lazy(() => import('./L2MeetSheet'));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PLACEHOLDER FOR UNIMPLEMENTED SHEETS
@@ -201,6 +203,8 @@ const SHEET_COMPONENTS = {
   'membership': L2MembershipSheet,
   'help': L2HelpSheet,
   'safety': L2SafetySheet,
+  'care-as-kink': L2CareSheet,
+  'meet': L2MeetSheet,
   // Search / discovery
   'search': L2SearchSheet,
   'directions': L2DirectionsSheet,

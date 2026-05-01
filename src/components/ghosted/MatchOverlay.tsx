@@ -4,11 +4,17 @@
  * Dark full-screen overlay with gold accent. Shows both users' avatars,
  * "It's a match" text, and a "Message" CTA. Dismisses on tap outside
  * or after timeout.
+ *
+ * Chunk 19 (B5): Silent prefetch of chat thread + Wingman at 1.2s while
+ * overlay is visible. When user taps "Send a Message" the composer is
+ * already loaded with starters. Spec: HOTMESS-Chat-Messaging-SEALED.docx §2.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Ghost, MessageCircle, X } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/components/utils/supabaseClient';
 
 const GOLD = '#C8962C';
 
@@ -17,8 +23,44 @@ interface MatchOverlayProps {
   myAvatarUrl: string | null;
   theirAvatarUrl: string | null;
   theirName: string;
+  theirId: string;
   onMessage: () => void;
   onDismiss: () => void;
+}
+
+/**
+ * silentPrefetchChat — Loads the chat thread + Wingman suggestions into
+ * React Query cache so the composer is ready before the user taps.
+ * Fire-and-forget. Never throws.
+ */
+async function silentPrefetchChat(theirId: string, queryClient: ReturnType<typeof useQueryClient>) {
+  try {
+    // 1. Prime thread messages into cache
+    queryClient.prefetchQuery({
+      queryKey: ['chat-thread', theirId],
+      queryFn:  () =>
+        supabase
+          .from('messages')
+          .select('*')
+          .or(`sender_id.eq.${theirId},receiver_id.eq.${theirId}`)
+          .order('created_at', { ascending: false })
+          .limit(20)
+          .then(({ data }) => data ?? []),
+      staleTime: 30_000,
+    });
+
+    // 2. Prime Wingman suggestions into cache
+    queryClient.prefetchQuery({
+      queryKey: ['wingman', theirId],
+      queryFn:  () =>
+        fetch('/api/ai/wingman', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ targetUserId: theirId, messageCount: 0 }),
+        }).then(r => r.ok ? r.json() : null),
+      staleTime: 60_000,
+    });
+  } catch { /* silent — never block the overlay */ }
 }
 
 export function MatchOverlay({
@@ -26,15 +68,34 @@ export function MatchOverlay({
   myAvatarUrl,
   theirAvatarUrl,
   theirName,
+  theirId,
   onMessage,
   onDismiss,
 }: MatchOverlayProps) {
+  const queryClient  = useQueryClient();
+  const prefetchedRef = useRef(false);
+
   // Auto-dismiss after 8 seconds
   useEffect(() => {
     if (!visible) return;
     const timer = setTimeout(onDismiss, 8000);
     return () => clearTimeout(timer);
   }, [visible, onDismiss]);
+
+  // Chunk 19 (B5): Silent prefetch at 1.2s — spec §2
+  useEffect(() => {
+    if (!visible || !theirId || prefetchedRef.current) return;
+    const timer = setTimeout(() => {
+      prefetchedRef.current = true;
+      silentPrefetchChat(theirId, queryClient);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [visible, theirId, queryClient]);
+
+  // Reset prefetch flag when overlay closes
+  useEffect(() => {
+    if (!visible) prefetchedRef.current = false;
+  }, [visible]);
 
   return (
     <AnimatePresence>
@@ -120,17 +181,10 @@ function Avatar({ url, label }: { url: string | null; label: string }) {
       {url ? (
         <img src={url} alt={label} className="w-full h-full object-cover" />
       ) : (
-        <div
-          className="w-full h-full flex items-center justify-center"
-          style={{ background: '#1C1C1E' }}
-        >
-          <span className="text-xl font-black text-white/20">
-            {label.charAt(0).toUpperCase()}
-          </span>
+        <div className="w-full h-full bg-white/10 flex items-center justify-center">
+          <Ghost className="w-8 h-8 text-white/30" />
         </div>
       )}
     </div>
   );
 }
-
-export default MatchOverlay;

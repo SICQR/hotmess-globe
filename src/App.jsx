@@ -79,6 +79,8 @@ const EventsMode  = lazy(() => import('@/modes/EventsMode'));
 const VaultMode   = lazy(() => import('@/modes/VaultMode'));
 const ChatMeetupPage = lazy(() => import('@/pages/ChatMeetupPage'));
 const ModerationPage = lazy(() => import('@/pages/admin/ModerationPage'));
+const FlagsAdmin    = lazy(() => import('@/pages/admin/FlagsAdmin'));
+const FunnelPage    = lazy(() => import('@/pages/admin/FunnelPage'));
 const SOSPage = lazy(() => import('@/pages/SOSPage'));
 const FakeCallPage = lazy(() => import('@/pages/FakeCallPage'));
 const SafetyPage = lazy(() => import('@/pages/Safety'));
@@ -493,6 +495,10 @@ const AuthenticatedApp = () => {
         );
       })}
       
+      {/* ADMIN — v6 Feature Flags */}
+      <Route path="/admin/flags" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><FlagsAdmin /></Suspense>} />
+      {/* ADMIN — v6 Funnel Dashboard */}
+      <Route path="/admin/funnel" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><FunnelPage /></Suspense>} />
       <Route path="*" element={<PageNotFound />} />
       </Routes>
     </PageTransition>

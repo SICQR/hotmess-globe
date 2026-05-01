@@ -22,6 +22,8 @@ import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
 import ProfileContentCard from '@/components/cards/ProfileContentCard';
 import { useTaps } from '@/hooks/useTaps';
+import { useV6Flag } from '@/hooks/useV6Flag';
+import { ProfileProximityPanel } from '@/components/profile/ProfileProximityPanel';
 
 const Chip = ({ children, gold = false }) => (
   <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
@@ -185,6 +187,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
   // Robust own-profile detection: match on email OR auth_user_id
   const [authUid, setAuthUid] = useState(null);
   const [travelTimes, setTravelTimes] = useState(null);
+  const isProximityCard = useV6Flag('v6_profile_proximity');
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => { if (data?.user?.id) setAuthUid(data.user.id); });
@@ -871,56 +874,69 @@ export default function L2ProfileSheet({ email, uid, id }) {
         )}
       </div>
 
-      {/* ── Location Action Bar ────────────────────────────────────────── */}
-      <div className="flex gap-2 px-4 py-2">
-        <button
-          onClick={handleShareLocation}
-          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold active:scale-95 transition-all"
-        >
-          <MapPin className="w-4 h-4 text-[#C8962C]" />
-          Share My Location
-        </button>
-        {travelTimes?.uber && (
-          <button
-            onClick={() => openSheet?.('uber', { 
-              lat: profileUser.last_lat, 
-              lng: profileUser.last_lng, 
-              label: profileUser.display_name, 
-              travelTimes, 
-              profileUser 
-            })}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold active:scale-95 transition-all"
-          >
-            <Car className="w-4 h-4 text-[#00C2E0]" />
-            Get Uber
-          </button>
-        )}
-      </div>
+      {/* ── Location: Proximity Card (v6_profile_proximity) or legacy bar ── */}
+      {isProximityCard && !isOwnProfile && travelTimes?.distKm && profileUser?.last_lat ? (
+        <ProfileProximityPanel
+          distanceM={Math.round(travelTimes.distKm * 1000)}
+          approxLat={profileUser.last_lat}
+          approxLng={profileUser.last_lng}
+          venueName={profileUser.venue_name}
+          displayName={name}
+        />
+      ) : (
+        <>
+          {/* ── Location Action Bar ────────────────────────────────────── */}
+          <div className="flex gap-2 px-4 py-2">
+            <button
+              onClick={handleShareLocation}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold active:scale-95 transition-all"
+            >
+              <MapPin className="w-4 h-4 text-[#C8962C]" />
+              Share My Location
+            </button>
+            {travelTimes?.uber && (
+              <button
+                onClick={() => openSheet?.('uber', {
+                  lat: profileUser.last_lat,
+                  lng: profileUser.last_lng,
+                  label: profileUser.display_name,
+                  travelTimes,
+                  profileUser
+                })}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold active:scale-95 transition-all"
+              >
+                <Car className="w-4 h-4 text-[#00C2E0]" />
+                Get Uber
+              </button>
+            )}
+          </div>
+
+          {/* ── Travel time chips ─────────────────────────────────────── */}
+          {travelTimes && (
+            <div className="flex gap-2 px-4 py-2">
+              {travelTimes.walking && travelTimes.distKm < 5 && (
+                <div className="flex-1 flex flex-col items-center py-2 rounded-xl bg-[#39FF14]/10 border border-[#39FF14]/30">
+                  <Footprints className="w-4 h-4 text-[#39FF14]" />
+                  <span className="text-[#39FF14] font-black text-sm mt-0.5">{Math.round(travelTimes.walking.durationSeconds/60)}m</span>
+                  <span className="text-white/30 text-[9px]">walk</span>
+                </div>
+              )}
+              {travelTimes.bicycling && travelTimes.distKm < 10 && (
+                <div className="flex-1 flex flex-col items-center py-2 rounded-xl bg-[#00C2E0]/10 border border-[#00C2E0]/30">
+                  <Bike className="w-4 h-4 text-[#00C2E0]" />
+                  <span className="text-[#00C2E0] font-black text-sm mt-0.5">{Math.round(travelTimes.bicycling.durationSeconds/60)}m</span>
+                  <span className="text-white/30 text-[9px]">bike</span>
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
 
       {/* ── Bio ────────────────────────────────────────────────────────── */}
       {profileUser?.bio && (
         <div className="px-4 py-2">
           <p className="text-white/70 text-sm leading-relaxed">{profileUser.bio}</p>
-        </div>
-      )}
-
-      {/* ── Travel time chips — wired in P6 ────────────────────────────── */}
-      {travelTimes && (
-        <div className="flex gap-2 px-4 py-2">
-          {travelTimes.walking && travelTimes.distKm < 5 && (
-            <div className="flex-1 flex flex-col items-center py-2 rounded-xl bg-[#39FF14]/10 border border-[#39FF14]/30">
-              <Footprints className="w-4 h-4 text-[#39FF14]" />
-              <span className="text-[#39FF14] font-black text-sm mt-0.5">{Math.round(travelTimes.walking.durationSeconds/60)}m</span>
-              <span className="text-white/30 text-[9px]">walk</span>
-            </div>
-          )}
-          {travelTimes.bicycling && travelTimes.distKm < 10 && (
-            <div className="flex-1 flex flex-col items-center py-2 rounded-xl bg-[#00C2E0]/10 border border-[#00C2E0]/30">
-              <Bike className="w-4 h-4 text-[#00C2E0]" />
-              <span className="text-[#00C2E0] font-black text-sm mt-0.5">{Math.round(travelTimes.bicycling.durationSeconds/60)}m</span>
-              <span className="text-white/30 text-[9px]">bike</span>
-            </div>
-          )}
         </div>
       )}
 

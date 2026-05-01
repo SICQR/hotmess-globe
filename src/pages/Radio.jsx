@@ -7,7 +7,6 @@ import { schedule } from '../components/radio/radioUtils';
 import { useRadio } from '@/contexts/RadioContext';
 import BrandBackground from '@/components/ui/BrandBackground';
 
-const LIVE_STREAM_URL = 'https://listen.radioking.com/radio/736103/stream/802454';
 
 const SHOWS = [
   { ...schedule.shows[0], accent: '#C8962C', shadow: 'rgba(255,20,147,0.4)',  icon: Mic2  },
@@ -24,25 +23,21 @@ function LiveBadge() {
   );
 }
 
+/**
+ * StreamPlayer — uses RadioContext (single audio element at app level).
+ * Never creates its own <audio> element to prevent dual-instance bug.
+ */
 function StreamPlayer() {
-  const [playing, setPlaying] = useState(false);
-  const audioRef = React.useRef(null);
-
-  const toggle = () => {
-    const el = audioRef.current;
-    if (!el) return;
-    if (playing) { el.pause(); setPlaying(false); }
-    else { el.play().then(() => setPlaying(true)).catch(() => {}); }
-  };
+  const { isPlaying, togglePlay, currentShowName } = useRadio();
 
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 flex items-center gap-4">
       <button
-        onClick={toggle}
+        onClick={togglePlay}
         className="w-14 h-14 rounded-full flex items-center justify-center shrink-0 transition-all active:scale-95"
         style={{ background: '#C8962C', boxShadow: '0 0 24px rgba(255,20,147,0.5)' }}
       >
-        {playing
+        {isPlaying
           ? <Pause className="w-6 h-6 text-black" />
           : <Play  className="w-6 h-6 text-black ml-0.5" />
         }
@@ -50,11 +45,12 @@ function StreamPlayer() {
       <div className="min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
           <p className="text-sm font-black uppercase tracking-wide text-white">HOTMESS RADIO</p>
-          {playing && <LiveBadge />}
+          {isPlaying && <LiveBadge />}
         </div>
-        <p className="text-xs text-white/40 font-mono">24/7 · London Queer Nightlife</p>
+        <p className="text-xs text-white/40 font-mono">
+          {currentShowName || '24/7 · London Queer Nightlife'}
+        </p>
       </div>
-      <audio ref={audioRef} src={LIVE_STREAM_URL} crossOrigin="anonymous" preload="none" />
     </div>
   );
 }

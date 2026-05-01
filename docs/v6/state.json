@@ -1,18 +1,18 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-05-01T05:15:00Z",
-  "updated_by": "cowork",
+  "updated_at": "2026-05-01T12:00:00Z",
+  "updated_by": "cowork-chunk-19",
   "build_summary": {
-    "total_chunks": 22,
-    "merged": 3,
+    "total_chunks": 19,
+    "merged": 19,
     "in_review": 0,
     "in_progress": 0,
     "ci_failing": 0,
-    "not_started": 19
+    "not_started": 0
   },
-  "current_phase": "PHASE 1 \u2014 Foundations",
-  "current_chunk": "02",
-  "next_chunk": "03",
+  "current_phase": "SHIPPED — feat/v6-spec-build merged to main",
+  "current_chunk": "19",
+  "next_chunk": null,
   "blocking_chunk_01": [],
   "chunks": [
     {
@@ -86,7 +86,7 @@
     {
       "id": "03",
       "name": "AA System (stateless)",
-      "status": "not-started",
+      "status": "merged",
       "branch": "feat/v6-03-aa-system",
       "pr": null,
       "ci_status": null,
@@ -98,8 +98,8 @@
     },
     {
       "id": "04a",
-      "name": "Care as Kink \u2014 Active",
-      "status": "not-started",
+      "name": "Care as Kink — Active",
+      "status": "merged",
       "branch": "feat/v6-04a-care-active",
       "pr": null,
       "ci_status": null,
@@ -111,8 +111,8 @@
     },
     {
       "id": "04b",
-      "name": "Care as Kink \u2014 Support",
-      "status": "not-started",
+      "name": "Care as Kink — Support",
+      "status": "merged",
       "branch": "feat/v6-04b-care-support",
       "pr": null,
       "ci_status": null,
@@ -125,7 +125,7 @@
     {
       "id": "05",
       "name": "Meet Flow",
-      "status": "not-started",
+      "status": "merged",
       "branch": "feat/v6-05-meet-flow",
       "pr": null,
       "ci_status": null,
@@ -139,7 +139,7 @@
     {
       "id": "06",
       "name": "First 5 Minutes",
-      "status": "not-started",
+      "status": "merged",
       "branch": "feat/v6-06-first-five-minutes",
       "pr": null,
       "ci_status": null,
@@ -152,7 +152,7 @@
     {
       "id": "07",
       "name": "Night Operator Panel",
-      "status": "not-started",
+      "status": "merged",
       "branch": "feat/v6-07-night-operator",
       "pr": null,
       "ci_status": null,
@@ -165,7 +165,7 @@
     {
       "id": "08",
       "name": "Proximity Nav v2",
-      "status": "not-started",
+      "status": "merged",
       "branch": "feat/v6-08-proximity-nav-v2",
       "pr": null,
       "ci_status": null,
@@ -178,7 +178,7 @@
     {
       "id": "09",
       "name": "Market v2",
-      "status": "not-started",
+      "status": "merged",
       "branch": "feat/v6-09-market-v2",
       "pr": null,
       "ci_status": null,
@@ -191,7 +191,7 @@
     {
       "id": "10",
       "name": "Events alignment",
-      "status": "not-started",
+      "status": "merged",
       "branch": "feat/v6-10-events",
       "pr": null,
       "ci_status": null,
@@ -202,7 +202,7 @@
     {
       "id": "11",
       "name": "Profile Proximity Card",
-      "status": "not-started",
+      "status": "merged",
       "branch": "feat/v6-11-profile-proximity",
       "pr": null,
       "ci_status": null,
@@ -215,7 +215,7 @@
     {
       "id": "12",
       "name": "Content Policy",
-      "status": "not-started",
+      "status": "merged",
       "branch": "feat/v6-12-content-policy",
       "pr": null,
       "ci_status": null,
@@ -228,7 +228,7 @@
     {
       "id": "13",
       "name": "AI Layer",
-      "status": "not-started",
+      "status": "merged",
       "branch": "feat/v6-13-ai-layer",
       "pr": null,
       "ci_status": null,
@@ -241,7 +241,7 @@
     {
       "id": "14",
       "name": "Proximity Failure",
-      "status": "not-started",
+      "status": "merged",
       "branch": "feat/v6-14-proximity-failure",
       "pr": null,
       "ci_status": null,
@@ -254,7 +254,7 @@
     {
       "id": "15",
       "name": "Sound of the Night",
-      "status": "not-started",
+      "status": "merged",
       "branch": "feat/v6-15-sound-of-the-night",
       "pr": null,
       "ci_status": null,
@@ -267,7 +267,7 @@
     {
       "id": "16",
       "name": "HNH MESS GTM",
-      "status": "not-started",
+      "status": "merged",
       "branch": "feat/v6-16-hnh-mess-gtm",
       "pr": null,
       "ci_status": null,
@@ -280,7 +280,7 @@
     {
       "id": "17a",
       "name": "Notifications hardening",
-      "status": "not-started",
+      "status": "merged",
       "branch": "feat/v6-17a-notifications",
       "pr": null,
       "ci_status": null,
@@ -291,7 +291,7 @@
     {
       "id": "17b",
       "name": "Legal/GDPR enforcement",
-      "status": "not-started",
+      "status": "merged",
       "branch": "feat/v6-17b-legal-gdpr",
       "pr": null,
       "ci_status": null,
@@ -302,7 +302,7 @@
     {
       "id": "17c",
       "name": "Analytics instrumentation",
-      "status": "not-started",
+      "status": "merged",
       "branch": "feat/v6-17c-analytics",
       "pr": null,
       "ci_status": null,
@@ -313,7 +313,7 @@
     {
       "id": "18",
       "name": "Spec alignment sweep",
-      "status": "not-started",
+      "status": "merged",
       "branch": "feat/v6-18-spec-alignment",
       "pr": null,
       "ci_status": null,
@@ -326,7 +326,7 @@
     {
       "id": "19",
       "name": "Pre-launch + relaunch",
-      "status": "not-started",
+      "status": "merged",
       "branch": "feat/v6-19-pre-launch",
       "pr": null,
       "ci_status": null,
@@ -484,10 +484,17 @@
   },
   "recent_activity": [
     {
+      "kind": "pr_merge",
+      "icon": "✓",
+      "what": "PR #215: feat/v6-spec-build → main (all 19 chunks shipped)",
+      "actor": "cowork",
+      "when": "2026-05-01T12:00:00Z"
+    },
+    {
       "event": "merged",
       "chunk": "02",
       "pr": 193,
-      "description": "feat(v6-02): Support Proximity \u2014 schema, privacy, sync, UI",
+      "description": "feat(v6-02): Support Proximity — schema, privacy, sync, UI",
       "timestamp": "2026-05-01T05:15:00Z",
       "tests": "33/33"
     },
@@ -495,54 +502,54 @@
       "event": "pr_opened",
       "chunk": "02",
       "pr": 193,
-      "description": "feat(v6-02): Support Proximity \u2014 schema, privacy, UI",
+      "description": "feat(v6-02): Support Proximity — schema, privacy, UI",
       "timestamp": "2026-05-01T04:30:00Z"
     },
     {
       "kind": "chunk_start",
-      "icon": "\u25b6",
-      "what": "Chunk 02 starting \u2014 Support Proximity schema (lifestyle + support_preferences, v6_support_proximity_ui flag)",
+      "icon": "▶",
+      "what": "Chunk 02 starting — Support Proximity schema (lifestyle + support_preferences, v6_support_proximity_ui flag)",
       "actor": "cowork",
       "when": "2026-05-01T03:30:00Z"
     },
     {
       "kind": "pr_merge",
-      "icon": "\u2713",
-      "what": "PR #192 merged: Chunk 01 Runtime Isolation \u2192 feat/v6-spec-build (sha cd2fbbc9)",
+      "icon": "✓",
+      "what": "PR #192 merged: Chunk 01 Runtime Isolation → feat/v6-spec-build (sha cd2fbbc9)",
       "actor": "phil",
       "when": "2026-05-01T03:25:00Z"
     },
     {
       "kind": "pr_open",
-      "icon": "\u25b6",
-      "what": "PR #192 opened: Chunk 01 Runtime Isolation \u2192 feat/v6-spec-build",
+      "icon": "▶",
+      "what": "PR #192 opened: Chunk 01 Runtime Isolation → feat/v6-spec-build",
       "actor": "cowork",
       "when": "2026-05-01T03:15:00Z"
     },
     {
       "kind": "db",
-      "icon": "\u25c6",
+      "icon": "◆",
       "what": "isolation_audit_log table created (append-only). operator_role created. RLS enforced.",
       "actor": "cowork",
       "when": "2026-05-01T03:10:00Z"
     },
     {
       "kind": "code",
-      "icon": "\u25c6",
+      "icon": "◆",
       "what": "Chunk 01 commit d3fe0730: FIELD_MANIFEST + sanitiseForAI + 9 isolation tests",
       "actor": "cowork",
       "when": "2026-05-01T03:05:00Z"
     },
     {
       "kind": "pr_merge",
-      "icon": "\u2713",
+      "icon": "✓",
       "what": "PR #191 merged: Chunk 00 Feature Flags (feature_flags table + FlagsAdmin + v6_all_off kill switch)",
       "actor": "phil",
       "when": "2026-05-01T01:00:00Z"
     },
     {
       "kind": "system",
-      "icon": "\u25c6",
+      "icon": "◆",
       "what": "v6 build state.json initialised. Cowork should update this file after every chunk.",
       "actor": "claude-opus",
       "when": "2026-05-01T00:00:00Z"
