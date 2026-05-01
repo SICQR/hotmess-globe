@@ -1,6 +1,18 @@
 import { supabase } from '@/components/utils/supabaseClient';
 import { uploadToStorage } from '@/lib/uploadToStorage';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+
+// ── Haversine distance in metres ─────────────────────────────────────────────
+function haversineM(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+const MEET_TRIGGER_DISTANCE_M = 300;
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Send, Image, Video, ArrowLeft, MoreVertical, Loader2, Lock, Users as UsersIcon, Check, CheckCheck, Smile, ZoomIn, Search, X, Bell, BellOff } from 'lucide-react';
@@ -36,6 +48,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
   const [viewingMedia, setViewingMedia] = useState(null);
   const [mediaGallery, setMediaGallery] = useState([]);
   const [mediaIndex, setMediaIndex] = useState(0);
+  const [meetTriggerDismissed, setMeetTriggerDismissed] = useState(false);
 
   const REACTIONS = ['❤️', '😂', '😮', '😢', '👍', '🔥', '💯', '🎉'];
 
@@ -102,6 +115,84 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
   });
 
   const { data: allUsers = [] } = useAllUsers();
+
+  // Hoist these early so queries below can gate on isGroupChat
+  const otherParticipants = thread.participant_emails.filter(email => email !== currentUser.email);
+  const otherUsers = allUsers.filter(u => otherParticipants.includes(u.email));
+  const isGroupChat = otherUsers.length > 1;
+
+  // ── Meet Trigger (D3): proximity check every 30s for 1:1 DM threads ─────────
+  const otherParticipantEmailForQuery = thread.participant_emails?.find(e => e !== currentUser?.email);
+  const { data: meetTriggerProximity = false } = useQuery({
+    queryKey: ['meet-trigger', thread.id, currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser?.id || !otherParticipantEmailForQuery) return false;
+      // Get both users' active beacons
+      const [myBeacon, theirBeacon] = await Promise.all([
+        supabase
+          .from('beacons')
+          .select('lat, lng, venue_id')
+          .eq('user_id', currentUser.id)
+          .gt('ends_at', new Date().toISOString())
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', otherParticipantEmailForQuery)
+          .maybeSingle()
+          .then(async (res) => {
+            if (!res.data?.id) return { data: null };
+            return supabase
+              .from('beacons')
+              .select('lat, lng, venue_id')
+              .eq('user_id', res.data.id)
+              .gt('ends_at', new Date().toISOString())
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+          }),
+      ]);
+      const me = myBeacon.data;
+      const them = theirBeacon.data;
+      if (!me || !them) return false;
+      // Same venue
+      if (me.venue_id && them.venue_id && me.venue_id === them.venue_id) return true;
+      // < 300m
+      if (me.lat && me.lng && them.lat && them.lng) {
+        return haversineM(me.lat, me.lng, them.lat, them.lng) < MEET_TRIGGER_DISTANCE_M;
+      }
+      return false;
+    },
+    enabled: !!(currentUser?.id && !isGroupChat && !meetTriggerDismissed),
+    refetchInterval: 30_000,
+    staleTime: 20_000,
+  });
+
+  const showMeetTrigger = meetTriggerProximity && !meetTriggerDismissed;
+
+  // ── Starter chips (D2): Wingman suggestions when no messages yet ─────────────
+  const DEFAULT_CHIPS = ["You here yet? 👀", "What's the vibe like?", "Where are you?"];
+  const { data: wingmanChips = DEFAULT_CHIPS } = useQuery({
+    queryKey: ['wingman-chips', thread.id, currentUser?.id],
+    queryFn: async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return DEFAULT_CHIPS;
+        const res = await fetch('/api/ai/wingman', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+          body: JSON.stringify({ thread_id: thread.id, mode: 'chips', count: 3 }),
+        });
+        if (!res.ok) return DEFAULT_CHIPS;
+        const json = await res.json();
+        return Array.isArray(json.chips) && json.chips.length > 0 ? json.chips.slice(0, 3) : DEFAULT_CHIPS;
+      } catch { return DEFAULT_CHIPS; }
+    },
+    enabled: messages.length === 0 && !!currentUser?.id && !isGroupChat,
+    staleTime: Infinity,
+  });
 
   const sendMutation = useMutation({
     mutationFn: async (data) => {
@@ -356,10 +447,6 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
       queryClient.invalidateQueries(['chat-threads']);
     }
   }, [messages, currentUser.email, thread.id]);
-
-  const otherParticipants = thread.participant_emails.filter(email => email !== currentUser.email);
-  const otherUsers = allUsers.filter(u => otherParticipants.includes(u.email));
-  const isGroupChat = otherUsers.length > 1;
 
   // Filter messages based on search
   const filteredMessages = searchQuery.trim()
@@ -711,6 +798,59 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
 
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Meet Trigger (D3): auto-surfaces when both users are < 300m or same venue */}
+      {showMeetTrigger && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-black border-t-2 border-[#C8962C] px-4 py-3 flex items-center justify-between gap-3"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-[#C8962C] text-xs">📍</span>
+            <p className="text-xs text-white/70 font-mono uppercase tracking-wide">
+              You're both nearby
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                sendMutation.mutate({ content: '📍 Meetpoint', message_type: 'meetpoint', metadata: {} });
+                setMeetTriggerDismissed(true);
+              }}
+              className="px-3 py-1.5 text-xs font-black uppercase border-2 border-[#C8962C] text-[#C8962C] hover:bg-[#C8962C] hover:text-black transition-colors"
+            >
+              Send meetpoint
+            </button>
+            <button
+              type="button"
+              onClick={() => setMeetTriggerDismissed(true)}
+              className="text-white/30 hover:text-white/60 text-xs px-1"
+              aria-label="Dismiss"
+            >
+              ✕
+            </button>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Starter chips (D2): shown when no messages have been sent yet */}
+      {messages.length === 0 && !isGroupChat && !readOnly && (
+        <div className="bg-black border-t border-white/10 px-4 py-2 flex gap-2 overflow-x-auto">
+          {wingmanChips.map((chip) => (
+            <button
+              key={chip}
+              type="button"
+              onClick={() => sendMutation.mutate({ content: chip, message_type: 'text' })}
+              disabled={sendMutation.isPending}
+              className="flex-shrink-0 px-3 py-1.5 text-xs border border-white/20 text-white/60 hover:border-[#C8962C] hover:text-[#C8962C] transition-colors whitespace-nowrap"
+            >
+              {chip}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Input */}
       <form onSubmit={handleSend} className="bg-black border-t-2 border-white/20 p-4">
