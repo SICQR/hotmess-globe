@@ -18,6 +18,7 @@ import React, {
 } from 'react';
 import { SoundConsentModal, useSoundConsent } from '@/components/radio/SoundConsentModal';
 import { supabase } from '@/components/utils/supabaseClient';
+import { radioIntensityFromDensity } from '@/lib/soundOfNight';
 
 const STREAM_URL = 'https://listen.radioking.com/radio/736103/stream/802454';
 // Write a radio_signal to DB at most once per 5 minutes per listen session
@@ -56,11 +57,24 @@ export function RadioProvider({ children }: { children: React.ReactNode }) {
 
     try {
       // Best-effort — no auth required (anon signal for aggregate heat)
+      const userCity = 'london'; // default; will be personalised once we have user city
       const expiresAt = new Date(now + 30 * 60 * 1000).toISOString(); // 30 min window
+
+      // Density → radio amplification (spec §5): higher live count = stronger WAVE
+      let intensity = 1;
+      try {
+        const { count } = await supabase
+          .from('right_now_posts')
+          .select('*', { count: 'exact', head: true })
+          .eq('city', userCity)
+          .gt('expires_at', new Date(now).toISOString());
+        intensity = radioIntensityFromDensity(count ?? 0);
+      } catch { /* best-effort — fall back to intensity 1 */ }
+
       await supabase.from('radio_signals').insert({
         signal_type: 'listener_active',
-        city: 'london', // default; will be personalised once we have user city
-        intensity: 1,
+        city: userCity,
+        intensity,
         listener_count_bucket: '1-10',
         starts_at: new Date(now).toISOString(),
         expires_at: expiresAt,
