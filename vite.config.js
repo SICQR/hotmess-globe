@@ -736,6 +736,16 @@ function localApiRoutes() {
               res.end(JSON.stringify({ error: error?.message || 'ai/profile-analysis handler error' }));
             });
         }
+        // ── Content scanning (CSAM / NSFW) ─────────────────────────────────
+        if (path === '/api/content/image-scan' && method === 'POST') {
+          return importFresh('./api/content/image-scan.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'content/image-scan handler error' }));
+            });
+        }
 
         // ── Stripe — boost checkout + connect onboard ───────────────────────
         if (path === '/api/stripe/create-boost-checkout' && method === 'POST') {
