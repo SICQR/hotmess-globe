@@ -13,7 +13,10 @@
     "STRIPE_BOOST_VIBE_BLAST_PRICE_ID": "price_1TSG4MFD4E2lo8ApBKaJsOWy",
     "STRIPE_BOOST_INCOGNITO_PRICE_ID": "price_1TSG4QFD4E2lo8ApWoTaJ8WJ",
     "STRIPE_BOOST_EXTRA_BEACON_PRICE_ID": "price_1TSG4TFD4E2lo8ApStwEZkws",
-    "STRIPE_BOOST_HIGHLIGHTED_MSG_PRICE_ID": "price_1TSG4XFD4E2lo8ApZsYrpuxL"
+    "STRIPE_BOOST_HIGHLIGHTED_MSG_PRICE_ID": "price_1TSG4XFD4E2lo8ApZsYrpuxL",
+    "CF_ACCOUNT_ID": "set-in-vercel-dashboard",
+    "CF_API_TOKEN": "set-in-vercel-dashboard",
+    "PHOTODNA_SUBSCRIPTION_KEY": "set-in-vercel-dashboard"
   },
   "crons": [
     {
