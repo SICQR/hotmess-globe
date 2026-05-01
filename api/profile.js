@@ -152,9 +152,11 @@ export default async function handler(req, res) {
 
   const { error: supaErr, serviceClient, anonClient } = getSupabaseServerClients();
 
+  let requesterAuthId = null;
   if (accessToken && anonClient) {
-    const { data, error } = await anonClient.auth.getUser(accessToken);
+    const { data: _authRes } = await anonClient.auth.getUser(accessToken);
     // Token validation is optional - profile viewing works without auth via RLS
+    requesterAuthId = _authRes?.user?.id ?? null;
   }
 
   // If service role isn't configured (common in local dev), try an authenticated anon-client query
@@ -215,6 +217,18 @@ export default async function handler(req, res) {
 
   let sawMissingTable = false;
 
+  // v6 Chunk 02: strip lifestyle_preferences + support_preferences for non-owner views
+  // DECOUPLING RULE: these fields are private regardless of lifestyle_preferences content.
+  const stripPrivateForNonOwner = (r) => {
+    if (!r) return r;
+    const isOwner = !!requesterAuthId && requesterAuthId === r?.auth_user_id;
+    if (isOwner) return r;
+    const out = { ...r };
+    delete out.lifestyle_preferences;
+    delete out.support_preferences;
+    return out;
+  };
+
   const respondWithUser = async (row) => {
     // Fetch profile_photos for this user (canonical multi-photo table)
     let profilePhotos = [];
@@ -241,7 +255,7 @@ export default async function handler(req, res) {
     const authUserId = row?.auth_user_id ? String(row.auth_user_id).trim() : null;
     if (!authUserId || !serviceClient?.auth?.admin?.getUserById) {
       // GDPR: strip email from response — never expose to other users
-      const { email: _email, user_email: _ue, ...safe } = enrichRow(row) || {};
+      const { email: _email, user_email: _ue, ...safe } = stripPrivateForNonOwner(enrichRow(row)) || {};
       return json(res, 200, { user: safe });
     }
 
@@ -250,11 +264,11 @@ export default async function handler(req, res) {
       const meta = error ? null : (data?.user?.user_metadata || null);
       const merged = mergeAuthMeta({ row, meta });
       // GDPR: strip email from response — never expose to other users
-      const { email: _email, user_email: _ue, ...safe } = enrichRow(merged) || {};
+      const { email: _email, user_email: _ue, ...safe } = stripPrivateForNonOwner(enrichRow(merged)) || {};
       return json(res, 200, { user: safe });
     } catch {
       // GDPR: strip email from response — never expose to other users
-      const { email: _email, user_email: _ue, ...safe } = enrichRow(row) || {};
+      const { email: _email, user_email: _ue, ...safe } = stripPrivateForNonOwner(enrichRow(row)) || {};
       return json(res, 200, { user: safe });
     }
   };
