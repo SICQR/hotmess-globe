@@ -134,7 +134,7 @@ export function useCareAsKink() {
       .from('user_sessions')
       .update({ expires_at: new Date().toISOString(), meta: { cancelled: true } })
       .eq('user_id', user.id)
-      .is('meta->>cancelled', null)
+      .filter('meta->>cancelled', 'is', null)
       .gt('expires_at', new Date().toISOString());
 
     if (error) throw error;
