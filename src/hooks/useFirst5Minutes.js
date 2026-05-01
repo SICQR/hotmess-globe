@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
-import { supabase } from '@/lib/supabaseClient';
-import { useFlag } from '@/hooks/useFlag';
+import { supabase } from '@/components/utils/supabaseClient';
+import { useV6Flag as useFlag } from '@/hooks/useV6Flag';
 
 /**
  * useFirst5Minutes — Chunk 06 hook

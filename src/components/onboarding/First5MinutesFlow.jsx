@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/components/utils/supabaseClient';
 import { useFirst5Minutes, F5M_STAGES } from '@/hooks/useFirst5Minutes';
 
 /**

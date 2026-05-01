@@ -11,7 +11,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
-import { useFlag } from '@/hooks/useFlag';
+import { useV6Flag as useFlag } from '@/hooks/useV6Flag';
 import { ConfirmProvider, useConfirm } from '@/components/operator/ConfirmModal';
 
 const T = {

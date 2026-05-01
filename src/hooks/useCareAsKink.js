@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabaseClient';
-import { useFlag } from '@/hooks/useFlag';
+import { supabase } from '@/components/utils/supabaseClient';
+import { useV6Flag as useFlag } from '@/hooks/useV6Flag';
 
 /**
  * Care As Kink hook — Chunks 04a + 04b

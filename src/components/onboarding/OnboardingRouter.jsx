@@ -19,7 +19,7 @@
  *   complete → /ghosted (BootRouter intercepts, never reaches here)
  */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useFlag } from '@/hooks/useFlag';
+import { useV6Flag as useFlag } from '@/hooks/useV6Flag';
 import First5MinutesFlow from './First5MinutesFlow';
 
 import { useNavigate } from 'react-router-dom';
@@ -76,7 +76,7 @@ export default function OnboardingRouter() {
   const [profileStage, setProfileStage] = React.useState(null);
   useEffect(() => {
     if (!f5mEnabled) return;
-    import('@/lib/supabaseClient').then(({ supabase: sb }) => {
+    import('@/components/utils/supabaseClient').then(({ supabase: sb }) => {
       sb.auth.getUser().then(({ data: { user } }) => {
         if (!user) { setProfileStage('start'); return; }
         sb.from('profiles').select('onboarding_stage').eq('id', user.id).single()

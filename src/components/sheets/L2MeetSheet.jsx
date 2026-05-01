@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '@/lib/supabaseClient';
-import { useFlag } from '@/hooks/useFlag';
+import { supabase } from '@/components/utils/supabaseClient';
+import { useV6Flag as useFlag } from '@/hooks/useV6Flag';
 
 /**
  * L2 Meet Sheet — Chunk 05
