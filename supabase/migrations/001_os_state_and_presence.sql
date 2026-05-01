@@ -8,6 +8,7 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS postgis CASCADE;  -- required for geography type in PHASE 4
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- PHASE 1: PROFILES TABLE (auth.users.id = profiles.id)
