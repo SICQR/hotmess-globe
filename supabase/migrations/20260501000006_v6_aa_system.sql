@@ -65,6 +65,10 @@ CREATE POLICY "aa_escalation_admin_resolve"
 -- No DELETE ever
 REVOKE DELETE ON aa_escalation_log FROM anon, authenticated, service_role;
 
+-- Anon has zero business touching this table — revoke all table-level grants
+-- (RLS blocks anyway, but belt-and-suspenders on a safety-critical append-only table)
+REVOKE ALL ON aa_escalation_log FROM anon;
+
 -- operator_role: read-only for Night Operator Panel (§7 — read-only view of AA state)
 DO $$
 BEGIN
