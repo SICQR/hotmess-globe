@@ -15,6 +15,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { Loader2, Mail } from 'lucide-react';
 import { ProgressDots } from './AgeGateScreen';
+import { track } from '@/lib/analytics';
 
 const GOLD = '#C8962C';
 
@@ -60,6 +61,8 @@ export default function SignUpScreen({ isSignIn = false }) {
   const handleOAuth = async (provider) => {
     setLoading(true);
     setError('');
+    // Chunk 17c: track signup attempt before redirect
+    track('signup', 'onboarding', provider);
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
@@ -92,6 +95,8 @@ export default function SignUpScreen({ isSignIn = false }) {
     if (otpError) {
       setError(otpError.message);
     } else {
+      // Chunk 17c: track magic link signup
+      track('signup', 'onboarding', 'magic_link');
       setMagicLinkSent(true);
       setCountdown(RESEND_COOLDOWN);
     }

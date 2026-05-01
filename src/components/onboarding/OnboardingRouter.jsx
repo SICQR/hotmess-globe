@@ -20,6 +20,7 @@
  */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useV6Flag as useFlag } from '@/hooks/useV6Flag';
+import { track } from '@/lib/analytics';
 import First5MinutesFlow from './First5MinutesFlow';
 
 import { useNavigate } from 'react-router-dom';
@@ -295,16 +296,20 @@ export default function OnboardingRouter() {
 
   const handleQuickSetupComplete = () => {
     // QuickSetup done → advance to Profile details screen
+    track('onboarding_stage_completed', 'onboarding', 'quick_setup');
     goTo(SCREENS.PROFILE);
   };
 
   const handleProfileComplete = () => {
     // Profile details done → advance to PIN setup
+    track('onboarding_stage_completed', 'onboarding', 'profile_complete');
     goTo(SCREENS.PIN_SETUP);
   };
 
   const handlePinComplete = async () => {
     // PIN is the final step — onboarding_completed is now true in DB
+    track('onboarding_stage_completed', 'onboarding', 'pin_complete');
+    track('profile_complete', 'onboarding');
     if (refetchProfile) {
       await refetchProfile();
     }
