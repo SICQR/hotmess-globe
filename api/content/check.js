@@ -77,20 +77,14 @@ async function isFlagEnabled(flagKey, userId) {
     const admin = supabaseAdmin();
     const { data } = await admin
       .from('feature_flags')
-      .select('enabled, target_type, target_ids')
-      .eq('key', flagKey)
+      .select('enabled_globally, enabled_for_user_ids, enabled_for_cohort')
+      .eq('flag_key', flagKey)
       .single();
 
-    if (!data || !data.enabled) return false;
-
-    const { target_type, target_ids } = data;
-    if (target_type === 'global') return true;
-    if (target_type === 'phil_only') {
-      // Phil's known profile IDs — checked against userId
-      return target_ids?.includes(userId) ?? false;
-    }
-    if (target_type === 'selected_user_ids') {
-      return target_ids?.includes(userId) ?? false;
+    if (!data) return false;
+    if (data.enabled_globally) return true;
+    if (userId && Array.isArray(data.enabled_for_user_ids)) {
+      return data.enabled_for_user_ids.includes(userId);
     }
     return false;
   } catch {
