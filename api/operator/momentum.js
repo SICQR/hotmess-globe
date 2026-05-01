@@ -6,7 +6,7 @@
  * States: EARLY(0.25) → LIVE(0.5) → PEAK(0.75) → WINDING_DOWN(1.0)
  * Flag: v6_night_operator_panel
  */
-import { verifyOperator, supabaseAdmin } from '../_verify.js';
+import { verifyOperator, supabaseAdmin } from './_verify.js';
 
 const MOMENTUM_STATES = {
   EARLY:       0.25,
