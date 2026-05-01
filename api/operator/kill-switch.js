@@ -6,7 +6,7 @@
  * Auto-expires after 4h.
  * Flag: v6_night_operator_panel
  */
-import { verifyOperator, supabaseAdmin } from '../_verify.js';
+import { verifyOperator, supabaseAdmin } from './_verify.js';
 
 const VALID_KEYS   = ['ghosted_grid', 'beacon_drops', 'new_messages', 'global'];
 const VALID_SCOPES = ['venue', 'event', 'city', 'global'];
