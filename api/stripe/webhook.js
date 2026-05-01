@@ -186,6 +186,73 @@ async function processOrderCompletion(session, eventType, req) {
     return;
   }
 
+  // ── HNH MESS direct purchase completion ──────────────────────────────────
+  if (session.metadata?.type === 'hnh_mess') {
+    const userId      = session.metadata?.user_id ?? null;
+    const source      = session.metadata?.source ?? 'unknown';
+    const venueId     = session.metadata?.venue_id   || null;
+    const beaconId    = session.metadata?.beacon_id  || null;
+    const radioShowId = session.metadata?.radio_show_id || null;
+    const sku         = session.metadata?.sku ?? 'small';
+    const amountGbp   = (session.amount_total ?? 0) / 100;
+
+    // Write order row with attribution metadata
+    const { data: orderRow, error: orderErr } = await supabase
+      .from('orders')
+      .insert({
+        user_id:     userId,
+        product_key: 'hnh-mess',
+        sku,
+        amount:      amountGbp,
+        currency:    'gbp',
+        status:      'paid',
+        stripe_session_id: session.id,
+        buyer_email: session.customer_details?.email ?? session.metadata?.user_email ?? '',
+        buyer_name:  session.customer_details?.name  ?? session.metadata?.user_name  ?? '',
+        shipping_address: session.shipping_details
+          ? `${session.shipping_details.name}
+${session.shipping_details.address.line1}, ${session.shipping_details.address.city}, ${session.shipping_details.address.postal_code}`
+          : null,
+        metadata: {
+          source,
+          venue_id:      venueId,
+          beacon_id:     beaconId,
+          radio_show_id: radioShowId,
+        },
+      })
+      .select('id')
+      .single();
+
+    if (orderErr) {
+      console.error('[hnh_mess-webhook] order insert error:', orderErr.message);
+    } else {
+      console.log('[hnh_mess-webhook] order created:', orderRow?.id);
+    }
+
+    // Write attribution event to analytics_events
+    if (userId) {
+      await supabase.from('analytics_events').insert({
+        user_id:    userId,
+        event_name: 'hnh_purchase',
+        category:   'conversion',
+        label:      `hnh_mess_${sku}`,
+        value:      amountGbp,
+        properties: {
+          source,
+          sku,
+          venue_id:      venueId,
+          beacon_id:     beaconId,
+          radio_show_id: radioShowId,
+          stripe_session_id: session.id,
+          order_id:      orderRow?.id ?? null,
+        },
+      });
+    }
+
+    console.log(`[hnh_mess-webhook] Done. source=${source} sku=${sku} amount=£${amountGbp}`);
+    return;
+  }
+
   // ── Handle Physical Orders (Existing Logic) ──────────────────────────────
   if (!orderId) {
     console.warn('[Webhook] No orderId found in metadata. Skipping processing.');
