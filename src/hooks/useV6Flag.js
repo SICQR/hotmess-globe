@@ -13,6 +13,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { resolveFlag } from '@/lib/v6Flags';
+import { useEffect, useRef } from 'react';
+import { trackOnce } from '@/lib/analytics';
 
 // Fetch current user's role once (cached alongside flag resolution)
 async function fetchUserRole(userId) {
@@ -42,7 +44,22 @@ export function useV6Flag(flagKey) {
     refetchOnWindowFocus: true,
   });
 
-  return data ?? false;
+  const flagValue = data ?? false;
+
+  // Chunk 17c: fire flag_exposure once per session when flag resolves to true
+  useEffect(() => {
+    if (!flagValue || !userId) return;
+    trackOnce(
+      `flag_exposure:${flagKey}:${userId}`,
+      'flag_exposure',
+      'flags',
+      flagKey,
+      undefined,
+      { flag_key: flagKey, user_id: userId },
+    );
+  }, [flagValue, flagKey, userId]);
+
+  return flagValue;
 }
 
 export default useV6Flag;
