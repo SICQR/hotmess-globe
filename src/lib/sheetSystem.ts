@@ -242,6 +242,14 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: false,
     deepLinkParams: [],
   },
+  'care-as-kink': {
+    id: 'care-as-kink',
+    title: 'Care',
+    height: 'full',
+    auth: true,
+    deepLinkParams: [],
+  },
+
   'location-watcher': {
     id: 'location-watcher',
     title: 'Live Location',
