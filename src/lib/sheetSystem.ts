@@ -242,6 +242,13 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: false,
     deepLinkParams: [],
   },
+  'meet': {
+    id: 'meet',
+    title: 'Meet',
+    height: 'full',
+    auth: true,
+    deepLinkParams: ['threadId', 'partnerId', 'partnerName'],
+  },
   'care-as-kink': {
     id: 'care-as-kink',
     title: 'Care',
