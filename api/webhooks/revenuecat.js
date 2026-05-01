@@ -135,7 +135,6 @@ export default async function handler(req, res) {
               status: 'active',
               payment_provider: 'revenuecat',
               ends_at: expiresAt,
-              updated_at: new Date().toISOString(),
             },
             { onConflict: 'user_id' }
           );
@@ -158,7 +157,6 @@ export default async function handler(req, res) {
           .update({
             status: 'cancelling',
             ends_at: expiresAt,
-            updated_at: new Date().toISOString(),
           })
           .eq('user_id', userId)
           .eq('payment_provider', 'revenuecat');
@@ -173,7 +171,6 @@ export default async function handler(req, res) {
             tier: 'mess',
             status: 'expired',
             ends_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
           })
           .eq('user_id', userId)
           .eq('payment_provider', 'revenuecat');
@@ -185,7 +182,6 @@ export default async function handler(req, res) {
           .from('memberships')
           .update({
             status: 'billing_issue',
-            updated_at: new Date().toISOString(),
           })
           .eq('user_id', userId)
           .eq('payment_provider', 'revenuecat');
