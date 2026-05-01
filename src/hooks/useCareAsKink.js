@@ -3,23 +3,26 @@ import { supabase } from '@/lib/supabaseClient';
 import { useFlag } from '@/hooks/useFlag';
 
 /**
- * Care As Kink — Active surfaces hook
- * Chunk 04a | feat flag: v6_care_as_kink_active
+ * Care As Kink hook — Chunks 04a + 04b
+ * Flag: v6_care_as_kink_active
  *
- * Backup contacts stored in trusted_contacts where role='backup', max 2 per user.
- * Decision: docs/v6-decisions/backup-contacts-storage.md (Option B)
+ * Backup contacts: trusted_contacts where role='backup', max 2 per user
+ * Sessions: user_sessions table
+ * Outcomes: meet_outcomes table
  */
 export function useCareAsKink() {
   const enabled = useFlag('v6_care_as_kink_active');
   const [coverActive, setCoverActive] = useState(false);
   const [coverCaller, setCoverCaller] = useState(null);
+  const [activeSessionId, setActiveSessionId] = useState(null);
+
+  // ── Backup contacts ──────────────────────────────────────────────────────
 
   const saveBackup = useCallback(async (contacts) => {
     if (!enabled) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('unauthenticated');
 
-    // Replace all existing backup rows with new set (max 2)
     const limited = contacts.slice(0, 2);
 
     await supabase
@@ -59,6 +62,8 @@ export function useCareAsKink() {
     return (data || []).map(r => ({ name: r.contact_name, phone: r.contact_phone }));
   }, [enabled]);
 
+  // ── GET OUT ──────────────────────────────────────────────────────────────
+
   const fireGetOut = useCallback(async () => {
     if (!enabled) return;
     const { data: { session } } = await supabase.auth.getSession();
@@ -75,6 +80,8 @@ export function useCareAsKink() {
     return res.json();
   }, [enabled]);
 
+  // ── COVER ────────────────────────────────────────────────────────────────
+
   const startCover = useCallback((callerName = 'Dean') => {
     if (!enabled) return;
     setCoverCaller(callerName);
@@ -89,8 +96,81 @@ export function useCareAsKink() {
     setCoverCaller(null);
   }, []);
 
+  // ── LAND TIME (04b) ──────────────────────────────────────────────────────
+
+  const setLandTime = useCallback(async (minutesFromNow) => {
+    if (!enabled) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('unauthenticated');
+
+    const landTime = new Date(Date.now() + minutesFromNow * 60 * 1000).toISOString();
+    const expiresAt = new Date(Date.now() + (minutesFromNow + 30) * 60 * 1000).toISOString();
+
+    const { data, error } = await supabase
+      .from('user_sessions')
+      .insert({
+        user_id: user.id,
+        land_time: landTime,
+        expires_at: expiresAt,
+        meta: { source: 'care_land_time' },
+      })
+      .select('id')
+      .single();
+
+    if (error) throw error;
+    setActiveSessionId(data.id);
+    return data.id;
+  }, [enabled]);
+
+  // ── CLEAN EXIT (04b) ─────────────────────────────────────────────────────
+
+  const cancelSession = useCallback(async () => {
+    if (!enabled) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('unauthenticated');
+
+    // Mark all active sessions expired
+    const { error } = await supabase
+      .from('user_sessions')
+      .update({ expires_at: new Date().toISOString(), meta: { cancelled: true } })
+      .eq('user_id', user.id)
+      .is('meta->>cancelled', null)
+      .gt('expires_at', new Date().toISOString());
+
+    if (error) throw error;
+
+    // Record outcome
+    if (activeSessionId) {
+      await supabase.from('meet_outcomes').insert({
+        session_id: activeSessionId,
+        user_id: user.id,
+        outcome_type: 'cancelled',
+      });
+    }
+
+    setActiveSessionId(null);
+  }, [enabled, activeSessionId]);
+
+  // ── HOW DID IT LAND (04b) ────────────────────────────────────────────────
+
+  const recordOutcome = useCallback(async (outcomeType) => {
+    if (!enabled) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('unauthenticated');
+
+    const { error } = await supabase.from('meet_outcomes').insert({
+      session_id: activeSessionId || null,
+      user_id: user.id,
+      outcome_type: outcomeType,
+    });
+
+    if (error) throw error;
+    setActiveSessionId(null);
+  }, [enabled, activeSessionId]);
+
   return {
     enabled,
+    // 04a
     saveBackup,
     loadBackup,
     fireGetOut,
@@ -98,5 +178,10 @@ export function useCareAsKink() {
     endCover,
     coverActive,
     coverCaller,
+    // 04b
+    setLandTime,
+    cancelSession,
+    recordOutcome,
+    activeSessionId,
   };
 }
