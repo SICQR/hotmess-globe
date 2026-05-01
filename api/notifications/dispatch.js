@@ -75,6 +75,17 @@ export default async function handler(req, res) {
   const { data: allItems } = await serviceClient.from('notification_outbox').select('id, status, channel, send_at, metadata').order('send_at', { ascending: false }).limit(10);
   console.log('[dispatch] All outbox items:', allItems);
 
+  // ── cron_runs: open a dispatch run record ──────────────────────────────────
+  let dispatchRunId = null;
+  try {
+    const { data: runRow } = await serviceClient
+      .from('cron_runs')
+      .insert({ job_name: 'notifications/dispatch', status: 'running' })
+      .select('id')
+      .single();
+    dispatchRunId = runRow?.id ?? null;
+  } catch { /* best-effort */ }
+
   const { data: items, error: loadError } = await serviceClient
     .from('notification_outbox')
     .select('*')
@@ -233,7 +244,16 @@ export default async function handler(req, res) {
     }
   }
 
-  return json(res, 200, {
+  // Close dispatch cron run
+  if (dispatchRunId) {
+    try {
+      await serviceClient.from('cron_runs')
+        .update({ status: 'ok', ended_at: new Date().toISOString() })
+        .eq('id', dispatchRunId);
+    } catch { /* best-effort */ }
+  }
+
+    return json(res, 200, {
     queued: (items || []).length,
     sent,
     failed,
