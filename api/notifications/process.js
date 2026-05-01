@@ -11,6 +11,22 @@ import { createClient } from '@supabase/supabase-js';
 import webPush from 'web-push';
 import { json, getEnv } from '../shopify/_utils.js';
 
+// ── Notifications hardening constants (spec §3, §4, §7) ──────────────────────
+const STALE_SIGNAL_TYPES = ['Movement', 'Arrival', 'Moment'];
+const STALE_THRESHOLD_MS = 15_000; // 15 seconds — spec §7 staleness rule
+const PUSH_DAILY_CAP    = 3;       // spec §3 channel rules
+const PUSH_QUIET_START  = 0;       // 00:00 local
+const PUSH_QUIET_END    = 9;       // 09:00 local
+// Push priority order per spec §3 (lower value = higher priority)
+const PUSH_PRIORITY = {
+  Movement: 1,
+  Arrival:  2,
+  Intent:   3,
+  Moment:   4,
+  System:   5,
+};
+const SAFETY_TYPES = ['sos', 'get_out', 'land_time_miss']; // bypass all caps
+
 const supabaseUrl = getEnv('SUPABASE_URL', ['VITE_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_URL']);
 const supabaseServiceKey = getEnv('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -61,9 +77,67 @@ export default async function handler(req, res) {
 
     let processed = 0;
     let errors = 0;
+    let dropped = 0;
 
-    for (const notification of queuedNotifications) {
+    // ── cron_runs: open a run record ────────────────────────────────────────
+    let cronRunId = null;
+    try {
+      const { data: runRow } = await supabase
+        .from('cron_runs')
+        .insert({ job_name: 'notifications/process', status: 'running' })
+        .select('id')
+        .single();
+      cronRunId = runRow?.id ?? null;
+    } catch { /* best-effort — never block processing */ }
+
+    // ── Sort by push_priority ASC so highest-priority signals process first ─
+    const sorted = [...queuedNotifications].sort(
+      (a, b) => (a.push_priority ?? 99) - (b.push_priority ?? 99)
+    );
+
+    for (const notification of sorted) {
       try {
+        // ── Staleness check (spec §7) ──────────────────────────────────────
+        const sigType = notification.signal_type ?? notification.notification_type ?? '';
+        const isTimeSensitive = STALE_SIGNAL_TYPES.some(t =>
+          sigType.toLowerCase().includes(t.toLowerCase())
+        );
+        if (isTimeSensitive) {
+          const ageMs = Date.now() - new Date(notification.created_at).getTime();
+          if (ageMs > STALE_THRESHOLD_MS) {
+            await supabase.from('notification_outbox')
+              .update({ status: 'dropped', dropped_stale: true, updated_at: new Date().toISOString() })
+              .eq('id', notification.id);
+            dropped++;
+            continue;
+          }
+        }
+
+        // ── Daily push cap (spec §3) ───────────────────────────────────────
+        const isSafety = SAFETY_TYPES.some(t => sigType.toLowerCase().includes(t));
+        if (!isSafety && notification.channel === 'push') {
+          const todayStart = new Date();
+          todayStart.setHours(0, 0, 0, 0);
+          const { count: pushToday } = await supabase
+            .from('notification_outbox')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', notification.user_id)
+            .eq('channel', 'push')
+            .eq('status', 'sent')
+            .gte('sent_at', todayStart.toISOString());
+
+          if ((pushToday ?? 0) >= PUSH_DAILY_CAP) {
+            // Downgrade to in-app only — do not drop entirely
+            notification.channel = 'in_app';
+          }
+
+          // No push during quiet hours (spec §3: never 00:00–09:00 local)
+          const localHour = new Date().getHours();
+          if (localHour >= PUSH_QUIET_START && localHour < PUSH_QUIET_END) {
+            notification.channel = 'in_app';
+          }
+        }
+
         // 1. Create in-app notification (table uses "type", outbox uses "notification_type")
         const { error: notifError } = await supabase
           .from('notifications')
