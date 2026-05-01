@@ -876,6 +876,17 @@ function localApiRoutes() {
             });
         }
 
+        // ── RevenueCat webhook (local testing) ─────────────────────────────────
+        if (path === '/api/webhooks/revenuecat' && method === 'POST') {
+          return importFresh('./api/webhooks/revenuecat.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'webhooks/revenuecat handler error' }));
+            });
+        }
+
         // ── Admin safety switch ─────────────────────────────────────────────
         if (path === '/api/admin/safety-switch' && (method === 'GET' || method === 'POST')) {
           return importFresh('./api/admin/safety-switch.js')
