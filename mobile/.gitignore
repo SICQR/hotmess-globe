@@ -1,0 +1,24 @@
+# Capacitor generated
+node_modules/
+
+# iOS
+ios/App/Pods/
+ios/App/.xcode.env.local
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/
+ios/App/DerivedData/
+ios/App/build/
+*.xcuserstate
+
+# Android
+android/build/
+android/.gradle/
+android/app/build/
+android/local.properties
+android/.idea/
+
+# Archive
+*.ipa
+*.apk
+*.aab
+
