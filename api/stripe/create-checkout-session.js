@@ -93,6 +93,81 @@ export default async function handler(req, res) {
     .eq('id', user.id)
     .single();
 
+  // ── HNH MESS product checkout (Channel 2/3: direct Stripe, no Shopify required) ─────────
+  if (type === 'hnh_mess') {
+    const {
+      sku = 'small',           // 'small' (£10) | 'large' (£15)
+      source,                  // attribution: market | beacon | radio | home | chat | whatsapp | venue_physical
+      venue_id   = null,
+      beacon_id  = null,
+      radio_show_id = null,
+    } = body;
+
+    // Daily order cap — spec §STOCK SAFETY (default 20)
+    const maxDaily = Number(process.env.MAX_HNH_DAILY_ORDERS ?? 20);
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const { count: todayCount } = await supabase
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .eq('product_key', 'hnh-mess')
+      .gte('created_at', todayStart.toISOString());
+
+    if ((todayCount ?? 0) >= maxDaily) {
+      res.statusCode = 429;
+      return res.end(JSON.stringify({
+        error: 'Daily order cap reached. Back soon.',
+        code:  'HNH_DAILY_CAP',
+      }));
+    }
+
+    const priceGbp = sku === 'large' ? 15 : 10;
+    const productName = sku === 'large' ? 'HNH MESS Large (50ml)' : 'HNH MESS Small (30ml)';
+
+    try {
+      const session = await stripe.checkout.sessions.create({
+        ui_mode: 'embedded',
+        payment_method_types: ['card'],
+        mode: 'payment',
+        customer_email: user.email,
+        line_items: [{
+          price_data: {
+            currency: 'gbp',
+            unit_amount: priceGbp * 100,
+            product_data: {
+              name: productName,
+              description: 'Aftercare isn\'t optional. Premium water-based lube.',
+            },
+          },
+          quantity: 1,
+        }],
+        shipping_address_collection: { allowed_countries: ['GB'] },
+        metadata: {
+          user_id:       user.id,
+          user_email:    user.email ?? '',
+          user_name:     profile?.display_name ?? '',
+          type:          'hnh_mess',
+          product_key:   'hnh-mess',
+          sku,
+          source:        source ?? 'unknown',
+          venue_id:      venue_id   ? String(venue_id)    : '',
+          beacon_id:     beacon_id  ? String(beacon_id)   : '',
+          radio_show_id: radio_show_id ? String(radio_show_id) : '',
+        },
+        return_url: `${origin}/market?purchase=success&type=hnh_mess&session_id={CHECKOUT_SESSION_ID}`,
+        allow_promotion_codes: false,
+      });
+
+      res.statusCode = 200;
+      return res.end(JSON.stringify({ clientSecret: session.client_secret }));
+    } catch (err) {
+      console.error('[hnh_mess-checkout] Stripe error:', err?.message);
+      res.statusCode = 500;
+      return res.end(JSON.stringify({ error: 'Failed to create checkout session', detail: err?.message }));
+    }
+  }
+
   // ── Preloved or Shopify order checkout ──────────────────────────────────────────────
   if (type === 'preloved_order' || type === 'shopify_order') {
     const { listing_id, price_gbp, title, order_id, items: lineItems } = body;
