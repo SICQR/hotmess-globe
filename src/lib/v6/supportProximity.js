@@ -41,21 +41,13 @@ export async function getSupportPreferences(userId) {
 // ── Update support preferences (own profile only) ────────────────────────────
 export async function setSupportEnabled(userId, enabled) {
   if (!userId) return;
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-      support_preferences: supabase.rpc ? undefined : {},  // handled below
-    })
-    .eq('id', userId);
-
-  // Use jsonb_set pattern via RPC for safe partial update
-  const { error: rpcError } = await supabase.rpc('update_support_preferences', {
+  // Safe partial JSONB update via RPC — never overwrites other support_preferences fields
+  const { error } = await supabase.rpc('update_support_preferences', {
     p_user_id: userId,
     p_enabled: enabled,
     p_detail_level: null,  // null = don't change
   });
-
-  return rpcError;
+  return error;
 }
 
 export async function setSupportDetailLevel(userId, level) {
