@@ -52,6 +52,8 @@ import { ShopEngine } from '@/modes/market/ShopEngine';
 import { DropsEngine } from '@/modes/market/DropsEngine';
 import { PrelovedEngine } from '@/modes/market/PrelovedEngine';
 import L2OrderSheet from '@/components/sheets/L2OrderSheet';
+import { MarketEditorialShell } from '@/components/market/MarketEditorialV2';
+import { useV6Flag } from '@/hooks/useV6Flag';
 
 // ---- Types ------------------------------------------------------------------
 
@@ -182,6 +184,22 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const { openSheet } = useSheet();
   const { clearCart } = useShopCart();
+
+  // v6_market_v2 — editorial UI flag gate
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const isMarketV2 = useV6Flag('v6_market_v2');
+  if (isMarketV2) {
+    return (
+      <MarketEditorialShell
+        onProductTap={(item: Record<string, unknown>) => openSheet('product', { product: item, source: 'shop' })}
+        onListingTap={(listing: Record<string, unknown>) => openSheet('listing', { listingId: (listing as { id: string }).id })}
+        onChipTap={(chip: string, listing: Record<string, unknown>) => openSheet('chat', { prefill: chip, userId: (listing as { seller_id: string }).seller_id })}
+        onMessageSeller={(listing: Record<string, unknown>) => openSheet('chat', { userId: (listing as { seller_id: string }).seller_id })}
+        onSellFAB={() => openSheet('sell', {})}
+      />
+    );
+  }
+
   const { isAuthenticated } = useBootGuard();
   
   // Post-purchase flow
