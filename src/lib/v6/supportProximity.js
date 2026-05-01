@@ -9,7 +9,7 @@
  * Only support_preferences.support_notifications_enabled activates the system.
  */
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/components/utils/supabaseClient';
 
 // ── Private field names — stripped from non-owner API responses ───────────────
 export const SUPPORT_PRIVATE_FIELDS = [

@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSheet } from '@/contexts/SheetContext';
 import { useGlobe } from '@/contexts/GlobeContext';
 import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
+import AAGlowLayer from '@/components/globe/AAGlowLayer';
 import { activityTracker } from '../components/globe/ActivityTracker';
 import BeaconPreviewPanel from '../components/globe/BeaconPreviewPanel';
 import CityDataOverlay from '../components/globe/CityDataOverlay';
@@ -679,7 +680,7 @@ export default function GlobePage({ embedded = false }) {
             className="w-full h-full"
             autoRotate={false}
           />
-
+          <AAGlowLayer lat={userLocation?.lat ?? null} lng={userLocation?.lng ?? null} />
         </div>
 
         {/* ── Header Title ─────────────────────────────────────────── */}

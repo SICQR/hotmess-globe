@@ -13,7 +13,7 @@
  *   - State is computed, never assumed
  */
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/components/utils/supabaseClient';
 
 // ── State constants (spec §2) ─────────────────────────────────────────────────
 export const AA_STATES = {
