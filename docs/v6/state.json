@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-05-01T04:30:00Z",
+  "updated_at": "2026-05-01T05:15:00Z",
   "updated_by": "cowork",
   "build_summary": {
     "total_chunks": 22,
-    "merged": 2,
-    "in_review": 1,
+    "merged": 3,
+    "in_review": 0,
     "in_progress": 0,
     "ci_failing": 0,
     "not_started": 19
@@ -71,16 +71,17 @@
     {
       "id": "02",
       "name": "Support Proximity schema",
-      "status": "in_review",
+      "status": "merged",
       "branch": "feat/v6-02-support-proximity",
       "pr": 193,
       "ci_status": null,
       "preview_url": null,
-      "merged_at": null,
+      "merged_at": "2026-05-01T05:15:00Z",
       "depends_on": [
         "01"
       ],
-      "pr_url": "https://github.com/SICQR/hotmess-globe/pull/193"
+      "pr_url": "https://github.com/SICQR/hotmess-globe/pull/193",
+      "merge_sha": "716cbc0bbd4c"
     },
     {
       "id": "03",
@@ -482,6 +483,14 @@
     "history": []
   },
   "recent_activity": [
+    {
+      "event": "merged",
+      "chunk": "02",
+      "pr": 193,
+      "description": "feat(v6-02): Support Proximity \u2014 schema, privacy, sync, UI",
+      "timestamp": "2026-05-01T05:15:00Z",
+      "tests": "33/33"
+    },
     {
       "event": "pr_opened",
       "chunk": "02",
