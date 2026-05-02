@@ -171,6 +171,11 @@ export default async function handler(req, res) {
           await sendEmailNotification(notification);
         }
 
+        // 4. Send WhatsApp for safety alerts routed to whatsapp channel
+        if (notification.channel === 'whatsapp' && notification.metadata?.contact_phone) {
+          await sendWhatsAppAlert(notification);
+        }
+
         // 4. Update outbox status to sent
         const { error: updateError } = await supabase
           .from('notification_outbox')
@@ -340,7 +345,107 @@ async function sendEmailNotification(notification) {
   }
 }
 
+
+/**
+ * Send WhatsApp message via Meta Cloud API for safety alerts.
+ * Uses template 'safety_alert_v1' (must be approved in Meta Business Manager).
+ * Falls back to free-form text for 24h conversation window if template unavailable.
+ */
+async function sendWhatsAppAlert(notification) {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const accessToken   = process.env.WHATSAPP_ACCESS_TOKEN;
+
+  if (!phoneNumberId || !accessToken) {
+    console.warn('[WhatsApp] Missing credentials — skipping alert');
+    return;
+  }
+
+  const to = notification.metadata?.contact_phone;
+  if (!to) return;
+
+  // Normalise phone: strip non-digits, ensure international format
+  const normPhone = to.replace(/\D/g, '');
+  if (normPhone.length < 7) return;
+
+  const alertType  = notification.metadata?.type || 'sos';
+  const userName   = notification.metadata?.user_name || 'Your friend';
+  const locationStr = notification.metadata?.location_str || 'Location unavailable';
+  const overdueMins = notification.metadata?.overdue_minutes;
+
+  let bodyText;
+  if (alertType === 'sos') {
+    bodyText = `🆘 HOTMESS Safety Alert\n\n${userName} has triggered an emergency. Last known location: ${locationStr}\n\nPlease check on them immediately.`;
+  } else if (alertType === 'checkin_missed') {
+    bodyText = `⏰ HOTMESS Check-in Missed\n\n${userName} was supposed to check in${overdueMins ? ` ${overdueMins} minute(s) ago` : ''} and hasn't responded.\n\nPlease check on them.`;
+  } else {
+    bodyText = notification.message || '⚠️ Safety alert from HOTMESS';
+  }
+
+  try {
+    // Try template first (required for cold-start conversations)
+    const templateRes = await fetch(
+      \`https://graph.facebook.com/v18.0/\${phoneNumberId}/messages\`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': \`Bearer \${accessToken}\`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to: normPhone,
+          type: 'template',
+          template: {
+            name: 'safety_alert_v1',
+            language: { code: 'en_GB' },
+            components: [{
+              type: 'body',
+              parameters: [
+                { type: 'text', text: userName },
+                { type: 'text', text: locationStr },
+              ],
+            }],
+          },
+        }),
+      }
+    );
+
+    if (templateRes.ok) {
+      console.log('[WhatsApp] Template alert sent to', normPhone);
+      return;
+    }
+
+    // Template not approved yet — fall back to plain text (only works if 24h window open)
+    const textRes = await fetch(
+      \`https://graph.facebook.com/v18.0/\${phoneNumberId}/messages\`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': \`Bearer \${accessToken}\`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to: normPhone,
+          type: 'text',
+          text: { body: bodyText },
+        }),
+      }
+    );
+
+    const result = await textRes.json();
+    if (textRes.ok) {
+      console.log('[WhatsApp] Text alert sent to', normPhone);
+    } else {
+      console.error('[WhatsApp] Send failed:', JSON.stringify(result));
+    }
+  } catch (err) {
+    console.error('[WhatsApp] Error:', err.message);
+  }
+}
+
 // Vercel config for cron
 export const config = {
   maxDuration: 30, // 30 second timeout
 };
+
