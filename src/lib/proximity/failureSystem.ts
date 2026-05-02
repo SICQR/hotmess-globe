@@ -144,7 +144,7 @@ function deriveState(
   return 'minimal';
 }
 
-function buildStateObject(
+export function buildStateObject(
   state:      SignalState,
   distM:      number | null,
   headerOverride?: string,

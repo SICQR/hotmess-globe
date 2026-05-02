@@ -19,7 +19,7 @@ function SOSConsumer() {
   return (
     <div>
       <span data-testid="sos-status">{sosActive ? 'active' : 'inactive'}</span>
-      <button onClick={triggerSOS} data-testid="trigger">Trigger SOS</button>
+      <button onClick={() => { void triggerSOS(); }} data-testid="trigger">Trigger SOS</button>
       <button onClick={clearSOS} data-testid="clear">Clear SOS</button>
     </div>
   );

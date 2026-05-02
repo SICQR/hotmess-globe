@@ -61,7 +61,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
   const navigate = useNavigate();
   const { openSheet } = useSheet();
   const { profile } = useBootGuard();
-  const { isPlaying: radioPlaying, activeUrl, togglePlay, setCurrentShowName, currentShowName } = useRadio();
+  const { isPlaying: radioPlaying, togglePlay, setCurrentShowName, currentShowName } = useRadio();
   const reduced = useReducedMotion();
 
   const [showRightNow, setShowRightNow] = useState(false);

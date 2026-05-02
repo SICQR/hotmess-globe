@@ -22,7 +22,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
 
 import { useSheet } from '@/contexts/SheetContext';
-import { RadioProvider, useRadio, STREAM_URL_BASE } from '@/contexts/RadioContext';
+import { RadioProvider, useRadio } from '@/contexts/RadioContext';
 import { RadioMiniPlayer } from '@/components/radio/RadioMiniPlayer';
 import { Radio as RadioIcon } from 'lucide-react';
 

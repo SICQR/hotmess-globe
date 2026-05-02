@@ -149,9 +149,11 @@ export async function purchaseBoost(
     const { Purchases } = await import('@revenuecat/purchases-capacitor');
     const { offerings } = await Purchases.getOfferings();
 
-    // Find the boost product across all offerings
+    // Find the boost product across all offerings.
+    // RevenueCat module is `any` via shim — cast the per-offering value so
+    // .availablePackages is reachable without losing the rest of the type.
     const allPackages = Object.values(offerings?.all ?? {}).flatMap(
-      (o) => o.availablePackages
+      (o: { availablePackages?: Array<{ product: { identifier: string } }> }) => o.availablePackages ?? []
     );
     const pkg = allPackages.find((p) => p.product.identifier === productId);
     if (!pkg) return { success: false, error: `Boost product "${productId}" not in offerings` };

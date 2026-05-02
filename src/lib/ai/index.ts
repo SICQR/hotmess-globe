@@ -106,7 +106,7 @@ export async function callWingman(
   context: WingmanContext,
   opts?: AICallOptions
 ): Promise<AICallResult<WingmanResult>> {
-  return callAI<WingmanResult>('wingman', context as Record<string, unknown>, opts);
+  return callAI<WingmanResult>('wingman', context as unknown as Record<string, unknown>, opts);
 }
 
 // ──
@@ -129,7 +129,7 @@ export async function callSceneScout(
   context: SceneScoutContext,
   opts?: AICallOptions
 ): Promise<AICallResult<SceneScoutResult>> {
-  return callAI<SceneScoutResult>('scene-scout', context as Record<string, unknown>, opts);
+  return callAI<SceneScoutResult>('scene-scout', context as unknown as Record<string, unknown>, opts);
 }
 
 // ──
@@ -150,7 +150,7 @@ export async function callChat(
   context: ChatContext,
   opts?: AICallOptions
 ): Promise<AICallResult<ChatResult>> {
-  return callAI<ChatResult>('chat', context as Record<string, unknown>, opts);
+  return callAI<ChatResult>('chat', context as unknown as Record<string, unknown>, opts);
 }
 
 // ──
@@ -163,5 +163,5 @@ export async function callProfileAnalysis(
   context: ProfileAnalysisContext,
   opts?: AICallOptions
 ): Promise<AICallResult<Record<string, unknown>>> {
-  return callAI('profile-analysis', context as Record<string, unknown>, opts);
+  return callAI('profile-analysis', context as unknown as Record<string, unknown>, opts);
 }

@@ -391,6 +391,7 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
         myAvatarUrl={myAvatarUrl}
         theirAvatarUrl={heroUrl}
         theirName={profile.display_name || 'Someone'}
+        theirId={profile.id}
         onMessage={handleMatchMessage}
         onDismiss={() => setShowMatch(false)}
       />
