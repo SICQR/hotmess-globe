@@ -186,31 +186,19 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   const { clearCart } = useShopCart();
 
   // v6_market_v2 — editorial UI flag gate
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const isMarketV2 = useV6Flag('v6_market_v2');
-  if (isMarketV2) {
-    return (
-      <MarketEditorialShell
-        onProductTap={(item: Record<string, unknown>) => openSheet('product', { product: item, source: 'shop' })}
-        onListingTap={(listing: Record<string, unknown>) => openSheet('listing', { listingId: (listing as { id: string }).id })}
-        onChipTap={(chip: string, listing: Record<string, unknown>) => openSheet('chat', { prefill: chip, userId: (listing as { seller_id: string }).seller_id })}
-        onMessageSeller={(listing: Record<string, unknown>) => openSheet('chat', { userId: (listing as { seller_id: string }).seller_id })}
-        onSellFAB={() => openSheet('sell', {})}
-      />
-    );
-  }
 
+  // ---- All hooks must be called unconditionally before any early returns ----
   const { isAuthenticated } = useBootGuard();
-  
-  // Post-purchase flow
-  const purchaseSuccess = searchParams.get('purchase') === 'success';
-  const purchaseListingId = searchParams.get('listing');
-  const purchaseOrderId = searchParams.get('order_id');
-  
   const cartItemCount = useCartItemCount();
 
   // Engine routing
   const activeEngine = deriveEngine(location.pathname);
+
+  // Post-purchase flow
+  const purchaseSuccess = searchParams.get('purchase') === 'success';
+  const purchaseListingId = searchParams.get('listing');
+  const purchaseOrderId = searchParams.get('order_id');
 
   // Search state (shared across engines)
   const [searchInput, setSearchInput] = useState(searchParams.get('q') ?? '');
@@ -251,6 +239,11 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   // Active engine color
   const activeColor = ENGINE_TABS.find(t => t.key === activeEngine)?.color ?? AMBER;
 
+  // ---- Post-Purchase State Machine ----
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [orderTotal, setOrderTotal] = useState<number | null>(null);
+  const [isSyncing, setIsSyncing] = useState(true);
+
   // ---- Auto-open receipt on success & Sync Status ----
   useEffect(() => {
     if (purchaseSuccess && purchaseOrderId) {
@@ -278,18 +271,8 @@ export function MarketMode({ className = '' }: MarketModeProps) {
       };
       
       syncPayment();
-      
-      // 2. Open the receipt directly (But user wants a success screen first now, 
-      // see next step for UI change)
     }
   }, [purchaseSuccess, purchaseOrderId, openSheet]);
-
-  // ---- Render ---------------------------------------------------------------
-
-  // ---- Post-Purchase State Machine ----
-  const [showReceipt, setShowReceipt] = useState(false);
-  const [orderTotal, setOrderTotal] = useState<number | null>(null);
-  const [isSyncing, setIsSyncing] = useState(true);
 
   // Sync Status and Fetch Total
   useEffect(() => {
@@ -334,6 +317,23 @@ export function MarketMode({ className = '' }: MarketModeProps) {
       setIsSyncing(true);
     }
   }, [purchaseSuccess, purchaseOrderId]);
+
+  // ---- Now conditional early returns (after ALL hooks) ----
+
+  // v6_market_v2 editorial shell
+  if (isMarketV2) {
+    return (
+      <MarketEditorialShell
+        onProductTap={(item: Record<string, unknown>) => openSheet('product', { product: item, source: 'shop' })}
+        onListingTap={(listing: Record<string, unknown>) => openSheet('listing', { listingId: (listing as { id: string }).id })}
+        onChipTap={(chip: string, listing: Record<string, unknown>) => openSheet('chat', { prefill: chip, userId: (listing as { seller_id: string }).seller_id })}
+        onMessageSeller={(listing: Record<string, unknown>) => openSheet('chat', { userId: (listing as { seller_id: string }).seller_id })}
+        onSellFAB={() => openSheet('sell', {})}
+      />
+    );
+  }
+
+  // ---- Render ---------------------------------------------------------------
 
   // VIP TWO-STAGE SUCCESS FLOW (Full Screen Interstitial)
   if (purchaseSuccess && purchaseOrderId) {
