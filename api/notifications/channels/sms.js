@@ -7,6 +7,8 @@
  */
 import { buildAlertCopy } from './_types.js';
 
+const FETCH_TIMEOUT_MS = 10_000;
+
 function basicAuth(sid, token) {
   return 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64');
 }
@@ -34,6 +36,9 @@ export async function send(opts) {
     Body: copy.short,
   });
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -41,6 +46,7 @@ export async function send(opts) {
         Authorization: basicAuth(sid, token),
         'Content-Type': 'application/x-www-form-urlencoded',
       },
+      signal: controller.signal,
       body,
     });
     const data = await res.json().catch(() => ({}));
@@ -55,6 +61,9 @@ export async function send(opts) {
       // Status callbacks would update delivered_at, but we don't have a webhook wired yet.
     };
   } catch (err) {
-    return { ok: false, error: `twilio_fetch_failed:${err.message}` };
+    const reason = err?.name === 'AbortError' ? 'timeout' : (err?.message || 'unknown');
+    return { ok: false, error: `twilio_fetch_failed:${reason}` };
+  } finally {
+    clearTimeout(timer);
   }
 }

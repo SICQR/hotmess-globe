@@ -76,9 +76,11 @@ export default async function handler(req, res) {
   }
 
   // Look up the delivery row to know which user to bind the HMAC to.
+  // delivered_at is selected so we don't overwrite the original delivery time
+  // when the ack lands later than first delivery.
   const { data: row, error } = await supabase
     .from('safety_delivery_log')
-    .select('id, user_id, safety_event_id, channel, status, acked_at')
+    .select('id, user_id, safety_event_id, channel, status, acked_at, delivered_at')
     .eq('id', deliveryId)
     .maybeSingle();
 
@@ -99,10 +101,16 @@ export default async function handler(req, res) {
   }
 
   const nowIso = new Date().toISOString();
-  await supabase
+  const { error: ackError } = await supabase
     .from('safety_delivery_log')
     .update({ status: 'acked', acked_at: nowIso, delivered_at: row.delivered_at ?? nowIso })
     .eq('id', row.id);
+
+  if (ackError) {
+    // Fail closed — don't return 200 if the ack didn't persist.
+    res.statusCode = 500;
+    return res.end(ackPage('Server error', 'We could not record this acknowledgement. Please try again.'));
+  }
 
   // Best-effort: bump ack count on the safety_events row for telemetry.
   try {

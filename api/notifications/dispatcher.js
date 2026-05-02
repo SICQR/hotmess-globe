@@ -157,7 +157,7 @@ async function updateAttempt(supabase, id, patch) {
  * the channel send and update the row with the outcome. Pre-allocating gives
  * the channel module the deliveryId it needs to embed in the ack URL.
  */
-async function attemptChannel({ supabase, channelName, contact, user, event, ackBaseUrl }) {
+async function attemptChannel({ supabase, channelName, contact, user, event, ackBaseUrl, mode = 'fanout' }) {
   const channel = CHANNEL_MAP[channelName];
   if (!channel) return { ok: false, error: 'unknown_channel' };
 
@@ -180,7 +180,7 @@ async function attemptChannel({ supabase, channelName, contact, user, event, ack
       event: { ...event, location_str: eventLocationStr(event, user) },
       ackUrl,
       deliveryId,
-      mode: 'fanout',
+      mode,
       supabase,
     });
   } catch (err) {
@@ -309,6 +309,7 @@ async function dispatchSequential({ supabase, event, user, contacts }) {
         user,
         event,
         ackBaseUrl: null,
+        mode: 'sequential',
       });
       if (r.ok) stats.delivered++;
       else if (r.skipped) stats.skipped++;
@@ -332,11 +333,30 @@ export async function dispatchSafetyEvent({ supabase, eventId, mode, contactsOve
 
   // Quiet-hours suppression for non-SOS only
   if (resolvedMode === 'sequential' && isQuietHourLocal(user.timezone)) {
-    // Defer entire sequential cascade by 9h-current_hour — i.e. wait until end of quiet hours.
-    // Simplest implementation: still record the event but mark all queued rows skipped with
-    // a quiet_hours flag and let a separate cron resurface after 09:00 local.
-    // For now: log and bypass; a follow-up commit will persist the deferred schedule.
-    // (SOS bypass is implicit because P0 always uses fanout mode, never sequential.)
+    // Quiet hours suppress the entire P1 cascade. Persist a single marker row
+    // so the audit trail shows we deliberately deferred, and bail before any
+    // channel send. SOS bypass is implicit because P0 always uses fanout mode.
+    // A follow-up cron pass (round 4) will resurface deferred events at 09:00
+    // local and re-enter the dispatcher.
+    const markerId = await recordAttempt(supabase, {
+      safety_event_id: event.id,
+      user_id: event.user_id,
+      trusted_contact_id: null,
+      channel: 'push',
+      attempt_number: 1,
+      status: 'skipped',
+      error: 'quiet_hours_deferred',
+    });
+    return {
+      mode: 'sequential',
+      event_id: event.id,
+      delivered: 0,
+      failed: 0,
+      skipped: 1,
+      scheduled: 0,
+      attempts: [{ deliveryId: markerId, channel: 'push', target: 'self', skipped: true, reason: 'quiet_hours' }],
+      deferred: true,
+    };
   }
 
   if (resolvedMode === 'fanout') {

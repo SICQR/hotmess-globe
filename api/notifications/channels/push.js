@@ -32,7 +32,8 @@ export async function send(opts) {
     return { ok: false, skipped: true, error: 'contact_not_internal_user' };
   }
   if (!ensureVapid()) {
-    return { ok: false, error: 'vapid_not_configured' };
+    // Provider not configured = skipped, not failed (consistent with other channels).
+    return { ok: false, skipped: true, error: 'vapid_not_configured' };
   }
 
   const { data: subs, error: subErr } = await supabase

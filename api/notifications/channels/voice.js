@@ -8,6 +8,8 @@
  * The DTMF response goes to /api/safety/voice-response/[id] (separate
  * endpoint, not implemented in this commit — see TODO at end of file).
  */
+const FETCH_TIMEOUT_MS = 10_000;
+
 export async function send(opts) {
   // Voice ack happens via DTMF (press 1) → /api/safety/voice-response — no
   // ackUrl is embedded in the call audio. Unused channel-contract field omitted.
@@ -48,10 +50,14 @@ export async function send(opts) {
     Twiml: twiml,
   });
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
   try {
     const res = await fetch(url, {
       method: 'POST',
       headers: { Authorization: auth, 'Content-Type': 'application/x-www-form-urlencoded' },
+      signal: controller.signal,
       body,
     });
     const data = await res.json().catch(() => ({}));
@@ -60,7 +66,10 @@ export async function send(opts) {
     }
     return { ok: true, providerId: data?.sid || null, raw: data };
   } catch (err) {
-    return { ok: false, error: `twilio_voice_fetch_failed:${err.message}` };
+    const reason = err?.name === 'AbortError' ? 'timeout' : (err?.message || 'unknown');
+    return { ok: false, error: `twilio_voice_fetch_failed:${reason}` };
+  } finally {
+    clearTimeout(timer);
   }
 }
 

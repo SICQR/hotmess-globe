@@ -15,6 +15,12 @@ import { Loader2, ArrowRight, Mail, RefreshCw, ChevronLeft } from 'lucide-react'
 import { toast } from 'sonner';
 import { useSheet } from '@/contexts/SheetContext';
 
+// Match supabase/config.toml: minimum_password_length=8 +
+// password_requirements="lower_upper_letters_digits". Surfacing the rule
+// client-side so users don't fail at submit time.
+const PASSWORD_RULE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+const PASSWORD_HINT = 'Password must be 8+ characters with at least one lowercase letter, one uppercase letter, and one digit';
+
 const REDIRECT_DELAY_MS = 500;
 const GOLD = '#C8962C';
 const BG = '#050507';
@@ -268,7 +274,7 @@ export default function Auth() {
     e.preventDefault();
     if (!email.trim() || !password.trim() || !confirmPassword.trim()) { toast.error('Please fill in all fields'); return; }
     if (password !== confirmPassword) { toast.error('Passwords do not match'); return; }
-    if (password.length < 6) { toast.error('Password must be at least 6 characters'); return; }
+    if (!PASSWORD_RULE.test(password)) { toast.error(PASSWORD_HINT); return; }
     setLoading(true);
     try {
       const { error } = await supabase.auth.signUp({ email: email.trim(), password });
@@ -323,7 +329,7 @@ export default function Auth() {
     e.preventDefault();
     if (!password.trim() || !confirmPassword.trim()) { toast.error('Please fill in all fields'); return; }
     if (password !== confirmPassword) { toast.error('Passwords do not match'); return; }
-    if (password.length < 6) { toast.error('Password must be at least 6 characters'); return; }
+    if (!PASSWORD_RULE.test(password)) { toast.error(PASSWORD_HINT); return; }
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });

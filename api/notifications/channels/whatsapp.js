@@ -9,6 +9,8 @@
 // _types is intentionally not imported — template uses positional params
 // directly, not the formatted body from buildAlertCopy().
 
+const FETCH_TIMEOUT_MS = 10_000;
+
 export async function send(opts) {
   const { contact, user, event, ackUrl } = opts;
 
@@ -33,10 +35,14 @@ export async function send(opts) {
     ],
   }];
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
   try {
     const res = await fetch(`https://graph.facebook.com/v17.0/${phoneId}/messages`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      signal: controller.signal,
       body: JSON.stringify({
         messaging_product: 'whatsapp',
         to: cleanPhone,
@@ -55,6 +61,9 @@ export async function send(opts) {
     const msgId = data?.messages?.[0]?.id || null;
     return { ok: true, providerId: msgId, raw: data };
   } catch (err) {
-    return { ok: false, error: `meta_fetch_failed:${err.message}` };
+    const reason = err?.name === 'AbortError' ? 'timeout' : (err?.message || 'unknown');
+    return { ok: false, error: `meta_fetch_failed:${reason}` };
+  } finally {
+    clearTimeout(timer);
   }
 }
