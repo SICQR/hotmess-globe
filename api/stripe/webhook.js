@@ -402,7 +402,7 @@ export default async function handler(req, res) {
     
     // In production, ALWAYS verify the signature!
     // On localhost, Vite Dev Server can sometimes mutate raw streams so we bypass signature validation.
-    if (!isLocal && process.env.STRIPE_WEBHOOK_SECRET && sig !== 'DEBUG') {
+    if (!isLocal && process.env.STRIPE_WEBHOOK_SECRET) {
       event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
     } else {
       let payloadString = rawBody.toString();
@@ -438,3 +438,4 @@ export default async function handler(req, res) {
   res.statusCode = 200;
   return res.end(JSON.stringify({ received: true }));
 }
+
