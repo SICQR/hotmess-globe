@@ -1,3 +1,11 @@
+/**
+ * SOSContext — loud panic-button SOS surface.
+ *
+ * Type semantics across the codebase:
+ *   'sos'     → THIS surface — immediate panic-button trigger
+ *   'get_out' → Care 3-second-hold surface (api/safety/get-out.js, discreet)
+ * Both produce the same downstream cascade; only the audit type differs.
+ */
 import React, { createContext, useContext, useState } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 
@@ -44,13 +52,22 @@ export function SOSProvider({ children }: { children: React.ReactNode }) {
       }).catch(() => null);
 
       // 3. Atomically log safety event
-      const { data: event } = await supabase.from('safety_events').insert({
-        user_id: user.id,
-        event_type: 'sos',
-        lat: position?.latitude,
-        lng: position?.longitude,
-        metadata: { trigger: 'silent_gesture' }
-      }).select().single();
+      // Schema: safety_events has columns id/user_id/type/delivery_status/created_at/metadata.
+      // Lat/lng live inside metadata — never as top-level columns.
+      const { data: event, error: eventErr } = await supabase
+        .from('safety_events')
+        .insert({
+          user_id: user.id,
+          type: 'sos',
+          metadata: {
+            trigger: 'silent_gesture',
+            lat: position?.latitude ?? null,
+            lng: position?.longitude ?? null,
+          },
+        })
+        .select()
+        .single();
+      if (eventErr) console.error('[SOS] safety_events insert failed:', eventErr);
 
       // 4. Trigger Alerts to Trusted Contacts
       const { data: contacts } = await supabase
