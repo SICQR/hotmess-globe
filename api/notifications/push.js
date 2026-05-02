@@ -7,6 +7,7 @@
  * Uses server-side VAPID keys + service role key — never exposed to client.
  */
 
+import '../_silence-dep0169.js';
 import webpush from 'web-push';
 import { getSupabaseServerClients } from '../routing/_utils.js';
 import { getEnv } from '../shopify/_utils.js';

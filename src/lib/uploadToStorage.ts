@@ -104,11 +104,27 @@ export async function uploadToStorage(
 
   console.log('[storage] ✅ Upload Success:', uploadData);
 
-  const { data: { publicUrl } } = supabase.storage
-    .from(resolvedBucket)
-    .getPublicUrl(path);
-
-  if (!publicUrl) throw new Error('Failed to generate public URL');
+  // Private buckets need signed URLs — public ones can use getPublicUrl().
+  // PRIVATE_BUCKETS list grows as more buckets are flipped (round 4: chat-uploads).
+  // Signed URL TTL: 7 days. Messages older than that need a refresh endpoint
+  // (round-5 work). Until then 7 days covers >99% of chat-attachment view sessions.
+  const PRIVATE_BUCKETS = new Set(['chat-uploads']);
+  let publicUrl: string;
+  if (PRIVATE_BUCKETS.has(resolvedBucket)) {
+    const SEVEN_DAYS_S = 7 * 24 * 60 * 60;
+    const { data: signed, error: signErr } = await supabase.storage
+      .from(resolvedBucket)
+      .createSignedUrl(path, SEVEN_DAYS_S);
+    if (signErr || !signed?.signedUrl) {
+      console.error(`[storage] ❌ Signed URL failed for "${resolvedBucket}":`, signErr);
+      throw signErr || new Error('Failed to generate signed URL');
+    }
+    publicUrl = signed.signedUrl;
+  } else {
+    const { data } = supabase.storage.from(resolvedBucket).getPublicUrl(path);
+    publicUrl = data.publicUrl;
+    if (!publicUrl) throw new Error('Failed to generate public URL');
+  }
 
   return publicUrl;
 }
