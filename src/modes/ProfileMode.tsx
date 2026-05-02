@@ -693,7 +693,7 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
           className="mx-4 mt-4 rounded-2xl overflow-hidden flex"
           style={{ background: CARD_BG }}
         >
-          <StatCell label="Taps" value={tapsCount} />
+          <StatCell label="Boos" value={tapsCount} />
           <div className="w-px bg-white/5" />
           <StatCell label="Listed" value={listingsCount} />
           <div className="w-px bg-white/5" />
@@ -870,3 +870,4 @@ function SettingsRow({
 }
 
 export default ProfileMode;
+
