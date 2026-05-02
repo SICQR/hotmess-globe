@@ -55,12 +55,14 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
   const { data: messages = [], hasNextPage } = useQuery({
     queryKey: ['messages', thread.id, messagesPage],
     queryFn: async () => {
-      const allMessages = await supabase.from('chat_messages').select('*').eq(
-        { thread_id: thread.id }, 
-        'created_date', 
-        MESSAGES_PER_PAGE * messagesPage
-      );
-      return allMessages;
+      const { data: allMessages, error: msgErr } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('thread_id', thread.id)
+        .order('created_at', { ascending: false })
+        .range(0, MESSAGES_PER_PAGE * messagesPage - 1);
+      if (msgErr) throw msgErr;
+      return allMessages || [];
     },
     // No polling - we use realtime subscriptions below
     keepPreviousData: true,
@@ -77,7 +79,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'Message',
+          table: 'messages',
           filter: `thread_id=eq.${thread.id}`,
         },
         (payload) => {
@@ -199,7 +201,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
       const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
       if (!ok) return null;
 
-      const message = await supabase.from('chat_messages').insert({
+      const message = await supabase.from('messages').insert({
         thread_id: thread.id,
         sender_email: currentUser.email,
         content: data.content,
@@ -379,7 +381,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
     const message = messages.find(m => m.id === messageId);
     if (!message) return;
 
-    // Reactions disabled — chat_messages has no metadata column
+    // Reactions disabled — messages has no metadata column
     // TODO: add a dedicated reactions table or column if needed
     queryClient.invalidateQueries(['messages', thread.id]);
     setShowReactions(null);
@@ -433,7 +435,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
 
     if (unreadMessages.length > 0) {
       unreadMessages.forEach(msg => {
-        supabase.from('chat_messages').update({
+        supabase.from('messages').update({
           read_by: [...msg.read_by, currentUser.email],
         });
       });
@@ -948,3 +950,4 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
     </div>
   );
 }
+
