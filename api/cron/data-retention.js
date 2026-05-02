@@ -15,10 +15,16 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-);
+const supabaseUrl =
+  process.env.SUPABASE_URL ??
+  process.env.NEXT_PUBLIC_SUPABASE_URL ??
+  process.env.VITE_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const supabase =
+  supabaseUrl && supabaseServiceKey
+    ? createClient(supabaseUrl, supabaseServiceKey)
+    : null;
 
 const STALE_MEET_SESSION_HOURS    = 48;
 const STALE_MESSAGE_DAYS          = 30;
@@ -35,6 +41,11 @@ export default async function handler(req, res) {
   const secret = req.headers['authorization']?.replace('Bearer ', '');
   if (secret !== process.env.CRON_SECRET) {
     return res.status(401).json({ error: 'unauthorized' });
+  }
+
+  if (!supabase) {
+    console.error('[data-retention] missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env');
+    return res.status(500).json({ error: 'Server misconfigured: missing Supabase env' });
   }
 
   const jobName = 'data-retention';

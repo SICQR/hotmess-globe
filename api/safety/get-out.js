@@ -3,6 +3,7 @@
  * Care As Kink — GET OUT trigger (Chunk 04a)
  *
  * Auth: Bearer token required
+ * - Logs an audit row in safety_events
  * - Loads backup contacts from trusted_contacts where role='backup'
  * - Clears user's beacon from right_now_posts (no trace)
  * - Queues notification_outbox entries for each backup contact
@@ -11,14 +12,24 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  { auth: { persistSession: false } }
-);
+const supabaseUrl =
+  process.env.SUPABASE_URL ??
+  process.env.NEXT_PUBLIC_SUPABASE_URL ??
+  process.env.VITE_SUPABASE_URL;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const supabaseAdmin =
+  supabaseUrl && serviceKey
+    ? createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } })
+    : null;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
+
+  if (!supabaseAdmin) {
+    console.error('[get-out] missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env');
+    return res.status(500).json({ error: 'server_misconfigured' });
+  }
 
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'unauthenticated' });
@@ -31,16 +42,34 @@ export default async function handler(req, res) {
     // Load backup contacts
     const { data: contacts } = await supabaseAdmin
       .from('trusted_contacts')
-      .select('contact_name, contact_phone')
+      .select('contact_name, contact_phone, contact_email')
       .eq('user_id', user.id)
       .eq('role', 'backup')
       .limit(2);
 
-    // Load last known location from profile
+    // Load last known location + display name from profile
     const { data: profile } = await supabaseAdmin
       .from('profiles')
-      .select('last_lat, last_lng, display_name')
+      .select('last_lat, last_lng, display_name, email')
       .eq('id', user.id)
+      .single();
+
+    const triggeredBy = profile?.display_name || 'A friend';
+    const lat = profile?.last_lat ?? null;
+    const lng = profile?.last_lng ?? null;
+    const locStr = (lat != null && lng != null)
+      ? `${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)}`
+      : 'Location unavailable';
+
+    // Audit row in safety_events (table columns: user_id, type, metadata)
+    const { data: eventRow } = await supabaseAdmin
+      .from('safety_events')
+      .insert({
+        user_id: user.id,
+        type: 'get_out',
+        metadata: { trigger: 'care_get_out', lat, lng, contact_count: contacts?.length || 0 },
+      })
+      .select('id')
       .single();
 
     // Clear beacon — no trace
@@ -49,31 +78,44 @@ export default async function handler(req, res) {
       .delete()
       .eq('user_id', user.id);
 
-    // Queue notifications for each backup contact
+    // Queue notifications for each backup contact via the outbox dispatcher
     const notified = [];
     if (contacts && contacts.length > 0) {
+      const triggeredAt = new Date().toISOString();
       const outboxRows = contacts.map(c => ({
         user_id: user.id,
-        type: 'get_out_trigger',
-        status: 'queued',
-        payload: {
-          contact_name: c.contact_name,
-          contact_phone: c.contact_phone,
-          triggered_by: profile?.display_name || 'A friend',
-          lat: profile?.last_lat,
-          lng: profile?.last_lng,
-          triggered_at: new Date().toISOString(),
+        user_email: c.contact_email || profile?.email || user.email,
+        notification_type: 'sos_alert',
+        title: '🆘 HOTMESS Safety — Get Out triggered',
+        message: `${triggeredBy} pressed Get Out. Last known location: ${locStr}`,
+        channel: c.contact_phone ? 'whatsapp' : 'email',
+        metadata: {
+          type: 'get_out',
+          user_id: user.id,
+          user_name: triggeredBy,
+          location_str: locStr,
+          contact_phone: c.contact_phone || null,
+          contact_email: c.contact_email || null,
+          event_id: eventRow?.id || null,
+          triggered_at: triggeredAt,
         },
       }));
 
-      await supabaseAdmin.from('notification_outbox').insert(outboxRows);
-      notified.push(...contacts.map(c => c.contact_name));
+      const { error: outboxErr } = await supabaseAdmin
+        .from('notification_outbox')
+        .insert(outboxRows);
+      if (outboxErr) {
+        console.error('[get-out] notification_outbox insert failed:', outboxErr);
+      } else {
+        notified.push(...contacts.map(c => c.contact_name));
+      }
     }
 
     return res.status(200).json({
       ok: true,
       notified,
       cleared: true,
+      event_id: eventRow?.id || null,
     });
   } catch (err) {
     console.error('[get-out] error:', err);
