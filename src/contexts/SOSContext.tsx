@@ -1,3 +1,11 @@
+/**
+ * SOSContext — loud panic-button SOS surface.
+ *
+ * Type semantics across the codebase:
+ *   'sos'     → THIS surface — immediate panic-button trigger
+ *   'get_out' → Care 3-second-hold surface (api/safety/get-out.js, discreet)
+ * Both produce the same downstream cascade; only the audit type differs.
+ */
 import React, { createContext, useContext, useState } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 

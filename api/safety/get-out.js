@@ -3,11 +3,17 @@
  * Care As Kink — GET OUT trigger (Chunk 04a)
  *
  * Auth: Bearer token required
- * - Logs an audit row in safety_events
- * - Loads backup contacts from trusted_contacts where role='backup'
+ * - Logs an audit row in safety_events with type='get_out'
+ *   ↳ Type semantics across the codebase:
+ *       'sos'     → loud panic-button SOS surface (SOSContext.tsx, immediate)
+ *       'get_out' → quiet 3-second-hold Care surface (this endpoint, discreet)
+ *     Both produce the same downstream cascade — only the audit type differs.
+ * - Loads contacts from trusted_contacts where notify_on_sos=true (up to 5 per
+ *   CareAsKink spec). The legacy role='backup' filter never matched real data —
+ *   schema default and all production rows use role='trusted'.
  * - Clears user's beacon from right_now_posts (no trace)
- * - Queues notification_outbox entries for each backup contact
- * - Returns { ok, notified, cleared }
+ * - Queues notification_outbox entries for each contact
+ * - Returns { ok, notified, cleared, event_id }
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -39,13 +45,13 @@ export default async function handler(req, res) {
   if (authErr || !user) return res.status(401).json({ error: 'invalid_token' });
 
   try {
-    // Load backup contacts
+    // Load contacts that opted in to SOS notifications (up to 5 per CareAsKink spec)
     const { data: contacts } = await supabaseAdmin
       .from('trusted_contacts')
       .select('contact_name, contact_phone, contact_email')
       .eq('user_id', user.id)
-      .eq('role', 'backup')
-      .limit(2);
+      .eq('notify_on_sos', true)
+      .limit(5);
 
     // Load last known location + display name from profile
     const { data: profile } = await supabaseAdmin
