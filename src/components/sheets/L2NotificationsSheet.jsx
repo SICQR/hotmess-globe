@@ -28,7 +28,7 @@ function Toggle({ enabled, onToggle }) {
 }
 
 const NOTIFICATION_ROWS = [
-  { key: 'notif_taps', icon: Zap, title: 'Taps & Interactions', desc: 'Boos, saves, and profile taps' },
+  { key: 'notif_taps', icon: Zap, title: 'Boos & Interactions', desc: 'Boos, saves, and profile taps' },
   { key: 'notif_messages', icon: MessageCircle, title: 'Messages', desc: 'When someone sends you a message' },
   { key: 'notif_live_nearby', icon: Users, title: 'Live Nearby', desc: 'When someone goes live near you' },
   { key: 'notif_shop', icon: ShoppingBag, title: 'Shop & Drops', desc: 'New products, restocks, and sales' },
@@ -129,3 +129,4 @@ export default function L2NotificationsSheet() {
     </div>
   );
 }
+
