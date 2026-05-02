@@ -220,6 +220,8 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   useEffect(() => {
     setSearchParams(
       (prev) => {
+        const current = prev.get('q') ?? '';
+        if ((debouncedSearch || '') === current) return prev;
         const next = new URLSearchParams(prev);
         if (debouncedSearch) next.set('q', debouncedSearch);
         else next.delete('q');
