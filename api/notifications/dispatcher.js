@@ -44,7 +44,8 @@ export const CHANNEL_MAP = {
 };
 
 const FANOUT_IMMEDIATE = ['push', 'sms', 'whatsapp', 'email'];
-const FANOUT_VOICE_DELAY_MS = 90_000;
+// Voice is held back as the 90-second escalation if no other channel acks.
+// The voice escalation cron is round-4 work; the constant moves there with it.
 
 // Sequential-mode schedule keyed off the event's created_at.
 // Unit: seconds offset from t0.
@@ -186,7 +187,6 @@ async function attemptChannel({ supabase, channelName, contact, user, event, ack
     result = { ok: false, error: `channel_threw:${err.message}` };
   }
 
-  const nowIso = new Date().toISOString();
   if (result.skipped) {
     await updateAttempt(supabase, deliveryId, {
       status: 'skipped',
@@ -211,15 +211,9 @@ async function attemptChannel({ supabase, channelName, contact, user, event, ack
   return { ...result, deliveryId };
 }
 
-async function alreadyAcked(supabase, eventId) {
-  const { data } = await supabase
-    .from('safety_delivery_log')
-    .select('id')
-    .eq('safety_event_id', eventId)
-    .eq('status', 'acked')
-    .limit(1);
-  return Boolean(data && data.length);
-}
+// alreadyAcked() lived here — short-circuit guard for ack-aware fan-out — but the
+// voice escalation cron that needs it is round-4 work. The helper moves there with
+// it, alongside FANOUT_VOICE_DELAY_MS.
 
 /**
  * Fan-out dispatch (Mode A). Awaits all immediate-channel attempts in parallel,

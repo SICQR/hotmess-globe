@@ -5,7 +5,7 @@
  * via Supabase client stubs. The DB itself is mocked via an in-memory shim so
  * tests run without network and without Supabase running.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 // dispatcher is .js — Vitest's resolver handles JS from a .test.ts via tsconfig allowJs
 // (the project already imports .js files from .ts elsewhere).
 import { dispatchSafetyEvent, __testing, CHANNEL_MAP } from '../../api/notifications/dispatcher.js';

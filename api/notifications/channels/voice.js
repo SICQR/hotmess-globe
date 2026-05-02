@@ -9,7 +9,9 @@
  * endpoint, not implemented in this commit — see TODO at end of file).
  */
 export async function send(opts) {
-  const { contact, deliveryId, user, event, ackUrl } = opts;
+  // Voice ack happens via DTMF (press 1) → /api/safety/voice-response — no
+  // ackUrl is embedded in the call audio. Unused channel-contract field omitted.
+  const { contact, deliveryId, user, event } = opts;
 
   if (!contact.contact_phone) {
     return { ok: false, skipped: true, error: 'no_phone' };

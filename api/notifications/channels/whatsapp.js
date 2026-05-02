@@ -6,7 +6,8 @@
  * approval is pending, this channel returns 401 from Meta — the dispatcher
  * records the failure and moves on. Other channels keep firing.
  */
-import { buildAlertCopy } from './_types.js';
+// _types is intentionally not imported — template uses positional params
+// directly, not the formatted body from buildAlertCopy().
 
 export async function send(opts) {
   const { contact, user, event, ackUrl } = opts;
@@ -22,9 +23,7 @@ export async function send(opts) {
   }
 
   const cleanPhone = String(contact.contact_phone).replace(/\D/g, '');
-  const copy = buildAlertCopy({ user, event, ackUrl });
-
-  // Template parameters: {1}=user_name, {2}=location, {3}=ack_url
+  // Template uses positional params (no buildAlertCopy needed): {1}=user_name, {2}=location, {3}=ack_url
   const components = [{
     type: 'body',
     parameters: [
