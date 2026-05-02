@@ -35,6 +35,10 @@
       "schedule": "*/5 * * * *"
     },
     {
+      "path": "/api/safety/check-ins",
+      "schedule": "*/2 * * * *"
+    },
+    {
       "path": "/api/admin/cleanup/rate-limits",
       "schedule": "20 4 * * *"
     },
