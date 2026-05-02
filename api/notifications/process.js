@@ -384,11 +384,11 @@ async function sendWhatsAppAlert(notification) {
   try {
     // Try template first (required for cold-start conversations)
     const templateRes = await fetch(
-      \`https://graph.facebook.com/v18.0/\${phoneNumberId}/messages\`,
+      `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`,
       {
         method: 'POST',
         headers: {
-          'Authorization': \`Bearer \${accessToken}\`,
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -417,11 +417,11 @@ async function sendWhatsAppAlert(notification) {
 
     // Template not approved yet — fall back to plain text (only works if 24h window open)
     const textRes = await fetch(
-      \`https://graph.facebook.com/v18.0/\${phoneNumberId}/messages\`,
+      `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`,
       {
         method: 'POST',
         headers: {
-          'Authorization': \`Bearer \${accessToken}\`,
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -448,4 +448,5 @@ async function sendWhatsAppAlert(notification) {
 export const config = {
   maxDuration: 30, // 30 second timeout
 };
+
 
