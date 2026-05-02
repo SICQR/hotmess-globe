@@ -9,7 +9,7 @@
  */
 
 // Lazy-import Capacitor so the bundle does not break in non-Capacitor builds
-const isNative = (): boolean => {
+export const isNative = (): boolean => {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { Capacitor } = window as any;
