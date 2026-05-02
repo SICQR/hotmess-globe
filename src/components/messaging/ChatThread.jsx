@@ -1,6 +1,6 @@
 import { supabase } from '@/components/utils/supabaseClient';
 import { uploadToStorage } from '@/lib/uploadToStorage';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 // ── Haversine distance in metres ─────────────────────────────────────────────
 function haversineM(lat1, lng1, lat2, lng2) {

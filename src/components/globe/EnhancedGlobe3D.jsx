@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import Globe from 'react-globe.gl';
-import * as THREE from 'three';
 
 const DEFAULT_ROTATION = { lat: 20, lng: 0 };
 

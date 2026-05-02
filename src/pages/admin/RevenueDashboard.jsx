@@ -9,8 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useUserContext } from '@/hooks/useUserContext';
 import {
-  TrendingUp, Users, Zap, Shield, Radio,
-  ShoppingBag, RefreshCw, AlertTriangle, CheckCircle,
+  TrendingUp, Users, Shield, Radio,
+  ShoppingBag, RefreshCw, AlertTriangle,
 } from 'lucide-react';
 
 const GOLD  = '#C8962C';

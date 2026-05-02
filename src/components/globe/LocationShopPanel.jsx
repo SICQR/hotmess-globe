@@ -34,7 +34,7 @@ export default function LocationShopPanel({ location, onClose }) {
       .then((results) => setProducts(results.filter(Boolean)))
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
-  }, [handlelesStr]); // eslint-disable-line react-hooks/exhaustive-deps -- join is stable for same array content
+  }, [handlelesStr]);  
 
   const handleAddToCart = async (product) => {
     const variantId = product?.variants?.[0]?.id;

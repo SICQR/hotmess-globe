@@ -50,7 +50,7 @@ export function GhostedAmbientToggle({ className = '' }) {
       player.playTrack(ambientTrack);
       if (player.setVolume) player.setVolume(0.3); // Low volume for ambient
     }
-  }, [isAmbient, ambientTrack]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isAmbient, ambientTrack]);  
 
   if (!ambientTrack) return null;
 

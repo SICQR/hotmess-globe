@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { buildProfileRecText, recommendTravelModes } from '@/utils/travelRecommendations';
 import { useNavigate } from 'react-router-dom';
 import { Camera, Loader2 } from 'lucide-react';
-import { supabase } from '@/components/utils/supabaseClient';
 import { uploadToStorage, insertProfilePhoto } from '@/lib/uploadToStorage';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';

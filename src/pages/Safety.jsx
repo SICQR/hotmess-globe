@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
-import { Shield, UserPlus, Clock, Phone, AlertTriangle, CheckCircle, ArrowLeft } from 'lucide-react';
+import { Shield, UserPlus, Clock, Phone, CheckCircle, ArrowLeft } from 'lucide-react';
 import { useLocalPullToRefresh } from '@/hooks/useLocalPullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 
