@@ -11,6 +11,11 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 import { humanizeError } from '@/lib/errorUtils';
 
+// Match supabase/config.toml: minimum_password_length=8 +
+// password_requirements="lower_upper_letters_digits".
+const PASSWORD_RULE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+const PASSWORD_HINT = 'Password must be 8+ characters with at least one lowercase letter, one uppercase letter, and one digit';
+
 export default function ResetPassword() {
   const navigate = useNavigate();
   const [password, setPassword]       = useState('');
@@ -35,8 +40,8 @@ export default function ResetPassword() {
 
   const handleReset = async (e) => {
     e.preventDefault();
-    if (password.length < 8)    return toast.error('Password must be at least 8 characters');
-    if (password !== confirm)   return toast.error("Passwords don't match");
+    if (!PASSWORD_RULE.test(password)) return toast.error(PASSWORD_HINT);
+    if (password !== confirm)          return toast.error("Passwords don't match");
 
     setLoading(true);
     try {
@@ -123,7 +128,7 @@ export default function ResetPassword() {
 
               <button
                 type="submit"
-                disabled={loading || password.length < 8 || password !== confirm}
+                disabled={loading || !PASSWORD_RULE.test(password) || password !== confirm}
                 className="w-full bg-[#C8962C] text-black font-black text-sm rounded-2xl py-4 flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50 mt-2"
               >
                 {loading
