@@ -220,9 +220,10 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   useEffect(() => {
     setSearchParams(
       (prev) => {
-        if (debouncedSearch) prev.set('q', debouncedSearch);
-        else prev.delete('q');
-        return prev;
+        const next = new URLSearchParams(prev);
+        if (debouncedSearch) next.set('q', debouncedSearch);
+        else next.delete('q');
+        return next;
       },
       { replace: true },
     );
@@ -230,12 +231,13 @@ export function MarketMode({ className = '' }: MarketModeProps) {
 
   const handleDismissPurchase = useCallback(() => {
     setSearchParams((prev) => {
-      prev.delete('purchase');
-      prev.delete('listing');
-      prev.delete('order_id');
-      prev.delete('session_id');
-      prev.delete('type');
-      return prev;
+      const next = new URLSearchParams(prev);
+      next.delete('purchase');
+      next.delete('listing');
+      next.delete('order_id');
+      next.delete('session_id');
+      next.delete('type');
+      return next;
     }, { replace: true });
   }, [setSearchParams]);
 
