@@ -7,6 +7,7 @@
  *
  * On 410/404 from the push service, the stale subscription is deleted.
  */
+import '../../_silence-dep0169.js';
 import webPush from 'web-push';
 import { buildAlertCopy } from './_types.js';
 

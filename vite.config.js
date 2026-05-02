@@ -696,6 +696,40 @@ function localApiRoutes() {
             });
         }
 
+        if (path === '/api/safety/sos' && (method === 'POST' || method === 'OPTIONS')) {
+          return importFresh('./api/safety/sos.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'safety/sos handler error' }));
+            });
+        }
+
+        if (path === '/api/safety/get-out' && (method === 'POST' || method === 'OPTIONS')) {
+          return importFresh('./api/safety/get-out.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'safety/get-out handler error' }));
+            });
+        }
+
+        // /api/safety/ack/[id] — dynamic param routed via path prefix
+        if (path.startsWith('/api/safety/ack/') && (method === 'GET' || method === 'OPTIONS')) {
+          const id = path.split('/').pop();
+          if (!req.query) req.query = {};
+          req.query.id = id;
+          return importFresh('./api/safety/ack/[id].js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'safety/ack handler error' }));
+            });
+        }
+
         // ── AI endpoints ────────────────────────────────────────────────────
         if (path === '/api/ai/wingman' && method === 'POST') {
           return importFresh('./api/ai/wingman.js')

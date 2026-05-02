@@ -39,72 +39,47 @@ export function SOSProvider({ children }: { children: React.ReactNode }) {
     setSosActive(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // 2. Immediate Location Capture
-      const position = await new Promise<GeolocationCoordinates>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => resolve(pos.coords),
-          reject,
-          { enableHighAccuracy: true, timeout: 5000 }
-        );
-      }).catch(() => null);
-
-      // 3. Atomically log safety event
-      // Schema: safety_events has columns id/user_id/type/delivery_status/created_at/metadata.
-      // Lat/lng live inside metadata — never as top-level columns.
-      const { data: event, error: eventErr } = await supabase
-        .from('safety_events')
-        .insert({
-          user_id: user.id,
-          type: 'sos',
-          metadata: {
-            trigger: 'silent_gesture',
-            lat: position?.latitude ?? null,
-            lng: position?.longitude ?? null,
-          },
-        })
-        .select()
-        .single();
-      if (eventErr) console.error('[SOS] safety_events insert failed:', eventErr);
-
-      // 4. Trigger Alerts to Trusted Contacts
-      const { data: contacts } = await supabase
-        .from('trusted_contacts')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('notify_on_sos', true);
-
-      const locStr = position
-        ? `${position.latitude.toFixed(5)}, ${position.longitude.toFixed(5)}`
-        : 'Location unavailable';
-
-      for (const contact of contacts || []) {
-        if (contact.contact_phone) {
-          await supabase.from('notification_outbox').insert({
-            user_email: contact.contact_email || user.email,
-            notification_type: 'sos_alert',
-            title: '🆘 HOTMESS Safety Alert',
-            message: `Your friend needs help right now. Last location: ${locStr}`,
-            channel: 'whatsapp',
-            metadata: {
-              type: 'sos',
-              user_id: user.id,
-              user_name: user.email,
-              location_str: locStr,
-              contact_phone: contact.contact_phone,
-              event_id: event?.id
-            }
-          });
-        }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        console.warn('[SOS] no session — cannot trigger');
+        return;
       }
 
-      console.log('[InvisibleSafety] SOS Triggered Silently');
+      // 2. Immediate Location Capture (best-effort)
+      const position = await new Promise<GeolocationCoordinates | null>((resolve) => {
+        if (!navigator.geolocation) return resolve(null);
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve(pos.coords),
+          () => resolve(null),
+          { enableHighAccuracy: true, timeout: 5000 }
+        );
+      });
+
+      // 3. POST to /api/safety/sos — server writes safety_events + invokes the
+      // multi-channel dispatcher (Mode A fan-out). The legacy client-side
+      // outbox writes have been removed; the dispatcher is the single source
+      // of truth for fan-out across push/sms/whatsapp/email/voice.
+      const res = await fetch('/api/safety/sos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          lat: position?.latitude ?? null,
+          lng: position?.longitude ?? null,
+          trigger: 'silent_gesture',
+        }),
+      });
+      if (!res.ok) {
+        console.error('[SOS] /api/safety/sos failed:', res.status);
+      } else {
+        console.log('[InvisibleSafety] SOS Triggered Silently');
+      }
 
       if (!options.silent) {
         // Only if explicitly requested (e.g. from Hub)
-        // setShowRecovery(true); 
+        // setShowRecovery(true);
       }
     } catch (err) {
       console.error('[SOS] Silent trigger failed:', err);

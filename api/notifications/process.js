@@ -7,6 +7,7 @@
  * Trigger: Vercel Cron /api/notifications/process (vercel.json) or manual GET/POST.
  */
 
+import '../_silence-dep0169.js';
 import { createClient } from '@supabase/supabase-js';
 import webPush from 'web-push';
 import { json, getEnv } from '../shopify/_utils.js';

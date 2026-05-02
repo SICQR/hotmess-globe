@@ -17,6 +17,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { dispatchSafetyEvent } from '../notifications/dispatcher.js';
 
 const supabaseUrl =
   process.env.SUPABASE_URL ??
@@ -117,11 +118,29 @@ export default async function handler(req, res) {
       }
     }
 
+    // Round 4 wiring: fan-out across all 5 channels via the dispatcher.
+    // The legacy notification_outbox path above stays in place for now —
+    // process.js still drains it. Both paths writing the same alert is
+    // intentional during the cutover; round 5 retires the legacy path.
+    let dispatch = null;
+    if (eventRow?.id) {
+      try {
+        dispatch = await dispatchSafetyEvent({
+          supabase: supabaseAdmin,
+          eventId: eventRow.id,
+          mode: 'fanout',
+        });
+      } catch (dErr) {
+        console.error('[get-out] dispatcher error (non-fatal):', dErr);
+      }
+    }
+
     return res.status(200).json({
       ok: true,
       notified,
       cleared: true,
       event_id: eventRow?.id || null,
+      dispatch,
     });
   } catch (err) {
     console.error('[get-out] error:', err);

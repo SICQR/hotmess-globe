@@ -8,6 +8,7 @@
  *       alerted_at IS NULL, then fires SOS-style alerts to trusted contacts.
  */
 import { createClient } from '@supabase/supabase-js';
+import { dispatchSafetyEvent } from '../notifications/dispatcher.js';
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
@@ -157,6 +158,35 @@ export default async function handler(req, res) {
           channel: 'push',
           metadata: { checkin_id: checkin.id },
         });
+
+        // Round 4 wiring: write a safety_events row so the dispatcher can fan
+        // out across all 5 channels (Mode B sequential — gentle escalation).
+        // Schema CHECK widened in 20260502051157 to allow 'check_in_miss'.
+        const { data: evRow } = await supabase
+          .from('safety_events')
+          .insert({
+            user_id: checkin.user_id,
+            type: 'check_in_miss',
+            metadata: {
+              checkin_id: checkin.id,
+              overdue_minutes: overdueMins,
+              note: checkin.note || null,
+              location: checkin.location || null,
+            },
+          })
+          .select('id')
+          .single();
+        if (evRow?.id) {
+          try {
+            await dispatchSafetyEvent({
+              supabase,
+              eventId: evRow.id,
+              mode: 'sequential',
+            });
+          } catch (dErr) {
+            console.error('[check-ins cron] dispatcher error (non-fatal):', dErr.message);
+          }
+        }
 
         alerted++;
       } catch (err) {
