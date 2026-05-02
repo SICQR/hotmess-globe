@@ -9,7 +9,10 @@ import { createClient } from '@supabase/supabase-js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!supabaseServiceKey) {
+  console.error('[stripe webhook] SUPABASE_SERVICE_ROLE_KEY not set');
+}
 
 const SHOPIFY_ADMIN_API_TOKEN = process.env.SHOPIFY_ADMIN_API_TOKEN;
 const SHOPIFY_STORE_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN || 'hotmessldn.myshopify.com';
@@ -383,6 +386,60 @@ async function sendMembershipEmail(userId, tierName, req) {
   }
 }
 
+
+// ── Subscription lifecycle handlers ─────────────────────────────────────────
+async function handleSubscriptionDeleted(subscription) {
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('stripe_subscription_id', subscription.id)
+    .maybeSingle();
+  if (!profile) {
+    console.warn('[Webhook] subscription.deleted: no profile found for', subscription.id);
+    return;
+  }
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      subscription_status: 'canceled',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', profile.id);
+  if (error) console.error('[Webhook] subscription.deleted update failed:', error.message);
+  else console.log('[Webhook] subscription.deleted: marked canceled for profile', profile.id);
+}
+
+async function handleSubscriptionUpdated(subscription) {
+  if (subscription.status !== 'past_due') return;
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  await supabase.from('stripe_events_log').insert({
+    event_type: 'customer.subscription.updated',
+    stripe_subscription_id: subscription.id,
+    status: subscription.status,
+    metadata: { reason: 'past_due', subscription_id: subscription.id },
+    created_at: new Date().toISOString(),
+  });
+  console.log('[Webhook] subscription.updated: past_due logged for', subscription.id);
+}
+
+async function handleInvoicePaymentFailed(invoice) {
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  await supabase.from('stripe_events_log').insert({
+    event_type: 'invoice.payment_failed',
+    stripe_subscription_id: invoice.subscription || null,
+    status: 'payment_failed',
+    metadata: {
+      invoice_id: invoice.id,
+      amount_due: invoice.amount_due,
+      attempt_count: invoice.attempt_count,
+      customer_email: invoice.customer_email,
+    },
+    created_at: new Date().toISOString(),
+  });
+  console.log('[Webhook] invoice.payment_failed logged, attempt', invoice.attempt_count, 'for', invoice.customer_email);
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -395,6 +452,11 @@ export default async function handler(req, res) {
   for await (const chunk of req) { chunks.push(chunk); }
   const rawBody = Buffer.concat(chunks);
   const sig = req.headers['stripe-signature'];
+
+  // Idempotency check — bail early if event already processed
+  const sigHeader = req.headers['stripe-signature'];
+  // We use stripe-signature as a proxy for event id until we parse it;
+  // real check is after parse below (see idempotency insert)
 
   let event;
   try {
@@ -427,15 +489,52 @@ export default async function handler(req, res) {
 
   console.log(`[Webhook] Event Received: ${event.type}`);
 
-  // Handle both possible success events
+  const supabaseForIdempotency = createClient(supabaseUrl, supabaseServiceKey);
+
+  // Idempotency: skip if already processed
+  if (event.id) {
+    const { data: existing } = await supabaseForIdempotency
+      .from('processed_webhook_sessions')
+      .select('stripe_event_id')
+      .eq('stripe_event_id', event.id)
+      .maybeSingle();
+    if (existing) {
+      console.log(`[Webhook] Skipping duplicate event: ${event.id}`);
+      res.statusCode = 200;
+      return res.end(JSON.stringify({ received: true, idempotent: true }));
+    }
+  }
+
+  // Handle events
   if (event.type === 'checkout.session.completed') {
     await processOrderCompletion(event.data.object, 'checkout.session.completed', req);
-  } 
-  else if (event.type === 'payment_intent.succeeded') {
+  } else if (event.type === 'payment_intent.succeeded') {
     await processOrderCompletion(event.data.object, 'payment_intent.succeeded', req);
+  } else if (event.type === 'customer.subscription.deleted') {
+    await handleSubscriptionDeleted(event.data.object);
+  } else if (event.type === 'customer.subscription.updated') {
+    await handleSubscriptionUpdated(event.data.object);
+  } else if (event.type === 'invoice.payment_failed') {
+    await handleInvoicePaymentFailed(event.data.object);
+  }
+
+  // Record processed event for idempotency
+  if (event.id) {
+    await supabaseForIdempotency
+      .from('processed_webhook_sessions')
+      .insert({
+        stripe_event_id: event.id,
+        stripe_session_id: event.data?.object?.id || null,
+        event_type: event.type,
+        processed_at: new Date().toISOString(),
+        result: { processed: true },
+      })
+      .select()
+      .maybeSingle();
   }
 
   res.statusCode = 200;
   return res.end(JSON.stringify({ received: true }));
 }
+
 
