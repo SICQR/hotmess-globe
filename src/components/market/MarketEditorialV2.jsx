@@ -15,7 +15,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/components/utils/supabaseClient';
-import { useV6Flag } from '@/hooks/useV6Flag';
 
 // ── DESIGN TOKENS ─────────────────────────────────────────────────────────────
 export const MARKET_TOKENS = {

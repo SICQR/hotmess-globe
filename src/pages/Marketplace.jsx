@@ -23,7 +23,6 @@ import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
 import { openCartDrawer } from '@/utils/cartEvents';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import OSCard, { OSCardBadge } from '@/components/ui/OSCard';
-import LazyImage from '@/components/ui/LazyImage';
 
 const BRAND_FILTERS = [
   { key: 'all', label: 'ALL' },

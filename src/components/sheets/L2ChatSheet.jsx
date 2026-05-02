@@ -318,7 +318,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       .catch((err) => {
         console.warn('[Chat] Target lookup failed.', err);
       });
-  }, [resolvedUserId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [resolvedUserId]);  
 
   // ── Load threads when user is ready ───────────────────────────────────────
   useEffect(() => {
@@ -441,7 +441,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         }
       )
       .subscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [currentUser?.email]);
 
   // Cleanup realtime on unmount

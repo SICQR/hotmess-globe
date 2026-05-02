@@ -258,7 +258,7 @@ export default function OnboardingGate() {
       if (error) console.error('[Onboarding] ensureProfileRow error:', error);
     };
     ensureProfileRow();
-  }, [session?.user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [session?.user?.id]);  
 
   // Wait for BootGuard to finish loading
   useEffect(() => {
@@ -280,7 +280,7 @@ export default function OnboardingGate() {
     }
 
     setStep(ageConfirmed ? 2 : 1);
-  }, [isLoading, session, profile?.onboarding_completed, ageConfirmed]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isLoading, session, profile?.onboarding_completed, ageConfirmed]);  
 
   // ── Step advance ──────────────────────────────────────────────────────────
   const handleNext = useCallback(

@@ -4,23 +4,20 @@
  * Refined UI: Stacked Image Gallery (no swiping), Multi-Variant Selection.
  */
 
-import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingBag, ShoppingCart, Loader2,
-  ChevronRight, ChevronDown, Tag, Share2, MessageCircle, HandCoins,
-  Truck, RotateCcw, Flag, Info, ShieldCheck
+  ChevronRight, ChevronDown, MessageCircle,
+  Truck, ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { SheetSection, SheetActions, SheetDivider } from './L2SheetContainer';
-import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
+import { useSheet } from '@/contexts/SheetContext';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import { fetchProductByHandle } from '@/features/shop/api/shopifyStorefront';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
-import ProductReviews from '@/components/marketplace/ProductReviews';
-import { nudgeAfterLatePurchase } from '@/lib/careNudges';
 import { getInternalProducts } from '@/lib/data/market';
 
 /**

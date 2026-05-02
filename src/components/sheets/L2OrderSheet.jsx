@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Package, Truck, CheckCircle, Clock, QrCode, Loader2, MapPin,
-  MessageCircle, CreditCard, XCircle, Shield,
+  MessageCircle, CreditCard, XCircle,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';

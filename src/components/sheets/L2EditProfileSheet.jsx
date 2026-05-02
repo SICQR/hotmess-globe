@@ -21,11 +21,10 @@ import { useSheet } from '@/contexts/SheetContext';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Camera, Loader2, CheckCircle, User, MapPin,
-  Instagram, Music, Crown, ChevronRight, Save, Plus, Check
+  Instagram, Music, Crown, ChevronRight, Plus, Check
 } from 'lucide-react';
 import { usePersona } from '@/contexts/PersonaContext';
 import { toast } from 'sonner';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const AMBER = '#C8962C';
 const PRONOUNS = ['He/Him', 'She/Her', 'They/Them', 'He/They', 'She/They', 'Any'];

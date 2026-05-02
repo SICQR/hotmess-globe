@@ -1,10 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { X, MapPin, Calendar, Users, Zap, ExternalLink } from 'lucide-react';
-import { format } from 'date-fns';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { X, MapPin } from 'lucide-react';
 import { createPageUrl } from '../../utils';
 
 export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
-import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield, Radio as RadioIcon, ChevronRight } from 'lucide-react';
+import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Search, Shield, Radio as RadioIcon } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { updatePresence } from '@/api/presence';
 import SafetyFAB from '@/components/safety/SafetyFAB';

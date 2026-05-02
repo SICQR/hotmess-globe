@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/components/utils/supabaseClient';
 import { uploadToStorage } from '@/lib/uploadToStorage';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Bell, Shield, LogOut, Save, Edit, Camera, Download, Trash2, Database, HelpCircle, MessageSquare, FileText, Lock, Fingerprint } from 'lucide-react';
+import { User, Bell, Shield, LogOut, Save, Camera, Download, Trash2, Database, HelpCircle, MessageSquare, FileText, Lock, Fingerprint } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
