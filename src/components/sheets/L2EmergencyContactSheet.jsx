@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Trash2, Plus, Loader2, User, Phone, Users } from 'lucide-react';
+import { AlertTriangle, Trash2, Plus, Loader2, User, Phone, Users, Mail, Send, Check } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 
 const RELATIONS = ['Friend', 'Partner', 'Family', 'Other'];
@@ -18,9 +18,11 @@ export default function L2EmergencyContactSheet() {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(null);
+  const [testing, setTesting] = useState(null);
+  const [testStatus, setTestStatus] = useState({}); // { [contactId]: 'sent' | 'failed' }
   const [error, setError] = useState('');
 
-  const [form, setForm] = useState({ contact_name: '', contact_phone: '', relationship: 'Friend' });
+  const [form, setForm] = useState({ contact_name: '', contact_phone: '', contact_email: '', relationship: 'Friend' });
 
   // ─── Load contacts ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -54,9 +56,18 @@ export default function L2EmergencyContactSheet() {
     let { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); setError('Not signed in.'); return; }
 
+    const insertPayload = {
+      user_id: user.id,
+      contact_name: form.contact_name.trim(),
+      contact_phone: form.contact_phone.trim(),
+      relationship: form.relationship,
+    };
+    const trimmedEmail = form.contact_email.trim();
+    if (trimmedEmail) insertPayload.contact_email = trimmedEmail;
+
     const { error: insertError } = await supabase
       .from('trusted_contacts')
-      .insert({ user_id: user.id, contact_name: form.contact_name.trim(), contact_phone: form.contact_phone.trim(), relationship: form.relationship });
+      .insert(insertPayload);
 
     setSaving(false);
 
@@ -69,9 +80,39 @@ export default function L2EmergencyContactSheet() {
       return;
     }
 
-    setForm({ contact_name: '', contact_phone: '', relationship: 'Friend' });
+    setForm({ contact_name: '', contact_phone: '', contact_email: '', relationship: 'Friend' });
     setShowForm(false);
     loadContacts();
+  }
+
+  // ─── Send test alert ──────────────────────────────────────────────────────
+  // Owner-only verification — fires a non-emergency SMS to the contact so the
+  // user knows the number is reachable BEFORE a real SOS.
+  async function handleTest(contactId) {
+    setTesting(contactId);
+    setTestStatus(s => ({ ...s, [contactId]: undefined }));
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setTestStatus(s => ({ ...s, [contactId]: 'failed' }));
+        return;
+      }
+      const res = await fetch('/api/safety/test-contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ contact_id: contactId }),
+      });
+      setTestStatus(s => ({ ...s, [contactId]: res.ok ? 'sent' : 'failed' }));
+      // Auto-clear status badge after 4s.
+      setTimeout(() => setTestStatus(s => ({ ...s, [contactId]: undefined })), 4000);
+    } catch (_err) {
+      setTestStatus(s => ({ ...s, [contactId]: 'failed' }));
+    } finally {
+      setTesting(null);
+    }
   }
 
   // ─── Delete contact ───────────────────────────────────────────────────────
@@ -103,7 +144,7 @@ export default function L2EmergencyContactSheet() {
           <div>
             <p className="text-[#C8962C] font-black text-sm">Emergency Contact</p>
             <p className="text-white/60 text-xs mt-0.5 leading-relaxed">
-              Always get notified if you trigger SOS. They'll receive a text with your alert.
+              They'll receive a text the second you trigger SOS. Tap the gold send icon to fire a test message — verify the number works before you ever need it.
             </p>
           </div>
         </div>
@@ -132,8 +173,27 @@ export default function L2EmergencyContactSheet() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-white font-bold text-sm truncate">{contact.contact_name}</p>
-                  <p className="text-white/50 text-xs">{contact.contact_phone} · {contact.relationship}</p>
+                  <p className="text-white/50 text-xs truncate">{contact.contact_phone} · {contact.relationship}</p>
+                  {testStatus[contact.id] === 'sent' && (
+                    <p className="text-emerald-400 text-[10px] font-bold mt-0.5">Test sent ✓</p>
+                  )}
+                  {testStatus[contact.id] === 'failed' && (
+                    <p className="text-red-400 text-[10px] font-bold mt-0.5">Test failed — check the number</p>
+                  )}
                 </div>
+                <button
+                  onClick={() => handleTest(contact.id)}
+                  disabled={testing === contact.id || !contact.contact_phone}
+                  className="w-8 h-8 rounded-xl bg-[#C8962C]/10 flex items-center justify-center flex-shrink-0 active:bg-[#C8962C]/20 transition-colors disabled:opacity-40"
+                  aria-label={`Send test alert to ${contact.contact_name}`}
+                  title="Send a test alert to this contact"
+                >
+                  {testing === contact.id
+                    ? <Loader2 className="w-4 h-4 text-[#C8962C] animate-spin" />
+                    : testStatus[contact.id] === 'sent'
+                      ? <Check className="w-4 h-4 text-emerald-400" />
+                      : <Send className="w-4 h-4 text-[#C8962C]" />}
+                </button>
                 <button
                   onClick={() => handleDelete(contact.id)}
                   disabled={deleting === contact.id}
@@ -181,9 +241,21 @@ export default function L2EmergencyContactSheet() {
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none" />
                 <input
                   type="tel"
-                  placeholder="Phone number"
+                  placeholder="Phone number (with country code)"
                   value={form.contact_phone}
                   onChange={e => setForm(f => ({ ...f, contact_phone: e.target.value }))}
+                  className="w-full bg-white/5 rounded-xl pl-9 pr-4 py-3 text-white text-sm placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-[#C8962C]/50"
+                />
+              </div>
+
+              {/* Email (optional, future channel) */}
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none" />
+                <input
+                  type="email"
+                  placeholder="Email (optional, fallback channel)"
+                  value={form.contact_email}
+                  onChange={e => setForm(f => ({ ...f, contact_email: e.target.value }))}
                   className="w-full bg-white/5 rounded-xl pl-9 pr-4 py-3 text-white text-sm placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-[#C8962C]/50"
                 />
               </div>
@@ -208,7 +280,7 @@ export default function L2EmergencyContactSheet() {
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"
-                  onClick={() => { setShowForm(false); setError(''); setForm({ contact_name: '', contact_phone: '', relationship: 'Friend' }); }}
+                  onClick={() => { setShowForm(false); setError(''); setForm({ contact_name: '', contact_phone: '', contact_email: '', relationship: 'Friend' }); }}
                   className="flex-1 py-3 bg-white/5 rounded-xl text-white/60 font-bold text-sm"
                 >
                   Cancel
