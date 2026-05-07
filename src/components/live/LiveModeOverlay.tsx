@@ -49,6 +49,36 @@ export default function LiveModeOverlay() {
   const reduced = useReducedMotion();
   const [activeChipId, setActiveChipId] = useState<string | null>(null);
 
+  // ── Action handlers ────────────────────────────────────────────────────────
+  // Hooks MUST be declared before any conditional return (React #310). Keep
+  // these here even though they only fire while live; moving them below the
+  // early-return on `!isLive` causes the hook count to jump 5→10 the moment
+  // Go Live flips on, which crashes the app.
+
+  const handlePing = useCallback((user: LiveUser) => {
+    openSheet('chat', { userId: user.id, prefill: '👋' });
+  }, [openSheet]);
+
+  const handlePullUp = useCallback((user: LiveUser) => {
+    openSheet('profile', { uid: user.id });
+  }, [openSheet]);
+
+  const handleMeetHalfway = useCallback((user: LiveUser) => {
+    openSheet('profile', { uid: user.id });
+  }, [openSheet]);
+
+  const handleAction = useCallback((user: LiveUser) => {
+    switch (user.primaryAction) {
+      case 'ping': return handlePing(user);
+      case 'pull_up': return handlePullUp(user);
+      case 'meet_halfway': return handleMeetHalfway(user);
+    }
+  }, [handlePing, handlePullUp, handleMeetHalfway]);
+
+  const handleChipTap = useCallback((chip: ContextChip) => {
+    setActiveChipId(prev => prev === chip.id ? null : chip.id);
+  }, []);
+
   if (!isLive || !liveContext) return null;
 
   const moment = data ?? {
@@ -89,33 +119,6 @@ export default function LiveModeOverlay() {
   const subline = subParts.join(' \u00B7 ') || 'Scanning...';
 
   const isVenueLayout = liveContext.type === 'venue';
-
-  // ── Action handlers ────────────────────────────────────────────────────────
-
-  const handlePing = useCallback((user: LiveUser) => {
-    openSheet('chat', { userId: user.id, prefill: '\uD83D\uDC4B' });
-  }, [openSheet]);
-
-  const handlePullUp = useCallback((user: LiveUser) => {
-    openSheet('profile', { uid: user.id });
-  }, [openSheet]);
-
-  const handleMeetHalfway = useCallback((user: LiveUser) => {
-    openSheet('profile', { uid: user.id });
-  }, [openSheet]);
-
-  const handleAction = useCallback((user: LiveUser) => {
-    switch (user.primaryAction) {
-      case 'ping': return handlePing(user);
-      case 'pull_up': return handlePullUp(user);
-      case 'meet_halfway': return handleMeetHalfway(user);
-    }
-  }, [handlePing, handlePullUp, handleMeetHalfway]);
-
-  const handleChipTap = useCallback((chip: ContextChip) => {
-    setActiveChipId(prev => prev === chip.id ? null : chip.id);
-  }, []);
-
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
