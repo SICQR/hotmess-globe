@@ -1,5 +1,54 @@
 import { getEnv, getQueryParam, json } from '../shopify/_utils.js';
 import { getSupabaseServerClients } from '../routing/_utils.js';
+import { sendSms } from './channels/sms.js';
+
+// Safety-critical types: when contact has phone, prefer SMS regardless of
+// the row's `channel` field. Lets us keep WhatsApp coded but inert until
+// Meta template + UK Alpha sender both clear, while still delivering SOS
+// alerts via the proven SMS path.
+const SAFETY_TYPES = new Set([
+  'safety_alert',
+  'sos_alert',
+  'checkin_missed',
+  'checkin_expired',
+  'trusted_contact_alert',
+  'land_time_miss',
+  'get_out',
+]);
+
+function shouldUseSms(item) {
+  if (item.channel === 'sms') return true;
+  if (SAFETY_TYPES.has(String(item.notification_type || ''))
+      && (item.metadata?.contact_phone || item.metadata?.phone)) {
+    return true;
+  }
+  return false;
+}
+
+function buildSafetySmsBody(item) {
+  const userName = item.metadata?.user_name
+    || item.metadata?.display_name
+    || 'A friend';
+  const where = item.metadata?.location_str || 'location unavailable';
+  const url = item.metadata?.ack_url || item.metadata?.link || 'https://hotmessldn.com/';
+  const type = String(item.notification_type || '');
+  const verb =
+    type === 'sos_alert'             ? 'pressed SOS'
+    : type === 'checkin_missed'      ? 'missed a safety check-in'
+    : type === 'checkin_expired'     ? 'has an expired safety check-in'
+    : type === 'land_time_miss'      ? 'missed their Land Time'
+    : type === 'get_out'             ? 'pressed Get Out'
+    : type === 'trusted_contact_alert' ? 'needs help'
+    : 'triggered a safety alert';
+  return `HOTMESS: ${userName} ${verb}. ${where}. Reach them: ${url}`;
+}
+
+function smsBodyFor(item) {
+  if (SAFETY_TYPES.has(String(item.notification_type || ''))) {
+    return buildSafetySmsBody(item);
+  }
+  return item.message || item.title || 'HOTMESS notification';
+}
 
 const getSecret = () => getEnv('OUTBOX_CRON_SECRET', ['CRON_SECRET']);
 
@@ -171,6 +220,33 @@ export default async function handler(req, res) {
         continue;
       }
 
+      // SMS — preferred for safety types, or any row where channel === 'sms'.
+      // Must come BEFORE whatsapp so safety types route to SMS while WA is
+      // pending Meta template + UK Alpha sender approval.
+      if (shouldUseSms(item)) {
+        const phone = item.metadata?.contact_phone || item.metadata?.phone;
+        if (!phone) throw new Error('Phone number required for SMS channel');
+
+        const result = await sendSms({ to: phone, body: smsBodyFor(item) });
+        if (!result.ok) {
+          throw new Error(result.error || 'SMS send failed');
+        }
+
+        const { error: updateError } = await serviceClient
+          .from('notification_outbox')
+          .update({
+            status: 'sent',
+            sent_at: nowIso,
+            error_message: null,
+            metadata: { ...(item.metadata || {}), provider_id: result.providerId || null, delivered_via: 'sms' },
+          })
+          .eq('id', item.id);
+
+        if (updateError) throw updateError;
+        sent += 1;
+        continue;
+      }
+
       if (channel === 'whatsapp') {
         const phone = item.metadata?.contact_phone || item.metadata?.phone;
         if (!phone) throw new Error('Phone number required for WhatsApp channel');
@@ -236,9 +312,20 @@ export default async function handler(req, res) {
       failed += 1;
     } catch (err) {
       console.error('[dispatch] Error processing item:', item.id, err);
+      // MEGA-1 §1.7: persist the actual failure reason so we can debug from SQL.
+      const reason = err?.message
+        || err?.error
+        || (typeof err === 'string' ? err : null)
+        || JSON.stringify(err)?.slice(0, 500)
+        || 'unknown_error';
       await serviceClient
         .from('notification_outbox')
-        .update({ status: 'failed', metadata: { ...(item.metadata || {}), error: err.message } })
+        .update({
+          status: 'failed',
+          error_message: String(reason).slice(0, 500),
+          updated_at: new Date().toISOString(),
+          metadata: { ...(item.metadata || {}), error: reason },
+        })
         .eq('id', item.id);
       failed += 1;
     }
