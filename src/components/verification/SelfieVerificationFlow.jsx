@@ -131,27 +131,19 @@ export default function SelfieVerificationFlow({ onComplete, onDismiss }) {
       const poseFile = new File([poseBlob], `verification_pose_${Date.now()}.jpg`, { type: 'image/jpeg' });
       await uploadToStorage(poseFile, 'avatars', `${user.id}/verification`);
 
-      // Write verification record
-      await supabase.from('profile_verifications').insert({
+      // Write verification record (admin reviews before is_verified flips)
+      const { error: insertErr } = await supabase.from('profile_verifications').insert({
         user_id: user.id,
         type: 'selfie',
-        status: 'approved', // Auto-approve selfie submissions (manual review can override later)
+        status: 'pending',
         selfie_url: selfieUrl,
         pose_challenge: challenge.key,
         submitted_at: new Date().toISOString(),
-        reviewed_at: new Date().toISOString(),
       });
-
-      // Update profile verification status
-      await supabase.from('profiles').update({
-        is_verified: true,
-        verification_level: 'basic',
-        verified_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }).eq('id', user.id);
+      if (insertErr) throw insertErr;
 
       setStep('success');
-      toast.success('You\'re verified!');
+      toast.success('Submitted for review');
     } catch (err) {
       console.error('[Verification] submit failed:', err);
       setError(err.message || 'Verification failed. Please try again.');
@@ -291,9 +283,9 @@ export default function SelfieVerificationFlow({ onComplete, onDismiss }) {
         <div className="w-16 h-16 rounded-full flex items-center justify-center mb-6" style={{ backgroundColor: `${GOLD}20` }}>
           <CheckCircle className="w-8 h-8" style={{ color: GOLD }} />
         </div>
-        <h2 className="text-white text-xl font-bold mb-2">You're Verified</h2>
+        <h2 className="text-white text-xl font-bold mb-2">Submitted</h2>
         <p className="text-white/50 text-sm text-center mb-8 max-w-[260px]">
-          Your badge is now live. Other users can see you're a real person.
+          A real human reviews every selfie. You'll get a notification within 24 hours when your badge is live.
         </p>
         <button
           onClick={() => onComplete?.()}
