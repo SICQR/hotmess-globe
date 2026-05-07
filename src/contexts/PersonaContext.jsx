@@ -15,11 +15,12 @@ import { supabase } from '@/components/utils/supabaseClient';
 
 const PersonaContext = createContext(null);
 
+// Simplified 2026-05-07: dropped CUSTOM and WEEKEND; renamed WEEKEND -> AFTERHOURS.
+// Existing CUSTOM rows are archived (archived_at IS NOT NULL) and filtered out of loads.
 export const PERSONA_TYPES = {
   MAIN: 'main',
   TRAVEL: 'travel',
-  WEEKEND: 'weekend',
-  CUSTOM: 'custom',
+  AFTERHOURS: 'afterhours',
 };
 
 export function PersonaProvider({ children }) {
@@ -35,6 +36,7 @@ export function PersonaProvider({ children }) {
         .from('personas')
         .select('*')
         .eq('user_id', userId)
+        .is('archived_at', null)
         .order('created_at', { ascending: true });
 
       if (error) throw error;

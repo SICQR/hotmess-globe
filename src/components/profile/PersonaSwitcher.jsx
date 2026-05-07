@@ -11,7 +11,6 @@ import {
   User, 
   Plane, 
   PartyPopper, 
-  Sparkles,
   ChevronDown,
   Check,
   Plus,
@@ -26,6 +25,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 
 // Persona type configs
+// Simplified 2026-05-07: AFTERHOURS replaces WEEKEND, CUSTOM dropped.
 const PERSONA_TYPES = {
   MAIN: {
     icon: User,
@@ -37,19 +37,13 @@ const PERSONA_TYPES = {
     icon: Plane,
     label: 'Travel',
     color: '#00C2E0',
-    description: 'For when you\'re exploring'
+    description: "For when you're 50km+ from home"
   },
-  WEEKEND: {
+  AFTERHOURS: {
     icon: PartyPopper,
-    label: 'Weekend',
+    label: 'After Hours',
     color: '#C8962C',
-    description: 'Party mode'
-  },
-  CUSTOM: {
-    icon: Sparkles,
-    label: 'Custom',
-    color: '#C8962C',
-    description: 'Your custom persona'
+    description: 'Your after-dark self'
   }
 };
 

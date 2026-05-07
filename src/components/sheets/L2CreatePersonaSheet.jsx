@@ -10,24 +10,21 @@ import { usePersona, PERSONA_TYPES } from '@/contexts/PersonaContext';
 import { useSheet } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
 
+// Simplified 2026-05-07: TRAVEL + AFTERHOURS only.
+// MAIN is auto-created on signup and can't be re-added here.
+// Copy framed around safety, not vanity — your work crush won't see your AFTERHOURS self.
 const PERSONA_OPTIONS = [
   {
     type: PERSONA_TYPES.TRAVEL,
     label: 'Travel',
-    description: "Who you are when you're away from home",
+    description: "Who you are when you're away from home — auto-active when you're 50km+ out.",
     color: '#00C2E0',
   },
   {
-    type: PERSONA_TYPES.WEEKEND,
-    label: 'Weekend',
-    description: 'Your after-dark, off-duty self',
+    type: PERSONA_TYPES.AFTERHOURS,
+    label: 'After Hours',
+    description: 'Your after-dark self. Switch on manually, or auto-on Fri 11pm → Sun 6am.',
     color: '#C8962C',
-  },
-  {
-    type: PERSONA_TYPES.CUSTOM,
-    label: 'Custom',
-    description: 'Name it yourself — anything goes',
-    color: '#39FF14',
   },
 ];
 
@@ -91,6 +88,13 @@ export default function L2CreatePersonaSheet({ onClose }) {
           <p className="text-[10px] uppercase tracking-widest text-white/40 font-mono">New Persona</p>
           <p className="text-white font-black text-base leading-tight">Choose a type</p>
         </div>
+      </div>
+
+      {/* Safety framing — multiple yous, one safe home */}
+      <div className="px-5 -mt-1 mb-1">
+        <p className="text-[11px] leading-snug text-white/55">
+          Multiple yous, one safe home — your work crush won't see your After Hours self.
+        </p>
       </div>
 
       <div className="px-4 space-y-3 mt-2">
