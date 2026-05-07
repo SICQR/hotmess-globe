@@ -22,13 +22,29 @@ interface Payload {
   icon?: string;
 }
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Max-Age": "86400",
+};
+
+const jsonHeaders = {
+  ...corsHeaders,
+  "Content-Type": "application/json",
+};
+
 Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
   if (req.method !== "POST") {
-    return new Response("Method Not Allowed", { status: 405 });
+    return new Response("Method Not Allowed", { status: 405, headers: corsHeaders });
   }
 
   const jwt = (req.headers.get("Authorization") ?? "").replace("Bearer ", "");
-  if (!jwt) return new Response("Unauthorized", { status: 401 });
+  if (!jwt) return new Response("Unauthorized", { status: 401, headers: corsHeaders });
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const serviceKey  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -39,13 +55,13 @@ Deno.serve(async (req: Request) => {
     global: { headers: { Authorization: `Bearer ${jwt}` } },
   });
   const { data: { user }, error: authError } = await userClient.auth.getUser();
-  if (authError || !user) return new Response("Unauthorized", { status: 401 });
+  if (authError || !user) return new Response("Unauthorized", { status: 401, headers: corsHeaders });
 
   let payload: Payload;
   try {
     payload = await req.json();
   } catch {
-    return new Response("Invalid JSON", { status: 400 });
+    return new Response("Invalid JSON", { status: 400, headers: corsHeaders });
   }
 
   const {
@@ -59,7 +75,7 @@ Deno.serve(async (req: Request) => {
   } = payload;
 
   if ((!emails?.length && !user_ids?.length) || !title || !body) {
-    return new Response("Missing required fields", { status: 400 });
+    return new Response("Missing required fields", { status: 400, headers: corsHeaders });
   }
 
   const admin = createClient(supabaseUrl, serviceKey);
@@ -80,7 +96,7 @@ Deno.serve(async (req: Request) => {
   const userIds = [...resolvedIds];
   if (!userIds.length) {
     return new Response(JSON.stringify({ ok: true, sent: 0 }), {
-      headers: { "Content-Type": "application/json" },
+      headers: jsonHeaders,
     });
   }
 
@@ -92,7 +108,7 @@ Deno.serve(async (req: Request) => {
 
   if (!subs?.length) {
     return new Response(JSON.stringify({ ok: true, sent: 0 }), {
-      headers: { "Content-Type": "application/json" },
+      headers: jsonHeaders,
     });
   }
 
@@ -104,7 +120,7 @@ Deno.serve(async (req: Request) => {
     console.error("[notify-push] VAPID keys not set");
     return new Response(JSON.stringify({ error: "Push not configured" }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: jsonHeaders,
     });
   }
 
@@ -138,6 +154,6 @@ Deno.serve(async (req: Request) => {
 
   console.log(`[notify-push] sent=${sent}`);
   return new Response(JSON.stringify({ ok: true, sent }), {
-    headers: { "Content-Type": "application/json" },
+    headers: jsonHeaders,
   });
 });
