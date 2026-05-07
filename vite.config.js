@@ -716,6 +716,16 @@ function localApiRoutes() {
             });
         }
 
+        if (path === '/api/safety/test-contact' && (method === 'POST' || method === 'OPTIONS')) {
+          return importFresh('./api/safety/test-contact.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'safety/test-contact handler error' }));
+            });
+        }
+
         // /api/safety/ack/[id] — dynamic param routed via path prefix
         if (path.startsWith('/api/safety/ack/') && (method === 'GET' || method === 'OPTIONS')) {
           const id = path.split('/').pop();
