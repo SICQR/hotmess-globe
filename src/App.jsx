@@ -599,10 +599,21 @@ function OSArchitecture() {
   // Aftercare nudge state for check-in expiry
   const [showAftercare, setShowAftercare] = useState(false);
 
-  // Listen for check-in expiry event
+  // Listen for check-in expiry event + post-meetup push deep-links (?aftercare=1).
   useEffect(() => {
     const h = () => setShowAftercare(true);
     window.addEventListener('hm:checkin-expired', h);
+    // Push notification from /api/cron/aftercare-nudge sets data.url=/?aftercare=1.
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('aftercare') === '1') {
+        setShowAftercare(true);
+        params.delete('aftercare');
+        const next = params.toString();
+        const cleaned = window.location.pathname + (next ? `?${next}` : '') + window.location.hash;
+        window.history.replaceState({}, '', cleaned);
+      }
+    } catch { /* ignore */ }
     return () => window.removeEventListener('hm:checkin-expired', h);
   }, []);
 

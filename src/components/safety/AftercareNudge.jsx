@@ -4,6 +4,7 @@ import { Heart, X, ThumbsUp, Clock, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
+import { addBreadcrumb } from '@/lib/sentry';
 
 /**
  * AftercareNudge - Post-meetup check-in modal
@@ -66,15 +67,26 @@ export default function AftercareNudge({
     }
   }, [autoShow, autoShowDelay, visible]);
 
-  // Sync with isOpen prop
+  // Sync with isOpen prop. When the nudge becomes visible, drop a breadcrumb so
+  // we can correlate fire/dismiss/escalate in Sentry.
   useEffect(() => {
     setVisible(isOpen);
-  }, [isOpen]);
+    if (isOpen) {
+      addBreadcrumb('AftercareNudge fired', 'safety.aftercare', {
+        trigger: autoShow ? 'auto' : 'event',
+      });
+    }
+  }, [isOpen, autoShow]);
 
   const handleResponse = (resp) => {
     setResponse(resp);
     setShowFollowUp(true);
-    
+
+    addBreadcrumb('AftercareNudge response', 'safety.aftercare', {
+      response: resp.id,
+      escalate: !!resp.urgent,
+    });
+
     // Track response — persist to DB (best-effort) + localStorage fallback
     const ts = new Date().toISOString();
     try {
@@ -99,6 +111,11 @@ export default function AftercareNudge({
   };
 
   const handleClose = () => {
+    if (visible) {
+      addBreadcrumb('AftercareNudge dismissed', 'safety.aftercare', {
+        had_response: !!response,
+      });
+    }
     setVisible(false);
     setResponse(null);
     setShowFollowUp(false);
