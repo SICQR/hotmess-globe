@@ -410,7 +410,7 @@ const AuthenticatedApp = () => {
 
           await supabase.from('memberships').upsert({
             user_id: user.id,
-            tier_name: tierKey,
+            tier: tierKey,
             updated_at: new Date().toISOString()
           }, { onConflict: 'user_id' });
 
