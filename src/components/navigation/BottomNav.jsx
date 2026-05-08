@@ -15,9 +15,13 @@ import { useSheet } from '@/contexts/SheetContext';
 
 /**
  * BottomNav — L1 HUD Navigation (z-50)
- * 
+ *
  * RULES:
- * 1. Exactly 6 modes: Home, Pulse, Ghosted, Shop, Profile, More
+ * 1. Exactly 7 modes: Home, Pulse, Ghosted, Shop, Inbox, Profile, More.
+ *    (Inbox is a sheet-action slot — see `isSheetAction: 'chat'` below — but
+ *    it occupies a permanent bar position because unread count drives engagement.
+ *    If product later decides Inbox should move to long-press / top-bar, drop
+ *    the row from MODES below and update this rule back to 6.)
  * 2. 44px minimum touch targets (WCAG 2.1)
  * 3. No nested navigation or modals
  * 4. Active state indicated by color + top bar
