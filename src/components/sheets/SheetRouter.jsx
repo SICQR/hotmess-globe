@@ -71,9 +71,6 @@ const L2UberSheet = lazy(() => import('./L2UberSheet'));
 const L2BoostShopSheet = lazy(() => import('./L2BoostShopSheet'));
 const L2ReferralSheet = lazy(() => import('./L2ReferralSheet'));
 const L2CityPickerSheet = lazy(() => import('./L2CityPickerSheet'));
-const L2AchievementsSheet = lazy(() => import('./L2AchievementsSheet'));
-const L2SquadsSheet = lazy(() => import('./L2SquadsSheet'));
-const L2SweatCoinsSheet = lazy(() => import('./L2SweatCoinsSheet'));
 const L2AuthMethodsSheet = lazy(() => import('./L2AuthMethodsSheet'));
 const L2QuickActionsSheet = lazy(() => import('./L2QuickActionsSheet'));
 const L2NowHappeningSheet = lazy(() => import('./L2NowHappeningSheet'));
@@ -247,10 +244,6 @@ const SHEET_COMPONENTS = {
   'referral': L2ReferralSheet,
   // Globe city picker (Pulse HUD → city-picker sheet → globe flyTo)
   'city-picker': L2CityPickerSheet,
-  // Gamification
-  'achievements': L2AchievementsSheet,
-  'squads': L2SquadsSheet,
-  'sweat-coins': L2SweatCoinsSheet,
   // Auth — more sign-in methods
   'more-auth-methods': L2AuthMethodsSheet,
   // Quick actions / Now happening / Card actions
