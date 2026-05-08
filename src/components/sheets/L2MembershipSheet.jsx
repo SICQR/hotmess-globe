@@ -176,7 +176,7 @@ export default function L2MembershipSheet() {
           .from('memberships')
           .upsert({
             user_id: user.id,
-            tier_name: tierName,
+            tier: tierName,
             updated_at: new Date().toISOString()
           }, { onConflict: 'user_id' });
 
