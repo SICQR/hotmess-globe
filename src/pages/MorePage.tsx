@@ -596,7 +596,7 @@ export default function MorePage() {
   // ── Quick items with live counts ──────────────────────────────────────
 
   const youItems: QuickItem[] = useMemo(() => [
-    { icon: Heart, label: 'Taps', count: activity.tapCount, onTap: () => openSheet('taps'), accent: '#FF5500' },
+    { icon: Heart, label: 'Boos', count: activity.tapCount, onTap: () => openSheet('taps'), accent: '#FF5500' },
     { icon: Ticket, label: 'Orders', count: activity.pendingOrders, onTap: () => openSheet('my-orders'), accent: GOLD },
     { icon: ShoppingBag, label: 'My Listings', count: activity.liveListings, onTap: () => openSheet('my-listings'), accent: '#9E7D47' },
     { icon: Bookmark, label: 'Saved', onTap: () => openSheet('favorites'), accent: GOLD },
