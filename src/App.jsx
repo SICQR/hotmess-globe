@@ -460,6 +460,7 @@ const AuthenticatedApp = () => {
       <Route path="/safety" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><SafetyPage /></Suspense>} />
       <Route path="/safety/*" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><SafetyPage /></Suspense>} />
       <Route path="/safe" element={<Suspense fallback={null}><SafePage /></Suspense>} />
+      <Route path="/fake-call" element={<Suspense fallback={null}><FakeCallPage /></Suspense>} />
 
       
       {/* AUTH & INFRASTRUCTURE */}
