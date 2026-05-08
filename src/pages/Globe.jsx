@@ -178,48 +178,13 @@ export default function GlobePage({ embedded = false }) {
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 
-  // Real-time subscriptions for user activities
-  useEffect(() => {
-    // Fetch recent activities
-    const fetchActivities = async () => {
-      try {
-        const { data: activities } = await supabase.from('user_activity').select('*').order('created_date', { ascending: false }).limit(50);
-        if (activities) {
-          setUserActivities(activityTracker.pruneOldActivities(activities));
-        }
-      } catch (error) {
-        console.error('Failed to fetch activities:', error);
-      }
-    };
-
-    fetchActivities();
-
-    const activityChannel = supabase
-      .channel('user-activities-realtime')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'UserActivity' },
-        (payload) => {
-          if (payload.new.visible) {
-            setUserActivities((old) => {
-              const updated = [payload.new, ...old];
-              return activityTracker.pruneOldActivities(updated);
-            });
-          }
-        }
-      )
-      .subscribe();
-
-    // Prune old activities every 10 seconds
-    const pruneInterval = setInterval(() => {
-      setUserActivities((old) => activityTracker.pruneOldActivities(old));
-    }, 10000);
-
-    return () => {
-      supabase.removeChannel(activityChannel);
-      clearInterval(pruneInterval);
-    };
-  }, []);
+  // Activity-tracker realtime channel removed 2026-05-08: subscribed to a
+  // public.UserActivity table that does not exist in production, and
+  // fetchActivities() queried public.user_activity which also does not exist.
+  // Both reads silently returned no data. The write-side activityTracker
+  // .trackActivity() calls are kept on event handlers for when the feature
+  // is re-architected (Path B in PULSE_AUDIT_2026_05_08.md). When that lands,
+  // re-introduce the channel + state here.
 
   const [activeLayers, setActiveLayers] = useState(['pins']);
   const [debouncedLayers, setDebouncedLayers] = useState(['pins']);
@@ -240,7 +205,6 @@ export default function GlobePage({ embedded = false }) {
   const [recencyFilter, setRecencyFilter] = useState('all');
   const [searchResults, setSearchResults] = useState(null);
   const [radiusSearch, setRadiusSearch] = useState(null);
-  const [userActivities, setUserActivities] = useState([]);
   const [activityVisibility, setActivityVisibility] = useState(activityTracker.isEnabled());
   const [userLocation, setUserLocation] = useState(null);
   const [previewBeacon, setPreviewBeacon] = useState(null);
@@ -637,7 +601,6 @@ export default function GlobePage({ embedded = false }) {
             venueIntensity={venueIntensity}
             venueVibes={venueVibes}
             activeLayers={debouncedLayers}
-            userActivities={userActivities}
             userIntents={userIntents}
             routesData={realtimeRoutes}
             globeActivity={globeActivity}
