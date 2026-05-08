@@ -46,7 +46,6 @@ import {
   AlertTriangle,
   Ticket,
   Users,
-  Trophy,
   Zap,
   Crown,
   MessageSquare,
@@ -448,11 +447,10 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
       title: 'ACTIVITY',
       items: [
         { icon: MessageSquare, label: 'Community', action: () => openSheet('community', {}) },
-        // Gamification items — only show when feature is enabled
+        // Creator Subscriptions kept behind the gamification flag — the
+        // Achievements / Squads / Sweat Coins sheets were removed in MEGA-1.4
+        // (no-gamification rule).
         ...(isGamificationEnabled() ? [
-          { icon: Trophy, label: 'Achievements', action: () => openSheet('achievements', {}) },
-          { icon: Users, label: 'Squads', action: () => openSheet('squads', {}) },
-          { icon: Zap, label: 'Sweat Coins', action: () => openSheet('sweat-coins', {}) },
           { icon: Crown, label: 'Creator Subscriptions', action: () => openSheet('creator-subscription', {}) },
         ] : []),
         { icon: Zap, label: 'Power-Ups', action: () => openSheet('boost-shop', {}) },
