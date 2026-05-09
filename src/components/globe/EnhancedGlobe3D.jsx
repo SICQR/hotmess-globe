@@ -17,18 +17,23 @@ export default function EnhancedGlobe3D({
   console.log('[Globe] Recovery Pins:', recoveryPins?.length || 0);
 
 
+  // Pin sizes — tuned 2026-05-09 for mobile tap targets.
+  // Recovery is the largest because it's the lowest-density layer and the
+  // safest to overdraw. Person pins were noticeably under tap-radius before.
+  const PIN_SIZE = { person: 0.55, recovery: 1.0, default: 0.7 };
+
   // Optimized data for the globe
   const pointsData = useMemo(() => {
     const beaconPoints = beacons.map(b => {
       const lat = Number(b.lat ?? b.location_lat);
       const lng = Number(b.lng ?? b.location_lng);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-      
+
       return {
         ...b,
         lat,
         lng,
-        size: b.kind === 'person' ? 0.4 : 0.6,
+        size: b.kind === 'person' ? PIN_SIZE.person : PIN_SIZE.default,
         color: b.kind === 'person' ? '#00C2E0' : '#FFEB3B'
       };
     }).filter(Boolean);
@@ -42,7 +47,7 @@ export default function EnhancedGlobe3D({
         ...r,
         lat,
         lng,
-        size: 0.8,
+        size: PIN_SIZE.recovery,
         color: '#FFFFFF', // Pure White for Recovery
         isRecovery: true
       };
@@ -115,7 +120,7 @@ export default function EnhancedGlobe3D({
         pointLng="lng"
         pointColor="color"
         pointRadius="size"
-        pointAltitude={0.05} // Raised higher to ensure easy clicking on mobile
+        pointAltitude={0.07} // Raised slightly higher 2026-05-09 to widen mobile tap target
         onPointClick={(point) => {
           console.log('[Globe] Point clicked:', point);
           // Subtle zoom-in to make the click feel responsive
