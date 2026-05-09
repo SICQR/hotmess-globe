@@ -864,6 +864,26 @@ function localApiRoutes() {
             });
         }
 
+        if (path === '/api/auth/phone-otp-send' && method === 'POST') {
+          return importFresh('./api/auth/phone-otp-send.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'phone-otp-send handler error' }));
+            });
+        }
+
+        if (path === '/api/auth/phone-otp-verify' && method === 'POST') {
+          return importFresh('./api/auth/phone-otp-verify.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'phone-otp-verify handler error' }));
+            });
+        }
+
         // ── Daily check-in ──────────────────────────────────────────────────
         if (path === '/api/daily-checkin' && (method === 'GET' || method === 'POST')) {
           return importFresh('./api/daily-checkin.js')

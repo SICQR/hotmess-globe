@@ -24,6 +24,7 @@ import { Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { ProgressDots } from './AgeGateScreen';
 import { track } from '@/lib/analytics';
 import TelegramLoginButton from '../TelegramLoginButton';
+import PhoneOtpButton from '../PhoneOtpButton';
 
 const GOLD = '#C8962C';
 
@@ -154,6 +155,7 @@ export default function SignUpScreen({ isSignIn = false }) {
             </p>
           )}
 
+          <PhoneOtpButton disabled={loading} />
           <TelegramLoginButton disabled={loading} />
         </div>
 
