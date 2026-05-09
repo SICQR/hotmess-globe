@@ -671,7 +671,7 @@ export default function GlobePage({ embedded = false }) {
         <div className="absolute top-[calc(140px+env(safe-area-inset-top,0px))] left-4 z-30 pointer-events-none">
           <div className="px-3 py-1.5 bg-black/60 border border-white/20 backdrop-blur-md rounded-full flex items-center gap-2 pointer-events-auto shadow-lg">
             <div className="w-2 h-2 rounded-full bg-[#39FF14] animate-pulse shadow-[0_0_8px_#39FF14]" />
-            <span className="text-[10px] font-black text-white uppercase tracking-widest">{onlineMemberCount} MEMBERS ONLINE</span>
+            <span className="text-[10px] font-black text-white uppercase tracking-widest">{onlineMemberCount} {onlineMemberCount === 1 ? 'MEMBER' : 'MEMBERS'} ONLINE</span>
           </div>
         </div>
 
