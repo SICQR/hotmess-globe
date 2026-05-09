@@ -55,6 +55,7 @@ import { MusicMiniPlayer } from '@/components/music/MusicMiniPlayer';
 import { GlobalTicker } from '@/components/banners/GlobalTicker';
 import { TopHUD } from '@/components/shell/TopHUD';
 import { MovementStatusCard } from '@/components/movement/MovementStatusCard';
+import DeferredProfileNudge from '@/components/onboarding/DeferredProfileNudge';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useRetentionPush } from '@/hooks/useRetentionPush';
 import { useDeepLinkSheet } from '@/hooks/useDeepLinkSheet';
@@ -732,6 +733,9 @@ function OSArchitecture() {
 
       {/* Movement Status Card — floats above nav when sharing movement (Z-50) */}
       {isAuthenticated && <MovementStatusCard />}
+
+      {/* Profile-name nudge — surfaces when display_name is empty post-onboarding */}
+      {isAuthenticated && <DeferredProfileNudge />}
 
       {/* L1: OS Bottom Nav — amber-circle 5-tab nav */}
       <OSBottomNav />

@@ -1,84 +1,40 @@
 /**
- * QuickSetupScreen — Name, photo, location. HOTMESS tone.
- * Name first. Photo optional and secondary. Location with clear payoff.
+ * QuickSetupScreen — Location consent + GDPR + terms.
+ *
+ * 2026-05-09: name/photo capture deferred to a post-onboarding banner
+ * ("Add a name so people know who Boo'd them"). This screen now only
+ * captures the consents we cannot legally defer:
+ *   - GPS consent (Pulse cannot render without it)
+ *   - Terms / community attestation
+ *   - GDPR consent record
+ *
+ * Passkey prompt is still surfaced after consent — it's free friction-
+ * removal for returning users.
  */
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
-import { uploadToStorage, insertProfilePhoto } from '@/lib/uploadToStorage';
-import { Loader2, Camera, MapPin, ToggleLeft, ToggleRight, Check } from 'lucide-react';
+import { Loader2, MapPin, ToggleLeft, ToggleRight } from 'lucide-react';
 import OnboardingBackButton from '../OnboardingBackButton';
 import { isWebAuthnSupported, isPasskeyRegistered, registerPasskey } from '@/lib/passkey';
 
 const GOLD = '#C8962C';
 
 export default function QuickSetupScreen({ session, onComplete, onBack }) {
-  const [displayName, setDisplayName] = useState('');
-  const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
-  const [locationEnabled, setLocationEnabled] = useState(false);
+  const [locationEnabled, setLocationEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [photoUploaded, setPhotoUploaded] = useState(false);
   const [error, setError] = useState('');
   const [showPasskeyPrompt, setShowPasskeyPrompt] = useState(false);
   const [registeringPasskey, setRegisteringPasskey] = useState(false);
-  const fileInputRef = useRef(null);
 
   const userId = session?.user?.id;
   const userEmail = session?.user?.email;
 
-  const canContinue = displayName.trim().length > 0 && !loading;
-
-  const handlePhotoSelect = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Photo must be under 5MB');
-      return;
-    }
-    setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
-    setPhotoUploaded(false);
-    setError('');
-    if (userId) {
-      setUploadingPhoto(true);
-      try {
-        const url = await uploadToStorage(file, 'avatars', userId);
-        setPhotoFile(url);
-        setPhotoUploaded(true);
-        await insertProfilePhoto(userId, url, 0, true).catch(() => {});
-      } catch (err) {
-        console.warn('[QuickSetup] avatar upload failed:', err);
-        setError('Photo upload failed — you can retry or continue without');
-        setPhotoFile(file);
-      } finally {
-        setUploadingPhoto(false);
-      }
-    }
-  };
-
   const handleSubmit = async () => {
-    if (!canContinue || !userId) return;
+    if (!userId || loading) return;
     setLoading(true);
     setError('');
 
     try {
-      let avatarUrl = null;
-      if (typeof photoFile === 'string') {
-        avatarUrl = photoFile;
-      } else if (photoFile instanceof File) {
-        setUploadingPhoto(true);
-        try {
-          avatarUrl = await uploadToStorage(photoFile, 'avatars', userId);
-          setPhotoUploaded(true);
-          await insertProfilePhoto(userId, avatarUrl, 0, true).catch(() => {});
-        } catch (uploadErr) {
-          console.warn('[QuickSetup] avatar upload failed:', uploadErr);
-        } finally {
-          setUploadingPhoto(false);
-        }
-      }
-
       let coords = null;
       if (locationEnabled) {
         try {
@@ -90,15 +46,13 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
             });
           });
         } catch {
-          // Location denied — continue without it
+          // Location denied at OS level — continue without it; user can re-grant later
         }
       }
 
       await supabase.from('profiles').upsert(
         {
           id: userId,
-          display_name: displayName.trim(),
-          ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
           has_consented_gps: locationEnabled,
           consent_accepted: true,
           has_agreed_terms: true,
@@ -136,7 +90,6 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
       try {
         localStorage.setItem('hm_age_gate_passed', 'true');
         localStorage.setItem('hm_community_attested_v1', 'true');
-        localStorage.setItem('hm_last_display_name', displayName.trim());
       } catch {}
 
       if (isWebAuthnSupported() && !isPasskeyRegistered()) {
@@ -161,7 +114,6 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col items-center justify-center px-6 overflow-y-auto">
-      {/* Face ID / Passkey prompt — shown after profile save */}
       {showPasskeyPrompt && (
         <div
           className="fixed inset-0 flex items-center justify-center px-6 z-50"
@@ -192,80 +144,20 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
       )}
       <OnboardingBackButton onBack={onBack} />
       <div className="w-full max-w-xs py-12">
+        <h2 className="text-white text-2xl font-black mb-2 tracking-tight">One last thing.</h2>
+        <p className="text-white/40 text-sm mb-10 leading-relaxed">
+          Pulse shows who's nearby right now. We need your location to put
+          you on the map. Your exact spot is never shown — only your area.
+        </p>
 
-        {/* Step indicator */}
-        <div className="flex gap-2 mb-8">
-          {[0,1,2].map((i) => (
-            <span key={i} className="text-xs" style={{ color: GOLD }}>●</span>
-          ))}
-        </div>
-
-        <h2 className="text-white text-xl font-bold mb-8">Make yourself at home.</h2>
-
-        {/* Display name — first */}
-        <div className="mb-8">
-          <input
-            type="text"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value.slice(0, 30))}
-            placeholder="What do people call you?"
-            maxLength={30}
-            className="w-full bg-black text-white py-3 border-b border-[#333] focus:outline-none text-base placeholder:text-white/25"
-            style={{ borderBottomColor: displayName ? GOLD : '#333' }}
-            autoComplete="off"
-            autoFocus
-          />
-          <p className="text-white/20 text-xs mt-1 text-right">{displayName.length}/30</p>
-        </div>
-
-        {/* Avatar upload — second, inline */}
-        <div className="flex items-center gap-4 mb-8">
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="relative w-16 h-16 rounded-full border-2 border-dashed flex items-center justify-center overflow-hidden flex-shrink-0"
-            style={{ borderColor: photoPreview ? GOLD : '#333' }}
-            aria-label="Upload profile photo"
-          >
-            {photoPreview ? (
-              <img src={photoPreview} alt="Profile preview" className="w-full h-full object-cover" />
-            ) : (
-              <Camera className="w-5 h-5 text-white/30" />
-            )}
-            {uploadingPhoto && (
-              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                <Loader2 className="w-4 h-4 animate-spin text-white" />
-              </div>
-            )}
-            {photoUploaded && !uploadingPhoto && (
-              <div className="absolute bottom-0 right-0 w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: GOLD }}>
-                <Check className="w-3 h-3 text-black" />
-              </div>
-            )}
-          </button>
-          <div className="flex flex-col">
-            <span className="text-white/60 text-sm">
-              {uploadingPhoto ? 'Uploading…' : photoUploaded ? 'Photo saved ✓' : 'Add a photo'}
-            </span>
-            <span className="text-white/25 text-xs mt-0.5">Optional — add one later</span>
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handlePhotoSelect}
-            className="hidden"
-          />
-        </div>
-
-        {/* Location toggle */}
-        <div className="flex items-center justify-between mb-10 py-3 border-t border-white/5">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between mb-10 py-4 border-y border-white/10">
+          <div className="flex items-center gap-3">
             <MapPin
-              className="w-4 h-4 flex-shrink-0"
+              className="w-5 h-5 flex-shrink-0"
               style={{ color: locationEnabled ? GOLD : '#555' }}
             />
-            <span className="text-white/60 text-sm leading-tight">
-              See who's out near you tonight
+            <span className="text-white text-sm font-medium leading-tight">
+              Show me on Pulse
             </span>
           </div>
           <button
@@ -274,25 +166,29 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
             aria-label={locationEnabled ? 'Disable location sharing' : 'Enable location sharing'}
           >
             {locationEnabled ? (
-              <ToggleRight className="w-8 h-8" style={{ color: GOLD }} />
+              <ToggleRight className="w-9 h-9" style={{ color: GOLD }} />
             ) : (
-              <ToggleLeft className="w-8 h-8 text-white/20" />
+              <ToggleLeft className="w-9 h-9 text-white/20" />
             )}
           </button>
         </div>
 
-        {/* CTA */}
         <button
           onClick={handleSubmit}
-          disabled={!canContinue}
+          disabled={loading}
           className="w-full py-4 rounded-lg text-black font-bold text-base tracking-wide flex items-center justify-center gap-2 transition-opacity"
           style={{
             backgroundColor: GOLD,
-            opacity: canContinue ? 1 : 0.3,
+            opacity: loading ? 0.4 : 1,
           }}
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Let's go"}
         </button>
+
+        <p className="text-white/20 text-[11px] mt-6 leading-relaxed">
+          Tapping Let's go agrees to the Terms and confirms you've read the
+          community charter. You can add a name and photo later from your profile.
+        </p>
 
         {error && (
           <p className="text-red-400 text-xs mt-4 text-center">{error}</p>
