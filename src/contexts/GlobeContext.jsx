@@ -48,7 +48,7 @@ export function GlobeProvider({ children }) {
   const [activeLayer, setActiveLayer] = useState({
     events: true,
     venues: true,
-    people: false,
+    people: true,
     safety: true,
     market: true,
     radio: true,
@@ -199,7 +199,7 @@ const GLOBE_NOOP = {
   setFocusedBeaconId: () => {},
   cameraCity: 'London',
   setCameraCity: () => {},
-  activeLayer: { events: true, venues: true, people: false, safety: true, market: true, radio: true },
+  activeLayer: { events: true, venues: true, people: true, safety: true, market: true, radio: true },
   setActiveLayer: () => {},
   amplifiedBeaconIds: new Map(),
   amplifyBeacon: () => {},
