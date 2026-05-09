@@ -854,6 +854,16 @@ function localApiRoutes() {
             });
         }
 
+        if (path === '/api/geocode/reverse' && method === 'POST') {
+          return importFresh('./api/geocode/reverse.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'geocode/reverse handler error' }));
+            });
+        }
+
         if (path === '/api/auth/magic-link' && method === 'POST') {
           return importFresh('./api/auth/magic-link.js')
             .then((mod) => (mod.default || mod)(req, res))

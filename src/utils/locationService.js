@@ -1,43 +1,40 @@
 import { supabase } from '@/components/utils/supabaseClient';
 import { safeGetViewerLatLng } from './geolocation';
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || import.meta.env.GOOGLE_MAPS_API_KEY;
-
 /**
- * Reverse geocode coordinates to get a neighbourhood/area name using Google Maps API.
+ * Reverse geocode coordinates to get a neighbourhood / area name.
+ *
+ * 2026-05-09: moved from a direct browser fetch to maps.googleapis.com
+ * over to the /api/geocode/reverse server-side proxy. Google rejects
+ * referer-restricted keys on the Geocoding REST API when called from
+ * the browser; the proxy uses GOOGLE_MAPS_API_KEY (server-side env) so
+ * the key is never exposed and no Referer header is required.
  */
 export async function reverseGeocode(lat, lng) {
-  if (!GOOGLE_MAPS_API_KEY || GOOGLE_MAPS_API_KEY === 'your_google_maps_key') {
-    console.warn('[LocationService] Google Maps API key not configured.');
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
     return null;
   }
 
   try {
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_API_KEY}`;
-    const response = await fetch(url);
-    const data = await response.json();
-
-    if (data.status === 'OK' && data.results.length > 0) {
-      // Look for neighborhood, sublocality, or locality
-      const result = data.results.find(r => 
-        r.types.includes('neighborhood') || 
-        r.types.includes('sublocality') || 
-        r.types.includes('locality')
-      ) || data.results[0];
-
-      // Extract the short name of the specific area
-      const areaComponent = result.address_components.find(c => 
-        c.types.includes('neighborhood') || 
-        c.types.includes('sublocality_level_1') || 
-        c.types.includes('locality')
-      );
-
-      return areaComponent ? areaComponent.long_name : result.formatted_address.split(',')[0];
+    const r = await fetch('/api/geocode/reverse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lat, lng }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      if (data?.error === 'GOOGLE_MAPS_API_KEY not configured') {
+        console.warn('[LocationService] Google Maps server-side key not set; skipping reverse geocode.');
+      } else {
+        console.warn('[LocationService] Reverse geocode proxy error:', data?.error || r.status);
+      }
+      return null;
     }
+    return data?.area || null;
   } catch (err) {
-    console.error('[LocationService] Reverse geocode failed:', err);
+    console.warn('[LocationService] Reverse geocode failed:', err?.message || err);
+    return null;
   }
-  return null;
 }
 
 /**

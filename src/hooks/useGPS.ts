@@ -101,28 +101,25 @@ export function useGPS(autoUpdate = true): UseGPSResult {
       }
 
       // ── Reverse Geocode for Area Name ──────────────────────────────────────
-      let locationArea = null;
-      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-      if (!apiKey) {
-        console.warn('[useGPS] VITE_GOOGLE_MAPS_API_KEY not set, skipping reverse geocode');
-      } else {
-        try {
-          const response = await fetch(
-            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${newPosition.lat},${newPosition.lng}&key=${apiKey}&result_type=neighborhood|sublocality|locality`
-          );
-          const geoData = await response.json();
-          if (geoData.status === 'OK' && geoData.results?.length > 0) {
-            // Find the most descriptive "neighborhood" or "sublocality"
-            const bestMatch = geoData.results.find(r => r.types.includes('neighborhood'))
-                          || geoData.results.find(r => r.types.includes('sublocality'))
-                          || geoData.results[0];
-
-            locationArea = bestMatch.address_components[0].long_name;
-            console.log('[useGPS] 📍 Reverse geocoded area:', locationArea);
-          }
-        } catch (err) {
-          console.warn('[useGPS] Reverse geocoding failed:', err);
+      // 2026-05-09: moved to /api/geocode/reverse server proxy. Google's
+      // Geocoding REST API rejects referer-restricted keys called from
+      // browser context, so the request goes server-side now.
+      let locationArea: string | null = null;
+      try {
+        const response = await fetch('/api/geocode/reverse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lat: newPosition.lat, lng: newPosition.lng }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok && data?.area) {
+          locationArea = data.area;
+          console.log('[useGPS] 📍 Reverse geocoded area:', locationArea);
+        } else if (!response.ok) {
+          console.warn('[useGPS] Reverse geocode proxy error:', data?.error || response.status);
         }
+      } catch (err) {
+        console.warn('[useGPS] Reverse geocoding failed:', err);
       }
 
       const locUpdate: Record<string, any> = {
