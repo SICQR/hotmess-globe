@@ -697,6 +697,17 @@ export default function GlobePage({ embedded = false }) {
             beacon={previewBeacon}
             onClose={() => setPreviewBeacon(null)}
             onViewFull={handleViewFullDetails}
+            onViewProfile={(b) => {
+              const userId = b.user_id || b.owner_id || b.id;
+              if (!userId) return;
+              setPreviewBeacon(null);
+              openProfile({
+                userId,
+                source: 'globe',
+                email: b.email,
+                preferSheet: true,
+              });
+            }}
           />
         )}
 
