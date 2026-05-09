@@ -4,22 +4,20 @@
  * Rendered by BootRouter for UNAUTHENTICATED, NEEDS_AGE, NEEDS_ONBOARDING,
  * and NEEDS_COMMUNITY_GATE states.
  *
- * Active flow (as of 2026-05-09):
- *   Splash → AgeGate → SignUp (auth) → QuickSetup → Profile → /ghosted
+ * Active flow (as of 2026-05-09 — Grindr-fast directive):
+ *   Splash → AgeGate → SignUp (auth) → QuickSetup → /ghosted
  *
- * PinSetupScreen was removed from the router 2026-05-09 — PIN protection
- * is now opt-in via Safety settings. PinSetupScreen.jsx is still exported
- * and used from there. SplashScreen, QuickProfileScreen, VibeScreen,
- * SafetySeedScreen, and LocationPermissionScreen are NOT deleted — just
- * not in the sequence. Legacy onboarding_stage values (profile/vibe/safety/
- * location) route to QuickSetupScreen so in-progress users can finish.
+ * Both ProfileScreen (vibe/orientation/body/height/ethnicity) and
+ * PinSetupScreen are removed from the gate. Vibe data lives in
+ * L2EditProfileSheet, PIN setup lives in /safety. The .jsx files are
+ * still in tree, just unwired from the gate. Legacy onboarding_stage
+ * values (profile / vibe / safety / location) collapse to QuickSetup.
  *
  * Resume logic (onboarding_stage → screen):
  *   null / start / age_gate → AgeGateScreen (or SignUpScreen if sessionStorage age passed)
  *   age_verified / signup / profile / vibe / safety / location → QuickSetupScreen
  *   signed_up → QuickSetupScreen
- *   quick_setup → ProfileScreen
- *   profile_complete / vibe_complete / pin_complete → /ghosted
+ *   quick_setup / profile_complete / vibe_complete / pin_complete → /ghosted
  *   complete → /ghosted (BootRouter intercepts, never reaches here)
  */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -31,38 +29,37 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useBootGuard } from '@/contexts/BootGuardContext';
 
-// Active screens
+// Active screens.
+// ProfileScreen + PinSetupScreen removed from the router 2026-05-09 —
+// vibe/body/orientation are deferred to L2EditProfileSheet and PIN is
+// opt-in via /safety settings (Grindr-fast directive). Both .jsx files
+// are still exported and used from those entry points.
 import SplashScreen from './screens/SplashScreen';
 import AgeGateScreen from './screens/AgeGateScreen';
 import SignUpScreen from './screens/SignUpScreen';
 import QuickSetupScreen from './screens/QuickSetupScreen';
-import ProfileScreen from './screens/ProfileScreen';
 
-// Screen keys.
-// PIN_SETUP intentionally removed 2026-05-09 — PIN is now opt-in via
-// /safety settings. PinSetupScreen still exists and is used there.
+// Screen keys
 const SCREENS = {
   SPLASH: 'splash',      // ← first-ever visit
   AGE_GATE: 'age_gate',
   SIGNUP: 'signup',
   SIGNIN: 'signin',
   QUICK_SETUP: 'quick_setup',
-  PROFILE: 'profile_screen',
 };
 
 // Map onboarding_stage → screen.
-// Legacy stages (profile/vibe/safety/location/vibe_complete) collapse to
-// the new path. profile_complete and pin_complete now both finish onboarding
-// directly (no separate PIN gate).
+// Legacy stages (profile / vibe / safety / location / vibe_complete /
+// profile_complete / pin_complete) collapse to QuickSetup or finish.
 const STAGE_TO_SCREEN = {
   start: SCREENS.AGE_GATE,
   age_gate: SCREENS.SIGNUP,        // authed, age already verified pre-auth
   age_verified: SCREENS.SIGNUP,    // explicit age_verified stage
   signed_up: SCREENS.QUICK_SETUP,  // signed up, quick setup not yet done
-  quick_setup: SCREENS.PROFILE,    // ProfileScreen
-  profile_complete: null,          // PIN deferred → onboarding finishes here
+  quick_setup: null,               // QuickSetup → finish (was: ProfileScreen / PinSetup)
+  profile_complete: null,          // legacy stage, also finishes
   vibe_complete: null,             // legacy stage, also finishes
-  pin_complete: null,
+  pin_complete: null,              // legacy stage, also finishes
   // Legacy stages → QuickSetup (new minimum to unlock)
   signup: SCREENS.QUICK_SETUP,
   profile: SCREENS.QUICK_SETUP,
@@ -299,17 +296,10 @@ export default function OnboardingRouter() {
     }
   }, [goTo]);
 
-  const handleQuickSetupComplete = () => {
-    // QuickSetup done → advance to Profile details screen
-    track('onboarding_stage_completed', 'onboarding', 'quick_setup');
-    goTo(SCREENS.PROFILE);
-  };
-
-  // Profile is now the final step — PIN is opt-in via /safety settings.
-  // Centralized completion: write onboarding_completed=true and route to
-  // /ghosted. Used by both Continue and Skip on ProfileScreen.
+  // QuickSetup is now the FINAL gate. Both ProfileScreen and PinSetup are
+  // deferred (vibe → L2EditProfileSheet, PIN → /safety settings).
   const finishOnboarding = useCallback(async () => {
-    track('onboarding_stage_completed', 'onboarding', 'profile_complete');
+    track('onboarding_stage_completed', 'onboarding', 'quick_setup');
     track('profile_complete', 'onboarding');
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -394,16 +384,8 @@ export default function OnboardingRouter() {
       return (
         <QuickSetupScreen
           session={session}
-          onComplete={handleQuickSetupComplete}
+          onComplete={finishOnboarding}
           onBack={canGoBack ? goBack : undefined}
-        />
-      );
-
-    case SCREENS.PROFILE:
-      return (
-        <ProfileScreen
-          onNext={finishOnboarding}
-          onSkip={finishOnboarding}
         />
       );
 
@@ -411,4 +393,3 @@ export default function OnboardingRouter() {
       return null;
   }
 }
-
