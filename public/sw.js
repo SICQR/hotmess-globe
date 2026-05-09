@@ -3,7 +3,7 @@
  * Handles: Push notifications, caching, offline support, background sync
  */
 
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const STATIC_CACHE = `hotmess-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `hotmess-dynamic-${CACHE_VERSION}`;
 const API_CACHE = `hotmess-api-${CACHE_VERSION}`;
@@ -246,13 +246,20 @@ self.addEventListener('fetch', (event) => {
   // Skip chrome-extension and other non-http requests
   if (!event.request.url.startsWith('http')) return;
   
-  // Skip cross-origin requests that we don't want to cache
   const url = new URL(event.request.url);
+
+  // Bypass SW entirely for Google Maps APIs — referrer-restricted keys need
+  // direct page-context fetches; SW-context fetch strips/modifies Referer,
+  // which makes the API reject the request even with a valid key.
+  if (url.hostname.includes('googleapis')) {
+    return;
+  }
+
+  // Skip cross-origin requests that we don't want to cache
   if (
     url.origin !== self.location.origin &&
     !url.hostname.includes('supabase') &&
-    !url.hostname.includes('cloudinary') &&
-    !url.hostname.includes('googleapis')
+    !url.hostname.includes('cloudinary')
   ) {
     return;
   }
