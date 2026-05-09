@@ -123,7 +123,9 @@ async function processOrderCompletion(session, eventType, req) {
   // ── Handle Membership Upgrades ──────────────────────────────────────────
   if (stripeType === 'membership') {
     const userId = session.metadata?.user_id;
-    const tierName = session.metadata?.tier_name;
+    // Read either key for backward-compat: sessions started before this rename
+    // still carry tier_name; new sessions use tier (matches the DB column name).
+    const tierName = session.metadata?.tier ?? session.metadata?.tier_name;
 
     if (!userId || !tierName) {
       console.error('[Webook] Missing membership metadata:', { userId, tierName });
