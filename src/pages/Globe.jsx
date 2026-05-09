@@ -611,7 +611,13 @@ export default function GlobePage({ embedded = false }) {
               setFocusedBeaconId(beacon.id);
             }}
             onRecoveryClick={(place) => {
-              setPreviewBeacon({ ...place, title: place.name, beacon_category: 'venue' });
+              setPreviewBeacon({
+                ...place,
+                title: place.name,
+                kind: 'recovery',
+                beacon_category: 'recovery',
+                description: place.notes || place.description,
+              });
             }}
 
             recoveryPins={recovery}

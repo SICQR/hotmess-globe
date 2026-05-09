@@ -1,24 +1,16 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
-import { X, MapPin } from 'lucide-react';
+import { X, MapPin, HeartHandshake } from 'lucide-react';
 import { createPageUrl } from '../../utils';
 
 export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
+  const navigate = useNavigate();
   if (!beacon) return null;
 
-  const kindColors = {
-    event: '#00C2E0',
-    venue: '#C8962C',
-    hookup: '#C8962C',
-    drop: '#FFEB3B',
-    popup: '#39FF14',
-    private: '#FF6B35',
-    person: '#00C2E0',
-  };
-
-  const color = kindColors[beacon.kind] || '#C8962C';
   const isPerson = beacon.kind === 'person';
+  const isRecovery = beacon.kind === 'recovery' || beacon.beacon_category === 'recovery';
   const detailsUrl = isPerson && beacon.email
     ? createPageUrl(`Profile?email=${encodeURIComponent(beacon.email)}`)
     : createPageUrl('BeaconDetail') + '?id=' + encodeURIComponent(beacon.id);
@@ -48,15 +40,22 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#C8962C]/10 rounded-xl flex items-center justify-center">
-              <MapPin className={`w-5 h-5 ${isPerson ? 'text-[#00C2E0]' : 'text-[#C8962C]'}`} />
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ background: isRecovery ? 'rgba(255,255,255,0.10)' : 'rgba(200,150,44,0.10)' }}
+            >
+              {isRecovery
+                ? <HeartHandshake className="w-5 h-5 text-white" />
+                : <MapPin className={`w-5 h-5 ${isPerson ? 'text-[#00C2E0]' : 'text-[#C8962C]'}`} />}
             </div>
             <div>
               <h3 className="text-xl font-black italic tracking-tight text-white uppercase leading-none">
                 {beacon.title}
               </h3>
-              <p className="text-[10px] text-white/30 font-black uppercase tracking-widest mt-1">
-                {isPerson ? 'person' : beacon.kind || 'SIGNAL'}
+              <p className="text-[10px] font-black uppercase tracking-widest mt-1"
+                 style={{ color: isRecovery ? '#FFFFFF99' : '#FFFFFF4D' }}
+              >
+                {isRecovery ? 'recovery support' : isPerson ? 'person' : beacon.kind || 'SIGNAL'}
               </p>
             </div>
           </div>
@@ -104,13 +103,29 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
             )}
 
             <div className="flex flex-wrap gap-2 pt-2">
-               {beacon.isRightNow && (
+               {!isRecovery && beacon.isRightNow && (
                  <span className="px-3 py-1 bg-[#00C2E0]/20 border border-[#00C2E0]/30 text-[#00C2E0] text-[10px] font-black uppercase tracking-widest">Live Now</span>
                )}
-               {beacon.intensity > 0.7 && (
+               {!isRecovery && beacon.intensity > 0.7 && (
                  <span className="px-3 py-1 bg-[#FFEB3B]/20 border border-[#FFEB3B]/30 text-[#FFEB3B] text-[10px] font-black uppercase tracking-widest">High Energy</span>
                )}
+               {isRecovery && (
+                 <span className="px-3 py-1 bg-white/10 border border-white/20 text-white text-[10px] font-black uppercase tracking-widest">Confidential</span>
+               )}
             </div>
+
+            {isRecovery && (
+              <button
+                onClick={() => {
+                  onClose?.();
+                  navigate('/care');
+                }}
+                className="w-full mt-2 py-3.5 bg-white text-black rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+              >
+                <HeartHandshake className="w-4 h-4" />
+                Open Hand N Hand
+              </button>
+            )}
           </div>
         </div>
       </motion.div>
