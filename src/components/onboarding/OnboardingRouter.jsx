@@ -4,18 +4,22 @@
  * Rendered by BootRouter for UNAUTHENTICATED, NEEDS_AGE, NEEDS_ONBOARDING,
  * and NEEDS_COMMUNITY_GATE states.
  *
- * New 3-step flow (as of 2026-03-27):
- *   AgeGate → SignUp (auth) → QuickSetup → /ghosted
+ * Active flow (as of 2026-05-09):
+ *   Splash → AgeGate → SignUp (auth) → QuickSetup → Profile → /ghosted
  *
- * SplashScreen, QuickProfileScreen, VibeScreen, SafetySeedScreen, and
- * LocationPermissionScreen are NOT deleted — just removed from router sequence.
- * Legacy onboarding_stage values (profile/vibe/safety/location) route to
- * QuickSetupScreen so in-progress users can complete via the new path.
+ * PinSetupScreen was removed from the router 2026-05-09 — PIN protection
+ * is now opt-in via Safety settings. PinSetupScreen.jsx is still exported
+ * and used from there. SplashScreen, QuickProfileScreen, VibeScreen,
+ * SafetySeedScreen, and LocationPermissionScreen are NOT deleted — just
+ * not in the sequence. Legacy onboarding_stage values (profile/vibe/safety/
+ * location) route to QuickSetupScreen so in-progress users can finish.
  *
  * Resume logic (onboarding_stage → screen):
  *   null / start / age_gate → AgeGateScreen (or SignUpScreen if sessionStorage age passed)
  *   age_verified / signup / profile / vibe / safety / location → QuickSetupScreen
  *   signed_up → QuickSetupScreen
+ *   quick_setup → ProfileScreen
+ *   profile_complete / vibe_complete / pin_complete → /ghosted
  *   complete → /ghosted (BootRouter intercepts, never reaches here)
  */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -33,9 +37,10 @@ import AgeGateScreen from './screens/AgeGateScreen';
 import SignUpScreen from './screens/SignUpScreen';
 import QuickSetupScreen from './screens/QuickSetupScreen';
 import ProfileScreen from './screens/ProfileScreen';
-import PinSetupScreen from './screens/PinSetupScreen';
 
-// Screen keys
+// Screen keys.
+// PIN_SETUP intentionally removed 2026-05-09 — PIN is now opt-in via
+// /safety settings. PinSetupScreen still exists and is used there.
 const SCREENS = {
   SPLASH: 'splash',      // ← first-ever visit
   AGE_GATE: 'age_gate',
@@ -43,21 +48,21 @@ const SCREENS = {
   SIGNIN: 'signin',
   QUICK_SETUP: 'quick_setup',
   PROFILE: 'profile_screen',
-  PIN_SETUP: 'pin_setup',
 };
 
 // Map onboarding_stage → screen.
-// Legacy stages (profile/vibe/safety/location) collapse to QUICK_SETUP so
-// users who were mid-old-flow can complete via the new 3-step path.
+// Legacy stages (profile/vibe/safety/location/vibe_complete) collapse to
+// the new path. profile_complete and pin_complete now both finish onboarding
+// directly (no separate PIN gate).
 const STAGE_TO_SCREEN = {
   start: SCREENS.AGE_GATE,
   age_gate: SCREENS.SIGNUP,        // authed, age already verified pre-auth
   age_verified: SCREENS.SIGNUP,    // explicit age_verified stage
   signed_up: SCREENS.QUICK_SETUP,  // signed up, quick setup not yet done
   quick_setup: SCREENS.PROFILE,    // ProfileScreen
-  profile_complete: SCREENS.PIN_SETUP,  // PinSetupScreen
-  vibe_complete: SCREENS.PIN_SETUP,  // PinSetupScreen (legacy stage)
-  pin_complete: null,  // should not reach OnboardingRouter (onboarding_completed=true)
+  profile_complete: null,          // PIN deferred → onboarding finishes here
+  vibe_complete: null,             // legacy stage, also finishes
+  pin_complete: null,
   // Legacy stages → QuickSetup (new minimum to unlock)
   signup: SCREENS.QUICK_SETUP,
   profile: SCREENS.QUICK_SETUP,
@@ -300,21 +305,34 @@ export default function OnboardingRouter() {
     goTo(SCREENS.PROFILE);
   };
 
-  const handleProfileComplete = () => {
-    // Profile details done → advance to PIN setup
+  // Profile is now the final step — PIN is opt-in via /safety settings.
+  // Centralized completion: write onboarding_completed=true and route to
+  // /ghosted. Used by both Continue and Skip on ProfileScreen.
+  const finishOnboarding = useCallback(async () => {
     track('onboarding_stage_completed', 'onboarding', 'profile_complete');
-    goTo(SCREENS.PIN_SETUP);
-  };
-
-  const handlePinComplete = async () => {
-    // PIN is the final step — onboarding_completed is now true in DB
-    track('onboarding_stage_completed', 'onboarding', 'pin_complete');
     track('profile_complete', 'onboarding');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('profiles').update({
+          onboarding_stage: 'complete',
+          onboarding_completed: true,
+          onboarding_completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }).eq('id', user.id);
+      }
+    } catch (e) {
+      console.warn('[OnboardingRouter] finishOnboarding write failed:', e);
+    }
+    try {
+      localStorage.setItem('hm_age_gate_passed', 'true');
+      localStorage.setItem('hm_community_attested_v1', 'true');
+    } catch {}
     if (refetchProfile) {
       await refetchProfile();
     }
     navigate('/ghosted', { replace: true });
-  };
+  }, [navigate, refetchProfile]);
 
   // v6 F5M — render intercept (all hooks above, safe to return here)
   if (f5mEnabled) {
@@ -384,16 +402,8 @@ export default function OnboardingRouter() {
     case SCREENS.PROFILE:
       return (
         <ProfileScreen
-          onNext={handleProfileComplete}
-          onSkip={handleProfileComplete}
-        />
-      );
-
-    case SCREENS.PIN_SETUP:
-      return (
-        <PinSetupScreen
-          onNext={handlePinComplete}
-          onSkip={handlePinComplete}
+          onNext={finishOnboarding}
+          onSkip={finishOnboarding}
         />
       );
 
