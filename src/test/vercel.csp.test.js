@@ -74,4 +74,15 @@ describe('vercel.json CSP', () => {
     expect(csp).toContain('connect-src');
     expect(csp).toContain('wss://vercel.live');
   });
+
+  it('allows Google Maps API connect-src for reverse geocode + tiles', () => {
+    // Root cause of an earlier prod regression: CSP silently blocked every
+    // maps.googleapis.com fetch even with a valid referrer-restricted key.
+    const vercelJson = readVercelJson();
+    const csp = getCspHeaderValue(vercelJson);
+
+    expect(csp).toBeTruthy();
+    expect(csp).toContain('connect-src');
+    expect(csp).toContain('https://maps.googleapis.com');
+  });
 });
