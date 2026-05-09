@@ -154,7 +154,7 @@ export default function EnhancedGlobe3D({
         labelLng="lng"
         labelText="text"
         labelSize="size"
-        labelDotRadius={0.3}
+        labelDotRadius={0.6}
         labelColor={() => "#C8962C"}
         labelResolution={2}
         onLabelClick={onCityClick}
