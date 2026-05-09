@@ -1,48 +1,45 @@
 /**
- * SignUpScreen — OAuth + magic link auth.
- * Handles both sign-up (from Join flow) and sign-in (from Sign In button).
+ * SignUpScreen — OAuth (Apple, Google) + Phone OTP + Telegram, with
+ * email+password tucked under a "More options" expander.
  *
- * NOTE: Does NOT set up its own onAuthStateChange listener.
- * BootGuardContext owns the auth listener. After auth completes,
- * BootGuardContext re-evaluates boot state → BootRouter renders
- * OnboardingRouter → OnboardingRouter.resolveScreen() applies
+ * 2026-05-09 (Grindr-fast directive):
+ *   - Magic link path REMOVED entirely (no email input as primary path,
+ *     no "Check your inbox" confirmation screen).
+ *   - Email+password is now the legacy fallback, collapsed under
+ *     "More options" so it doesn't compete with 1-tap auth.
+ *   - Phone OTP and Telegram buttons are wired separately in sibling PRs
+ *     and will surface above email+password once those PRs land.
+ *
+ * NOTE: Does NOT set up its own onAuthStateChange listener. BootGuardContext
+ * owns the auth listener. After auth completes, BootGuardContext re-evaluates
+ * boot state → BootRouter renders OnboardingRouter → resolveScreen() applies
  * sessionStorage age gate data and routes to the correct screen.
  *
  * WebView detection: Apple Sign In is hidden in Instagram / FBAN / Twitter
  * WebViews because WKWebView blocks the Apple auth popup (returns 400).
  */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
-import { Loader2, Mail } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { ProgressDots } from './AgeGateScreen';
 import { track } from '@/lib/analytics';
 
 const GOLD = '#C8962C';
 
-/**
- * Apple Sign In is disabled until the Apple OAuth app (Services ID + .p8 key)
- * is fully configured in Supabase Dashboard → Auth → Providers → Apple.
- * Flip to `true` once configured.
- */
 const APPLE_ENABLED = true;
 
-/**
- * Returns true when running inside a social media in-app browser (WebView)
- * that blocks Apple's OAuth popup.
- */
 function isInWebView() {
   const ua = navigator.userAgent || '';
   return /FBAN|FBAV|Instagram|Twitter|Line\/|Musical\.ly/i.test(ua);
 }
 
-const RESEND_COOLDOWN = 60; // seconds
-
 export default function SignUpScreen({ isSignIn = false }) {
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [error, setError] = useState('');
-  const [countdown, setCountdown] = useState(0);
+  const [info, setInfo] = useState('');
   const webView = isInWebView();
 
   // Capture referral code from URL
@@ -51,23 +48,13 @@ export default function SignUpScreen({ isSignIn = false }) {
     if (r) { try { sessionStorage.setItem('hm_referral_code', r.toUpperCase()); } catch {} }
   }, []);
 
-  // Countdown timer for resend button
-  useEffect(() => {
-    if (countdown <= 0) return;
-    const id = setInterval(() => setCountdown((c) => c - 1), 1000);
-    return () => clearInterval(id);
-  }, [countdown]);
-
   const handleOAuth = async (provider) => {
     setLoading(true);
     setError('');
-    // Chunk 17c: track signup attempt before redirect
     track('signup', 'onboarding', provider);
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
     if (oauthError) {
       setError(oauthError.message);
@@ -75,117 +62,64 @@ export default function SignUpScreen({ isSignIn = false }) {
     }
   };
 
-  const sendMagicLink = useCallback(async (emailAddr) => {
-    const { error: otpError } = await supabase.auth.signInWithOtp({
-      email: emailAddr.trim(),
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    return otpError;
-  }, []);
-
-  const handleMagicLink = async (e) => {
+  const handleEmailPassword = async (e) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!email.trim() || !password) return;
     setLoading(true);
     setError('');
-    const otpError = await sendMagicLink(email);
-    setLoading(false);
-    if (otpError) {
-      setError(otpError.message);
-    } else {
-      // Chunk 17c: track magic link signup
-      track('signup', 'onboarding', 'magic_link');
-      setMagicLinkSent(true);
-      setCountdown(RESEND_COOLDOWN);
+    setInfo('');
+    try {
+      if (isSignIn) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        if (signInError) {
+          setError(signInError.message);
+        } else {
+          track('signin', 'onboarding', 'password');
+          window.location.assign('/auth/callback');
+        }
+      } else {
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+        });
+        if (signUpError) {
+          setError(signUpError.message);
+        } else if (data?.session) {
+          track('signup', 'onboarding', 'password');
+          window.location.assign('/auth/callback');
+        } else {
+          // Email confirmation required (Supabase default). User gets a
+          // confirmation link via email — but Phil's directive removes
+          // magic-link UX so we just say so in plain text.
+          track('signup', 'onboarding', 'password_pending_confirm');
+          setInfo("Account created. Check your email to confirm, then sign in.");
+        }
+      }
+    } catch (err) {
+      setError(err?.message || 'Something went wrong. Try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleResend = async () => {
-    if (countdown > 0) return;
-    setLoading(true);
-    const otpError = await sendMagicLink(email);
-    setLoading(false);
-    if (!otpError) {
-      setCountdown(RESEND_COOLDOWN);
-    }
-  };
-
-  // ── Magic link sent: confirmation screen ──────────────────────────────────
-  if (magicLinkSent) {
-    return (
-      <div
-        className="fixed inset-0 flex flex-col items-center justify-center px-6"
-        style={{ background: '#0A0A0A' }}
-      >
-        <div className="w-full max-w-xs text-center">
-          {/* Icon */}
-          <div
-            className="w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center"
-            style={{ background: `${GOLD}18`, border: `1px solid ${GOLD}30` }}
-          >
-            <Mail className="w-7 h-7" style={{ color: GOLD }} />
-          </div>
-
-          <h2 className="text-white text-xl font-black mb-2">Check your inbox</h2>
-          <p className="text-white/50 text-sm leading-relaxed mb-1">
-            Magic link sent to
-          </p>
-          <p className="text-white/80 text-sm font-semibold mb-8 break-all">{email}</p>
-
-          <p className="text-white/30 text-xs mb-6">
-            Tap the link in your email to sign in. It expires in 10 minutes.
-          </p>
-
-          {/* Resend */}
-          <button
-            onClick={handleResend}
-            disabled={countdown > 0 || loading}
-            className="w-full py-3.5 rounded-xl font-bold text-sm mb-3 transition-opacity"
-            style={{
-              background: countdown > 0 ? 'rgba(255,255,255,0.04)' : `${GOLD}18`,
-              border: `1px solid ${countdown > 0 ? 'rgba(255,255,255,0.08)' : `${GOLD}30`}`,
-              color: countdown > 0 ? 'rgba(255,255,255,0.3)' : GOLD,
-              opacity: loading ? 0.5 : 1,
-            }}
-          >
-            {loading
-              ? 'Sending…'
-              : countdown > 0
-              ? `Resend in ${countdown}s`
-              : 'Resend magic link'}
-          </button>
-
-          {/* Wrong email */}
-          <button
-            onClick={() => { setMagicLinkSent(false); setEmail(''); setCountdown(0); }}
-            className="text-xs font-medium"
-            style={{ color: 'rgba(255,255,255,0.3)' }}
-          >
-            Wrong email? Start over
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Main auth screen ───────────────────────────────────────────────────────
   return (
     <div
       className="fixed inset-0 flex flex-col items-center justify-center px-6"
       style={{ background: '#0A0A0A' }}
     >
       <div className="w-full max-w-xs">
-        {!isSignIn && <ProgressDots current={2} total={5} />}
+        {!isSignIn && <ProgressDots current={2} total={3} />}
 
         <h2 className="text-white text-xl font-bold mb-8">
           {isSignIn ? 'Welcome back' : 'Create your account'}
         </h2>
 
-        {/* OAuth buttons */}
-        <div className="flex flex-col gap-3 mb-8">
-          {/* Apple Sign In: hidden until configured in Supabase Dashboard */}
+        {/* OAuth buttons — primary 1-tap paths */}
+        <div className="flex flex-col gap-3 mb-3">
           {APPLE_ENABLED && !webView && (
             <button
               onClick={() => handleOAuth('apple')}
@@ -220,39 +154,62 @@ export default function SignUpScreen({ isSignIn = false }) {
           )}
         </div>
 
-        {/* Divider */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="flex-1 h-px bg-white/10" />
-          <span className="text-white/30 text-xs uppercase tracking-widest">or</span>
-          <div className="flex-1 h-px bg-white/10" />
-        </div>
+        {/* "More options" expander — email+password fallback */}
+        <button
+          type="button"
+          onClick={() => setShowMoreOptions((v) => !v)}
+          className="w-full py-3 mt-2 mb-2 flex items-center justify-center gap-1 text-white/40 text-xs font-semibold tracking-wider uppercase hover:text-white/70 transition-colors"
+          aria-expanded={showMoreOptions}
+        >
+          More options
+          {showMoreOptions ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        </button>
 
-        {/* Magic link form */}
-        <form onSubmit={handleMagicLink} className="flex flex-col gap-4">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email address"
-            className="w-full bg-transparent text-white py-3 border-b focus:outline-none text-base placeholder:text-white/25"
-            style={{ borderBottomColor: email ? GOLD : '#333' }}
-            autoComplete="email"
-          />
-          <button
-            type="submit"
-            disabled={loading || !email.trim()}
-            className="w-full py-4 rounded-xl text-black font-bold text-base tracking-wide flex items-center justify-center gap-2 transition-opacity"
-            style={{
-              backgroundColor: GOLD,
-              opacity: loading || !email.trim() ? 0.3 : 1,
-            }}
-          >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send magic link'}
-          </button>
-        </form>
+        {showMoreOptions && (
+          <form onSubmit={handleEmailPassword} className="flex flex-col gap-3 pt-2 border-t border-white/5">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email address"
+              className="w-full bg-transparent text-white py-3 border-b focus:outline-none text-base placeholder:text-white/25"
+              style={{ borderBottomColor: email ? GOLD : '#333' }}
+              autoComplete="email"
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="w-full bg-transparent text-white py-3 border-b focus:outline-none text-base placeholder:text-white/25"
+              style={{ borderBottomColor: password ? GOLD : '#333' }}
+              autoComplete={isSignIn ? 'current-password' : 'new-password'}
+              minLength={isSignIn ? undefined : 8}
+            />
+            <button
+              type="submit"
+              disabled={loading || !email.trim() || !password}
+              className="w-full py-4 rounded-xl text-black font-bold text-base tracking-wide flex items-center justify-center gap-2 transition-opacity"
+              style={{
+                backgroundColor: GOLD,
+                opacity: loading || !email.trim() || !password ? 0.3 : 1,
+              }}
+            >
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (isSignIn ? 'Sign in' : 'Create account')}
+            </button>
+            {!isSignIn && (
+              <p className="text-white/25 text-[10px] text-center leading-relaxed">
+                Use 8+ chars. We'll never email you marketing.
+              </p>
+            )}
+          </form>
+        )}
 
         {error && (
           <p className="text-red-400 text-xs mt-4 text-center">{error}</p>
+        )}
+        {info && (
+          <p className="text-white/60 text-xs mt-4 text-center leading-relaxed">{info}</p>
         )}
       </div>
     </div>
