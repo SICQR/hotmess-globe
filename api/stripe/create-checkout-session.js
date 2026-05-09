@@ -299,7 +299,7 @@ export default async function handler(req, res) {
         user_email: user.email ?? '',
         user_name: profile?.display_name ?? '',
         tier_id: String(tier.id),
-        tier_name: tier.name,
+        tier: tier.name,
         type: 'membership',
       },
       return_url: `${origin}/more/settings?membership=success&tier=${encodeURIComponent(tier.name)}&session_id={CHECKOUT_SESSION_ID}`,
