@@ -5,7 +5,7 @@
  * and NEEDS_COMMUNITY_GATE states.
  *
  * Active flow (as of 2026-05-09 — Grindr-fast directive):
- *   Splash → AgeGate → SignUp (auth) → QuickSetup → /ghosted
+ *   Splash → AgeGate → SignUp (auth) → QuickSetup → /pulse
  *
  * Both ProfileScreen (vibe/orientation/body/height/ethnicity) and
  * PinSetupScreen are removed from the gate. Vibe data lives in
@@ -17,8 +17,8 @@
  *   null / start / age_gate → AgeGateScreen (or SignUpScreen if sessionStorage age passed)
  *   age_verified / signup / profile / vibe / safety / location → QuickSetupScreen
  *   signed_up → QuickSetupScreen
- *   quick_setup / profile_complete / vibe_complete / pin_complete → /ghosted
- *   complete → /ghosted (BootRouter intercepts, never reaches here)
+ *   quick_setup / profile_complete / vibe_complete / pin_complete → /pulse
+ *   complete → /pulse (BootRouter intercepts, never reaches here)
  */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useV6Flag as useFlag } from '@/hooks/useV6Flag';
@@ -147,7 +147,7 @@ export default function OnboardingRouter() {
 
     // Already complete?
     if (freshProfile.onboarding_completed) {
-      navigate('/ghosted', { replace: true });
+      navigate('/pulse', { replace: true });
       return;
     }
 
@@ -321,7 +321,7 @@ export default function OnboardingRouter() {
     if (refetchProfile) {
       await refetchProfile();
     }
-    navigate('/ghosted', { replace: true });
+    navigate('/pulse', { replace: true });
   }, [navigate, refetchProfile]);
 
   // v6 F5M — render intercept (all hooks above, safe to return here)
