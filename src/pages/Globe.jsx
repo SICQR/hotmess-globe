@@ -389,12 +389,22 @@ export default function GlobePage({ embedded = false }) {
       }
     }
 
-    // Layer filtering from GlobeContext
-    if (!activeLayer.events)  filtered = filtered.filter(b => b.type !== 'event'  && b.kind !== 'event');
-    if (!activeLayer.venues)  filtered = filtered.filter(b => b.beacon_category !== 'venue');
-    if (!activeLayer.people)  filtered = filtered.filter(b => b.kind !== 'person');
-    if (!activeLayer.safety)  filtered = filtered.filter(b => b.type !== 'safety' && b.kind !== 'safety');
-    if (!activeLayer.market)  filtered = filtered.filter(b => b.type !== 'market' && b.kind !== 'market');
+    // Layer filtering from GlobeContext.
+    // Each category matches on EITHER beacon_category (canonical, from the
+    // beacons table) OR type/kind (legacy fields still present on some
+    // realtime payloads). Keep all 6 categories in sync with LAYER_DEFS.
+    const matches = (b, ...needles) => {
+      const cat = String(b.beacon_category || '').toLowerCase();
+      const type = String(b.type || '').toLowerCase();
+      const kind = String(b.kind || '').toLowerCase();
+      return needles.some(n => cat === n || type === n || kind === n);
+    };
+    if (!activeLayer.events) filtered = filtered.filter(b => !matches(b, 'event'));
+    if (!activeLayer.venues) filtered = filtered.filter(b => !matches(b, 'venue'));
+    if (!activeLayer.people) filtered = filtered.filter(b => !matches(b, 'person', 'user'));
+    if (!activeLayer.safety) filtered = filtered.filter(b => !matches(b, 'safety'));
+    if (!activeLayer.market) filtered = filtered.filter(b => !matches(b, 'market', 'vendor'));
+    if (!activeLayer.radio)  filtered = filtered.filter(b => !matches(b, 'radio'));
 
     return filtered;
   }, [realtimeBeacons, activeMode, beaconType, minIntensity, recencyFilter, searchResults, radiusSearch, nearbyPeoplePins, showPeoplePins, realtimeLocations, activeLayer]);
