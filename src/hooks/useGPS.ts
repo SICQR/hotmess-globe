@@ -102,23 +102,27 @@ export function useGPS(autoUpdate = true): UseGPSResult {
 
       // ── Reverse Geocode for Area Name ──────────────────────────────────────
       let locationArea = null;
-      try {
-        const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyDZBzKf5oO1zhdQph9F5j_1JUihMkFQXM0';
-        const response = await fetch(
-          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${newPosition.lat},${newPosition.lng}&key=${apiKey}&result_type=neighborhood|sublocality|locality`
-        );
-        const geoData = await response.json();
-        if (geoData.status === 'OK' && geoData.results?.length > 0) {
-          // Find the most descriptive "neighborhood" or "sublocality"
-          const bestMatch = geoData.results.find(r => r.types.includes('neighborhood')) 
-                        || geoData.results.find(r => r.types.includes('sublocality'))
-                        || geoData.results[0];
-          
-          locationArea = bestMatch.address_components[0].long_name;
-          console.log('[useGPS] 📍 Reverse geocoded area:', locationArea);
+      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      if (!apiKey) {
+        console.warn('[useGPS] VITE_GOOGLE_MAPS_API_KEY not set, skipping reverse geocode');
+      } else {
+        try {
+          const response = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${newPosition.lat},${newPosition.lng}&key=${apiKey}&result_type=neighborhood|sublocality|locality`
+          );
+          const geoData = await response.json();
+          if (geoData.status === 'OK' && geoData.results?.length > 0) {
+            // Find the most descriptive "neighborhood" or "sublocality"
+            const bestMatch = geoData.results.find(r => r.types.includes('neighborhood'))
+                          || geoData.results.find(r => r.types.includes('sublocality'))
+                          || geoData.results[0];
+
+            locationArea = bestMatch.address_components[0].long_name;
+            console.log('[useGPS] 📍 Reverse geocoded area:', locationArea);
+          }
+        } catch (err) {
+          console.warn('[useGPS] Reverse geocoding failed:', err);
         }
-      } catch (err) {
-        console.warn('[useGPS] Reverse geocoding failed:', err);
       }
 
       const locUpdate: Record<string, any> = {
