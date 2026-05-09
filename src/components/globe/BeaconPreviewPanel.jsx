@@ -2,15 +2,19 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
-import { X, MapPin, HeartHandshake } from 'lucide-react';
+import { X, MapPin, HeartHandshake, UserCircle2 } from 'lucide-react';
 import { createPageUrl } from '../../utils';
 
-export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
+export default function BeaconPreviewPanel({ beacon, onClose, onViewFull, onViewProfile }) {
   const navigate = useNavigate();
   if (!beacon) return null;
 
   const isPerson = beacon.kind === 'person';
   const isRecovery = beacon.kind === 'recovery' || beacon.beacon_category === 'recovery';
+  const isUserBeacon =
+    isPerson ||
+    beacon.beacon_category === 'user' ||
+    Boolean(beacon.user_id || beacon.owner_id);
   const detailsUrl = isPerson && beacon.email
     ? createPageUrl(`Profile?email=${encodeURIComponent(beacon.email)}`)
     : createPageUrl('BeaconDetail') + '?id=' + encodeURIComponent(beacon.id);
@@ -124,6 +128,16 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
               >
                 <HeartHandshake className="w-4 h-4" />
                 Open Hand N Hand
+              </button>
+            )}
+
+            {!isRecovery && isUserBeacon && onViewProfile && (
+              <button
+                onClick={() => onViewProfile(beacon)}
+                className="w-full mt-2 py-3.5 bg-[#C8962C] text-black rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+              >
+                <UserCircle2 className="w-4 h-4" />
+                View Profile
               </button>
             )}
           </div>
