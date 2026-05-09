@@ -5,9 +5,14 @@
  * Body: { phone: '+447700900123' }  (E.164)
  *
  * Env required:
- *   TWILIO_ACCOUNT_SID
- *   TWILIO_AUTH_TOKEN
- *   TWILIO_VERIFY_SERVICE_SID  (Verify service "Service SID")
+ *   TWILIO_ACCOUNT_SID         (already in Vercel for SMS)
+ *   TWILIO_API_KEY_SID         (rotatable API Key, starts with 'SK…')
+ *   TWILIO_API_KEY_SECRET      (rotatable API Key secret)
+ *   TWILIO_VERIFY_SERVICE_SID  (Verify service "Service SID" — Phil
+ *                               provisions this in Twilio Console)
+ *
+ * Twilio Basic auth uses API Key SID:API Key Secret. Falls back to
+ * AccountSid:AuthToken if API Key creds aren't set, for migration safety.
  *
  * Twilio Verify docs: https://www.twilio.com/docs/verify/api/verification
  *
@@ -17,19 +22,36 @@
 
 const E164_RE = /^\+[1-9]\d{6,14}$/;
 
+function getTwilioBasicAuth() {
+  const apiKeySid = process.env.TWILIO_API_KEY_SID;
+  const apiKeySecret = process.env.TWILIO_API_KEY_SECRET;
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+  // Prefer API Key creds (rotatable). Fall back to Account SID + Auth Token.
+  if (apiKeySid && apiKeySecret) {
+    return Buffer.from(`${apiKeySid}:${apiKeySecret}`).toString('base64');
+  }
+  if (accountSid && authToken) {
+    return Buffer.from(`${accountSid}:${authToken}`).toString('base64');
+  }
+  return null;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const basicAuth = getTwilioBasicAuth();
   const serviceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
 
-  if (!accountSid || !authToken || !serviceSid) {
-    return res.status(500).json({
-      error: 'MISSING_TWILIO_VERIFY_SID',
-      detail: 'Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_VERIFY_SERVICE_SID in env to enable phone OTP.',
+  if (!basicAuth || !serviceSid) {
+    return res.status(503).json({
+      error: 'TWILIO_VERIFY_SERVICE_SID not configured',
+      detail:
+        'Set TWILIO_API_KEY_SID + TWILIO_API_KEY_SECRET (preferred) or ' +
+        'TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN, plus TWILIO_VERIFY_SERVICE_SID.',
     });
   }
 
@@ -41,11 +63,10 @@ export default async function handler(req, res) {
   try {
     const url = `https://verify.twilio.com/v2/Services/${encodeURIComponent(serviceSid)}/Verifications`;
     const body = new URLSearchParams({ To: phone, Channel: 'sms' });
-    const auth = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
     const r = await fetch(url, {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${auth}`,
+        'Authorization': `Basic ${basicAuth}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body,

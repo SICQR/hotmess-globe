@@ -57,7 +57,8 @@ export default function PhoneOtpButton({ disabled }) {
       });
       const data = await r.json();
       if (!r.ok) {
-        if (data?.error === 'MISSING_TWILIO_VERIFY_SID') {
+        if (data?.error === 'TWILIO_VERIFY_SERVICE_SID not configured' ||
+            data?.error === 'MISSING_TWILIO_VERIFY_SID') {
           setError("Phone sign-in isn't set up yet. Try Apple, Google, or email.");
         } else {
           setError(data?.error || 'Could not send code. Try again.');
@@ -91,7 +92,8 @@ export default function PhoneOtpButton({ disabled }) {
       if (!r.ok) {
         if (data?.error === 'invalid_code') {
           setError("That code didn't match. Try again.");
-        } else if (data?.error === 'MISSING_TWILIO_VERIFY_SID') {
+        } else if (data?.error === 'TWILIO_VERIFY_SERVICE_SID not configured' ||
+                   data?.error === 'MISSING_TWILIO_VERIFY_SID') {
           setError("Phone sign-in isn't set up yet.");
         } else if (data?.error === 'SUPABASE_ADMIN_NOT_CONFIGURED') {
           setError("Server isn't configured to sign you in by phone yet.");
