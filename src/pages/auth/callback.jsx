@@ -7,12 +7,13 @@ import logger from '@/utils/logger';
  * OAuth / Magic Link Callback Handler
  *
  * After Supabase verifies the token:
- * - Returning user (onboarding_completed = true) → /ghosted
+ * - Returning user (onboarding_completed = true) → /pulse
  * - New / incomplete user → /
  * - Bot/scraper hitting a stale link (400 error) → / gracefully
  *
- * The BootGuardContext will handle final routing from / anyway,
- * so /ghosted for returning users is an optimistic fast-path.
+ * The BootGuardContext will handle final routing from / anyway, so /pulse
+ * for returning users is an optimistic fast-path. Pulse is the primary
+ * destination per the Grindr-fast directive (2026-05-09).
  */
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -69,9 +70,9 @@ export default function AuthCallback() {
               await routeAfterAuth(existing.session.user.id, navigate);
               return;
             }
-            // No session at all — redirect to /ghosted as a best-effort
+            // No session at all — redirect to /pulse as a best-effort
             // (BootGuardContext will redirect to auth if truly unauthenticated)
-            navigate('/ghosted', { replace: true });
+            navigate('/pulse', { replace: true });
             return;
           }
 
@@ -162,7 +163,7 @@ export default function AuthCallback() {
 
 /**
  * After a successful auth, check onboarding_completed and route accordingly.
- * Returning user → /ghosted. New/incomplete user → /.
+ * Returning user → /pulse. New/incomplete user → /.
  * Also handles referral code capture for new users.
  */
 async function routeAfterAuth(userId, navigate) {
@@ -189,7 +190,7 @@ async function routeAfterAuth(userId, navigate) {
       }
     } catch {}
 
-    const dest = profile?.onboarding_completed === true ? '/ghosted' : '/';
+    const dest = profile?.onboarding_completed === true ? '/pulse' : '/';
     navigate(dest, { replace: true });
     // Hard fallback: if React Router navigate doesn't fire (race with BootGuard),
     // force a full page load after a short delay.

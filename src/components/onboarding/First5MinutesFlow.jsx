@@ -11,7 +11,7 @@ import { useFirst5Minutes, F5M_STAGES } from '@/hooks/useFirst5Minutes';
  * 9 screens: Cold Open → Auth → Age → Name → Sound → Ghosted → Match → Chat → Arrival
  * Each stage: logged to analytics_events + persisted to profiles.onboarding_stage
  * Resume: mounts at correct stage from profile
- * Complete: onboarding_stage → 'complete', navigate → /ghosted
+ * Complete: onboarding_stage → 'complete', navigate → /pulse
  */
 
 const T = {
@@ -366,7 +366,7 @@ export default function First5MinutesFlow({ initialStage, onComplete }) {
   const handleDone = async () => {
     await completeOnboarding();
     onComplete?.();
-    navigate('/ghosted');
+    navigate('/pulse');
   };
 
   const screens = [
