@@ -86,7 +86,17 @@ export function useGlobeRealtime() {
       const { data, error } = await supabase
         .from('night_pulse_realtime')
         .select('city_id, city_name, latitude, longitude, active_beacons, heat_intensity, scans_last_hour');
-      if (error) throw error;
+      if (error) {
+        // PostgrestError is a plain object; default %o stringification renders
+        // it as "Object". Unpack the diagnostic fields explicitly.
+        console.warn('[GlobeRealtime] city heat fetch failed:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+        });
+        return;
+      }
       if (!mountedRef.current) return;
       setCityHeat(
         (data || []).map((c: Record<string, unknown>) => ({
@@ -100,7 +110,10 @@ export function useGlobeRealtime() {
         }))
       );
     } catch (e) {
-      console.warn('[GlobeRealtime] city heat fetch failed:', e);
+      console.warn(
+        '[GlobeRealtime] city heat fetch threw:',
+        e instanceof Error ? `${e.name}: ${e.message}` : JSON.stringify(e)
+      );
     }
   }, []);
 
@@ -116,7 +129,15 @@ export function useGlobeRealtime() {
           'venue_id, ends_at, starts_at, description, owner_id'
         )
         .eq('status', 'active');
-      if (error) throw error;
+      if (error) {
+        console.warn('[GlobeRealtime] beacons fetch failed:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+        });
+        return;
+      }
       if (!mountedRef.current) return;
 
       const now = new Date();
@@ -146,7 +167,10 @@ export function useGlobeRealtime() {
           }))
       );
     } catch (e) {
-      console.warn('[GlobeRealtime] beacons fetch failed:', e);
+      console.warn(
+        '[GlobeRealtime] beacons fetch threw:',
+        e instanceof Error ? `${e.name}: ${e.message}` : JSON.stringify(e)
+      );
     }
   }, []);
 
