@@ -23,6 +23,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { ProgressDots } from './AgeGateScreen';
 import { track } from '@/lib/analytics';
+import TelegramLoginButton from '../TelegramLoginButton';
 
 const GOLD = '#C8962C';
 
@@ -152,6 +153,8 @@ export default function SignUpScreen({ isSignIn = false }) {
               Open in Safari for Apple Sign In
             </p>
           )}
+
+          <TelegramLoginButton disabled={loading} />
         </div>
 
         {/* "More options" expander — email+password fallback */}
