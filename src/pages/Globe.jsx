@@ -11,7 +11,6 @@ import CityDataOverlay from '../components/globe/CityDataOverlay';
 import { Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { debounce } from 'lodash';
 import ErrorBoundary from '../components/error/ErrorBoundary';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
@@ -186,20 +185,8 @@ export default function GlobePage({ embedded = false }) {
   // is re-architected (Path B in PULSE_AUDIT_2026_05_08.md). When that lands,
   // re-introduce the channel + state here.
 
-  const [activeLayers, setActiveLayers] = useState(['pins']);
-  const [debouncedLayers, setDebouncedLayers] = useState(['pins']);
   const [activeMode, setActiveMode] = useState(null);
   const [selectedBeacon, setSelectedBeacon] = useState(null);
-
-  // Debounce layer changes to prevent memory leak from rapid toggling
-  const debouncedSetLayers = React.useMemo(
-    () => debounce((layers) => setDebouncedLayers(layers), 300),
-    []
-  );
-
-  useEffect(() => {
-    debouncedSetLayers(activeLayers);
-  }, [activeLayers, debouncedSetLayers]);
   const [beaconType, setBeaconType] = useState(null);
   const [minIntensity, setMinIntensity] = useState(0);
   const [recencyFilter, setRecencyFilter] = useState('all');
@@ -251,7 +238,7 @@ export default function GlobePage({ embedded = false }) {
   const liveBeaconCount = realtimeBeacons?.length ?? 0;
   const globeActivity = useGlobeActivity(liveBeaconCount);
 
-  const showPeoplePins = activeLayers.includes('people');
+  const showPeoplePins = activeLayer.people;
 
   const { data: nearbyResponse } = useQuery({
     queryKey: ['globe-nearby', userLocation?.lat, userLocation?.lng],
@@ -600,7 +587,6 @@ export default function GlobePage({ embedded = false }) {
 
             venueIntensity={venueIntensity}
             venueVibes={venueVibes}
-            activeLayers={debouncedLayers}
             userIntents={userIntents}
             routesData={realtimeRoutes}
             globeActivity={globeActivity}
