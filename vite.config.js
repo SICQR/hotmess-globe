@@ -844,6 +844,16 @@ function localApiRoutes() {
             });
         }
 
+        if (path === '/api/auth/telegram-callback' && method === 'POST') {
+          return importFresh('./api/auth/telegram-callback.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'telegram-callback handler error' }));
+            });
+        }
+
         if (path === '/api/auth/magic-link' && method === 'POST') {
           return importFresh('./api/auth/magic-link.js')
             .then((mod) => (mod.default || mod)(req, res))
