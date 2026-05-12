@@ -90,6 +90,8 @@ const SafetyPage = lazy(() => import('@/pages/Safety'));
 const SafePage = lazy(() => import('@/pages/SafePage'));
 const SafetySeedScreen = lazy(() => import('@/components/onboarding/screens/SafetySeedScreen'));
 const MusicMode = lazy(() => import('@/modes/MusicMode'));
+const MusicLibraryPage = lazy(() => import('@/pages/music/MusicLibraryPage'));
+const MusicReleasePage = lazy(() => import('@/pages/music/MusicReleasePage'));
 import MorePage from '@/pages/MorePage';
 const CarePage = lazy(() => import('@/pages/CarePage'));
 import AftercareNudge from '@/components/safety/AftercareNudge';
@@ -456,6 +458,8 @@ const AuthenticatedApp = () => {
       <Route path="/more" element={<Suspense fallback={null}><MorePage /></Suspense>} />
       <Route path="/radio" element={<Navigate to="/more" replace />} />
       <Route path="/music" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><MusicMode /></Suspense>} />
+      <Route path="/music/library" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><MusicLibraryPage /></Suspense>} />
+      <Route path="/music/release/:id" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><MusicReleasePage /></Suspense>} />
       <Route path="/care" element={<Navigate to="/more" replace />} />
       <Route path="/more/*" element={<Suspense fallback={null}><MorePage /></Suspense>} />
       <Route path="/safety" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><SafetyPage /></Suspense>} />

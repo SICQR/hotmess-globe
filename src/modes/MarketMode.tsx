@@ -222,7 +222,9 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   const isMarketV2 = useV6Flag('v6_market_v2');
 
   // Live Shopify + internal product feed for v2 editorial shell.
-  // Fires regardless of flag value (cheap, react-query dedupes with ShopEngine's own queries).
+  // Shopify products are partitioned by brand: DROP_BRANDS (raw/hung/high/hungmess/superhung/superraw)
+  // and low-quantity/tagged items go to Drops; everything else (HNH MESS + general merch) goes to Shop.
+  // Internal/creator products augment Drops.
   const { data: v2Shopify = [] } = useQuery<Product[]>({
     queryKey: ['market-v2', 'shopify-all'],
     queryFn: () => getShopifyProducts({ source: 'shopify' }),
@@ -235,8 +237,17 @@ export function MarketMode({ className = '' }: MarketModeProps) {
     staleTime: 2 * 60 * 1000,
     enabled: isMarketV2,
   });
-  const v2ShopItems = useMemo(() => v2Shopify.map(toEditorialItem), [v2Shopify]);
-  const v2DropItems = useMemo(() => v2Internal.map(toEditorialItem), [v2Internal]);
+  const v2ShopItems = useMemo(
+    () => v2Shopify.filter(p => !isDropBrand(p)).map(toEditorialItem),
+    [v2Shopify],
+  );
+  const v2DropItems = useMemo(
+    () => [
+      ...v2Shopify.filter(p => isDropBrand(p)).map(toEditorialItem),
+      ...v2Internal.map(toEditorialItem),
+    ],
+    [v2Shopify, v2Internal],
+  );
 
   // ---- All hooks must be called unconditionally before any early returns ----
   const { isAuthenticated } = useBootGuard();
