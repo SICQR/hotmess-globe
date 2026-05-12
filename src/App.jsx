@@ -723,8 +723,10 @@ function OSArchitecture() {
       {/* L1: Top HUD (Z-50) — Unified Logo + Notifs + Avatar */}
       <TopHUD />
 
-      {/* Global Ticker — sits just below TopHUD */}
-      <GlobalTicker className="fixed top-12 left-0 right-0 z-[60]" />
+      {/* Global Ticker disabled 2026-05-12 — blocking too much real estate.
+          Component + DB driver (app_banners.placement='global_ticker') kept;
+          re-mount this line if/when the ticker is wanted again. */}
+      {/* <GlobalTicker className="fixed top-12 left-0 right-0 z-[60]" /> */}
 
       {/* Radio Mini Player — sits just above OSBottomNav (Z-40) */}
       <RadioMiniPlayer hidden={onRadioActive} />
