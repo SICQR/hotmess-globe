@@ -46,17 +46,14 @@ function formatSeconds(sec) {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-// Stems are paid-only — only return 'stems' when stems are actually for sale
+// Access classifier — 2026-05-12: stems tier removed, only full / preview / coming_soon remain.
 function getTrackAccessLevel(track) {
-  if (track.stem_pack_url && track.stem_pack_price_gbp > 0) return 'stems';
   if (track.download_url || (track.preview_url && !track.is_preview_only)) return 'full';
   if (track.preview_url) return 'preview';
   return 'coming_soon';
 }
 
-function getReleaseAccessLevel(release, releaseTracks) {
-  if (release.stem_pack_url && release.stem_pack_price_gbp > 0) return 'stems';
-  if (releaseTracks?.some(t => t.stem_pack_url && t.stem_pack_price_gbp > 0)) return 'stems';
+function getReleaseAccessLevel(release, _releaseTracks) {
   if (release.download_url || (release.preview_url && !release.is_preview_only)) return 'full';
   if (release.preview_url) return 'preview';
   return 'coming_soon';
@@ -175,30 +172,9 @@ function LinkedEntityCard({ release }) {
   );
 }
 
-// ── Stem Pack Stub ───────────────────────────────────────────────────────────
-
-function StemPackStub({ release }) {
-  // Stems are paid-only — hide if no price (free stems discontinued 2026-05-12)
-  if (!release.stem_pack_url || !(release.stem_pack_price_gbp > 0)) return null;
-
-  return (
-    <div className="mt-4 rounded-xl border border-[#9B1B2A]/20 bg-[#9B1B2A]/5 p-4">
-      <div className="flex items-center gap-3">
-        <FileAudio className="w-5 h-5 text-[#9B1B2A]" />
-        <div className="flex-1">
-          <p className="text-xs font-bold text-white">Stem Pack Available</p>
-          <p className="text-[10px] text-white/40">£{Number(release.stem_pack_price_gbp).toFixed(2)}</p>
-        </div>
-        <button
-          onClick={() => toast('Stems coming soon')}
-          className="px-3 py-1.5 rounded-lg bg-[#9B1B2A] text-[10px] font-bold uppercase text-white active:scale-[0.97] transition-transform"
-        >
-          Get Stems
-        </button>
-      </div>
-    </div>
-  );
-}
+// ── StemPackStub removed 2026-05-12 — stems offering discontinued.
+//    Component intentionally left out; DB columns (stem_pack_url, stem_pack_price_gbp)
+//    kept so the data layer remains backwards-compatible if reintroduced.
 
 // ── Member Gate Banner ───────────────────────────────────────────────────────
 
@@ -208,7 +184,7 @@ function MemberGateBanner({ onJoin }) {
       <Crown className="w-5 h-5 text-[#C8962C]" />
       <div className="flex-1">
         <p className="text-xs font-bold text-white">Members Only</p>
-        <p className="text-[10px] text-white/40">Full tracks, stems, and downloads require membership</p>
+        <p className="text-[10px] text-white/40">Full tracks and downloads require membership</p>
       </div>
       <button
         onClick={onJoin}
@@ -341,24 +317,7 @@ function ReleaseDetailSheet({ release, tracks, onClose }) {
         {/* Linked entity */}
         <LinkedEntityCard release={release} />
 
-        {/* Stem pack \u2014 paid-only, free stems discontinued 2026-05-12 */}
-        {release.stem_pack_url && release.stem_pack_price_gbp > 0 && (
-          <div className="mt-4 rounded-xl border border-[#C8962C]/20 bg-[#C8962C]/5 p-4">
-            <div className="flex items-center gap-3">
-              <FileAudio className="w-5 h-5 text-[#C8962C]" />
-              <div className="flex-1">
-                <p className="text-xs font-bold text-white">Stem Pack Available</p>
-                <p className="text-[10px] text-white/40">\u00a3{Number(release.stem_pack_price_gbp).toFixed(2)}</p>
-              </div>
-              <button
-                onClick={() => console.log('[STEMS] Purchase flow for', release.id)}
-                className="px-3 py-1.5 rounded-lg bg-[#C8962C] text-[10px] font-bold uppercase text-black active:scale-95 transition-transform"
-              >
-                Get Stems
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Stems offering removed 2026-05-12 */}
 
         {/* Platform links */}
         <PlatformLinks release={release} className="mt-5 justify-center" />
@@ -367,9 +326,9 @@ function ReleaseDetailSheet({ release, tracks, onClose }) {
   );
 }
 
-// ── Stem Unlock Sheet ────────────────────────────────────────────────────────
-
-function StemUnlockSheet({ release, onClose }) {
+// StemUnlockSheet — REMOVED 2026-05-12 (stems offering discontinued)
+// eslint-disable-next-line no-unused-vars
+function StemUnlockSheet_DEPRECATED({ release, onClose }) {
   const navigate = useNavigate();
   const stemTypes = [
     { name: 'Drums', sub: 'Ready for your DAW' },
@@ -567,7 +526,6 @@ export default function MusicTab() {
 
   // UI state
   const [selectedRelease, setSelectedRelease] = useState(null);
-  const [stemRelease, setStemRelease] = useState(null); // release for stem sheet
   const [showPreviewEnd, setShowPreviewEnd] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -814,57 +772,23 @@ export default function MusicTab() {
       {/* ═══════════════════════════════════════════════════════════════════════
           2. PRODUCER MODE — stems / for producers
           ═══════════════════════════════════════════════════════════════════ */}
-      <section className="mt-8 mx-6 rounded-2xl border border-[#C8962C]/10 bg-[#C8962C]/[0.03] p-6">
-        <h2 className="text-lg font-black uppercase text-white tracking-wide">
-          For Producers
-        </h2>
-        <p className="text-sm text-white/50 mt-1">Unlock the source. Built for the floor.</p>
-
-        {/* Find first release with PAID stems \u2014 free stems discontinued 2026-05-12 */}
-        {(() => {
-          const hasPaidStems = (r) => r.stem_pack_url && r.stem_pack_price_gbp > 0;
-          const stemRelDoc = releases.find(hasPaidStems) ||
-            releases.find(r => (tracksByRelease[r.id] || []).some(t => t.stem_pack_url && t.stem_pack_price_gbp > 0));
-
-          if (stemRelDoc) {
-            const inlineStemTypes = ['Drums', 'Bass', 'Vocals', 'FX'];
-            const price = `\u00a3${Number(stemRelDoc.stem_pack_price_gbp).toFixed(2)}`;
-
-            return (
-              <div className="mt-5">
-                <div className="grid grid-cols-4 gap-2 mb-4">
-                  {inlineStemTypes.map(stem => (
-                    <div key={stem} className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-white/[0.03] border border-white/5">
-                      <FileAudio className="w-5 h-5 text-[#C8962C]" />
-                      <span className="text-[9px] font-bold uppercase text-white/50">{stem}</span>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-[10px] text-white/30 text-center mb-4">WAV 24-bit &middot; Ready to drop into your DAW</p>
-                <motion.button
-                  onClick={() => setStemRelease(stemRelDoc)}
-                  className="w-full h-12 rounded-xl bg-[#C8962C] text-black font-black text-sm uppercase active:scale-95 transition-transform"
-                  whileTap={{ scale: 0.97 }}
-                >
-                  Unlock Stems {'\u2014'} {price}
-                </motion.button>
-              </div>
-            );
-          }
-
-          return (
-            <p className="text-sm text-white/30 mt-4 italic">
-              Stem packs coming soon.
-            </p>
-          );
-        })()}
-      </section>
+      {/* PRODUCER MODE section removed 2026-05-12 \u2014 stems offering discontinued. */}
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          3. ALL RELEASES — horizontal carousel (tap to open detail sheet)
+          3. ALL RELEASES — horizontal carousel + browse-all CTA
           ═══════════════════════════════════════════════════════════════════ */}
       <section className="mt-10 pl-6 pb-40">
-        <SectionHeader>All Releases</SectionHeader>
+        <div className="flex items-center justify-between pr-6 mb-3">
+          <SectionHeader>All Releases</SectionHeader>
+          <button
+            onClick={() => navigate('/music/library')}
+            className="text-[10px] font-black uppercase tracking-widest active:opacity-70"
+            style={{ color: '#C8962C' }}
+            aria-label="Browse full music library"
+          >
+            Browse all &rarr;
+          </button>
+        </div>
         <div className="flex gap-3 overflow-x-auto pb-4 pr-6 scrollbar-hide">
           {releases.map(rel => {
             const relTracks = tracksByRelease[rel.id] || [];
@@ -879,14 +803,14 @@ export default function MusicTab() {
               <motion.button
                 key={rel.id}
                 whileTap={{ scale: 0.96 }}
-                onClick={() => setSelectedRelease(rel)}
+                onClick={() => navigate(`/music/release/${rel.id}`)}
                 className="flex-shrink-0 w-[140px] text-left"
                 aria-label={`Open ${rel.title}`}
               >
                 {/* Artwork */}
                 <div className={`relative w-[140px] h-[140px] rounded-xl overflow-hidden bg-[#1C1C1E] ${
-                  access === 'stems' ? 'ring-2 ring-[#C8962C]/50' : ''
-                } ${access === 'preview' ? 'opacity-70' : ''}`}>
+                  access === 'preview' ? 'opacity-70' : ''
+                }`}>
                   {rel.artwork_url ? (
                     <img src={rel.artwork_url} alt={rel.title} className="w-full h-full object-cover" loading="lazy" />
                   ) : (
@@ -898,11 +822,6 @@ export default function MusicTab() {
                   {access === 'preview' && (
                     <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-white/15 text-white/60 backdrop-blur-sm">
                       Preview
-                    </span>
-                  )}
-                  {access === 'stems' && (
-                    <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-[#C8962C]/90 text-black backdrop-blur-sm">
-                      Stems
                     </span>
                   )}
                   {isCurrentPlaying && (
@@ -942,15 +861,7 @@ export default function MusicTab() {
         )}
       </AnimatePresence>
 
-      {/* Stem Unlock Sheet */}
-      <AnimatePresence>
-        {stemRelease && (
-          <StemUnlockSheet
-            release={stemRelease}
-            onClose={() => setStemRelease(null)}
-          />
-        )}
-      </AnimatePresence>
+      {/* Stem Unlock Sheet removed 2026-05-12 — stems offering discontinued */}
 
       {/* Preview End Overlay */}
       <AnimatePresence>
