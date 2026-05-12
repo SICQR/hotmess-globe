@@ -1,8 +1,13 @@
 /**
  * useV6Flag — resolves a v6 feature flag for the current session user.
  *
- * Returns false while loading (safe default — no flash of unreleased UI).
- * Caches for 60s via React Query; busts on window focus.
+ * Returns the last-known cached value on first render (from localStorage),
+ * falling back to false. Once the network resolves the real value, that
+ * becomes authoritative and is cached for next session. This eliminates the
+ * "flash of old UI before new" problem on flag-gated screens.
+ *
+ * Caches for 60s via React Query in-memory; busts on window focus.
+ * Persists across sessions via localStorage (`hm_v6_flag_<key>_<userId>`).
  *
  * Usage:
  *   const showAAGlow = useV6Flag('v6_aa_system');
@@ -13,7 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { resolveFlag } from '@/lib/v6Flags';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { trackOnce } from '@/lib/analytics';
 
 // Fetch current user's role once (cached alongside flag resolution)
@@ -27,6 +32,26 @@ async function fetchUserRole(userId) {
   return data?.role ?? 'user';
 }
 
+const LS_PREFIX = 'hm_v6_flag_';
+
+function readCachedFlag(flagKey, userId) {
+  if (typeof window === 'undefined') return false;
+  try {
+    const raw = window.localStorage.getItem(`${LS_PREFIX}${flagKey}_${userId || 'anon'}`);
+    return raw === 'true';
+  } catch {
+    return false;
+  }
+}
+function writeCachedFlag(flagKey, userId, value) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(`${LS_PREFIX}${flagKey}_${userId || 'anon'}`, value ? 'true' : 'false');
+  } catch {
+    /* quota / private mode — non-fatal */
+  }
+}
+
 export function useV6Flag(flagKey) {
   const { user } = useAuth();
   const userId   = user?.id ?? null;
@@ -36,12 +61,17 @@ export function useV6Flag(flagKey) {
     queryFn:   async () => {
       if (!userId) return false;
       const role   = await fetchUserRole(userId);
-      return resolveFlag(flagKey, userId, role);
+      const resolved = await resolveFlag(flagKey, userId, role);
+      writeCachedFlag(flagKey, userId, resolved);
+      return resolved;
     },
     enabled:      !!userId,
     staleTime:    60_000,
     gcTime:       5 * 60_000,
     refetchOnWindowFocus: true,
+    // Synchronous initial value from localStorage — prevents flag-loading flicker
+    initialData:  () => readCachedFlag(flagKey, userId),
+    initialDataUpdatedAt: 0, // mark as stale so a real fetch still runs
   });
 
   const flagValue = data ?? false;

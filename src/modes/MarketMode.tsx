@@ -57,6 +57,20 @@ import { useV6Flag } from '@/hooks/useV6Flag';
 import { useQuery } from '@tanstack/react-query';
 import { getShopifyProducts, getInternalProducts, type Product } from '@/lib/data/market';
 
+// Drop-brand discriminator — these are limited-run clothing brands that belong in
+// the Drops engine, not Shop. SuperHung is a DROP. See src/config/brands.ts.
+const DROP_BRANDS = new Set(['raw', 'hung', 'high', 'hungmess', 'superhung', 'superraw']);
+
+function isDropBrand(p: Product): boolean {
+  const vendor = (p.vendor || '').toLowerCase();
+  if (DROP_BRANDS.has(vendor)) return true;
+  if (p.tags?.some(t => DROP_BRANDS.has((t || '').toLowerCase()))) return true;
+  // Fallback heuristic: limited stock OR explicit drop/limited tag
+  if (p.tags?.some(t => ['drop', 'limited'].includes((t || '').toLowerCase()))) return true;
+  if (p.quantity != null && p.quantity <= 20) return true;
+  return false;
+}
+
 // Transform unified Product to editorial-card shape used by MarketEditorialShell.
 // Original product fields are preserved so onProductTap can pass them to L2ProductSheet.
 function toEditorialItem(p: Product) {
