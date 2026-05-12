@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { Loader2, Shield, ArrowLeft } from 'lucide-react';
 import { ProgressDots } from './AgeGateScreen';
 import OnboardingBackButton from '../OnboardingBackButton';
+import { track, trackOnce } from '@/lib/analytics';
 
 const GOLD = '#C8962C';
 
@@ -37,6 +38,12 @@ export default function SafetySeedScreen({ session: sessionProp, onComplete, onB
       });
     }
   }, [standalone, sessionProp]);
+
+  useEffect(() => {
+    if (!standalone) {
+      trackOnce('safety_seed_started_session', 'safety_seed_started', 'onboarding');
+    }
+  }, [standalone]);
 
   const userId = session?.user?.id;
   const userEmail = session?.user?.email;
@@ -89,6 +96,7 @@ export default function SafetySeedScreen({ session: sessionProp, onComplete, onB
             updated_at: new Date().toISOString(),
           })
           .eq('id', userId);
+        track(skip ? 'safety_seed_skipped' : 'safety_seed_completed', 'onboarding');
         onComplete();
       }
     } catch (err) {

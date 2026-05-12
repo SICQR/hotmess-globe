@@ -1,12 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
+import { track, trackOnce } from '@/lib/analytics';
 
 export default function PinSetupScreen({ onNext, onSkip }) {
   const [pin, setPin] = useState('');
   const [confirm, setConfirm] = useState('');
   const [phase, setPhase] = useState('enter');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    trackOnce('pin_setup_started_session', 'pin_setup_started', 'onboarding');
+  }, []);
 
   const hashPin = async (p) => {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(p));
@@ -43,6 +48,8 @@ export default function PinSetupScreen({ onNext, onSkip }) {
         localStorage.setItem('hm_age_gate_passed', 'true');
         localStorage.setItem('hm_community_attested_v1', 'true');
       } catch {}
+      track('pin_setup_completed', 'onboarding');
+      track('first_5_minutes_completed', 'onboarding', 'pin');
       onNext?.();
     } catch { toast.error('Could not save PIN'); } finally { setSaving(false); }
   };
@@ -61,6 +68,8 @@ export default function PinSetupScreen({ onNext, onSkip }) {
         localStorage.setItem('hm_age_gate_passed', 'true');
         localStorage.setItem('hm_community_attested_v1', 'true');
       } catch {}
+      track('pin_setup_skipped', 'onboarding');
+      track('first_5_minutes_completed', 'onboarding', 'skip_pin');
       onSkip?.();
     } catch { toast.error('Could not complete setup'); } finally { setSaving(false); }
   };

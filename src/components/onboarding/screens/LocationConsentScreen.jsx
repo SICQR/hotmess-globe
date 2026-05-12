@@ -1,11 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, ShieldCheck, ChevronRight } from 'lucide-react';
 import { ProgressDots } from './AgeGateScreen';
+import { track, trackOnce } from '@/lib/analytics';
 
 const GOLD = '#C8962C';
 
 export default function LocationConsentScreen({ onAllow, onSkip, progress = 4 }) {
+  useEffect(() => {
+    trackOnce('location_consent_prompted_session', 'location_consent_prompted', 'onboarding');
+  }, []);
+
+  const handleAllow = () => { track('location_consent_granted', 'onboarding'); onAllow?.(); };
+  const handleSkip  = () => { track('location_consent_denied',  'onboarding'); onSkip?.(); };
   return (
     <div className="fixed inset-0 bg-black flex flex-col items-center justify-center overflow-hidden">
       {/* Background Radiance */}
@@ -79,7 +86,7 @@ export default function LocationConsentScreen({ onAllow, onSkip, progress = 4 })
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={onAllow}
+            onClick={handleAllow}
             className="w-full h-16 rounded-2xl text-black font-black text-sm tracking-[0.2em] uppercase flex items-center justify-center gap-2 group transition-all"
             style={{ 
               backgroundColor: GOLD,
@@ -91,7 +98,7 @@ export default function LocationConsentScreen({ onAllow, onSkip, progress = 4 })
           </motion.button>
           
           <button
-            onClick={onSkip}
+            onClick={handleSkip}
             className="w-full py-4 text-white/20 font-bold text-[11px] tracking-[0.3em] uppercase hover:text-white/60 transition-colors"
           >
             Not Now

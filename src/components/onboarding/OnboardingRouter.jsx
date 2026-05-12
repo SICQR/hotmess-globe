@@ -94,6 +94,33 @@ export default function OnboardingRouter() {
   const [screen, setScreen] = useState(null);
   const [sessionReady, setSessionReady] = useState(false);
   const retryCountRef = useRef(0);
+  const screenRef = useRef(null);
+
+  // Telemetry: abandon listener — fire 'onboarding_abandoned' if the user
+  // closes the tab/window mid-flow (i.e. screen is set but not complete).
+  // Uses navigator.sendBeacon for delivery reliability past page-unload.
+  useEffect(() => { screenRef.current = screen; }, [screen]);
+  useEffect(() => {
+    const handler = () => {
+      const s = screenRef.current;
+      if (!s || s === SCREENS.COMPLETE) return;
+      try {
+        navigator.sendBeacon?.(
+          '/api/analytics/track',
+          new Blob(
+            [JSON.stringify({
+              event_name: 'onboarding_abandoned',
+              category:   'onboarding',
+              label:      String(s).toLowerCase(),
+            })],
+            { type: 'application/json' },
+          ),
+        );
+      } catch { /* swallow — analytics must never block unload */ }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, []);
 
   // Determine which screen to show
   const resolveScreen = useCallback(async () => {
