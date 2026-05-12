@@ -46,16 +46,17 @@ function formatSeconds(sec) {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+// Stems are paid-only — only return 'stems' when stems are actually for sale
 function getTrackAccessLevel(track) {
-  if (track.stem_pack_url) return 'stems';
+  if (track.stem_pack_url && track.stem_pack_price_gbp > 0) return 'stems';
   if (track.download_url || (track.preview_url && !track.is_preview_only)) return 'full';
   if (track.preview_url) return 'preview';
   return 'coming_soon';
 }
 
 function getReleaseAccessLevel(release, releaseTracks) {
-  if (release.stem_pack_url) return 'stems';
-  if (releaseTracks?.some(t => t.stem_pack_url)) return 'stems';
+  if (release.stem_pack_url && release.stem_pack_price_gbp > 0) return 'stems';
+  if (releaseTracks?.some(t => t.stem_pack_url && t.stem_pack_price_gbp > 0)) return 'stems';
   if (release.download_url || (release.preview_url && !release.is_preview_only)) return 'full';
   if (release.preview_url) return 'preview';
   return 'coming_soon';
@@ -177,7 +178,8 @@ function LinkedEntityCard({ release }) {
 // ── Stem Pack Stub ───────────────────────────────────────────────────────────
 
 function StemPackStub({ release }) {
-  if (!release.stem_pack_url) return null;
+  // Stems are paid-only — hide if no price (free stems discontinued 2026-05-12)
+  if (!release.stem_pack_url || !(release.stem_pack_price_gbp > 0)) return null;
 
   return (
     <div className="mt-4 rounded-xl border border-[#9B1B2A]/20 bg-[#9B1B2A]/5 p-4">
@@ -185,11 +187,7 @@ function StemPackStub({ release }) {
         <FileAudio className="w-5 h-5 text-[#9B1B2A]" />
         <div className="flex-1">
           <p className="text-xs font-bold text-white">Stem Pack Available</p>
-          <p className="text-[10px] text-white/40">
-            {release.stem_pack_price_gbp
-              ? `£${Number(release.stem_pack_price_gbp).toFixed(2)}`
-              : 'Free with membership'}
-          </p>
+          <p className="text-[10px] text-white/40">£{Number(release.stem_pack_price_gbp).toFixed(2)}</p>
         </div>
         <button
           onClick={() => toast('Stems coming soon')}
@@ -343,16 +341,14 @@ function ReleaseDetailSheet({ release, tracks, onClose }) {
         {/* Linked entity */}
         <LinkedEntityCard release={release} />
 
-        {/* Stem pack */}
-        {release.stem_pack_url && (
+        {/* Stem pack \u2014 paid-only, free stems discontinued 2026-05-12 */}
+        {release.stem_pack_url && release.stem_pack_price_gbp > 0 && (
           <div className="mt-4 rounded-xl border border-[#C8962C]/20 bg-[#C8962C]/5 p-4">
             <div className="flex items-center gap-3">
               <FileAudio className="w-5 h-5 text-[#C8962C]" />
               <div className="flex-1">
                 <p className="text-xs font-bold text-white">Stem Pack Available</p>
-                <p className="text-[10px] text-white/40">
-                  {release.stem_pack_price_gbp ? `\u00a3${Number(release.stem_pack_price_gbp).toFixed(2)}` : 'Free'}
-                </p>
+                <p className="text-[10px] text-white/40">\u00a3{Number(release.stem_pack_price_gbp).toFixed(2)}</p>
               </div>
               <button
                 onClick={() => console.log('[STEMS] Purchase flow for', release.id)}
@@ -381,7 +377,8 @@ function StemUnlockSheet({ release, onClose }) {
     { name: 'Vocals', sub: 'Ready for your DAW' },
     { name: 'FX', sub: 'Ready for your DAW' },
   ];
-  const price = release.stem_pack_price_gbp ? `\u00a3${Number(release.stem_pack_price_gbp).toFixed(2)}` : 'Free';
+  // Stems are paid-only \u2014 sheet should only open with a valid price
+  const price = `\u00a3${Number(release.stem_pack_price_gbp || 0).toFixed(2)}`;
 
   // Track stem interest for retention notifications
   useEffect(() => {
@@ -823,16 +820,15 @@ export default function MusicTab() {
         </h2>
         <p className="text-sm text-white/50 mt-1">Unlock the source. Built for the floor.</p>
 
-        {/* Find first release with stems */}
+        {/* Find first release with PAID stems \u2014 free stems discontinued 2026-05-12 */}
         {(() => {
-          const stemRelDoc = releases.find(r => r.stem_pack_url) ||
-            releases.find(r => (tracksByRelease[r.id] || []).some(t => t.stem_pack_url));
+          const hasPaidStems = (r) => r.stem_pack_url && r.stem_pack_price_gbp > 0;
+          const stemRelDoc = releases.find(hasPaidStems) ||
+            releases.find(r => (tracksByRelease[r.id] || []).some(t => t.stem_pack_url && t.stem_pack_price_gbp > 0));
 
           if (stemRelDoc) {
             const inlineStemTypes = ['Drums', 'Bass', 'Vocals', 'FX'];
-            const price = stemRelDoc.stem_pack_price_gbp
-              ? `\u00a3${Number(stemRelDoc.stem_pack_price_gbp).toFixed(2)}`
-              : 'Free';
+            const price = `\u00a3${Number(stemRelDoc.stem_pack_price_gbp).toFixed(2)}`;
 
             return (
               <div className="mt-5">

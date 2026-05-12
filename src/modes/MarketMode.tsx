@@ -54,6 +54,25 @@ import { PrelovedEngine } from '@/modes/market/PrelovedEngine';
 import L2OrderSheet from '@/components/sheets/L2OrderSheet';
 import { MarketEditorialShell } from '@/components/market/MarketEditorialV2';
 import { useV6Flag } from '@/hooks/useV6Flag';
+import { useQuery } from '@tanstack/react-query';
+import { getShopifyProducts, getInternalProducts, type Product } from '@/lib/data/market';
+
+// Transform unified Product to editorial-card shape used by MarketEditorialShell.
+// Original product fields are preserved so onProductTap can pass them to L2ProductSheet.
+function toEditorialItem(p: Product) {
+  const symbol = p.currency === 'GBP' ? '£' : '$';
+  return {
+    ...p,
+    id: p.id,
+    title: p.title,
+    subtitle: p.vendor || p.category || undefined,
+    price: `${symbol}${Number(p.price || 0).toFixed(2)}`,
+    img: p.images?.[0] || 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=800&q=80',
+    tag: p.compareAtPrice && p.compareAtPrice > p.price ? 'JUST DROPPED' : null,
+    micro: p.description ? p.description.slice(0, 60) : null,
+    dist: null,
+  };
+}
 
 // ---- Types ------------------------------------------------------------------
 
@@ -188,6 +207,23 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   // v6_market_v2 — editorial UI flag gate
   const isMarketV2 = useV6Flag('v6_market_v2');
 
+  // Live Shopify + internal product feed for v2 editorial shell.
+  // Fires regardless of flag value (cheap, react-query dedupes with ShopEngine's own queries).
+  const { data: v2Shopify = [] } = useQuery<Product[]>({
+    queryKey: ['market-v2', 'shopify-all'],
+    queryFn: () => getShopifyProducts({ source: 'shopify' }),
+    staleTime: 2 * 60 * 1000,
+    enabled: isMarketV2,
+  });
+  const { data: v2Internal = [] } = useQuery<Product[]>({
+    queryKey: ['market-v2', 'internal-drops'],
+    queryFn: () => getInternalProducts({ source: 'creator' as Product['source'] }),
+    staleTime: 2 * 60 * 1000,
+    enabled: isMarketV2,
+  });
+  const v2ShopItems = useMemo(() => v2Shopify.map(toEditorialItem), [v2Shopify]);
+  const v2DropItems = useMemo(() => v2Internal.map(toEditorialItem), [v2Internal]);
+
   // ---- All hooks must be called unconditionally before any early returns ----
   const { isAuthenticated } = useBootGuard();
   const cartItemCount = useCartItemCount();
@@ -320,10 +356,12 @@ export function MarketMode({ className = '' }: MarketModeProps) {
 
   // ---- Now conditional early returns (after ALL hooks) ----
 
-  // v6_market_v2 editorial shell
+  // v6_market_v2 editorial shell — wired to live Shopify + internal product feeds
   if (isMarketV2) {
     return (
       <MarketEditorialShell
+        shopItems={v2ShopItems}
+        dropItems={v2DropItems}
         onProductTap={(item: Record<string, unknown>) => openSheet('product', { product: item, source: 'shop' })}
         onListingTap={(listing: Record<string, unknown>) => openSheet('listing', { listingId: (listing as { id: string }).id })}
         onChipTap={(chip: string, listing: Record<string, unknown>) => openSheet('chat', { prefill: chip, userId: (listing as { seller_id: string }).seller_id })}
