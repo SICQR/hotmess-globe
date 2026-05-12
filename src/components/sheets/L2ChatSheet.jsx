@@ -27,6 +27,7 @@ import { formatDistanceToNow } from 'date-fns';
 import MeetpointCard from '@/components/messaging/MeetpointCard';
 import VideoCallModal from '@/components/video/VideoCallModal';
 import TravelModal from '@/components/messaging/TravelModal';
+import VaultShareToggle from '@/components/messaging/VaultShareToggle';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { usePowerups } from '@/hooks/usePowerups';
 import { Zap } from 'lucide-react';
@@ -1132,6 +1133,17 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           <Flag className="w-3.5 h-3.5 text-white/30" />
         </button>
       </div>
+
+      {/* Vault share toggle — Grindr-style single Private vault, mutual-BOO gated by chat existence. */}
+      {otherProfile?.id && selectedThread?.id && (
+        <div className="px-4 py-2 border-b border-white/[0.04] flex justify-end" style={{ background: 'rgba(5,5,7,0.6)' }}>
+          <VaultShareToggle
+            recipientId={otherProfile.id}
+            recipientName={otherName}
+            conversationId={selectedThread.id}
+          />
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">

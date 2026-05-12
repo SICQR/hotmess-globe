@@ -24,6 +24,7 @@ import ProfileContentCard from '@/components/cards/ProfileContentCard';
 import { useTaps } from '@/hooks/useTaps';
 import { useV6Flag } from '@/hooks/useV6Flag';
 import { ProfileProximityPanel } from '@/components/profile/ProfileProximityPanel';
+import VaultAccessRequest from '@/components/messaging/VaultAccessRequest';
 
 const Chip = ({ children, gold = false }) => (
   <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
@@ -851,6 +852,16 @@ export default function L2ProfileSheet({ email, uid, id }) {
           </div>
         </div>
       </div>
+
+      {/* ── Private vault gate (someone else's profile only) ──────────── */}
+      {!isOwnProfile && (profileUser.auth_user_id || profileUser.id) && (
+        <div className="px-4 py-2">
+          <VaultAccessRequest
+            ownerId={profileUser.auth_user_id || profileUser.id}
+            ownerName={name}
+          />
+        </div>
+      )}
 
       {/* ── Identity chips ────────────────────────────────────────────── */}
       <div className="flex gap-1.5 px-4 py-2 overflow-x-auto no-scrollbar">

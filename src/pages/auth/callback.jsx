@@ -170,9 +170,24 @@ async function routeAfterAuth(userId, navigate) {
   try {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('onboarding_completed')
+      .select('onboarding_completed, age_verified_at')
       .eq('id', userId)
       .single();
+
+    // 2026-05-12: Backfill age_verified_at from localStorage flag if the user
+    // passed the AgeGate pre-auth but we never wrote it to their profile row.
+    // Required for has_xxx_access() (paid membership + age verified) to ever
+    // return true — without this the Ghosted lockbox is unreachable.
+    try {
+      if (!profile?.age_verified_at && typeof window !== 'undefined' &&
+          window.localStorage?.getItem('hm_age_gate_passed') === 'true') {
+        await supabase
+          .from('profiles')
+          .update({ age_verified_at: new Date().toISOString() })
+          .eq('id', userId)
+          .is('age_verified_at', null);
+      }
+    } catch {}
 
     // Handle referral code capture for new users
     try {

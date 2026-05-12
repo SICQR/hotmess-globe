@@ -223,18 +223,11 @@ export default function MusicReleasePage() {
 
       {/* Body */}
       <div className="px-5 -mt-2 relative z-20">
-        {/* Play all */}
-        {tracks.length > 0 && (
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={() => tracks[0] && handlePlayTrack(tracks[0])}
-            className="w-full h-14 rounded-xl flex items-center justify-center gap-2 font-black uppercase text-sm tracking-widest active:scale-95 transition-transform shadow-[0_8px_32px_rgba(200,150,44,0.3)]"
-            style={{ backgroundColor: GOLD, color: '#000' }}
-          >
-            <Play className="w-4 h-4 fill-black" />
-            Play
-          </motion.button>
-        )}
+        {/* Hero "Play" CTA removed 2026-05-12 — was redundant with per-track row
+            buttons and the global MusicMiniPlayer. Three controls for the same
+            audio source created a "multiple play buttons" UX bug. Track rows
+            below remain the canonical per-track entry; mini player handles
+            global pause/resume once anything's playing. */}
 
         {/* Track list */}
         {tracks.length > 0 && (

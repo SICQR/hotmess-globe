@@ -61,29 +61,64 @@ import { getShopifyProducts, getInternalProducts, type Product } from '@/lib/dat
 // the Drops engine, not Shop. SuperHung is a DROP. See src/config/brands.ts.
 const DROP_BRANDS = new Set(['raw', 'hung', 'high', 'hungmess', 'superhung', 'superraw']);
 
+// Categories that should never be classified as a drop even if their stock is low.
+// Lube (wellness), aftercare, and similar staples are SHOP forever — they're meant
+// to be in stock continuously, not framed as scarcity drops.
+const SHOP_FOREVER_CATEGORIES = new Set(['wellness', 'aftercare', 'lube', 'hnh', 'hnh mess']);
+
 function isDropBrand(p: Product): boolean {
   const vendor = (p.vendor || '').toLowerCase();
   if (DROP_BRANDS.has(vendor)) return true;
   if (p.tags?.some(t => DROP_BRANDS.has((t || '').toLowerCase()))) return true;
-  // Fallback heuristic: limited stock OR explicit drop/limited tag
+  // Explicit drop/limited tag wins regardless of category
   if (p.tags?.some(t => ['drop', 'limited'].includes((t || '').toLowerCase()))) return true;
+  // Quantity fallback — but never for wellness staples like HNH MESS lube
+  const cat = (p.category || '').toLowerCase();
+  if (SHOP_FOREVER_CATEGORIES.has(cat)) return false;
+  if (p.tags?.some(t => SHOP_FOREVER_CATEGORIES.has((t || '').toLowerCase()))) return false;
   if (p.quantity != null && p.quantity <= 20) return true;
   return false;
 }
 
 // Transform unified Product to editorial-card shape used by MarketEditorialShell.
 // Original product fields are preserved so onProductTap can pass them to L2ProductSheet.
+// Strip HTML tags + markdown-export data attributes from Shopify description copy.
+// Some descriptions arrive as raw markup ("<h3 data-start=...>") because they were
+// pasted from a markdown processor into the Shopify Description field as plain text.
+// We sanitise here so cards never leak raw tags into the UI.
+function cleanMicro(desc?: string): string | null {
+  if (!desc) return null;
+  const stripped = desc
+    .replace(/<[^>]+>/g, ' ')        // any HTML tag
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&[a-z]+;/gi, '')        // other entities
+    .replace(/data-(start|end)="[^"]*"/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!stripped) return null;
+  return stripped.length > 60 ? `${stripped.slice(0, 60).trim()}…` : stripped;
+}
+
+// Vendor names from Shopify default to the store name ("My Store") on SKUs that
+// were never re-tagged. Hide that placeholder so cards don't display it.
+function cleanVendor(v?: string): string | undefined {
+  if (!v) return undefined;
+  if (/^my store$/i.test(v.trim())) return undefined;
+  return v;
+}
+
 function toEditorialItem(p: Product) {
   const symbol = p.currency === 'GBP' ? '£' : '$';
   return {
     ...p,
     id: p.id,
     title: p.title,
-    subtitle: p.vendor || p.category || undefined,
+    subtitle: cleanVendor(p.vendor) || p.category || undefined,
     price: `${symbol}${Number(p.price || 0).toFixed(2)}`,
     img: p.images?.[0] || 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=800&q=80',
     tag: p.compareAtPrice && p.compareAtPrice > p.price ? 'JUST DROPPED' : null,
-    micro: p.description ? p.description.slice(0, 60) : null,
+    micro: cleanMicro(p.description),
     dist: null,
   };
 }

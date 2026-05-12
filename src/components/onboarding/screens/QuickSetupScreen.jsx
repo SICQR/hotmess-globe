@@ -11,15 +11,19 @@
  * Passkey prompt is still surfaced after consent — it's free friction-
  * removal for returning users.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { Loader2, MapPin, ToggleLeft, ToggleRight } from 'lucide-react';
 import OnboardingBackButton from '../OnboardingBackButton';
 import { isWebAuthnSupported, isPasskeyRegistered, registerPasskey } from '@/lib/passkey';
+import { track, trackOnce } from '@/lib/analytics';
 
 const GOLD = '#C8962C';
 
 export default function QuickSetupScreen({ session, onComplete, onBack }) {
+  useEffect(() => {
+    trackOnce('quick_setup_started_session', 'quick_setup_started', 'onboarding');
+  }, []);
   const [locationEnabled, setLocationEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -91,6 +95,8 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
         localStorage.setItem('hm_age_gate_passed', 'true');
         localStorage.setItem('hm_community_attested_v1', 'true');
       } catch {}
+
+      track('quick_setup_completed', 'onboarding', locationEnabled ? 'with_location' : 'no_location');
 
       if (isWebAuthnSupported() && !isPasskeyRegistered()) {
         setShowPasskeyPrompt(true);

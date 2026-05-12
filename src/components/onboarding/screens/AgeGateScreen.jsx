@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import BlockedScreen from './BlockedScreen';
 import { track } from '@/lib/analytics';
+import { supabase } from '@/components/utils/supabaseClient';
 
 const GOLD = '#C8962C';
 
@@ -28,11 +29,24 @@ export default function AgeGateScreen({ onComplete }) {
 
   if (blocked) return <BlockedScreen reason="age" />;
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!confirmed) return;
     try { localStorage.setItem('hm_age_gate_passed', 'true'); } catch {}
     // Chunk 17c: instrument age gate pass
     track('age_gate_passed', 'onboarding');
+    // 2026-05-12: Persist age_verified_at to profiles. Without this, has_xxx_access()
+    // returns false universally, blocking the Ghosted lockbox + all XXX content.
+    // Best-effort — if user isn't authed yet, the callback handler will backfill.
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.id) {
+        await supabase
+          .from('profiles')
+          .update({ age_verified_at: new Date().toISOString() })
+          .eq('id', user.id)
+          .is('age_verified_at', null);
+      }
+    } catch { /* swallow — local flag is the user-facing source of truth */ }
     onComplete();
   };
 

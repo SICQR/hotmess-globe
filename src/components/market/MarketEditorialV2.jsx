@@ -369,10 +369,14 @@ export function ShopEngineEditorial({ items = [], onTap }) {
 export function DropsEngineEditorial({ items = [], endsAt = 0, isLive = false, onTap }) {
   const remainingSeconds = Math.max(0, Math.floor((endsAt - Date.now()) / 1000));
   const countdown = useCountdown(remainingSeconds);
+  // Only treat as a live timed drop if BOTH a real endsAt is provided AND isLive is true.
+  // Otherwise the hero falls back to an evergreen "drops collection" framing instead of
+  // showing a meaningless "00:00:00 REMAINING" countdown that erodes urgency credibility.
+  const hasLiveDrop = isLive && endsAt > Date.now();
   const c = MARKET_COPY.heroes.drops;
   const T = MARKET_TOKENS;
   return (
-    <div style={{ background: isLive ? '#040404' : T.bg }}>
+    <div style={{ background: hasLiveDrop ? '#040404' : T.bg }}>
       <div style={{
         padding: '28px 16px 24px',
         borderBottom: `1px solid ${T.drops}22`,
@@ -387,21 +391,23 @@ export function DropsEngineEditorial({ items = [], endsAt = 0, isLive = false, o
           }}
         />
 
-        <p style={{
-          margin: '0 0 4px', fontSize: '10px', letterSpacing: '0.3em',
-          color: T.drops, fontFamily: "'Oswald', sans-serif", textTransform: 'uppercase',
-          display: 'flex', alignItems: 'center', gap: 7,
-        }}>
-          <motion.span
-            animate={{ opacity: [1, 0.15, 1] }}
-            transition={{ duration: 1.2, repeat: Infinity }}
-            style={{
-              width: 5, height: 5, borderRadius: '50%',
-              background: T.drops, display: 'inline-block', flexShrink: 0,
-            }}
-          />
-          {c.status}
-        </p>
+        {hasLiveDrop && (
+          <p style={{
+            margin: '0 0 4px', fontSize: '10px', letterSpacing: '0.3em',
+            color: T.drops, fontFamily: "'Oswald', sans-serif", textTransform: 'uppercase',
+            display: 'flex', alignItems: 'center', gap: 7,
+          }}>
+            <motion.span
+              animate={{ opacity: [1, 0.15, 1] }}
+              transition={{ duration: 1.2, repeat: Infinity }}
+              style={{
+                width: 5, height: 5, borderRadius: '50%',
+                background: T.drops, display: 'inline-block', flexShrink: 0,
+              }}
+            />
+            {c.status}
+          </p>
+        )}
 
         <h2 style={{
           margin: '0 0 4px',
@@ -409,7 +415,7 @@ export function DropsEngineEditorial({ items = [], endsAt = 0, isLive = false, o
           fontFamily: "'Oswald', sans-serif", fontWeight: 700,
           color: T.white, textTransform: 'uppercase',
         }}>
-          {c.heading[0]}<br />{c.heading[1]}
+          {hasLiveDrop ? <>{c.heading[0]}<br />{c.heading[1]}</> : 'DROPS'}
         </h2>
 
         <p style={{
@@ -417,23 +423,25 @@ export function DropsEngineEditorial({ items = [], endsAt = 0, isLive = false, o
           fontSize: '11px', fontFamily: "'Barlow', sans-serif",
           color: T.muted, letterSpacing: '0.1em',
         }}>
-          {c.sub}
+          {hasLiveDrop ? c.sub : 'Limited runs from HOTMESS brands.'}
         </p>
 
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 18 }}>
-          <span style={{
-            fontSize: '38px', fontFamily: "'Oswald', sans-serif", fontWeight: 700,
-            color: T.drops, letterSpacing: '0.05em', fontVariantNumeric: 'tabular-nums',
-          }}>
-            {countdown}
-          </span>
-          <span style={{
-            fontSize: '9px', fontFamily: "'Barlow', sans-serif",
-            color: T.muted, letterSpacing: '0.25em', textTransform: 'uppercase',
-          }}>
-            {c.unitLabel}
-          </span>
-        </div>
+        {hasLiveDrop && (
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 18 }}>
+            <span style={{
+              fontSize: '38px', fontFamily: "'Oswald', sans-serif", fontWeight: 700,
+              color: T.drops, letterSpacing: '0.05em', fontVariantNumeric: 'tabular-nums',
+            }}>
+              {countdown}
+            </span>
+            <span style={{
+              fontSize: '9px', fontFamily: "'Barlow', sans-serif",
+              color: T.muted, letterSpacing: '0.25em', textTransform: 'uppercase',
+            }}>
+              {c.unitLabel}
+            </span>
+          </div>
+        )}
 
         <motion.button
           onClick={() => onTap?.({ type: 'hero', engine: 'drops' })}
