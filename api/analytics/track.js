@@ -59,7 +59,7 @@ export default async function handler(req, res) {
     category:   category ?? null,
     label:      label ?? null,
     value:      typeof value === 'number' ? value : null,
-    properties: properties ?? null,
+    properties: properties ?? {},
     user_id:    userId,
     path:       req.headers['referer'] ?? null,
     user_agent: req.headers['user-agent'] ?? null,
