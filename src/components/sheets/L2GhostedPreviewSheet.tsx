@@ -452,12 +452,16 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
         </div>
 
         {/* Context */}
-        {profile.city && (
+        {/* Defensive guard 2026-05-13: city was contaminated with PostGIS EWKB
+            hex strings on 3 prod profiles (root cause unknown — likely a
+            faulty migration). Filter anything that looks like a hex-only
+            binary blob so the sheet never renders cryptic strings as a city. */}
+        {profile.city && !/^[0-9A-Fa-f]{20,}$/.test(String(profile.city).trim()) && (
           <p className="text-sm text-white/40 mb-3">{profile.city}</p>
         )}
 
         {/* Bio */}
-        {profile.bio && (
+        {profile.bio && !/^[0-9A-Fa-f]{20,}$/.test(String(profile.bio).trim()) && (
           <p className="text-sm text-white/60 mb-4 leading-relaxed">{profile.bio}</p>
         )}
 
