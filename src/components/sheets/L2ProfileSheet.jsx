@@ -147,11 +147,39 @@ export default function L2ProfileSheet({ email, uid, id }) {
   const { data: profileUser, isLoading } = useQuery({
     queryKey: ['profile-sheet', email, resolvedUid],
     queryFn: async () => {
+      // 2026-05-13: helper to merge profile_photos rows into the legacy
+      // profile.photos field so the L2ProfileSheet carousel surfaces ALL
+      // approved main photos (up to 5) — not just the avatar_url. The new
+      // schema (profile_photos table) was being written by L2PhotosSheet /
+      // L2EditProfileSheet but never read by L2ProfileSheet, so users who
+      // uploaded multiple photos still saw only one. Bug surfaced in Phil's
+      // mobile audit: "profile cards still show one image despite an
+      // expectation that they were upgraded".
+      const mergePhotos = async (p) => {
+        if (!p?.id) return p;
+        try {
+          const { data: rows } = await supabase
+            .from('profile_photos')
+            .select('url, position, is_primary')
+            .eq('profile_id', p.id)
+            .eq('moderation_status', 'approved')
+            .order('is_primary', { ascending: false })
+            .order('position', { ascending: true });
+          const fromTable = Array.isArray(rows) ? rows.map(r => r.url).filter(Boolean) : [];
+          const legacy = Array.isArray(p.photos) ? p.photos.map(x => typeof x === 'string' ? x : x?.url).filter(Boolean) : [];
+          const merged = [...new Set([...fromTable, ...legacy])];
+          return merged.length ? { ...p, photos: merged } : p;
+        } catch {
+          return p;
+        }
+      };
+
       if (!email && !resolvedUid) {
         let { data: { user } } = await supabase.auth.getUser();
         if (!user) return null;
         const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
-        return { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email };
+        const merged = await mergePhotos(profile);
+        return { ...user, ...(merged || {}), auth_user_id: user.id, email: user.email || merged?.email };
       }
 
       const qs = new URLSearchParams();
@@ -166,20 +194,20 @@ export default function L2ProfileSheet({ email, uid, id }) {
         });
         if (res.ok) {
           const payload = await res.json();
-          return payload?.user || null;
+          return await mergePhotos(payload?.user || null);
         }
       } catch {}
 
       if (email) {
         const { data, error } = await supabase.from('profiles').select('*').eq('email', email).maybeSingle();
         if (error) throw error;
-        return data || null;
+        return await mergePhotos(data || null);
       }
       if (resolvedUid) {
         // profiles.id IS the auth user UUID — no separate auth_user_id column
         const { data, error } = await supabase.from('profiles').select('*').eq('id', resolvedUid).maybeSingle();
         if (error) throw error;
-        return data || null;
+        return await mergePhotos(data || null);
       }
       return null;
     },
