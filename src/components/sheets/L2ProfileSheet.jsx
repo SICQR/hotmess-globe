@@ -28,7 +28,9 @@ import VaultAccessRequest from '@/components/messaging/VaultAccessRequest';
 import ProfileMediaStack from '@/components/profile/ProfileMediaStack';
 import MutualStateOverlay from '@/components/profile/MutualStateOverlay';
 import IntentLayer from '@/components/profile/IntentLayer';
+import RecoveryStateCard from '@/components/profile/RecoveryStateCard';
 import useProfileDwell from '@/hooks/useProfileDwell';
+import useRecoveryState from '@/hooks/useRecoveryState';
 
 const Chip = ({ children, gold = false }) => (
   <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
@@ -690,6 +692,27 @@ export default function L2ProfileSheet({ email, uid, id }) {
     v6Enabled:    !!v6GhostedLoop,
   });
 
+  // ── RecoveryState v0.1 — 2 mechanical triggers only (bible Part 7) ────
+  const recoveryRelationship = (() => {
+    const targetId = profileUser?.auth_user_id || profileUser?.id;
+    if (!targetId || !myUserId) return 'none';
+    if (isMutualBoo(targetId)) return 'mutual';
+    return 'none';
+  })();
+  const recovery = useRecoveryState({
+    viewerId:             myUserId,
+    profileId:            profileUser?.auth_user_id || profileUser?.id || null,
+    relationship:         recoveryRelationship,
+    ownerLocationConsent: profileUser?.location_consent ?? null,
+    enabled:              !!v6GhostedLoop && !isOwnProfile,
+  });
+  const recoveryVariant = recovery.meetup_completed
+    ? 'meetup_completed'
+    : recovery.location_revoked
+      ? 'location_revoked'
+      : null;
+  const [recoveryDismissed, setRecoveryDismissed] = useState(false);
+
   // ── Loading / empty states ──────────────────────────────────────────────
 
   if (isLoading) {
@@ -832,6 +855,11 @@ export default function L2ProfileSheet({ email, uid, id }) {
       {booActive ? "Boo'd" : 'Boo'}
     </button>
   );
+  // Phil exec review 2026-05-13: Share is killed from the intent layer.
+  // External profile sharing contradicts the Ghosted philosophy of bounded
+  // discovery. The top-bar Share button is retained for now (controlled
+  // sharing via native share-sheet); intent-layer share would have made
+  // sharing feel like a peer action to BOO.
   const intentActions = [
     {
       id: 'message',
@@ -851,12 +879,6 @@ export default function L2ProfileSheet({ email, uid, id }) {
       icon: <Video size={14} strokeWidth={2} />,
       onTap: handleVideoCall,
     },
-    {
-      id: 'share',
-      label: 'Share',
-      icon: <Share2 size={14} strokeWidth={2} />,
-      onTap: handleShare,
-    },
   ];
 
   return (
@@ -867,7 +889,8 @@ export default function L2ProfileSheet({ email, uid, id }) {
         {v6GhostedLoop && photoUrls.length > 0 ? (
           <ProfileMediaStack
             images={photoUrls}
-            isMutual={mutualArmed}
+            isMutual={mutualArmed && !recoveryVariant}
+            softBorder={!!recoveryVariant && !recoveryDismissed}
             onIndexChange={setActivePhotoIdx}
             aspect="3 / 4"
           />
@@ -998,6 +1021,16 @@ export default function L2ProfileSheet({ email, uid, id }) {
         );
       } return heroBody; })()}
 
+      {/* ── RecoveryState v0.1 (bible Part 7) ──────────────────────────── */}
+      {v6GhostedLoop && recoveryVariant && !recoveryDismissed && !isOwnProfile && (
+        <RecoveryStateCard
+          variant={recoveryVariant}
+          theirName={name}
+          onAction={() => { setRecoveryDismissed(true); handleMessage(); }}
+          onDismiss={() => setRecoveryDismissed(true)}
+        />
+      )}
+
       {/* ── Private vault gate (someone else's profile only) ──────────── */}
       {!isOwnProfile && (profileUser.auth_user_id || profileUser.id) && (
         <div className="px-4 py-2">
@@ -1030,8 +1063,10 @@ export default function L2ProfileSheet({ email, uid, id }) {
         )}
       </div>
 
-      {/* ── Location: Proximity Card (v6_profile_proximity) or legacy bar ── */}
-      {isProximityCard && !isOwnProfile && travelTimes?.distKm && profileUser?.last_lat ? (
+      {/* ── Logistics moved below content cards (descent into operational
+          space per Phil exec review 2026-05-13). Proximity card still
+          renders here when v6_profile_proximity is on. ──────────────── */}
+      {isProximityCard && !isOwnProfile && travelTimes?.distKm && profileUser?.last_lat && (
         <ProfileProximityPanel
           distanceM={Math.round(travelTimes.distKm * 1000)}
           approxLat={profileUser.last_lat}
@@ -1039,54 +1074,6 @@ export default function L2ProfileSheet({ email, uid, id }) {
           venueName={profileUser.venue_name}
           displayName={name}
         />
-      ) : (
-        <>
-          {/* ── Location Action Bar ────────────────────────────────────── */}
-          <div className="flex gap-2 px-4 py-2">
-            <button
-              onClick={handleShareLocation}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold active:scale-95 transition-all"
-            >
-              <MapPin className="w-4 h-4 text-[#C8962C]" />
-              Share My Location
-            </button>
-            {travelTimes?.uber && (
-              <button
-                onClick={() => openSheet?.('uber', {
-                  lat: profileUser.last_lat,
-                  lng: profileUser.last_lng,
-                  label: profileUser.display_name,
-                  travelTimes,
-                  profileUser
-                })}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold active:scale-95 transition-all"
-              >
-                <Car className="w-4 h-4 text-[#00C2E0]" />
-                Get Uber
-              </button>
-            )}
-          </div>
-
-          {/* ── Travel time chips ─────────────────────────────────────── */}
-          {travelTimes && (
-            <div className="flex gap-2 px-4 py-2">
-              {travelTimes.walking && travelTimes.distKm < 5 && (
-                <div className="flex-1 flex flex-col items-center py-2 rounded-xl bg-[#39FF14]/10 border border-[#39FF14]/30">
-                  <Footprints className="w-4 h-4 text-[#39FF14]" />
-                  <span className="text-[#39FF14] font-black text-sm mt-0.5">{Math.round(travelTimes.walking.durationSeconds/60)}m</span>
-                  <span className="text-white/30 text-[9px]">walk</span>
-                </div>
-              )}
-              {travelTimes.bicycling && travelTimes.distKm < 10 && (
-                <div className="flex-1 flex flex-col items-center py-2 rounded-xl bg-[#00C2E0]/10 border border-[#00C2E0]/30">
-                  <Bike className="w-4 h-4 text-[#00C2E0]" />
-                  <span className="text-[#00C2E0] font-black text-sm mt-0.5">{Math.round(travelTimes.bicycling.durationSeconds/60)}m</span>
-                  <span className="text-white/30 text-[9px]">bike</span>
-                </div>
-              )}
-            </div>
-          )}
-        </>
       )}
 
       {/* ── Bio ────────────────────────────────────────────────────────── */}
@@ -1201,6 +1188,107 @@ export default function L2ProfileSheet({ email, uid, id }) {
           </div>
         )}
       </div>
+
+      {/* ── Logistics block — descent into operational (bible Part 7 +
+          Phil exec review 2026-05-13). Coordination AFTER intent, not
+          alongside it. Tone hierarchy:
+            BOO       = full gold #C8962C  (primary)
+            Location  = utility gold (muted)
+            ETA       = metadata tone (neutral)
+            Ride      = service tone (most muted)
+          Suppressed when v6_profile_proximity already rendered above. */}
+      {!isProximityCard && !isOwnProfile && (
+        <div className="px-4 pt-3 pb-1 mt-2">
+          <div
+            className="text-[9px] font-medium tracking-[0.28em] uppercase mb-2"
+            style={{ color: 'rgba(255,255,255,0.32)' }}
+          >
+            Logistics
+          </div>
+          {travelTimes && (
+            <div className="flex gap-2 mb-2">
+              {travelTimes.walking && travelTimes.distKm < 5 && (
+                <div
+                  className="flex-1 flex flex-col items-center py-2 rounded-md"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)' }}
+                >
+                  <Footprints className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.55)' }} />
+                  <span className="text-sm font-medium mt-0.5" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                    {Math.round(travelTimes.walking.durationSeconds/60)}m
+                  </span>
+                  <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.32)' }}>walk</span>
+                </div>
+              )}
+              {travelTimes.bicycling && travelTimes.distKm < 10 && (
+                <div
+                  className="flex-1 flex flex-col items-center py-2 rounded-md"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)' }}
+                >
+                  <Bike className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.55)' }} />
+                  <span className="text-sm font-medium mt-0.5" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                    {Math.round(travelTimes.bicycling.durationSeconds/60)}m
+                  </span>
+                  <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.32)' }}>bike</span>
+                </div>
+              )}
+              {travelTimes.uber && (
+                <div
+                  className="flex-1 flex flex-col items-center py-2 rounded-md"
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.06)' }}
+                >
+                  <Car className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.42)' }} />
+                  <span className="text-sm font-medium mt-0.5" style={{ color: 'rgba(255,255,255,0.58)' }}>
+                    {Math.round(travelTimes.uber.durationSeconds/60)}m
+                  </span>
+                  <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.30)' }}>uber</span>
+                </div>
+              )}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <button
+              onClick={handleShareLocation}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 active:scale-95 transition-all"
+              style={{
+                background: 'rgba(200,150,44,0.04)',
+                border: '0.5px solid rgba(200,150,44,0.28)',
+                borderRadius: 6,
+                color: 'rgba(255,255,255,0.72)',
+                fontSize: 11,
+                fontWeight: 500,
+                letterSpacing: '0.04em',
+              }}
+            >
+              <MapPin className="w-3.5 h-3.5" style={{ color: 'rgba(200,150,44,0.55)' }} />
+              Share location
+            </button>
+            {travelTimes?.uber && (
+              <button
+                onClick={() => openSheet?.('uber', {
+                  lat: profileUser.last_lat,
+                  lng: profileUser.last_lng,
+                  label: profileUser.display_name,
+                  travelTimes,
+                  profileUser,
+                })}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 active:scale-95 transition-all"
+                style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '0.5px solid rgba(255,255,255,0.08)',
+                  borderRadius: 6,
+                  color: 'rgba(255,255,255,0.58)',
+                  fontSize: 11,
+                  fontWeight: 500,
+                  letterSpacing: '0.04em',
+                }}
+              >
+                <Car className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.42)' }} />
+                Get Uber
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Cross-links (listings / music) ─────────────────────────────── */}
       {(totalListingCount > 0 || artistRecord) && (

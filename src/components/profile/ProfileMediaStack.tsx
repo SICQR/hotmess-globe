@@ -31,6 +31,8 @@ export type StackState = 'idle' | 'dragging-x' | 'peeking-next' | 'transitioning
 export interface ProfileMediaStackProps {
   images:            string[]
   isMutual?:         boolean
+  /** Recovery state — softens the gold border per bible Part 7. */
+  softBorder?:       boolean
   onIndexChange?:    (i: number) => void
   className?:        string
   /** Aspect ratio of the card — bible default 9:13 portrait */
@@ -44,7 +46,7 @@ function pickPeekPx(viewportWidth: number): number {
 }
 
 export function ProfileMediaStack({
-  images, isMutual = false, onIndexChange, className = '', aspect = '9 / 13',
+  images, isMutual = false, softBorder = false, onIndexChange, className = '', aspect = '9 / 13',
 }: ProfileMediaStackProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [index, setIndex]      = useState(0)
@@ -225,12 +227,14 @@ export function ProfileMediaStack({
         />
       )}
 
-      {isMutual && (
+      {(isMutual || softBorder) && (
         <span
           aria-hidden="true"
           style={{
             position: 'absolute', inset: 0,
-            border: '1.5px solid #C8962C',
+            border: softBorder
+              ? '1px solid rgba(200,150,44,0.30)'
+              : '1.5px solid #C8962C',
             pointerEvents: 'none',
           }}
         />

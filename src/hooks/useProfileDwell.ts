@@ -50,13 +50,17 @@ export function useProfileDwell({
   const dwellPerImageRef   = useRef<Record<number, number>>({})
   const firedOpenRef       = useRef<boolean>(false)
   const firedCloseRef      = useRef<boolean>(false)
+  const firedFirstSwipeRef = useRef<boolean>(false)
+  const firstSwipeMsRef    = useRef<number | null>(null)
 
   // ── Lifecycle: open + close ────────────────────────────────────────────
   useEffect(() => {
     if (!v6Enabled || !isOpen || !profileId) return
     if (firedOpenRef.current) return
-    firedOpenRef.current  = true
-    firedCloseRef.current = false
+    firedOpenRef.current        = true
+    firedCloseRef.current       = false
+    firedFirstSwipeRef.current  = false
+    firstSwipeMsRef.current     = null
     const now = performance.now()
     openedAtRef.current     = now
     lastChangeAtRef.current = now
@@ -81,14 +85,16 @@ export function useProfileDwell({
         (dwellPerImageRef.current[lastIndexRef.current] ?? 0) + finalDwell
       const totalDwell = Math.round(closedAt - openedAt)
       track('profile_close', 'ghosted', profileId, totalDwell, {
-        profile_id:        profileId,
-        max_index_reached: maxIndexRef.current,
-        total_images:      totalImages,
-        total_dwell_ms:    totalDwell,
-        dwell_per_image:   dwellPerImageRef.current,
-        completion_pct:    totalImages > 0
+        profile_id:           profileId,
+        max_index_reached:    maxIndexRef.current,
+        total_images:         totalImages,
+        total_dwell_ms:       totalDwell,
+        dwell_per_image:      dwellPerImageRef.current,
+        completion_pct:       totalImages > 0
           ? Math.round((maxIndexRef.current + 1) / totalImages * 100)
           : 0,
+        time_to_first_swipe_ms: firstSwipeMsRef.current,
+        ever_swiped:            firedFirstSwipeRef.current,
       })
       firedOpenRef.current = false
     }
@@ -121,6 +127,22 @@ export function useProfileDwell({
       dwell_on_prev_ms:  dwellOnPrev,
       total_images:      totalImages,
     })
+
+    // Hidden metric — fires once per session, on the FIRST swipe away from
+    // image 0. Surfaces whether the first-image lock pauses users naturally
+    // or pushes them to instantly escape. Phil exec review 2026-05-13.
+    if (!firedFirstSwipeRef.current && prevIndex === 0 && currentIndex !== 0) {
+      firedFirstSwipeRef.current = true
+      const openedAt   = openedAtRef.current ?? now
+      const elapsedMs  = Math.round(now - openedAt)
+      firstSwipeMsRef.current = elapsedMs
+      track('profile_first_swipe', 'ghosted', profileId, elapsedMs, {
+        profile_id:    profileId,
+        elapsed_ms:    elapsedMs,
+        direction:     currentIndex > 0 ? 'forward' : 'backward',
+        total_images:  totalImages,
+      })
+    }
   }, [currentIndex, v6Enabled, isOpen, profileId, totalImages])
 
   // ── Public API ─────────────────────────────────────────────────────────
