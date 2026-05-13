@@ -1,16 +1,18 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Radio, Lock, ChevronRight, Play, Users, MessageCircle } from 'lucide-react';
-import { TrackPlayer } from '@/components/music/TrackPlayer';
+import { Users, MessageCircle } from 'lucide-react';
 import { useGhostedGrid } from '@/hooks/useGhostedGrid';
 import { useGPS } from '@/hooks/useGPS';
 import { useSheet } from '@/contexts/SheetContext';
 import { useTaps } from '@/hooks/useTaps';
 import { useUnreadCount } from '@/hooks/useUnreadCount';
 import { GhostedCard } from '@/components/ghosted/GhostedCard';
+import { SignalStrip } from '@/components/ghosted/SignalStrip';
 import { supabase } from '@/components/utils/supabaseClient';
 
 import LocationConsentScreen from '@/components/onboarding/screens/LocationConsentScreen';
+
+const GHOSTED_VOL_1 = 'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/records-audio/1764584744541-Ghosted%20(are%20you%20looking_)%20blended%20version%20(Remastered).mp3';
 
 export default function GhostedMode() {
   const { position } = useGPS();
@@ -87,83 +89,72 @@ export default function GhostedMode() {
   };
 
   const { isTapped, isMutualBoo } = useTaps(myUserId, myEmail);
-
-  // Generate random heights for music visualizer bars
-  const bars = Array.from({ length: 16 }).map((_, i) => ({
-    id: i,
-    height: 10 + Math.random() * 20,
-    delay: Math.random() * 0.5,
-    duration: 0.8 + Math.random() * 0.8,
-  }));
-
   const { unreadCount } = useUnreadCount();
 
   return (
     <div className="relative h-full w-full bg-[#050507] flex flex-col overflow-hidden">
-      
+
       {/* Scrollable Container */}
-      <div 
-        className="flex-1 overflow-y-auto pt-6 pb-24 px-1"
-        style={{ 
+      <div
+        className="flex-1 overflow-y-auto pb-24"
+        style={{
           WebkitOverflowScrolling: 'touch',
-          scrollbarWidth: 'none'
+          scrollbarWidth: 'none',
         }}
       >
         <style dangerouslySetInnerHTML={{__html: `::-webkit-scrollbar { display: none; }`}} />
 
-        <div className="px-4 mb-4 text-center mt-6">
-          
-          {/* Subtle Visualizer (Ghosted Music Hook) */}
-          <div className="flex items-center justify-center gap-[3px] mb-8 h-8 opacity-50">
-            {bars.map((bar) => (
-              <motion.div
-                key={bar.id}
-                className="w-1 bg-[#C8962C] rounded-full mix-blend-screen"
-                initial={{ height: 4 }}
-                animate={{ height: [4, bar.height, 4] }}
-                transition={{
-                  duration: bar.duration,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: bar.delay
-                }}
-              />
-            ))}
-          </div>
+        {/* ── SIGNAL STRIP — ambient transmission, never hero. Phil exec
+            review 2026-05-13: this used to be a giant TrackPlayer that
+            read as the primary product. Compressed to a 44px row that
+            sits above the filter and the live field. */}
+        <SignalStrip
+          src={GHOSTED_VOL_1}
+          title="GHOSTED — Vol 1"
+          artist="GHOSTED"
+        />
 
-          <h2 className="text-[26px] font-black text-white px-4 leading-[1.1] tracking-tight mb-2 uppercase">
-            Some messages don’t come back.
-          </h2>
-          <p className="text-white/40 text-[10px] font-black tracking-[0.2em] mb-8 uppercase">
-            You felt that.
-          </p>
-
-          <TrackPlayer 
-            trackTitle="GHOSTED — VOL 1"
-            trackSource="https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/records-audio/1764584744541-Ghosted%20(are%20you%20looking_)%20blended%20version%20(Remastered).mp3" 
-            artistName="GHOSTED"
-            className="mb-8"
-            themeColor="#C8962C"
-          />
-
-          {/* Filter Chips */}
-          <div className="flex justify-center gap-4 mb-8">
-            <button 
-              onClick={() => setFilter('recent')}
-              className={`px-6 py-2 rounded-full text-[10px] font-black tracking-widest uppercase transition-all ${filter === 'recent' ? 'bg-white text-black' : 'bg-white/5 text-white/40'}`}
-            >
-              Recent
-            </button>
-            <button 
-              onClick={handleToggleNearby}
-              className={`px-6 py-2 rounded-full text-[10px] font-black tracking-widest uppercase transition-all border ${filter === 'nearby' ? 'bg-[#C8962C] border-[#C8962C] text-black' : 'bg-transparent border-white/10 text-white/40'}`}
-            >
-              Nearby
-            </button>
-          </div>
+        {/* ── FILTER STATE — Recent / Nearby. Tight, minimal. ─────────── */}
+        <div className="flex justify-center gap-3 pt-4 pb-3">
+          <button
+            onClick={() => setFilter('recent')}
+            className="text-[10px] tracking-[0.28em] uppercase transition-colors"
+            style={{
+              padding: '6px 14px',
+              borderRadius: 2,
+              fontWeight: 500,
+              background: filter === 'recent' ? 'rgba(200,150,44,0.10)' : 'transparent',
+              border: filter === 'recent'
+                ? '0.5px solid rgba(200,150,44,0.45)'
+                : '0.5px solid rgba(255,255,255,0.08)',
+              color: filter === 'recent' ? '#C8962C' : 'rgba(255,255,255,0.42)',
+            }}
+          >
+            Recent
+          </button>
+          <button
+            onClick={handleToggleNearby}
+            className="text-[10px] tracking-[0.28em] uppercase transition-colors"
+            style={{
+              padding: '6px 14px',
+              borderRadius: 2,
+              fontWeight: 500,
+              background: filter === 'nearby' ? 'rgba(200,150,44,0.10)' : 'transparent',
+              border: filter === 'nearby'
+                ? '0.5px solid rgba(200,150,44,0.45)'
+                : '0.5px solid rgba(255,255,255,0.08)',
+              color: filter === 'nearby' ? '#C8962C' : 'rgba(255,255,255,0.42)',
+            }}
+          >
+            Nearby
+          </button>
         </div>
 
-        {/* The Live Grid */}
+        {/* ── LIVE FIELD — the emotional center. Orbit mechanics: zero
+            gutters, deterministic per-index opacity jitter so the grid
+            doesn't read as uniform "app tiles." Full orbit pass (active
+            card 1.06×, partial-clip, intersection-observer focus) is
+            queued separately. */}
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-8 h-8 border-2 border-[#C8962C]/30 border-t-[#C8962C] rounded-full animate-spin" />
@@ -180,17 +171,33 @@ export default function GhostedMode() {
             </p>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-3 gap-1 px-0.5">
-            {cards.map((card, i) => (
-              <GhostedCard
-                key={card.id}
-                {...card}
-                index={i}
-                isBood={isTapped(card.id, 'boo')}
-                isMutual={isMutualBoo(card.id)}
-                onTap={(id) => openSheet('ghosted-preview', { uid: id })}
-              />
-            ))}
+          <div className="grid grid-cols-3 gap-0">
+            {cards.map((card, i) => {
+              // Index-based jitter — quietly breaks "app grid" feel without
+              // requiring scroll detection. Pattern repeats every 7 cards
+              // so the field has rhythm but no obvious tile.
+              const cycle = i % 7;
+              const dim   = cycle === 1 || cycle === 4 ? 0.82 : cycle === 6 ? 0.92 : 1.0;
+              const scale = cycle === 2 ? 1.015 : cycle === 5 ? 0.985 : 1.0;
+              return (
+                <div
+                  key={card.id}
+                  style={{
+                    opacity: dim,
+                    transform: `scale(${scale})`,
+                    transformOrigin: 'center',
+                  }}
+                >
+                  <GhostedCard
+                    {...card}
+                    index={i}
+                    isBood={isTapped(card.id, 'boo')}
+                    isMutual={isMutualBoo(card.id)}
+                    onTap={(id) => openSheet('ghosted-preview', { uid: id })}
+                  />
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

@@ -6,9 +6,10 @@
  * Hidden when not playing.
  */
 
-import { ChevronUp, Pause, Play, Radio } from 'lucide-react';
+import { ChevronUp, Pause, Play, Radio, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
+import { AnimatePresence, motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
 import { useRadio } from '@/contexts/RadioContext';
 
 const DRAG_THRESHOLD = -60; // drag up 60px to expand
@@ -25,12 +26,166 @@ export function RadioMiniPlayer({ hidden = false }: RadioMiniPlayerProps) {
   const y = useMotionValue(0);
   const opacity = useTransform(y, [-80, 0], [0.6, 1]);
 
-  if (!isPlaying || hidden) return null;
-
-  // Phil exec review 2026-05-13: in Ghosted mode the player compresses to a
-  // persistent system-audio strip — no Live pulse, smaller controls, less
-  // gold. Media duplication with the top transmission strip is forbidden.
+  // Phil exec review 2026-05-13: on /ghosted the full-width strip covers the
+  // nav and SOS shield. Replaced with a floating play triangle that, when
+  // pressed, expands a glass "now playing" rectangle. Triangle ↔ pause icon
+  // reflects audio state. Card auto-collapses when audio pauses.
   const isGhosted = location.pathname.startsWith('/ghosted');
+  const [expanded, setExpanded] = useState(false);
+  const wasPlayingRef = useRef(isPlaying);
+
+  // Open the card the first time audio starts playing while on /ghosted.
+  // Close it whenever audio stops. Users can also dismiss manually.
+  useEffect(() => {
+    if (!isGhosted) return;
+    if (isPlaying && !wasPlayingRef.current) setExpanded(true);
+    if (!isPlaying) setExpanded(false);
+    wasPlayingRef.current = isPlaying;
+  }, [isPlaying, isGhosted]);
+
+  // ─── /ghosted: floating triangle + optional glass rectangle ─────────────
+  if (isGhosted) {
+    if (hidden) return null;
+
+    const handlePress = () => {
+      togglePlay();
+      // If audio is about to start, open the card. If pausing, the useEffect
+      // above will close it automatically.
+      if (!isPlaying) setExpanded(true);
+    };
+
+    return (
+      <>
+        {/* Floating play / pause triangle. Bottom-right column, ABOVE the
+            inbox FAB (which lives at bottom-6 right-6, w-14 h-14). Mirrors
+            the SafetyFAB column on the left. Never covers the nav. */}
+        <button
+          onClick={handlePress}
+          aria-label={isPlaying ? 'Pause HOTMESS Radio' : 'Play HOTMESS Radio'}
+          style={{
+            position: 'fixed',
+            bottom: 96,
+            right: 24,
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            background: 'rgba(20,16,12,0.62)',
+            backdropFilter: 'blur(18px) saturate(1.4)',
+            WebkitBackdropFilter: 'blur(18px) saturate(1.4)',
+            border: '0.5px solid rgba(200,150,44,0.45)',
+            color: 'rgba(200,150,44,0.92)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.40)',
+            zIndex: 40,
+            transition: 'transform 120ms ease, background 200ms ease',
+          }}
+        >
+          {isPlaying
+            ? <Pause size={14} strokeWidth={2.4} />
+            : <Play  size={14} strokeWidth={2.4} style={{ marginLeft: 1 }} />}
+        </button>
+
+        {/* Glass "now playing" rectangle — visible only while audio plays
+            AND user hasn't dismissed it. Slides up from the triangle. */}
+        <AnimatePresence>
+          {isPlaying && expanded && (
+            <motion.div
+              role="region"
+              aria-label="HOTMESS Radio · now playing"
+              initial={{ opacity: 0, y: 8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{    opacity: 0, y: 6, scale: 0.97, transition: { duration: 0.14 } }}
+              transition={{ duration: 0.20, ease: [0.22, 0.61, 0.36, 1] }}
+              style={{
+                position: 'fixed',
+                bottom: 148,
+                right: 24,
+                width: 240,
+                padding: '12px 14px',
+                borderRadius: 4,
+                background: 'rgba(13,13,13,0.55)',
+                backdropFilter: 'blur(26px) saturate(1.5)',
+                WebkitBackdropFilter: 'blur(26px) saturate(1.5)',
+                border: '0.5px solid rgba(200,150,44,0.22)',
+                boxShadow: '0 12px 36px rgba(0,0,0,0.55)',
+                zIndex: 40,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                <span
+                  aria-hidden
+                  style={{
+                    width: 18, height: 18, borderRadius: '50%',
+                    background: 'rgba(200,150,44,0.18)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    marginTop: 1,
+                  }}
+                >
+                  <Radio size={10} strokeWidth={2} style={{ color: 'rgba(200,150,44,0.92)' }} />
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span
+                    style={{
+                      display: 'block',
+                      fontSize: 9,
+                      letterSpacing: '0.32em',
+                      color: 'rgba(200,150,44,0.70)',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    HOTMESS Radio · Live
+                  </span>
+                  <span
+                    style={{
+                      display: 'block',
+                      marginTop: 3,
+                      fontSize: 11,
+                      color: 'rgba(255,255,255,0.78)',
+                      lineHeight: 1.35,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {currentShowName || 'Streaming now'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setExpanded(false)}
+                  aria-label="Close now playing"
+                  style={{
+                    width: 18, height: 18,
+                    marginTop: -2, marginRight: -4,
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'rgba(255,255,255,0.45)',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <X size={12} strokeWidth={2} />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </>
+    );
+  }
+
+  // ─── Legacy strip — non-Ghosted routes only ─────────────────────────────
+  if (!isPlaying || hidden) return null;
 
   const handleDragEnd = (_: unknown, info: PanInfo) => {
     if (info.offset.y < DRAG_THRESHOLD) {
@@ -44,102 +199,53 @@ export function RadioMiniPlayer({ hidden = false }: RadioMiniPlayerProps) {
       dragConstraints={{ top: -80, bottom: 0 }}
       dragElastic={0.15}
       onDragEnd={handleDragEnd}
-      className={`fixed left-0 right-0 z-40 flex items-center cursor-grab active:cursor-grabbing touch-none ${
-        isGhosted ? 'gap-2 px-3 py-1' : 'gap-3 px-4 py-2'
-      }`}
+      className="fixed left-0 right-0 z-40 flex items-center gap-3 px-4 py-2 cursor-grab active:cursor-grabbing touch-none"
       style={{
         bottom: '83px',
         y,
         opacity,
-        background: isGhosted ? 'rgba(13,13,13,0.92)' : '#0D0D0D',
-        borderTop: isGhosted
-          ? '0.5px solid rgba(200,150,44,0.08)'
-          : '0.5px solid rgba(200,150,44,0.20)',
+        background: '#0D0D0D',
+        borderTop: '0.5px solid rgba(200,150,44,0.20)',
       }}
     >
-      {/* Left: radio icon — gold dot only in Ghosted mode, full badge elsewhere */}
-      {isGhosted ? (
-        <span
-          aria-hidden
-          className="flex-shrink-0"
-          style={{
-            width: 14, height: 14, borderRadius: '50%',
-            background: 'rgba(200,150,44,0.16)',
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          <Radio className="w-2.5 h-2.5" style={{ color: 'rgba(200,150,44,0.85)' }} />
-        </span>
-      ) : (
-        <div className="w-8 h-8 rounded-full bg-[#C8962C] flex items-center justify-center flex-shrink-0">
-          <Radio className="w-4 h-4 text-black" />
-        </div>
-      )}
-
-      {/* Middle: station + show name. In Ghosted mode: single quiet line,
-          no Live pulse. */}
+      <div className="w-8 h-8 rounded-full bg-[#C8962C] flex items-center justify-center flex-shrink-0">
+        <Radio className="w-4 h-4 text-black" />
+      </div>
       <div className="flex-1 min-w-0">
-        {isGhosted ? (
-          <p
-            className="leading-tight truncate"
-            style={{
-              fontSize: 10,
-              letterSpacing: '0.22em',
-              color: 'rgba(200,150,44,0.65)',
-              fontWeight: 500,
-              textTransform: 'uppercase',
-            }}
-          >
-            {currentShowName || 'HOTMESS Radio · live'}
+        <div className="flex items-center gap-2">
+          <p className="text-[#C8962C] font-black text-xs leading-tight tracking-wide">
+            HOTMESS RADIO
           </p>
+          <span className="flex items-center gap-1 px-1.5 py-0.5 bg-red-500/20 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-red-400 text-[8px] font-black uppercase tracking-wider">Live</span>
+          </span>
+        </div>
+        {currentShowName ? (
+          <p className="text-white/40 text-[10px] leading-tight truncate">{currentShowName}</p>
         ) : (
-          <>
-            <div className="flex items-center gap-2">
-              <p className="text-[#C8962C] font-black text-xs leading-tight tracking-wide">
-                HOTMESS RADIO
-              </p>
-              <span className="flex items-center gap-1 px-1.5 py-0.5 bg-red-500/20 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-red-400 text-[8px] font-black uppercase tracking-wider">Live</span>
-              </span>
-            </div>
-            {currentShowName ? (
-              <p className="text-white/40 text-[10px] leading-tight truncate">{currentShowName}</p>
-            ) : (
-              <p className="text-white/40 text-[10px] leading-tight">Streaming via RadioKing</p>
-            )}
-          </>
+          <p className="text-white/40 text-[10px] leading-tight">Streaming via RadioKing</p>
         )}
       </div>
-
-      {/* Right: controls — compressed in Ghosted mode */}
-      <div className={`flex items-center flex-shrink-0 ${isGhosted ? 'gap-1' : 'gap-2'}`}>
+      <div className="flex items-center flex-shrink-0 gap-2">
         <button
           onClick={togglePlay}
           aria-label={isPlaying ? 'Pause radio' : 'Play radio'}
-          className={`rounded-full flex items-center justify-center active:scale-95 transition-transform ${
-            isGhosted
-              ? 'w-6 h-6 bg-transparent'
-              : 'w-8 h-8 bg-[#C8962C]/10'
-          }`}
-          style={isGhosted ? { color: 'rgba(200,150,44,0.65)' } : undefined}
+          className="w-8 h-8 rounded-full bg-[#C8962C]/10 flex items-center justify-center active:scale-95 transition-transform"
         >
           {isPlaying ? (
-            <Pause className={isGhosted ? 'w-3 h-3' : 'w-4 h-4 text-[#C8962C]'} />
+            <Pause className="w-4 h-4 text-[#C8962C]" />
           ) : (
-            <Play className={isGhosted ? 'w-3 h-3 ml-0.5' : 'w-4 h-4 text-[#C8962C] ml-0.5'} />
+            <Play className="w-4 h-4 text-[#C8962C] ml-0.5" />
           )}
         </button>
-
-        {!isGhosted && (
-          <button
-            onClick={() => navigate('/radio')}
-            aria-label="Open radio player"
-            className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center active:scale-95 transition-transform"
-          >
-            <ChevronUp className="w-4 h-4 text-white/40" />
-          </button>
-        )}
+        <button
+          onClick={() => navigate('/radio')}
+          aria-label="Open radio player"
+          className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center active:scale-95 transition-transform"
+        >
+          <ChevronUp className="w-4 h-4 text-white/40" />
+        </button>
       </div>
     </motion.div>
   );
