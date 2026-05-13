@@ -27,6 +27,8 @@ import { ProfileProximityPanel } from '@/components/profile/ProfileProximityPane
 import VaultAccessRequest from '@/components/messaging/VaultAccessRequest';
 import ProfileMediaStack from '@/components/profile/ProfileMediaStack';
 import MutualStateOverlay from '@/components/profile/MutualStateOverlay';
+import IntentLayer from '@/components/profile/IntentLayer';
+import useProfileDwell from '@/hooks/useProfileDwell';
 
 const Chip = ({ children, gold = false }) => (
   <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
@@ -669,6 +671,25 @@ export default function L2ProfileSheet({ email, uid, id }) {
     }
   };
 
+  // ── Photo URLs (memo) — used both by the carousel + dwell instrumentation
+  const photoUrls = React.useMemo(() => {
+    const urls = [];
+    const seen = new Set();
+    const add = (u) => { if (u && !seen.has(u)) { seen.add(u); urls.push(u); } };
+    add(profileUser?.avatar_url || profileUser?.photos?.[0]);
+    (profileUser?.photos || []).forEach(p => add(typeof p === 'string' ? p : p?.url));
+    return urls;
+  }, [profileUser?.avatar_url, profileUser?.photos]);
+
+  // ── Phase A truth-signal instrumentation (profile dwell progression)
+  const dwellApi = useProfileDwell({
+    profileId:    profileUser?.auth_user_id || profileUser?.id || null,
+    currentIndex: activePhotoIdx,
+    totalImages:  photoUrls.length,
+    isOpen:       !!profileUser && !isOwnProfile,
+    v6Enabled:    !!v6GhostedLoop,
+  });
+
   // ── Loading / empty states ──────────────────────────────────────────────
 
   if (isLoading) {
@@ -770,34 +791,93 @@ export default function L2ProfileSheet({ email, uid, id }) {
     ? rightNowStatus.intent.charAt(0).toUpperCase() + rightNowStatus.intent.slice(1)
     : null;
 
+  // ── v6 Ghosted loop — BOO + intent action wiring ──────────────────────
+  const targetUid = profileUser.auth_user_id || profileUser.id;
+  const handleBoo = async () => {
+    if (!targetUid) return;
+    const result = await sendTap(targetUid, name, 'boo');
+    if (v6GhostedLoop) {
+      dwellApi.trackBoo(!!result?.mutual);
+      if (result?.mutual) {
+        setMutualArmed(true);
+        setShowMutual(true);
+      }
+    }
+  };
+  const booActive = !!targetUid && isTapped(targetUid, 'boo');
+  const booPrimary = (
+    <button
+      onClick={handleBoo}
+      aria-label={booActive ? 'Booed' : 'Boo'}
+      style={{
+        width: '100%',
+        height: 52,
+        background: booActive ? '#C8962C' : 'rgba(200,150,44,0.10)',
+        color:      booActive ? '#0B0B0F' : '#C8962C',
+        border:     booActive ? '0.5px solid #C8962C' : '0.5px solid rgba(200,150,44,0.55)',
+        borderRadius: 2,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 10,
+        fontSize: 12,
+        fontWeight: 700,
+        letterSpacing: '0.32em',
+        textTransform: 'uppercase',
+        cursor: 'pointer',
+        boxShadow: booActive ? '0 0 24px rgba(200,150,44,0.28)' : 'none',
+      }}
+    >
+      <Ghost size={18} strokeWidth={2} />
+      {booActive ? "Boo'd" : 'Boo'}
+    </button>
+  );
+  const intentActions = [
+    {
+      id: 'message',
+      label: 'Message',
+      icon: <MessageCircle size={14} strokeWidth={2} />,
+      onTap: handleMessage,
+    },
+    {
+      id: 'save',
+      label: isSaved ? 'Saved' : 'Save',
+      icon: <Heart size={14} strokeWidth={2} fill={isSaved ? 'currentColor' : 'none'} />,
+      onTap: handleSaveToggle,
+    },
+    {
+      id: 'video',
+      label: 'Video',
+      icon: <Video size={14} strokeWidth={2} />,
+      onTap: handleVideoCall,
+    },
+    {
+      id: 'share',
+      label: 'Share',
+      icon: <Share2 size={14} strokeWidth={2} />,
+      onTap: handleShare,
+    },
+  ];
+
   return (
     <div className="pb-20 -mt-4">
       {/* ── Photo carousel (full-bleed, 3:4 portrait) ────────────────── */}
+      {(() => { const heroBody = (
       <div className="relative">
-        {(() => {
-          const urls = [];
-          const seen = new Set();
-          const add = (u) => { if (u && !seen.has(u)) { seen.add(u); urls.push(u); } };
-          add(avatarUrl);
-          (profileUser.photos || []).forEach(p => add(typeof p === 'string' ? p : p?.url));
-          if (v6GhostedLoop && urls.length > 0) {
-            return (
-              <ProfileMediaStack
-                images={urls}
-                isMutual={mutualArmed}
-                onIndexChange={setActivePhotoIdx}
-                aspect="3 / 4"
-              />
-            );
-          }
-          return (
-            <PhotoCarousel
-              images={urls}
-              fallbackInitial={name[0]}
-              onIndexChange={setActivePhotoIdx}
-            />
-          );
-        })()}
+        {v6GhostedLoop && photoUrls.length > 0 ? (
+          <ProfileMediaStack
+            images={photoUrls}
+            isMutual={mutualArmed}
+            onIndexChange={setActivePhotoIdx}
+            aspect="3 / 4"
+          />
+        ) : (
+          <PhotoCarousel
+            images={photoUrls}
+            fallbackInitial={name[0]}
+            onIndexChange={setActivePhotoIdx}
+          />
+        )}
 
         {/* Gradient overlay at bottom */}
         <div
@@ -905,6 +985,18 @@ export default function L2ProfileSheet({ email, uid, id }) {
           </div>
         </div>
       </div>
+      ); if (v6GhostedLoop && photoUrls.length > 0 && !isOwnProfile) {
+        return (
+          <IntentLayer
+            primary={booPrimary}
+            actions={intentActions}
+            onStateChange={(s) => {
+              if (s === 'dormant') return;
+              dwellApi.trackDragUp(s === 'retracting' ? 'cancelled' : s);
+            }}
+          >{heroBody}</IntentLayer>
+        );
+      } return heroBody; })()}
 
       {/* ── Private vault gate (someone else's profile only) ──────────── */}
       {!isOwnProfile && (profileUser.auth_user_id || profileUser.id) && (
@@ -1147,7 +1239,8 @@ export default function L2ProfileSheet({ email, uid, id }) {
         </div>
       )}
 
-      {/* ── Bottom action bar ──────────────────────────────────────────── */}
+      {/* ── Bottom action bar (legacy — suppressed under v6_ghosted_loop) */}
+      {!(v6GhostedLoop && photoUrls.length > 0 && !isOwnProfile) && (
       <div
         className="fixed bottom-0 left-0 right-0 px-4 py-3 z-10 flex gap-2"
         style={{
@@ -1163,9 +1256,12 @@ export default function L2ProfileSheet({ email, uid, id }) {
             const targetUid = profileUser.auth_user_id || profileUser.id;
             if (!targetUid) return;
             const result = await sendTap(targetUid, name, 'boo');
-            if (v6GhostedLoop && result?.mutual) {
-              setMutualArmed(true);
-              setShowMutual(true);
+            if (v6GhostedLoop) {
+              dwellApi.trackBoo(!!result?.mutual);
+              if (result?.mutual) {
+                setMutualArmed(true);
+                setShowMutual(true);
+              }
             }
           }}
           className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
@@ -1209,6 +1305,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
           <Video className="w-5 h-5" />
         </button>
       </div>
+      )}
 
       {/* ── Mutual reveal (v6_ghosted_loop) ─────────────────────────────── */}
       {v6GhostedLoop && (
