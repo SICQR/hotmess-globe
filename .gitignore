@@ -53,3 +53,13 @@ HNH Mess 2 (Remastered).mp3
 hotmess-globe/
 .github_token
 .supabase_token
+
+# Sandbox & agent detritus
+.claude/worktrees/
+**/.fuse_hidden*
+outputs/
+STATE.md
+TOOLS.md
+HOTMESS_STATE_AND_PLAN.md
+parse_advisors.py
+src/components/ui/XXKW8djL
