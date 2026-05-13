@@ -513,7 +513,9 @@ export default function Music() {
                 <RadioIcon className="w-16 h-16" />
               </div>
               <h3 className="text-3xl font-black uppercase mb-3">ON AIR NOW</h3>
-              <p className="text-xl text-white/80 mb-2">HOTMESS RADIO</p>
+              <p className="text-xl mb-2">
+                <span style={{ color: '#FFFFFF' }}>HOT</span><span style={{ color: '#C8962C' }}>MESS</span> <span style={{ color: 'rgba(255,255,255,0.85)' }}>RADIO</span>
+              </p>
               <p className="text-sm text-white/60 uppercase mb-8">24/7 LONDON OS SOUNDTRACK</p>
               <Button 
                 onClick={openRadio}

@@ -80,8 +80,8 @@ export default function SellerOnboarding() {
             className="text-center"
           >
             <Store className="w-20 h-20 text-[#C8962C] mx-auto mb-6" />
-            <h2 className="text-3xl font-black uppercase mb-4">
-              Start Selling on <span className="text-[#C8962C]">HOTMESS</span>
+            <h2 className="text-3xl font-medium uppercase mb-4">
+              Start Selling on <span style={{ color: '#FFFFFF' }}>HOT</span><span style={{ color: '#C8962C' }}>MESS</span>
             </h2>
             <p className="text-white/60 mb-8 max-w-md mx-auto">
               Join our community marketplace. Sell merch, art, tickets, services, 

@@ -140,7 +140,9 @@ export default function GlobalAssistant() {
                     <Bot className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-black text-sm uppercase text-white">HOTMESS AI</h3>
+                    <h3 className="font-medium text-sm uppercase">
+                      <span style={{ color: '#FFFFFF' }}>HOT</span><span style={{ color: '#C8962C' }}>MESS</span> <span style={{ color: '#FFFFFF' }}>AI</span>
+                    </h3>
                     <div className="flex items-center gap-1">
                       <div className="w-2 h-2 rounded-full bg-[#39FF14] animate-pulse" />
                       <span className="text-[10px] text-white uppercase">Online</span>

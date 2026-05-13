@@ -407,7 +407,9 @@ function StemUnlockSheet_DEPRECATED({ release, onClose }) {
 
         {/* License summary */}
         <div className="mb-6 rounded-xl border border-[#9B1B2A]/20 bg-[#9B1B2A]/5 px-4 py-3">
-          <p className="text-[9px] font-medium uppercase tracking-widest text-[#9B1B2A] mb-2">HOTMESS Remix License</p>
+          <p className="text-[9px] font-medium uppercase tracking-widest mb-2">
+            <span style={{ color: '#FFFFFF' }}>HOT</span><span style={{ color: '#C8962C' }}>MESS</span> <span style={{ color: '#FFFFFF' }}>Remix License</span>
+          </p>
           <div className="space-y-1.5 text-xs text-white/60">
             <p className="flex items-center gap-2"><span className="text-[#30D158]">{'\u2713'}</span> Remix + DJ use allowed</p>
             <p className="flex items-center gap-2"><span className="text-[#30D158]">{'\u2713'}</span> Share mixes non-commercially</p>

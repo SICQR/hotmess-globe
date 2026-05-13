@@ -108,4 +108,34 @@ export function HotmessWordmark({
   );
 }
 
+/**
+ * HotmessText — inline brand wordmark with HOT-white / MESS-gold split.
+ *
+ * Use this anywhere you need "HOTMESS" rendered inline as text — eyebrows,
+ * captions, sentence-flow references. The styling (size, weight, tracking,
+ * uppercase, italic) is fully controlled by the parent via className or
+ * style. The ONLY thing this component owns is the colour split.
+ *
+ * Brand rule (Phil 2026-05-13): HOT is white, MESS is gold. Always.
+ *
+ * Usage:
+ *   <p className="text-[10px] tracking-[0.3em] uppercase font-medium">
+ *     <HotmessText />
+ *   </p>
+ */
+export function HotmessText({
+  accent = '#C8962C',
+  className = '',
+}: {
+  accent?: string;
+  className?: string;
+}) {
+  return (
+    <span className={className}>
+      <span style={{ color: '#FFFFFF' }}>HOT</span>
+      <span style={{ color: accent }}>MESS</span>
+    </span>
+  );
+}
+
 export default HotmessWordmark;

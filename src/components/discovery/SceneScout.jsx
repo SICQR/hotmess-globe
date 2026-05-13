@@ -331,7 +331,9 @@ export default function SceneScout({
         <div className="p-4 border-t border-white/10 bg-white/5">
           <div className="flex items-center gap-2 mb-2">
             <Users className="w-4 h-4 text-[#C8962C]" />
-            <span className="text-xs font-bold text-white">HOTMESS Activity</span>
+            <span className="text-xs font-medium">
+              <span style={{ color: '#FFFFFF' }}>HOT</span><span style={{ color: '#C8962C' }}>MESS</span> <span style={{ color: '#FFFFFF' }}>Activity</span>
+            </span>
           </div>
           <div className="flex flex-wrap gap-2">
             {hotmessActivity.map((activity, i) => (

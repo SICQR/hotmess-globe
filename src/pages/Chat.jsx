@@ -140,7 +140,9 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
             <Sparkles className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-black uppercase tracking-tight">HOTMESS AI</h1>
+            <h1 className="text-xl md:text-2xl font-medium uppercase tracking-tight">
+              <span style={{ color: '#FFFFFF' }}>HOT</span><span style={{ color: '#C8962C' }}>MESS</span> <span style={{ color: '#FFFFFF' }}>AI</span>
+            </h1>
             <p className="text-xs text-white/60">Your nightlife discovery assistant</p>
           </div>
         </div>

@@ -44,7 +44,9 @@ function StreamPlayer() {
       </button>
       <div className="min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <p className="text-sm font-black uppercase tracking-wide text-white">HOTMESS RADIO</p>
+          <p className="text-sm font-medium uppercase tracking-wide">
+            <span style={{ color: '#FFFFFF' }}>HOT</span><span style={{ color: '#C8962C' }}>MESS</span> <span style={{ color: '#FFFFFF' }}>RADIO</span>
+          </p>
           {isPlaying && <LiveBadge />}
         </div>
         <p className="text-xs text-white/40 font-mono">

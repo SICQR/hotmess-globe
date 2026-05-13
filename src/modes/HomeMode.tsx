@@ -38,6 +38,7 @@ import { motionTokens, getMotion, useReducedMotion } from '@/lib/motionTokens';
 import RightNowModal from '@/components/globe/RightNowModal';
 import { trackEvent } from '@/components/utils/analytics';
 import { TrackPlayer } from '@/components/music/TrackPlayer';
+import { HotmessText } from '@/components/brand/HotmessWordmark';
 
 // ── Brand tokens ────────────────────────────────────────────────────────────
 const AMBER = '#C8962C';
@@ -182,13 +183,12 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
             }}
             className="relative z-10"
           >
-            {/* Eyebrow */}
+            {/* Eyebrow — brand split (HOT white, MESS gold) */}
             <motion.p
               variants={reduced ? {} : motionTokens.fadeUpSm}
               className="text-[10px] font-medium uppercase tracking-[0.3em] mb-2"
-              style={{ color: AMBER }}
             >
-              HOTMESS
+              <HotmessText accent={AMBER} />
             </motion.p>
 
             {/* Headline — static, answers "what is this?" */}

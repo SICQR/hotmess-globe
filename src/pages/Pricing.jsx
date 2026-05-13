@@ -795,7 +795,9 @@ function RadioSection() {
             <Radio className="w-8 h-8 text-hot-500" />
           </div>
           <div>
-            <h3 className="text-2xl font-black">HOTMESS RADIO</h3>
+            <h3 className="text-2xl font-medium">
+              <span style={{ color: '#FFFFFF' }}>HOT</span><span style={{ color: '#C8962C' }}>MESS</span> <span style={{ color: '#FFFFFF' }}>RADIO</span>
+            </h3>
             <p className="text-white/60">24/7 Underground Music • Global LGBTQ+ Audience</p>
           </div>
         </div>

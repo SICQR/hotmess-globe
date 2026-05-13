@@ -595,7 +595,9 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
             {/* Trust badge */}
             <div className="flex items-center justify-center gap-2 pt-2 text-white/25 text-xs">
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>HOTMESS Buyer Protection</span>
+              <span>
+                <span style={{ color: '#FFFFFF' }}>HOT</span><span style={{ color: '#C8962C' }}>MESS</span> Buyer Protection
+              </span>
             </div>
           </div>
         )}
@@ -632,7 +634,9 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
         )}
         <div className="flex items-center justify-center gap-1.5">
           <Lock className="w-3 h-3 text-white/20" />
-          <p className="text-white/25 text-[10px]">HOTMESS Buyer Protection · Community Guidelines</p>
+          <p className="text-[10px]">
+            <span style={{ color: '#FFFFFF', opacity: 0.55 }}>HOT</span><span style={{ color: '#C8962C', opacity: 0.85 }}>MESS</span><span style={{ color: 'rgba(255,255,255,0.25)' }}> Buyer Protection · Community Guidelines</span>
+          </p>
         </div>
       </div>
     </div>

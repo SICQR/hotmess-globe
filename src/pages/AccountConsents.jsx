@@ -85,8 +85,8 @@ export default function AccountConsents() {
       >
         <div className="bg-black border-2 border-white p-8">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">
-              WELCOME TO <span className="text-[#C8962C]">HOTMESS</span>
+            <h1 className="text-4xl font-medium uppercase tracking-tighter mb-2">
+              WELCOME TO <span style={{ color: '#FFFFFF' }}>HOT</span><span style={{ color: '#C8962C' }}>MESS</span>
             </h1>
             <p className="text-white/60 uppercase text-sm tracking-wider">LONDON NIGHTLIFE OS</p>
           </div>

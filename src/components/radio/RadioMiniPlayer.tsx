@@ -8,6 +8,7 @@
 
 import { ChevronUp, Pause, Play, Radio, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { HotmessText } from '@/components/brand/HotmessWordmark';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
 import { useRadio } from '@/contexts/RadioContext';
@@ -223,8 +224,8 @@ export function RadioMiniPlayer({ hidden = false }: RadioMiniPlayerProps) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="text-[#C8962C] font-black text-xs leading-tight tracking-wide">
-            HOTMESS RADIO
+          <p className="text-xs leading-tight tracking-wide font-medium">
+            <HotmessText accent="#C8962C" /> <span style={{ color: '#FFFFFF' }}>RADIO</span>
           </p>
           <span className="flex items-center gap-1 px-1.5 py-0.5 bg-red-500/20 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
