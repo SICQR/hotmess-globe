@@ -193,7 +193,7 @@ export default function GhostedMode() {
                     index={i}
                     isBood={isTapped(card.id, 'boo')}
                     isMutual={isMutualBoo(card.id)}
-                    onTap={(id) => openSheet('ghosted-preview', { uid: id })}
+                    onTap={(id) => openSheet('profile', { uid: id })}
                   />
                 </div>
               );

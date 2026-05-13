@@ -203,9 +203,22 @@ export function IntentLayer({
       ref={ref}
       className={`flex flex-col ${className}`}
       style={{
-        touchAction: 'pan-x pan-y',
+        // touch-action: pan-y lets the parent sheet scroll vertically through
+        // the photo region. The intent gesture is still observed by the
+        // gesture router via pointer events for an INTENTIONAL drag-up; we
+        // just don't fight the browser for the basic vertical scroll.
+        touchAction: 'pan-y',
         WebkitUserSelect: 'none',
         userSelect: 'none',
+        // ONE card — photo + BOO + actions all live inside this rounded
+        // boundary. Phil exec review 2026-05-13: "everything is still
+        // outside the profile card rather than inside" — fixed by extending
+        // the card's rounded clip across the whole IntentLayer surface.
+        borderRadius: 16,
+        overflow: 'hidden',
+        background: '#0a0708',
+        border: '0.5px solid rgba(255,255,255,0.06)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
       }}
     >
       {/* Photo subregion — hero compresses inside, actions fade in the
