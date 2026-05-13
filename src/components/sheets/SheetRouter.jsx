@@ -48,6 +48,8 @@ const L2BlockedSheet = lazy(() => import('./L2BlockedSheet'));
 const L2NotificationsSheet = lazy(() => import('./L2NotificationsSheet'));
 const L2SettingsSheet = lazy(() => import('./L2SettingsSheet'));
 const L2PhotosSheet = lazy(() => import('./L2PhotosSheet'));
+const L2AlbumsSheet = lazy(() => import('./L2AlbumsSheet'));
+const L2AlbumPhotosSheet = lazy(() => import('./L2AlbumPhotosSheet'));
 const L2LocationSheet = lazy(() => import('./L2LocationSheet'));
 const L2HelpSheet = lazy(() => import('./L2HelpSheet'));
 const L2MembershipSheet = lazy(() => import('./L2MembershipSheet'));
@@ -192,6 +194,8 @@ const SHEET_COMPONENTS = {
   // Profile management
   'edit-profile': L2EditProfileSheet,
   'photos': L2PhotosSheet,
+  'albums': L2AlbumsSheet,
+  'album-photos': L2AlbumPhotosSheet,
   'location': L2LocationSheet,
   'privacy': L2PrivacySheet,
   'blocked': L2BlockedSheet,

@@ -228,6 +228,20 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: true,
     deepLinkParams: [],
   },
+  'albums': {
+    id: 'albums',
+    title: 'Private albums',
+    height: 'large',
+    auth: true,
+    deepLinkParams: [],
+  },
+  'album-photos': {
+    id: 'album-photos',
+    title: 'Album',
+    height: 'large',
+    auth: true,
+    deepLinkParams: ['albumId'],
+  },
   'location': {
     id: 'location',
     title: 'Location',

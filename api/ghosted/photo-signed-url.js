@@ -92,13 +92,20 @@ export default async function handler(req, res) {
     }
   }
 
-  // Mint signed URL
-  const { data: signed, error: signErr } = await admin.storage
-    .from('ghosted-photos')
-    .createSignedUrl(photo.storage_path, 300);
-
-  if (signErr || !signed?.signedUrl) {
-    return res.status(500).json({ error: 'signing failed' });
+  // Pass-through for external URLs — used for recon backfill where the
+  // photo is hosted off-bucket (e.g. picsum seeded URLs on Alex's profile).
+  // Real uploads always go to the ghosted-photos bucket and get signed.
+  let signedUrl;
+  if (/^https?:\/\//i.test(photo.storage_path)) {
+    signedUrl = photo.storage_path;
+  } else {
+    const { data: signed, error: signErr } = await admin.storage
+      .from('ghosted-photos')
+      .createSignedUrl(photo.storage_path, 300);
+    if (signErr || !signed?.signedUrl) {
+      return res.status(500).json({ error: 'signing failed' });
+    }
+    signedUrl = signed.signedUrl;
   }
 
   // Forensics log — fire and forget, never block the response
@@ -117,7 +124,7 @@ export default async function handler(req, res) {
     .then(() => {}, () => {});
 
   return res.status(200).json({
-    url: signed.signedUrl,
+    url: signedUrl,
     expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
   });
 }

@@ -21,7 +21,7 @@ import { useSheet } from '@/contexts/SheetContext';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Camera, Loader2, CheckCircle, User, MapPin,
-  Instagram, Music, Crown, ChevronRight, Plus, Check
+  Instagram, Music, Crown, ChevronRight, Plus, Check, Lock
 } from 'lucide-react';
 import { usePersona } from '@/contexts/PersonaContext';
 import { toast } from 'sonner';
@@ -402,8 +402,48 @@ export default function L2EditProfileSheet() {
           </button>
 
           <p className="text-white/30 text-xs">
-            {avatarUploading ? 'Uploading...' : 'Tap to change photo'}
+            {avatarUploading ? 'Uploading...' : 'Tap to change cover'}
           </p>
+
+          {/* Manage main carousel + private albums — two-button entry row */}
+          <div className="flex gap-2 w-full px-2 mt-4">
+            <button
+              type="button"
+              onClick={() => openSheet('photos')}
+              className="flex-1 flex items-center justify-center gap-2 py-3 active:scale-95 transition-all"
+              style={{
+                background: 'rgba(200,150,44,0.08)',
+                border: '0.5px solid rgba(200,150,44,0.35)',
+                borderRadius: 2,
+                color: '#C8962C',
+                fontSize: 11,
+                fontWeight: 500,
+                letterSpacing: '0.22em',
+                textTransform: 'uppercase',
+              }}
+            >
+              <Camera className="w-3.5 h-3.5" />
+              Photos
+            </button>
+            <button
+              type="button"
+              onClick={() => openSheet('albums')}
+              className="flex-1 flex items-center justify-center gap-2 py-3 active:scale-95 transition-all"
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '0.5px solid rgba(200,150,44,0.22)',
+                borderRadius: 2,
+                color: 'rgba(200,150,44,0.78)',
+                fontSize: 11,
+                fontWeight: 500,
+                letterSpacing: '0.22em',
+                textTransform: 'uppercase',
+              }}
+            >
+              <Lock className="w-3.5 h-3.5" />
+              Albums
+            </button>
+          </div>
         </div>
 
         {/* ── Fields ────────────────────────────────────────────────────────── */}
