@@ -1,21 +1,26 @@
 /**
- * GhostedCard — Single profile card in the Ghosted grid
+ * GhostedCard — single profile card in the Ghosted grid.
  *
- * Compact 3-column card: photo, name, distance, context line.
- * Tap → ghosted-preview sheet. No direct-to-chat.
+ * Phil exec review 2026-05-13: this is scanning encrypted nightlife
+ * signals, not browsing profiles. Presence is DETECTED not announced,
+ * mutuality is quietly dangerous not celebrated, fallback art is
+ * obscured silhouette not letters.
  *
  * ┌──────────────────┐
- * │  [Photo 4:5]   ● │  ← online dot (green, top-right)
+ * │  [Photo 4:5]   ° │  ← online dot — 6px, low-saturation, inset
  * │                   │
- * │  Name · ✓         │  ← 13px bold, verified badge
- * │  340m away        │  ← 11px white/40
- * │  At Eagle  [vibe] │  ← 10px context + optional chip
+ * │  Name · ✓         │  ← 13px bold, verified
+ * │  340m near Eagle  │  ← one human line, merged distance + place
  * └──────────────────┘
+ *
+ * Mutual = +0.5px gold edge + tiny gold glyph in corner.
+ * Boo'd = tiny dim gold glyph in corner.
+ * No "MATCH" / "BOO" text labels — those read dating-app reward.
  */
 
 import { memo } from 'react';
 import { motion } from 'framer-motion';
-import { BadgeCheck } from 'lucide-react';
+import { BadgeCheck, Ghost } from 'lucide-react';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -71,10 +76,32 @@ function GhostedCardInner({
 }: GhostedCardComponentProps) {
   const intentColor = intent ? INTENT_RING[intent] : undefined;
 
+  // Merge distance + context into one human line. Distance alone reads as
+  // system copy ("340m"); context alone hides proximity. Combined feels
+  // intercepted, not browsed.
+  const distLabel = distanceM == null
+    ? null
+    : distanceM < 100  ? '<100m'
+    : distanceM < 1000 ? `${distanceM}m`
+    : `${(distanceM / 1000).toFixed(1)}km`;
+  const mergedLine = (() => {
+    if (!distLabel && !contextLabel) return null;
+    if (!distLabel) return contextLabel;
+    if (!contextLabel) return distLabel;
+    // Prefer "at {venue}" / "near {place}" prefixes if context already
+    // includes a preposition; otherwise interpose " · ".
+    const ctxLower = contextLabel.toLowerCase();
+    if (ctxLower.startsWith('at ') || ctxLower.startsWith('near ') ||
+        ctxLower.startsWith('in ')  || ctxLower.startsWith('from ')) {
+      return `${distLabel} · ${contextLabel}`;
+    }
+    return `${distLabel} · ${contextLabel}`;
+  })();
+
   return (
     <motion.button
       className="relative w-full aspect-[4/5] rounded-xl overflow-hidden bg-white/[0.03] focus:outline-none focus:ring-2 focus:ring-[#C8962C]/50"
-      style={isMutual ? { boxShadow: '0 0 0 2px #C8962C' } : undefined}
+      style={isMutual ? { boxShadow: 'inset 0 0 0 0.5px rgba(200,150,44,0.55)' } : undefined}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.03, 0.4), duration: 0.25 }}
@@ -82,7 +109,8 @@ function GhostedCardInner({
       onClick={() => onTap(id)}
       aria-label={`View ${name}'s profile`}
     >
-      {/* Photo / fallback */}
+      {/* Photo or obscured silhouette — never initials, never placeholder.
+          Ambient believability per Phil's hierarchy directive. */}
       {avatarUrl ? (
         <img
           src={avatarUrl}
@@ -92,14 +120,39 @@ function GhostedCardInner({
         />
       ) : (
         <div
-          className="absolute inset-0 flex items-center justify-center"
+          className="absolute inset-0"
           style={{
-            background: 'linear-gradient(135deg, #1C1C1E 0%, #0D0D0D 100%)',
+            background: 'radial-gradient(ellipse at 50% 42%, #1a1410 0%, #0d0a08 55%, #050405 100%)',
           }}
+          aria-hidden="true"
         >
-          <span className="text-2xl font-black text-white/20">
-            {name.charAt(0).toUpperCase()}
-          </span>
+          {/* Soft body mass — blurred low-light silhouette */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '32%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '55%',
+              height: '54%',
+              borderRadius: '46% 46% 32% 32%',
+              background: 'rgba(255,255,255,0.025)',
+              filter: 'blur(10px)',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              top: '22%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '24%',
+              height: '24%',
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.03)',
+              filter: 'blur(8px)',
+            }}
+          />
         </div>
       )}
 
@@ -111,31 +164,34 @@ function GhostedCardInner({
         }}
       />
 
-      {/* Online dot */}
+      {/* Presence — detected, not announced. 6px, desaturated, inset. */}
       {isOnline && (
         <span
-          className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full border border-black/30"
-          style={{ backgroundColor: '#30D158' }}
+          className="absolute rounded-full"
+          style={{
+            top: 10, right: 10,
+            width: 6, height: 6,
+            background: 'rgba(48,209,88,0.55)',
+            boxShadow: '0 0 4px rgba(48,209,88,0.25)',
+          }}
           aria-label="Online"
         />
       )}
 
-      {/* Boo / Mutual badge (top-left) */}
-      {isMutual ? (
+      {/* Mutual / Boo — tiny corner glyph, no loud labels. Mutual gets the
+          inset gold edge (set on the motion.button). */}
+      {(isMutual || isBood) && (
         <span
-          className="absolute top-2 left-2 z-10 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md"
-          style={{ backgroundColor: '#C8962C', color: '#000' }}
+          className="absolute"
+          style={{
+            top: 10, left: 10,
+            opacity: isMutual ? 0.95 : 0.45,
+          }}
+          aria-label={isMutual ? 'Mutual' : 'Booed'}
         >
-          Match
+          <Ghost size={11} strokeWidth={1.6} color="#C8962C" />
         </span>
-      ) : isBood ? (
-        <span
-          className="absolute top-2 left-2 z-10 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md"
-          style={{ backgroundColor: 'rgba(200,150,44,0.2)', color: '#C8962C' }}
-        >
-          Boo
-        </span>
-      ) : null}
+      )}
 
       {/* Intent ring indicator (thin border at top) */}
       {intentColor && (
@@ -145,11 +201,11 @@ function GhostedCardInner({
         />
       )}
 
-      {/* Text content */}
+      {/* Text content — name + single merged proximity line. */}
       <div className="absolute inset-x-0 bottom-0 px-2 pb-2 flex flex-col gap-0.5">
         {/* Name row */}
         <div className="flex items-center gap-1">
-          <span className="text-[13px] font-bold text-white truncate leading-tight">
+          <span className="text-[13px] font-medium text-white truncate leading-tight">
             {name}
           </span>
           {isVerified && (
@@ -157,38 +213,22 @@ function GhostedCardInner({
           )}
         </div>
 
-        {/* Distance */}
-        {distanceM != null && (
-          <span className="text-[11px] text-white/40 leading-tight">
-            {distanceM < 1000 ? `${distanceM}m` : `${(distanceM / 1000).toFixed(1)}km`}
-          </span>
-        )}
-
-        {/* Context line + vibe chip */}
-        <div className="flex items-center gap-1.5">
-          {contextType === 'moving' ? (
-            <span className="text-[10px] text-white/50 truncate leading-tight flex items-center gap-1">
+        {/* Single human proximity line — distance + place merged. */}
+        {mergedLine && (
+          <span className="text-[11px] text-white/50 truncate leading-tight flex items-center gap-1">
+            {contextType === 'moving' && (
               <motion.span
                 animate={{ x: [0, 3, 0] }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
                 className="inline-block"
-                style={{ color: '#C8962C' }}
+                style={{ color: 'rgba(200,150,44,0.55)' }}
               >
                 &rarr;
               </motion.span>
-              {contextLabel}
-            </span>
-          ) : (
-            <span className="text-[10px] text-white/50 truncate leading-tight">
-              {contextLabel}
-            </span>
-          )}
-          {vibe && (
-            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/50 flex-shrink-0 leading-tight">
-              {vibe}
-            </span>
-          )}
-        </div>
+            )}
+            {mergedLine}
+          </span>
+        )}
       </div>
     </motion.button>
   );
