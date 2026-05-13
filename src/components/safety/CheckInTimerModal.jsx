@@ -71,7 +71,7 @@ export default function CheckInTimerModal({ isOpen, onClose }) {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="w-full max-w-sm bg-[#1C1C1E] rounded-3xl p-6 border border-[#C8962C]/20"
+            className="w-full max-w-sm bg-[#1C1C1E] rounded-2xl p-6 border border-[#C8962C]/20"
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-6">

@@ -1204,7 +1204,7 @@ export default function OnboardingGate() {
         )}
 
         {/* Step card */}
-        <div className="bg-[#1C1C1E] border border-white/8 rounded-3xl p-6">
+        <div className="bg-[#1C1C1E] border border-white/8 rounded-2xl p-6">
           <AnimatePresence mode="wait">{renderStep()}</AnimatePresence>
         </div>
 

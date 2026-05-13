@@ -37,7 +37,7 @@ export default function LocationConsentScreen({ onAllow, onSkip, progress = 4 })
             transition={{ repeat: Infinity, duration: 3 }}
             className="absolute inset-0 bg-[#C8962C]/20 rounded-full blur-xl"
           />
-          <div className="w-20 h-20 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center backdrop-blur-md relative overflow-hidden group">
+          <div className="w-20 h-20 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md relative overflow-hidden group">
              <div className="absolute inset-0 bg-gradient-to-tr from-[#C8962C]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
              <MapPin className="w-10 h-10 text-[#C8962C]" />
           </div>

@@ -125,7 +125,7 @@ export default function ConsentForm({ user, onAccepted }) {
         </div>
 
         {/* Card */}
-        <div className="bg-[#1C1C1E] border border-white/8 rounded-3xl p-6">
+        <div className="bg-[#1C1C1E] border border-white/8 rounded-2xl p-6">
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">
             <Shield className="w-5 h-5" style={{ color: GOLD }} />

@@ -84,7 +84,7 @@ export default function TravelModal({ onSend, onClose }) {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 80, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="w-full max-w-sm bg-[#1C1C1E] rounded-3xl overflow-hidden"
+          className="w-full max-w-sm bg-[#1C1C1E] rounded-2xl overflow-hidden"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-4 pb-0">

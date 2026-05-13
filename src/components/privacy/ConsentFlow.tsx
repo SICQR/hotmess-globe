@@ -153,7 +153,7 @@ export default function ConsentFlow({ onComplete }: ConsentFlowProps) {
         >
           {/* Icon */}
           <div
-            className="w-20 h-20 rounded-3xl flex items-center justify-center mb-8"
+            className="w-20 h-20 rounded-2xl flex items-center justify-center mb-8"
             style={{ background: `${AMBER}15`, border: `1px solid ${AMBER}25` }}
           >
             <Icon className="w-10 h-10" style={{ color: AMBER }} />

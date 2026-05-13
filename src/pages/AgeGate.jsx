@@ -140,7 +140,7 @@ export default function AgeGate() {
         initial={{ opacity: 0, y: 28, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={springSmooth}
-        className="relative z-10 bg-[#1C1C1E] border border-white/8 rounded-3xl p-7 w-full max-w-sm"
+        className="relative z-10 bg-[#1C1C1E] border border-white/8 rounded-2xl p-7 w-full max-w-sm"
       >
         {/* Wordmark */}
         <motion.div

@@ -669,7 +669,7 @@ export default function MorePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="w-full flex items-center gap-3 p-5 rounded-3xl bg-white/[0.03] border border-white/5 text-left"
+            className="w-full flex items-center gap-3 p-5 rounded-2xl bg-white/[0.03] border border-white/5 text-left"
           >
             <div className="w-10 h-10 rounded-xl bg-[#C8962C]/10 flex items-center justify-center">
               <Heart className="w-5 h-5 text-[#C8962C]" />

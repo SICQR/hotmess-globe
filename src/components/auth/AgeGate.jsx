@@ -16,7 +16,7 @@ export default function AgeGate({ onVerified }) {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: 'easeOut' }}
-        className="bg-[#1C1C1E] rounded-3xl p-8 mx-4 w-full max-w-sm"
+        className="bg-[#1C1C1E] rounded-2xl p-8 mx-4 w-full max-w-sm"
       >
         {/* Title */}
         <h1 className="font-black text-xl text-white leading-tight">

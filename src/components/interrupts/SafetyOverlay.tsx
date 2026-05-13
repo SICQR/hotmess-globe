@@ -27,7 +27,7 @@ export function SafetyOverlay({
 
   return (
     <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-[#1C1C1E] rounded-3xl p-8 mx-4 w-full max-w-sm">
+      <div className="bg-[#1C1C1E] rounded-2xl p-8 mx-4 w-full max-w-sm">
         {!showPinEntry ? (
           <>
             {/* Shield icon */}

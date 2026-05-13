@@ -58,7 +58,7 @@ export default function L2QRSheet({ orderId, ticketId }) {
 
   return (
     <div className="flex flex-col items-center px-4 py-8 h-full">
-      <div className="bg-white rounded-3xl p-6 shadow-2xl">
+      <div className="bg-white rounded-2xl p-6 shadow-2xl">
         <canvas ref={canvasRef} className="w-48 h-48" />
       </div>
 

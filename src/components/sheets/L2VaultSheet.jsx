@@ -85,7 +85,7 @@ function QROverlay({ value, label, onClose }) {
         Show at door
       </p>
 
-      <div className="bg-white rounded-3xl p-6 shadow-2xl">
+      <div className="bg-white rounded-2xl p-6 shadow-2xl">
         <QRCanvas value={value} size={240} />
       </div>
 

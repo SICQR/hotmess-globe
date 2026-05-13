@@ -242,7 +242,7 @@ export default function L2ShopSheet({ handle, product: initialPropProduct, selle
 
                 {/* SIZES / COLORS */}
                 {options.length > 0 && (
-                  <div className="space-y-8 mb-12 text-left bg-white/[0.02] p-6 rounded-3xl border border-white/5">
+                  <div className="space-y-8 mb-12 text-left bg-white/[0.02] p-6 rounded-2xl border border-white/5">
                     {options.map((opt) => (
                       <div key={opt.name}>
                         <div className="flex items-center justify-between mb-4 px-1">

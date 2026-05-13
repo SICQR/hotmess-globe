@@ -237,7 +237,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         <section className="px-5 pb-5">
           <motion.div
             className="rounded-2xl p-4"
-            style={{ background: 'rgba(255,255,255,0.05)' }}
+            style={{ background: '#1C1C1E' }}
             {...(reduced ? {} : motionTokens.cardFloat)}
           >
             {cardVariant === 'live' && (

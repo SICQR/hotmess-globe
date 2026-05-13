@@ -205,7 +205,7 @@ export default function RightNowModal({ isOpen, onClose, intent: intentProp = 'e
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="w-full max-w-sm bg-[#1C1C1E] rounded-3xl p-6 border border-[#C8962C]/20 max-h-[85vh] overflow-y-auto"
+            className="w-full max-w-sm bg-[#1C1C1E] rounded-2xl p-6 border border-[#C8962C]/20 max-h-[85vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">

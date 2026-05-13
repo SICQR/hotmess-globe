@@ -36,7 +36,7 @@ export function SoundConsentModal({ isOpen, onConsent, onDecline }: SoundConsent
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.92, opacity: 0, y: 12 }}
             transition={springSmooth}
-            className="w-full max-w-sm rounded-3xl bg-[#1C1C1E] border border-white/10 p-6 text-center"
+            className="w-full max-w-sm rounded-2xl bg-[#1C1C1E] border border-white/10 p-6 text-center"
           >
             {/* Icon with gold glow ring */}
             <div className="relative w-16 h-16 mx-auto mb-5">

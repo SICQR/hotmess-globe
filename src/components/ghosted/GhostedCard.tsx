@@ -100,7 +100,7 @@ function GhostedCardInner({
 
   return (
     <motion.button
-      className="relative w-full aspect-[4/5] rounded-xl overflow-hidden bg-white/[0.03] focus:outline-none focus:ring-2 focus:ring-[#C8962C]/50"
+      className="relative w-full aspect-[4/5] rounded-xl overflow-hidden bg-[#1C1C1E] focus:outline-none focus:ring-2 focus:ring-[#C8962C]/50"
       style={isMutual ? { boxShadow: 'inset 0 0 0 0.5px rgba(200,150,44,0.55)' } : undefined}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}

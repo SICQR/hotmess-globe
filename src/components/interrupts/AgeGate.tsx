@@ -17,7 +17,7 @@ export function AgeGate({ onConfirm, onReject }: AgeGateProps) {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: 'easeOut' }}
-        className="bg-[#1C1C1E] rounded-3xl p-8 mx-4 max-w-sm w-full"
+        className="bg-[#1C1C1E] rounded-2xl p-8 mx-4 max-w-sm w-full"
       >
         {/* Wordmark */}
         <p className="font-black text-2xl text-white leading-none">
