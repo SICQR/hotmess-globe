@@ -15,7 +15,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import {
   MessageCircle, Shield, Plane, MapPin,
   Loader2, MoreVertical, Flag, Ban, X, ChevronLeft, Ghost,
-  Footprints, Bike, Car, Heart, Video, Share2, ShoppingBag, Music,
+  Footprints, Bike, Car, Heart, Video, ShoppingBag, Music,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
@@ -471,26 +471,6 @@ export default function L2ProfileSheet({ email, uid, id }) {
 
   // ── Handlers ────────────────────────────────────────────────────────────
 
-  const handleShare = async () => {
-    const handle = profileUser?.username || profileUser?.display_name || 'someone';
-    const shareUrl = `https://hotmessldn.com/ghosted?profile=${encodeURIComponent(profileUser?.auth_user_id || profileUser?.id || '')}`;
-    const shareData = {
-      title: `${handle} on HOTMESS`,
-      text: `Check out ${handle} on HOTMESS`,
-      url: shareUrl,
-    };
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(shareUrl);
-        toast.success('Link copied to clipboard');
-      }
-    } catch {
-      // User cancelled share
-    }
-  };
-
   const handleSaveToggle = async () => {
     if (isSaving) return;
     setIsSaving(true);
@@ -674,14 +654,33 @@ export default function L2ProfileSheet({ email, uid, id }) {
   };
 
   // ── Photo URLs (memo) — used both by the carousel + dwell instrumentation
+  // 2026-05-13: /api/profile returns the canonical multi-photo set as
+  // `profile_photos` (array of {url, position, is_primary} rows). Earlier
+  // code only checked `profileUser.photos` (which comes from auth
+  // user_metadata and is undefined for users who never used that legacy
+  // field), so Alex's 5 photos never made it into the carousel. Now we
+  // merge profile_photos (preferred, ordered by is_primary then position)
+  // → photos legacy array → avatar_url fallback.
   const photoUrls = React.useMemo(() => {
     const urls = [];
     const seen = new Set();
     const add = (u) => { if (u && !seen.has(u)) { seen.add(u); urls.push(u); } };
-    add(profileUser?.avatar_url || profileUser?.photos?.[0]);
+
+    const profilePhotosRows = Array.isArray(profileUser?.profile_photos)
+      ? profileUser.profile_photos
+      : [];
+    const sortedRows = [...profilePhotosRows].sort((a, b) => {
+      if (!!a.is_primary !== !!b.is_primary) return a.is_primary ? -1 : 1;
+      return (a.position ?? 99) - (b.position ?? 99);
+    });
+    sortedRows.forEach(r => add(r?.url));
+
+    // Legacy fallbacks
     (profileUser?.photos || []).forEach(p => add(typeof p === 'string' ? p : p?.url));
+    add(profileUser?.avatar_url);
+
     return urls;
-  }, [profileUser?.avatar_url, profileUser?.photos]);
+  }, [profileUser?.avatar_url, profileUser?.photos, profileUser?.profile_photos]);
 
   // ── Phase A truth-signal instrumentation (profile dwell progression)
   const dwellApi = useProfileDwell({
@@ -917,27 +916,24 @@ export default function L2ProfileSheet({ email, uid, id }) {
           <ChevronLeft className="w-5 h-5 text-white" />
         </button>
 
-        {/* Top-right actions: share + more */}
-        <div
-          className="absolute top-4 right-4 flex items-center gap-2 z-20"
-          style={{ marginTop: 'env(safe-area-inset-top, 0px)' }}
-        >
-          <button
-            onClick={handleShare}
-            className="w-9 h-9 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm active:bg-black/70"
-            aria-label="Share profile"
+        {/* Top-right action: only More (report/block). Share is killed
+            entirely — Phil exec review: profile sharing contradicts the
+            Ghosted philosophy of bounded discovery, regardless of UI
+            surface (intent layer or native share-sheet). */}
+        {!isOwnProfile && (
+          <div
+            className="absolute top-4 right-4 flex items-center gap-2 z-20"
+            style={{ marginTop: 'env(safe-area-inset-top, 0px)' }}
           >
-            <Share2 className="w-4.5 h-4.5 text-white" />
-          </button>
-          {!isOwnProfile && (
             <button
               onClick={() => setShowMoreMenu(!showMoreMenu)}
               className="w-9 h-9 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm active:bg-black/70"
+              aria-label="More"
             >
               <MoreVertical className="w-5 h-5 text-white" />
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Views badge */}
         {viewCount > 0 && (
