@@ -56,18 +56,19 @@ export function RadioMiniPlayer({ hidden = false }: RadioMiniPlayerProps) {
 
     return (
       <>
-        {/* Floating play / pause triangle. Bottom-right column, ABOVE the
-            inbox FAB (which lives at bottom-6 right-6, w-14 h-14). Mirrors
-            the SafetyFAB column on the left. Never covers the nav. */}
+        {/* Floating play / pause triangle. Left column, ABOVE the
+            SafetyFAB (which lives at bottom-24 left-6, w-12 h-12 → 96–144).
+            Inbox FAB has the right column; the triangle has the upper-left
+            ambient slot. Never covers the nav. */}
         <button
           onClick={handlePress}
           aria-label={isPlaying ? 'Pause HOTMESS Radio' : 'Play HOTMESS Radio'}
           style={{
             position: 'fixed',
-            bottom: 96,
-            right: 24,
-            width: 40,
-            height: 40,
+            bottom: 156,
+            left: 24,
+            width: 36,
+            height: 36,
             borderRadius: '50%',
             background: 'rgba(20,16,12,0.62)',
             backdropFilter: 'blur(18px) saturate(1.4)',
@@ -93,16 +94,24 @@ export function RadioMiniPlayer({ hidden = false }: RadioMiniPlayerProps) {
         <AnimatePresence>
           {isPlaying && expanded && (
             <motion.div
-              role="region"
-              aria-label="HOTMESS Radio · now playing"
+              role="button"
+              aria-label="HOTMESS Radio · now playing — tap to open full player"
+              tabIndex={0}
+              onClick={() => navigate('/radio')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate('/radio');
+                }
+              }}
               initial={{ opacity: 0, y: 8, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{    opacity: 0, y: 6, scale: 0.97, transition: { duration: 0.14 } }}
               transition={{ duration: 0.20, ease: [0.22, 0.61, 0.36, 1] }}
               style={{
                 position: 'fixed',
-                bottom: 148,
-                right: 24,
+                bottom: 204,
+                left: 24,
                 width: 240,
                 padding: '12px 14px',
                 borderRadius: 4,
@@ -112,6 +121,7 @@ export function RadioMiniPlayer({ hidden = false }: RadioMiniPlayerProps) {
                 border: '0.5px solid rgba(200,150,44,0.22)',
                 boxShadow: '0 12px 36px rgba(0,0,0,0.55)',
                 zIndex: 40,
+                cursor: 'pointer',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
@@ -159,7 +169,7 @@ export function RadioMiniPlayer({ hidden = false }: RadioMiniPlayerProps) {
                   </span>
                 </div>
                 <button
-                  onClick={() => setExpanded(false)}
+                  onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
                   aria-label="Close now playing"
                   style={{
                     width: 18, height: 18,
