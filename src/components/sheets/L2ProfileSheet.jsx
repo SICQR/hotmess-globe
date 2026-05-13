@@ -25,6 +25,8 @@ import { useTaps } from '@/hooks/useTaps';
 import { useV6Flag } from '@/hooks/useV6Flag';
 import { ProfileProximityPanel } from '@/components/profile/ProfileProximityPanel';
 import VaultAccessRequest from '@/components/messaging/VaultAccessRequest';
+import ProfileMediaStack from '@/components/profile/ProfileMediaStack';
+import MutualStateOverlay from '@/components/profile/MutualStateOverlay';
 
 const Chip = ({ children, gold = false }) => (
   <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
@@ -123,7 +125,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
     });
   }, []);
 
-  const { isTapped, sendTap } = useTaps(myUserId, myEmail);
+  const { isTapped, sendTap, isMutualBoo } = useTaps(myUserId, myEmail);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
@@ -217,6 +219,9 @@ export default function L2ProfileSheet({ email, uid, id }) {
   const [authUid, setAuthUid] = useState(null);
   const [travelTimes, setTravelTimes] = useState(null);
   const isProximityCard = useV6Flag('v6_profile_proximity');
+  const v6GhostedLoop   = useV6Flag('v6_ghosted_loop');
+  const [showMutual,    setShowMutual]    = useState(false);
+  const [mutualArmed,   setMutualArmed]   = useState(false); // dormant gold border
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => { if (data?.user?.id) setAuthUid(data.user.id); });
@@ -387,6 +392,14 @@ export default function L2ProfileSheet({ email, uid, id }) {
     },
     enabled: !!profileUser?.email,
   });
+
+  // v6_ghosted_loop — arm the gold mutual border when relationship loads as mutual
+  useEffect(() => {
+    if (!v6GhostedLoop) return;
+    const targetId = profileUser?.auth_user_id || profileUser?.id;
+    if (!targetId || !myUserId) return;
+    setMutualArmed(isMutualBoo(targetId));
+  }, [v6GhostedLoop, profileUser?.auth_user_id, profileUser?.id, myUserId, isMutualBoo]);
 
   // Check if profile is saved/favorited
   useEffect(() => {
@@ -761,18 +774,30 @@ export default function L2ProfileSheet({ email, uid, id }) {
     <div className="pb-20 -mt-4">
       {/* ── Photo carousel (full-bleed, 3:4 portrait) ────────────────── */}
       <div className="relative">
-        <PhotoCarousel
-          images={(() => {
-            const urls = [];
-            const seen = new Set();
-            const add = (u) => { if (u && !seen.has(u)) { seen.add(u); urls.push(u); } };
-            add(avatarUrl);
-            (profileUser.photos || []).forEach(p => add(typeof p === 'string' ? p : p?.url));
-            return urls;
-          })()}
-          fallbackInitial={name[0]}
-          onIndexChange={setActivePhotoIdx}
-        />
+        {(() => {
+          const urls = [];
+          const seen = new Set();
+          const add = (u) => { if (u && !seen.has(u)) { seen.add(u); urls.push(u); } };
+          add(avatarUrl);
+          (profileUser.photos || []).forEach(p => add(typeof p === 'string' ? p : p?.url));
+          if (v6GhostedLoop && urls.length > 0) {
+            return (
+              <ProfileMediaStack
+                images={urls}
+                isMutual={mutualArmed}
+                onIndexChange={setActivePhotoIdx}
+                aspect="3 / 4"
+              />
+            );
+          }
+          return (
+            <PhotoCarousel
+              images={urls}
+              fallbackInitial={name[0]}
+              onIndexChange={setActivePhotoIdx}
+            />
+          );
+        })()}
 
         {/* Gradient overlay at bottom */}
         <div
@@ -1134,12 +1159,17 @@ export default function L2ProfileSheet({ email, uid, id }) {
       >
         {/* Boo button */}
         <button
-          onClick={() => {
-            const targetEmail = profileUser.email || profileUser.userId;
-            if (targetEmail) sendTap(targetEmail, name, 'boo');
+          onClick={async () => {
+            const targetUid = profileUser.auth_user_id || profileUser.id;
+            if (!targetUid) return;
+            const result = await sendTap(targetUid, name, 'boo');
+            if (v6GhostedLoop && result?.mutual) {
+              setMutualArmed(true);
+              setShowMutual(true);
+            }
           }}
           className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-            (profileUser.email || profileUser.userId) && isTapped(profileUser.email || profileUser.userId, 'boo')
+            (profileUser.auth_user_id || profileUser.id) && isTapped(profileUser.auth_user_id || profileUser.id, 'boo')
               ? 'bg-[#C8962C] text-black' : 'bg-white/10 text-white/60 hover:bg-white/15'
           }`}
           title="Boo"
@@ -1179,6 +1209,17 @@ export default function L2ProfileSheet({ email, uid, id }) {
           <Video className="w-5 h-5" />
         </button>
       </div>
+
+      {/* ── Mutual reveal (v6_ghosted_loop) ─────────────────────────────── */}
+      {v6GhostedLoop && (
+        <MutualStateOverlay
+          open={showMutual}
+          theirName={name}
+          theirAvatar={avatarUrl}
+          onMessage={() => { setShowMutual(false); handleMessage(); }}
+          onDismiss={() => setShowMutual(false)}
+        />
+      )}
 
       {/* ── More menu dropdown ─────────────────────────────────────────── */}
       {showMoreMenu && (
