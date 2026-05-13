@@ -1053,7 +1053,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
           <span key={l} className="shrink-0 px-2.5 py-1 bg-white/8 text-white/60 text-xs rounded-full border border-white/10">{l}</span>
         ))}
         {profileUser?.public_attributes?.time_horizon && (
-          <span className="shrink-0 px-2.5 py-1 bg-amber-400/15 text-amber-400 text-xs font-bold rounded-full border border-amber-400/30">
+          <span className="shrink-0 px-2.5 py-1 bg-[#C8962C]/15 text-[#C8962C] text-xs font-bold rounded-full border border-[#C8962C]/30">
             {profileUser.public_attributes.time_horizon}
           </span>
         )}
@@ -1454,7 +1454,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
               }}
               className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 text-left border-t border-white/5"
             >
-              <Flag className="w-4 h-4 text-amber-500" />
+              <Flag className="w-4 h-4 text-[#C8962C]" />
               <span className="text-white text-sm font-medium">Report Photo</span>
             </button>
             <button

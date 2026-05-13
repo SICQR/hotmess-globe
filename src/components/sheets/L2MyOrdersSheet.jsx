@@ -25,7 +25,7 @@ import { useSheet } from '@/contexts/SheetContext';
 import { cn } from '@/lib/utils';
 
 const STATUS_CONFIG = {
-  pending_payment: { label: 'Awaiting Payment', color: 'text-amber-400',     bg: 'bg-amber-400/15',     icon: CreditCard },
+  pending_payment: { label: 'Awaiting Payment', color: 'text-[#C8962C]',     bg: 'bg-[#C8962C]/15',     icon: CreditCard },
   pending:         { label: 'Pending',          color: 'text-white/50',      bg: 'bg-white/10',         icon: Clock },
   paid:            { label: 'Paid',             color: 'text-green-400',     bg: 'bg-green-400/15',     icon: CheckCircle2 },
   shipped:         { label: 'Shipped',          color: 'text-blue-400',      bg: 'bg-blue-400/15',      icon: Truck },

@@ -150,7 +150,7 @@ const getProductPreviewUrls = (profile: Profile): string[] => {
 const distanceBadge = (km?: number) => {
   if (!km && km !== 0) return null;
   const label = km < 1 ? `${Math.round(km*1000)}m` : `${km.toFixed(1)}km`;
-  const color = km < 0.5 ? 'text-[#39FF14]' : km < 2 ? 'text-amber-400' : 'text-white/50';
+  const color = km < 0.5 ? 'text-[#39FF14]' : km < 2 ? 'text-[#C8962C]' : 'text-white/50';
   return <span className={`text-[10px] font-bold ${color}`}>{label}</span>;
 };
 

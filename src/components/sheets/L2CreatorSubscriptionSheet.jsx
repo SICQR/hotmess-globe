@@ -22,7 +22,7 @@ const STATUS_STYLE = {
   active:    'text-emerald-400 bg-emerald-400/10',
   cancelled: 'text-red-400 bg-red-400/10',
   expired:   'text-white/30 bg-white/5',
-  paused:    'text-amber-400 bg-amber-400/10',
+  paused:    'text-[#C8962C] bg-[#C8962C]/10',
 };
 
 function fmt(cents) {

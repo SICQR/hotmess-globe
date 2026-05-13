@@ -75,7 +75,7 @@ export function PresenceIndicator({
       )}
       {showText && (
         <span
-          className={`text-sm ${isOnline ? 'text-amber-500' : 'text-white/40'}`}
+          className={`text-sm ${isOnline ? 'text-[#C8962C]' : 'text-white/40'}`}
         >
           {getPresenceText()}
         </span>

@@ -72,7 +72,7 @@ function PostCard({ post, onLike, liking }) {
           <span className="text-xs font-bold">{post.comment_count || 0}</span>
         </div>
         {post.ai_sentiment === 'positive' && (
-          <div className="flex items-center gap-1 text-amber-400/60">
+          <div className="flex items-center gap-1 text-[#C8962C]/60">
             <Flame className="w-3.5 h-3.5" />
             <span className="text-xs">Hot</span>
           </div>

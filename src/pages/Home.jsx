@@ -540,7 +540,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { to: '/social', icon: Users, title: 'Connect', desc: 'Find your people tonight', color: 'from-amber-500 to-red-500' },
+              { to: '/social', icon: Users, title: 'Connect', desc: 'Find your people tonight', color: 'from-[#C8962C] to-red-500' },
               { to: '/events', icon: Zap, title: 'Events', desc: 'What\'s happening now', color: 'from-yellow-500 to-orange-500' },
               { to: '/music/live', icon: Radio, title: 'Radio', desc: 'Live sets & culture', color: 'from-green-500 to-emerald-500' },
               { to: '/market', icon: ShoppingBag, title: 'Market', desc: 'Drops & P2P commerce', color: 'from-purple-500 to-violet-500' },

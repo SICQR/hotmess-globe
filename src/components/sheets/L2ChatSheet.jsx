@@ -1410,7 +1410,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                       isMe
                         ? 'rounded-br-none'
                         : 'rounded-bl-none',
-                      isHighlightedMsg && 'ring-2 ring-amber-500 ring-offset-2 ring-offset-black',
+                      isHighlightedMsg && 'ring-2 ring-[#C8962C] ring-offset-2 ring-offset-black',
                     )}
                     style={{
                       background: isMe 

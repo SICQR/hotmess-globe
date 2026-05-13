@@ -536,7 +536,7 @@ export default function Directions() {
                 {mode !== 'uber' && (
                   <div className="px-4 pb-4">
                     {(isApprox || directionsWarning) && !directionsErrorMessage && origin && (
-                      <div className="mb-3 border border-amber-400/30 bg-amber-500/10 p-2 text-xs text-amber-200">
+                      <div className="mb-3 border border-[#C8962C]/30 bg-[#C8962C]/10 p-2 text-xs text-[#C8962C]/70">
                         Approximate route shown — turn-by-turn steps unavailable right now.
                       </div>
                     )}

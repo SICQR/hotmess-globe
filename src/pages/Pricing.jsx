@@ -168,7 +168,7 @@ function MembershipSection({ billingPeriod, setBillingPeriod }) {
               tier.popular
                 ? 'border-hot-500 bg-gradient-to-b from-hot-500/10 to-transparent scale-105'
                 : tier.premium
-                ? 'border-amber-500/50 bg-gradient-to-b from-amber-500/10 to-transparent'
+                ? 'border-[#C8962C]/50 bg-gradient-to-b from-[#C8962C]/10 to-transparent'
                 : 'border-white/10 bg-white/5'
             )}
           >
@@ -178,7 +178,7 @@ function MembershipSection({ billingPeriod, setBillingPeriod }) {
               </div>
             )}
             {tier.premium && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-black text-xs font-bold uppercase">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-[#C8962C] to-orange-500 text-black text-xs font-bold uppercase">
                 Premium
               </div>
             )}
@@ -226,7 +226,7 @@ function MembershipSection({ billingPeriod, setBillingPeriod }) {
                 tier.id === 'free'
                   ? 'bg-white/10 text-white hover:bg-white/20'
                   : tier.premium
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black hover:from-amber-400 hover:to-orange-400'
+                  ? 'bg-gradient-to-r from-[#C8962C] to-orange-500 text-black hover:from-[#C8962C] hover:to-orange-400'
                   : 'bg-hot-500 text-white hover:bg-hot-600'
               )}
             >
@@ -349,8 +349,8 @@ function SellersSection() {
             <p className="font-bold mt-1">50 pre-rolls/month</p>
             <p className="text-sm text-emerald-400 mt-1">+ 10% off all packages</p>
           </div>
-          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
-            <p className="text-amber-400 text-xs uppercase tracking-wider">Business Seller</p>
+          <div className="p-4 rounded-xl bg-[#C8962C]/10 border border-[#C8962C]/30">
+            <p className="text-[#C8962C] text-xs uppercase tracking-wider">Business Seller</p>
             <p className="font-bold mt-1">200 pre-rolls + 2 live reads/month</p>
             <p className="text-sm text-emerald-400 mt-1">+ 20% off + priority scheduling</p>
           </div>
@@ -393,9 +393,9 @@ function TicketsSection() {
   return (
     <div className="space-y-8">
       {/* Fee Calculator */}
-      <div className="p-6 rounded-2xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-white/10">
+      <div className="p-6 rounded-2xl bg-gradient-to-br from-[#C8962C]/10 to-orange-500/10 border border-white/10">
         <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-          <Calculator className="w-5 h-5 text-amber-400" />
+          <Calculator className="w-5 h-5 text-[#C8962C]" />
           Ticket Fee Calculator
         </h3>
         <div className="grid md:grid-cols-3 gap-6">
@@ -407,7 +407,7 @@ function TicketsSection() {
                 type="number"
                 value={faceValue}
                 onChange={(e) => setFaceValue(Number(e.target.value))}
-                className="w-full pl-8 pr-4 py-3 rounded-xl bg-white/5 border border-white/20 focus:border-amber-500 focus:outline-none"
+                className="w-full pl-8 pr-4 py-3 rounded-xl bg-white/5 border border-white/20 focus:border-[#C8962C] focus:outline-none"
               />
             </div>
           </div>
@@ -419,7 +419,7 @@ function TicketsSection() {
                 type="number"
                 value={ticketPrice}
                 onChange={(e) => setTicketPrice(Number(e.target.value))}
-                className="w-full pl-8 pr-4 py-3 rounded-xl bg-white/5 border border-white/20 focus:border-amber-500 focus:outline-none"
+                className="w-full pl-8 pr-4 py-3 rounded-xl bg-white/5 border border-white/20 focus:border-[#C8962C] focus:outline-none"
               />
             </div>
             {!fees.withinPriceCap && (
@@ -443,7 +443,7 @@ function TicketsSection() {
       <div className="grid md:grid-cols-2 gap-6">
         <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
           <h4 className="font-bold mb-4 flex items-center gap-2">
-            <Store className="w-5 h-5 text-amber-400" />
+            <Store className="w-5 h-5 text-[#C8962C]" />
             Seller Fees
           </h4>
           <ul className="space-y-3">
@@ -493,10 +493,10 @@ function TicketsSection() {
       </div>
 
       {/* Price Cap Notice */}
-      <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
-        <Info className="w-5 h-5 text-amber-400 mt-0.5" />
+      <div className="p-4 rounded-xl bg-[#C8962C]/10 border border-[#C8962C]/30 flex items-start gap-3">
+        <Info className="w-5 h-5 text-[#C8962C] mt-0.5" />
         <div>
-          <p className="font-medium text-amber-400">Anti-Scalping Price Cap</p>
+          <p className="font-medium text-[#C8962C]">Anti-Scalping Price Cap</p>
           <p className="text-sm text-white/60 mt-1">
             Tickets cannot be listed above 150% of face value to prevent excessive scalping 
             and keep events accessible to the community.
@@ -698,7 +698,7 @@ function AdvertisingSection() {
       {/* Sponsored Content */}
       <div>
         <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-          <Star className="w-5 h-5 text-amber-400" />
+          <Star className="w-5 h-5 text-[#C8962C]" />
           Sponsored Placements
         </h3>
         <div className="grid md:grid-cols-3 gap-4">
@@ -743,9 +743,9 @@ function RadioSection() {
   return (
     <div className="space-y-8">
       {/* Cross-Platform Perks Banner */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-purple-500/20 via-hot-500/20 to-amber-500/20 border border-white/20">
+      <div className="p-6 rounded-2xl bg-gradient-to-r from-purple-500/20 via-hot-500/20 to-[#C8962C]/20 border border-white/20">
         <h3 className="text-lg font-bold mb-2 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-amber-400" />
+          <Sparkles className="w-5 h-5 text-[#C8962C]" />
           Radio Ads Included in Your Package!
         </h3>
         <p className="text-white/60 text-sm mb-4">
@@ -775,10 +775,10 @@ function RadioSection() {
             </ul>
           </div>
           {/* Members */}
-          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
+          <div className="p-4 rounded-xl bg-[#C8962C]/10 border border-[#C8962C]/30">
             <div className="flex items-center gap-2 mb-2">
-              <Crown className="w-4 h-4 text-amber-400" />
-              <span className="font-bold text-amber-400">Members</span>
+              <Crown className="w-4 h-4 text-[#C8962C]" />
+              <span className="font-bold text-[#C8962C]">Members</span>
             </div>
             <ul className="space-y-1 text-sm">
               <li className="text-white/60">PLUS: 10% off (when selling/creating)</li>
@@ -818,7 +818,7 @@ function RadioSection() {
       {/* Sponsorship Packages */}
       <div>
         <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-          <Star className="w-5 h-5 text-amber-400" />
+          <Star className="w-5 h-5 text-[#C8962C]" />
           Sponsorship Packages
         </h3>
         <div className="grid md:grid-cols-3 gap-6">
@@ -827,11 +827,11 @@ function RadioSection() {
               key={pkg.name}
               className={cn(
                 'rounded-2xl border p-6',
-                index === 2 ? 'border-amber-500 bg-amber-500/10' : 'border-white/10 bg-white/5'
+                index === 2 ? 'border-[#C8962C] bg-[#C8962C]/10' : 'border-white/10 bg-white/5'
               )}
             >
               {index === 2 && (
-                <span className="text-xs bg-amber-500 text-black px-2 py-0.5 rounded-full font-bold">Premier</span>
+                <span className="text-xs bg-[#C8962C] text-black px-2 py-0.5 rounded-full font-bold">Premier</span>
               )}
               <h4 className="text-lg font-bold mt-2">{pkg.name}</h4>
               <p className="text-sm text-white/60 mt-1">{pkg.description}</p>
@@ -1046,7 +1046,7 @@ function RadioSection() {
       {/* Bundle Packages */}
       <div>
         <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-          <Zap className="w-5 h-5 text-amber-400" />
+          <Zap className="w-5 h-5 text-[#C8962C]" />
           Radio Ad Bundles
         </h3>
         <div className="grid md:grid-cols-3 gap-6">
@@ -1107,7 +1107,7 @@ function RadioSection() {
               <h4 className="font-medium">{target.name}</h4>
               <p className="text-xs text-white/60 mt-1">{target.description}</p>
               {target.surcharge > 0 && (
-                <p className="text-xs text-amber-400 mt-2">+{target.surcharge * 100}% premium</p>
+                <p className="text-xs text-[#C8962C] mt-2">+{target.surcharge * 100}% premium</p>
               )}
               <div className="flex flex-wrap gap-1 mt-2">
                 {target.options.map((opt) => (

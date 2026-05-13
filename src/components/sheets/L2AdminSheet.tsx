@@ -773,7 +773,7 @@ function OrdersTab() {
   };
 
   const STATUS_CONFIG: Record<string, any> = {
-    pending_payment: { label: 'Awaiting', color: 'text-amber-400', bg: 'bg-amber-400/10' },
+    pending_payment: { label: 'Awaiting', color: 'text-[#C8962C]', bg: 'bg-[#C8962C]/10' },
     paid: { label: 'Paid', color: 'text-green-400', bg: 'bg-green-400/10' },
     shipped: { label: 'Shipped', color: 'text-blue-400', bg: 'bg-blue-400/10' },
     delivered: { label: 'Done', color: 'text-[#C8962C]', bg: 'bg-[#C8962C]/10' },
@@ -814,7 +814,7 @@ function OrdersTab() {
           <p className="text-[10px] font-bold text-[#8E8E93] uppercase">Paid</p>
         </div>
         <div className="bg-[#1C1C1E] rounded-xl p-3 border border-white/5">
-          <p className="text-xl font-black text-amber-400">{totals.pending}</p>
+          <p className="text-xl font-black text-[#C8962C]">{totals.pending}</p>
           <p className="text-[10px] font-bold text-[#8E8E93] uppercase">Awaiting</p>
         </div>
       </div>

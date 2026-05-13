@@ -22,7 +22,7 @@ const STATUS_STEPS = [
 ];
 
 const STATUS_CONFIG = {
-  pending_payment: { icon: Clock, color: 'text-amber-400', bg: 'bg-amber-400/15', label: 'Pending Payment' },
+  pending_payment: { icon: Clock, color: 'text-[#C8962C]', bg: 'bg-[#C8962C]/15', label: 'Pending Payment' },
   paid:            { icon: CheckCircle, color: 'text-green-400', bg: 'bg-green-400/15', label: 'Paid' },
   shipped:         { icon: Truck, color: 'text-blue-400', bg: 'bg-blue-400/15', label: 'Shipped' },
   delivered:       { icon: CheckCircle, color: 'text-[#C8962C]', bg: 'bg-[#C8962C]/15', label: 'Delivered' },

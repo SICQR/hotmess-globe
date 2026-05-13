@@ -612,11 +612,11 @@ export default function LiveLocationShare({
             exit={{ opacity: 0 }}
             className="space-y-4"
           >
-            <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+            <div className="p-4 bg-[#C8962C]/10 border border-[#C8962C]/30 rounded-lg">
               <div className="flex items-start gap-3">
-                <Shield className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <Shield className="w-5 h-5 text-[#C8962C] flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-bold text-amber-400">Confirm Location Sharing</p>
+                  <p className="font-bold text-[#C8962C]">Confirm Location Sharing</p>
                   <p className="text-sm text-white/60 mt-1">
                     Your real-time location will be shared with {selectedContacts.length} contact(s) 
                     for {DURATION_OPTIONS.find(o => o.value === selectedDuration)?.label}.
