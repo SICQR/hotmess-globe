@@ -149,6 +149,13 @@ function ContextTag({ text, accent }) {
 // item = { id, title, subtitle, price, tag, micro, img, dist }
 export function EditorialCard({ item, accent, onTap, size = 'normal' }) {
   const isLarge = size === 'large';
+  // 2026-05-13: card heights bumped to match portrait product photography.
+  // Was 240 (near-square) which cropped 33% off top/bottom of portrait
+  // product shots (e.g. HNH MESS LUBE 250ML — 1024x1536 source crammed
+  // into a 245x240 landscape slot). New heights 320 / 440 give roughly
+  // 3:4 portrait, which matches how the products are actually shot.
+  // object-position: center 35% biases the crop above centre so the
+  // product label / brand mark survives any remaining cover-crop.
   return (
     <motion.div
       onClick={() => onTap?.(item)}
@@ -156,7 +163,7 @@ export function EditorialCard({ item, accent, onTap, size = 'normal' }) {
       style={{
         position: 'relative', overflow: 'hidden', cursor: 'pointer',
         background: MARKET_TOKENS.surface,
-        height: isLarge ? 380 : 240,
+        height: isLarge ? 440 : 320,
       }}
     >
       <motion.img
@@ -165,7 +172,9 @@ export function EditorialCard({ item, accent, onTap, size = 'normal' }) {
         whileHover={{ scale: 1.04 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
         style={{
-          width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+          width: '100%', height: '100%',
+          objectFit: 'cover', objectPosition: 'center 35%',
+          display: 'block',
           filter: 'brightness(0.72)',
         }}
       />
