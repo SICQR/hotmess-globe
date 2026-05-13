@@ -10,14 +10,33 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-);
+// 2026-05-13: env var fallback chain. The original module read only
+// NEXT_PUBLIC_SUPABASE_URL — a Next.js convention. HOTMESS is a Vite app,
+// so that var is undefined in Vercel's serverless function env. Result:
+// createClient received an undefined URL, every insert failed, and the
+// endpoint returned 200 anyway because it's designed to swallow analytics
+// errors. ~100% of telemetry has been silently dropped since this shipped.
+// SUPABASE_URL is the Vercel-set canonical var.
+const SUPABASE_URL =
+  process.env.SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  process.env.VITE_SUPABASE_URL;
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const supabase = (SUPABASE_URL && SERVICE_KEY)
+  ? createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } })
+  : null;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'method not allowed' });
+  }
+
+  if (!supabase) {
+    // Misconfigured env — surface in logs rather than swallow silently.
+    // Still 200 to client so analytics never breaks UX.
+    console.error('[analytics/track] supabase client unavailable — check SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY');
+    return res.status(200).json({ ok: true, sink: 'disabled' });
   }
 
   const { event_name, category, label, value, properties } = req.body ?? {};
@@ -52,6 +71,7 @@ export default async function handler(req, res) {
   if (error) {
     // Log but return 200 — client should never retry analytics
     console.error('[analytics/track] insert error:', error.message, { event_name });
+    return res.status(200).json({ ok: true, sink: 'error' });
   }
 
   return res.status(200).json({ ok: true });
