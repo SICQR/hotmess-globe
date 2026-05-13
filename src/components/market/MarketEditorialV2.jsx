@@ -681,8 +681,18 @@ export function MarketEditorialShell({
   const engineAccent = engine === 'shop' ? T.shop : engine === 'drops' ? T.drops : T.pre;
 
   return (
+    // 2026-05-13: outer wrapper is the OWN scroll container.
+    // html/body/#root are locked (position: fixed; overflow: hidden) globally
+    // to kill iOS pull-to-refresh — see index.css comment from session 7.
+    // Without this wrapper's own overflow-y: auto, content below the fold
+    // is unreachable on the v2 market shell. Fixes the reported "shop
+    // does not scroll" bug on mobile.
     <div style={{
-      background: T.bg, color: T.white, minHeight: '100vh',
+      background: T.bg, color: T.white,
+      height: '100dvh',
+      overflowY: 'auto', overflowX: 'hidden',
+      WebkitOverflowScrolling: 'touch',
+      overscrollBehaviorY: 'contain',
       fontFamily: "'Barlow', sans-serif",
       maxWidth: 480, margin: '0 auto', position: 'relative',
     }}>
