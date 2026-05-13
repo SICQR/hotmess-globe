@@ -68,6 +68,13 @@ export default function L2SheetContainer({
   showHandle = true,
   showClose = true,
   onClose: customOnClose,
+  // Phil exec direction 2026-05-13: profile (and other photo-led) sheets
+  // had ~92px of dead chrome at the top before the photo started (48px
+  // drag-handle bar + 44px PROFILE title row). `bareTop` collapses that
+  // into a 14px slim drag pip — no title row, no close-button row, no
+  // border — so the photo region lives right under the safe-area inset.
+  // The sheet itself supplies its own back-button + more-menu overlays.
+  bareTop = false,
 }) {
   const { isOpen, closeSheet, onAnimationComplete, activeSheet } = useSheet();
   const sheetRef = useRef(null);
@@ -183,51 +190,61 @@ export default function L2SheetContainer({
             aria-modal="true"
             aria-labelledby="sheet-title"
           >
-            {/* Drag handle — 48px tall tap zone, ONLY draggable area */}
+            {/* Drag handle — slim 14px pip when bareTop, otherwise the full
+                48px tap zone with title row underneath. */}
             {showHandle && (
               <motion.div
-                className="flex justify-center py-3 cursor-grab active:cursor-grabbing touch-none"
+                className={cn(
+                  'flex justify-center cursor-grab active:cursor-grabbing touch-none',
+                  bareTop ? 'py-1.5' : 'py-3'
+                )}
                 aria-hidden="true"
                 drag="y"
                 dragConstraints={{ top: 0, bottom: 0 }}
                 dragElastic={{ top: 0, bottom: 0.5 }}
                 onDragEnd={handleDragEnd}
-                style={{ minHeight: 48 }}
+                style={{ minHeight: bareTop ? 14 : 48 }}
               >
-                <div className="w-16 h-1.5 bg-white/30 rounded-full" />
+                <div className={cn(
+                  'rounded-full',
+                  bareTop ? 'w-10 h-[3px] bg-white/22' : 'w-16 h-1.5 bg-white/30'
+                )} />
               </motion.div>
             )}
 
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 pb-3 border-b border-white/10">
-              <div className="flex-1 min-w-0">
-                {title && (
-                  <h2 
-                    id="sheet-title" 
-                    className="text-lg font-black uppercase tracking-wider text-white truncate"
+            {/* Header — collapsed in bareTop mode. The host sheet supplies
+                its own header chrome (back button, more menu, close). */}
+            {!bareTop && (
+              <div className="flex items-center justify-between px-4 pb-3 border-b border-white/10">
+                <div className="flex-1 min-w-0">
+                  {title && (
+                    <h2
+                      id="sheet-title"
+                      className="text-lg font-black uppercase tracking-wider text-white truncate"
+                    >
+                      {title}
+                    </h2>
+                  )}
+                  {subtitle && (
+                    <p className="text-xs text-white/60 truncate">{subtitle}</p>
+                  )}
+                </div>
+
+                {showClose && (
+                  <button
+                    onClick={handleClose}
+                    className={cn(
+                      'min-h-[44px] min-w-[44px] -mr-2 flex items-center justify-center rounded-xl transition-colors',
+                      'text-white/60 hover:text-white hover:bg-white/10 active:bg-white/20',
+                      'focus:outline-none focus:ring-2 focus:ring-[#C8962C]'
+                    )}
+                    aria-label="Close sheet"
                   >
-                    {title}
-                  </h2>
-                )}
-                {subtitle && (
-                  <p className="text-xs text-white/60 truncate">{subtitle}</p>
+                    <X className="w-5 h-5" />
+                  </button>
                 )}
               </div>
-              
-              {showClose && (
-                <button
-                  onClick={handleClose}
-                  className={cn(
-                    'min-h-[44px] min-w-[44px] -mr-2 flex items-center justify-center rounded-xl transition-colors',
-                    'text-white/60 hover:text-white hover:bg-white/10 active:bg-white/20',
-                    'focus:outline-none focus:ring-2 focus:ring-[#C8962C]'
-                  )}
-                  aria-label="Close sheet"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              )}
-            </div>
+            )}
 
             {/* Content */}
             <div

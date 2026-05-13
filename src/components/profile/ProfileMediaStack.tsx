@@ -227,63 +227,77 @@ export function ProfileMediaStack({
         />
       )}
 
-      {/* Page indicators — dashes at the top edge so users SEE there are
-          more photos. Only render with 2+ photos. Tappable to jump.
-          Sits above the photo overlay gradient so it stays legible on
-          any background. Phil exec direction 2026-05-13: "give an
-          understanding of the carousel". */}
+      {/* Page indicators — dashes at the top edge. Phil live verification
+          2026-05-13: 2px × 28% alpha got eaten by busy photo textures.
+          Bumped to 4px (active) / 3px (inactive) and 0.45 alpha; sit on a
+          thin gradient mask so they're legible against any photo. Only
+          render with 2+ photos. Tappable to jump. */}
       {images.length > 1 && (
-        <div
-          role="tablist"
-          aria-label="Photo selector"
-          style={{
-            position: 'absolute',
-            top: 'calc(8px + env(safe-area-inset-top, 0px))',
-            left: 8, right: 8,
-            display: 'flex',
-            gap: 4,
-            zIndex: 10,
-            pointerEvents: 'auto',
-          }}
-        >
-          {images.map((_, i) => {
-            const active = i === index;
-            return (
-              <button
-                key={i}
-                role="tab"
-                aria-selected={active}
-                aria-label={`Go to photo ${i + 1} of ${images.length}`}
-                onClick={() => {
-                  if (i === index || state === 'transitioning') return;
-                  if (!lockExpired && i !== 0) return;
-                  // Animate the jump via the same controls used for swipe commits
-                  setState('transitioning');
-                  setIndex(i);
-                  onIndexChange?.(i);
-                  x.set(0);
-                  setState(isMutual ? 'locked-after-mutual' : 'idle');
-                }}
-                style={{
-                  flex: 1,
-                  height: 2,
-                  borderRadius: 1,
-                  background: active
-                    ? '#C8962C'
-                    : 'rgba(255,255,255,0.28)',
-                  border: 'none',
-                  padding: 0,
-                  cursor: 'pointer',
-                  transition: 'background 200ms ease',
-                  // Drop-shadow keeps the dim dashes legible over bright photos
-                  boxShadow: active
-                    ? '0 0 4px rgba(200,150,44,0.45)'
-                    : '0 0 1px rgba(0,0,0,0.45)',
-                }}
-              />
-            );
-          })}
-        </div>
+        <>
+          {/* Subtle top gradient — gives the dashes contrast against bright
+              shoulders, faces, sky etc. */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: 0, left: 0, right: 0,
+              height: 56,
+              background: 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.18) 60%, transparent 100%)',
+              pointerEvents: 'none',
+              zIndex: 9,
+            }}
+          />
+          <div
+            role="tablist"
+            aria-label="Photo selector"
+            style={{
+              position: 'absolute',
+              top: 'calc(10px + env(safe-area-inset-top, 0px))',
+              left: 10, right: 10,
+              display: 'flex',
+              gap: 5,
+              zIndex: 11,
+              pointerEvents: 'auto',
+            }}
+          >
+            {images.map((_, i) => {
+              const active = i === index;
+              return (
+                <button
+                  key={i}
+                  role="tab"
+                  aria-selected={active}
+                  aria-label={`Go to photo ${i + 1} of ${images.length}`}
+                  onClick={() => {
+                    if (i === index || state === 'transitioning') return;
+                    if (!lockExpired && i !== 0) return;
+                    setState('transitioning');
+                    setIndex(i);
+                    onIndexChange?.(i);
+                    x.set(0);
+                    setState(isMutual ? 'locked-after-mutual' : 'idle');
+                  }}
+                  style={{
+                    flex: 1,
+                    height: active ? 4 : 3,
+                    borderRadius: 2,
+                    background: active
+                      ? '#C8962C'
+                      : 'rgba(255,255,255,0.48)',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    transition: 'background 200ms ease, height 200ms ease',
+                    boxShadow: active
+                      ? '0 0 8px rgba(200,150,44,0.55)'
+                      : '0 0 2px rgba(0,0,0,0.55)',
+                    alignSelf: 'center',
+                  }}
+                />
+              );
+            })}
+          </div>
+        </>
       )}
 
       {(isMutual || softBorder) && (

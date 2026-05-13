@@ -319,11 +319,19 @@ export default function SheetRouter() {
   const subtitle = sheetProps?.subtitle;
   const height = getSheetHeight(activeSheet);
 
+  // Photo-led sheets (profile, edit-profile, album-photos) bring their own
+  // header chrome (back button + more menu, overlaid on the hero photo).
+  // The default ~92px sheet header eats screen real estate that should
+  // belong to the photo. Phil exec direction 2026-05-13.
+  const BARE_TOP_SHEETS = new Set(['profile', 'edit-profile', 'album-photos']);
+  const bareTop = BARE_TOP_SHEETS.has(activeSheet);
+
   return (
-    <L2SheetContainer 
-      title={dynamicTitle} 
+    <L2SheetContainer
+      title={dynamicTitle}
       subtitle={subtitle}
       height={height}
+      bareTop={bareTop}
     >
       <SheetErrorBoundary key={activeSheet}>
         <Suspense fallback={<SheetLoading />}>
