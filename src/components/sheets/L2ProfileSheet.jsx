@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
 import {
-  MessageCircle, Shield, Plane,
+  MessageCircle, Shield, Plane, MapPin,
   Loader2, MoreVertical, Flag, Ban, X, ChevronLeft, Ghost,
   Footprints, Bike, Car, Heart, Video, Share2, ShoppingBag, Music,
 } from 'lucide-react';

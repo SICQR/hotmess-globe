@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import Globe from 'react-globe.gl';
 
 const DEFAULT_ROTATION = { lat: 20, lng: 0 };
@@ -13,7 +13,31 @@ export default function EnhancedGlobe3D({
   rotationRef 
 }) {
 
-  const globeRef = useRef();
+  const globeRef     = useRef();
+  const containerRef = useRef(null);
+  const [size, setSize] = useState({ w: 0, h: 0 });
+
+  // 2026-05-13: react-globe.gl sizes itself from container offsetWidth/Height
+  // ONCE on mount and never reflows. On desktop window resize (or rotation)
+  // half the globe goes missing. ResizeObserver keeps Globe's width/height
+  // bound to the live container so it scales with the viewport.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const measure = () => {
+      const r = el.getBoundingClientRect();
+      setSize({ w: Math.round(r.width), h: Math.round(r.height) });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener('orientationchange', measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('orientationchange', measure);
+    };
+  }, []);
+
   console.log('[Globe] Recovery Pins:', recoveryPins?.length || 0);
 
 
@@ -97,9 +121,11 @@ export default function EnhancedGlobe3D({
   };
 
   return (
-    <div className="w-full h-full bg-black">
+    <div ref={containerRef} className="w-full h-full bg-black" style={{ position: 'relative' }}>
       <Globe
         ref={globeRef}
+        width={size.w || undefined}
+        height={size.h || undefined}
         backgroundColor="#000000"
         
         // --- Earth Visuals ---
