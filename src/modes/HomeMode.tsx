@@ -185,7 +185,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
             {/* Eyebrow */}
             <motion.p
               variants={reduced ? {} : motionTokens.fadeUpSm}
-              className="text-[10px] font-black uppercase tracking-[0.3em] mb-2"
+              className="text-[10px] font-medium uppercase tracking-[0.3em] mb-2"
               style={{ color: AMBER }}
             >
               HOTMESS
@@ -194,7 +194,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
             {/* Headline — static, answers "what is this?" */}
             <motion.h1
               variants={reduced ? {} : motionTokens.fadeUpSm}
-              className="text-[28px] font-black text-white leading-[1.1] tracking-tight"
+              className="text-[28px] font-medium text-white leading-[1.1] tracking-tight"
             >
               {userRnStatus ? "You're live." : "Tonight's already started."}
             </motion.h1>
@@ -207,7 +207,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
               {hasSignal && (
                 <span className="w-1.5 h-1.5 rounded-full bg-[#30D158] animate-pulse flex-shrink-0" />
               )}
-              <span className="text-xs font-semibold tracking-wide" style={{ color: hasSignal ? 'rgba(255,255,255,0.5)' : MUTED }}>
+              <span className="text-xs font-medium tracking-wide" style={{ color: hasSignal ? 'rgba(255,255,255,0.5)' : MUTED }}>
                 {signalLine}
               </span>
             </motion.div>
@@ -220,7 +220,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={handleEnterPulse}
-                className="h-12 px-8 rounded-2xl text-sm font-bold flex items-center gap-2"
+                className="h-12 px-8 rounded-2xl text-sm font-medium flex items-center gap-2"
                 style={{ background: AMBER, color: '#000' }}
                 aria-label="Enter Pulse — live globe"
               >
@@ -245,7 +245,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="w-2 h-2 rounded-full animate-pulse flex-shrink-0" style={{ background: AMBER }} />
                   <div className="min-w-0">
-                    <p className="text-white text-sm font-bold leading-tight">You&rsquo;re visible</p>
+                    <p className="text-white text-sm font-medium leading-tight">You&rsquo;re visible</p>
                     <p className="text-[11px] truncate" style={{ color: MUTED }}>{userRnStatus?.intent ?? 'Explore'}</p>
                   </div>
                 </div>
@@ -255,7 +255,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
                     trackEvent('home_cta_tap', { cta: 'open_ghosted_live' });
                     navigate('/ghosted');
                   }}
-                  className="h-9 px-4 rounded-full text-xs font-bold flex items-center gap-1.5 flex-shrink-0"
+                  className="h-9 px-4 rounded-full text-xs font-medium flex items-center gap-1.5 flex-shrink-0"
                   style={{ background: AMBER, color: '#000' }}
                   aria-label="See who's nearby"
                 >
@@ -267,13 +267,13 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
             {cardVariant === 'go-live' && (
               <div className="flex items-center justify-between">
                 <div className="min-w-0">
-                  <p className="text-white text-sm font-bold leading-tight">You&rsquo;re off the grid</p>
+                  <p className="text-white text-sm font-medium leading-tight">You&rsquo;re off the grid</p>
                   <p className="text-[11px]" style={{ color: MUTED }}>Go Live so people nearby can find you</p>
                 </div>
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={handleGoLive}
-                  className="h-9 px-4 rounded-full text-xs font-bold flex items-center gap-1.5 flex-shrink-0 ml-3"
+                  className="h-9 px-4 rounded-full text-xs font-medium flex items-center gap-1.5 flex-shrink-0 ml-3"
                   style={{ background: AMBER, color: '#000' }}
                   aria-label="Go Live"
                 >
@@ -285,13 +285,13 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
             {cardVariant === 'complete-profile' && (
               <div className="flex items-center justify-between">
                 <div className="min-w-0">
-                  <p className="text-white text-sm font-bold leading-tight">Complete your profile</p>
+                  <p className="text-white text-sm font-medium leading-tight">Complete your profile</p>
                   <p className="text-[11px]" style={{ color: MUTED }}>Add a photo and bio</p>
                 </div>
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={() => openSheet('edit-profile')}
-                  className="h-9 px-4 rounded-full text-xs font-bold flex items-center gap-1.5 flex-shrink-0 ml-3"
+                  className="h-9 px-4 rounded-full text-xs font-medium flex items-center gap-1.5 flex-shrink-0 ml-3"
                   style={{ background: AMBER, color: '#000' }}
                   aria-label="Edit your profile"
                 >
@@ -324,10 +324,10 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
                   aria-label={lane.label}
                 >
                   <Icon className="w-4 h-4 flex-shrink-0" style={{ color: AMBER }} />
-                  <span className="text-white font-bold text-xs">{lane.label}</span>
+                  <span className="text-white font-medium text-xs">{lane.label}</span>
                   {isGhosted && rnCount > 0 && (
                     <span
-                      className="min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-bold text-black px-1"
+                      className="min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-medium text-black px-1"
                       style={{ background: AMBER }}
                     >
                       {rnCount > 99 ? '99+' : rnCount}
@@ -357,7 +357,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
               <div className="flex items-center gap-3">
                 <Ghost className="w-4 h-4" style={{ color: AMBER }} />
                 <div className="text-left">
-                  <p className="text-white font-bold text-sm leading-tight">
+                  <p className="text-white font-medium text-sm leading-tight">
                     {rnCount > 0 ? `${rnCount} men out right now` : 'See who\u2019s nearby'}
                   </p>
                   <p className="text-[11px]" style={{ color: MUTED }}>
@@ -383,7 +383,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
                   <span className="hm-badge">HNH MESS</span>
                   {radioPlaying && <span className="hm-badge-outline" style={{ borderColor: TEAL, color: TEAL }}>Live</span>}
                 </div>
-                <h2 className="text-[20px] font-black text-white leading-[1.05] mb-2 tracking-tight block">
+                <h2 className="text-[20px] font-medium text-white leading-[1.05] mb-2 tracking-tight block">
                   Care hits different<br />when it’s dirty.
                 </h2>
                 <p className="text-white/50 text-[11px] font-medium leading-relaxed max-w-[140px]">
@@ -422,7 +422,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
                   trackEvent('home_cta_tap', { cta: 'hnh_mess_get_messy' });
                   navigate('/market');
                 }}
-                className="flex-1 bg-white/5 border border-white/10 text-white font-black text-xs h-12 rounded-xl flex items-center justify-center gap-1.5"
+                className="flex-1 bg-white/5 border border-white/10 text-white font-medium text-xs h-12 rounded-xl flex items-center justify-center gap-1.5"
               >
                 Get the products <ChevronRight className="w-3.5 h-3.5" />
               </motion.button>
@@ -440,10 +440,10 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
 
             {/* Stigma & Nudge Footer */}
             <div className="flex items-end justify-between pt-4 border-t border-white/10">
-              <p className="text-white/70 text-[10px] font-bold tracking-wide italic">
+              <p className="text-white/70 text-[10px] font-medium tracking-wide italic">
                 You don’t get to skip aftercare.
               </p>
-              <div className="flex items-center gap-1 text-[#C8962C] text-[9px] font-black uppercase tracking-widest text-right">
+              <div className="flex items-center gap-1 text-[#C8962C] text-[9px] font-medium uppercase tracking-widest text-right">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#C8962C] animate-pulse" />
                 First run.
               </div>

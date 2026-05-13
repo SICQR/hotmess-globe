@@ -419,13 +419,13 @@ function SectionCard({ title, subtitle, nextAction, icon: Icon, accent, badge, o
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-black uppercase tracking-wider text-white">{title}</span>
+            <span className="text-sm font-medium uppercase tracking-wider text-white">{title}</span>
             {badge && (
               <motion.span
                 key={badge.text}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full"
+                className="text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded-full"
                 style={{ background: `${badge.color}20`, color: badge.color }}
               >
                 {badge.text}
@@ -457,7 +457,7 @@ function SectionCard({ title, subtitle, nextAction, icon: Icon, accent, badge, o
             style={{ background: `${accent}10`, borderLeft: `1px solid ${accent}20`, borderRight: `1px solid ${accent}20`, borderBottom: `1px solid ${accent}20` }}
           >
             <ArrowRight className="w-3 h-3 flex-shrink-0" style={{ color: accent }} />
-            <span className="text-[11px] font-semibold truncate" style={{ color: accent }}>
+            <span className="text-[11px] font-medium truncate" style={{ color: accent }}>
               {nextAction}
             </span>
           </motion.button>
@@ -495,13 +495,13 @@ function QuickRow({ items, delay }: { items: QuickItem[]; delay: number }) {
           className="flex items-center gap-3 p-3 rounded-2xl bg-[#1C1C1E]/60 border border-white/[0.04] transition-all text-left"
         >
           <Icon className="w-4 h-4 flex-shrink-0" style={{ color: accent || '#8E8E93' }} />
-          <span className="text-xs font-semibold text-white/60 truncate flex-1">{label}</span>
+          <span className="text-xs font-medium text-white/60 truncate flex-1">{label}</span>
           {count != null && count > 0 && (
             <motion.span
               key={count}
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="text-[10px] font-black min-w-[18px] h-[18px] flex items-center justify-center rounded-full"
+              className="text-[10px] font-medium min-w-[18px] h-[18px] flex items-center justify-center rounded-full"
               style={{ background: `${accent || GOLD}25`, color: accent || GOLD }}
             >
               {count}
@@ -534,12 +534,12 @@ function NudgeCard({ nudge, onDismiss }: { nudge: Nudge; onDismiss: () => void }
           onClick={nudge.action}
           className="flex-1 min-w-0 text-left"
         >
-          <p className="text-[12px] font-bold text-white leading-tight">{nudge.text}</p>
+          <p className="text-[12px] font-medium text-white leading-tight">{nudge.text}</p>
         </button>
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={nudge.action}
-            className="px-3 py-1.5 rounded-lg text-[11px] font-bold"
+            className="px-3 py-1.5 rounded-lg text-[11px] font-medium"
             style={{ background: nudge.accent, color: nudge.accent === GOLD ? '#000' : '#fff' }}
           >
             Fix now
@@ -627,7 +627,7 @@ export default function MorePage() {
       >
         <div className="pt-[env(safe-area-inset-top)]" />
         <div className="flex items-center justify-center h-14">
-          <h1 className="font-black text-sm tracking-[0.25em] uppercase" style={{ color: GOLD }}>
+          <h1 className="font-medium text-sm tracking-[0.25em] uppercase" style={{ color: GOLD }}>
             Control
           </h1>
         </div>
@@ -647,19 +647,19 @@ export default function MorePage() {
           
           {/* ── YOU SECTION ────────────────────────────────────────── */}
           <section className="space-y-4">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#C8962C] px-1">You</h2>
+            <h2 className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#C8962C] px-1">You</h2>
             <QuickRow items={youItems} delay={0.1} />
           </section>
 
           {/* ── FEATURES SECTION ────────────────────────────────────── */}
           <section className="space-y-4">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#C8962C] px-1">Features</h2>
+            <h2 className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#C8962C] px-1">Features</h2>
             <QuickRow items={featureItems} delay={0.2} />
           </section>
 
           {/* ── ACCOUNT SECTION ─────────────────────────────────────── */}
           <section className="space-y-4">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#C8962C] px-1">Account</h2>
+            <h2 className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#C8962C] px-1">Account</h2>
             <QuickRow items={accountItems} delay={0.3} />
           </section>
 
@@ -675,7 +675,7 @@ export default function MorePage() {
               <Heart className="w-5 h-5 text-[#C8962C]" />
             </div>
             <div className="flex-1">
-              <p className="text-xs font-bold text-white/60">Hand N Hand Aftercare</p>
+              <p className="text-xs font-medium text-white/60">Hand N Hand Aftercare</p>
               <p className="text-[10px] text-white/30 uppercase tracking-widest mt-0.5">Resources & Wellbeing</p>
             </div>
             <ChevronRight className="w-4 h-4 text-white/10" />

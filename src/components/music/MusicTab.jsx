@@ -13,7 +13,6 @@ import {
   Crown, FileAudio, Headphones, ExternalLink,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
-import { toast } from 'sonner';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
@@ -64,7 +63,7 @@ function getReleaseAccessLevel(release, _releaseTracks) {
 function SectionHeader({ children, color = 'white' }) {
   return (
     <h2
-      className="text-xs font-black uppercase tracking-[0.2em] mb-4"
+      className="text-xs font-medium uppercase tracking-[0.2em] mb-4"
       style={{ color }}
     >
       {children}
@@ -91,7 +90,7 @@ function PlatformLinks({ release, className = '' }) {
           href={link.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase border border-white/10 active:scale-95 transition-transform"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-medium uppercase border border-white/10 active:scale-95 transition-transform"
           style={{ color: link.color }}
           aria-label={`Open on ${link.label}`}
         >
@@ -117,7 +116,7 @@ function LyricsAccordion({ lyrics }) {
         aria-expanded={open}
         aria-label="Toggle lyrics"
       >
-        <span className="text-xs font-bold uppercase text-white/60">Lyrics</span>
+        <span className="text-xs font-medium uppercase text-white/60">Lyrics</span>
         <ChevronDown className={`w-4 h-4 text-white/40 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       <AnimatePresence>
@@ -147,7 +146,7 @@ function LinkedEntityCard({ release }) {
 
   return (
     <div className="mt-4 rounded-xl border border-white/8 bg-white/[0.02] p-4">
-      <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-2">
+      <p className="text-[9px] font-medium uppercase tracking-widest text-white/30 mb-2">
         This track is about
       </p>
       <div className="flex items-center gap-3">
@@ -155,13 +154,13 @@ function LinkedEntityCard({ release }) {
           <ExternalLink className="w-5 h-5" style={{ color }} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-white">{release.linked_entity_label}</p>
+          <p className="text-sm font-medium text-white">{release.linked_entity_label}</p>
           <p className="text-[10px] text-white/40 uppercase">{release.linked_entity_type.replace('_', ' ')}</p>
         </div>
         {release.linked_entity_url && (
           <a
             href={release.linked_entity_url}
-            className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase active:scale-95 transition-transform"
+            className="px-3 py-1.5 rounded-lg text-[10px] font-medium uppercase active:scale-95 transition-transform"
             style={{ backgroundColor: `${color}20`, color }}
           >
             {release.linked_entity_cta || 'View'}
@@ -183,12 +182,12 @@ function MemberGateBanner({ onJoin }) {
     <div className="rounded-xl border border-[#C8962C]/20 bg-[#C8962C]/5 p-4 flex items-center gap-3">
       <Crown className="w-5 h-5 text-[#C8962C]" />
       <div className="flex-1">
-        <p className="text-xs font-bold text-white">Members Only</p>
+        <p className="text-xs font-medium text-white">Members Only</p>
         <p className="text-[10px] text-white/40">Full tracks and downloads require membership</p>
       </div>
       <button
         onClick={onJoin}
-        className="px-3 py-1.5 rounded-lg bg-[#C8962C] text-[10px] font-black uppercase text-black active:scale-[0.97] transition-transform"
+        className="px-3 py-1.5 rounded-lg bg-[#C8962C] text-[10px] font-medium uppercase text-black active:scale-[0.97] transition-transform"
       >
         Join
       </button>
@@ -226,7 +225,7 @@ function ReleaseDetailSheet({ release, tracks, onClose }) {
         <button onClick={onClose} className="p-2 -ml-2 w-10 h-10 flex items-center justify-center" aria-label="Close">
           <ChevronDown className="w-5 h-5 text-white/60" />
         </button>
-        <span className="text-[10px] font-bold uppercase text-white/30 tracking-widest">
+        <span className="text-[10px] font-medium uppercase text-white/30 tracking-widest">
           {release.catalog_number || 'Release'}
         </span>
         <button onClick={onClose} className="p-2 -mr-2 w-10 h-10 flex items-center justify-center" aria-label="Close">
@@ -242,14 +241,14 @@ function ReleaseDetailSheet({ release, tracks, onClose }) {
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1C1C1E] to-[#0D0D0D]">
               <Disc3 className="w-14 h-14 text-[#C8962C]/20 mb-2" />
-              <span className="text-[9px] font-bold uppercase tracking-widest text-white/15">RAW CONVICT</span>
+              <span className="text-[9px] font-medium uppercase tracking-widest text-white/15">RAW CONVICT</span>
             </div>
           )}
         </div>
 
         {/* Title + meta */}
         <div className="mt-5 text-center">
-          <h2 className="text-xl font-black uppercase text-white leading-tight">{release.title}</h2>
+          <h2 className="text-xl font-medium uppercase text-white leading-tight">{release.title}</h2>
           <p className="text-xs text-white/40 mt-1 uppercase">
             Smash Daddys {release.release_type && `\u00b7 ${release.release_type}`}
             {release.genre && ` \u00b7 ${release.genre}`}
@@ -268,14 +267,14 @@ function ReleaseDetailSheet({ release, tracks, onClose }) {
             aria-label="Play all tracks"
           >
             <Play className="w-4 h-4 text-black" fill="black" />
-            <span className="text-xs font-black uppercase text-black">Play</span>
+            <span className="text-xs font-medium uppercase text-black">Play</span>
           </button>
         </div>
 
         {/* Track list */}
         {trackList.length > 1 && (
           <div className="mt-6">
-            <h3 className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-3">Tracks</h3>
+            <h3 className="text-[10px] font-medium uppercase text-white/30 tracking-widest mb-3">Tracks</h3>
             <div className="space-y-1">
               {trackList.map((track, idx) => {
                 const isActive = player.currentTrack?.id === track.id;
@@ -297,7 +296,7 @@ function ReleaseDetailSheet({ release, tracks, onClose }) {
                       )}
                     </span>
                     <div className="flex-1 min-w-0 text-left">
-                      <p className={`text-xs font-bold truncate ${isActive ? 'text-[#C8962C]' : 'text-white/80'}`}>
+                      <p className={`text-xs font-medium truncate ${isActive ? 'text-[#C8962C]' : 'text-white/80'}`}>
                         {track.title}
                       </p>
                     </div>
@@ -327,7 +326,7 @@ function ReleaseDetailSheet({ release, tracks, onClose }) {
 }
 
 // StemUnlockSheet — REMOVED 2026-05-12 (stems offering discontinued)
-// eslint-disable-next-line no-unused-vars
+ 
 function StemUnlockSheet_DEPRECATED({ release, onClose }) {
   const navigate = useNavigate();
   const stemTypes = [
@@ -370,24 +369,24 @@ function StemUnlockSheet_DEPRECATED({ release, onClose }) {
         {/* Drag handle */}
         <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-6" />
 
-        <h2 className="text-2xl font-black uppercase text-white text-center">
+        <h2 className="text-2xl font-medium uppercase text-white text-center">
           Unlock the Source
         </h2>
         <p className="text-sm text-white/50 text-center mt-1">
           {release.title} &mdash; Smash Daddys
         </p>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-[#C8962C] text-center mt-2 mb-6">
+        <p className="text-[10px] font-medium uppercase tracking-widest text-[#C8962C] text-center mt-2 mb-6">
           Used by DJs. Built for the floor.
         </p>
 
         {/* What you get */}
         <div className="mb-5">
-          <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-3">What you get</p>
+          <p className="text-[9px] font-medium uppercase tracking-widest text-white/30 mb-3">What you get</p>
           <div className="grid grid-cols-4 gap-3">
             {stemTypes.map(({ name, sub }) => (
               <div key={name} className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-white/[0.03] border border-white/5">
                 <FileAudio className="w-6 h-6 text-[#C8962C]" />
-                <span className="text-[10px] font-bold uppercase text-white/60">{name}</span>
+                <span className="text-[10px] font-medium uppercase text-white/60">{name}</span>
                 <span className="text-[7px] text-white/25 leading-tight text-center px-1">{sub}</span>
               </div>
             ))}
@@ -396,19 +395,19 @@ function StemUnlockSheet_DEPRECATED({ release, onClose }) {
 
         {/* File format */}
         <div className="mb-4 rounded-xl bg-white/[0.02] border border-white/5 px-4 py-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-2">File format</p>
+          <p className="text-[9px] font-medium uppercase tracking-widest text-white/30 mb-2">File format</p>
           <p className="text-xs text-white/70">WAV (24-bit) &middot; Studio quality &middot; Ready to drop into your DAW</p>
         </div>
 
         {/* Delivery */}
         <div className="mb-4 rounded-xl bg-white/[0.02] border border-white/5 px-4 py-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-2">Delivery</p>
+          <p className="text-[9px] font-medium uppercase tracking-widest text-white/30 mb-2">Delivery</p>
           <p className="text-xs text-white/70">Instant download &middot; Saved to your account &middot; Re-download anytime</p>
         </div>
 
         {/* License summary */}
         <div className="mb-6 rounded-xl border border-[#9B1B2A]/20 bg-[#9B1B2A]/5 px-4 py-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-[#9B1B2A] mb-2">HOTMESS Remix License</p>
+          <p className="text-[9px] font-medium uppercase tracking-widest text-[#9B1B2A] mb-2">HOTMESS Remix License</p>
           <div className="space-y-1.5 text-xs text-white/60">
             <p className="flex items-center gap-2"><span className="text-[#30D158]">{'\u2713'}</span> Remix + DJ use allowed</p>
             <p className="flex items-center gap-2"><span className="text-[#30D158]">{'\u2713'}</span> Share mixes non-commercially</p>
@@ -417,7 +416,7 @@ function StemUnlockSheet_DEPRECATED({ release, onClose }) {
           </div>
           <button
             onClick={() => { onClose(); navigate('/legal/remix-license'); }}
-            className="mt-2 text-[10px] font-bold uppercase tracking-wider text-[#C8962C] active:opacity-70"
+            className="mt-2 text-[10px] font-medium uppercase tracking-wider text-[#C8962C] active:opacity-70"
           >
             Read full license &rarr;
           </button>
@@ -429,7 +428,7 @@ function StemUnlockSheet_DEPRECATED({ release, onClose }) {
             console.log('[STEMS] Purchase:', release.id, price);
             onClose();
           }}
-          className="w-full h-12 rounded-xl bg-[#C8962C] text-black font-black uppercase text-sm active:scale-95 transition-transform"
+          className="w-full h-12 rounded-xl bg-[#C8962C] text-black font-medium uppercase text-sm active:scale-95 transition-transform"
           aria-label={`Buy stems for ${price}`}
           animate={{ boxShadow: ['0 0 0px rgba(200,150,44,0)', '0 0 16px rgba(200,150,44,0.4)', '0 0 0px rgba(200,150,44,0)'] }}
           transition={{ repeat: Infinity, duration: 5 }}
@@ -471,8 +470,8 @@ function PreviewEndOverlay({ onUpgrade, onDismiss, phase = 'end' }) {
       >
         {isTaste ? (
           <>
-            <p className="text-[10px] font-black uppercase tracking-widest text-[#C8962C] mb-2">Preview ending</p>
-            <h3 className="text-2xl font-black uppercase text-white">
+            <p className="text-[10px] font-medium uppercase tracking-widest text-[#C8962C] mb-2">Preview ending</p>
+            <h3 className="text-2xl font-medium uppercase text-white">
               This is just a taste
             </h3>
             <p className="text-sm text-white/50 mt-2 mb-6">
@@ -481,7 +480,7 @@ function PreviewEndOverlay({ onUpgrade, onDismiss, phase = 'end' }) {
           </>
         ) : (
           <>
-            <h3 className="text-2xl font-black uppercase text-white">
+            <h3 className="text-2xl font-medium uppercase text-white">
               Unlock the Full Drop
             </h3>
             <p className="text-sm text-white/50 mt-2 mb-6">
@@ -491,7 +490,7 @@ function PreviewEndOverlay({ onUpgrade, onDismiss, phase = 'end' }) {
         )}
         <motion.button
           onClick={onUpgrade}
-          className="w-full h-12 rounded-xl bg-[#C8962C] text-black font-black uppercase text-sm active:scale-95 transition-transform"
+          className="w-full h-12 rounded-xl bg-[#C8962C] text-black font-medium uppercase text-sm active:scale-95 transition-transform"
           animate={{ boxShadow: ['0 0 0px rgba(200,150,44,0)', '0 0 16px rgba(200,150,44,0.4)', '0 0 0px rgba(200,150,44,0)'] }}
           transition={{ repeat: Infinity, duration: 5 }}
         >
@@ -627,13 +626,13 @@ export default function MusicTab() {
         <div className="w-16 h-16 rounded-2xl bg-[#1C1C1E] flex items-center justify-center mb-4">
           <Disc3 className="w-8 h-8 text-white/10" />
         </div>
-        <p className="text-white font-bold text-lg uppercase">No Music Yet</p>
+        <p className="text-white font-medium text-lg uppercase">No Music Yet</p>
         <p className="text-white/40 text-sm mt-2 max-w-[260px]">
           New releases from Raw Convict Records are on the way. Check back soon.
         </p>
         <button
           onClick={() => navigate('/radio')}
-          className="mt-6 h-12 px-8 rounded-xl bg-[#C8962C] text-black font-black text-sm uppercase active:scale-95 transition-transform"
+          className="mt-6 h-12 px-8 rounded-xl bg-[#C8962C] text-black font-medium text-sm uppercase active:scale-95 transition-transform"
         >
           Listen to Radio
         </button>
@@ -659,7 +658,7 @@ export default function MusicTab() {
         if (saved.length === 0) return null;
         return (
           <section className="px-6 pt-5 pb-3">
-            <p className="text-[9px] font-black uppercase tracking-widest text-white/20 mb-3">You left this here</p>
+            <p className="text-[9px] font-medium uppercase tracking-widest text-white/20 mb-3">You left this here</p>
             <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
               {saved.slice(0, 4).map((t) => (
                 <button
@@ -679,7 +678,7 @@ export default function MusicTab() {
                     </div>
                   )}
                   <div className="text-left min-w-0">
-                    <p className="text-xs font-bold text-white truncate max-w-[100px]">{t.title}</p>
+                    <p className="text-xs font-medium text-white truncate max-w-[100px]">{t.title}</p>
                     <p className="text-[10px] text-white/30">{t.artist}</p>
                   </div>
                 </button>
@@ -710,12 +709,12 @@ export default function MusicTab() {
 
         <div className="relative px-6 pt-14 pb-8">
           {/* Label name */}
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#9B1B2A] mb-2">
+          <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-[#9B1B2A] mb-2">
             Raw Convict Records
           </p>
 
           {/* Artist name */}
-          <h1 className="text-4xl font-black uppercase text-white leading-[0.95] tracking-tight">
+          <h1 className="text-4xl font-medium uppercase text-white leading-[0.95] tracking-tight">
             Smash<br />Daddys
           </h1>
 
@@ -737,7 +736,7 @@ export default function MusicTab() {
                   }, [], 0);
                 }
               }}
-              className="h-11 px-6 rounded-full bg-[#C8962C] text-black font-black text-xs uppercase flex items-center gap-2 active:scale-95 transition-transform"
+              className="h-11 px-6 rounded-full bg-[#C8962C] text-black font-medium text-xs uppercase flex items-center gap-2 active:scale-95 transition-transform"
               aria-label="Listen now"
             >
               <Play className="w-4 h-4" fill="black" />
@@ -748,7 +747,7 @@ export default function MusicTab() {
                 href={artist.soundcloud_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="h-11 px-5 rounded-full border border-[#FF5500]/40 text-[#FF5500] font-bold text-xs uppercase flex items-center active:scale-95 transition-transform"
+                className="h-11 px-5 rounded-full border border-[#FF5500]/40 text-[#FF5500] font-medium text-xs uppercase flex items-center active:scale-95 transition-transform"
                 aria-label="Open SoundCloud"
               >
                 SoundCloud
@@ -759,7 +758,7 @@ export default function MusicTab() {
                 href={artist.spotify_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="h-11 px-5 rounded-full border border-[#1DB954]/40 text-[#1DB954] font-bold text-xs uppercase flex items-center active:scale-95 transition-transform"
+                className="h-11 px-5 rounded-full border border-[#1DB954]/40 text-[#1DB954] font-medium text-xs uppercase flex items-center active:scale-95 transition-transform"
                 aria-label="Open Spotify"
               >
                 Spotify
@@ -782,7 +781,7 @@ export default function MusicTab() {
           <SectionHeader>All Releases</SectionHeader>
           <button
             onClick={() => navigate('/music/library')}
-            className="text-[10px] font-black uppercase tracking-widest active:opacity-70"
+            className="text-[10px] font-medium uppercase tracking-widest active:opacity-70"
             style={{ color: '#C8962C' }}
             aria-label="Browse full music library"
           >
@@ -816,11 +815,11 @@ export default function MusicTab() {
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1C1C1E] to-[#0D0D0D]">
                       <Disc3 className="w-8 h-8 text-[#C8962C]/30 mb-1" />
-                      <span className="text-[8px] font-bold uppercase tracking-widest text-white/15">RCR</span>
+                      <span className="text-[8px] font-medium uppercase tracking-widest text-white/15">RCR</span>
                     </div>
                   )}
                   {access === 'preview' && (
-                    <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-white/15 text-white/60 backdrop-blur-sm">
+                    <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-medium uppercase bg-white/15 text-white/60 backdrop-blur-sm">
                       Preview
                     </span>
                   )}
@@ -836,7 +835,7 @@ export default function MusicTab() {
                     </div>
                   )}
                 </div>
-                <p className="text-xs font-bold text-white truncate mt-2">{rel.title}</p>
+                <p className="text-xs font-medium text-white truncate mt-2">{rel.title}</p>
                 <p className="text-[10px] text-white/40 truncate">
                   Smash Daddys{rel.genre ? ` · ${rel.genre}` : ''}
                 </p>
