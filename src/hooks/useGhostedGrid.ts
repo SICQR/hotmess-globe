@@ -21,7 +21,7 @@ import type { GhostedCardProps } from '@/components/ghosted/GhostedCard';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export type GhostedTab = 'nearby' | 'live' | 'chats';
+export type GhostedTab = 'nearby' | 'live' | 'recent' | 'chats';
 
 export interface ChatThreadItem {
   id: string;
@@ -140,6 +140,40 @@ export function useGhostedGrid(
 
       if (error) throw new Error(error.message);
       return data || [];
+    },
+  });
+
+  // ── Recent mode — profiles ordered by last_seen, irrespective of
+  // active right_now_status. Phil exec direction 2026-05-13: the
+  // 'Recent' UI tab was routing to 'live' mode which only returned
+  // users with active right_now intent → empty grid even when the API
+  // had 10 profiles. This mode replaces that.
+  const recentQuery = useQuery({
+    queryKey: ['ghosted-recent', myId],
+    enabled: tab === 'recent' && !!myId,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select(`
+          id, email, display_name, username, avatar_url, photos,
+          is_online, age, looking_for, is_verified, last_seen,
+          last_lat, last_lng, created_at, role
+        `)
+        .neq('id', myId!)
+        .not('display_name', 'is', null)
+        .order('is_online', { ascending: false })
+        .order('last_seen', { ascending: false, nullsFirst: false })
+        .limit(60);
+      if (error) throw new Error(error.message);
+      // Ghost-account filter — mirror /api/profiles behaviour
+      return (data || []).filter((p: any) => {
+        const e = (p.email || '').toLowerCase();
+        if (e.includes('@hotmess.app') || e.includes('@hotmess.test')) return false;
+        if (e.startsWith('demo_') || e.startsWith('admin_') || e.startsWith('e2e_')) return false;
+        return true;
+      });
     },
   });
 
@@ -367,25 +401,67 @@ export function useGhostedGrid(
       });
   }, [liveQuery.data, blockedIds, myLat, myLng]);
 
+  // ── Transform recent profiles to GhostedCardProps ─────────────────────────
+  const recentCards = useMemo(() => {
+    if (!recentQuery.data) return [];
+    const blocked = blockedIds || new Set();
+
+    return recentQuery.data
+      .filter((p: any) => !blocked.has(p.id))
+      .map((p: any) => {
+        const distanceM =
+          myLat != null && myLng != null && p.last_lat != null && p.last_lng != null
+            ? calculateDistance(myLat, myLng, p.last_lat, p.last_lng)
+            : null;
+
+        const { contextType, contextLabel } = deriveContext(p, distanceM);
+        const avatar = p.avatar_url || p.photos?.[0]?.url || (typeof p.photos?.[0] === 'string' ? p.photos[0] : null);
+        const intent = Array.isArray(p.looking_for) ? p.looking_for[0] || null : null;
+
+        return {
+          id: p.id,
+          name: p.display_name || p.username || '?',
+          avatarUrl: avatar,
+          distanceM: distanceM != null ? roundDistance(distanceM) : null,
+          isOnline: !!p.is_online,
+          isVerified: !!p.is_verified,
+          contextType,
+          contextLabel,
+          vibe: null,
+          intent: intent ? String(intent).toLowerCase() : null,
+          email: p.email || null,
+        } as GhostedCardProps;
+      });
+  }, [recentQuery.data, blockedIds, myLat, myLng]);
+
   // ── Select data based on active tab ───────────────────────────────────────
-  const cards = tab === 'nearby' ? nearbyCards : tab === 'live' ? liveCards : [];
+  const cards = tab === 'nearby'
+    ? nearbyCards
+    : tab === 'live'
+      ? liveCards
+      : tab === 'recent'
+        ? recentCards
+        : [];
   const chatThreads = tab === 'chats' ? (chatsQuery.data || []) : [];
 
   const isLoading =
     tab === 'nearby' ? nearbyQuery.isLoading :
-    tab === 'live' ? liveQuery.isLoading :
-    tab === 'chats' ? chatsQuery.isLoading : false;
+    tab === 'live'   ? liveQuery.isLoading :
+    tab === 'recent' ? recentQuery.isLoading :
+    tab === 'chats'  ? chatsQuery.isLoading : false;
 
   const error =
     tab === 'nearby' ? (nearbyQuery.error?.message || null) :
-    tab === 'live' ? (liveQuery.error?.message || null) :
-    tab === 'chats' ? (chatsQuery.error?.message || null) : null;
+    tab === 'live'   ? (liveQuery.error?.message || null) :
+    tab === 'recent' ? (recentQuery.error?.message || null) :
+    tab === 'chats'  ? (chatsQuery.error?.message || null) : null;
 
   const refetch = useCallback(() => {
     if (tab === 'nearby') nearbyQuery.refetch();
     else if (tab === 'live') liveQuery.refetch();
+    else if (tab === 'recent') recentQuery.refetch();
     else if (tab === 'chats') chatsQuery.refetch();
-  }, [tab, nearbyQuery, liveQuery, chatsQuery]);
+  }, [tab, nearbyQuery, liveQuery, recentQuery, chatsQuery]);
 
   return { cards, chatThreads, isLoading, error, refetch };
 }

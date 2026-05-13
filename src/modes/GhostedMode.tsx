@@ -22,9 +22,9 @@ export default function GhostedMode() {
   const [locationConsent, setLocationConsent] = React.useState<boolean | null>(null);
 
   const { cards, isLoading, refetch } = useGhostedGrid(
-    filter === 'nearby' ? 'nearby' : 'live', 
-    position?.lat ?? null, 
-    position?.lng ?? null, 
+    filter === 'nearby' ? 'nearby' : 'recent',
+    position?.lat ?? null,
+    position?.lng ?? null,
     null
   );
   
