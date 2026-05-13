@@ -423,7 +423,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
         shopItems={v2ShopItems}
         dropItems={v2DropItems}
         onProductTap={(item: Record<string, unknown>) => openSheet('product', { product: item, source: 'shop' })}
-        onListingTap={(listing: Record<string, unknown>) => openSheet('listing', { listingId: (listing as { id: string }).id })}
+        onListingTap={(listing: Record<string, unknown>) => openSheet('product', { id: (listing as { id: string }).id, source: 'preloved' })}
         onChipTap={(chip: string, listing: Record<string, unknown>) => openSheet('chat', { prefill: chip, userId: (listing as { seller_id: string }).seller_id })}
         onMessageSeller={(listing: Record<string, unknown>) => openSheet('chat', { userId: (listing as { seller_id: string }).seller_id })}
         onSellFAB={() => openSheet('sell', {})}

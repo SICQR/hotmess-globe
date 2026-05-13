@@ -214,7 +214,7 @@ export default function GhostedMode() {
           <MessageCircle className="w-6 h-6 text-black" strokeWidth={2.5} />
           {/* Subtle indicator if unread */}
           {unreadCount > 0 && (
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[#C8962C] animate-pulse" />
+            <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-[#C8962C] animate-pulse" style={{ background: '#FF3B30' }} />
           )}
         </div>
       </motion.button>

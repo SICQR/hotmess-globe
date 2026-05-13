@@ -430,7 +430,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => {
-                  openSheet('shop-cart');
+                  openSheet('cart');
                 }}
                 className="flex-shrink-0 w-12 h-12 bg-[#C8962C] text-black rounded-xl flex items-center justify-center shadow-lg shadow-[#C8962C]/20"
               >

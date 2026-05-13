@@ -86,7 +86,6 @@ const L2DataExportSheet = lazy(() => import('./L2DataExportSheet'));
 const L2ReportSheet = lazy(() => import('./L2ReportSheet'));
 const L2VerificationSheet = lazy(() => import('./L2VerificationSheet'));
 const L2RouteSheet = lazy(() => import('./L2RouteSheet'));
-const L2GhostedPreviewSheet = lazy(() => import('./L2GhostedPreviewSheet'));
 const L2GoLiveSheet = lazy(() => import('./L2GoLiveSheet'));
 const L2MovementShareSheet = lazy(() => import('./L2MovementShareSheet'));
 const L2RadioPlayerSheet = lazy(() => import('./L2RadioPlayerSheet'));
@@ -269,8 +268,6 @@ const SHEET_COMPONENTS = {
   'verification': L2VerificationSheet,
   // Travel route
   'route': L2RouteSheet,
-  // Ghosted preview (tap → preview sheet with Boo/Message/Meet)
-  'ghosted-preview': L2GhostedPreviewSheet,
   // Go Live (unified entry point for presence + vibe + radio + movement)
   'go-live': L2GoLiveSheet,
   // Movement sharing

@@ -590,15 +590,10 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // GHOSTED PREVIEW (profile tap from grid)
-  // ─────────────────────────────────────────────────────────────────────────
-  'ghosted-preview': {
-    id: 'ghosted-preview',
-    title: 'Profile',
-    height: 'large',
-    auth: false,
-    deepLinkParams: ['uid'],
-  },
+  // 'ghosted-preview' RETIRED 2026-05-13 (audit P0-7). The static teaser
+  // sheet was never finished and the /ghosted tap target now opens the
+  // canonical L2ProfileSheet directly. Deep-links to ?sheet=ghosted-preview
+  // are redirected to ?sheet=profile in SheetContext.
 
   // ─────────────────────────────────────────────────────────────────────────
   // MOVEMENT SHARING
