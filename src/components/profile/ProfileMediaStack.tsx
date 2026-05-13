@@ -213,91 +213,70 @@ export function ProfileMediaStack({
         />
       )}
 
-      {nextSrc && (
-        <span
-          aria-hidden="true"
+      {/* Page indicators — VERTICAL column on the RIGHT edge of the photo.
+          Phil 2026-05-13 (third pass): top-mounted horizontal dashes kept
+          getting eaten by sheet chrome (drag pip, safe-area inset, back
+          button hover). Moving them to the right edge solves the whole
+          class of "top is busy" problems — and naturally subsumes the
+          old 1×24px pull handle that hinted "more this way".
+
+          5 dashes stacked vertically, centered on the photo height. Active
+          segment is taller + full gold + soft glow. Inactive segments are
+          shorter + dim white with subtle drop-shadow for legibility on any
+          background. Tappable to jump. */}
+      {images.length > 1 && (
+        <div
+          role="tablist"
+          aria-label="Photo selector"
           style={{
             position: 'absolute',
-            right: 4, top: '50%', transform: 'translateY(-50%)',
-            width: IMAGE_STACK.pullHandle.widthPx,
-            height: IMAGE_STACK.pullHandle.heightPx,
-            background: IMAGE_STACK.pullHandle.color,
-            borderRadius: 0.5,
+            right: 6,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 4,
+            zIndex: 11,
+            pointerEvents: 'auto',
           }}
-        />
-      )}
-
-      {/* Page indicators — dashes at the top edge. Phil live verification
-          2026-05-13: 2px × 28% alpha got eaten by busy photo textures.
-          Bumped to 4px (active) / 3px (inactive) and 0.45 alpha; sit on a
-          thin gradient mask so they're legible against any photo. Only
-          render with 2+ photos. Tappable to jump. */}
-      {images.length > 1 && (
-        <>
-          {/* Subtle top gradient — gives the dashes contrast against bright
-              shoulders, faces, sky etc. */}
-          <div
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              top: 0, left: 0, right: 0,
-              height: 56,
-              background: 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.18) 60%, transparent 100%)',
-              pointerEvents: 'none',
-              zIndex: 9,
-            }}
-          />
-          <div
-            role="tablist"
-            aria-label="Photo selector"
-            style={{
-              position: 'absolute',
-              top: 'calc(10px + env(safe-area-inset-top, 0px))',
-              left: 10, right: 10,
-              display: 'flex',
-              gap: 5,
-              zIndex: 11,
-              pointerEvents: 'auto',
-            }}
-          >
-            {images.map((_, i) => {
-              const active = i === index;
-              return (
-                <button
-                  key={i}
-                  role="tab"
-                  aria-selected={active}
-                  aria-label={`Go to photo ${i + 1} of ${images.length}`}
-                  onClick={() => {
-                    if (i === index || state === 'transitioning') return;
-                    if (!lockExpired && i !== 0) return;
-                    setState('transitioning');
-                    setIndex(i);
-                    onIndexChange?.(i);
-                    x.set(0);
-                    setState(isMutual ? 'locked-after-mutual' : 'idle');
-                  }}
-                  style={{
-                    flex: 1,
-                    height: active ? 4 : 3,
-                    borderRadius: 2,
-                    background: active
-                      ? '#C8962C'
-                      : 'rgba(255,255,255,0.48)',
-                    border: 'none',
-                    padding: 0,
-                    cursor: 'pointer',
-                    transition: 'background 200ms ease, height 200ms ease',
-                    boxShadow: active
-                      ? '0 0 8px rgba(200,150,44,0.55)'
-                      : '0 0 2px rgba(0,0,0,0.55)',
-                    alignSelf: 'center',
-                  }}
-                />
-              );
-            })}
-          </div>
-        </>
+        >
+          {images.map((_, i) => {
+            const active = i === index;
+            return (
+              <button
+                key={i}
+                role="tab"
+                aria-selected={active}
+                aria-label={`Go to photo ${i + 1} of ${images.length}`}
+                onClick={() => {
+                  if (i === index || state === 'transitioning') return;
+                  if (!lockExpired && i !== 0) return;
+                  setState('transitioning');
+                  setIndex(i);
+                  onIndexChange?.(i);
+                  x.set(0);
+                  setState(isMutual ? 'locked-after-mutual' : 'idle');
+                }}
+                style={{
+                  width: active ? 4 : 3,
+                  height: active ? 18 : 12,
+                  borderRadius: 2,
+                  background: active
+                    ? '#C8962C'
+                    : 'rgba(255,255,255,0.52)',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  transition: 'background 200ms ease, height 200ms ease, width 200ms ease',
+                  boxShadow: active
+                    ? '0 0 10px rgba(200,150,44,0.60)'
+                    : '0 0 3px rgba(0,0,0,0.60)',
+                }}
+              />
+            );
+          })}
+        </div>
       )}
 
       {(isMutual || softBorder) && (
