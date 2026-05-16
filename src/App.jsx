@@ -62,6 +62,7 @@ import { useDeepLinkSheet } from '@/hooks/useDeepLinkSheet';
 import { usePresenceHeartbeat } from '@/hooks/usePresenceHeartbeat';
 import { useSwipeBack } from '@/hooks/useSwipeBack';
 import AuthCallback from '@/pages/auth/callback';
+import PortalPage from '@/pages/PortalPage';
 import { supabase } from '@/components/utils/supabaseClient';
 import { syncLocation } from '@/utils/locationService';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
@@ -472,6 +473,7 @@ const AuthenticatedApp = () => {
       <Route path="/auth" element={<PageRoute pageKey="Auth" />} />
       <Route path="/auth/*" element={<PageRoute pageKey="Auth" />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/portal" element={<PortalPage />} />
       <Route path="/onboarding" element={<PageRoute pageKey="OnboardingGate" />} />
       <Route path="/onboarding/*" element={<PageRoute pageKey="OnboardingGate" />} />
       
