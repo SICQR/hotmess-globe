@@ -92,9 +92,31 @@ function useSOSRings() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'safety_events' },
         (payload) => {
-          const row = payload.new as { id: string; lat?: number; lng?: number; latitude?: number; longitude?: number };
-          const lat = row.lat ?? row.latitude;
-          const lng = row.lng ?? row.longitude;
+          // safety_events real schema (verified 2026-05-17 against rfoftonnlwudilafhfkl):
+          //   columns: id, user_id, type, delivery_status, created_at, metadata jsonb
+          // Coordinates live inside metadata jsonb — NOT as top-level columns.
+          // Earlier code read row.lat / row.lng which never exist, so the listener
+          // silently returned early on every SOS event and rings never rendered.
+          // PHASE_4_PATCHES.md §4c also assumed a resolved_at column for an UPDATE
+          // listener — that column doesn't exist on this table, so the doc patch
+          // can't ship as written. The 5-min auto-dismiss below is the only
+          // resolution path until a resolved_at convention is added (tracked in
+          // V2_ROADMAP.md Sprint 4+ care infrastructure section).
+          const row = payload.new as {
+            id: string;
+            type?: string;
+            metadata?: { lat?: number | null; lng?: number | null } | null;
+            // Legacy fallbacks in case future code surfaces lat/lng at top level:
+            lat?: number;
+            lng?: number;
+            latitude?: number;
+            longitude?: number;
+          };
+          // Only render rings for SOS-type events (other safety_events types may exist)
+          if (row.type && row.type !== 'sos') return;
+          const meta = row.metadata ?? {};
+          const lat = (typeof meta.lat === 'number' ? meta.lat : undefined) ?? row.lat ?? row.latitude;
+          const lng = (typeof meta.lng === 'number' ? meta.lng : undefined) ?? row.lng ?? row.longitude;
           if (typeof lat !== 'number' || typeof lng !== 'number') return;
           const newRing: FoundingSOSRing = {
             id: 'sos:' + row.id,
@@ -103,7 +125,7 @@ function useSOSRings() {
             startedAt: Date.now(),
           };
           setRings((prev) => [...prev, newRing]);
-          // Auto-remove after 5 minutes
+          // 5-minute hard dismiss (only auto-dismiss path given current schema)
           setTimeout(() => {
             setRings((prev) => prev.filter((r) => r.id !== newRing.id));
           }, 5 * 60_000);
