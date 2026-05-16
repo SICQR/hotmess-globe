@@ -7,6 +7,11 @@ export default function EnhancedGlobe3D({
   beacons = [], 
   cities = [], 
   recoveryPins = [],
+  // Founding-cohort layer (passed through from FoundingTierLayer):
+  foundingHtmlElements = [],
+  foundingArcs = [],
+  foundingSosRings = [],
+  renderHtmlElement,
   onBeaconClick, 
   onCityClick,
   onRecoveryClick,
@@ -194,16 +199,43 @@ export default function EnhancedGlobe3D({
           powerPreference: "high-performance" 
         }}
         
-        // --- Rings (Pulses) ---
-        ringsData={pointsData.filter(b => b.isRightNow || b.intensity > 1 || b.isRecovery)}
+        // --- Rings (Pulses) — merges existing point-derived pulses with SOS rings ---
+        ringsData={[
+          ...pointsData.filter(b => b.isRightNow || b.intensity > 1 || b.isRecovery),
+          ...foundingSosRings.map(r => ({ ...r, isSosRing: true })),
+        ]}
 
         ringLat="lat"
         ringLng="lng"
-        ringColor={(d) => d.isRecovery ? "#FFFFFF" : "#C8962C"}
+        ringColor={(d) => {
+          if (d.isSosRing) return "#FF2D2D";
+          if (d.isRecovery) return "#FFFFFF";
+          // Anchor / Chain founding pulses get full gold
+          return "#C8962C";
+        }}
 
-        ringMaxRadius={2.5}
-        ringPropagationSpeed={2.5}
-        ringRepeat={3}
+        ringMaxRadius={(d) => d.isSosRing ? 3.5 : 2.5}
+        ringPropagationSpeed={(d) => d.isSosRing ? 4.0 : 2.5}
+        ringRepeat={(d) => d.isSosRing ? 6 : 3}
+
+        // --- HTML Elements (Founding Anchor named labels) ---
+        htmlElementsData={foundingHtmlElements}
+        htmlLat="lat"
+        htmlLng="lng"
+        htmlAltitude={0.1}
+        htmlElement={renderHtmlElement}
+
+        // --- Arcs (Founding Promoter migration animations) ---
+        arcsData={foundingArcs}
+        arcStartLat="startLat"
+        arcStartLng="startLng"
+        arcEndLat="endLat"
+        arcEndLng="endLng"
+        arcColor="color"
+        arcDashLength={0.4}
+        arcDashGap={0.2}
+        arcDashAnimateTime={3500}
+        arcStroke={0.5}
       />
     </div>
   );

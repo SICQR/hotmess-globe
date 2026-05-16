@@ -5,6 +5,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSheet } from '@/contexts/SheetContext';
 import { useGlobe } from '@/contexts/GlobeContext';
 import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
+import {
+  useFoundingTierLayer,
+  mergeFoundingIntoBeacons,
+  renderFoundingAnchorLabel,
+} from '../components/globe/FoundingTierLayer';
 import { activityTracker } from '../components/globe/ActivityTracker';
 import BeaconPreviewPanel from '../components/globe/BeaconPreviewPanel';
 import CityDataOverlay from '../components/globe/CityDataOverlay';
@@ -133,6 +138,10 @@ export default function GlobePage({ embedded = false }) {
 
   // Beacons and Presence Count from Realtime hooks
   const { beacons: realtimeBeacons, loading: rawBeaconsLoading } = useRealtimeBeacons();
+  // Founding-cohort tier layer — sibling to GlobeBeacons. Provides 6 tier
+  // sprite groups via beacon-shape merge, Anchor named labels via htmlElementsData,
+  // Promoter migration arcs via arcsData, and SOS expanding rings.
+  const founding = useFoundingTierLayer();
   // Only show loading on the very first mount, never on realtime updates
   const [beaconsLoading, setBeaconsLoading] = useState(true);
   useEffect(() => {
@@ -590,7 +599,11 @@ export default function GlobePage({ embedded = false }) {
 
           <EnhancedGlobe3D
             ref={globeRef}
-            beacons={filteredBeacons}
+            beacons={mergeFoundingIntoBeacons(filteredBeacons, founding.foundingBeacons)}
+            foundingHtmlElements={founding.foundingHtmlElements}
+            foundingArcs={founding.foundingArcs}
+            foundingSosRings={founding.sosRings}
+            renderHtmlElement={renderFoundingAnchorLabel}
             cities={cities}
             pulsePlaces={pulsePlaces}
             rotationRef={rotationRef}
