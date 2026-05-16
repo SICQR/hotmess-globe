@@ -30,11 +30,19 @@ import { track } from '@/lib/analytics';
 const BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || '';
 const WIDGET_SCRIPT = `https://telegram.org/js/telegram-widget.js?22`;
 const CALLBACK_GLOBAL = '__hmTelegramAuth';
+// If the Telegram iframe hasn't injected itself within this window, render a
+// deep-link fallback so users on broken-widget deployments (BotFather domain
+// not whitelisted, CSP edge cases, script blocked) still have a path through.
+const WIDGET_FALLBACK_MS = 3000;
 
 export default function TelegramLoginButton({ disabled }) {
   const containerRef = useRef(null);
   const [error, setError] = useState('');
   const [verifying, setVerifying] = useState(false);
+  // showFallback flips true if the widget doesn't render an <iframe> within
+  // WIDGET_FALLBACK_MS. Once true it sticks — we don't bounce the user back
+  // to a broken widget if it loads late.
+  const [showFallback, setShowFallback] = useState(false);
 
   useEffect(() => {
     if (!BOT_USERNAME) {
@@ -89,7 +97,18 @@ export default function TelegramLoginButton({ disabled }) {
       container.appendChild(s);
     }
 
+    // Watchdog: if no iframe is rendered after WIDGET_FALLBACK_MS, expose the
+    // "Open Telegram" deep-link button so the user isn't stuck on a blank
+    // square. Telegram's widget always renders an <iframe> on success; absence
+    // is a reliable signal something blocked it (domain whitelist, CSP, etc.).
+    const watchdog = setTimeout(() => {
+      if (!container.querySelector('iframe')) {
+        setShowFallback(true);
+      }
+    }, WIDGET_FALLBACK_MS);
+
     return () => {
+      clearTimeout(watchdog);
       try { delete window[CALLBACK_GLOBAL]; } catch { window[CALLBACK_GLOBAL] = undefined; }
     };
   }, []);
@@ -99,8 +118,10 @@ export default function TelegramLoginButton({ disabled }) {
     return null;
   }
 
+  // Responsive container: `max-w-xs mx-auto` keeps the widget from overflowing
+  // narrow mobile viewports while still spanning full width on tall sheets.
   return (
-    <div className="w-full">
+    <div className="w-full max-w-xs mx-auto">
       <div className="relative">
         <div
           ref={containerRef}
@@ -117,6 +138,20 @@ export default function TelegramLoginButton({ disabled }) {
           </div>
         )}
       </div>
+      {showFallback && (
+        // Graceful degradation: deep-link to the bot's start command so the
+        // user can complete linking outside the embedded widget if it's broken.
+        // ?start=auth gives the bot a server-side signal that this is a login
+        // flow (handled in api/auth/telegram-callback.js based on chat context).
+        <a
+          href={`https://t.me/${BOT_USERNAME}?start=auth`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0088cc] px-4 py-3 text-sm font-medium text-white hover:bg-[#0077b5] focus:outline-none focus:ring-2 focus:ring-[#0088cc] focus:ring-offset-2 focus:ring-offset-black"
+        >
+          Open Telegram
+        </a>
+      )}
       {error && error !== 'MISSING_TELEGRAM_BOT_USERNAME' && (
         <p className="text-red-400 text-xs mt-2 text-center">{error}</p>
       )}
