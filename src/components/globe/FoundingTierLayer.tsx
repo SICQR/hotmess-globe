@@ -213,28 +213,46 @@ export function useFoundingTierLayer(): FoundingTierLayerOutput {
     });
   }, [tiers.founding_anchor]);
 
-  // Promoter migration arcs — only when active_event_venue is set AND we have
-  // both home + active coords. The partner_beacons_geojson RPC already
-  // resolves the displayed coord; this layer separately exposes the arc for
-  // animation purposes.
-  // For Phase 2 ship: arc is emitted with start=home, end=current displayed coord.
-  // If they're identical (no active event), we skip — no arc to draw.
+  // PHASE 4a: Promoter home → active event venue migration arcs.
+  //
+  // Data shape (post-RPC-hotfix c8143fc on partner_beacons_geojson, verified
+  // against rfoftonnlwudilafhfkl 2026-05-17):
+  //   props.home_lat / props.home_lng           — Promoter base coords
+  //   props.displayed_lat / props.displayed_lng — resolved active venue coord
+  //   props.event_active                        — true when active_event_venue_id is set
+  //   f.geometry.coordinates                    — [lng, lat] of the displayed point
+  //                                              (same as displayed_lng/lat for promoters)
+  //
+  // Arc renders only when ALL of:
+  //   - props.event_active === true
+  //   - home_lat / home_lng are populated and finite
+  //   - home location differs from displayed location (no self-arc)
+  //
+  // Sprint 0 constraint: react-globe.gl arcs animate linearly via
+  // arcDashAnimateTime. easeOutCubic + opacity fade deferred to Sprint 1
+  // (Mapbox arc layer supports both natively).
   const foundingArcs = useMemo<FoundingTierArc[]>(() => {
     const arcs: FoundingTierArc[] = [];
     for (const f of tiers.founding_promoter.features) {
       const props = (f.properties ?? {}) as Record<string, unknown>;
-      if (!props.event_active) continue;
+      if (props.event_active !== true) continue;
+
+      const homeLat = Number(props.home_lat);
+      const homeLng = Number(props.home_lng);
+      if (!Number.isFinite(homeLat) || !Number.isFinite(homeLng)) continue;
+
       const cur = f.geometry.coordinates as [number, number];
-      // We don't have home coords in the FeatureCollection — they're in beacons.home_lng/lat
-      // but the RPC resolves to the displayed coord. For Phase 2 we mark the arc as
-      // a self-arc (start == end) which react-globe.gl will skip. Phase 3 will fetch
-      // home coords for proper migration animation.
-      // TODO Phase 3: fetch beacons.home_lng/lat alongside resolved displayed coord.
+      const curLat = cur[1];
+      const curLng = cur[0];
+
+      // Reject self-arcs even if data accidentally lands with home === displayed
+      if (Math.abs(homeLat - curLat) < 0.0001 && Math.abs(homeLng - curLng) < 0.0001) continue;
+
       arcs.push({
-        startLat: cur[1],
-        startLng: cur[0],
-        endLat: cur[1],
-        endLng: cur[0],
+        startLat: homeLat,
+        startLng: homeLng,
+        endLat: curLat,
+        endLng: curLng,
         color: TIER_VISUAL_CONFIG.founding_promoter.accentColor || '#FF4F9A',
         promoter_id: String(f.id),
       });
