@@ -3,7 +3,12 @@
  * Handles: Push notifications, caching, offline support, background sync
  */
 
-const CACHE_VERSION = 'v5';
+// v5 → v6 (2026-05-17): forces deletion of all v5-prefixed caches on activate,
+// fixing the iPhone PWA "stale auth screen" trap where networkFirst would
+// fall back to cached HTML on momentary network hiccup and the v5 STATIC_CACHE
+// still held the pre-"Get into HOTMESS" index.html. Bump every time a fully
+// fresh boot is required for safety.
+const CACHE_VERSION = 'v6';
 const STATIC_CACHE = `hotmess-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `hotmess-dynamic-${CACHE_VERSION}`;
 const API_CACHE = `hotmess-api-${CACHE_VERSION}`;
@@ -172,8 +177,14 @@ async function cacheFirst(request, cacheName, maxItems) {
 
 // Network-first strategy
 async function networkFirst(request, cacheName, maxItems) {
+  // For navigation (HTML) requests bypass the browser's own HTTP cache so the
+  // SW's cache is the only source of stale HTML. Without this, a momentary
+  // 304-from-browser-cache can re-cement an old index.html into STATIC_CACHE
+  // — the trap that kept Phil's iPhone on the pre-"Get into HOTMESS" auth
+  // screen after deploys. `cache: 'reload'` forces a fresh trip to origin.
+  const fetchOpts = request.mode === 'navigate' ? { cache: 'reload' } : undefined;
   try {
-    const networkResponse = await fetch(request);
+    const networkResponse = await fetch(request, fetchOpts);
     
     if (networkResponse.ok) {
       const cache = await caches.open(cacheName);
@@ -345,12 +356,33 @@ self.addEventListener('notificationclose', (event) => {
   console.log('[SW] Notification dismissed:', event.notification.tag);
 });
 
-// Message handler for push subscription management
+// Message handler — SW lifecycle hooks the page can drive
 self.addEventListener('message', (event) => {
   console.log('[SW] Message received:', event.data?.type);
-  
+
+  // Page tells the waiting SW to take over immediately. Used by the
+  // SWUpdateBanner "Refresh" action after an updatefound -> installed
+  // transition.
   if (event.data?.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  }
+
+  // Explicit cache nuke for emergency invalidation. Drives the optional
+  // "Reset app cache" settings button + any future force-recovery path.
+  // Replies via the MessageChannel port the page sent (if any) so the
+  // caller can await completion before unregistering / reloading.
+  if (event.data?.type === 'CLEAR_ALL_CACHES') {
+    event.waitUntil(
+      caches.keys()
+        .then((names) => Promise.all(names.map((n) => caches.delete(n))))
+        .then(() => {
+          event.ports?.[0]?.postMessage({ ok: true });
+        })
+        .catch((err) => {
+          console.error('[SW] CLEAR_ALL_CACHES failed:', err);
+          event.ports?.[0]?.postMessage({ ok: false, error: String(err) });
+        })
+    );
   }
 });
 
