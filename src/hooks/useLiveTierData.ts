@@ -68,7 +68,7 @@ export const TIER_VISUAL_CONFIG: Record<FoundingTier, {
   },
   founding_promoter: {
     label: 'Founding Promoter', cap: 15,
-    color: '#C8962C', accentColor: '#E91E63',
+    color: '#C8962C', accentColor: '#FF4F9A',
     pulse: 'migration', sizeBase: 1.1,
     persistentLabel: false, emissiveStrength: 1.0,
   },
