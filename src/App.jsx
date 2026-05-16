@@ -10,6 +10,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider } from '@/lib/AuthContext';
 import { BootGuardProvider, useBootGuard, BOOT_STATES } from '@/contexts/BootGuardContext';
 import BootRouter from '@/components/shell/BootRouter';
+import SWUpdateBanner from '@/components/shell/SWUpdateBanner';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { createPageUrl } from './utils';
 import { ShopCartProvider } from '@/features/shop/cart/ShopCartContext';
@@ -558,6 +559,8 @@ function App() {
                 </ShopCartProvider>
               </WorldPulseProvider>
               <Toaster />
+              {/* SW update banner — listens for hm_sw_update_available and prompts refresh */}
+              <SWUpdateBanner />
               {/* PIN Lock Overlay - Z-200, above everything */}
               <PinLockOverlay />
             </QueryClientProvider>

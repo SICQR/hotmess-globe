@@ -30,6 +30,21 @@ export function usePushNotifications(): void {
       try {
         const reg = await navigator.serviceWorker.register('/sw.js');
 
+        // Surface a "new version available" signal so the app shell can
+        // prompt the user to refresh. SWUpdateBanner listens for the custom
+        // event and renders a sonner toast with a Refresh action.
+        // First-install case (no existing controller) intentionally skipped
+        // — the page is already on the fresh code, no prompt needed.
+        reg.addEventListener('updatefound', () => {
+          const newSw = reg.installing;
+          if (!newSw) return;
+          newSw.addEventListener('statechange', () => {
+            if (newSw.state === 'installed' && navigator.serviceWorker.controller) {
+              window.dispatchEvent(new CustomEvent('hm_sw_update_available'));
+            }
+          });
+        });
+
         if (Notification.permission !== 'granted') {
           subscribed.current = true;
           return;
