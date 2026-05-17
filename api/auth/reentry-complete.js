@@ -101,10 +101,24 @@ export default async function handler(req, res) {
   // Consume the token
   await sb.from('reentry_tokens').update({ consumed_at: new Date().toISOString() }).eq('id', tokRow.id);
 
+  // Spot number for the welcome message: count of profiles in the assigned
+  // cohort. Since assign_founding_status_slot already wrote this profile's
+  // status under FOR UPDATE, this COUNT(*) includes us and matches the
+  // ordinal of our slot. Cheap; under 1ms at 154 profiles total.
+  let spot_number = null;
+  if (assigned === 'original_50' || assigned === 'founding') {
+    const { count } = await sb
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('founding_status', assigned);
+    spot_number = count ?? null;
+  }
+
   return send(res, 200, {
     ok: true,
     profile_id: profileId,
     username: locked_username,
     founding_status: assigned,
+    spot_number,
   });
 }
