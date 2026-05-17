@@ -72,7 +72,7 @@
     },
     {
       "path": "/api/admin/wa-template-create",
-      "schedule": "*/1 * * * *"
+      "schedule": "*/10 * * * *"
     }
   ],
   "routes": [
