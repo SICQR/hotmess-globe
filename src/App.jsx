@@ -12,6 +12,7 @@ import { BootGuardProvider, useBootGuard, BOOT_STATES } from '@/contexts/BootGua
 import BootRouter from '@/components/shell/BootRouter';
 import SWUpdateBanner from '@/components/shell/SWUpdateBanner';
 import ReentryPage from '@/pages/ReentryPage';
+import PricingPage from '@/pages/Pricing';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { createPageUrl } from './utils';
 import { ShopCartProvider } from '@/features/shop/cart/ShopCartContext';
@@ -477,6 +478,10 @@ const AuthenticatedApp = () => {
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/portal" element={<PortalPage />} />
       <Route path="/reentry" element={<ReentryPage />} />
+      {/* v3 reentry welcome screen secondary CTA targets /pricing. Pricing.jsx
+          component exists but was not routed; wiring here. The tier query
+          param is read by Pricing if implemented; otherwise informational. */}
+      <Route path="/pricing" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><PricingPage /></Suspense>} />
       <Route path="/onboarding" element={<PageRoute pageKey="OnboardingGate" />} />
       <Route path="/onboarding/*" element={<PageRoute pageKey="OnboardingGate" />} />
       

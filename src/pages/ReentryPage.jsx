@@ -112,27 +112,56 @@ export default function ReentryPage() {
     );
   }
   if (phase === 'done') {
-    // v2 corrective: post-AgeGate community-register welcome.
-    // Copy matches the brief's table — no commercial-cohort framing.
-    let welcome;
+    // v3 corrective: full welcome SCREEN (not toast) with 3 CTAs per status.
+    // Headline + body per brief table; CTAs: primary "Hit the globe", secondary
+    // "Upgrade to Hotmess — £7.99/mo" (plain link), tertiary "Or browse the
+    // market". /pricing is the existing membership tier surface (wired in
+    // src/App.jsx for this campaign). Soft commerce — visible, not pushed.
+    let headline, body;
     if (assignedStatus === 'original_50') {
-      welcome = `You're back. OG 50 spot ${spotNumber ?? ''} — that's a permanent badge on your profile. Welcome home.`;
+      headline = `You're back. OG 50 spot ${spotNumber ?? ''}.`;
+      body = 'Permanent badge on your profile. The receipt for showing up first.';
     } else if (assignedStatus === 'founding') {
-      welcome = `You're back. Founding member #${spotNumber ?? ''}. Welcome home.`;
+      headline = `You're back. Founding member #${spotNumber ?? ''}.`;
+      body = 'Welcome home.';
     } else {
-      welcome = `You're back. Welcome home.`;
+      headline = `You're back.`;
+      body = 'Welcome home.';
     }
     return (
       <div className="min-h-screen bg-[#050507] text-white grid place-items-center p-6">
         <div className="max-w-md w-full text-center">
           <div className="text-xs uppercase tracking-[0.12em] text-[#C8962C] mb-3">HOTMESS</div>
-          <p className="text-xl leading-relaxed mb-8">{welcome.trim()}</p>
+          <h1 className="text-2xl leading-snug mb-3 font-medium">{headline.trim()}</h1>
+          <p className="text-base opacity-80 mb-8">{body}</p>
+
+          {/* Primary CTA — dominant */}
           <button
-            onClick={() => navigate('/', { replace: true })}
+            onClick={() => navigate('/pulse', { replace: true })}
             className="w-full py-3 rounded-xl bg-[#C8962C] text-black font-medium"
           >
-            Go to HOTMESS &rarr;
+            Hit the globe &rarr;
           </button>
+
+          {/* Secondary CTA — soft, plain link */}
+          <div className="mt-5">
+            <a
+              href="/pricing?tier=hotmess"
+              className="text-sm text-[#C8962C] underline underline-offset-4 hover:opacity-80"
+            >
+              Upgrade to Hotmess &mdash; &pound;7.99/mo
+            </a>
+          </div>
+
+          {/* Tertiary CTA — softest */}
+          <div className="mt-3">
+            <a
+              href="/market"
+              className="text-sm text-white/60 underline underline-offset-4 hover:opacity-80"
+            >
+              Or browse the market
+            </a>
+          </div>
         </div>
       </div>
     );

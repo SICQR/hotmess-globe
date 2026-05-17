@@ -22,7 +22,11 @@ import { createClient } from '@supabase/supabase-js';
 const DEAN_ID = '10a5232a-867a-4e48-bceb-d24a291c0d61';
 const SITE = 'https://hotmessldn.com';
 const FROM = 'Phil Gizzie <phil@hotmessldn.com>';
-const SUBJECT = 'You showed up too early.';
+const SUBJECT_BASE = 'You showed up too early.';
+// Preview mode appends a disambiguating suffix so Phil's inbox can tell
+// v1/v2/v3 previews apart. Bulk SHIP mode strips the suffix.
+const SUBJECT_SUFFIX = process.env.SUBJECT_SUFFIX || '';
+const SUBJECT = SUBJECT_SUFFIX ? `${SUBJECT_BASE} ${SUBJECT_SUFFIX}` : SUBJECT_BASE;
 const NOTIFICATION_TYPE = 'reentry-invitation';
 
 function mintToken(profileId, secret) {
@@ -40,25 +44,26 @@ function htmlBody(firstName, reentryUrl) {
   <div style="font-size:12px;color:#C8962C;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;">HOTMESS</div>
   <p style="font-size:20px;margin:0 0 16px;">Hey ${fn},</p>
   <p>A while back &mdash; maybe months, maybe over a year &mdash; you signed up for HOTMESS.</p>
-  <p>I want to say sorry. The age gate was broken on half the phones it tried to run on, the sign-up loop pushed people back to where they started, and most of what you came for didn't exist yet.</p>
+  <p>The age gate was broken on half the phones it tried to run on, the sign-up loop pushed people back to where they started, and most of what you came for didn't exist yet.</p>
   <p>You turned up anyway. Thank you.</p>
-  <p>It works now. Properly. Six tier sprites on the globe, SOS rings, proximity for the people who want it and opt-out for the people who don't. Recovery and sobriety as first-class identities, not afterthoughts. Radio, market, drops. The whole thing.</p>
-  <p>You're one of 154 people who showed up before this platform was real. I want you back.</p>
-  <p>If you come back this week, you're marked as one of the OG 50 &mdash; community recognition, a small badge on your profile, the satisfaction of saying you were here when. No price tag. No upsell. Just thank you.</p>
+  <p>It works now. Properly.</p>
+  <p>A live globe of queer people, venues, sounds, and care infrastructure. SOS rings when it gets dark. Proximity for the people who want it, opt-out for the people who don't. Recovery and sobriety as identity, not afterthought. Radio. Drops. HNH MESS. The market.</p>
+  <p>Free to join. Hotmess at &pound;7.99/mo gets you a permanent pin and full proximity. Connected at &pound;19.99/mo unlocks DMs and group chat. &pound;2.99 boosts when you want to be seen for a night.</p>
+  <p>If you come back this week, you're marked OG 50 &mdash; a permanent badge on your profile. The receipt for showing up first. No price tag. Just thank you.</p>
   <p style="margin:24px 0;">
     <a href="${reentryUrl}" style="display:inline-block;background:#C8962C;color:#050507;font-weight:600;padding:14px 24px;border-radius:12px;text-decoration:none;">Come back to HOTMESS &rarr;</a>
   </p>
-  <p>It'll walk you through age verification again (the old one was busted, sorry), let you lock your username before someone else takes it, and put you on the globe.</p>
-  <p>If you don't want to, that's fine too. No follow-up. We're cool. I just owed you the chance.</p>
+  <p>Age check (sorry &mdash; old one was busted), lock your username before someone else takes it, you're on the globe.</p>
+  <p>If you don't want to, no follow-up. We're cool. I owed you the chance.</p>
   <p>Phil<br/>HOTMESS</p>
-  <p style="color:#888;font-size:12px;line-height:1.6;margin-top:24px;">&mdash; Sent from my own address on an actual Sunday morning because I couldn't sleep until I'd written this. Reply if anything's off &mdash; it'll come to me, not a queue.</p>
+  <p style="color:#888;font-size:12px;line-height:1.6;margin-top:24px;">&mdash; Sent from my own address on an actual Sunday morning because I couldn't sleep. Reply if anything's off &mdash; comes to me, not a queue.</p>
   <p style="color:#666;font-size:11px;">If the button doesn't work, paste this URL in your browser: ${reentryUrl}</p>
 </div></body></html>`;
 }
 
 function textBody(firstName, reentryUrl) {
   const fn = firstName || 'mate';
-  return `Hey ${fn},\n\nA while back you signed up for HOTMESS. I want to say sorry. The age gate was broken, the sign-up loop pushed people back, and most of what you came for didn't exist yet. You turned up anyway. Thank you.\n\nIt works now. You're one of 154 people who showed up before this platform was real. I want you back.\n\nIf you come back this week, you're marked as one of the OG 50 — community recognition, a small badge on your profile. No price tag. No upsell.\n\nCome back: ${reentryUrl}\n\nIf you don't, no follow-up. We're cool. I just owed you the chance.\n\nPhil\nHOTMESS`;
+  return `Hey ${fn},\n\nA while back you signed up for HOTMESS. The age gate was broken, the sign-up loop pushed people back, and most of what you came for didn't exist yet. You turned up anyway. Thank you.\n\nIt works now. Properly.\n\nA live globe of queer people, venues, sounds, and care infrastructure. SOS rings when it gets dark. Proximity for the people who want it, opt-out for those who don't. Recovery and sobriety as identity, not afterthought. Radio. Drops. HNH MESS. The market.\n\nFree to join. Hotmess at £7.99/mo gets you a permanent pin and full proximity. Connected at £19.99/mo unlocks DMs and group chat. £2.99 boosts when you want to be seen for a night.\n\nIf you come back this week, you're marked OG 50 — a permanent badge on your profile. The receipt for showing up first. No price tag. Just thank you.\n\nCome back: ${reentryUrl}\n\nAge check (sorry — old one was busted), lock your username, you're on the globe.\n\nIf you don't, no follow-up. We're cool. I owed you the chance.\n\nPhil\nHOTMESS`;
 }
 
 async function sendOne({ to, firstName, reentryUrl, resendKey, replyTo, tags }) {
