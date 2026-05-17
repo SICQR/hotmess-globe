@@ -361,10 +361,102 @@ export async function dispatchSafetyEvent({ supabase, eventId, mode, contactsOve
 
   if (resolvedMode === 'fanout') {
     const stats = await dispatchFanout({ supabase, event, user, contacts, ackBaseUrl });
-    return { mode: 'fanout', event_id: event.id, ...stats };
+    // Cofounder ops alert (Sprint 1 #01 brief §"Three reference flows" / SOS):
+    // for P0 events (sos / get_out) Phil receives notification regardless of
+    // whether the affected user has Phil in their trusted_contacts. Implemented
+    // as a separate parallel send-path so a misconfigured user can't gag the
+    // ops alert. WhatsApp + Telegram are graceful no-ops when their respective
+    // env vars (or — for WhatsApp — a non-expired token) are absent; SMS is
+    // the reliable channel given current ops-channel state.
+    let opsAlert = null;
+    if (isP0Type(event.type)) {
+      opsAlert = await dispatchPhilOpsAlert({ supabase, event, user });
+    }
+    return { mode: 'fanout', event_id: event.id, ops_alert: opsAlert, ...stats };
   }
   const stats = await dispatchSequential({ supabase, event, user, contacts });
   return { mode: 'sequential', event_id: event.id, ...stats };
+}
+
+/**
+ * Cofounder ops alert. Sends Phil an SOS notification regardless of whether
+ * the affected user has Phil in their trusted_contacts. Three channels in
+ * parallel — Telegram (requires PHIL_TELEGRAM_CHAT_ID), WhatsApp (requires
+ * a non-expired WHATSAPP_ACCESS_TOKEN + an approved template), SMS (requires
+ * PHIL_OPS_PHONE + Twilio creds, the reliable path).
+ *
+ * Each adapter call is independently logged to safety_delivery_log under a
+ * synthetic trusted_contact_id=null + role='ops_alert' marker so the health-
+ * check cron can distinguish ops-alert failures from regular fan-out failures.
+ *
+ * NEVER throws — if every channel fails, returns a stats object the caller
+ * can persist for observability.
+ */
+async function dispatchPhilOpsAlert({ supabase, event, user }) {
+  const philPhone = process.env.PHIL_OPS_PHONE?.trim() || null;
+  const philChatId = process.env.PHIL_TELEGRAM_CHAT_ID?.trim() || null;
+  const stats = { delivered: 0, failed: 0, skipped: 0, attempts: [] };
+
+  // Build the contact object the existing adapters expect. user_id_if_internal
+  // null because Phil's not pushable via this path (use his own profile push
+  // subscription via the normal fanout if he's also in the user's trusted
+  // contacts list).
+  const opsContact = {
+    id: null,
+    contact_name: 'Phil (ops)',
+    contact_phone: philPhone,
+    contact_email: null,
+    role: 'ops_alert',
+    notify_on_sos: true,
+    user_id_if_internal: null,
+  };
+
+  // SMS — the high-confidence path. Works as soon as PHIL_OPS_PHONE is set
+  // and the Twilio creds are valid (they are, per current Vercel env).
+  if (philPhone) {
+    const r = await attemptChannel({ supabase, channelName: 'sms', contact: opsContact, user, event, ackBaseUrl: null });
+    stats.attempts.push({ channel: 'sms', ok: !!r.ok, error: r.error || null });
+    if (r.ok) stats.delivered++; else if (r.skipped) stats.skipped++; else stats.failed++;
+  } else {
+    stats.skipped++;
+    stats.attempts.push({ channel: 'sms', ok: false, error: 'PHIL_OPS_PHONE not set' });
+  }
+
+  // WhatsApp — fires only if token + phone present. Graceful when token expired.
+  if (philPhone && (process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN)) {
+    const r = await attemptChannel({ supabase, channelName: 'whatsapp', contact: opsContact, user, event, ackBaseUrl: null });
+    stats.attempts.push({ channel: 'whatsapp', ok: !!r.ok, error: r.error || null });
+    if (r.ok) stats.delivered++; else if (r.skipped) stats.skipped++; else stats.failed++;
+  }
+
+  // Telegram — direct sendMessage to Phil's chat. Requires PHIL_TELEGRAM_CHAT_ID
+  // (captured via /start auth on @HotmessAuthBot per brief 01 §7). Until that
+  // happens this is a skipped no-op.
+  if (philChatId && process.env.TELEGRAM_BOT_TOKEN) {
+    try {
+      const meta = (event.metadata && typeof event.metadata === 'object') ? event.metadata : {};
+      const loc = (meta.lat != null && meta.lng != null)
+        ? `https://maps.google.com/?q=${Number(meta.lat).toFixed(5)},${Number(meta.lng).toFixed(5)}`
+        : '(no location)';
+      const text = `🚨 HOTMESS SOS\n${user.display_name || 'A member'} (id: ${event.user_id.slice(0,8)}) triggered ${event.type.toUpperCase()} at ${event.created_at}.\nLocation: ${loc}\nEvent id: ${event.id}`;
+      const tgRes = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: philChatId, text, parse_mode: 'Markdown' }),
+      });
+      const tgOk = tgRes.ok;
+      stats.attempts.push({ channel: 'telegram', ok: tgOk, error: tgOk ? null : `telegram_${tgRes.status}` });
+      if (tgOk) stats.delivered++; else stats.failed++;
+    } catch (e) {
+      stats.failed++;
+      stats.attempts.push({ channel: 'telegram', ok: false, error: e?.message || 'telegram_threw' });
+    }
+  } else {
+    stats.skipped++;
+    stats.attempts.push({ channel: 'telegram', ok: false, error: 'PHIL_TELEGRAM_CHAT_ID or TELEGRAM_BOT_TOKEN not set' });
+  }
+
+  return stats;
 }
 
 export const __testing = {

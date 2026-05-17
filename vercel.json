@@ -39,6 +39,10 @@
       "schedule": "*/2 * * * *"
     },
     {
+      "path": "/api/cron/sos-health-check",
+      "schedule": "* * * * *"
+    },
+    {
       "path": "/api/admin/cleanup/rate-limits",
       "schedule": "20 4 * * *"
     },
