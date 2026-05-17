@@ -71,7 +71,6 @@
       "schedule": "*/30 * * * *"
     },
     {
-      "_comment": "WhatsApp template bootstrap \u2014 fires once per minute until template lands APPROVED, then removed.",
       "path": "/api/admin/wa-template-create",
       "schedule": "*/1 * * * *"
     }
