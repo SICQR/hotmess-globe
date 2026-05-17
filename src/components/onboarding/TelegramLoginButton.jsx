@@ -101,14 +101,28 @@ export default function TelegramLoginButton({ disabled }) {
     // "Open Telegram" deep-link button so the user isn't stuck on a blank
     // square. Telegram's widget always renders an <iframe> on success; absence
     // is a reliable signal something blocked it (domain whitelist, CSP, etc.).
+    //
+    // Auth funnel rescue (2026-05-17): pair the watchdog with a MutationObserver
+    // so the fallback DISMISSES if the iframe shows up later (slow networks,
+    // late script load). Prevents the duplicate-button experience Glen reported
+    // where both "Log in with Telegram" iframe + "Open Telegram" fallback were
+    // visible at once.
     const watchdog = setTimeout(() => {
       if (!container.querySelector('iframe')) {
         setShowFallback(true);
       }
     }, WIDGET_FALLBACK_MS);
 
+    const observer = new MutationObserver(() => {
+      if (container.querySelector('iframe')) {
+        setShowFallback(false);
+      }
+    });
+    observer.observe(container, { childList: true, subtree: true });
+
     return () => {
       clearTimeout(watchdog);
+      observer.disconnect();
       try { delete window[CALLBACK_GLOBAL]; } catch { window[CALLBACK_GLOBAL] = undefined; }
     };
   }, []);

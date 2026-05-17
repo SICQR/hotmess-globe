@@ -12,6 +12,14 @@ const PUBLIC_PATH_PREFIXES = [
   '/guidelines',
   '/contact',
   '/accessibility',
+  // Reentry + welcome portal pages MUST render for unauthenticated visitors —
+  // these flows ARE the auth entry path (reentry email links for returning
+  // beta members; portal magic links for paid partners). Pre-fix, BootRouter
+  // intercepted them and bounced to OnboardingRouter, which is why the
+  // 17 May reentry campaign saw 68 tokens minted but 0 verify calls in 4h
+  // of runtime logs. Whitelist or the funnel is dead on arrival.
+  '/reentry',
+  '/portal',
 ];
 
 // Branded loading — cinematic pulse
