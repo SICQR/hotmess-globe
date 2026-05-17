@@ -5,18 +5,8 @@
  * to Meta for approval. Idempotent: if the template already exists on
  * the WABA, returns the existing one instead of resubmitting.
  *
- * Auth (any of):
- *   - Bearer ${CRON_SECRET} (or OUTBOX_CRON_SECRET)
- *   - x-vercel-cron header (Vercel cron trigger)
- *
- * Wired into vercel.json as a daily cron so Vercel's edge invokes it
- * automatically. Once the template lands status APPROVED, this file +
- * cron entry can be deleted.
- *
- * Why this exists: post-Glen (8 silent SOS presses 2026-05-17), WhatsApp
- * is supposed to be one of three redundant ops channels to Phil. WABA
- * 823532027036864 had zero templates → WhatsApp ops sends were no-oping.
- * Template bootstrap closes the last gap.
+ * Wired into vercel.json as a per-minute cron until template approved,
+ * then file + cron entry should be removed.
  */
 const WABA_ID = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || '823532027036864';
 
@@ -24,7 +14,6 @@ function json(res, status, body) {
   res.setHeader('Content-Type', 'application/json');
   res.status(status).end(JSON.stringify(body, null, 2));
 }
-
 function isAuthorized(req) {
   if (req.headers['x-vercel-cron']) return true;
   const cronSecret = process.env.CRON_SECRET || process.env.OUTBOX_CRON_SECRET;
@@ -38,27 +27,27 @@ export default async function handler(req, res) {
   if (!isAuthorized(req)) return json(res, 401, { error: 'unauthorized' });
 
   const token = process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN;
-  if (!token) return json(res, 500, { error: 'no_token' });
+  if (!token) {
+    console.error('[wa-template-create] no_token');
+    return json(res, 500, { error: 'no_token' });
+  }
+  console.log('[wa-template-create] starting | waba=' + WABA_ID + ' | token_len=' + token.length + ' | token_prefix=' + token.slice(0,8));
 
-  // 1. Check existing templates first — idempotent.
   const listRes = await fetch(
     `https://graph.facebook.com/v17.0/${WABA_ID}/message_templates?fields=name,status,language,category`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
   const listBody = await listRes.json();
+  console.log('[wa-template-create] list status=' + listRes.status + ' body=' + JSON.stringify(listBody).slice(0,800));
   if (!listRes.ok) {
     return json(res, 502, { error: 'list_failed', status_code: listRes.status, response: listBody });
   }
   const existing = (listBody.data || []).find(t => t.name === 'safety_alert_v1');
   if (existing) {
+    console.log('[wa-template-create] already exists | status=' + existing.status);
     return json(res, 200, { ok: true, action: 'already_exists', template: existing, all: listBody.data });
   }
 
-  // 2. Submit template.
-  //   {{1}} = user display name
-  //   {{2}} = location URL (Google Maps) or '(no location)'
-  //   {{3}} = ack URL
-  // UTILITY = transactional account-related notification (not marketing).
   const template = {
     name: 'safety_alert_v1',
     language: 'en_GB',
@@ -79,7 +68,6 @@ export default async function handler(req, res) {
       { type: 'FOOTER', text: 'HOTMESS member safety' },
     ],
   };
-
   const createRes = await fetch(
     `https://graph.facebook.com/v17.0/${WABA_ID}/message_templates`,
     {
@@ -89,11 +77,11 @@ export default async function handler(req, res) {
     }
   );
   const createBody = await createRes.json();
+  console.log('[wa-template-create] create status=' + createRes.status + ' body=' + JSON.stringify(createBody).slice(0,800));
   return json(res, createRes.ok ? 200 : 502, {
     ok: createRes.ok,
     action: 'submitted',
     status_code: createRes.status,
     response: createBody,
-    template_sent: template,
   });
 }
