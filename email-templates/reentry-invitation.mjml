@@ -1,0 +1,35 @@
+<mjml>
+  <mj-head>
+    <mj-title>You showed up too early.</mj-title>
+    <mj-attributes>
+      <mj-all font-family="-apple-system, BlinkMacSystemFont, 'Inter', sans-serif" />
+      <mj-body background-color="#050507" />
+      <mj-section padding="24px" />
+      <mj-text color="#ECECEC" line-height="1.6" font-size="16px" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#050507">
+    <mj-section background-color="#050507" padding-top="32px">
+      <mj-column>
+        <mj-text font-size="14px" color="#C8962C" letter-spacing="0.12em" text-transform="uppercase">HOTMESS</mj-text>
+        <mj-spacer height="8px" />
+        <mj-text font-size="22px" line-height="1.3" color="#ECECEC">Hey {{first_name}},</mj-text>
+        <mj-spacer height="12px" />
+        <mj-text>A while back — maybe months, maybe over a year — you signed up for HOTMESS.</mj-text>
+        <mj-text>I want to say sorry. The platform wasn't ready. The age gate was broken on half the phones it tried to run on, the sign-up loop pushed people back to where they started, and most of what you came for didn't exist yet.</mj-text>
+        <mj-text>You turned up anyway. Thank you.</mj-text>
+        <mj-text>It works now. Properly. Six tier sprites on the globe, SOS rings, proximity for the people who want it and opt-out for the people who don't. Recovery and sobriety as first-class identities, not afterthoughts. Radio, market, drops. The whole thing.</mj-text>
+        <mj-text>I'm opening the founding cohort this Monday. 50 Original spots. 115 Founding spots after that. First in, first served — no friend-of-friend, no waitlist gymnastics.</mj-text>
+        <mj-spacer height="16px" />
+        <mj-button href="{{reentry_url}}" background-color="#C8962C" color="#050507" font-size="16px" font-weight="600" border-radius="12px" padding="14px 24px">Claim my spot →</mj-button>
+        <mj-spacer height="16px" />
+        <mj-text>It'll walk you through age verification again (the old one was busted, sorry), let you lock your username before someone else takes it, and put you on the globe.</mj-text>
+        <mj-text>If you don't want one, no follow-up email. We're cool. I just owed you the chance.</mj-text>
+        <mj-text>Phil<br/>HOTMESS</mj-text>
+        <mj-spacer height="20px" />
+        <mj-text color="#888" font-size="12px" line-height="1.6">— Sent from my own address on an actual Sunday morning because I couldn't sleep until I'd written this. Reply if anything's off — it'll come to me, not a queue.</mj-text>
+        <mj-text color="#666" font-size="11px" line-height="1.6">If the button doesn't work, paste this URL in your browser: {{reentry_url}}</mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

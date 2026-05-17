@@ -11,6 +11,7 @@ import { AuthProvider } from '@/lib/AuthContext';
 import { BootGuardProvider, useBootGuard, BOOT_STATES } from '@/contexts/BootGuardContext';
 import BootRouter from '@/components/shell/BootRouter';
 import SWUpdateBanner from '@/components/shell/SWUpdateBanner';
+import ReentryPage from '@/pages/ReentryPage';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { createPageUrl } from './utils';
 import { ShopCartProvider } from '@/features/shop/cart/ShopCartContext';
@@ -475,6 +476,7 @@ const AuthenticatedApp = () => {
       <Route path="/auth/*" element={<PageRoute pageKey="Auth" />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/portal" element={<PortalPage />} />
+      <Route path="/reentry" element={<ReentryPage />} />
       <Route path="/onboarding" element={<PageRoute pageKey="OnboardingGate" />} />
       <Route path="/onboarding/*" element={<PageRoute pageKey="OnboardingGate" />} />
       
