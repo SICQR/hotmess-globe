@@ -1,14 +1,22 @@
 /**
- * POST /api/admin/wa-template-create
+ * GET/POST /api/admin/wa-template-create
  *
- * One-time admin endpoint to submit the safety_alert_v1 WhatsApp template
- * for approval. Auth via CRON_SECRET. Idempotent — if template already
- * exists, returns the existing one. Delete this file after Meta approves
- * the template (target deletion: 2026-05-19).
+ * One-shot endpoint that submits the safety_alert_v1 WhatsApp template
+ * to Meta for approval. Idempotent: if the template already exists on
+ * the WABA, returns the existing one instead of resubmitting.
  *
- * Why this exists: post-Glen (8 silent SOS presses 2026-05-17), we need
- * WhatsApp as a redundant ops channel to Phil. WABA 823532027036864 has
- * zero templates → SOS WhatsApp sends fail. This bootstraps the template.
+ * Auth (any of):
+ *   - Bearer ${CRON_SECRET} (or OUTBOX_CRON_SECRET)
+ *   - x-vercel-cron header (Vercel cron trigger)
+ *
+ * Wired into vercel.json as a daily cron so Vercel's edge invokes it
+ * automatically. Once the template lands status APPROVED, this file +
+ * cron entry can be deleted.
+ *
+ * Why this exists: post-Glen (8 silent SOS presses 2026-05-17), WhatsApp
+ * is supposed to be one of three redundant ops channels to Phil. WABA
+ * 823532027036864 had zero templates → WhatsApp ops sends were no-oping.
+ * Template bootstrap closes the last gap.
  */
 const WABA_ID = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || '823532027036864';
 
@@ -18,8 +26,9 @@ function json(res, status, body) {
 }
 
 function isAuthorized(req) {
+  if (req.headers['x-vercel-cron']) return true;
   const cronSecret = process.env.CRON_SECRET || process.env.OUTBOX_CRON_SECRET;
-  if (!cronSecret) return false;
+  if (!cronSecret) return process.env.NODE_ENV !== 'production';
   const auth = req.headers.authorization || '';
   return auth === `Bearer ${cronSecret}`;
 }
@@ -31,32 +40,31 @@ export default async function handler(req, res) {
   const token = process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN;
   if (!token) return json(res, 500, { error: 'no_token' });
 
-  // First check existing templates
+  // 1. Check existing templates first — idempotent.
   const listRes = await fetch(
     `https://graph.facebook.com/v17.0/${WABA_ID}/message_templates?fields=name,status,language,category`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
   const listBody = await listRes.json();
+  if (!listRes.ok) {
+    return json(res, 502, { error: 'list_failed', status_code: listRes.status, response: listBody });
+  }
   const existing = (listBody.data || []).find(t => t.name === 'safety_alert_v1');
   if (existing) {
     return json(res, 200, { ok: true, action: 'already_exists', template: existing, all: listBody.data });
   }
 
-  // Template body uses 3 positional params:
+  // 2. Submit template.
   //   {{1}} = user display name
   //   {{2}} = location URL (Google Maps) or '(no location)'
   //   {{3}} = ack URL
-  // Category UTILITY — safety alert is account-related, not marketing.
+  // UTILITY = transactional account-related notification (not marketing).
   const template = {
     name: 'safety_alert_v1',
     language: 'en_GB',
     category: 'UTILITY',
     components: [
-      {
-        type: 'HEADER',
-        format: 'TEXT',
-        text: 'HOTMESS SOS',
-      },
+      { type: 'HEADER', format: 'TEXT', text: 'HOTMESS SOS' },
       {
         type: 'BODY',
         text: '{{1}} just pressed SOS in HOTMESS.\n\nLocation: {{2}}\n\nAcknowledge: {{3}}',
@@ -68,10 +76,7 @@ export default async function handler(req, res) {
           ]],
         },
       },
-      {
-        type: 'FOOTER',
-        text: 'HOTMESS member safety',
-      },
+      { type: 'FOOTER', text: 'HOTMESS member safety' },
     ],
   };
 
