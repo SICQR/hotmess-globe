@@ -33,6 +33,11 @@ export default function ReentryPage() {
   const [submitting, setSubmitting] = useState(false);
   const [assignedStatus, setAssignedStatus] = useState(null);
   const [spotNumber, setSpotNumber] = useState(null);
+  // AUTH FUNNEL RESCUE (2026-05-17): reentry-complete now returns a magic-link
+  // action_link that exchanges for a Supabase session at /auth/callback.
+  // We use it as the primary CTA on the welcome screen so members land
+  // authenticated rather than bouncing to /auth.
+  const [actionLink, setActionLink] = useState(null);
 
   useEffect(() => {
     if (!token) { setError('No reentry token in URL.'); setPhase('error'); return; }
@@ -82,6 +87,9 @@ export default function ReentryPage() {
       // params. Keeps copy under our control and matches the brief's table.
       setAssignedStatus(d.founding_status);
       setSpotNumber(d.spot_number ?? null);
+      // Auth funnel rescue: stash the magic-link from /reentry-complete so
+      // the done phase primary CTA exchanges it for a real session.
+      setActionLink(d.action_link ?? null);
       setPhase('done');
       setSubmitting(false);
     } catch (e) {
@@ -135,13 +143,27 @@ export default function ReentryPage() {
           <h1 className="text-2xl leading-snug mb-3 font-medium">{headline.trim()}</h1>
           <p className="text-base opacity-80 mb-8">{body}</p>
 
-          {/* Primary CTA — dominant */}
-          <button
-            onClick={() => navigate('/pulse', { replace: true })}
-            className="w-full py-3 rounded-xl bg-[#C8962C] text-black font-medium"
-          >
-            Hit the globe &rarr;
-          </button>
+          {/* Primary CTA — dominant.
+              Auth funnel rescue: if reentry-complete returned a magic-link
+              action_link, route the click through it so the user picks up
+              a real Supabase session via /auth/callback before landing on
+              /pulse. Fallback (no link) navigates directly — BootRouter
+              will then send them to /auth to sign in manually. */}
+          {actionLink ? (
+            <a
+              href={actionLink}
+              className="block w-full py-3 rounded-xl bg-[#C8962C] text-black font-medium text-center no-underline"
+            >
+              Enter HOTMESS &rarr;
+            </a>
+          ) : (
+            <button
+              onClick={() => navigate('/pulse', { replace: true })}
+              className="w-full py-3 rounded-xl bg-[#C8962C] text-black font-medium"
+            >
+              Hit the globe &rarr;
+            </button>
+          )}
 
           {/* Secondary CTA — soft, plain link */}
           <div className="mt-5">

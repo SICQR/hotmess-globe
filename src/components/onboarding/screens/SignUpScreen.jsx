@@ -28,7 +28,14 @@ import PhoneOtpButton from '../PhoneOtpButton';
 
 const GOLD = '#C8962C';
 
-const APPLE_ENABLED = true;
+// AUTH FUNNEL RESCUE (2026-05-17): Apple Sign-In is broken — no APPLE_* env
+// vars exist on hotmess-globe Vercel (confirmed via `vercel env ls`). The
+// .p8 key isn't accessible from this thread either. Per the brief's Issue
+// 4 launch-day mitigation: hide the Apple button entirely behind an env
+// flag rather than show a dead CTA. When Phil hands over the .p8 + sets
+// the secrets, flip VITE_AUTH_APPLE_ENABLED=true in Vercel and the button
+// reappears with no code change.
+const APPLE_ENABLED = import.meta.env.VITE_AUTH_APPLE_ENABLED === 'true';
 
 function isInWebView() {
   const ua = navigator.userAgent || '';
@@ -206,6 +213,38 @@ export default function SignUpScreen({ isSignIn = false }) {
               <p className="text-white/25 text-[10px] text-center leading-relaxed">
                 Use 8+ chars. We'll never email you marketing.
               </p>
+            )}
+            {isSignIn && (
+              <button
+                type="button"
+                onClick={async () => {
+                  // AUTH FUNNEL RESCUE (2026-05-17): wire forgot-password.
+                  // Brief Issue 3: members locked out if they don't remember
+                  // their password. Fire Supabase's reset email; show a toast.
+                  if (!email.trim()) {
+                    setError('Enter your email above first.');
+                    return;
+                  }
+                  setError('');
+                  setInfo('');
+                  try {
+                    const { error: rstErr } = await supabase.auth.resetPasswordForEmail(
+                      email.trim(),
+                      { redirectTo: 'https://hotmessldn.com/reset-password' },
+                    );
+                    if (rstErr) {
+                      setError(rstErr.message);
+                    } else {
+                      setInfo("Sent. Check your inbox for a reset link. Still stuck? Email phil@hotmessldn.com.");
+                    }
+                  } catch (e) {
+                    setError(e?.message || 'Failed to send reset email.');
+                  }
+                }}
+                className="text-white/40 text-[11px] hover:text-white/70 transition-colors underline underline-offset-2 self-center"
+              >
+                Forgot password?
+              </button>
             )}
           </form>
         )}

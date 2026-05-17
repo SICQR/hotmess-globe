@@ -114,11 +114,40 @@ export default async function handler(req, res) {
     spot_number = count ?? null;
   }
 
+  // AUTH FUNNEL RESCUE (2026-05-17): reentry-complete used to return without
+  // creating a Supabase session. Members completed reentry but had no auth
+  // cookie, so /pulse and every authed route bounced them to /auth — the
+  // bounce Glen and 67 other recipients hit. Fix: mint a magic-link via
+  // admin.generateLink and return its action_link. ReentryPage's done phase
+  // surfaces it as a primary "Enter HOTMESS →" CTA that exchanges the
+  // magic-link token for a real session via /auth/callback.
+  let action_link = null;
+  try {
+    const { data: au, error: auErr } = await sb.auth.admin.getUserById(profileId);
+    const userEmail = au?.user?.email;
+    if (!auErr && userEmail) {
+      const { data: linkData, error: linkErr } = await sb.auth.admin.generateLink({
+        type: 'magiclink',
+        email: userEmail,
+        options: { redirectTo: 'https://hotmessldn.com/auth/callback' },
+      });
+      if (!linkErr) {
+        action_link = linkData?.properties?.action_link ?? null;
+      }
+    }
+  } catch (e) {
+    // Non-fatal: the reentry write already succeeded; if magic-link mint
+    // fails, the client falls back to its own "request a sign-in link"
+    // affordance on the welcome screen. Log it for observability.
+    console.warn('[reentry-complete] magic-link mint failed (non-fatal):', e?.message || e);
+  }
+
   return send(res, 200, {
     ok: true,
     profile_id: profileId,
     username: locked_username,
     founding_status: assigned,
     spot_number,
+    action_link,
   });
 }
