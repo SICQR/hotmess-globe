@@ -72,7 +72,7 @@ export default async function handler(req, res) {
       { type: 'HEADER', format: 'TEXT', text: 'HOTMESS SOS' },
       {
         type: 'BODY',
-        text: 'Member {{1}} just pressed SOS in HOTMESS.\n\nLocation: {{2}}\n\nAcknowledge here: {{3}} — call the member now.',
+        text: 'HOTMESS SOS from member {{1}}. Location: {{2}}. Acknowledge here: {{3}} — please respond now.',
         example: { body_text: [['Glen', 'https://maps.google.com/?q=51.5074,-0.1278', 'https://hotmessldn.com/sos/ack/abc123']] },
       },
       { type: 'FOOTER', text: 'HOTMESS member safety' },
