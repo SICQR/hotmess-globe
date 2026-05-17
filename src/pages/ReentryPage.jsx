@@ -31,6 +31,8 @@ export default function ReentryPage() {
   const [nextSlot, setNextSlot] = useState(null);
   const [username, setUsername] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [assignedStatus, setAssignedStatus] = useState(null);
+  const [spotNumber, setSpotNumber] = useState(null);
 
   useEffect(() => {
     if (!token) { setError('No reentry token in URL.'); setPhase('error'); return; }
@@ -75,7 +77,13 @@ export default function ReentryPage() {
         setSubmitting(false);
         return;
       }
-      navigate(`/?welcome=founding&status=${d.founding_status}&username=${encodeURIComponent(d.username)}`, { replace: true });
+      // v2 corrective: stay on /reentry and show the community-register
+      // welcome message in-page rather than navigating to home with query
+      // params. Keeps copy under our control and matches the brief's table.
+      setAssignedStatus(d.founding_status);
+      setSpotNumber(d.spot_number ?? null);
+      setPhase('done');
+      setSubmitting(false);
     } catch (e) {
       setError(e.message || 'Network error');
       setSubmitting(false);
@@ -103,13 +111,38 @@ export default function ReentryPage() {
       </div>
     );
   }
+  if (phase === 'done') {
+    // v2 corrective: post-AgeGate community-register welcome.
+    // Copy matches the brief's table — no commercial-cohort framing.
+    let welcome;
+    if (assignedStatus === 'original_50') {
+      welcome = `You're back. OG 50 spot ${spotNumber ?? ''} — that's a permanent badge on your profile. Welcome home.`;
+    } else if (assignedStatus === 'founding') {
+      welcome = `You're back. Founding member #${spotNumber ?? ''}. Welcome home.`;
+    } else {
+      welcome = `You're back. Welcome home.`;
+    }
+    return (
+      <div className="min-h-screen bg-[#050507] text-white grid place-items-center p-6">
+        <div className="max-w-md w-full text-center">
+          <div className="text-xs uppercase tracking-[0.12em] text-[#C8962C] mb-3">HOTMESS</div>
+          <p className="text-xl leading-relaxed mb-8">{welcome.trim()}</p>
+          <button
+            onClick={() => navigate('/', { replace: true })}
+            className="w-full py-3 rounded-xl bg-[#C8962C] text-black font-medium"
+          >
+            Go to HOTMESS &rarr;
+          </button>
+        </div>
+      </div>
+    );
+  }
   // lock_username
   return (
     <div className="min-h-screen bg-[#050507] text-white grid place-items-center p-6">
       <div className="max-w-md w-full">
         <h1 className="text-2xl font-medium mb-2">Lock your username</h1>
         <p className="opacity-70 mb-6 text-sm">
-          You're getting a <span className="text-[#C8962C]">{nextSlot === 'original_50' ? 'Original 50' : nextSlot === 'founding' ? 'Founding' : 'Early'}</span> spot.
           Pick the username you want before someone else takes it.
         </p>
         <input

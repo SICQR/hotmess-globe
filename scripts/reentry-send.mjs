@@ -40,15 +40,16 @@ function htmlBody(firstName, reentryUrl) {
   <div style="font-size:12px;color:#C8962C;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;">HOTMESS</div>
   <p style="font-size:20px;margin:0 0 16px;">Hey ${fn},</p>
   <p>A while back &mdash; maybe months, maybe over a year &mdash; you signed up for HOTMESS.</p>
-  <p>I want to say sorry. The platform wasn't ready. The age gate was broken on half the phones it tried to run on, the sign-up loop pushed people back to where they started, and most of what you came for didn't exist yet.</p>
+  <p>I want to say sorry. The age gate was broken on half the phones it tried to run on, the sign-up loop pushed people back to where they started, and most of what you came for didn't exist yet.</p>
   <p>You turned up anyway. Thank you.</p>
   <p>It works now. Properly. Six tier sprites on the globe, SOS rings, proximity for the people who want it and opt-out for the people who don't. Recovery and sobriety as first-class identities, not afterthoughts. Radio, market, drops. The whole thing.</p>
-  <p>I'm opening the founding cohort this Monday. 50 Original spots. 115 Founding spots after that. First in, first served &mdash; no friend-of-friend, no waitlist gymnastics.</p>
+  <p>You're one of 154 people who showed up before this platform was real. I want you back.</p>
+  <p>If you come back this week, you're marked as one of the OG 50 &mdash; community recognition, a small badge on your profile, the satisfaction of saying you were here when. No price tag. No upsell. Just thank you.</p>
   <p style="margin:24px 0;">
-    <a href="${reentryUrl}" style="display:inline-block;background:#C8962C;color:#050507;font-weight:600;padding:14px 24px;border-radius:12px;text-decoration:none;">Claim my spot &rarr;</a>
+    <a href="${reentryUrl}" style="display:inline-block;background:#C8962C;color:#050507;font-weight:600;padding:14px 24px;border-radius:12px;text-decoration:none;">Come back to HOTMESS &rarr;</a>
   </p>
   <p>It'll walk you through age verification again (the old one was busted, sorry), let you lock your username before someone else takes it, and put you on the globe.</p>
-  <p>If you don't want one, no follow-up email. We're cool. I just owed you the chance.</p>
+  <p>If you don't want to, that's fine too. No follow-up. We're cool. I just owed you the chance.</p>
   <p>Phil<br/>HOTMESS</p>
   <p style="color:#888;font-size:12px;line-height:1.6;margin-top:24px;">&mdash; Sent from my own address on an actual Sunday morning because I couldn't sleep until I'd written this. Reply if anything's off &mdash; it'll come to me, not a queue.</p>
   <p style="color:#666;font-size:11px;">If the button doesn't work, paste this URL in your browser: ${reentryUrl}</p>
@@ -57,7 +58,7 @@ function htmlBody(firstName, reentryUrl) {
 
 function textBody(firstName, reentryUrl) {
   const fn = firstName || 'mate';
-  return `Hey ${fn},\n\nA while back you signed up for HOTMESS. I want to say sorry. The platform wasn't ready.\n\nIt works now. I'm opening the founding cohort this Monday. 50 Original spots. 115 Founding spots after that. First in, first served.\n\nIf you want one: ${reentryUrl}\n\nIf you don't, no follow-up. I just owed you the chance.\n\nPhil\nHOTMESS`;
+  return `Hey ${fn},\n\nA while back you signed up for HOTMESS. I want to say sorry. The age gate was broken, the sign-up loop pushed people back, and most of what you came for didn't exist yet. You turned up anyway. Thank you.\n\nIt works now. You're one of 154 people who showed up before this platform was real. I want you back.\n\nIf you come back this week, you're marked as one of the OG 50 — community recognition, a small badge on your profile. No price tag. No upsell.\n\nCome back: ${reentryUrl}\n\nIf you don't, no follow-up. We're cool. I just owed you the chance.\n\nPhil\nHOTMESS`;
 }
 
 async function sendOne({ to, firstName, reentryUrl, resendKey, replyTo, tags }) {
