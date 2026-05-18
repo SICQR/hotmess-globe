@@ -42,25 +42,14 @@ export default function SafetyFAB() {
   const thresholdReachedRef = useRef({ exit: false, disappear: false });
 
   // Triple Tap Handler
+  // Safety-critical: never dispatch SOS from repeated taps.
+  // SOS must use an explicit consent + hold/confirm + cancel-window flow.
   const handleTap = useCallback(() => {
-    console.log(`[SafetyFAB] Tap count: ${tapCount + 1}`);
-    setTapCount(prev => {
-      const next = prev + 1;
-      if (next === 3) {
-        console.log('[SafetyFAB] SOS TRIGGERED (Triple Tap)');
-        if (navigator?.vibrate) navigator.vibrate([50, 30, 50]);
-        triggerSOS({ silent: true });
-        return 0;
-      }
-      return next;
-    });
-
-    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
-    tapTimerRef.current = setTimeout(() => {
-      setTapCount(0);
-      console.log('[SafetyFAB] Tap sequence reset');
-    }, 600);
-  }, [triggerSOS, tapCount]);
+    console.log('[SafetyFAB] Shield tapped — opening safety menu');
+    setTapCount(0);
+    setIsExpanded(prev => !prev);
+    try { if (navigator?.vibrate) navigator.vibrate(35); } catch {}
+  }, []);
 
   const startHold = useCallback((e) => {
     holdStartRef.current = performance.now();
