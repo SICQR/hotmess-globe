@@ -11,6 +11,33 @@ interface UsePullToRefreshOptions {
   scrollRef?: RefObject<HTMLElement | null>;
 }
 
+function shouldIgnorePullToRefresh(target: HTMLElement | null) {
+  let check = target;
+  while (check && check !== document.body) {
+    // Any complex gesture surface can opt out. Pulse/Globe uses this so dragging
+    // the Earth does not trigger the global app refresh loop.
+    if (check.hasAttribute('data-pull-refresh-ignore')) return true;
+    if (check.hasAttribute('data-globe-interactive')) return true;
+
+    const style = window.getComputedStyle(check);
+    const isFixed = style.position === 'fixed' || style.position === 'absolute';
+    const zIndex = parseInt(style.zIndex, 10);
+
+    // If we are touching something elevated (z-index > 50) that is fixed/absolute,
+    // it's likely a sheet, FAB, nav, modal, or overlay.
+    if (isFixed && zIndex >= 50) return true;
+
+    // Explicit sheet / modal checks.
+    if (check.hasAttribute('data-sheet') || check.getAttribute('role') === 'dialog') return true;
+
+    // Existing scroll check: do not steal gestures from nested scroll areas.
+    if (check.scrollTop > 0) return true;
+
+    check = check.parentElement as HTMLElement;
+  }
+  return false;
+}
+
 /**
  * usePullToRefresh — Global gesture for site reload (or custom refresh callback).
  *
@@ -28,7 +55,6 @@ export function usePullToRefresh(options: UsePullToRefreshOptions = {}) {
   const onRefreshRef = useRef(onRefresh);
   onRefreshRef.current = onRefresh;
 
-  
   const startY = useRef(0);
   const currentY = useRef(0);
   const isPulling = useRef(false);
@@ -36,47 +62,28 @@ export function usePullToRefresh(options: UsePullToRefreshOptions = {}) {
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
       if (disabled) return;
-      
-      const target = e.target as HTMLElement;
 
-      // SAFETY: Bail if touch starts inside a sheet, modal, or fixed overlay
-      // We check for specific roles and common sheet classes
-      let check = target;
-      while (check && check !== document.body) {
-        const style = window.getComputedStyle(check);
-        const isFixed = style.position === 'fixed' || style.position === 'absolute';
-        const zIndex = parseInt(style.zIndex, 10);
-        
-        // If we are touching something elevated (z-index > 50) that is fixed/absolute, 
-        // it's likely a sheet or overlay.
-        if (isFixed && zIndex >= 50) return;
-        
-        // Explicit sheet check
-        if (check.hasAttribute('data-sheet') || check.getAttribute('role') === 'dialog') return;
-        
-        if (check.scrollTop > 0) return; // Existing scroll check
-        check = check.parentElement as HTMLElement;
-      }
-      
+      const target = e.target as HTMLElement | null;
+      if (shouldIgnorePullToRefresh(target)) return;
+
       const isAtTop = window.scrollY <= 0;
-
-
       if (isAtTop) {
         startY.current = e.touches[0].pageY;
+        currentY.current = startY.current;
         isPulling.current = true;
       }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
       if (!isPulling.current || isRefreshing) return;
-      
+
       currentY.current = e.touches[0].pageY;
       const diff = currentY.current - startY.current;
-      
+
       if (diff > 0) {
         // Prevent default browser behavior (bouncing)
         if (e.cancelable) e.preventDefault();
-        
+
         const progress = Math.min(diff / THRESHOLD, 1.2);
         setPullProgress(progress);
       } else {
@@ -87,7 +94,7 @@ export function usePullToRefresh(options: UsePullToRefreshOptions = {}) {
 
     const handleTouchEnd = () => {
       if (!isPulling.current) return;
-      
+
       const diff = currentY.current - startY.current;
       if (diff >= THRESHOLD) {
         setIsRefreshing(true);
@@ -112,7 +119,7 @@ export function usePullToRefresh(options: UsePullToRefreshOptions = {}) {
       } else {
         setPullProgress(0);
       }
-      
+
       isPulling.current = false;
     };
 
@@ -126,7 +133,6 @@ export function usePullToRefresh(options: UsePullToRefreshOptions = {}) {
       window.removeEventListener('touchend', handleTouchEnd);
     };
   }, [isRefreshing, disabled]);
-
 
   return {
     pullProgress,
