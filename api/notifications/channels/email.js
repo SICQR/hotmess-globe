@@ -8,7 +8,7 @@
 import { buildAlertCopy } from './_types.js';
 
 const FROM_ADDR = process.env.RESEND_SAFETY_FROM
-  || 'HOTMESS Safety <safety@send.hotmessldn.com>';
+  || 'HOTMESS Safety <safety@hotmessldn.com>';  // verified apex; send.* is not in Resend (free plan, 1 domain)
 
 const FETCH_TIMEOUT_MS = 10_000;
 

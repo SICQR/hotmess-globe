@@ -43,7 +43,7 @@ export const CHANNEL_MAP = {
   voice: voiceChannel,
 };
 
-const FANOUT_IMMEDIATE = ['push', 'sms', 'whatsapp', 'email'];
+const FANOUT_IMMEDIATE = ['push', 'sms', 'whatsapp', 'telegram', 'email'];  // telegram added by audit 2026-05-18 (multichannel)
 // Voice is held back as the 90-second escalation if no other channel acks.
 // The voice escalation cron is round-4 work; the constant moves there with it.
 
@@ -230,9 +230,28 @@ async function dispatchFanout({ supabase, event, user, contacts, ackBaseUrl }) {
   const stats = { delivered: 0, failed: 0, skipped: 0, attempts: [] };
   if (!contacts.length) return stats;
 
+  // Per-contact channels_enabled gate (audit 2026-05-18). Each contact's row
+  // carries a JSONB { sms, whatsapp, telegram, email } map. Push is sent
+  // when the contact is an internal user (separate path inside attemptChannel).
+  // Push is always attempted (gated separately on user_id_if_internal).
+  function channelEnabledForContact(contact, ch) {
+    if (ch === 'push') return true;
+    const ce = (contact && contact.channels_enabled) || null;
+    if (!ce || typeof ce !== 'object') {
+      // Legacy contact (no per-row map): infer from which value-bearing field is populated.
+      if (ch === 'sms')      return !!contact.contact_phone;
+      if (ch === 'whatsapp') return !!(contact.contact_whatsapp || contact.contact_phone);
+      if (ch === 'telegram') return !!(contact.contact_telegram_chat_id || contact.contact_telegram_handle);
+      if (ch === 'email')    return !!contact.contact_email;
+      return false;
+    }
+    return ce[ch] === true;
+  }
+
   const tasks = [];
   for (const contact of contacts) {
     for (const ch of FANOUT_IMMEDIATE) {
+      if (!channelEnabledForContact(contact, ch)) continue;
       tasks.push(attemptChannel({ supabase, channelName: ch, contact, user, event, ackBaseUrl }));
     }
   }
