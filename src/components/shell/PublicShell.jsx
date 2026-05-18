@@ -9,11 +9,11 @@ import ResetPassword from '@/pages/ResetPassword';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
 import { PrivacyPolicyPage, LegalPage } from '@/pages/legal/LegalPages';
 
-const Spinner = () => (
-  <div className="fixed inset-0 bg-black flex items-center justify-center">
-    <div className="w-5 h-5 border-2 border-[#C8962C]/30 border-t-[#C8962C] rounded-full animate-spin" />
-  </div>
-);
+// Polish-sweep 2026-05-18 Issue 3: brand the cold-visitor transition state.
+// Was a 5px spinner — visually indistinguishable from a frozen black page on a
+// fresh page-load. Now: pulsing gold ring matches the Pulse brand language.
+import GoldPulseLoader from '@/components/ui/GoldPulseLoader';
+const Spinner = () => <GoldPulseLoader />;
 
 /**
  * PublicShell - Routes available without authentication

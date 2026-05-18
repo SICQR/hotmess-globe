@@ -47,7 +47,29 @@ export default async function handler(req, res) {
 
   // Body parse — Vercel parses JSON bodies automatically when content-type is set.
   const body = (typeof req.body === 'object' && req.body) ? req.body : {};
-  const { lat = null, lng = null, trigger = 'silent_gesture' } = body;
+  const { lat = null, lng = null, trigger = 'silent_gesture', escalation = false } = body;
+
+  // ── Rate limit (Polish sweep 2026-05-18 Issue 1) ──────────────────────────
+  // Hard cap: 3 SOS events / 1 hour / user, UNLESS metadata.escalation=true.
+  // Why: prevents duplicate-alert spam (cost + anxiety for trusted contacts)
+  // while keeping the escape hatch for genuine worsening situations.
+  if (!escalation) {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: recent } = await supabaseAdmin
+      .from('safety_events')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('type', 'sos')
+      .gte('created_at', oneHourAgo);
+    if ((recent ?? 0) >= 3) {
+      return res.status(429).json({
+        error: 'rate_limited',
+        message: "You've sent 3 help signals in the last hour. Confirm escalation only if your situation has worsened.",
+        recent_count: recent,
+        window: '1h',
+      });
+    }
+  }
 
   try {
     const { data: eventRow, error: evErr } = await supabaseAdmin
@@ -55,7 +77,7 @@ export default async function handler(req, res) {
       .insert({
         user_id: user.id,
         type: 'sos',
-        metadata: { trigger, lat, lng },
+        metadata: { trigger, lat, lng, escalation: !!escalation },
       })
       .select('id')
       .single();
