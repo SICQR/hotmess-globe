@@ -3,17 +3,31 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
 import logger from '@/utils/logger';
 
+const CALLBACK_SETTLING_KEY = 'hm_auth_callback_settling';
+const isCallbackPath = () => (
+  typeof window !== 'undefined' &&
+  window.location?.pathname?.startsWith('/auth/callback')
+);
+
+// Set the guard at module-load time, not only inside useEffect. The app has
+// auth/onboarding providers mounted above this route; if they wake up during
+// callback hydration, they must see that callback settlement is already in
+// progress before any OAuth launcher can re-enter /authorize.
+try {
+  if (isCallbackPath()) sessionStorage.setItem(CALLBACK_SETTLING_KEY, 'true');
+} catch {}
+
 /**
  * OAuth / Magic Link Callback Handler
  *
+ * This page is the single owner of Supabase callback settlement. Do not let
+ * BootRouter / onboarding auth UI relaunch OAuth while this route is mounted.
+ *
+ * Handles both modern PKCE links (`?code=...`) and older implicit/hash links.
  * After Supabase verifies the token:
  * - Returning user (onboarding_completed = true) → /pulse
  * - New / incomplete user → /
- * - Bot/scraper hitting a stale link (400 error) → / gracefully
- *
- * The BootGuardContext will handle final routing from / anyway, so /pulse
- * for returning users is an optimistic fast-path. Pulse is the primary
- * destination per the Grindr-fast directive (2026-05-09).
+ * - Bot/scraper hitting a stale/expired link → graceful UI or splash
  */
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -22,20 +36,43 @@ export default function AuthCallback() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const handleCallback = async () => {
+    let cancelled = false;
+    let retryTimer = null;
+
+    const finishWithError = (message, dest = '/') => {
+      if (cancelled) return;
+      logger.error('Auth callback failed', { error: message });
+      setError(message || 'Sign in failed');
+      setStatus('error');
+      retryTimer = setTimeout(() => {
+        try { sessionStorage.removeItem(CALLBACK_SETTLING_KEY); } catch {}
+        if (!cancelled) navigate(dest, { replace: true });
+      }, 1200);
+    };
+
+    const readSession = async () => {
+      const { data, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      return data?.session || null;
+    };
+
+    const settleCallback = async () => {
       try {
-        // Check both URL search params AND hash fragment for errors.
-        // Supabase sometimes returns OAuth errors in the hash fragment.
+        try { sessionStorage.setItem(CALLBACK_SETTLING_KEY, 'true'); } catch {}
+
         const errorParam = searchParams.get('error');
         const errorDescription = searchParams.get('error_description');
+        const code = searchParams.get('code');
 
-        // Also check hash fragment (Supabase auth errors sometimes land here)
+        // Supabase may return auth errors/tokens in the hash fragment.
         const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
         const hashError = hashParams.get('error') || hashParams.get('error_code');
         const hashErrorDesc = hashParams.get('error_description');
 
-        // Detect expired magic link / OTP
-        const allErrors = [errorParam, errorDescription, hashError, hashErrorDesc].join(' ').toLowerCase();
+        const allErrors = [errorParam, errorDescription, hashError, hashErrorDesc]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
         const isExpired = allErrors.includes('expired') || allErrors.includes('otp_expired');
 
         if (isExpired) {
@@ -45,66 +82,75 @@ export default function AuthCallback() {
         }
 
         if (!errorParam && (hashError || hashErrorDesc)) {
-          logger.error('OAuth error from hash fragment', { error: hashError, description: hashErrorDesc });
-          navigate('/', { replace: true });
+          finishWithError(hashErrorDesc || hashError || 'OAuth error from provider');
           return;
         }
 
         if (errorParam) {
-          logger.error('OAuth error from provider', { error: errorParam, description: errorDescription });
-          navigate('/', { replace: true });
+          finishWithError(errorDescription || errorParam);
           return;
         }
 
-        // Wait for Supabase to process the hash (magic link / OAuth token)
-        const { data, error: sessionError } = await supabase.auth.getSession();
+        let session = null;
 
-        if (sessionError) {
-          // "code already used" means the user hit back during OAuth and replayed
-          // the callback URL. They likely already have a valid session — send them in.
-          const msg = sessionError.message || '';
-          if (msg.includes('code') && (msg.includes('already') || msg.includes('expired') || msg.includes('used'))) {
-            logger.warn('OAuth code already used — checking for existing session', { error: msg });
-            const { data: existing } = await supabase.auth.getSession();
-            if (existing?.session?.user?.id) {
-              await routeAfterAuth(existing.session.user.id, navigate);
+        // Modern Supabase OAuth/magic-link callbacks use PKCE: /auth/callback?code=...
+        // getSession() alone is not enough here; we must exchange the code exactly once.
+        if (code) {
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+
+          if (exchangeError) {
+            const msg = exchangeError.message || '';
+            const maybeReplayedCode =
+              msg.toLowerCase().includes('code') &&
+              ['already', 'expired', 'used'].some((needle) => msg.toLowerCase().includes(needle));
+
+            if (!maybeReplayedCode) {
+              finishWithError(msg || 'Could not complete sign in');
               return;
             }
-            // No session at all — redirect to /pulse as a best-effort
-            // (BootGuardContext will redirect to auth if truly unauthenticated)
-            navigate('/pulse', { replace: true });
-            return;
-          }
 
-          logger.error('Session error during callback', { error: sessionError.message });
-          navigate('/', { replace: true });
-          return;
-        }
-
-        if (data?.session?.user?.id) {
-          setStatus('success');
-          await routeAfterAuth(data.session.user.id, navigate);
-          return;
-        }
-
-        // Retry once — hash may not be processed yet
-        setTimeout(async () => {
-          const { data: retryData } = await supabase.auth.getSession();
-          if (retryData?.session?.user?.id) {
-            await routeAfterAuth(retryData.session.user.id, navigate);
+            logger.warn('Auth code replay/expiry during callback — checking existing session', { error: msg });
+            session = await readSession();
           } else {
-            // Timed out — send back to splash
-            navigate('/', { replace: true });
+            session = data?.session || null;
           }
-        }, 2000);
+        } else {
+          session = await readSession();
+        }
+
+        if (session?.user?.id) {
+          if (cancelled) return;
+          setStatus('success');
+          await routeAfterAuth(session.user.id, navigate);
+          return;
+        }
+
+        // Hash/implicit links can need one tick before supabase-js persists the session.
+        retryTimer = setTimeout(async () => {
+          try {
+            const retrySession = await readSession();
+            if (retrySession?.user?.id) {
+              if (cancelled) return;
+              setStatus('success');
+              await routeAfterAuth(retrySession.user.id, navigate);
+              return;
+            }
+            finishWithError('No session found after callback');
+          } catch (err) {
+            finishWithError(err?.message || 'Could not complete sign in');
+          }
+        }, 500);
       } catch (err) {
-        logger.error('Unexpected error in callback', { error: err.message });
-        // Fail gracefully — BootGuardContext will recover
-        navigate('/', { replace: true });
+        finishWithError(err?.message || 'Unexpected callback error');
       }
     };
 
-    handleCallback();
+    settleCallback();
+
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+    };
   }, [navigate, searchParams]);
 
   return (
@@ -206,12 +252,14 @@ async function routeAfterAuth(userId, navigate) {
     } catch {}
 
     const dest = profile?.onboarding_completed === true ? '/pulse' : '/';
+    try { sessionStorage.removeItem(CALLBACK_SETTLING_KEY); } catch {}
     navigate(dest, { replace: true });
     // Hard fallback: if React Router navigate doesn't fire (race with BootGuard),
     // force a full page load after a short delay.
     setTimeout(() => { window.location.replace(dest); }, 1500);
   } catch {
     // DB unavailable — BootGuardContext will recover from /
+    try { sessionStorage.removeItem(CALLBACK_SETTLING_KEY); } catch {}
     navigate('/', { replace: true });
     setTimeout(() => { window.location.replace('/'); }, 1500);
   }

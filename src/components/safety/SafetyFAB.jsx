@@ -39,17 +39,15 @@ export default function SafetyFAB() {
   const rafRef = useRef(null);
   const thresholdReachedRef = useRef({ exit: false, disappear: false });
 
-  // Triple Tap Handler
-  // Safety-critical: never dispatch SOS from repeated taps.
-  // SOS must use an explicit consent + hold/confirm + cancel-window flow.
+  // Tap opens the compact safety menu only. SOS dispatch must stay behind
+  // explicit hold/confirm/cancel flows; no repeated-tap panic triggers.
   const handleTap = useCallback(() => {
     console.log('[SafetyFAB] Shield tapped — opening safety menu');
-    setTapCount(0);
     setIsExpanded(prev => !prev);
     try { if (navigator?.vibrate) navigator.vibrate(35); } catch {}
   }, []);
 
-  const startHold = useCallback((e) => {
+  const startHold = useCallback(() => {
     holdStartRef.current = performance.now();
     setIsHolding(true);
     setHoldProgress(0);
@@ -101,7 +99,7 @@ export default function SafetyFAB() {
     else if (elapsed >= HOLD_DISAPPEAR_MS) {
       triggerTheDisappear();
     }
-  }, [handleTap, tapCount, triggerTheExit, triggerTheDisappear]);
+  }, [handleTap, triggerTheExit, triggerTheDisappear]);
 
   useEffect(() => {
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
@@ -179,6 +177,7 @@ export default function SafetyFAB() {
                 ? 'border border-[#00C2E0]/30'
                 : 'border border-white/10'
               }`}
+            aria-label="Open safety menu"
           >
             <Shield className={`w-5 h-5 ${
               timerActive

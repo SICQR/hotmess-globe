@@ -45,7 +45,6 @@ export default function EnhancedGlobe3D({
 
   console.log('[Globe] Recovery Pins:', recoveryPins?.length || 0);
 
-
   // Pin sizes — tuned 2026-05-09 for mobile tap targets.
   // Recovery is the largest because it's the lowest-density layer and the
   // safest to overdraw. Person pins were noticeably under tap-radius before.
@@ -53,7 +52,7 @@ export default function EnhancedGlobe3D({
 
   // Optimized data for the globe
   const pointsData = useMemo(() => {
-    const beaconPoints = beacons.map(b => {
+    const beaconPoints = (Array.isArray(beacons) ? beacons : []).map(b => {
       const lat = Number(b.lat ?? b.location_lat);
       const lng = Number(b.lng ?? b.location_lng);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
@@ -67,7 +66,7 @@ export default function EnhancedGlobe3D({
       };
     }).filter(Boolean);
 
-    const recoveryPoints = recoveryPins.map(r => {
+    const recoveryPoints = (Array.isArray(recoveryPins) ? recoveryPins : []).map(r => {
       const lat = Number(r.lat);
       const lng = Number(r.lng);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
@@ -82,27 +81,48 @@ export default function EnhancedGlobe3D({
       };
     }).filter(Boolean);
 
-
-
     return [...beaconPoints, ...recoveryPoints];
   }, [beacons, recoveryPins]);
 
-
-
   const labelsData = useMemo(() => {
-    return cities.map(c => ({
-      ...c,
-      lat: Number(c.lat),
-      lng: Number(c.lng),
-      text: c.name,
-      color: 'white',
-      size: 0.8
-    }));
+    return (Array.isArray(cities) ? cities : [])
+      .map(c => ({
+        ...c,
+        lat: Number(c.lat),
+        lng: Number(c.lng),
+        text: c.name,
+        color: 'white',
+        size: 0.8
+      }))
+      .filter(c => Number.isFinite(c.lat) && Number.isFinite(c.lng));
   }, [cities]);
+
+  const ringsData = useMemo(() => {
+    const pointRings = pointsData.filter(b => b.isRightNow || b.intensity > 1 || b.isRecovery);
+    const sosRings = (Array.isArray(foundingSosRings) ? foundingSosRings : [])
+      .map(r => ({ ...r, isSosRing: true }))
+      .filter(r => Number.isFinite(Number(r.lat)) && Number.isFinite(Number(r.lng)));
+    return [...pointRings, ...sosRings];
+  }, [pointsData, foundingSosRings]);
+
+  const htmlElementsData = useMemo(() => {
+    return (Array.isArray(foundingHtmlElements) ? foundingHtmlElements : [])
+      .filter(d => Number.isFinite(Number(d.lat)) && Number.isFinite(Number(d.lng)));
+  }, [foundingHtmlElements]);
+
+  const arcsData = useMemo(() => {
+    return (Array.isArray(foundingArcs) ? foundingArcs : [])
+      .filter(a =>
+        Number.isFinite(Number(a.startLat)) &&
+        Number.isFinite(Number(a.startLng)) &&
+        Number.isFinite(Number(a.endLat)) &&
+        Number.isFinite(Number(a.endLng))
+      );
+  }, [foundingArcs]);
 
   // Sync rotation state with the parent ref
   useEffect(() => {
-    if (!globeRef.current) return;
+    if (!globeRef.current || !rotationRef?.current) return;
     
     // Initial camera setup
     const isMobile = window.innerWidth < 768;
@@ -116,11 +136,11 @@ export default function EnhancedGlobe3D({
     globeRef.current.controls().autoRotate = false;
     globeRef.current.controls().enableDamping = true;
     globeRef.current.controls().dampingFactor = 0.1;
-  }, []);
+  }, [rotationRef]);
 
   // Update rotation ref when user moves the globe
   const handleCameraChange = () => {
-    if (!globeRef.current) return;
+    if (!globeRef.current || !rotationRef?.current) return;
     const { lat, lng, altitude } = globeRef.current.pointOfView();
     rotationRef.current = { lat, lng, altitude };
   };
@@ -143,7 +163,7 @@ export default function EnhancedGlobe3D({
         atmosphereAltitude={0.15}
         
         // --- Stars / Background ---
-        showGraticules={true} // Add the grid lines back
+        showGraticules={true}
         
         // --- Points (Beacons) ---
         pointsData={pointsData}
@@ -151,7 +171,7 @@ export default function EnhancedGlobe3D({
         pointLng="lng"
         pointColor="color"
         pointRadius="size"
-        pointAltitude={0.07} // Raised slightly higher 2026-05-09 to widen mobile tap target
+        pointAltitude={0.07}
         onPointClick={(point) => {
           console.log('[Globe] Point clicked:', point);
           // Subtle zoom-in to make the click feel responsive
@@ -170,14 +190,10 @@ export default function EnhancedGlobe3D({
           }
         }}
 
-
-
-        
         // Individual interaction for Points
         pointsMerge={false} 
 
         pointLabel={b => `<div class="bg-black/80 border border-white p-2 text-white font-black uppercase text-[10px] tracking-widest">${b.name || b.title || 'UNKNOWN'}</div>`}
-
 
         // --- Labels (Cities) ---
         labelsData={labelsData}
@@ -199,34 +215,31 @@ export default function EnhancedGlobe3D({
           powerPreference: "high-performance" 
         }}
         
-        // --- Rings (Pulses) — merges existing point-derived pulses with SOS rings ---
-        ringsData={[
-          ...pointsData.filter(b => b.isRightNow || b.intensity > 1 || b.isRecovery),
-          ...foundingSosRings.map(r => ({ ...r, isSosRing: true })),
-        ]}
-
+        // --- Rings (Pulses) ---
+        ringsData={ringsData}
         ringLat="lat"
         ringLng="lng"
         ringColor={(d) => {
           if (d.isSosRing) return "#FF2D2D";
           if (d.isRecovery) return "#FFFFFF";
-          // Anchor / Chain founding pulses get full gold
           return "#C8962C";
         }}
 
-        ringMaxRadius={(d) => d.isSosRing ? 3.5 : 2.5}
-        ringPropagationSpeed={(d) => d.isSosRing ? 4.0 : 2.5}
-        ringRepeat={(d) => d.isSosRing ? 6 : 3}
+        // Keep these numeric. The current react-globe.gl integration is stable
+        // with numeric ring controls; accessor functions here can crash Pulse on mount.
+        ringMaxRadius={2.5}
+        ringPropagationSpeed={2.5}
+        ringRepeat={3}
 
         // --- HTML Elements (Founding Anchor named labels) ---
-        htmlElementsData={foundingHtmlElements}
+        htmlElementsData={htmlElementsData}
         htmlLat="lat"
         htmlLng="lng"
         htmlAltitude={0.1}
         htmlElement={renderHtmlElement}
 
         // --- Arcs (Founding Promoter migration animations) ---
-        arcsData={foundingArcs}
+        arcsData={arcsData}
         arcStartLat="startLat"
         arcStartLng="startLng"
         arcEndLat="endLat"
@@ -240,5 +253,4 @@ export default function EnhancedGlobe3D({
     </div>
   );
 }
-
 
