@@ -6,6 +6,16 @@ export const isGeolocationSupported = () => {
   return typeof navigator !== 'undefined' && !!navigator.geolocation;
 };
 
+export async function getGeolocationPermissionState() {
+  try {
+    if (typeof navigator === 'undefined' || !navigator.permissions?.query) return 'unknown';
+    const status = await navigator.permissions.query({ name: 'geolocation' });
+    return status?.state || 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
 export const normalizeGeolocationError = (err) => {
   const code = err?.code;
   if (code === 1) return { code, reason: 'denied', message: err?.message || 'Permission denied' };
@@ -15,7 +25,6 @@ export const normalizeGeolocationError = (err) => {
 };
 
 const shouldRetryError = (norm) => {
-  // Retry transient failures.
   return norm.reason === 'unavailable' || norm.reason === 'timeout';
 };
 
@@ -40,17 +49,35 @@ export const getLatLngFromPosition = (pos) => {
 };
 
 /**
- * Best-effort geolocation with small retry/backoff.
+ * Prompt-safe geolocation.
  *
- * - Retries on POSITION_UNAVAILABLE/TIMEOUT (common with CoreLocation)
- * - Does not retry on PERMISSION_DENIED
- * - Returns `null` if location can’t be obtained
+ * Default behavior is passive: it will only read location if browser permission
+ * is already granted. This prevents Safari/Chrome native permission popups from
+ * being triggered by app boot, pull-to-refresh, route remounts, or passive tabs.
+ *
+ * Pass `{ allowNativePrompt: true }` only from explicit user actions such as
+ * Go Live, Nearby, Beacon Drop, Safety sharing, or Directions.
  */
 export async function safeGetViewerLatLng(
   geoOptions = { enableHighAccuracy: false, maximumAge: 60_000, timeout: 10_000 },
-  { retries = 2, baseDelayMs = 400, backoff = 2, jitterMs = 120, logKey = 'geo' } = {}
+  {
+    retries = 2,
+    baseDelayMs = 400,
+    backoff = 2,
+    jitterMs = 120,
+    logKey = 'geo',
+    allowNativePrompt = false,
+  } = {}
 ) {
   if (!isGeolocationSupported()) return null;
+
+  if (!allowNativePrompt) {
+    const permissionState = await getGeolocationPermissionState();
+    if (permissionState !== 'granted') {
+      logger.debug('Skipping passive geolocation to avoid native prompt', { key: logKey, permissionState });
+      return null;
+    }
+  }
 
   let lastError = null;
 
@@ -59,15 +86,12 @@ export async function safeGetViewerLatLng(
       const pos = await getCurrentPositionOnce(geoOptions);
       const loc = getLatLngFromPosition(pos);
       if (loc) return loc;
-
-      // Treat malformed coords as retryable once.
       lastError = new Error('Invalid geolocation coordinates');
     } catch (err) {
       const norm = normalizeGeolocationError(err);
       lastError = err;
 
       if (!shouldRetryError(norm) || attempt === retries) {
-        // Keep logs quiet: this is very often user/device/environment dependent.
         if (norm.reason !== 'denied') {
           logger.debug('Geolocation unavailable', { key: logKey, reason: norm.reason, message: norm.message });
         }
@@ -79,7 +103,6 @@ export async function safeGetViewerLatLng(
     await sleep(delay);
   }
 
-  // Should never reach, but keep behavior predictable.
   if (lastError) {
     const norm = normalizeGeolocationError(lastError);
     if (norm.reason !== 'denied') {
