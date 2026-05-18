@@ -3,12 +3,6 @@ import { safeGetViewerLatLng } from './geolocation';
 
 /**
  * Reverse geocode coordinates to get a neighbourhood / area name.
- *
- * 2026-05-09: moved from a direct browser fetch to maps.googleapis.com
- * over to the /api/geocode/reverse server-side proxy. Google rejects
- * referer-restricted keys on the Geocoding REST API when called from
- * the browser; the proxy uses GOOGLE_MAPS_API_KEY (server-side env) so
- * the key is never exposed and no Referer header is required.
  */
 export async function reverseGeocode(lat, lng) {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
@@ -37,15 +31,32 @@ export async function reverseGeocode(lat, lng) {
   }
 }
 
+async function getBrowserLocationPermissionState() {
+  try {
+    if (typeof navigator === 'undefined' || !navigator.permissions?.query) return 'unknown';
+    const status = await navigator.permissions.query({ name: 'geolocation' });
+    return status?.state || 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
 /**
- * Update user location in DB (Part B)
+ * Update user location in DB.
+ *
+ * Consent is two-layered:
+ * - app consent: stored in profiles.location_consent
+ * - browser consent: native Safari/Chrome permission
+ *
+ * Passive app boot must never trigger the native browser prompt. Native prompts
+ * should only happen from explicit user actions like Go Live, Nearby, Beacon Drop,
+ * or Safety location sharing.
  */
-export async function syncLocation() {
+export async function syncLocation({ allowNativePrompt = false } = {}) {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return null;
 
-    // 1. Check consent from profiles table
     const { data: profile } = await supabase
       .from('profiles')
       .select('location_consent')
@@ -53,22 +64,24 @@ export async function syncLocation() {
       .single();
 
     if (!profile?.location_consent) {
-      console.log('[LocationService] No location consent. Skipping sync.');
+      console.log('[LocationService] No app location consent. Skipping sync.');
       return null;
     }
 
-    // 2. Get GPS coordinates
+    if (!allowNativePrompt) {
+      const permissionState = await getBrowserLocationPermissionState();
+      if (permissionState !== 'granted') {
+        console.log('[LocationService] Browser location not already granted. Skipping passive sync.');
+        return null;
+      }
+    }
+
     const loc = await safeGetViewerLatLng();
     if (!loc) return null;
 
     const { lat, lng } = loc;
-
-    // 3. Reverse Geocode (only if we need a fresh area name)
-    // For now, we update it every time the app opens as requested.
     const areaName = await reverseGeocode(lat, lng);
 
-    // 4. Update Database
-    // profiles table
     await supabase.from('profiles').update({
       last_lat: lat,
       last_lng: lng,
@@ -78,7 +91,6 @@ export async function syncLocation() {
       updated_at: new Date().toISOString()
     }).eq('id', session.user.id);
 
-    // user_presence table (Part B)
     await supabase.from('user_presence').upsert({
       user_id: session.user.id,
       location: `POINT(${lng} ${lat})`,
