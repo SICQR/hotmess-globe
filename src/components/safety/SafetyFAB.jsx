@@ -29,9 +29,7 @@ export default function SafetyFAB() {
   const isTonight = tonightMode?.isTonight ?? false;
 
   // ── Invisible Gestures Logic ──────────────────────────────────────────────
-  const { triggerSOS, triggerTheExit, triggerTheDisappear } = useSOSContext();
-  const [tapCount, setTapCount] = useState(0);
-  const tapTimerRef = useRef(null);
+  const { triggerTheExit, triggerTheDisappear } = useSOSContext();
 
   const HOLD_EXIT_MS = 1500;
   const HOLD_DISAPPEAR_MS = 3000;
@@ -87,17 +85,10 @@ export default function SafetyFAB() {
     setIsHolding(false);
     setHoldProgress(0);
 
-    // 1. Short tap (< 300ms) → Handle Triple Tap or Menu
+    // 1. Short tap (< 300ms) → open/close safety menu only.
+    // Never dispatch SOS from repeated taps.
     if (elapsed < 300) {
       handleTap();
-      // Only toggle menu if it's not the middle of a triple tap? 
-      // Actually, menu is fine for short tap.
-      if (tapCount === 0) {
-        // Delay menu slightly to see if another tap comes
-        setTimeout(() => {
-          if (tapCount === 0) setIsExpanded(prev => !prev);
-        }, 200);
-      }
       return;
     }
 
