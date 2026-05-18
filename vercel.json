@@ -69,10 +69,6 @@
     {
       "path": "/api/cron/safety-checkin-escalate",
       "schedule": "*/30 * * * *"
-    },
-    {
-      "path": "/api/admin/wa-template-create",
-      "schedule": "*/10 * * * *"
     }
   ],
   "routes": [
