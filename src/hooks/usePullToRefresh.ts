@@ -1,36 +1,25 @@
 import { useState, useEffect, useRef, type RefObject } from 'react';
-import { toast } from 'sonner';
 
-const THRESHOLD = 120; // pixels to pull before refresh
+const THRESHOLD = 120;
 
 interface UsePullToRefreshOptions {
   disabled?: boolean;
-  /** If provided, runs instead of `window.location.reload()` on refresh trigger. */
   onRefresh?: () => void | Promise<void>;
-  /** Currently informational — surfaced for caller compat with the gesture-on-element pattern. */
   scrollRef?: RefObject<HTMLElement | null>;
 }
 
 function shouldIgnorePullToRefresh(target: HTMLElement | null) {
   let check = target;
   while (check && check !== document.body) {
-    // Any complex gesture surface can opt out. Pulse/Globe uses this so dragging
-    // the Earth does not trigger the global app refresh loop.
     if (check.hasAttribute('data-pull-refresh-ignore')) return true;
     if (check.hasAttribute('data-globe-interactive')) return true;
 
     const style = window.getComputedStyle(check);
     const isFixed = style.position === 'fixed' || style.position === 'absolute';
     const zIndex = parseInt(style.zIndex, 10);
-
-    // If we are touching something elevated (z-index > 50) that is fixed/absolute,
-    // it's likely a sheet, FAB, nav, modal, or overlay.
     if (isFixed && zIndex >= 50) return true;
 
-    // Explicit sheet / modal checks.
     if (check.hasAttribute('data-sheet') || check.getAttribute('role') === 'dialog') return true;
-
-    // Existing scroll check: do not steal gestures from nested scroll areas.
     if (check.scrollTop > 0) return true;
 
     check = check.parentElement as HTMLElement;
@@ -38,19 +27,9 @@ function shouldIgnorePullToRefresh(target: HTMLElement | null) {
   return false;
 }
 
-/**
- * usePullToRefresh — Global gesture for site reload (or custom refresh callback).
- *
- * Detects downward swipe from top. Shows progress. Triggers `onRefresh()` if
- * given, else reloads the window.
- *
- * Returns { pullProgress (0-1), pullDistance (px), isRefreshing, handlers }.
- * `handlers` is currently a no-op spread for caller-side compat (`{...handlers}`
- * on a div). The hook attaches its listeners to window, not the element.
- */
 export function usePullToRefresh(options: UsePullToRefreshOptions = {}) {
   const { disabled = false, onRefresh } = options;
-  const [pullProgress, setPullProgress] = useState(0); // 0 to 1
+  const [pullProgress, setPullProgress] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const onRefreshRef = useRef(onRefresh);
   onRefreshRef.current = onRefresh;
@@ -62,12 +41,10 @@ export function usePullToRefresh(options: UsePullToRefreshOptions = {}) {
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
       if (disabled) return;
-
       const target = e.target as HTMLElement | null;
       if (shouldIgnorePullToRefresh(target)) return;
 
-      const isAtTop = window.scrollY <= 0;
-      if (isAtTop) {
+      if (window.scrollY <= 0) {
         startY.current = e.touches[0].pageY;
         currentY.current = startY.current;
         isPulling.current = true;
@@ -76,16 +53,12 @@ export function usePullToRefresh(options: UsePullToRefreshOptions = {}) {
 
     const handleTouchMove = (e: TouchEvent) => {
       if (!isPulling.current || isRefreshing) return;
-
       currentY.current = e.touches[0].pageY;
       const diff = currentY.current - startY.current;
 
       if (diff > 0) {
-        // Prevent default browser behavior (bouncing)
         if (e.cancelable) e.preventDefault();
-
-        const progress = Math.min(diff / THRESHOLD, 1.2);
-        setPullProgress(progress);
+        setPullProgress(Math.min(diff / THRESHOLD, 1.2));
       } else {
         setPullProgress(0);
         isPulling.current = false;
@@ -94,26 +67,20 @@ export function usePullToRefresh(options: UsePullToRefreshOptions = {}) {
 
     const handleTouchEnd = () => {
       if (!isPulling.current) return;
-
       const diff = currentY.current - startY.current;
+
       if (diff >= THRESHOLD) {
         setIsRefreshing(true);
         setPullProgress(1);
 
         if (onRefreshRef.current) {
-          // Caller-supplied refresh — invalidate queries / re-fetch / etc.
           Promise.resolve(onRefreshRef.current())
-            .catch(() => { /* swallow — caller logs */ })
+            .catch(() => {})
             .finally(() => {
               setIsRefreshing(false);
               setPullProgress(0);
             });
         } else {
-          // Default: full window reload with a gold toast.
-          toast.loading('Refreshing HOTMESS...', {
-            duration: 2000,
-            style: { background: '#000', color: '#C8962C', border: '1px solid #C8962C' },
-          });
           setTimeout(() => { window.location.reload(); }, 800);
         }
       } else {
