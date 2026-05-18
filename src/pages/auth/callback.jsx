@@ -4,6 +4,18 @@ import { supabase } from '@/components/utils/supabaseClient';
 import logger from '@/utils/logger';
 
 const CALLBACK_SETTLING_KEY = 'hm_auth_callback_settling';
+const isCallbackPath = () => (
+  typeof window !== 'undefined' &&
+  window.location?.pathname?.startsWith('/auth/callback')
+);
+
+// Set the guard at module-load time, not only inside useEffect. The app has
+// auth/onboarding providers mounted above this route; if they wake up during
+// callback hydration, they must see that callback settlement is already in
+// progress before any OAuth launcher can re-enter /authorize.
+try {
+  if (isCallbackPath()) sessionStorage.setItem(CALLBACK_SETTLING_KEY, 'true');
+} catch {}
 
 /**
  * OAuth / Magic Link Callback Handler
@@ -33,6 +45,7 @@ export default function AuthCallback() {
       setError(message || 'Sign in failed');
       setStatus('error');
       retryTimer = setTimeout(() => {
+        try { sessionStorage.removeItem(CALLBACK_SETTLING_KEY); } catch {}
         if (!cancelled) navigate(dest, { replace: true });
       }, 1200);
     };
@@ -137,7 +150,6 @@ export default function AuthCallback() {
     return () => {
       cancelled = true;
       if (retryTimer) clearTimeout(retryTimer);
-      try { sessionStorage.removeItem(CALLBACK_SETTLING_KEY); } catch {}
     };
   }, [navigate, searchParams]);
 
@@ -240,12 +252,14 @@ async function routeAfterAuth(userId, navigate) {
     } catch {}
 
     const dest = profile?.onboarding_completed === true ? '/pulse' : '/';
+    try { sessionStorage.removeItem(CALLBACK_SETTLING_KEY); } catch {}
     navigate(dest, { replace: true });
     // Hard fallback: if React Router navigate doesn't fire (race with BootGuard),
     // force a full page load after a short delay.
     setTimeout(() => { window.location.replace(dest); }, 1500);
   } catch {
     // DB unavailable — BootGuardContext will recover from /
+    try { sessionStorage.removeItem(CALLBACK_SETTLING_KEY); } catch {}
     navigate('/', { replace: true });
     setTimeout(() => { window.location.replace('/'); }, 1500);
   }
