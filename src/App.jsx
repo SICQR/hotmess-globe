@@ -100,6 +100,7 @@ import MorePage from '@/pages/MorePage';
 const CarePage = lazy(() => import('@/pages/CarePage'));
 import AftercareNudge from '@/components/safety/AftercareNudge';
 import CreateBeaconBiz from '@/pages/biz/CreateBeaconBiz';
+import GoldPulseLoader from '@/components/ui/GoldPulseLoader';
 const VenueCheckin = lazy(() => import('@/pages/VenueCheckin'));
 const ComingSoon = lazy(() => import('@/pages/ComingSoon'));
 const SellerDashboard = lazy(() => import('@/pages/SellerDashboard'));

@@ -1,11 +1,7 @@
 import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { Sparkles, MapPin, Heart, Flame } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
+import { Sparkles} from 'lucide-react';
 
 export default function AIMatchmaker({ currentUser }) {
   const [matches, setMatches] = useState([]);

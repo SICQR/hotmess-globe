@@ -18,6 +18,7 @@ import { useSOSContext } from '@/contexts/SOSContext';
 import EmergencyMessageEditor from '../components/safety/EmergencyMessageEditor';
 import CheckInTimerCustomizer from '../components/safety/CheckInTimerCustomizer';
 import AftercareNudge from '../components/safety/AftercareNudge';
+import SilentSOSButton from '@/components/safety/SilentSOSButton';
 
 export default function Safety() {
   const navigate = useNavigate();
@@ -207,14 +208,10 @@ export default function Safety() {
 
         {/* Quick actions — clear hierarchy: SOS primary, Fake Call secondary */}
         <div className="grid grid-cols-2 gap-3 mb-6">
-          <button
-            onClick={() => triggerSOS()}
-            className="py-3.5 font-bold text-sm rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2"
-            style={{ background: 'rgba(255,59,48,0.12)', color: '#FF3B30', border: '1px solid rgba(255,59,48,0.25)' }}
-          >
-            <Shield className="w-4 h-4" />
-            SILENT SOS
-          </button>
+          {/* Polish-sweep 2026-05-18 — Issue 1: Apple-Emergency-SOS hold-to-fire
+              UX. Cancel-on-release writes ZERO DB rows. Server rate-limited
+              to 3/hour unless escalation. See docs/polish-sweep-2026-05-18.md. */}
+          <SilentSOSButton />
           <button
             onClick={() => navigate('/fake-call')}
             className="py-3.5 font-bold text-sm rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2 bg-[#1C1C1E] border border-white/10 text-white/70"

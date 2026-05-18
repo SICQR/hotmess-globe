@@ -109,11 +109,10 @@ export function usePullToRefresh(options: UsePullToRefreshOptions = {}) {
               setPullProgress(0);
             });
         } else {
-          // Default: full window reload with a gold toast.
-          toast.loading('Refreshing HOTMESS...', {
-            duration: 2000,
-            style: { background: '#000', color: '#C8962C', border: '1px solid #C8962C' },
-          });
+          // Default: full window reload. NO toast — the gold-line banner in
+          // App.jsx (Pull to refresh → Release to refresh) is the single
+          // canonical indicator. Polish-sweep 2026-05-18 Issue 8: user-test
+          // recording showed banner + toast stacking simultaneously.
           setTimeout(() => { window.location.reload(); }, 800);
         }
       } else {
