@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="HOTMESS brand hero placeholder">
+  <title>HOTMESS — placeholder hero</title>
+  <defs>
+    <linearGradient id="slate" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#050507"/>
+      <stop offset="60%" stop-color="#0D0D0D"/>
+      <stop offset="100%" stop-color="#1a1a1f"/>
+    </linearGradient>
+    <linearGradient id="goldFill" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#9A7020"/>
+      <stop offset="50%" stop-color="#C8962C"/>
+      <stop offset="100%" stop-color="#D4A84B"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#slate)"/>
+  <!-- Thin gold rule, top-left -->
+  <line x1="80" y1="80" x2="220" y2="80" stroke="#C8962C" stroke-width="1.2" opacity="0.7"/>
+  <text x="80" y="110" fill="#C8962C" font-family="'Space Mono','SF Mono',Menlo,monospace" font-size="14" letter-spacing="4" font-weight="700">PLACEHOLDER · BRAND HERO</text>
+  <!-- Wordmark, centered, large, no figurative -->
+  <text x="800" y="510" fill="url(#goldFill)" font-family="'Oswald','Bebas Neue',system-ui,sans-serif" font-size="220" font-weight="700" letter-spacing="22" text-anchor="middle">HOTMESS</text>
+  <!-- Geometric mark below — three thin gold strokes -->
+  <g transform="translate(800,590)" stroke="#C8962C" fill="none" stroke-width="1.4" opacity="0.6">
+    <line x1="-220" y1="0" x2="-110" y2="0"/>
+    <line x1="-50"  y1="0" x2="50"   y2="0"/>
+    <line x1="110"  y1="0" x2="220"  y2="0"/>
+  </g>
+  <text x="800" y="660" fill="rgba(255,255,255,0.45)" font-family="'Space Mono','SF Mono',Menlo,monospace" font-size="12" letter-spacing="6" text-anchor="middle">SWAP 1:1 BY FILENAME — REAL IMAGERY PR LATER</text>
+</svg>

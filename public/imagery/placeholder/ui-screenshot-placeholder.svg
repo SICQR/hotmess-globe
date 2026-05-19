@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 1334" role="img" aria-label="UI screenshot placeholder">
+  <title>UI screenshot placeholder</title>
+  <rect width="750" height="1334" fill="#0D0D0D"/>
+  <!-- Status bar -->
+  <rect x="0" y="0" width="750" height="44" fill="#050507"/>
+  <text x="32" y="29" fill="rgba(255,255,255,0.5)" font-family="'Space Mono','SF Mono',Menlo,monospace" font-size="14" font-weight="700">14:32</text>
+  <!-- Outer card -->
+  <rect x="40" y="80" width="670" height="1180" rx="20" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.14)"/>
+  <!-- Inner placeholder rows -->
+  <rect x="72" y="120" width="220" height="14" rx="2" fill="rgba(255,255,255,0.12)"/>
+  <rect x="72" y="148" width="406" height="22" rx="2" fill="rgba(255,255,255,0.18)"/>
+  <rect x="72" y="200" width="606" height="320" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.10)"/>
+  <text x="375" y="370" fill="rgba(255,255,255,0.45)" font-family="'Space Mono','SF Mono',Menlo,monospace" font-size="22" letter-spacing="6" font-weight="700" text-anchor="middle">PREVIEW</text>
+  <text x="375" y="402" fill="rgba(255,255,255,0.30)" font-family="'Space Mono','SF Mono',Menlo,monospace" font-size="12" letter-spacing="5" text-anchor="middle">UI SCREENSHOT PLACEHOLDER</text>
+  <!-- bullet rows -->
+  <rect x="72"  y="560" width="606" height="18" rx="2" fill="rgba(255,255,255,0.10)"/>
+  <rect x="72"  y="592" width="486" height="18" rx="2" fill="rgba(255,255,255,0.08)"/>
+  <rect x="72"  y="624" width="540" height="18" rx="2" fill="rgba(255,255,255,0.08)"/>
+  <!-- CTA -->
+  <rect x="72" y="700" width="606" height="58" rx="8" fill="#C8962C"/>
+  <text x="375" y="738" fill="#050507" font-family="'Space Mono','SF Mono',Menlo,monospace" font-size="14" letter-spacing="3" font-weight="700" text-anchor="middle">SWAP 1:1 BY FILENAME</text>
+</svg>
