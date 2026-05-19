@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSOSContext } from '@/contexts/SOSContext';
+import { useDiscreetMode } from '@/hooks/useDiscreetMode';
 
 import EmergencyMessageEditor from '../components/safety/EmergencyMessageEditor';
 import CheckInTimerCustomizer from '../components/safety/CheckInTimerCustomizer';
@@ -31,6 +32,7 @@ export default function Safety() {
   const [relationship, setRelationship] = useState('friend');
   const [checkOutHours, setCheckOutHours] = useState(4);
   const queryClient = useQueryClient();
+  const { discreet, toggle: toggleDiscreet } = useDiscreetMode();
   const scrollRef = useRef(null);
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries();
@@ -220,6 +222,35 @@ export default function Safety() {
             Fake Call
           </button>
         </div>
+
+        {/* Discreet Mode — privacy toggle. Map-level avatar redaction.
+            Photos remain visible at profile-card level on tap. */}
+        <button
+          type="button"
+          onClick={toggleDiscreet}
+          aria-pressed={discreet}
+          className="w-full flex items-center justify-between gap-3 mb-6 px-4 py-3 rounded-xl border border-white/10 bg-white/5 active:scale-[0.99] transition-transform text-left"
+        >
+          <div className="flex items-start gap-3">
+            <Shield className="w-5 h-5 mt-0.5 text-safety flex-shrink-0" />
+            <div>
+              <div className="text-sm font-bold text-white">Discreet Mode</div>
+              <div className="text-[11px] text-white/55 leading-tight">
+                Hide member avatars on the Pulse map. Photos still visible on tap.
+              </div>
+            </div>
+          </div>
+          <span
+            className={
+              'shrink-0 inline-flex items-center justify-center min-w-[44px] h-6 rounded-full px-2 text-[10px] font-bold uppercase tracking-widest border ' +
+              (discreet
+                ? 'bg-safety/20 text-safety border-safety/40'
+                : 'bg-white/5 text-white/50 border-white/15')
+            }
+          >
+            {discreet ? 'On' : 'Off'}
+          </span>
+        </button>
 
         <Tabs defaultValue="checkin">
           <TabsList className="bg-white/5 border border-white/10 mb-6">
