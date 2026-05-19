@@ -16,8 +16,8 @@ const SHOWS = [
 
 function LiveBadge() {
   return (
-    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#C8962C]/20 border border-[#C8962C]/40 text-[#C8962C] text-[10px] font-black uppercase tracking-widest">
-      <span className="w-1.5 h-1.5 rounded-full bg-[#C8962C] animate-pulse" />
+    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-brand/20 border border-brand/40 text-brand text-[10px] font-black uppercase tracking-widest">
+      <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
       LIVE
     </span>
   );
@@ -82,7 +82,7 @@ function ShowCard({ show, index }) {
             />
           </div>
           <div className="p-5">
-            <p className="text-base font-black uppercase tracking-wide text-white mb-1 group-hover:text-[#C8962C] transition-colors">
+            <p className="text-base font-black uppercase tracking-wide text-white mb-1 group-hover:text-brand transition-colors">
               {show.title}
             </p>
             <p className="text-xs text-white/40 leading-relaxed mb-4">{show.tagline}</p>
@@ -116,7 +116,7 @@ export default function Radio() {
                 style={{ color: '#C8962C', filter: 'drop-shadow(0 0 16px rgba(255,20,147,0.6))' }}
               />
               <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tight leading-none">
-                HOT<span className="text-[#C8962C]">MESS</span> RADIO
+                HOT<span className="text-brand">MESS</span> RADIO
               </h1>
             </div>
             <p className="text-white/50 text-base md:text-lg mb-8">
@@ -162,7 +162,7 @@ export default function Radio() {
           className="flex items-center justify-between w-full px-5 py-4 rounded-2xl border border-white/10 hover:bg-white/5 transition-colors"
         >
           <span className="text-[10px] uppercase tracking-[0.35em] font-mono text-white/50">Raw Convict Records releases</span>
-          <span className="text-[10px] uppercase tracking-widest font-mono text-[#C8962C]">Explore</span>
+          <span className="text-[10px] uppercase tracking-widest font-mono text-brand">Explore</span>
         </Link>
       </section>
 

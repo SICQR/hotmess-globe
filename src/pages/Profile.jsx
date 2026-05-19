@@ -638,7 +638,7 @@ export default function Profile() {
         >
           <div className="text-center mb-8">
             <h1 className="text-4xl font-black uppercase mb-2">
-              <span className="text-[#C8962C]">HOT</span>MESS
+              <span className="text-brand">HOT</span>MESS
             </h1>
             <p className="text-sm text-white/60 uppercase tracking-wider">Complete Your Profile</p>
           </div>
@@ -660,7 +660,7 @@ export default function Profile() {
               <Button
                 type="button"
                 onClick={() => document.getElementById('avatar-upload').click()}
-                className="bg-white text-black hover:bg-[#C8962C] hover:text-white font-black"
+                className="bg-white text-black hover:bg-brand hover:text-white font-black"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 Upload Avatar
@@ -711,7 +711,7 @@ export default function Profile() {
                     onClick={() => setProfileType(t.value)}
                     className={`p-4 text-left border-2 transition-all ${
                       profileType === t.value
-                        ? 'bg-[#C8962C] border-[#C8962C] text-black'
+                        ? 'bg-brand border-brand text-black'
                         : 'bg-white/5 border-white/20 text-white hover:border-white/40'
                     }`}
                   >
@@ -745,14 +745,14 @@ export default function Profile() {
                 onChange={(e) => setBio(e.target.value)}
                 placeholder="What are you about? What are you here for?"
                 rows={4}
-                className="w-full bg-white/5 border-2 border-white/20 p-3 text-white placeholder:text-white/40 focus:border-[#C8962C] focus:outline-none"
+                className="w-full bg-white/5 border-2 border-white/20 p-3 text-white placeholder:text-white/40 focus:border-brand focus:outline-none"
               />
             </div>
 
             {profileType === 'seller' && (
-              <div className="border-2 border-[#00C2E0] p-4 bg-black">
+              <div className="border-2 border-signal p-4 bg-black">
                 <div className="mb-3">
-                  <p className="text-xs uppercase tracking-widest text-[#00C2E0] font-black">Seller Details</p>
+                  <p className="text-xs uppercase tracking-widest text-signal font-black">Seller Details</p>
                   <p className="text-xs text-white/50">These show up on your card and help cross-sell.</p>
                 </div>
                 <div className="space-y-4">
@@ -781,7 +781,7 @@ export default function Profile() {
                       placeholder="What you sell, shipping/pickup, collaborations…"
                       rows={4}
                       maxLength={500}
-                      className="w-full bg-white/5 border-2 border-white/20 p-3 text-white placeholder:text-white/40 focus:border-[#00C2E0] focus:outline-none"
+                      className="w-full bg-white/5 border-2 border-white/20 p-3 text-white placeholder:text-white/40 focus:border-signal focus:outline-none"
                     />
                     <p className="text-xs text-white/40 mt-1">{sellerBio.length}/500</p>
                   </div>
@@ -823,7 +823,7 @@ export default function Profile() {
             <Button
               type="submit"
               disabled={saving || !fullName.trim() || !String(profileType || '').trim() || !String(city || '').trim() || !photoPolicyAck}
-              className="w-full bg-[#C8962C] hover:bg-white text-white hover:text-black font-black text-lg py-6 border-2 border-white"
+              className="w-full bg-brand hover:bg-white text-white hover:text-black font-black text-lg py-6 border-2 border-white"
             >
               {saving ? (
                 <>
@@ -895,7 +895,7 @@ export default function Profile() {
               {isConnection ? (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 mb-3">
-                    <Lock className="w-4 h-4 text-[#00C2E0]" />
+                    <Lock className="w-4 h-4 text-signal" />
                     <p className="text-xs text-white/40 uppercase">Social Links (Connected)</p>
                   </div>
                   <div className="flex flex-wrap gap-3">
@@ -999,10 +999,10 @@ export default function Profile() {
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <User className="w-5 h-5 text-[#00C2E0]" />
+                  <User className="w-5 h-5 text-signal" />
                   <h2 className="text-xl font-black uppercase">Profile Views</h2>
                 </div>
-                <span className="text-2xl font-black text-[#00C2E0]">{viewCount}</span>
+                <span className="text-2xl font-black text-signal">{viewCount}</span>
               </div>
               
               {canSeeViewers ? (
@@ -1072,10 +1072,10 @@ export default function Profile() {
                     <div className="flex items-start justify-between mb-2">
                       <Star className="w-5 h-5 text-[#FFEB3B]" />
                       {highlight.item_type === 'checkin' && checkIn && (
-                        <span className="text-xs text-[#00C2E0] font-bold uppercase">Check-in</span>
+                        <span className="text-xs text-signal font-bold uppercase">Check-in</span>
                       )}
                       {highlight.item_type === 'squad' && squad && (
-                        <span className="text-xs text-[#C8962C] font-bold uppercase">Squad</span>
+                        <span className="text-xs text-brand font-bold uppercase">Squad</span>
                       )}
                       {highlight.item_type === 'achievement' && achievement && (
                         <span className="text-xs text-[#FFEB3B] font-bold uppercase">Badge</span>
@@ -1109,7 +1109,7 @@ export default function Profile() {
             className="mb-6"
           >
             <div className="flex items-center gap-2 mb-4">
-              <Shield className="w-5 h-5 text-[#C8962C]" />
+              <Shield className="w-5 h-5 text-brand" />
               <h2 className="text-xl font-black uppercase">Badges</h2>
               <span className="text-sm text-white/60">({achievementDetails.length})</span>
             </div>
@@ -1176,7 +1176,7 @@ export default function Profile() {
                       <img src={checkIn.photo_url} alt="Check-in" className="w-full h-48 object-cover rounded-lg mb-3" />
                     )}
                     <Link to={createPageUrl(`BeaconDetail?id=${checkIn.beacon_id}`)}>
-                      <h3 className="font-bold mb-1 hover:text-[#C8962C] transition-colors">{sanitizeText(checkIn.beacon_title)}</h3>
+                      <h3 className="font-bold mb-1 hover:text-brand transition-colors">{sanitizeText(checkIn.beacon_title)}</h3>
                     </Link>
                     {checkIn.note && <p className="text-sm text-white/60 mb-2">{sanitizeText(checkIn.note)}</p>}
                     <div className="flex items-center gap-2 text-xs text-white/40">
@@ -1247,7 +1247,7 @@ export default function Profile() {
                 >
                   <h3 className="font-black text-lg mb-2">{squad.name}</h3>
                   <p className="text-sm text-white/60 mb-3">{squad.description}</p>
-                  <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-[#C8962C]">
+                  <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-brand">
                     <Users className="w-4 h-4" />
                     <span>{squad.interest}</span>
                   </div>

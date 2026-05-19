@@ -116,7 +116,7 @@ export default function SafetyFAB() {
   return (
     <>
       {/* FAB + menu */}
-      <div className="fixed z-[150] bottom-24 left-6">
+      <div className="fixed z-fab right-4 top-[calc(env(safe-area-inset-top)+72px)]">
         <AnimatePresence>
           {isExpanded && (
             <motion.div
@@ -124,7 +124,7 @@ export default function SafetyFAB() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.95 }}
               transition={{ duration: 0.15 }}
-              className="absolute bottom-14 left-0 bg-[#1C1C1E] border border-white/10 rounded-xl p-2 min-w-[180px] shadow-lg"
+              className="absolute top-14 right-0 bg-[#1C1C1E] border border-white/10 rounded-xl p-2 min-w-[180px] shadow-lg"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="space-y-0.5">
@@ -133,18 +133,18 @@ export default function SafetyFAB() {
                   className="w-full justify-start text-white/80 hover:bg-white/5 hover:text-white h-10 text-sm"
                   onClick={() => { setShowFakeCall(true); setIsExpanded(false); }}
                 >
-                  <Phone className="w-4 h-4 mr-2.5 text-[#00C2E0]" />
+                  <Phone className="w-4 h-4 mr-2.5 text-brand" />
                   Fake Call
                 </Button>
                 <Button
                   variant="ghost"
                   className={`w-full justify-start h-10 text-sm ${timerActive
-                    ? 'text-[#00C2E0] bg-[#00C2E0]/5'
+                    ? 'text-brand bg-brand/5'
                     : 'text-white/80 hover:bg-white/5 hover:text-white'
                     }`}
                   onClick={() => { setShowCheckinTimer(true); setIsExpanded(false); }}
                 >
-                  <Clock className="w-4 h-4 mr-2.5 text-[#00C2E0]" />
+                  <Clock className="w-4 h-4 mr-2.5 text-brand" />
                   {timerActive
                     ? `Check-in · ${Math.floor(secondsLeft / 60)}m`
                     : 'Check-in Timer'}
@@ -174,14 +174,14 @@ export default function SafetyFAB() {
             onTouchEnd={cancelHold}
             className={`relative z-10 rounded-full w-12 h-12 shadow-md transition-all select-none bg-[#1C1C1E] ${
               timerActive
-                ? 'border border-[#00C2E0]/30'
+                ? 'border border-brand/30'
                 : 'border border-white/10'
               }`}
             aria-label="Open safety menu"
           >
             <Shield className={`w-5 h-5 ${
               timerActive
-                ? 'text-[#00C2E0]/70'
+                ? 'text-brand/70'
                 : 'text-white/40'
               }`} />
           </Button>
@@ -190,7 +190,7 @@ export default function SafetyFAB() {
           {timerActive && !isHolding && (
             <motion.div
               className="absolute -inset-2 rounded-full pointer-events-none z-0"
-              style={{ border: '2px solid rgba(0,194,224,0.6)' }}
+              style={{ border: '2px solid rgba(200,150,44,0.6)' }}
               animate={{ scale: [1, 1.4], opacity: [1, 0] }}
               transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
             />

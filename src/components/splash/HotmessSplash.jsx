@@ -36,7 +36,16 @@ const HOTMESS = ['H', 'O', 'T', 'M', 'E', 'S', 'S'];
 export default function HotmessSplash() {
   const navigate = useNavigate();
   const [stage, setStage] = useState('splash');
-  const [isSignUp, setIsSignUp] = useState(false);
+  /**
+   * Default to sign-up for cold visitors; default to sign-in for users who've
+   * touched auth before. We detect prior auth via a localStorage breadcrumb
+   * left by previous successful signup/signin (set in handleAuth below).
+   * design system reset 2026-05-19 — cold-visitor "Welcome back" was wrong.
+   */
+  const [isSignUp, setIsSignUp] = useState(() => {
+    try { return !localStorage.getItem('hm:hasAuthed'); }
+    catch { return true; }
+  });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -100,6 +109,7 @@ export default function HotmessSplash() {
           options: { data: { full_name: fullName.trim() || undefined } },
         });
         if (error) throw error;
+        try { localStorage.setItem('hm:hasAuthed', '1'); } catch {}
         setPendingEmail(email.trim());
         setStage('confirm-pending');
         setLoading(false);
@@ -110,6 +120,7 @@ export default function HotmessSplash() {
           password,
         });
         if (error) throw error;
+        try { localStorage.setItem('hm:hasAuthed', '1'); } catch {}
         toast.success('Welcome back!');
         setStage('done');
         setTimeout(() => navigate('/', { replace: true }), 800);
@@ -187,7 +198,7 @@ export default function HotmessSplash() {
                     initial="hidden"
                     animate="visible"
                     className={`text-[17vw] sm:text-[12vw] font-black italic leading-none ${
-                      i >= 3 ? 'text-[#C8962C]' : 'text-white'
+                      i >= 3 ? 'text-brand' : 'text-white'
                     }`}
                     style={{
                       textShadow: i >= 3
@@ -222,9 +233,9 @@ export default function HotmessSplash() {
                 className="group relative w-full"
               >
                 {/* Glow layer */}
-                <div className="absolute inset-0 bg-[#C8962C] rounded-2xl blur-xl opacity-30 group-hover:opacity-50 group-active:opacity-60 transition-opacity" />
+                <div className="absolute inset-0 bg-brand rounded-2xl blur-xl opacity-30 group-hover:opacity-50 group-active:opacity-60 transition-opacity" />
                 {/* Button */}
-                <div className="relative bg-[#C8962C] text-black font-black py-4 text-center text-sm uppercase tracking-[0.25em] rounded-2xl active:scale-[0.97] transition-transform">
+                <div className="relative bg-brand text-black font-black py-4 text-center text-sm uppercase tracking-[0.25em] rounded-2xl active:scale-[0.97] transition-transform">
                   Enter
                 </div>
               </button>
@@ -249,7 +260,7 @@ export default function HotmessSplash() {
                 <span className="text-white/30">18+</span> and agree to our{' '}
                 <button
                   onClick={() => setShowLegal(s => !s)}
-                  className="text-[#C8962C]/40 underline decoration-[#C8962C]/20 hover:text-[#C8962C]/60"
+                  className="text-brand/40 underline decoration-brand/20 hover:text-brand/60"
                 >
                   Terms, Privacy &amp; Cookies
                 </button>
@@ -265,9 +276,9 @@ export default function HotmessSplash() {
                     <p>Adults 18+ only. You must comply with local laws. No commercial sex work solicitation.</p>
                     <p>We collect minimal data for app functionality. See full Privacy Policy at hotmess.app/privacy.</p>
                     <div className="flex items-center justify-center gap-2 pt-1">
-                      <a href="/legal/terms" className="text-[#C8962C]/25 underline">Terms</a>
+                      <a href="/legal/terms" className="text-brand/25 underline">Terms</a>
                       <span className="text-white/10">·</span>
-                      <a href="/legal/privacy" className="text-[#C8962C]/25 underline">Privacy</a>
+                      <a href="/legal/privacy" className="text-brand/25 underline">Privacy</a>
                     </div>
                   </motion.div>
                 )}
@@ -300,7 +311,7 @@ export default function HotmessSplash() {
 
               {/* Header */}
               <div className="mb-7">
-                <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-2"><span className="text-white">HOT</span><span className="text-[#C8962C]">MESS</span></p>
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-2"><span className="text-white">HOT</span><span className="text-brand">MESS</span></p>
                 <h2 className="text-white font-black text-[28px] leading-tight">
                   {isSignUp ? 'Create account' : 'Welcome back'}
                 </h2>
@@ -316,7 +327,7 @@ export default function HotmessSplash() {
                     value={fullName}
                     onChange={e => setFullName(e.target.value)}
                     placeholder="Display name"
-                    className="w-full bg-[#1C1C1E] border border-white/8 rounded-xl px-4 py-3.5 text-white placeholder-white/20 text-sm focus:outline-none focus:border-[#C8962C]/50 transition-colors"
+                    className="w-full bg-bg-elevated border border-white/8 rounded-xl px-4 py-3.5 text-white placeholder-white/20 text-sm focus:outline-none focus:border-brand/50 transition-colors"
                   />
                 )}
                 <input
@@ -325,7 +336,7 @@ export default function HotmessSplash() {
                   onChange={e => setEmail(e.target.value)}
                   placeholder="Email address"
                   autoComplete="email"
-                  className="w-full bg-[#1C1C1E] border border-white/8 rounded-xl px-4 py-3.5 text-white placeholder-white/20 text-sm focus:outline-none focus:border-[#C8962C]/50 transition-colors"
+                  className="w-full bg-bg-elevated border border-white/8 rounded-xl px-4 py-3.5 text-white placeholder-white/20 text-sm focus:outline-none focus:border-brand/50 transition-colors"
                 />
                 <div className="relative">
                   <input
@@ -334,7 +345,7 @@ export default function HotmessSplash() {
                     onChange={e => setPassword(e.target.value)}
                     placeholder="Password"
                     autoComplete={isSignUp ? 'new-password' : 'current-password'}
-                    className="w-full bg-[#1C1C1E] border border-white/8 rounded-xl px-4 py-3.5 text-white placeholder-white/20 text-sm focus:outline-none focus:border-[#C8962C]/50 pr-12 transition-colors"
+                    className="w-full bg-bg-elevated border border-white/8 rounded-xl px-4 py-3.5 text-white placeholder-white/20 text-sm focus:outline-none focus:border-brand/50 pr-12 transition-colors"
                   />
                   <button
                     type="button"
@@ -348,7 +359,7 @@ export default function HotmessSplash() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#C8962C] text-black font-black text-sm rounded-2xl h-14 flex items-center justify-center gap-2 active:scale-[0.97] transition-transform disabled:opacity-50 mt-1"
+                  className="w-full bg-brand text-black font-black text-sm rounded-2xl h-14 flex items-center justify-center gap-2 active:scale-[0.97] transition-transform disabled:opacity-50 mt-1"
                   style={{ boxShadow: '0 0 30px rgba(200, 150, 44, 0.2)' }}
                 >
                   {loading
@@ -369,7 +380,7 @@ export default function HotmessSplash() {
                 {!isSignUp && (
                   <button
                     onClick={() => { setResetEmail(email); setStage('forgot'); }}
-                    className="text-[#C8962C]/50 text-xs hover:text-[#C8962C] transition-colors"
+                    className="text-brand/50 text-xs hover:text-brand transition-colors"
                   >
                     Forgot password?
                   </button>
@@ -414,8 +425,8 @@ export default function HotmessSplash() {
               </button>
 
               <div className="mb-7">
-                <div className="w-12 h-12 rounded-2xl bg-[#C8962C]/8 border border-[#C8962C]/15 flex items-center justify-center mb-4">
-                  <Mail className="w-5 h-5 text-[#C8962C]" />
+                <div className="w-12 h-12 rounded-2xl bg-brand/8 border border-brand/15 flex items-center justify-center mb-4">
+                  <Mail className="w-5 h-5 text-brand" />
                 </div>
                 <h2 className="text-white font-black text-2xl">Reset password</h2>
                 <p className="text-white/35 text-sm mt-1.5">
@@ -431,12 +442,12 @@ export default function HotmessSplash() {
                   placeholder="Email address"
                   autoComplete="email"
                   autoFocus
-                  className="w-full bg-[#1C1C1E] border border-white/8 rounded-xl px-4 py-3.5 text-white placeholder-white/20 text-sm focus:outline-none focus:border-[#C8962C]/50 transition-colors"
+                  className="w-full bg-bg-elevated border border-white/8 rounded-xl px-4 py-3.5 text-white placeholder-white/20 text-sm focus:outline-none focus:border-brand/50 transition-colors"
                 />
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#C8962C] text-black font-black text-sm rounded-2xl h-14 flex items-center justify-center gap-2 active:scale-[0.97] transition-transform disabled:opacity-50"
+                  className="w-full bg-brand text-black font-black text-sm rounded-2xl h-14 flex items-center justify-center gap-2 active:scale-[0.97] transition-transform disabled:opacity-50"
                 >
                   {loading
                     ? <><Loader2 className="w-4 h-4 animate-spin" /> Sending...</>
@@ -472,15 +483,15 @@ export default function HotmessSplash() {
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ ...springSnap, delay: 0.2 }}
-                  className="w-16 h-16 rounded-full bg-[#C8962C]/10 border-2 border-[#C8962C]/25 flex items-center justify-center mx-auto mb-5"
+                  className="w-16 h-16 rounded-full bg-brand/10 border-2 border-brand/25 flex items-center justify-center mx-auto mb-5"
                 >
-                  <Mail className="w-7 h-7 text-[#C8962C]" />
+                  <Mail className="w-7 h-7 text-brand" />
                 </motion.div>
                 <h2 className="text-white font-black text-2xl mb-2">Check your inbox</h2>
                 <p className="text-white/35 text-sm leading-relaxed">
                   We sent a reset link to
                 </p>
-                <p className="text-[#C8962C] text-sm font-bold mt-1 break-all">{resetEmail}</p>
+                <p className="text-brand text-sm font-bold mt-1 break-all">{resetEmail}</p>
                 <p className="text-white/20 text-xs mt-3 leading-relaxed">
                   Click the link to set a new password. Check spam if needed.
                 </p>
@@ -488,7 +499,7 @@ export default function HotmessSplash() {
 
               <button
                 onClick={() => { setStage('auth'); setIsSignUp(false); }}
-                className="mt-6 w-full bg-[#1C1C1E] border border-white/8 text-white font-black text-sm rounded-2xl h-14 flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
+                className="mt-6 w-full bg-bg-elevated border border-white/8 text-white font-black text-sm rounded-2xl h-14 flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
               >
                 <ArrowLeft className="w-4 h-4" /> Back to Sign In
               </button>
@@ -528,15 +539,15 @@ export default function HotmessSplash() {
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ ...springSnap, delay: 0.2 }}
-                  className="w-16 h-16 rounded-full bg-[#C8962C]/10 border-2 border-[#C8962C]/25 flex items-center justify-center mx-auto mb-5"
+                  className="w-16 h-16 rounded-full bg-brand/10 border-2 border-brand/25 flex items-center justify-center mx-auto mb-5"
                 >
-                  <Mail className="w-7 h-7 text-[#C8962C]" />
+                  <Mail className="w-7 h-7 text-brand" />
                 </motion.div>
                 <h2 className="text-white font-black text-2xl mb-2">Confirm your email</h2>
                 <p className="text-white/35 text-sm leading-relaxed">
                   We sent a confirmation link to
                 </p>
-                <p className="text-[#C8962C] text-sm font-bold mt-1 break-all">{pendingEmail}</p>
+                <p className="text-brand text-sm font-bold mt-1 break-all">{pendingEmail}</p>
                 <p className="text-white/20 text-xs mt-3 leading-relaxed">
                   Click the link in your email to enter HOTMESS. Check spam if needed.
                 </p>
@@ -545,7 +556,7 @@ export default function HotmessSplash() {
               <button
                 onClick={handleResend}
                 disabled={resendLoading}
-                className="mt-4 w-full bg-[#1C1C1E] border border-white/8 text-white font-black text-sm rounded-2xl h-14 flex items-center justify-center gap-2 active:scale-[0.97] transition-transform disabled:opacity-50"
+                className="mt-4 w-full bg-bg-elevated border border-white/8 text-white font-black text-sm rounded-2xl h-14 flex items-center justify-center gap-2 active:scale-[0.97] transition-transform disabled:opacity-50"
               >
                 {resendLoading
                   ? <><Loader2 className="w-4 h-4 animate-spin" /> Resending...</>
@@ -580,11 +591,11 @@ export default function HotmessSplash() {
               transition={springSnap}
               className="text-3xl font-black italic text-white select-none"
             >
-              HOT<span className="text-[#C8962C]">MESS</span>
+              HOT<span className="text-brand">MESS</span>
             </motion.p>
             {/* Gold pulse ring */}
             <div className="mt-6 relative">
-              <div className="w-10 h-10 rounded-full border-2 border-[#C8962C]/20 border-t-[#C8962C] animate-spin" />
+              <div className="w-10 h-10 rounded-full border-2 border-brand/20 border-t-brand animate-spin" />
             </div>
             <p className="mt-4 text-[9px] uppercase tracking-[0.4em] text-white/15">Loading</p>
           </motion.div>

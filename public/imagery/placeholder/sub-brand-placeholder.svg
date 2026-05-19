@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Sub-brand colour blocks placeholder">
+  <title>Sub-brand placeholder — colour blocks</title>
+  <defs>
+    <pattern id="cage" x="0" y="0" width="44" height="44" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="44" height="44" fill="#E4C82C"/>
+      <line x1="0" y1="0" x2="0" y2="44" stroke="#050507" stroke-width="6"/>
+      <line x1="0" y1="0" x2="44" y2="0" stroke="#050507" stroke-width="6"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="900" fill="#050507"/>
+  <!-- HNH MESS — yellow cage block, left -->
+  <rect x="80"  y="120" width="680" height="660" fill="url(#cage)"/>
+  <rect x="80"  y="120" width="680" height="660" fill="none" stroke="#050507" stroke-width="6"/>
+  <text x="420" y="430" fill="#050507" font-family="'Oswald','Bebas Neue',system-ui,sans-serif" font-size="92" font-weight="700" letter-spacing="6" text-anchor="middle">HNH MESS</text>
+  <text x="420" y="490" fill="#050507" font-family="'Space Mono','SF Mono',Menlo,monospace" font-size="14" letter-spacing="5" text-anchor="middle">PLACEHOLDER · CAGE</text>
+  <!-- RAW CONVICT — red flat block, right -->
+  <rect x="840" y="120" width="680" height="660" fill="#B5302A"/>
+  <text x="1180" y="430" fill="#0D0D0D" font-family="'Oswald','Bebas Neue',system-ui,sans-serif" font-size="92" font-weight="700" letter-spacing="6" text-anchor="middle">RAW CONVICT</text>
+  <text x="1180" y="490" fill="#0D0D0D" font-family="'Space Mono','SF Mono',Menlo,monospace" font-size="14" letter-spacing="5" text-anchor="middle">PLACEHOLDER · LABEL</text>
+  <text x="800" y="850" fill="rgba(255,255,255,0.45)" font-family="'Space Mono','SF Mono',Menlo,monospace" font-size="12" letter-spacing="5" text-anchor="middle">NO IMAGERY · SWAP 1:1 BY FILENAME</text>
+</svg>

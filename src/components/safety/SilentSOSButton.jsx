@@ -27,6 +27,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Loader2, Check, AlertTriangle, Phone } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
+import { COLOR } from '@/lib/tokens';
 
 const HOLD_MS = 3000;          // hold time before fire
 const COOLDOWN_MS = 60 * 1000; // visible cooldown after a successful send
@@ -136,9 +137,13 @@ export default function SilentSOSButton() {
       // Stream per-channel results into the UI.
       const attempts = body?.dispatch?.attempts || [];
       const opsAttempts = body?.dispatch?.ops_alert?.attempts || [];
+      // design system reset 2026-05-19: drop attempts with no channel name.
+      // The previous fallback `'channel'` rendered literally as "CHANNEL" in
+      // the chip row because the chip class applies `uppercase`. Better to
+      // skip than to show a placeholder badge that means nothing to the user.
       const merged = [...opsAttempts, ...attempts]
-        .filter(a => a && (a.channel || a.deliveryId))
-        .map(a => ({ channel: a.channel || 'channel', ok: !!a.ok, skipped: !!a.skipped, error: a.error || null }));
+        .filter(a => a && typeof a.channel === 'string' && a.channel.length > 0)
+        .map(a => ({ channel: a.channel, ok: !!a.ok, skipped: !!a.skipped, error: a.error || null }));
       setChannelResults(merged);
       HAPTIC(120);
       setPhase('sent');
@@ -193,7 +198,7 @@ export default function SilentSOSButton() {
           style={{
             background: phase === 'sent' || phase === 'cooldown'
               ? 'rgba(48,209,88,0.16)' : 'rgba(255,59,48,0.12)',
-            color: phase === 'sent' || phase === 'cooldown' ? '#30D158' : '#FF3B30',
+            color: phase === 'sent' || phase === 'cooldown' ? COLOR.signal : COLOR.emergency,
             border: `1px solid ${phase === 'sent' || phase === 'cooldown' ? 'rgba(48,209,88,0.30)' : 'rgba(255,59,48,0.25)'}`,
             transition: 'background 200ms ease, color 200ms ease, border 200ms ease',
           }}
@@ -235,7 +240,7 @@ export default function SilentSOSButton() {
                 <li key={i} className="text-[10px] uppercase tracking-wider rounded-full px-2 py-0.5"
                   style={{
                     background: r.ok ? 'rgba(48,209,88,0.10)' : r.skipped ? 'rgba(255,255,255,0.06)' : 'rgba(255,59,48,0.10)',
-                    color: r.ok ? '#30D158' : r.skipped ? 'rgba(255,255,255,0.45)' : '#FF3B30',
+                    color: r.ok ? COLOR.signal : r.skipped ? 'rgba(255,255,255,0.45)' : COLOR.emergency,
                     border: '1px solid currentColor',
                   }}>
                   {r.ok ? '✓' : r.skipped ? '·' : '✗'} {CHANNEL_LABELS[r.channel] || r.channel}
@@ -255,14 +260,14 @@ export default function SilentSOSButton() {
             ].map((line) => (
               <a key={line.tel} href={`tel:${line.tel}`}
                 className="text-[10px] uppercase tracking-wider rounded-full px-2 py-0.5 inline-flex items-center gap-1"
-                style={{ background: 'rgba(200,150,44,0.10)', color: '#C8962C', border: '1px solid rgba(200,150,44,0.25)' }}>
+                style={{ background: COLOR.brandTint, color: COLOR.brand, border: `1px solid ${COLOR.brand}40` }}>
                 <Phone className="w-2.5 h-2.5" /> {line.label}
               </a>
             ))}
           </div>
         )}
 
-        {error && <p className="text-[11px] text-[#FF3B30] mt-1">Send failed: {String(error).slice(0, 120)}. Try once more or use the crisis lines above.</p>}
+        {error && <p className="text-[11px] text-emergency mt-1">Send failed: {String(error).slice(0, 120)}. Try once more or use the crisis lines above.</p>}
       </div>
 
       {/* Escalation modal — fires when user re-presses inside cooldown */}
@@ -273,9 +278,9 @@ export default function SilentSOSButton() {
             className="fixed inset-0 z-[400] bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
             onClick={(e) => { if (e.target === e.currentTarget) setEscalationModal(false); }}>
             <motion.div initial={{ y: 60 }} animate={{ y: 0 }} exit={{ y: 60 }}
-              className="w-full max-w-md rounded-2xl bg-[#1C1C1E] border border-white/10 p-5 space-y-3">
+              className="w-full max-w-md rounded-2xl bg-bg-elevated border border-white/10 p-5 space-y-3">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-[#FF3B30] mt-0.5" />
+                <AlertTriangle className="w-5 h-5 text-emergency mt-0.5" />
                 <div className="text-white/85 text-sm leading-relaxed">
                   Help is already on the way. Pressing again will send another set of alerts to your contacts.
                   Only do this if your situation has worsened.
@@ -283,7 +288,7 @@ export default function SilentSOSButton() {
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <button onClick={() => { setEscalationModal(false); fire({ escalation: true }); }}
-                  className="flex-1 py-3 rounded-xl font-bold text-sm" style={{ background: '#FF3B30', color: 'white' }}>
+                  className="flex-1 py-3 rounded-xl font-bold text-sm" style={{ background: COLOR.emergency, color: 'white' }}>
                   Yes — it's worse. Send again.
                 </button>
                 <button onClick={() => setEscalationModal(false)}
@@ -304,9 +309,9 @@ export default function SilentSOSButton() {
             className="fixed inset-0 z-[400] bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
             onClick={(e) => { if (e.target === e.currentTarget) setRateLimitModal(false); }}>
             <motion.div initial={{ y: 60 }} animate={{ y: 0 }} exit={{ y: 60 }}
-              className="w-full max-w-md rounded-2xl bg-[#1C1C1E] border border-white/10 p-5 space-y-3">
+              className="w-full max-w-md rounded-2xl bg-bg-elevated border border-white/10 p-5 space-y-3">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-[#C8962C] mt-0.5" />
+                <AlertTriangle className="w-5 h-5 text-brand mt-0.5" />
                 <div className="text-white/85 text-sm leading-relaxed">
                   You've sent 3 help signals in the last hour. Your people are responding.
                   Confirm escalation only if your situation has worsened, or tap a crisis line below.
@@ -314,13 +319,13 @@ export default function SilentSOSButton() {
               </div>
               <div className="flex flex-col gap-2">
                 <button onClick={() => { setRateLimitModal(false); fire({ escalation: true }); }}
-                  className="py-3 rounded-xl font-bold text-sm" style={{ background: '#FF3B30', color: 'white' }}>
+                  className="py-3 rounded-xl font-bold text-sm" style={{ background: COLOR.emergency, color: 'white' }}>
                   Confirm escalation — send again
                 </button>
                 <div className="flex flex-wrap gap-1.5 justify-center">
-                  <a href="tel:116123" className="text-xs rounded-full px-3 py-1.5 inline-flex items-center gap-1" style={{ background: 'rgba(200,150,44,0.12)', color: '#C8962C', border: '1px solid rgba(200,150,44,0.30)' }}><Phone className="w-3 h-3" /> Samaritans 116 123</a>
-                  <a href="tel:03003300630" className="text-xs rounded-full px-3 py-1.5 inline-flex items-center gap-1" style={{ background: 'rgba(200,150,44,0.12)', color: '#C8962C', border: '1px solid rgba(200,150,44,0.30)' }}><Phone className="w-3 h-3" /> LGBT+ 0300 330 0630</a>
-                  <a href="tel:999" className="text-xs rounded-full px-3 py-1.5 inline-flex items-center gap-1" style={{ background: 'rgba(200,150,44,0.12)', color: '#C8962C', border: '1px solid rgba(200,150,44,0.30)' }}><Phone className="w-3 h-3" /> 999</a>
+                  <a href="tel:116123" className="text-xs rounded-full px-3 py-1.5 inline-flex items-center gap-1" style={{ background: COLOR.brandTint, color: COLOR.brand, border: `1px solid ${COLOR.brand}4D` }}><Phone className="w-3 h-3" /> Samaritans 116 123</a>
+                  <a href="tel:03003300630" className="text-xs rounded-full px-3 py-1.5 inline-flex items-center gap-1" style={{ background: COLOR.brandTint, color: COLOR.brand, border: `1px solid ${COLOR.brand}4D` }}><Phone className="w-3 h-3" /> LGBT+ 0300 330 0630</a>
+                  <a href="tel:999" className="text-xs rounded-full px-3 py-1.5 inline-flex items-center gap-1" style={{ background: COLOR.brandTint, color: COLOR.brand, border: `1px solid ${COLOR.brand}4D` }}><Phone className="w-3 h-3" /> 999</a>
                 </div>
                 <button onClick={() => setRateLimitModal(false)} className="py-2.5 rounded-xl font-bold text-xs bg-white/8 text-white/70">Dismiss</button>
               </div>
