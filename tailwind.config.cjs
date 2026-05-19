@@ -148,6 +148,13 @@ module.exports = {
           tint:     'rgba(48, 209, 88, 0.12)',
           'tint-2': 'rgba(48, 209, 88, 0.22)',
         },
+        // Safety Hub UI accent — canonical cyan, distinct from signal.
+        // Drive §1 brief. Consume as text-safety, bg-safety/20, etc.
+        'safety': {
+          DEFAULT:  '#5BC8D0',
+          tint:     'rgba(91, 200, 208, 0.12)',
+          'tint-2': 'rgba(91, 200, 208, 0.22)',
+        },
         'warn': {
           DEFAULT: '#FFB800',
           tint:    'rgba(255, 184, 0, 0.12)',

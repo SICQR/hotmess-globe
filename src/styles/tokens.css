@@ -60,6 +60,19 @@
   --c-signal-tint:   rgba(48, 209, 88, 0.12);
   --c-signal-tint-2: rgba(48, 209, 88, 0.22);
 
+  /* --hotmess-safety = Safety Hub UI accent (Window / Exit / Disappear).
+   * Canonical cyan from §1 of the Drive design brief. Distinct from
+   * --c-signal (delivered/online/live) so a recovery partner reading the
+   * Safety surface doesn't read "delivered" cues as "safe" cues.
+   * Note: --hotmess-success (#6BA66B) is referenced by the brief's
+   * verification criterion but is NOT introduced on this branch — Phil's
+   * "Do NOT change tokens beyond --hotmess-safety" constraint takes
+   * precedence. The visual distinction (safety vs. success) becomes
+   * testable in a later branch when success is extracted. */
+  --hotmess-safety:        #5BC8D0;
+  --hotmess-safety-tint:   rgba(91, 200, 208, 0.12);
+  --hotmess-safety-tint-2: rgba(91, 200, 208, 0.22);
+
   --c-warn:          #FFB800;
   --c-warn-tint:     rgba(255, 184, 0, 0.12);
 

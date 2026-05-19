@@ -2,6 +2,11 @@
  * src/components/system/Body.tsx
  * Body text — for paragraphs, captions, descriptions.
  *
+ * DEFAULT FONT: sans stack (system-ui / -apple-system / etc.).
+ * Mono is reserved for: channel chips, ticker text, timestamps, member
+ * IDs, system status, and code. Use a `font-mono` className on the
+ * specific span when you need it; do not change this default.
+ *
  *   size="default"  fs-body (14px)
  *   size="lg"       fs-body-lg (16px) — readable body
  *   size="sm"       fs-small (12px) — captions
@@ -38,7 +43,7 @@ function cn(...p: Array<string | false | undefined>) { return p.filter(Boolean).
 export const Body: React.FC<Props> = ({ size = 'default', tone = 'default', as = 'p', className, children, ...rest }) => {
   const Tag: any = as;
   return (
-    <Tag className={cn('font-mono leading-base', SIZE[size], TONE[tone], className)} {...rest}>
+    <Tag className={cn('font-sans leading-base', SIZE[size], TONE[tone], className)} {...rest}>
       {children}
     </Tag>
   );

@@ -825,7 +825,7 @@ export default function Auth() {
                 <ChevronLeft className="w-4 h-4" /> Back
               </button>
 
-              <h2 className="text-2xl font-black text-white mb-1">Join The Mess</h2>
+              <h2 className="text-2xl font-black text-white mb-1">Welcome.</h2>
               <p className="text-white/40 text-sm mb-6">Create your account</p>
 
               <form onSubmit={handleSignUp} className="space-y-4">

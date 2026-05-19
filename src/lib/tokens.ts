@@ -33,6 +33,13 @@ export const COLOR = {
   signalTint:    'rgba(48, 209, 88, 0.12)',
   signalTint2:   'rgba(48, 209, 88, 0.22)',
 
+  // Safety Hub UI accent (Window / Exit / Disappear) — canonical cyan
+  // from §1 of the Drive design brief. Distinct from `signal` (live /
+  // online / delivered) so safety cues don't read as delivery cues.
+  safety:        '#5BC8D0',
+  safetyTint:    'rgba(91, 200, 208, 0.12)',
+  safetyTint2:   'rgba(91, 200, 208, 0.22)',
+
   warn:          '#FFB800',
   warnTint:      'rgba(255, 184, 0, 0.12)',
 
