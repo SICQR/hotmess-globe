@@ -43,18 +43,28 @@ export function CookieBanner({ onConsent }: CookieBannerProps) {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 80, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-          className="fixed bottom-44 left-4 right-4 z-[60] mx-auto max-w-md pointer-events-auto" /* polish-sweep 2026-05-18 Issue 2: above bottom-nav (which is z-50), below safety controls (z-300+) and SOS modals (z-400) */
+          /**
+           * design system reset 2026-05-19:
+           *  - SafetyFAB is now top-right (Issue 5 fix), so bottom is free
+           *  - z-cookie (115) sits above z-toast (110) and z-dock (50),
+           *    below z-interrupt (120) and z-emergency (200)
+           *  - bottom anchored above dock with safe-area inset
+           *  - max-w-md centred; pointer-events-none on wrapper so taps
+           *    outside the card pass through to surfaces below
+           */
+          className="fixed left-4 right-4 z-cookie mx-auto max-w-md pointer-events-none"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom) + 88px)' }}
         >
-          <div className="rounded-2xl bg-[#1C1C1E]/95 backdrop-blur-xl border border-white/8 p-4 shadow-2xl">
+          <div className="rounded-2xl bg-bg-elevated/95 backdrop-blur-xl border border-white/10 p-4 shadow-strong pointer-events-auto">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 mt-0.5">
-                <Shield className="h-4 w-4 text-[#C8962C]/60" />
+                <Shield className="h-4 w-4 text-brand/60" />
               </div>
 
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] text-white/60 leading-relaxed">
                   We use cookies to keep HOTMESS running.{' '}
-                  <a href="/legal/privacy" className="text-[#C8962C]/50 underline decoration-[#C8962C]/20 hover:text-[#C8962C]/80">
+                  <a href="/legal/privacy" className="text-brand/55 underline decoration-brand/20 hover:text-brand/80">
                     Learn more
                   </a>
                 </p>
@@ -68,7 +78,7 @@ export function CookieBanner({ onConsent }: CookieBannerProps) {
                   </button>
                   <button
                     onClick={() => handleConsent('all')}
-                    className="rounded-xl bg-[#C8962C] px-5 py-2 text-xs font-black text-black hover:bg-[#D4A84B] transition-colors active:scale-[0.97]"
+                    className="rounded-xl bg-brand px-5 py-2 text-xs font-black text-black hover:bg-brand-hover transition-colors active:scale-[0.97]"
                   >
                     Accept All
                   </button>

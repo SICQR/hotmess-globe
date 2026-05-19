@@ -214,9 +214,9 @@ export default function Safety() {
           <SilentSOSButton />
           <button
             onClick={() => navigate('/fake-call')}
-            className="py-3.5 font-bold text-sm rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2 bg-[#1C1C1E] border border-white/10 text-white/70"
+            className="py-3.5 font-bold text-sm rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2 bg-bg-elevated border border-white/10 text-white/70"
           >
-            <Phone className="w-4 h-4 text-[#00C2E0]" />
+            <Phone className="w-4 h-4 text-signal" />
             Fake Call
           </button>
         </div>
@@ -251,7 +251,7 @@ export default function Safety() {
             ) : (
               <div className="bg-white/5 border border-white/10 p-6 mb-6">
                 <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-[#00C2E0]" />
+                  <Clock className="w-5 h-5 text-signal" />
                   Start Safety Check-In
                 </h3>
                 <p className="text-sm text-white/60 mb-4">
@@ -302,7 +302,7 @@ export default function Safety() {
           <TabsContent value="contacts">
             <div className="bg-white/5 border border-white/10 p-6 mb-6">
               <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-[#00C2E0]" />
+                <UserPlus className="w-5 h-5 text-signal" />
                 Add Trusted Contact
               </h3>
               
@@ -372,7 +372,7 @@ export default function Safety() {
                         {contact.contact_email && (
                           <p className="text-xs text-white/40">{contact.contact_email}</p>
                         )}
-                        <span className="inline-block mt-2 px-2 py-1 bg-[#00C2E0]/20 text-[#00C2E0] text-xs font-bold uppercase">
+                        <span className="inline-block mt-2 px-2 py-1 bg-signal/20 text-signal text-xs font-bold uppercase">
                           {contact.relationship}
                         </span>
                       </div>

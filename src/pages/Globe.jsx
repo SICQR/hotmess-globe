@@ -455,7 +455,7 @@ export default function GlobePage({ embedded = false }) {
           </div>
         </div>
 
-        <div className="absolute top-[calc(65px+env(safe-area-inset-top,0px))] right-4 z-30 pointer-events-none">
+        <div className="absolute top-[calc(65px+env(safe-area-inset-top,0px))] left-4 z-30 pointer-events-none">
           <button onClick={() => setShowLayersSheet(true)} className="p-3 bg-black/60 border border-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-black transition-all pointer-events-auto shadow-lg" data-pull-refresh-ignore>
             <Layers className="w-5 h-5" />
           </button>
@@ -488,8 +488,8 @@ export default function GlobePage({ embedded = false }) {
           />
         )}
 
-        <div key="beacon-fab" className="absolute bottom-[calc(76px+env(safe-area-inset-bottom,0px))] right-6 z-[70]" data-pull-refresh-ignore>
-          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setShowBeaconModal(true)} className="w-16 h-16 bg-[#C8962C] rounded-2xl flex items-center justify-center shadow-[0_15px_35px_-12px_rgba(200,150,44,0.6)] border border-white/30 overflow-hidden group backdrop-blur-md">
+        <div key="beacon-fab" className="absolute bottom-[calc(76px+env(safe-area-inset-bottom,0px))] right-6 z-fab" data-pull-refresh-ignore>
+          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setShowBeaconModal(true)} className="w-16 h-16 bg-brand rounded-2xl flex items-center justify-center shadow-brand-glow-lg border border-white/30 overflow-hidden group backdrop-blur-md">
             <div className="absolute inset-0 bg-gradient-to-tr from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <MapPin className="w-7 h-7 text-black" />
           </motion.button>

@@ -486,21 +486,21 @@ export default function Music() {
           <TabsList className="grid w-full grid-cols-3 bg-white/5 mb-12">
             <TabsTrigger 
               value="live"
-              className="data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black"
+              className="data-[state=active]:bg-signal data-[state=active]:text-black"
             >
               <RadioIcon className="w-4 h-4 mr-2" />
               LIVE
             </TabsTrigger>
             <TabsTrigger 
               value="shows"
-              className="data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black"
+              className="data-[state=active]:bg-signal data-[state=active]:text-black"
             >
               <Calendar className="w-4 h-4 mr-2" />
               EVENTS
             </TabsTrigger>
             <TabsTrigger 
               value="releases"
-              className="data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black"
+              className="data-[state=active]:bg-signal data-[state=active]:text-black"
             >
               <Disc className="w-4 h-4 mr-2" />
               RELEASES
@@ -509,7 +509,7 @@ export default function Music() {
 
           <TabsContent value="live">
             <div className="bg-white/5 border-2 border-white/10 p-8 text-center">
-              <div className="w-32 h-32 bg-[#C8962C] flex items-center justify-center mx-auto mb-6 animate-pulse">
+              <div className="w-32 h-32 bg-brand flex items-center justify-center mx-auto mb-6 animate-pulse">
                 <RadioIcon className="w-16 h-16" />
               </div>
               <h3 className="text-3xl font-black uppercase mb-3">ON AIR NOW</h3>
@@ -540,13 +540,13 @@ export default function Music() {
             <div className="mt-12">
               <Link
                 to="/radio"
-                className="flex items-center justify-between w-full px-5 py-4 bg-white/5 border-2 border-white/10 hover:border-[#C8962C] transition-all"
+                className="flex items-center justify-between w-full px-5 py-4 bg-white/5 border-2 border-white/10 hover:border-brand transition-all"
               >
                 <div>
                   <p className="font-black uppercase text-sm">RADIO SCHEDULE</p>
                   <p className="text-xs text-white/40 uppercase tracking-wider">Shows, times &amp; calendar</p>
                 </div>
-                <span className="text-[10px] uppercase tracking-widest font-mono text-[#C8962C]">View</span>
+                <span className="text-[10px] uppercase tracking-widest font-mono text-brand">View</span>
               </Link>
             </div>
           </TabsContent>
@@ -574,7 +574,7 @@ export default function Music() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {musicEvents.map((event) => (
                     <Link key={event.id} to={`/events/${encodeURIComponent(event.id)}`}>
-                      <div className="group relative aspect-[4/3] overflow-hidden bg-white/5 border-2 border-white/10 hover:border-[#C8962C] transition-all">
+                      <div className="group relative aspect-[4/3] overflow-hidden bg-white/5 border-2 border-white/10 hover:border-brand transition-all">
                         {event.image_url && (
                           <img 
                             src={event.image_url} 
@@ -585,11 +585,11 @@ export default function Music() {
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent" />
                         <div className="absolute inset-0 flex flex-col justify-end p-6">
                           <div className="flex items-center gap-2 mb-3">
-                            <div className="px-2 py-1 bg-[#C8962C] text-white text-xs font-black uppercase">
+                            <div className="px-2 py-1 bg-brand text-white text-xs font-black uppercase">
                               MUSIC EVENT
                             </div>
                             {event.audio_url && (
-                              <div className="px-2 py-1 bg-[#00C2E0] text-black text-xs font-black uppercase flex items-center gap-1">
+                              <div className="px-2 py-1 bg-signal text-black text-xs font-black uppercase flex items-center gap-1">
                                 <Play className="w-3 h-3" />
                                 AUDIO
                               </div>
@@ -770,7 +770,7 @@ export default function Music() {
                     </div>
                     <div>
                       <label className="text-xs uppercase tracking-widest text-white/60 mb-2 block">WAV File</label>
-                      <div className="border-2 border-dashed border-white/20 p-4 text-center hover:border-[#C8962C] transition-colors">
+                      <div className="border-2 border-dashed border-white/20 p-4 text-center hover:border-brand transition-colors">
                         <input
                           type="file"
                           accept=".wav"
@@ -909,10 +909,10 @@ export default function Music() {
                   {combinedReleases.map((release) => (
                     <div 
                       key={release.track_id}
-                      className="group relative bg-white/5 border-2 border-white/10 hover:border-[#C8962C] transition-all p-4"
+                      className="group relative bg-white/5 border-2 border-white/10 hover:border-brand transition-all p-4"
                     >
                       <div className="aspect-square bg-gradient-to-br from-[#C8962C]/20 to-black/40 mb-4 flex items-center justify-center">
-                        <Disc className="w-16 h-16 text-[#C8962C] group-hover:animate-spin" style={{ animationDuration: '3s' }} />
+                        <Disc className="w-16 h-16 text-brand group-hover:animate-spin" style={{ animationDuration: '3s' }} />
                       </div>
 
                       {(release.soundcloud_urn || release.soundcloud_url) && (
@@ -929,7 +929,7 @@ export default function Music() {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           {release.mood && (
-                            <span className="px-2 py-0.5 bg-[#C8962C] text-white text-[10px] font-black uppercase">
+                            <span className="px-2 py-0.5 bg-brand text-white text-[10px] font-black uppercase">
                               {release.mood}
                             </span>
                           )}
@@ -959,7 +959,7 @@ export default function Music() {
                               href={release.soundcloud_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1.5 bg-[#C8962C] text-black hover:bg-white transition-colors"
+                              className="p-1.5 bg-brand text-black hover:bg-white transition-colors"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <ExternalLink className="w-4 h-4" />
