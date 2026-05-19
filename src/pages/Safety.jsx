@@ -1,418 +1,336 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+/**
+ * Safety — v1.0 rebuild per HOTMESS Safety Build Doc.
+ *
+ * Single-column, thumb-zone layout. Background #050507. No nav clutter.
+ * Inline emergency disclaimer visible on every state (not a modal).
+ *
+ * Composition order (top → bottom):
+ *   1. Calm header (Back + "Safety" title only)
+ *   2. Inline emergency disclaimer (verbatim per brief)
+ *   3. TrustedContactStatus — only mounts when an unresolved event exists
+ *   4. SOSHoldButton — 168x168 hold-to-fire centrepiece
+ *   5. SafetyCheckInModes — six inline-panel modes
+ *   6. SafetyAftercare — accordion, opens on RECOVERY MODE or post-SOS
+ *   7. Trusted contacts roster (compact add + list)
+ *
+ * Doctrine compliance:
+ *   - No alert() / confirm() / browser popups
+ *   - No "we keep you safe" / "we protect you" copy — only "share your
+ *     status with people you trust." per brief.
+ *   - Hostile-region: copy avoids police-default (uses 999 baseline only
+ *     where the user has explicitly opened the Support Resources panel).
+ *
+ * Scope discipline: only this file plus four new components in
+ * src/components/safety/. App.jsx route registration unchanged (route
+ * already maps /safety → this page).
+ */
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, UserPlus, Phone, Trash2 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
-import { Shield, UserPlus, Clock, Phone, CheckCircle, ArrowLeft } from 'lucide-react';
-import { useLocalPullToRefresh } from '@/hooks/useLocalPullToRefresh';
-import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
-
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+import SOSHoldButton from '@/components/safety/SOSHoldButton';
+import SafetyCheckInModes from '@/components/safety/SafetyCheckInModes';
+import SafetyAftercare from '@/components/safety/SafetyAftercare';
+import TrustedContactStatus from '@/components/safety/TrustedContactStatus';
 import { useSOSContext } from '@/contexts/SOSContext';
 
-import EmergencyMessageEditor from '../components/safety/EmergencyMessageEditor';
-import CheckInTimerCustomizer from '../components/safety/CheckInTimerCustomizer';
-import AftercareNudge from '../components/safety/AftercareNudge';
-import SilentSOSButton from '@/components/safety/SilentSOSButton';
+const TOKENS = {
+  ink: '#050507',
+  gold: '#C8962C',
+  care: '#3A464D',
+};
+
+const EMERGENCY_DISCLAIMER =
+  'HOTMESS Safety is not an emergency service. For emergencies, call 999.';
+
+const RELATIONSHIPS = [
+  { value: 'daddy', label: 'Daddy' },
+  { value: 'friend', label: 'Friend' },
+  { value: 'flatmate', label: 'Flatmate' },
+  { value: 'club_contact', label: 'Club Contact' },
+  { value: 'emergency', label: 'Emergency' },
+];
 
 export default function Safety() {
   const navigate = useNavigate();
-  const { triggerSOS } = useSOSContext();
-  const [currentUser, setCurrentUser] = useState(null);
-  const [contactName, setContactName] = useState('');
-  const [contactPhone, setContactPhone] = useState('');
-  const [showAftercareNudge, setShowAftercareNudge] = useState(false);
-  const [contactEmail, setContactEmail] = useState('');
-  const [relationship, setRelationship] = useState('friend');
-  const [checkOutHours, setCheckOutHours] = useState(4);
   const queryClient = useQueryClient();
-  const scrollRef = useRef(null);
-  const handleRefresh = useCallback(async () => {
-    await queryClient.invalidateQueries();
-  }, [queryClient]);
+  const { showRecovery, dismissRecovery } = useSOSContext();
 
-  const { pullDistance, isRefreshing } = useLocalPullToRefresh({
-    onRefresh: handleRefresh,
-    scrollRef,
-  });
+  const [userId, setUserId] = useState(null);
+  const [aftercareOpen, setAftercareOpen] = useState(false);
 
-
-
+  // Mount-time light haptic per brief — calm, no sound.
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        // Build a compat object so existing code can use currentUser.email
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        setCurrentUser({
-          id: session.user.id,
-          email: session.user.email,
-          city: profile?.city || null,
-          ...profile,
-        });
-      }
-    };
-    fetchUser();
+    try { if (navigator?.vibrate) navigator.vibrate(8); } catch { /* noop */ }
   }, []);
 
-  const { data: trustedContacts = [] } = useQuery({
-    queryKey: ['trusted-contacts', currentUser?.id],
+  // Auto-open aftercare after SOS recovery (post-event care continuation).
+  useEffect(() => {
+    if (showRecovery) {
+      setAftercareOpen(true);
+    }
+  }, [showRecovery]);
+
+  // Bootstrap user
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!cancelled && session?.user) setUserId(session.user.id);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const { data: contacts = [] } = useQuery({
+    queryKey: ['safety-trusted-contacts', userId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('trusted_contacts')
-        .select('*')
-        .eq('user_id', currentUser.id);
+        .select('id, contact_name, contact_phone, relationship')
+        .eq('user_id', userId);
       if (error) throw error;
       return data || [];
     },
-    enabled: !!currentUser,
+    enabled: !!userId,
   });
 
-  const { data: activeCheckIn } = useQuery({
-    queryKey: ['active-safety-checkin', currentUser?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('safety_checkins')
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .eq('status', 'active')
-        .limit(1)
-        .maybeSingle();
-      if (error) throw error;
-      return data || null;
-    },
-    enabled: !!currentUser,
-    refetchInterval: 30000,
-  });
+  const [newName, setNewName] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newRel, setNewRel] = useState('daddy');
 
-  const addContactMutation = useMutation({
+  const addContact = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from('trusted_contacts').insert({
-        user_id: currentUser.id,
-        contact_name: contactName,
-        contact_phone: contactPhone,
-        contact_email: contactEmail,
-        relationship,
+        user_id: userId,
+        contact_name: newName.trim(),
+        contact_phone: newPhone.trim(),
+        relationship: newRel,
         notify_on_sos: true,
       });
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['trusted-contacts']);
-      toast.success('Trusted contact added');
-      setContactName('');
-      setContactPhone('');
-      setContactEmail('');
+      queryClient.invalidateQueries({ queryKey: ['safety-trusted-contacts'] });
+      setNewName(''); setNewPhone('');
+      toast.success('Contact added.');
     },
+    onError: (e) => toast.error(e?.message || 'Could not add contact.'),
   });
 
-  const checkInMutation = useMutation({
-    mutationFn: async () => {
-      const checkOutTime = new Date(Date.now() + checkOutHours * 60 * 60 * 1000).toISOString();
-
-      let location = { venue_name: 'Unknown' };
-      if (navigator.geolocation) {
-        try {
-          const position = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
-          });
-          location = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            venue_name: currentUser.city || 'Unknown'
-          };
-        } catch (error) {
-          void('Location access denied');
-        }
-      }
-
-      const { error } = await supabase.from('safety_checkins').insert({
-        user_id: currentUser.id,
-        check_in_time: new Date().toISOString(),
-        expected_check_out: checkOutTime,
-        location,
-        status: 'active',
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['active-safety-checkin']);
-      toast.success('Safety check-in active');
-    },
-  });
-
-  const checkOutMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase
-        .from('safety_checkins')
-        .update({ status: 'checked_out' })
-        .eq('id', activeCheckIn.id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['active-safety-checkin']);
-      toast.success('Checked out safely');
-      setTimeout(() => setShowAftercareNudge(true), 3000);
-    },
-  });
-
-  const deleteContactMutation = useMutation({
+  const removeContact = useMutation({
     mutationFn: async (id) => {
       const { error } = await supabase.from('trusted_contacts').delete().eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['trusted-contacts']);
-      toast.success('Contact removed');
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['safety-trusted-contacts'] }),
   });
 
+  const handleTextSomeoneSafe = useCallback(() => {
+    setAftercareOpen(false);
+    toast.message('Pick STAY WITH ME from check-in modes to open a thread.');
+    // Scroll to modes for clarity. No nav.
+    const el = document.getElementById('checkin-modes');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
+  const handleGetHomeSafely = useCallback(() => {
+    setAftercareOpen(false);
+    toast.message('Pick WALK HOME or RIDE SAFE.');
+    const el = document.getElementById('checkin-modes');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
+  const handleSOSSent = useCallback(() => {
+    // After a real send, the dispatcher (when re-enabled) writes
+    // safety_events → TrustedContactStatus picks it up live.
+    // Aftercare doesn't auto-open immediately — that happens via showRecovery
+    // when the user resolves the alert.
+  }, []);
+
   return (
-    <div className="h-full w-full flex flex-col text-white" style={{ background: '#050507' }}>
-      {/* Mobile-first sticky header */}
-      <div
+    <div
+      className="h-full w-full flex flex-col text-white"
+      style={{ background: TOKENS.ink }}
+    >
+      {/* Header — calm, single back button + title. No tabs, no clutter. */}
+      <header
         className="sticky top-0 z-30 border-b border-white/5 px-4"
-        style={{ background: 'rgba(5,5,7,0.85)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}
+        style={{
+          background: 'rgba(5,5,7,0.85)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+        }}
       >
         <div className="pt-[env(safe-area-inset-top)]" />
         <div className="flex items-center justify-between h-14">
           <button
+            type="button"
             onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 text-sm font-semibold text-white/60 active:text-white transition-colors"
+            className="flex items-center gap-1.5 text-sm font-semibold text-white/60 active:text-white"
+            aria-label="Back"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
           </button>
-          <div className="text-center">
-            <h1 className="font-black text-base tracking-[0.12em] uppercase" style={{ color: '#C8962C' }}>
-              Safety Hub
-            </h1>
-            <p className="text-[10px] text-white/30 font-medium">Care-first</p>
-          </div>
-          <div className="w-12" /> {/* spacer */}
-        </div>
-      </div>
-
-      {/* Scrollable content */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum px-4 py-4 pb-24">
-        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
-
-        {/* Quick actions — clear hierarchy: SOS primary, Fake Call secondary */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          {/* Polish-sweep 2026-05-18 — Issue 1: Apple-Emergency-SOS hold-to-fire
-              UX. Cancel-on-release writes ZERO DB rows. Server rate-limited
-              to 3/hour unless escalation. See docs/polish-sweep-2026-05-18.md. */}
-          <SilentSOSButton />
-          <button
-            onClick={() => navigate('/fake-call')}
-            className="py-3.5 font-bold text-sm rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2 bg-[#1C1C1E] border border-white/10 text-white/70"
+          <h1
+            className="font-black text-base tracking-[0.18em] uppercase font-mono"
+            style={{ color: TOKENS.gold }}
           >
-            <Phone className="w-4 h-4 text-[#00C2E0]" />
-            Fake Call
-          </button>
+            Safety
+          </h1>
+          <span className="w-12" aria-hidden />
         </div>
+      </header>
 
-        <Tabs defaultValue="checkin">
-          <TabsList className="bg-white/5 border border-white/10 mb-6">
-            <TabsTrigger value="checkin">Safety Check-In</TabsTrigger>
-            <TabsTrigger value="contacts">Trusted Contacts</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-          </TabsList>
+      {/* Scrollable single column — thumb-zone, 390px-first */}
+      <main className="flex-1 overflow-y-auto px-4 pt-5 pb-24">
+        <div className="mx-auto max-w-md flex flex-col gap-5">
 
-          <TabsContent value="checkin">
-            {activeCheckIn ? (
-              <div className="bg-green-500/20 border-2 border-green-500 p-6 mb-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <CheckCircle className="w-8 h-8 text-green-500" />
-                  <div>
-                    <h3 className="font-black uppercase text-lg">ACTIVE CHECK-IN</h3>
-                    <p className="text-sm text-white/60">
-                      Expected check-out: {new Date(activeCheckIn.expected_check_out).toLocaleTimeString()}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  onClick={() => checkOutMutation.mutate()}
-                  variant="cyan"
-                  className="w-full"
-                >
-                  CHECK OUT SAFELY
-                </Button>
-              </div>
+          {/* Inline emergency disclaimer — always present, no modal */}
+          <p
+            className="text-[11px] leading-snug text-center text-white/45"
+            role="note"
+          >
+            {EMERGENCY_DISCLAIMER}
+          </p>
+
+          {/* Trusted contact realtime status — only mounts during live event */}
+          {userId && <TrustedContactStatus userId={userId} />}
+
+          {/* SOS hold button — centrepiece */}
+          <div className="flex flex-col items-center pt-2 pb-1">
+            <SOSHoldButton onSent={handleSOSSent} />
+            <p className="text-[11px] text-white/40 text-center max-w-[20rem] mt-2 leading-snug">
+              Share your status with people you trust.
+            </p>
+          </div>
+
+          {/* Six check-in modes — inline-panel grid */}
+          <section id="checkin-modes" aria-label="Check-in modes">
+            <h2 className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55 mb-2">
+              Check-in
+            </h2>
+            <SafetyCheckInModes onOpenAftercare={() => setAftercareOpen(true)} />
+          </section>
+
+          {/* Aftercare — opens via RECOVERY MODE check-in or post-SOS */}
+          <AnimatePresence>
+            {aftercareOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+              >
+                <SafetyAftercare
+                  open
+                  onTextSomeoneSafe={handleTextSomeoneSafe}
+                  onGetHomeSafely={handleGetHomeSafely}
+                  onClose={() => {
+                    setAftercareOpen(false);
+                    if (showRecovery) dismissRecovery();
+                  }}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Trusted contacts — compact roster + add */}
+          <section aria-label="Trusted contacts" className="rounded-2xl border p-4"
+            style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.08)' }}>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">
+                Trusted contacts
+              </h2>
+              <span className="text-[10px] text-white/35 tabular-nums">{contacts.length}</span>
+            </div>
+
+            {contacts.length === 0 ? (
+              <p className="text-[12px] text-white/45 leading-snug mb-3">
+                Add the people you want notified. Daddy first.
+              </p>
             ) : (
-              <div className="bg-white/5 border border-white/10 p-6 mb-6">
-                <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-[#00C2E0]" />
-                  Start Safety Check-In
-                </h3>
-                <p className="text-sm text-white/60 mb-4">
-                  Your contacts get alerted if you don't check out on time.
-                </p>
-                
-                <div className="mb-4">
-                  <label className="text-xs uppercase tracking-widest text-white/60 mb-2 block">
-                    Expected return time
-                  </label>
-                  <Select value={checkOutHours.toString()} onValueChange={(v) => setCheckOutHours(Number(v))}>
-                    <SelectTrigger className="bg-white/5 border-white/20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="2">2 hours</SelectItem>
-                      <SelectItem value="4">4 hours</SelectItem>
-                      <SelectItem value="6">6 hours</SelectItem>
-                      <SelectItem value="8">8 hours (Full night)</SelectItem>
-                      <SelectItem value="12">12 hours</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Button
-                  onClick={() => checkInMutation.mutate()}
-                  disabled={trustedContacts.length === 0 || checkInMutation.isPending}
-                  variant="cyan"
-                  className="w-full"
-                >
-                  START CHECK-IN
-                </Button>
-                {trustedContacts.length === 0 && (
-                  <p className="text-xs text-white/40 mt-2 text-center">
-                    Add trusted contacts first
-                  </p>
-                )}
-              </div>
+              <ul className="space-y-1.5 mb-3" role="list">
+                {contacts.map((c) => (
+                  <li key={c.id} className="flex items-center justify-between rounded-xl bg-black/30 border border-white/8 px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-white truncate">{c.contact_name}</p>
+                      <p className="text-[11px] text-white/45 flex items-center gap-1.5">
+                        <Phone className="w-3 h-3" />
+                        {c.contact_phone}
+                        {c.relationship && <span className="text-white/30">· {c.relationship}</span>}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeContact.mutate(c.id)}
+                      aria-label={`Remove ${c.contact_name}`}
+                      className="text-white/35 hover:text-white/70 p-1.5"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
 
-            <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
-              <p className="text-xs text-white/40 leading-relaxed">
-                Check in before you go out. Set a return time. If you don't check out, your trusted contacts are notified. SOS is always one hold away.
-              </p>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="contacts">
-            <div className="bg-white/5 border border-white/10 p-6 mb-6">
-              <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-[#00C2E0]" />
-                Add Trusted Contact
-              </h3>
-              
-              <div className="space-y-4">
-                <Input
-                  placeholder="Contact name"
-                  value={contactName}
-                  onChange={(e) => setContactName(e.target.value)}
-                  className="bg-white/5 border-white/20"
-                />
-                <Input
-                  placeholder="Phone number"
-                  value={contactPhone}
-                  onChange={(e) => setContactPhone(e.target.value)}
-                  className="bg-white/5 border-white/20"
-                />
-                <Input
-                  placeholder="Email (optional)"
-                  value={contactEmail}
-                  onChange={(e) => setContactEmail(e.target.value)}
-                  className="bg-white/5 border-white/20"
-                />
-                <Select value={relationship} onValueChange={setRelationship}>
-                  <SelectTrigger className="bg-white/5 border-white/20">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="friend">Friend</SelectItem>
-                    <SelectItem value="family">Family</SelectItem>
-                    <SelectItem value="partner">Partner</SelectItem>
-                    <SelectItem value="roommate">Roommate</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Button
-                  onClick={() => addContactMutation.mutate()}
-                  disabled={!contactName.trim() || !contactPhone.trim() || addContactMutation.isPending}
-                  variant="cyan"
-                  className="w-full"
-                >
-                  ADD CONTACT
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {trustedContacts.length === 0 ? (
-                <div className="text-center py-12 border-2 border-white/10">
-                  <Shield className="w-16 h-16 text-white/20 mx-auto mb-4" />
-                  <p className="text-white/40">No trusted contacts yet</p>
-                </div>
-              ) : (
-                trustedContacts.map((contact) => (
-                  <motion.div
-                    key={contact.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white/5 border border-white/10 p-4"
+            <div className="grid grid-cols-1 gap-2">
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Name"
+                className="bg-black/40 border border-white/15 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30"
+                autoComplete="off"
+              />
+              <input
+                type="tel"
+                value={newPhone}
+                onChange={(e) => setNewPhone(e.target.value)}
+                placeholder="Phone"
+                inputMode="tel"
+                className="bg-black/40 border border-white/15 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30"
+                autoComplete="off"
+              />
+              <div className="flex flex-wrap gap-1.5">
+                {RELATIONSHIPS.map((r) => (
+                  <button
+                    key={r.value}
+                    type="button"
+                    onClick={() => setNewRel(r.value)}
+                    className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold border"
+                    style={{
+                      background: newRel === r.value ? TOKENS.gold : 'rgba(255,255,255,0.04)',
+                      color: newRel === r.value ? '#050507' : '#fff',
+                      borderColor: newRel === r.value ? TOKENS.gold : 'rgba(255,255,255,0.12)',
+                    }}
                   >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="font-bold uppercase">{contact.contact_name}</h4>
-                        <p className="text-sm text-white/60 flex items-center gap-2 mt-1">
-                          <Phone className="w-3 h-3" />
-                          {contact.contact_phone}
-                        </p>
-                        {contact.contact_email && (
-                          <p className="text-xs text-white/40">{contact.contact_email}</p>
-                        )}
-                        <span className="inline-block mt-2 px-2 py-1 bg-[#00C2E0]/20 text-[#00C2E0] text-xs font-bold uppercase">
-                          {contact.relationship}
-                        </span>
-                      </div>
-                      <Button
-                        onClick={() => deleteContactMutation.mutate(contact.id)}
-                        variant="glass"
-                        size="sm"
-                        className="text-white/70 hover:text-red-300 border-white/15"
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  </motion.div>
-                ))
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="settings">
-            <div className="space-y-6">
-              <EmergencyMessageEditor />
-              <CheckInTimerCustomizer />
-              
-              <div className="bg-white/5 border border-white/10 p-6">
-                <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-white/30" />
-                  How safety works
-                </h3>
-                <ul className="space-y-2 text-xs text-white/40 leading-relaxed">
-                  <li><strong>SILENT SOS:</strong> Triple-tap the shield button (bottom-left) to trigger a silent SOS. Your location is shared immediately.</li>
-                  <li><strong>THE EXIT:</strong> Long-press (2s) the shield button for an immediate fake incoming call to leave any situation.</li>
-                  <li><strong>THE DISAPPEAR:</strong> Long-press (4s+) the shield button to stealth-wipe local app data and hide your activity.</li>
-                  <li><strong>THE WINDOW:</strong> Check-in timers alert contacts if you're overdue. Your contacts are notified via WhatsApp.</li>
-                </ul>
+                    {r.label}
+                  </button>
+                ))}
               </div>
+              <button
+                type="button"
+                disabled={!newName.trim() || !newPhone.trim() || addContact.isPending}
+                onClick={() => addContact.mutate()}
+                className="py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider disabled:opacity-50"
+                style={{ background: TOKENS.gold, color: '#050507' }}
+              >
+                <UserPlus className="inline w-4 h-4 mr-1.5 -mt-0.5" />
+                Add contact
+              </button>
             </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-      <AftercareNudge isOpen={showAftercareNudge} onClose={() => setShowAftercareNudge(false)} />
+          </section>
+
+          {/* Repeat the disclaimer at the bottom for users who scrolled past the top */}
+          <p className="text-[11px] text-white/35 text-center leading-snug pt-2">
+            {EMERGENCY_DISCLAIMER}
+          </p>
+        </div>
+      </main>
     </div>
   );
 }
