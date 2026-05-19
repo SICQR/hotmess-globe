@@ -277,3 +277,63 @@ html, body {
     transition-duration:  0.01ms !important;
   }
 }
+
+
+/* ════════════════════════════════════════════════════════════════════
+ * PULSE — MEMBER-DOT SEMANTICS
+ *
+ * Per design refinements from the queer-app research (Phil 2026-05-19),
+ * member dots on the Pulse globe should render in three opacity tiers
+ * that read at-a-glance as activity state:
+ *
+ *   .pulse-dot--active    Currently online → subtle opacity pulsation,
+ *                         1.5s cycle, 0.6 → 1.0 → 0.6. No size animation,
+ *                         no glow flash. Opacity only.
+ *   .pulse-dot--recent    Last seen within 1hr → static, full opacity.
+ *   .pulse-dot--inactive  Last seen >1hr → faded / hollow, opacity 0.4.
+ *
+ * Wire from the Pulse globe layer once member-dot rendering lands (the
+ * current PulseMode is a coming-soon teaser and does not render members).
+ *
+ * The "Open" warm-glow ring and the "State" chip are deferred — both
+ * require schema columns (profiles.is_open, profiles.state) which do
+ * not exist on this branch. Flagged in PR #279; do not add schema here.
+ * ════════════════════════════════════════════════════════════════════ */
+
+@keyframes pulse-active-dot {
+  0%   { opacity: 0.6; }
+  50%  { opacity: 1.0; }
+  100% { opacity: 0.6; }
+}
+
+.pulse-dot--active {
+  animation: pulse-active-dot 1.5s ease-in-out infinite;
+}
+
+.pulse-dot--recent {
+  opacity: 1;
+}
+
+.pulse-dot--inactive {
+  opacity: 0.4;
+  /* Hollow look — consumer sets fill: transparent + 1px border. */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-dot--active {
+    animation: none;
+    opacity: 0.9;
+  }
+}
+
+/* Open ring (warm glow) — scaffolded but commented out until
+ * profiles.is_open schema column lands. Consumer would apply
+ * .pulse-dot--open alongside one of the activity-tier classes:
+ *
+ *   .pulse-dot--open {
+ *     box-shadow: 0 0 0 2px rgba(200, 168, 120, 0.55);
+ *   }
+ *
+ * The warm-glow colour matches the founding-site --care-warm-glow
+ * (#C8A878) — distinct from brand gold #C8962C. NOT brand gold.
+ */
