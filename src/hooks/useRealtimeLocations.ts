@@ -12,6 +12,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { calculateDistance } from '@/lib/locationUtils';
+import { requestGeoPermissionOnce } from '@/lib/geo/sharedGeolocation';
 
 export interface RealtimeLocation {
   userId: string;
@@ -129,6 +130,10 @@ export function useRealtimeLocations(currentUserId: string | null, radiusKm: num
 
     setError(null);
     setIsSharing(true);
+
+    // Coalesced single permission prompt (shared with usePresenceHeartbeat) so
+    // iOS doesn't stack two native location dialogs.
+    await requestGeoPermissionOnce();
 
     const watchId = navigator.geolocation.watchPosition(
       async (position) => {
