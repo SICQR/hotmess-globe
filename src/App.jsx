@@ -100,7 +100,6 @@ import MorePage from '@/pages/MorePage';
 const CarePage = lazy(() => import('@/pages/CarePage'));
 import AftercareNudge from '@/components/safety/AftercareNudge';
 import CreateBeaconBiz from '@/pages/biz/CreateBeaconBiz';
-import GoldPulseLoader from '@/components/ui/GoldPulseLoader';
 const VenueCheckin = lazy(() => import('@/pages/VenueCheckin'));
 const ComingSoon = lazy(() => import('@/pages/ComingSoon'));
 const SellerDashboard = lazy(() => import('@/pages/SellerDashboard'));
@@ -179,13 +178,19 @@ const LEGACY_PAGE_ROUTE_ALLOWLIST = new Set([
   'OrderHistory',
 ]);
 
-const { Pages, Layout, mainPage } = pagesConfig;
+const { Pages, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
 const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
 
-const LayoutWrapper = ({ children, currentPageName }) => Layout ?
-  <Layout currentPageName={currentPageName}>{children}</Layout>
-  : <>{children}</>;
+// 2026-05-20: LayoutWrapper is now a pass-through. The legacy Layout.jsx
+// chrome rendered a SECOND nav row (shield/gear/search/radio/bell/hamburger)
+// on every PageRoute/auto-routed page (Settings, Help, etc.) — visible on top
+// of the global OS chrome (TopHUD + OSBottomNav + SafetyFAB, all rendered in
+// OSArchitecture). That duplicate legacy nav was also the source of the
+// "page crashes back to Home" bug (heavy legacy chrome throwing → caught by
+// PageErrorBoundary which redirects to Home). The OS shell owns all chrome now,
+// so secondary pages render bare inside it.
+const LayoutWrapper = ({ children }) => <>{children}</>;
 
 const PageRoute = ({ pageKey }) => {
   const Page = Pages[pageKey];
