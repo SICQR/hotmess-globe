@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Ghost, MessageCircle, X } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -97,7 +98,7 @@ export function MatchOverlay({
     if (!visible) prefetchedRef.current = false;
   }, [visible]);
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {visible && (
         <motion.div
@@ -168,7 +169,8 @@ export function MatchOverlay({
           </motion.button>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 
