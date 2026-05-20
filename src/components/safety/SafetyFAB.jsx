@@ -246,7 +246,7 @@ function SafetyFABInner() {
 
   return (
     <>
-      <div className="fixed z-[150] bottom-24 left-6">
+      <div className="fixed z-[150] bottom-44 left-5">
         <AnimatePresence>
           {isExpanded && (
             <motion.div
