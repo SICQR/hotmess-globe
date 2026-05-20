@@ -79,11 +79,21 @@ function GhostedCardInner({
   // Merge distance + context into one human line. Distance alone reads as
   // system copy ("340m"); context alone hides proximity. Combined feels
   // intercepted, not browsed.
+  //
+  // 2026-05-20 boo-first doctrine (Phil): EXACT distance is consent-gated.
+  // Pre-mutual = coarse bands only (<200m → <1km → <5km → coarse km).
+  // Post-mutual = exact metres / 0.1km resolution.
+  // We never reveal sub-200m proximity to a stranger.
   const distLabel = distanceM == null
     ? null
-    : distanceM < 100  ? '<100m'
-    : distanceM < 1000 ? `${distanceM}m`
-    : `${(distanceM / 1000).toFixed(1)}km`;
+    : isMutual
+      ? (distanceM < 100  ? '<100m'
+        : distanceM < 1000 ? `${distanceM}m`
+        : `${(distanceM / 1000).toFixed(1)}km`)
+      : (distanceM < 200  ? '<200m'
+        : distanceM < 1000 ? '<1km'
+        : distanceM < 5000 ? '<5km'
+        : `${Math.round(distanceM / 1000)}km`);
   const mergedLine = (() => {
     if (!distLabel && !contextLabel) return null;
     if (!distLabel) return contextLabel;
