@@ -4,6 +4,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AgeGate from './pages/AgeGate';
 import Contact from './pages/Contact';
 import HelpCenter from './pages/HelpCenter';
+import CommunityGuidelines from './pages/CommunityGuidelines';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import Auth from './pages/Auth';
@@ -45,6 +46,7 @@ export const PAGES = {
     "PrivacyPolicy": PrivacyPolicy,
     "Contact": Contact,
     "HelpCenter": HelpCenter,
+    "CommunityGuidelines": CommunityGuidelines,
     "BeaconDetail": () => import('./pages/BeaconDetail'),
 }
 

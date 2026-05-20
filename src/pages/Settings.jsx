@@ -477,8 +477,10 @@ export default function Settings() {
           </div>
         </motion.div>
 
-        {/* Developer Tools (Admin Only) */}
-        {user?.role === 'admin' || user?.role === 'superadmin' ? (
+        {/* Developer Tools — DEV builds only. Pure debug surface (throws a
+            test error to verify Sentry wiring); must never render in
+            production, even for admins. Gated on Vite's import.meta.env.DEV. */}
+        {import.meta.env.DEV && (user?.role === 'admin' || user?.role === 'superadmin') ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
