@@ -2,6 +2,7 @@ import AccountConsents from './pages/AccountConsents';
 import AccountDeletion from './pages/AccountDeletion';
 import AdminDashboard from './pages/AdminDashboard';
 import AgeGate from './pages/AgeGate';
+import CommunityGuidelines from './pages/CommunityGuidelines';
 import Contact from './pages/Contact';
 import HelpCenter from './pages/HelpCenter';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -27,6 +28,7 @@ export const PAGES = {
     "AccountDeletion": AccountDeletion,
     "AdminDashboard": AdminDashboard,
     "AgeGate": AgeGate,
+    "CommunityGuidelines": CommunityGuidelines,
     "Auth": Auth,
     "Home": Home,
     "Ghosted": Ghosted,
