@@ -10,7 +10,6 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
-import { requestGeoPermissionOnce } from '@/lib/geo/sharedGeolocation';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { calculateDistance } from '@/lib/locationUtils';
 
@@ -130,11 +129,6 @@ export function useRealtimeLocations(currentUserId: string | null, radiusKm: num
 
     setError(null);
     setIsSharing(true);
-
-    // Surface the single shared permission prompt FIRST (coalesced with
-    // usePresenceHeartbeat). Once it resolves, permission is decided so the
-    // watchPosition below won't trigger a second native dialog.
-    await requestGeoPermissionOnce();
 
     const watchId = navigator.geolocation.watchPosition(
       async (position) => {

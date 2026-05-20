@@ -192,7 +192,7 @@ export default function MusicReleasePage() {
   ].filter(l => !!l.url);
 
   return (
-    <div className="h-full overflow-y-auto overscroll-contain w-full pb-40" style={{ backgroundColor: BG }}>
+    <div className="min-h-screen w-full pb-40" style={{ backgroundColor: BG }}>
       {/* Hero artwork */}
       <div className="relative w-full" style={{ aspectRatio: '1 / 1' }}>
         {release.artwork_url ? (

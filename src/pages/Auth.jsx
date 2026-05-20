@@ -31,9 +31,15 @@ const spring = { type: 'spring', stiffness: 200, damping: 25 };
 /**
  * Apple Sign In is disabled until the Apple OAuth app (Services ID + .p8 key)
  * is fully configured in Supabase Dashboard -> Auth -> Providers -> Apple.
- * Flip to `true` once configured.
+ * Mirror of the gate used in `src/components/onboarding/screens/SignUpScreen.jsx:38`
+ * — both surfaces must read the same env var so they enable/disable in lockstep.
+ * Set VITE_AUTH_APPLE_ENABLED=true in Vercel once the .p8 lands.
+ *
+ * Previously: hardcoded `true` — Auth.jsx shipped Apple to users while the
+ * onboarding screen kept it gated, causing silent OAuth failures for users
+ * who tapped Apple on /auth. Cofounder audit 2026-05-18 surfaced this bug.
  */
-const APPLE_ENABLED = true;
+const APPLE_ENABLED = import.meta.env.VITE_AUTH_APPLE_ENABLED === 'true';
 
 /**
  * Returns true when running inside a social media in-app browser (WebView)
@@ -1091,9 +1097,9 @@ export default function Auth() {
       <div className="relative z-10 px-6 pb-10 pt-4 text-center">
         <p className="text-[11px] text-white/25 leading-relaxed">
           By continuing, you agree to our{' '}
-          <a href="/legal/terms" className="underline hover:text-white/40 transition-colors">Terms</a>,{' '}
-          <a href="/legal/privacy" className="underline hover:text-white/40 transition-colors">Privacy</a>, and{' '}
-          <a href="/CommunityGuidelines" className="underline hover:text-white/40 transition-colors">Community Rules</a>.
+          <a href="/terms" className="underline hover:text-white/40 transition-colors">Terms</a>,{' '}
+          <a href="/privacy" className="underline hover:text-white/40 transition-colors">Privacy</a>, and{' '}
+          <a href="/community" className="underline hover:text-white/40 transition-colors">Community Rules</a>.
         </p>
       </div>
     </div>

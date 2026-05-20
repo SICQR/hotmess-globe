@@ -52,9 +52,6 @@ const L2AlbumsSheet = lazy(() => import('./L2AlbumsSheet'));
 const L2AlbumPhotosSheet = lazy(() => import('./L2AlbumPhotosSheet'));
 const L2LocationSheet = lazy(() => import('./L2LocationSheet'));
 const L2HelpSheet = lazy(() => import('./L2HelpSheet'));
-const L2AccountDeletionSheet = lazy(() => import('./L2AccountDeletionSheet'));
-const L2ContactSheet = lazy(() => import('./L2ContactSheet'));
-const L2CommunityGuidelinesSheet = lazy(() => import('./L2CommunityGuidelinesSheet'));
 const L2MembershipSheet = lazy(() => import('./L2MembershipSheet'));
 const L2QRSheet = lazy(() => import('./L2QRSheet'));
 const L2CreateEventSheet = lazy(() => import('./L2CreateEventSheet'));
@@ -205,9 +202,6 @@ const SHEET_COMPONENTS = {
   'settings': L2SettingsSheet,
   'membership': L2MembershipSheet,
   'help': L2HelpSheet,
-  'account-deletion': L2AccountDeletionSheet,
-  'contact': L2ContactSheet,
-  'community-guidelines': L2CommunityGuidelinesSheet,
   'safety': L2SafetySheet,
   'care-as-kink': L2CareSheet,
   'meet': L2MeetSheet,

@@ -14,13 +14,13 @@
  * Save button at top-right → saves all in one call → shows confirmation → closes
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
-import ProfilePhotoGrid from '@/components/profile/ProfilePhotoGrid';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import { useSheet } from '@/contexts/SheetContext';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  Loader2, CheckCircle, User, MapPin,
+  Camera, Loader2, CheckCircle, User, MapPin,
   Instagram, Music, Crown, ChevronRight, Plus, Check, Lock
 } from 'lucide-react';
 import { usePersona } from '@/contexts/PersonaContext';
@@ -102,10 +102,12 @@ export default function L2EditProfileSheet() {
   const { closeSheet, openSheet } = useSheet();
   const { personas, activePersona, loadPersonas, switchPersona, isLoading: personaLoading } = usePersona();
   const queryClient = useQueryClient();
+  const avatarInputRef = useRef(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [userId, setUserId] = useState(null);
 
   // Form state
@@ -190,15 +192,35 @@ export default function L2EditProfileSheet() {
 
   // ── Avatar upload ─────────────────────────────────────────────────────────────
 
-  // Avatar upload is now handled by <ProfilePhotoGrid/> (correct
-  // profile_photos schema + drag-and-drop). When its cover changes it calls
-  // onCoverChange → setAvatarUrl, keeping the header avatar in sync, and the
-  // grid itself writes profiles.avatar_url. Invalidate the profiles query so
-  // the Ghosted grid reflects the new cover.
-  useEffect(() => {
-    if (!avatarUrl) return;
-    queryClient.invalidateQueries({ queryKey: ['profiles'] });
-  }, [avatarUrl, queryClient]);
+  const handleAvatarChange = useCallback(async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+    e.target.value = '';
+
+    setAvatarUploading(true);
+    const toastId = toast.loading('Uploading photo...');
+    try {
+      const publicUrl = await uploadToStorage(file, 'avatars', userId);
+
+      // Persist to profiles + profile_photos
+      await Promise.allSettled([
+        supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', userId),
+        supabase.from('profile_photos').upsert(
+          { user_id: userId, profile_id: userId, url: publicUrl, position: 0, is_avatar: true },
+          { onConflict: 'user_id,position' }
+        ),
+      ]);
+
+      setAvatarUrl(publicUrl);
+      toast.success('Photo updated ✅', { id: toastId });
+      // Invalidate so Ghosted grid reflects the change immediately
+      await queryClient.invalidateQueries({ queryKey: ['profiles'] });
+    } catch (err) {
+      toast.error(err?.message || 'Photo upload failed', { id: toastId });
+    } finally {
+      setAvatarUploading(false);
+    }
+  }, [userId, queryClient]);
 
   // ── Save ──────────────────────────────────────────────────────────────────────
 
@@ -345,19 +367,64 @@ export default function L2EditProfileSheet() {
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
 
-        {/* ── Photos — Grindr-style drag-and-drop grid (2026-05-20) ─────────────
-            Replaces the old single-avatar tap-to-change, which silently failed
-            to persist to profile_photos (wrong onConflict + columns). The grid
-            uses the correct (profile_id, position) schema and surfaces every
-            state. Cover (position 0) syncs to profiles.avatar_url. */}
-        <ProfilePhotoGrid userId={userId} onCoverChange={(url) => setAvatarUrl(url || '')} />
+        {/* ── Photo ─────────────────────────────────────────────────────────── */}
+        <div className="flex flex-col items-center gap-3 pt-6 pb-5 border-b border-white/6">
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleAvatarChange}
+          />
+          <button
+            type="button"
+            onClick={() => avatarInputRef.current?.click()}
+            disabled={avatarUploading}
+            className="relative group"
+            aria-label="Change profile photo"
+          >
+            {/* Avatar */}
+            <div className="w-28 h-28 rounded-full overflow-hidden bg-white/8 border-2 border-white/15 group-hover:border-[#C8962C]/60 transition-colors">
+              {avatarUrl
+                ? <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                : <div className="w-full h-full flex items-center justify-center"><User className="w-12 h-12 text-white/20" /></div>
+              }
+            </div>
+            {/* Overlay */}
+            <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity flex items-center justify-center">
+              {avatarUploading
+                ? <Loader2 className="w-7 h-7 text-white animate-spin" />
+                : <Camera className="w-7 h-7 text-white" />}
+            </div>
+            {/* Amber ring */}
+            <div className="absolute -inset-1 rounded-full border-2 border-[#C8962C] opacity-0 group-hover:opacity-100 transition-opacity" />
+          </button>
 
-        {/* Private albums — separate system (ghosted_albums). The public photo
-            grid is inline above; this is the entry to locked/private albums.
-            (The old "Photos" button was removed — it opened L2PhotosSheet, which
-            now renders the same ProfilePhotoGrid shown inline here.) */}
-        <div className="flex flex-col items-center gap-3 pt-4 pb-5 border-b border-white/6">
-          <div className="flex gap-2 w-full px-2">
+          <p className="text-white/30 text-xs">
+            {avatarUploading ? 'Uploading...' : 'Tap to change cover'}
+          </p>
+
+          {/* Manage main carousel + private albums — two-button entry row */}
+          <div className="flex gap-2 w-full px-2 mt-4">
+            <button
+              type="button"
+              onClick={() => openSheet('photos')}
+              className="flex-1 flex items-center justify-center gap-2 py-3 active:scale-95 transition-all"
+              style={{
+                background: 'rgba(200,150,44,0.08)',
+                border: '0.5px solid rgba(200,150,44,0.35)',
+                borderRadius: 2,
+                color: '#C8962C',
+                fontSize: 11,
+                fontWeight: 500,
+                letterSpacing: '0.22em',
+                textTransform: 'uppercase',
+              }}
+            >
+              <Camera className="w-3.5 h-3.5" />
+              Photos
+            </button>
             <button
               type="button"
               onClick={() => openSheet('albums')}
@@ -374,7 +441,7 @@ export default function L2EditProfileSheet() {
               }}
             >
               <Lock className="w-3.5 h-3.5" />
-              Private Albums
+              Albums
             </button>
           </div>
         </div>
@@ -594,7 +661,7 @@ export default function L2EditProfileSheet() {
         <button
           type="button"
           onClick={handleSave}
-          disabled={saving || !displayName.trim() || displayName.trim().length < 2}
+          disabled={saving || avatarUploading || !displayName.trim() || displayName.trim().length < 2}
           className={cn(
             'w-full py-4 font-black uppercase tracking-wide rounded-2xl text-sm transition-all',
             saved

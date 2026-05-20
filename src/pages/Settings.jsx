@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/components/utils/supabaseClient';
 import { uploadToStorage } from '@/lib/uploadToStorage';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { User, Bell, Shield, LogOut, Save, Camera, Download, Trash2, Database, HelpCircle, MessageSquare, FileText, Lock, Fingerprint } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -124,7 +124,6 @@ function PinLockSettings() {
 }
 
 export default function Settings() {
-  const { openSheet } = useSheet();
   const [user, setUser] = useState(null);
   const [fullName, setFullName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
@@ -396,7 +395,7 @@ export default function Settings() {
           </div>
 
           <div className="space-y-4">
-            <div role="button" tabIndex={0} className="cursor-pointer" onClick={() => openSheet('data-export')}>
+            <Link to={createPageUrl('DataExport')}>
               <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer">
                 <div className="flex items-center gap-3">
                   <Download className="w-5 h-5 text-[#C8962C]" />
@@ -407,9 +406,9 @@ export default function Settings() {
                 </div>
                 <span className="text-white/40">→</span>
               </div>
-            </div>
+            </Link>
 
-            <div role="button" tabIndex={0} className="cursor-pointer" onClick={() => openSheet('account-deletion')}>
+            <Link to={createPageUrl('AccountDeletion')}>
               <div className="flex items-center justify-between p-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/40 rounded-lg transition-colors cursor-pointer">
                 <div className="flex items-center gap-3">
                   <Trash2 className="w-5 h-5 text-red-500" />
@@ -420,7 +419,7 @@ export default function Settings() {
                 </div>
                 <span className="text-red-500/60">→</span>
               </div>
-            </div>
+            </Link>
           </div>
         </motion.div>
 
@@ -437,7 +436,7 @@ export default function Settings() {
           </div>
 
           <div className="space-y-4">
-            <div role="button" tabIndex={0} className="cursor-pointer" onClick={() => openSheet('help')}>
+            <Link to={createPageUrl('HelpCenter')}>
               <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer">
                 <div className="flex items-center gap-3">
                   <HelpCircle className="w-5 h-5 text-[#00C2E0]" />
@@ -448,9 +447,9 @@ export default function Settings() {
                 </div>
                 <span className="text-white/40">→</span>
               </div>
-            </div>
+            </Link>
 
-            <div role="button" tabIndex={0} className="cursor-pointer" onClick={() => openSheet('contact')}>
+            <Link to={createPageUrl('Contact')}>
               <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer">
                 <div className="flex items-center gap-3">
                   <MessageSquare className="w-5 h-5 text-[#C8962C]" />
@@ -461,9 +460,9 @@ export default function Settings() {
                 </div>
                 <span className="text-white/40">→</span>
               </div>
-            </div>
+            </Link>
 
-            <div role="button" tabIndex={0} className="cursor-pointer" onClick={() => openSheet('community-guidelines')}>
+            <Link to={createPageUrl('CommunityGuidelines')}>
               <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer">
                 <div className="flex items-center gap-3">
                   <FileText className="w-5 h-5 text-[#39FF14]" />
@@ -474,14 +473,12 @@ export default function Settings() {
                 </div>
                 <span className="text-white/40">→</span>
               </div>
-            </div>
+            </Link>
           </div>
         </motion.div>
 
-        {/* Developer Tools — DEV builds only. Pure debug surface (throws a
-            test error to verify Sentry wiring); must never render in
-            production, even for admins. Gated on Vite's import.meta.env.DEV. */}
-        {import.meta.env.DEV && (user?.role === 'admin' || user?.role === 'superadmin') ? (
+        {/* Developer Tools (Admin Only) */}
+        {user?.role === 'admin' || user?.role === 'superadmin' ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

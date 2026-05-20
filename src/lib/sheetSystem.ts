@@ -341,27 +341,6 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: false,
     deepLinkParams: [],
   },
-  'account-deletion': {
-    id: 'account-deletion',
-    title: 'Delete Account',
-    height: 'large',
-    auth: true,
-    deepLinkParams: [],
-  },
-  'contact': {
-    id: 'contact',
-    title: 'Contact Support',
-    height: 'large',
-    auth: false,
-    deepLinkParams: [],
-  },
-  'community-guidelines': {
-    id: 'community-guidelines',
-    title: 'Community Guidelines',
-    height: 'large',
-    auth: false,
-    deepLinkParams: [],
-  },
 
   // ─────────────────────────────────────────────────────────────────────────
   // RADIO

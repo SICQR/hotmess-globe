@@ -100,6 +100,7 @@ import MorePage from '@/pages/MorePage';
 const CarePage = lazy(() => import('@/pages/CarePage'));
 import AftercareNudge from '@/components/safety/AftercareNudge';
 import CreateBeaconBiz from '@/pages/biz/CreateBeaconBiz';
+import GoldPulseLoader from '@/components/ui/GoldPulseLoader';
 const VenueCheckin = lazy(() => import('@/pages/VenueCheckin'));
 const ComingSoon = lazy(() => import('@/pages/ComingSoon'));
 const SellerDashboard = lazy(() => import('@/pages/SellerDashboard'));
@@ -182,12 +183,6 @@ const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
 const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
 
-// NOTE 2026-05-20: a previous attempt made this a pass-through to remove the
-// legacy second nav row, but Layout.jsx ALSO provides <TaxonomyProvider> (only
-// here, not global), so stripping it threw SYSTEM ERROR on Settings/Notifications.
-// Reverted to render Layout. Proper nav-removal (hoist TaxonomyProvider to the
-// global App provider tree, THEN pass-through) to be done + preview-verified
-// before touching main again.
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;

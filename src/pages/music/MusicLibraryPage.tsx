@@ -113,7 +113,7 @@ export default function MusicLibraryPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="h-full overflow-y-auto overscroll-contain w-full pb-32" style={{ backgroundColor: BG }}>
+    <div className="min-h-screen w-full pb-32" style={{ backgroundColor: BG }}>
       {/* Top bar */}
       <div className="sticky top-0 z-30 backdrop-blur-md bg-black/80 border-b border-white/5">
         <div className="h-14 px-4 flex items-center gap-3">

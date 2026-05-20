@@ -10,7 +10,6 @@
 
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
-import { requestGeoPermissionOnce } from '@/lib/geo/sharedGeolocation';
 
 const PROFILE_INTERVAL_MS = 30 * 1000; // 30 seconds (faster for testing discovery)
 const PRESENCE_INTERVAL_MS = 30 * 1000; // 30 seconds
@@ -29,11 +28,14 @@ async function getCoords(userId: string): Promise<{ lat: number; lng: number } |
     return null;
   }
 
-  // Shared coordinator: surfaces AT MOST ONE permission prompt across all
-  // location-using hooks (was double-prompting on Pulse alongside
-  // useRealtimeLocations' watchPosition).
-  const pos = await requestGeoPermissionOnce({ enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 });
-  return pos ? { lat: pos.coords.latitude, lng: pos.coords.longitude } : null;
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) { resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null),
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 },
+    );
+  });
 }
 
 export function usePresenceHeartbeat() {
