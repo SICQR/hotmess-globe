@@ -1,35 +1,28 @@
 /**
  * SOSHoldButton — circular 168×168 hold-to-fire SOS, brief v1.0 spec.
  *
- * Distinct from SilentSOSButton (which is the rectangular FAB pattern still
- * used on small surfaces). This is the centrepiece of the rebuilt /safety
- * route: oversized thumb target, breathing gold idle, bottom→top gold→orange
- * →red clip-path fill over 3 seconds, calm low-frequency audio pulse, soft
- * haptic per second.
+ * Distinct from SilentSOSButton (the rectangular FAB pattern still in use on
+ * other surfaces). This is the centrepiece of the /safety route.
  *
- * Doctrine notes:
- *  - setTimeout chain, NOT setInterval (more reliable on iOS background).
- *  - onPointerDown / onPointerUp / onPointerCancel / onPointerLeave to catch
- *    finger-slide-off — onMouseDown alone would never fire on iOS Safari.
- *  - No "Are you sure?" anywhere. No guilt language on cancel.
- *  - Idempotent: pressing while already sent is a no-op (the parent surface
- *    routes a second press through the cooldown/escalation modal).
- *  - Respects VITE_SOS_ENABLED via the useSOSContext().triggerSOS gate. While
- *    the gate is off (Glen-incident post-2026-05-17 safe state) the existing
- *    SOSContext will surface its crisis-resources sheet instead of writing
- *    to safety_events. This component does not bypass that gate.
+ * Haptic doctrine (Phil v1.0 — 2026-05-20):
+ *   - Touch:      impactMedium  — "arming, not alarming"
+ *   - 1s elapsed: selectionChanged(1) — heartbeat tick (soft)
+ *   - 2s elapsed: selectionChanged(2) — heartbeat tick (slightly heavier)
+ *   - 3s (sent): notificationError — the ONLY strong haptic in the system
+ *   - Release early: impactSoft — soft release, no shake, no warning noise
+ *
+ * Cadence is heartbeat, not machine-gun. Audio is sub-bass, not a siren.
+ * Cancel-on-release writes nothing — no DB row, no toast, no shame copy.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSOSContext } from '@/contexts/SOSContext';
+import {
+  impactMedium, impactSoft, selectionChanged, notificationError,
+} from '@/lib/safety/haptics';
 
 const HOLD_MS = 3000;
 const CANCEL_LABEL_AT_MS = 1500;
 const SENDING_LABEL_AT_MS = 2500;
-const HAPTIC = (pattern) => {
-  try {
-    if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(pattern);
-  } catch { /* noop */ }
-};
 
 // HOTMESS visual language tokens — locked per brief v1.0.
 const TOKENS = {
@@ -54,7 +47,6 @@ function useLowFreqPulse() {
       if (!Ctx) return;
       if (!ctxRef.current) ctxRef.current = new Ctx();
       const ctx = ctxRef.current;
-      // Safari requires resume on user gesture; we are in a pointerdown handler.
       if (ctx.state === 'suspended') ctx.resume();
 
       const osc = ctx.createOscillator();
@@ -64,7 +56,6 @@ function useLowFreqPulse() {
       gain.gain.value = 0;
       osc.connect(gain).connect(ctx.destination);
       osc.start();
-      // gentle ramp in
       gain.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 0.25);
       oscRef.current = osc;
       gainRef.current = gain;
@@ -93,12 +84,11 @@ export default function SOSHoldButton({ onSent, onCancelled, disabled = false })
   const [progressMs, setProgressMs] = useState(0);
   const startedAtRef = useRef(null);
   const rafRef = useRef(null);
-  const timeoutChainRef = useRef([]); // setTimeout ids — soft per-second haptics
+  const timeoutChainRef = useRef([]);
   const completedRef = useRef(false);
   const cancelledLabelTimerRef = useRef(null);
   const { start: startPulse, stop: stopPulse } = useLowFreqPulse();
 
-  // Clean up RAF + timers
   const cleanup = useCallback(() => {
     if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
     timeoutChainRef.current.forEach((id) => clearTimeout(id));
@@ -107,20 +97,17 @@ export default function SOSHoldButton({ onSent, onCancelled, disabled = false })
 
   useEffect(() => () => { cleanup(); stopPulse(); }, [cleanup, stopPulse]);
 
-  // Animation loop — locked to display refresh via RAF so the fill is smooth.
   const tick = useCallback(() => {
     if (startedAtRef.current == null) return;
     const elapsed = performance.now() - startedAtRef.current;
     setProgressMs(Math.min(elapsed, HOLD_MS));
     if (elapsed >= HOLD_MS) {
-      // Completion — heavy haptic, lock red, trigger SOS via context.
       if (completedRef.current) return;
       completedRef.current = true;
       cleanup();
-      HAPTIC([120, 40, 120]); // heavy confirmation
+      notificationError();           // the ONE strong haptic — final + undeniable
       stopPulse();
       setPhase('sent');
-      // Idempotent: only call triggerSOS once.
       triggerSOS({ silent: false }).catch(() => { /* context surfaces its own UI */ });
       onSent?.();
       return;
@@ -131,7 +118,6 @@ export default function SOSHoldButton({ onSent, onCancelled, disabled = false })
   const beginHold = useCallback(() => {
     if (disabled) return;
     if (phase === 'sent' || phase === 'holding') return; // idempotent
-    // Clear any lingering "Alert cancelled." label
     if (cancelledLabelTimerRef.current) {
       clearTimeout(cancelledLabelTimerRef.current);
       cancelledLabelTimerRef.current = null;
@@ -140,11 +126,13 @@ export default function SOSHoldButton({ onSent, onCancelled, disabled = false })
     completedRef.current = false;
     setPhase('holding');
     setProgressMs(0);
-    HAPTIC(40);              // medium haptic on press
-    startPulse();            // low-frequency audio pulse
-    // Soft per-second haptic pulses (1s, 2s)
-    timeoutChainRef.current.push(setTimeout(() => HAPTIC(20), 1000));
-    timeoutChainRef.current.push(setTimeout(() => HAPTIC(20), 2000));
+    impactMedium();              // arming, not alarming
+    startPulse();
+    // Heartbeat-like cadence — soft tick at 1s, slightly heavier at 2s.
+    // The "1" deep confirmation pulse at 3s is rolled into notificationError
+    // on completion (see tick()).
+    timeoutChainRef.current.push(setTimeout(() => selectionChanged(1), 1000));
+    timeoutChainRef.current.push(setTimeout(() => selectionChanged(2), 2000));
     rafRef.current = requestAnimationFrame(tick);
   }, [disabled, phase, startPulse, tick]);
 
@@ -156,8 +144,7 @@ export default function SOSHoldButton({ onSent, onCancelled, disabled = false })
     startedAtRef.current = null;
     setPhase('cancelled');
     setProgressMs(0);
-    HAPTIC(8); // tiny soft tap — acknowledgement, no shame
-    // After 1.5s, return to idle.
+    impactSoft();                // soft release — acknowledgement, no shame
     cancelledLabelTimerRef.current = setTimeout(() => {
       setPhase('idle');
       cancelledLabelTimerRef.current = null;
@@ -165,10 +152,9 @@ export default function SOSHoldButton({ onSent, onCancelled, disabled = false })
     onCancelled?.();
   }, [cleanup, onCancelled, phase, stopPulse]);
 
-  // External: if SOS context resets (resolution elsewhere), we return to idle.
+  // External: if SOS context resets (resolution elsewhere), return to idle.
   useEffect(() => {
     if (!sosActive && phase === 'sent') {
-      // Wait a beat so the "ALERT SENT" state is visible before relaxing.
       const t = setTimeout(() => setPhase('idle'), 1200);
       return () => clearTimeout(t);
     }
@@ -191,18 +177,12 @@ export default function SOSHoldButton({ onSent, onCancelled, disabled = false })
     subLabel = 'Alert cancelled.';
   }
 
-  // ── Fill colour interpolation gold → orange → red ───────────────────────
-  // 0%   gold
-  // 50%  gold → orange
-  // 100% orange → red
   const fillPct = phase === 'sent'
     ? 100
     : phase === 'holding'
       ? (progressMs / HOLD_MS) * 100
       : 0;
 
-  // Pick the visible fill colour: at the "front" of the wave is the most
-  // urgent colour reached so far. We blend in CSS via two stops.
   const fillColor = (() => {
     if (phase === 'sent') return TOKENS.red;
     if (fillPct < 50) return TOKENS.gold;
@@ -210,12 +190,10 @@ export default function SOSHoldButton({ onSent, onCancelled, disabled = false })
     return TOKENS.red;
   })();
 
-  // Drain animation: when in 'idle' or 'cancelled', height transitions down.
   const showDrain = phase === 'cancelled' || phase === 'idle';
 
   return (
     <div className="flex flex-col items-center gap-3 select-none">
-      {/* Button — 168x168 circular thumb target */}
       <button
         type="button"
         aria-label="Hold for SOS — press and hold for 3 seconds to alert your trusted contacts"
@@ -233,26 +211,20 @@ export default function SOSHoldButton({ onSent, onCancelled, disabled = false })
           background: TOKENS.gold,
           border: `2px solid ${TOKENS.gold}`,
           color: TOKENS.ink,
-          // Breathing glow — idle only. 3s ease-in-out infinite via inline keyframes (see <style> below).
           animation: phase === 'idle' ? 'hm-sos-breathe 3s ease-in-out infinite' : 'none',
           transition: 'background 200ms ease, border-color 200ms ease',
           outlineColor: TOKENS.gold,
         }}
       >
-        {/* Fill layer — rises bottom→top via height (not transform), so it's a
-            true wavefront, not a ring/loader. Uses overflow-hidden + bottom anchor. */}
         <span
           aria-hidden
           className="absolute inset-x-0 bottom-0 pointer-events-none"
           style={{
             height: `${fillPct}%`,
             background: fillColor,
-            // When draining, animate the height shrinking. While holding, lock
-            // to RAF (no transition) for crisp wavefront.
             transition: showDrain ? 'height 500ms cubic-bezier(0.4, 0, 0.2, 1), background 250ms ease' : 'background 250ms ease',
           }}
         />
-        {/* Label */}
         <span
           className="relative z-10 flex flex-col items-center justify-center w-full h-full font-mono uppercase tracking-[0.18em]"
           style={{
@@ -267,7 +239,6 @@ export default function SOSHoldButton({ onSent, onCancelled, disabled = false })
         </span>
       </button>
 
-      {/* Sub-label under the button — condensed monospace, subtle glow */}
       <p
         className="font-mono text-xs uppercase tracking-[0.16em] text-center min-h-[1.25rem]"
         style={{
@@ -279,7 +250,6 @@ export default function SOSHoldButton({ onSent, onCancelled, disabled = false })
         {subLabel}
       </p>
 
-      {/* Inline keyframes — kept local so this file is self-contained */}
       <style>{`
         @keyframes hm-sos-breathe {
           0%, 100% { box-shadow: 0 0 0 0 ${TOKENS.gold}33, 0 0 32px 4px ${TOKENS.gold}22; }

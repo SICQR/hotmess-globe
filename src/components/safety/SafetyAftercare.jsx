@@ -2,19 +2,15 @@
  * SafetyAftercare — "Stay with us." Eight tappable care actions.
  *
  * Brief: warm, steady, non-clinical, masculine, not corporate-wellness.
- * Most apps stop at panic. HOTMESS continues into care.
+ * Most apps stop at panic. HOTMESS continues into care. Visible by default
+ * on /safety (Phil v1.0): users get a calm permanent entry, deeper post-SOS
+ * states open the resources / breathing surfaces.
  *
- * Actions:
- *   1. Drink water       — gentle anim + "noted" confirmation
- *   2. Text someone safe — opens STAY WITH ME thread (callback)
- *   3. Grounding reset   — 4-7-8 breath inline animation
- *   4. Breathe           — same as Grounding reset (alias per brief)
- *   5. Get home safely   — opens WALK HOME / RIDE SAFE (callback)
- *   6. Support resources — inline list (verified numbers)
- *   7. Hand N Hand       — navigates to /care
- *   8. Close             — calm, no-shame dismissal
- *
- * Reusable from RECOVERY MODE check-in and post-SOS auto-mount.
+ * Haptic doctrine (Phil v1.0):
+ *   - Aftercare should feel quiet. Almost no haptics here.
+ *   - Subtle tap on breathing start (impactLight).
+ *   - Tiny pulse on session complete / aftercare close (impactSoft).
+ *   - NOTHING else. No vibration on tile tap, no buzz on resource open.
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,6 +19,7 @@ import {
   Droplet, MessageCircle, Wind, Footprints, BookOpen, Heart, Phone, Check,
 } from 'lucide-react';
 import { SUPPORT_RESOURCES } from '@/lib/safety/supportResources';
+import { impactLight, impactSoft } from '@/lib/safety/haptics';
 
 const TOKENS = {
   gold: '#C8962C',
@@ -30,15 +27,20 @@ const TOKENS = {
   ink: '#050507',
 };
 
-// ── 4-7-8 breathing pattern in ms ─────────────────────────────────────────
 const BREATH = { inhale: 4000, hold: 7000, exhale: 8000 };
 
 function BreathRing({ onClose }) {
-  const [phase, setPhase] = useState('inhale'); // inhale | hold | exhale
+  const [phase, setPhase] = useState('inhale');
   const [cycles, setCycles] = useState(0);
   const timerRef = useRef(null);
+  const firedStartRef = useRef(false);
 
   useEffect(() => {
+    // Subtle tap on breathing start — single fire, never per phase change.
+    if (!firedStartRef.current) {
+      impactLight();
+      firedStartRef.current = true;
+    }
     const next = () => {
       setPhase((p) => {
         if (p === 'inhale') return 'hold';
@@ -153,15 +155,21 @@ function ResourcesList({ onClose }) {
 }
 
 export default function SafetyAftercare({
-  open = true,
   onTextSomeoneSafe,
   onGetHomeSafely,
-  onClose,
+  onSessionComplete,
+  expandResourcesByDefault = false,
 }) {
   const navigate = useNavigate();
-  const [panel, setPanel] = useState(null); // null | 'breath' | 'resources' | 'water'
+  const [panel, setPanel] = useState(expandResourcesByDefault ? 'resources' : null);
 
-  if (!open) return null;
+  // External signal (post-SOS) → expand resources panel.
+  useEffect(() => {
+    if (expandResourcesByDefault && panel !== 'resources') {
+      setPanel('resources');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expandResourcesByDefault]);
 
   const actions = [
     {
@@ -208,6 +216,12 @@ export default function SafetyAftercare({
     },
   ];
 
+  const handleAcknowledge = () => {
+    // Tiny pulse on session complete — Phil v1.0.
+    impactSoft();
+    onSessionComplete?.();
+  };
+
   return (
     <section
       aria-label="Aftercare"
@@ -229,7 +243,6 @@ export default function SafetyAftercare({
         </p>
       </div>
 
-      {/* Actions grid — 2 columns, thumb-comfortable */}
       <ul className="grid grid-cols-2 gap-2.5 mb-3" role="list">
         {actions.map((a) => {
           const Icon = a.icon;
@@ -250,7 +263,7 @@ export default function SafetyAftercare({
         <li>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleAcknowledge}
             className="w-full text-left rounded-xl p-3 border bg-black/20 active:scale-[0.98] transition-transform"
             style={{ borderColor: 'rgba(255,255,255,0.06)' }}
           >
@@ -260,38 +273,19 @@ export default function SafetyAftercare({
         </li>
       </ul>
 
-      {/* Inline panel area — water toast / breath ring / resources */}
       <AnimatePresence mode="wait">
         {panel === 'water' && (
-          <motion.div
-            key="water"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
+          <motion.div key="water" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
             <WaterToast onDismiss={() => setPanel(null)} />
           </motion.div>
         )}
         {panel === 'breath' && (
-          <motion.div
-            key="breath"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
+          <motion.div key="breath" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
             <BreathRing onClose={() => setPanel(null)} />
           </motion.div>
         )}
         {panel === 'resources' && (
-          <motion.div
-            key="resources"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
+          <motion.div key="resources" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
             <ResourcesList onClose={() => setPanel(null)} />
           </motion.div>
         )}

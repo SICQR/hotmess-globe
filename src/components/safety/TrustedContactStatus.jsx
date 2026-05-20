@@ -5,6 +5,11 @@
  * acknowledged, who is responding. Example: 'Daddy opened your alert.' —
  * this dramatically reduces panic."
  *
+ * Haptic doctrine (Phil v1.0):
+ *   - Gentle double pulse on transition into delivered / acked. Only fires
+ *     on TRANSITION (status change), never on the initial load and never on
+ *     every realtime tick. "Someone is here."
+ *
  * Builds on the existing SafetyDeliveryStatus component (which already
  * subscribes to safety_delivery_log realtime) by:
  *   1. Looking up the latest open safety_events row for the current user
@@ -14,10 +19,11 @@
  *
  * Mounts only while a SOS event is unresolved. Self-unmounts on resolution.
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldCheck, Eye, MessageCircle } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
+import { gentleDoublePulse } from '@/lib/safety/haptics';
 
 const TOKENS = {
   gold: '#C8962C',
@@ -42,15 +48,24 @@ function titleForContact(c) {
   return c.contact_name || rel || 'Your contact';
 }
 
+const ACK_STATUSES = new Set(['delivered', 'acked']);
+
 export default function TrustedContactStatus({ userId }) {
   const [eventId, setEventId] = useState(null);
-  const [deliveryRows, setDeliveryRows] = useState([]); // joined with trusted_contacts
-  const [contactsById, setContactsById] = useState({}); // id → contact
+  const [deliveryRows, setDeliveryRows] = useState([]);
+  const [contactsById, setContactsById] = useState({});
+  // Per-contact best status from the previous render; used to detect
+  // transitions for the gentle double pulse so we never spam haptics.
+  const prevStatusRef = useRef(new Map());
+  // Don't fire the haptic on the FIRST load — only on live transitions.
+  const initialLoadedRef = useRef(false);
 
   // Find the latest unresolved event for this user.
   useEffect(() => {
     if (!userId) return undefined;
     let cancelled = false;
+    initialLoadedRef.current = false;
+    prevStatusRef.current = new Map();
     (async () => {
       const { data } = await supabase
         .from('safety_events')
@@ -63,7 +78,6 @@ export default function TrustedContactStatus({ userId }) {
       if (!cancelled) setEventId(data?.id ?? null);
     })();
 
-    // Listen for new events too
     const ch = supabase
       .channel(`tcs-events-${userId}`)
       .on('postgres_changes', {
@@ -111,7 +125,22 @@ export default function TrustedContactStatus({ userId }) {
         .select('id, channel, status, attempted_at, delivered_at, acked_at, trusted_contact_id')
         .eq('safety_event_id', eventId)
         .order('attempted_at', { ascending: true });
-      if (!cancelled && data) setDeliveryRows(data);
+      if (!cancelled && data) {
+        setDeliveryRows(data);
+        // First snapshot landed — seed prevStatusRef so the next realtime
+        // event that changes a row will be a true transition.
+        const seed = new Map();
+        data.forEach((r) => {
+          if (r.trusted_contact_id) {
+            const prev = seed.get(r.trusted_contact_id);
+            if (!prev || rankStatus(r.status) > rankStatus(prev)) {
+              seed.set(r.trusted_contact_id, r.status);
+            }
+          }
+        });
+        prevStatusRef.current = seed;
+        initialLoadedRef.current = true;
+      }
     })();
     const ch = supabase
       .channel(`tcs-delivery-${eventId}`)
@@ -142,25 +171,38 @@ export default function TrustedContactStatus({ userId }) {
     deliveryRows.forEach((r) => {
       if (!r.trusted_contact_id) return;
       const prev = map.get(r.trusted_contact_id);
-      const rank = (s) => ({
-        queued: 0, sent: 1, delivered: 2, acked: 3, failed: -1, skipped: -2,
-      }[s] ?? 0);
-      if (!prev || rank(r.status) > rank(prev.status)) {
+      if (!prev || rankStatus(r.status) > rankStatus(prev.status)) {
         map.set(r.trusted_contact_id, r);
       }
     });
     return Array.from(map.entries()).map(([id, row]) => ({
       contact: contactsById[id],
+      contactId: id,
       status: row.status,
       acked_at: row.acked_at,
       delivered_at: row.delivered_at,
     }));
   }, [contactsById, deliveryRows]);
 
+  // ── Haptic: gentle double pulse on first transition into delivered/acked.
+  useEffect(() => {
+    if (!initialLoadedRef.current) return;
+    let firedThisTick = false;
+    perContact.forEach((r) => {
+      const prevStatus = prevStatusRef.current.get(r.contactId);
+      const becameAck = ACK_STATUSES.has(r.status) && !ACK_STATUSES.has(prevStatus);
+      if (becameAck && !firedThisTick) {
+        gentleDoublePulse();
+        firedThisTick = true; // one pulse per tick max, never stacked
+      }
+      prevStatusRef.current.set(r.contactId, r.status);
+    });
+  }, [perContact]);
+
   // Most recent ack — for the headline ("Daddy opened your alert.")
   const headline = useMemo(() => {
     const opened = perContact
-      .filter((r) => r.status === 'delivered' || r.status === 'acked')
+      .filter((r) => ACK_STATUSES.has(r.status))
       .sort((a, b) => {
         const at = new Date(a.acked_at || a.delivered_at || 0).getTime();
         const bt = new Date(b.acked_at || b.delivered_at || 0).getTime();
@@ -212,12 +254,12 @@ export default function TrustedContactStatus({ userId }) {
                 `${name} — ${r.status}`
               );
               const Icon = r.status === 'acked' ? MessageCircle : Eye;
-              const tone = (r.status === 'acked' || r.status === 'delivered') ? TOKENS.green
+              const tone = ACK_STATUSES.has(r.status) ? TOKENS.green
                           : r.status === 'failed' ? '#FF3B30'
                           : 'rgba(255,255,255,0.55)';
               return (
                 <motion.li
-                  key={r.contact?.id ?? name}
+                  key={r.contactId ?? name}
                   layout
                   initial={{ opacity: 0, x: -4 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -235,4 +277,8 @@ export default function TrustedContactStatus({ userId }) {
       )}
     </motion.section>
   );
+}
+
+function rankStatus(s) {
+  return ({ queued: 0, sent: 1, delivered: 2, acked: 3, failed: -1, skipped: -2 }[s] ?? 0);
 }

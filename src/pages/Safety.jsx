@@ -1,32 +1,23 @@
 /**
  * Safety — v1.0 rebuild per HOTMESS Safety Build Doc.
  *
- * Single-column, thumb-zone layout. Background #050507. No nav clutter.
- * Inline emergency disclaimer visible on every state (not a modal).
+ * Layout doctrine (Phil v1.0 — 2026-05-20):
+ *   1. Header / status
+ *   2. Big SOS hold button (centrepiece, do NOT shrink)
+ *   3. Live session state, if active
+ *   4. Safety mode grid
+ *   5. Aftercare calm block (PERMANENT — visible by default)
+ *   6. Persistent disclaimer bar (sticky bottom)
  *
- * Composition order (top → bottom):
- *   1. Calm header (Back + "Safety" title only)
- *   2. Inline emergency disclaimer (verbatim per brief)
- *   3. TrustedContactStatus — only mounts when an unresolved event exists
- *   4. SOSHoldButton — 168x168 hold-to-fire centrepiece
- *   5. SafetyCheckInModes — six inline-panel modes
- *   6. SafetyAftercare — accordion, opens on RECOVERY MODE or post-SOS
- *   7. Trusted contacts roster (compact add + list)
+ * Critical rule: ONE PAGE, ONE SOS SURFACE, ONE MENTAL MODEL.
+ *   The global SafetyFAB hides itself on /safety (see SafetyFAB.jsx route
+ *   guard). Two SOS surfaces on one screen creates danger/confusion.
  *
- * Doctrine compliance:
- *   - No alert() / confirm() / browser popups
- *   - No "we keep you safe" / "we protect you" copy — only "share your
- *     status with people you trust." per brief.
- *   - Hostile-region: copy avoids police-default (uses 999 baseline only
- *     where the user has explicitly opened the Support Resources panel).
- *
- * Scope discipline: only this file plus four new components in
- * src/components/safety/. App.jsx route registration unchanged (route
- * already maps /safety → this page).
+ * Tone: HOTMESS Safety helps notify people you trust. It is not emergency
+ *   services. (Verbatim — Phil v1.0)
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, UserPlus, Phone, Trash2 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
@@ -37,6 +28,7 @@ import SafetyCheckInModes from '@/components/safety/SafetyCheckInModes';
 import SafetyAftercare from '@/components/safety/SafetyAftercare';
 import TrustedContactStatus from '@/components/safety/TrustedContactStatus';
 import { useSOSContext } from '@/contexts/SOSContext';
+import { impactLight } from '@/lib/safety/haptics';
 
 const TOKENS = {
   ink: '#050507',
@@ -44,8 +36,7 @@ const TOKENS = {
   care: '#3A464D',
 };
 
-const EMERGENCY_DISCLAIMER =
-  'HOTMESS Safety is not an emergency service. For emergencies, call 999.';
+const DISCLAIMER = 'HOTMESS Safety helps notify people you trust. It is not emergency services.';
 
 const RELATIONSHIPS = [
   { value: 'daddy', label: 'Daddy' },
@@ -61,21 +52,27 @@ export default function Safety() {
   const { showRecovery, dismissRecovery } = useSOSContext();
 
   const [userId, setUserId] = useState(null);
-  const [aftercareOpen, setAftercareOpen] = useState(false);
+  // Deeper aftercare state: when SOS recovery fires, expand the resources
+  // panel inside the always-mounted aftercare block.
+  const [expandResources, setExpandResources] = useState(false);
 
-  // Mount-time light haptic per brief — calm, no sound.
+  // "You entered a controlled space." Light impact on mount.
   useEffect(() => {
-    try { if (navigator?.vibrate) navigator.vibrate(8); } catch { /* noop */ }
+    impactLight();
   }, []);
 
-  // Auto-open aftercare after SOS recovery (post-event care continuation).
+  // Auto-expand aftercare resources after SOS recovery.
   useEffect(() => {
     if (showRecovery) {
-      setAftercareOpen(true);
+      setExpandResources(true);
+      // Scroll the calm block into view so the user can land on it.
+      requestAnimationFrame(() => {
+        const el = document.getElementById('safety-aftercare');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
     }
   }, [showRecovery]);
 
-  // Bootstrap user
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -130,25 +127,25 @@ export default function Safety() {
   });
 
   const handleTextSomeoneSafe = useCallback(() => {
-    setAftercareOpen(false);
     toast.message('Pick STAY WITH ME from check-in modes to open a thread.');
-    // Scroll to modes for clarity. No nav.
     const el = document.getElementById('checkin-modes');
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
 
   const handleGetHomeSafely = useCallback(() => {
-    setAftercareOpen(false);
     toast.message('Pick WALK HOME or RIDE SAFE.');
     const el = document.getElementById('checkin-modes');
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
 
+  const handleAftercareDone = useCallback(() => {
+    setExpandResources(false);
+    if (showRecovery) dismissRecovery();
+  }, [dismissRecovery, showRecovery]);
+
   const handleSOSSent = useCallback(() => {
-    // After a real send, the dispatcher (when re-enabled) writes
-    // safety_events → TrustedContactStatus picks it up live.
-    // Aftercare doesn't auto-open immediately — that happens via showRecovery
-    // when the user resolves the alert.
+    // After a real send the dispatcher (when re-enabled) writes safety_events
+    // → TrustedContactStatus picks it up live. Aftercare is already mounted.
   }, []);
 
   return (
@@ -156,7 +153,7 @@ export default function Safety() {
       className="h-full w-full flex flex-col text-white"
       style={{ background: TOKENS.ink }}
     >
-      {/* Header — calm, single back button + title. No tabs, no clutter. */}
+      {/* Header — calm, single back button + title. */}
       <header
         className="sticky top-0 z-30 border-b border-white/5 px-4"
         style={{
@@ -187,21 +184,13 @@ export default function Safety() {
       </header>
 
       {/* Scrollable single column — thumb-zone, 390px-first */}
-      <main className="flex-1 overflow-y-auto px-4 pt-5 pb-24">
+      <main className="flex-1 overflow-y-auto px-4 pt-5 pb-24 relative">
         <div className="mx-auto max-w-md flex flex-col gap-5">
 
-          {/* Inline emergency disclaimer — always present, no modal */}
-          <p
-            className="text-[11px] leading-snug text-center text-white/45"
-            role="note"
-          >
-            {EMERGENCY_DISCLAIMER}
-          </p>
-
-          {/* Trusted contact realtime status — only mounts during live event */}
+          {/* Trusted-contact realtime status — only mounts during a live event */}
           {userId && <TrustedContactStatus userId={userId} />}
 
-          {/* SOS hold button — centrepiece */}
+          {/* 2. Big SOS hold button — centrepiece, do NOT shrink */}
           <div className="flex flex-col items-center pt-2 pb-1">
             <SOSHoldButton onSent={handleSOSSent} />
             <p className="text-[11px] text-white/40 text-center max-w-[20rem] mt-2 leading-snug">
@@ -209,34 +198,34 @@ export default function Safety() {
             </p>
           </div>
 
-          {/* Six check-in modes — inline-panel grid */}
+          {/* 4. Safety mode grid (3. live session state renders INSIDE the
+              modes component when active — keeps page order calm). */}
           <section id="checkin-modes" aria-label="Check-in modes">
             <h2 className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55 mb-2">
               Check-in
             </h2>
-            <SafetyCheckInModes onOpenAftercare={() => setAftercareOpen(true)} />
+            <SafetyCheckInModes
+              onOpenAftercare={() => {
+                // RECOVERY MODE tile = "I want aftercare right now" → expand
+                // resources panel and scroll the calm block into view.
+                setExpandResources(true);
+                requestAnimationFrame(() => {
+                  const el = document.getElementById('safety-aftercare');
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+              }}
+            />
           </section>
 
-          {/* Aftercare — opens via RECOVERY MODE check-in or post-SOS */}
-          <AnimatePresence>
-            {aftercareOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 8 }}
-              >
-                <SafetyAftercare
-                  open
-                  onTextSomeoneSafe={handleTextSomeoneSafe}
-                  onGetHomeSafely={handleGetHomeSafely}
-                  onClose={() => {
-                    setAftercareOpen(false);
-                    if (showRecovery) dismissRecovery();
-                  }}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* 5. Aftercare calm block — PERMANENT. Visible by default. */}
+          <section id="safety-aftercare" aria-label="Aftercare">
+            <SafetyAftercare
+              onTextSomeoneSafe={handleTextSomeoneSafe}
+              onGetHomeSafely={handleGetHomeSafely}
+              onSessionComplete={handleAftercareDone}
+              expandResourcesByDefault={expandResources}
+            />
+          </section>
 
           {/* Trusted contacts — compact roster + add */}
           <section aria-label="Trusted contacts" className="rounded-2xl border p-4"
@@ -325,9 +314,22 @@ export default function Safety() {
             </div>
           </section>
 
-          {/* Repeat the disclaimer at the bottom for users who scrolled past the top */}
-          <p className="text-[11px] text-white/35 text-center leading-snug pt-2">
-            {EMERGENCY_DISCLAIMER}
+          {/* Bottom spacer so the sticky disclaimer doesn't overlap content */}
+          <div className="h-10" aria-hidden />
+        </div>
+
+        {/* 6. Persistent disclaimer — sticky thin bar at the bottom of the
+            scroll container. Calm, product-positioning copy (no 999 line). */}
+        <div
+          className="sticky bottom-0 left-0 right-0 z-20 px-4 pt-2 pb-3"
+          style={{
+            background: 'linear-gradient(to top, rgba(5,5,7,0.92) 60%, rgba(5,5,7,0))',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+          }}
+        >
+          <p className="text-[11px] text-white/45 text-center leading-snug max-w-md mx-auto">
+            {DISCLAIMER}
           </p>
         </div>
       </main>

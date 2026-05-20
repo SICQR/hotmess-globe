@@ -1,14 +1,21 @@
 /**
  * SafetyFAB - Floating safety button
  *
- * Calm idle state. Long-press (3s) triggers SOS overlay.
- * Short tap opens compact menu: Fake Call, Check-in Timer, Safety Hub.
+ * Calm idle state. Long-press (1.5s) → fake call (The Exit). Long-press (3s)
+ * → stealth wipe (The Disappear). Short tap opens compact menu: Fake Call,
+ * Check-in Timer, Safety Hub.
  *
  * Does NOT duplicate the full SOSOverlay — just provides the trigger.
- * Emergency Mode overlay removed (SOS overlay is the canonical panic path).
+ *
+ * Route guard (Phil v1.0 — 2026-05-20):
+ *   The FAB hides itself on /safety. That page has its own dedicated SOS
+ *   hold-to-fire surface (the big 168×168 gold ring); two SOS controls with
+ *   different gesture logic on the same screen creates danger/confusion.
+ *   ONE PAGE, ONE SOS SURFACE, ONE MENTAL MODEL.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Phone, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,7 +25,11 @@ import CheckInTimerModal from '@/components/safety/CheckInTimerModal';
 import { useCheckinTimer } from '@/contexts/CheckinTimerContext';
 import { useSOSContext } from '@/contexts/SOSContext';
 
-export default function SafetyFAB() {
+/**
+ * Inner FAB — unchanged from prior behaviour. The default export wraps this
+ * with a route guard so it doesn't render on /safety.
+ */
+function SafetyFABInner() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showFakeCall, setShowFakeCall] = useState(false);
   const [showCheckinTimer, setShowCheckinTimer] = useState(false);
@@ -55,7 +66,7 @@ export default function SafetyFAB() {
     const tick = () => {
       if (!holdStartRef.current) return;
       const elapsed = performance.now() - holdStartRef.current;
-      
+
       // Haptic signals at thresholds
       if (elapsed >= HOLD_EXIT_MS && !thresholdReachedRef.current.exit) {
         if (navigator?.vibrate) navigator.vibrate(50);
@@ -94,7 +105,7 @@ export default function SafetyFAB() {
     if (elapsed >= HOLD_EXIT_MS && elapsed < HOLD_DISAPPEAR_MS) {
       if (navigator?.vibrate) navigator.vibrate(100);
       triggerTheExit();
-    } 
+    }
     // 3. The Disappear (3s+)
     else if (elapsed >= HOLD_DISAPPEAR_MS) {
       triggerTheDisappear();
@@ -228,4 +239,17 @@ export default function SafetyFAB() {
       />
     </>
   );
+}
+
+/**
+ * Default export — route-guarded wrapper. Renders the FAB everywhere EXCEPT
+ * /safety, where the page has its own dedicated SOS surface and a second
+ * floating control would create two competing SOS interactions.
+ */
+export default function SafetyFAB() {
+  const { pathname } = useLocation();
+  if (pathname === '/safety' || pathname.startsWith('/safety/')) {
+    return null;
+  }
+  return <SafetyFABInner />;
 }
