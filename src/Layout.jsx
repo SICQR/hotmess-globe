@@ -200,6 +200,12 @@ function LayoutInner({ children, currentPageName }) {
           currentPageName !== 'AccountConsents' &&
           currentPageName !== 'AgeGate' &&
           currentPageName !== 'Settings' &&
+          currentPageName !== 'CommunityGuidelines' &&
+          currentPageName !== 'TermsOfService' &&
+          currentPageName !== 'PrivacyPolicy' &&
+          currentPageName !== 'HelpCenter' &&
+          currentPageName !== 'Contact' &&
+          currentPageName !== 'AccountDeletion' &&
           (!currentUser?.has_agreed_terms || !currentUser?.has_consented_data)
         ) {
           navigate(createPageUrl('OnboardingGate'));
@@ -213,6 +219,12 @@ function LayoutInner({ children, currentPageName }) {
           currentPageName !== 'OnboardingGate' &&
           currentPageName !== 'AccountConsents' &&
           currentPageName !== 'AgeGate' &&
+          currentPageName !== 'CommunityGuidelines' &&
+          currentPageName !== 'TermsOfService' &&
+          currentPageName !== 'PrivacyPolicy' &&
+          currentPageName !== 'HelpCenter' &&
+          currentPageName !== 'Contact' &&
+          currentPageName !== 'AccountDeletion' &&
           (!currentUser?.full_name || !currentUser?.avatar_url)
         ) {
           const next = encodeURIComponent(`${window.location.pathname}${window.location.search || ''}`);
