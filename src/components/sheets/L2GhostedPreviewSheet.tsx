@@ -184,22 +184,22 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
     }
   }, [uid, myUserId, profile, sendTap, isPremium, dailyBoos, hasBood, openSheet]);
 
+  // ── Boo-first doctrine (Phil, 2026-05-20) ──────────────────────────────
+  // Mutual Boo is the SINGLE hard gate for any communication or location
+  // action. Premium NEVER bypasses consent — premium unlocks discovery and
+  // capacity (more boos, rewind, boosts, filters), not access to people.
+  const canInteract = uid ? isMutualBoo(uid) : false;
+  const booFirstBlock = useCallback(() => {
+    toast('Boo each other first to unlock chat and location tools.');
+  }, []);
+
   const handleMessage = useCallback(() => {
     if (!profile || !uid) return;
-    
+    if (!canInteract) { booFirstBlock(); return; }
+
     // Safety check: Cannot message mock profiles without emails
     if (!profile.email) {
       toast.error('This user hasn\'t set up their profile for messaging yet.');
-      return;
-    }
-    
-    // Core messaging logic:
-    // Premium users can message anyone. Free users MUST have a mutual BOO to message.
-    if (!isPremium && !isMutualBoo(uid)) {
-      openSheet('premium-gate', { 
-        title: 'Upgrade to HOTMESS to send messages — £7.99/mo',
-        reason: 'messaging'
-      });
       return;
     }
 
@@ -208,10 +208,12 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
       to: profile.email,
       title: `Chat with ${profile.display_name || 'Someone'}`,
     });
-  }, [profile, uid, isPremium, isMutualBoo, openSheet]);
+  }, [profile, uid, canInteract, booFirstBlock, openSheet]);
 
   const handleMeet = useCallback(() => {
-    if (!profile?.last_lat || !profile?.last_lng) {
+    if (!profile || !uid) return;
+    if (!canInteract) { booFirstBlock(); return; }
+    if (!profile.last_lat || !profile.last_lng) {
       toast('Location not available');
       return;
     }
@@ -235,10 +237,11 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
         label: `Meet ${profile.display_name || 'them'}`,
       });
     }
-  }, [profile, openSheet, myPosition]);
+  }, [profile, uid, canInteract, booFirstBlock, openSheet, myPosition]);
 
   const handleSuggestStop = useCallback(() => {
-    if (!profile) return;
+    if (!profile || !uid) return;
+    if (!canInteract) { booFirstBlock(); return; }
     openSheet('chat', {
       userId: profile.id,
       to: profile.email,
@@ -254,7 +257,7 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
           }
         : undefined,
     });
-  }, [profile, openSheet, moverInfo]);
+  }, [profile, uid, canInteract, booFirstBlock, openSheet, moverInfo]);
 
   const handleShareMovement = useCallback(() => {
     openSheet('movement-share', {});
@@ -296,20 +299,24 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
   }, [profile, closeSheet]);
 
   const handleUber = useCallback(() => {
-    if (!profile?.last_lat || !profile?.last_lng) {
+    if (!profile || !uid) return;
+    if (!canInteract) { booFirstBlock(); return; }
+    if (!profile.last_lat || !profile.last_lng) {
       toast('Location not available');
       return;
     }
     const url = `uber://?action=setPickup&pickup=my_location&dropoff[latitude]=${profile.last_lat}&dropoff[longitude]=${profile.last_lng}`;
     window.location.href = url;
-  }, [profile]);
+  }, [profile, uid, canInteract, booFirstBlock]);
 
   const handleShareLocation = useCallback(async () => {
-    if (!profile || !myUserId || !myPosition) {
+    if (!profile || !uid) return;
+    if (!canInteract) { booFirstBlock(); return; }
+    if (!myUserId || !myPosition) {
        if (!myPosition) toast('We need your GPS location first');
        return;
     }
-    
+
     try {
       await supabase.from('location_shares').insert({
         sender_id: myUserId,
@@ -327,7 +334,7 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
     } catch {
       toast('Failed to share location');
     }
-  }, [profile, myUserId, myPosition, currentUser, openSheet]);
+  }, [profile, uid, canInteract, booFirstBlock, myUserId, myPosition, currentUser, openSheet]);
 
   const handleShare = useCallback(async () => {
     if (!profile) return;
@@ -428,15 +435,25 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-5 pt-4 pb-safe md:w-1/2 md:px-8 md:pt-8 md:flex md:flex-col">
-        {/* Mutual match banner */}
-        {uid && isMutualBoo(uid) && (
+        {/* Consent banner — pre-mutual: explain the gate. Post-mutual: confirm. */}
+        {canInteract ? (
           <div
             className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3"
             style={{ background: 'rgba(200,150,44,0.1)', border: '1px solid rgba(200,150,44,0.25)' }}
           >
             <Ghost className="w-4 h-4" style={{ color: '#C8962C' }} />
             <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: '#C8962C' }}>
-              YOU MATCHED — SAY SOMETHING
+              MUTUAL BOO — CHAT &amp; SAFETY TOOLS UNLOCKED
+            </span>
+          </div>
+        ) : (
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <Ghost className="w-4 h-4 text-white/40" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/55">
+              Boo each other first to unlock chat and location tools
             </span>
           </div>
         )}
@@ -517,9 +534,8 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
           </div>
         )}
 
-        {/* Primary actions */}
+        {/* Boo — always visible. Pre-mutual this is the only consent action. */}
         <div className="flex gap-3 mb-4">
-          {/* Boo */}
           <button
             onClick={handleBoo}
             disabled={hasBood}
@@ -533,63 +549,71 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
             <Ghost className="w-4 h-4" />
             {hasBood ? "BOO'D" : "BOO"}
           </button>
-
-          {/* Message */}
-          <button
-            onClick={handleMessage}
-            className="flex-1 h-12 rounded-xl bg-[#C8962C] text-white font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-[0_4px_12px_rgba(200,150,44,0.3)]"
-            aria-label="MESSAGE"
-          >
-            <MessageCircle className="w-4 h-4" />
-            MESSAGE
-          </button>
-
-          {/* Suggest Stop (only when user is moving nearby) */}
-          {moverInfo && moverInfo.isPassingNear && (
-            <button
-              onClick={handleSuggestStop}
-              className="flex-1 h-12 rounded-xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
-              style={{ backgroundColor: 'rgba(200,150,44,0.15)', color: '#C8962C', border: '1px solid rgba(200,150,44,0.3)' }}
-              aria-label="Suggest a stop"
-            >
-              <MapPin className="w-4 h-4" />
-              SUGGEST STOP
-            </button>
-          )}
-
-          {/* Meet */}
-          <button
-            onClick={handleMeet}
-            className="flex-1 h-12 rounded-xl bg-white/10 text-white font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
-            aria-label="Get directions"
-          >
-            <Navigation className="w-4 h-4" />
-            MEET
-          </button>
         </div>
 
-        {/* Transport & Location actions */}
-        <div className="flex gap-3 mb-4">
-          <button
-            onClick={handleShareLocation}
-            className="flex-1 h-12 rounded-xl bg-white/5 text-[#30D158] font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
-            aria-label="Share Location"
-          >
-            <MapPin className="w-4 h-4" />
-            SHARE LOCATION
-          </button>
+        {/* Comms + location actions — GATED on mutual boo. Phil's doctrine
+            2026-05-20: premium NEVER unlocks chat or location; only mutual
+            consent does. UI gate matched server-side by RLS in PR #2. */}
+        {canInteract && (
+          <>
+            <div className="flex gap-3 mb-4">
+              {/* Message */}
+              <button
+                onClick={handleMessage}
+                className="flex-1 h-12 rounded-xl bg-[#C8962C] text-white font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-[0_4px_12px_rgba(200,150,44,0.3)]"
+                aria-label="MESSAGE"
+              >
+                <MessageCircle className="w-4 h-4" />
+                MESSAGE
+              </button>
 
-          <button
-            onClick={handleUber}
-            className="flex-1 h-12 rounded-xl bg-white/5 text-white font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
-            aria-label="Uber"
-          >
-            <Car className="w-4 h-4" />
-            UBER
-          </button>
-        </div>
+              {/* Suggest Stop (only when user is moving nearby) */}
+              {moverInfo && moverInfo.isPassingNear && (
+                <button
+                  onClick={handleSuggestStop}
+                  className="flex-1 h-12 rounded-xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                  style={{ backgroundColor: 'rgba(200,150,44,0.15)', color: '#C8962C', border: '1px solid rgba(200,150,44,0.3)' }}
+                  aria-label="Suggest a stop"
+                >
+                  <MapPin className="w-4 h-4" />
+                  SUGGEST STOP
+                </button>
+              )}
 
-        {/* Secondary actions */}
+              {/* Meet */}
+              <button
+                onClick={handleMeet}
+                className="flex-1 h-12 rounded-xl bg-white/10 text-white font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                aria-label="Get directions"
+              >
+                <Navigation className="w-4 h-4" />
+                MEET
+              </button>
+            </div>
+
+            <div className="flex gap-3 mb-4">
+              <button
+                onClick={handleShareLocation}
+                className="flex-1 h-12 rounded-xl bg-white/5 text-[#30D158] font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                aria-label="Share Location"
+              >
+                <MapPin className="w-4 h-4" />
+                SHARE LOCATION
+              </button>
+
+              <button
+                onClick={handleUber}
+                className="flex-1 h-12 rounded-xl bg-white/5 text-white font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                aria-label="Uber"
+              >
+                <Car className="w-4 h-4" />
+                UBER
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Secondary actions — always available */}
         <div className="flex gap-3">
           <button
             onClick={handleSave}
