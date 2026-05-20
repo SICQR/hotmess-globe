@@ -31,6 +31,8 @@ import { useNearbyMovement } from '@/hooks/useNearbyMovement';
 import { useGPS } from '@/hooks/useGPS';
 import { MatchOverlay } from '@/components/ghosted/MatchOverlay';
 import { calculateMidpoint, calculateDistance } from '@/lib/locationUtils';
+import { logConsentBlock, type ConsentBlockAction } from '@/lib/consent/telemetry';
+import { createLocationSession, DEFAULT_LOCATION_TTL_MIN } from '@/lib/ghosted/locationSession';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -189,13 +191,25 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
   // action. Premium NEVER bypasses consent — premium unlocks discovery and
   // capacity (more boos, rewind, boosts, filters), not access to people.
   const canInteract = uid ? isMutualBoo(uid) : false;
-  const booFirstBlock = useCallback(() => {
-    toast('Boo each other first to unlock chat and location tools.');
-  }, []);
+  const booFirstBlock = useCallback(
+    (action: ConsentBlockAction = 'message') => {
+      toast('Boo each other first to unlock chat and location tools.');
+      if (myUserId && uid) {
+        void logConsentBlock({
+          userId: myUserId,
+          targetId: uid,
+          action,
+          reason: 'no_mutual_boo',
+          context: { source: 'L2GhostedPreviewSheet' },
+        });
+      }
+    },
+    [myUserId, uid],
+  );
 
   const handleMessage = useCallback(() => {
     if (!profile || !uid) return;
-    if (!canInteract) { booFirstBlock(); return; }
+    if (!canInteract) { booFirstBlock('message'); return; }
 
     // Safety check: Cannot message mock profiles without emails
     if (!profile.email) {
@@ -212,7 +226,7 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
 
   const handleMeet = useCallback(() => {
     if (!profile || !uid) return;
-    if (!canInteract) { booFirstBlock(); return; }
+    if (!canInteract) { booFirstBlock('meet'); return; }
     if (!profile.last_lat || !profile.last_lng) {
       toast('Location not available');
       return;
@@ -241,7 +255,7 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
 
   const handleSuggestStop = useCallback(() => {
     if (!profile || !uid) return;
-    if (!canInteract) { booFirstBlock(); return; }
+    if (!canInteract) { booFirstBlock('suggest_stop'); return; }
     openSheet('chat', {
       userId: profile.id,
       to: profile.email,
@@ -300,7 +314,7 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
 
   const handleUber = useCallback(() => {
     if (!profile || !uid) return;
-    if (!canInteract) { booFirstBlock(); return; }
+    if (!canInteract) { booFirstBlock('uber'); return; }
     if (!profile.last_lat || !profile.last_lng) {
       toast('Location not available');
       return;
@@ -311,30 +325,84 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
 
   const handleShareLocation = useCallback(async () => {
     if (!profile || !uid) return;
-    if (!canInteract) { booFirstBlock(); return; }
+    if (!canInteract) { booFirstBlock('share_location'); return; }
     if (!myUserId || !myPosition) {
-       if (!myPosition) toast('We need your GPS location first');
-       return;
+      if (!myPosition) toast('We need your GPS location first');
+      return;
     }
 
-    try {
-      await supabase.from('location_shares').insert({
-        sender_id: myUserId,
-        receiver_id: profile.id,
-        lat: myPosition.lat,
-        lng: myPosition.lng
-      });
-      openSheet('chat', {
-        userId: profile.id,
-        to: profile.email,
-        title: `Chat with ${profile.display_name || 'Someone'}`,
-        prefillMessage: "📍 I shared my current location with you"
-      });
-      toast('Location shared to chat');
-    } catch {
-      toast('Failed to share location');
+    // 2026-05-20 doctrine: Ghosted location share is a TEMP SESSION, not a
+    // chat coordinate. Coordinates live in ghosted_location_sessions with a
+    // hard expiry (15min) and revoke. The chat thread carries only a
+    // reference to the session id, so no permanent coords sit in chat
+    // history. RLS + mutual gate enforced server-side.
+    //
+    // Step 1: resolve/create the direct chat thread for these two emails.
+    // Step 2: insert location_session row referencing thread + recipient.
+    // Step 3: post a chat message that references the session_id.
+
+    // Look up or create the direct thread (mutual gated by RLS)
+    const otherEmail = profile.email;
+    if (!otherEmail) {
+      toast.error('This user has no email on file');
+      return;
     }
-  }, [profile, uid, canInteract, booFirstBlock, myUserId, myPosition, currentUser, openSheet]);
+    const myJwtEmail = myEmail || '';
+    const participantEmails = [myJwtEmail, otherEmail].filter(Boolean).sort();
+
+    let threadId: string | null = null;
+    const { data: existing } = await supabase
+      .from('chat_threads')
+      .select('id')
+      .eq('thread_type', 'direct')
+      .contains('participant_emails', participantEmails)
+      .maybeSingle();
+    if (existing?.id) {
+      threadId = existing.id;
+    } else {
+      const { data: inserted, error: insErr } = await supabase
+        .from('chat_threads')
+        .insert({
+          participant_emails: participantEmails,
+          thread_type: 'direct',
+          active: true,
+        })
+        .select('id')
+        .single();
+      if (insErr || !inserted) {
+        toast('Could not open chat. Boo first.');
+        return;
+      }
+      threadId = inserted.id;
+    }
+
+    if (!threadId) return;
+
+    const session = await createLocationSession({
+      threadId,
+      sharerId: myUserId,
+      recipientId: profile.id,
+      lat: myPosition.lat,
+      lng: myPosition.lng,
+      accuracyM: null,
+      ttlMinutes: DEFAULT_LOCATION_TTL_MIN,
+    });
+
+    if (!session.ok || !session.data) {
+      toast('Could not share location. Try again.');
+      return;
+    }
+
+    openSheet('chat', {
+      userId: profile.id,
+      to: profile.email,
+      title: `Chat with ${profile.display_name || 'Someone'}`,
+      // No coords in body — the chat renderer resolves session_id at view time
+      // and shows the live map until expiry/revocation.
+      prefillMessage: `📍 Shared my location · expires in ${DEFAULT_LOCATION_TTL_MIN} min`,
+      locationSessionId: session.data.id,
+    });
+  }, [profile, uid, canInteract, booFirstBlock, myUserId, myPosition, myEmail, openSheet]);
 
   const handleShare = useCallback(async () => {
     if (!profile) return;
