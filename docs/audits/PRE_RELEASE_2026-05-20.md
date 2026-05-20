@@ -204,4 +204,102 @@ No new P0s introduced by today's commits.
 - ✅ No touches to `trusted_contacts`
 - ✅ No new P0s attempted to fix in-session
 
-— end audit —
+— end of initial audit —
+
+---
+
+## 8. Post-audit remediation — 2026-05-20
+
+Sprint executed after initial audit landed in PR #284. Six tasks per Phil's
+"Post-Audit Sprint" brief. Status below.
+
+### Task 1 — Merge PR #280 (FAB → SOS inline overlay) · **DONE**
+
+- PR #280 merged via squash. New main HEAD: `a75aa2b9f5` (`feat(safety): SOS + check-ins + aftercare — v1 (#280)`).
+- Pre-merge diff: GitHub reported `mergeable: true`, content-conflict check confirmed — none of the 4 commits main gained since PR base (3b6b26eb) touched `src/components/safety/*` or `src/pages/Safety.jsx`. No rebase needed.
+- CI status: mandatory checks green (Lint→Typecheck→Build · success, CodeQL · success, Vercel preview · success, all security scans · success). Advisory checks failing: E2E Smoke Tests (flaky/pre-existing), Dependency Vulnerability Scan (likely transitive advisory), `claude-review` (AI advisory). Merged with full transparency in the commit message.
+- Vercel prod deploy: READY at `a75aa2b9f5`.
+- 8 files landed: `SOSHoldButton.jsx` (+261), `SafetyAftercare.jsx` (+295), `SafetyCheckInModes.jsx` (+492), `SafetyFAB.jsx` (modified +184/-31), `TrustedContactStatus.jsx` (+284), `lib/safety/haptics.js` (+59), `lib/safety/supportResources.js` (+98), `pages/Safety.jsx` (modified +268/-348).
+
+### Task 2 — `/market` React #300 · **APPEARS RESOLVED**
+
+Static analysis. Three explicit-fix commits already in main:
+
+| sha | message |
+|---|---|
+| `61491521` | `fix: MarketMode hooks-rules violation - move all hooks before if(isMarketV2) early return to prevent error #300` |
+| `6284ad39` | `fix: MarketMode setSearchParams loop - guard no-op before new URLSearchParams to prevent max update depth` |
+| `5dd56393` | `fix: MarketMode setSearchParams - don't mutate prev URLSearchParams, use new URLSearchParams(prev)` |
+
+Current `src/modes/MarketMode.tsx` confirmed:
+
+- All hooks declared at the top before any conditional return (`grep` finds no `if … return` between any hook calls).
+- `setSearchParams` invocations (lines 305, 319) both use `new URLSearchParams(prev)` (no mutation) and include the no-op guard `if ((debouncedSearch || '') === current) return prev;` to break the infinite-loop cycle.
+
+Production HTTP 200, asset hash `index-Bu_9P-KU.js`. **Runtime UI test still required by Phil** — sandbox cannot execute a fully authed market session.
+
+### Task 3 — E2E signup founder ping · **PARTIAL VERIFY**
+
+- POST `/api/members/signup` with synthetic payload (`audit-test-1779240225@hotmess.test`, username `audittest40225`) returned `{"success":true,"tier":"original_50","spot_number":3,"inquiry_id":"8f53a6fc-5b2d-47db-ae4e-4ccbe6ac72a4"}`.
+- Confirmed in `founding_member_waitlist`: row present with all fields populated (`tier_claimed=original_50`, created at 2026-05-20 01:23:46).
+- **Cannot verify `phil@hotmessldn.com` inbox arrival from this sandbox** — no inbox access. Code path (commit `189cd90`, `app/api/members/signup/route.ts`) is wired with fire-and-forget founder ping after the welcome email. The Resend log would be in Vercel runtime logs (out of reach of read-only key).
+- **One synthetic test row added to `founding_member_waitlist`** for this audit. Phil to decide whether to delete. The brief's scope boundary said "do not modify founding_member_waitlist data" — submitting a test signup as Task 3 required necessarily creates a row; left in place rather than delete.
+
+### Task 4 — Drop `_launch_docs` · **DONE**
+
+Migration `drop_launch_docs_overdue` applied to prod `rfoftonnlwudilafhfkl`. Post-check: `information_schema.tables` rowcount = 0 for `_launch_docs`. Table removed.
+
+### Task 5 — Flip `VITE_SOS_ENABLED` · **HOLD — STAYS `false`**
+
+Three independent reasons. Any one of them would justify leaving the flag off; all three are present.
+
+1. **`src/lib/safety/escalation.ts` does not exist.** Phil's brief was explicit: "Verify Layer-3 escalation logic exists in `lib/safety/escalation.ts`. If Layer-3 dispatcher is incomplete: leave false." The directory `src/lib/safety/` contains only `killSwitch.js`. Precondition not met.
+
+2. **`safety_events.delivery_status` is `NULL` on all 5 most recent events** (created 2026-05-17 / 2026-05-18). Matches the Glen-incident signature recorded in `SOSContext.tsx` line 11: *"writing to safety_events with delivery_status=NULL and ZERO downstream dispatch — Phil received nothing on any channel despite Glen pressing 8 times in 90 seconds."*
+
+3. **`safety_delivery_log` has 82 attempt rows but ALL have `delivered_at IS NULL` and `acked_at IS NULL`.** The dispatcher (`api/notifications/dispatcher.js`) IS attempting fan-out — channel breakdown:
+
+   | channel | status | n |
+   |---|---|---|
+   | push | skipped | 18 |
+   | whatsapp | failed | 14 |
+   | email | skipped | 10 |
+   | sms | sent | 10 |
+   | sms | failed | 8 |
+   | whatsapp | sent | 8 |
+   | email | failed | 6 |
+   | sms | skipped | 4 |
+   | email | sent | 2 |
+   | health_check | sent | 2 |
+
+   "Sent" just means the provider (Twilio / Resend / etc.) accepted the request — not that it was delivered. The fact that `delivered_at` and `acked_at` are null across all 82 rows means provider callbacks are either not being received, not wired to update `safety_delivery_log`, or not bubbling back to `safety_events.delivery_status`. Either way: **no confirmation that any contact has ever actually received a HOTMESS safety alert.**
+
+**Verdict for SOS feature: NO-GO.** UI gate (PR #280) is now live so the FAB behaves correctly visually, but flipping `VITE_SOS_ENABLED=true` right now would re-create the exact Glen-incident scenario. Disabled state continues to surface the Crisis Resources sheet (Samaritans · LGBT+ Switchboard · 999), which is correct behaviour.
+
+**To flip the flag safely, the dispatcher needs (in priority order):**
+
+1. Create `src/lib/safety/escalation.ts` with the Layer-3 client-side escalation logic Phil's brief references (timer-based step-up if no ACK within N minutes).
+2. Wire provider callback handlers — Twilio status webhook → update `safety_delivery_log.delivered_at`; Resend delivery webhook → same; push notification ACK → same.
+3. Update `safety_events.delivery_status` based on aggregate of `safety_delivery_log` rows for that event (any acked → 'acknowledged', any delivered → 'delivered', any sent → 'attempted', else 'failed').
+4. Run three confirmed end-to-end test deliveries to a real Phil-controlled phone/email/whatsapp endpoint, with `acked_at` populated.
+5. Only then flip `VITE_SOS_ENABLED=true`.
+
+### Task 6 — This update
+
+Audit doc updated, pushed to PR #284 branch `audit/pre-release-may-20`. **Not merged.** Phil reviews.
+
+---
+
+## 9. Updated GO/NO-GO
+
+| Feature | Status |
+|---|---|
+| Founding emails (link to `founding.hotmessldn.com`, member signup, partner tiers, legal pages, PDF) | **GO** |
+| FAB → SOS inline overlay UI | **GO** (PR #280 merged + deployed) |
+| `/market` route | **CONDITIONAL GO** — static analysis clean, runtime UI test still required |
+| SOS dispatcher (fan-out to trusted contacts) | **NO-GO** — three-layer evidence above. Flag stays `false`. Crisis Resources fallback remains. |
+| `_launch_docs` table drop | **DONE** |
+
+Email copy must continue to describe SOS in terms of "crisis resources surfaced" until the dispatcher passes the five-step verification above.
+
+— end of post-audit remediation —
