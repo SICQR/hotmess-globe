@@ -178,19 +178,19 @@ const LEGACY_PAGE_ROUTE_ALLOWLIST = new Set([
   'OrderHistory',
 ]);
 
-const { Pages, mainPage } = pagesConfig;
+const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
 const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
 
-// 2026-05-20: LayoutWrapper is now a pass-through. The legacy Layout.jsx
-// chrome rendered a SECOND nav row (shield/gear/search/radio/bell/hamburger)
-// on every PageRoute/auto-routed page (Settings, Help, etc.) — visible on top
-// of the global OS chrome (TopHUD + OSBottomNav + SafetyFAB, all rendered in
-// OSArchitecture). That duplicate legacy nav was also the source of the
-// "page crashes back to Home" bug (heavy legacy chrome throwing → caught by
-// PageErrorBoundary which redirects to Home). The OS shell owns all chrome now,
-// so secondary pages render bare inside it.
-const LayoutWrapper = ({ children }) => <>{children}</>;
+// NOTE 2026-05-20: a previous attempt made this a pass-through to remove the
+// legacy second nav row, but Layout.jsx ALSO provides <TaxonomyProvider> (only
+// here, not global), so stripping it threw SYSTEM ERROR on Settings/Notifications.
+// Reverted to render Layout. Proper nav-removal (hoist TaxonomyProvider to the
+// global App provider tree, THEN pass-through) to be done + preview-verified
+// before touching main again.
+const LayoutWrapper = ({ children, currentPageName }) => Layout ?
+  <Layout currentPageName={currentPageName}>{children}</Layout>
+  : <>{children}</>;
 
 const PageRoute = ({ pageKey }) => {
   const Page = Pages[pageKey];
