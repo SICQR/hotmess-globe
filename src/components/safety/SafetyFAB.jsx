@@ -246,7 +246,7 @@ function SafetyFABInner() {
 
   return (
     <>
-      <div className="fixed z-[150] bottom-44 left-5">
+      <div className="fixed z-[150] top-1/2 -translate-y-1/2 right-4">
         <AnimatePresence>
           {isExpanded && (
             <motion.div
@@ -254,7 +254,7 @@ function SafetyFABInner() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.95 }}
               transition={{ duration: 0.15 }}
-              className="absolute bottom-14 left-0 bg-[#1C1C1E] border border-white/10 rounded-xl p-2 min-w-[200px] shadow-lg"
+              className="absolute bottom-14 right-0 bg-[#1C1C1E] border border-white/10 rounded-xl p-2 min-w-[200px] shadow-lg"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="space-y-0.5">
