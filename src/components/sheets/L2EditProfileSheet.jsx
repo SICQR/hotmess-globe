@@ -20,7 +20,7 @@ import ProfilePhotoGrid from '@/components/profile/ProfilePhotoGrid';
 import { useSheet } from '@/contexts/SheetContext';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  Camera, Loader2, CheckCircle, User, MapPin,
+  Loader2, CheckCircle, User, MapPin,
   Instagram, Music, Crown, ChevronRight, Plus, Check, Lock
 } from 'lucide-react';
 import { usePersona } from '@/contexts/PersonaContext';
@@ -352,27 +352,12 @@ export default function L2EditProfileSheet() {
             state. Cover (position 0) syncs to profiles.avatar_url. */}
         <ProfilePhotoGrid userId={userId} onCoverChange={(url) => setAvatarUrl(url || '')} />
 
+        {/* Private albums — separate system (ghosted_albums). The public photo
+            grid is inline above; this is the entry to locked/private albums.
+            (The old "Photos" button was removed — it opened L2PhotosSheet, which
+            now renders the same ProfilePhotoGrid shown inline here.) */}
         <div className="flex flex-col items-center gap-3 pt-4 pb-5 border-b border-white/6">
-          {/* Manage main carousel + private albums — two-button entry row */}
           <div className="flex gap-2 w-full px-2">
-            <button
-              type="button"
-              onClick={() => openSheet('photos')}
-              className="flex-1 flex items-center justify-center gap-2 py-3 active:scale-95 transition-all"
-              style={{
-                background: 'rgba(200,150,44,0.08)',
-                border: '0.5px solid rgba(200,150,44,0.35)',
-                borderRadius: 2,
-                color: '#C8962C',
-                fontSize: 11,
-                fontWeight: 500,
-                letterSpacing: '0.22em',
-                textTransform: 'uppercase',
-              }}
-            >
-              <Camera className="w-3.5 h-3.5" />
-              Photos
-            </button>
             <button
               type="button"
               onClick={() => openSheet('albums')}
@@ -389,7 +374,7 @@ export default function L2EditProfileSheet() {
               }}
             >
               <Lock className="w-3.5 h-3.5" />
-              Albums
+              Private Albums
             </button>
           </div>
         </div>
