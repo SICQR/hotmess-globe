@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { requestGeoPermissionOnce } from '@/lib/geo/sharedGeolocation';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Search, Shield, Radio as RadioIcon } from 'lucide-react';
@@ -200,12 +201,6 @@ function LayoutInner({ children, currentPageName }) {
           currentPageName !== 'AccountConsents' &&
           currentPageName !== 'AgeGate' &&
           currentPageName !== 'Settings' &&
-          currentPageName !== 'CommunityGuidelines' &&
-          currentPageName !== 'TermsOfService' &&
-          currentPageName !== 'PrivacyPolicy' &&
-          currentPageName !== 'HelpCenter' &&
-          currentPageName !== 'Contact' &&
-          currentPageName !== 'AccountDeletion' &&
           (!currentUser?.has_agreed_terms || !currentUser?.has_consented_data)
         ) {
           navigate(createPageUrl('OnboardingGate'));
@@ -219,12 +214,6 @@ function LayoutInner({ children, currentPageName }) {
           currentPageName !== 'OnboardingGate' &&
           currentPageName !== 'AccountConsents' &&
           currentPageName !== 'AgeGate' &&
-          currentPageName !== 'CommunityGuidelines' &&
-          currentPageName !== 'TermsOfService' &&
-          currentPageName !== 'PrivacyPolicy' &&
-          currentPageName !== 'HelpCenter' &&
-          currentPageName !== 'Contact' &&
-          currentPageName !== 'AccountDeletion' &&
           (!currentUser?.full_name || !currentUser?.avatar_url)
         ) {
           const next = encodeURIComponent(`${window.location.pathname}${window.location.search || ''}`);
@@ -303,23 +292,13 @@ function LayoutInner({ children, currentPageName }) {
       if (document.visibilityState !== 'visible') return;
 
       try {
-        navigator.geolocation.getCurrentPosition(
-          onPosition,
-          (err) => {
-            // 1 = PERMISSION_DENIED
-            // Stop polling if permission is explicitly denied to avoid repeated CoreLocation noise.
-            if (err?.code === 1) {
-              if (intervalId != null) clearInterval(intervalId);
-              intervalId = null;
-            }
-            onError(err);
-          },
-          {
-            enableHighAccuracy: false,
-            maximumAge: 30_000,
-            timeout: 10_000,
-          }
-        );
+        requestGeoPermissionOnce({
+          enableHighAccuracy: false,
+          maximumAge: 30_000,
+          timeout: 10_000,
+        })
+          .then((pos) => { if (pos) onPosition(pos); })
+          .catch(onError);
       } catch {
         // ignore
       }

@@ -1,4 +1,5 @@
 import React from 'react';
+import { requestGeoPermissionOnce } from '@/lib/geo/sharedGeolocation';
 import { motion } from 'framer-motion';
 import { Users, MessageCircle } from 'lucide-react';
 import { useGhostedGrid } from '@/hooks/useGhostedGrid';
@@ -82,10 +83,9 @@ export default function GhostedMode() {
     setFilter('nearby');
     
     // Trigger GPS
-    navigator.geolocation.getCurrentPosition(
-      () => refetch(),
-      (err) => console.warn('[Ghosted] Geolocation trigger failed:', err)
-    );
+    requestGeoPermissionOnce()
+      .then(() => refetch())
+      .catch((err) => console.warn('[Ghosted] Geolocation trigger failed:', err));
   };
 
   const { isTapped, isMutualBoo } = useTaps(myUserId, myEmail);

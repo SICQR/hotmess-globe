@@ -98,6 +98,7 @@ export function MatchOverlay({
     if (!visible) prefetchedRef.current = false;
   }, [visible]);
 
+  if (typeof document === 'undefined') return null;
   return createPortal(
     <AnimatePresence>
       {visible && (
