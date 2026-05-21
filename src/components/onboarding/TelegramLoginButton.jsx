@@ -27,7 +27,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { track } from '@/lib/analytics';
 
-const BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || '';
+const BOT_USERNAME = (import.meta.env.VITE_TELEGRAM_BOT_USERNAME || '').replace(/^@/, '');
 const WIDGET_SCRIPT = `https://telegram.org/js/telegram-widget.js?22`;
 const CALLBACK_GLOBAL = '__hmTelegramAuth';
 // If the Telegram iframe hasn't injected itself within this window, render a
