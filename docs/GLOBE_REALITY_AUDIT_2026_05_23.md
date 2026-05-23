@@ -22,7 +22,7 @@
 
 | # | Check | Tag | Finding | Source |
 |---|---|---|---|---|
-| 1.1f | Daily cron `/api/cron/data-retention` | ❌ | Returns **HTTP 500** in production — `TypeError: supabase.from(...)`. Root cause in code: `const supabase = supabaseUrl && supabaseServiceKey ? createClient(...) : null;` — when `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` don't resolve for this function, `supabase` is `null` and the handler still calls `supabase.from('cron_runs')`. This is the only 500 in the last 7 days of runtime logs. | Vercel `get_runtime_logs` (status=500, 7d) + `api/cron/data-retention.js` |
+| 1.1f | Daily cron `/api/cron/data-retention` | ❌ | Returns **HTTP 500** every run — confirmed via `cron_runs` stuck at `status='running'` for **12+ consecutive days** (2026-05-12→23). Root cause (corrected after deeper checks — it is **not** a null client): the final `cron_runs` close chains `.catch()` on a Postgrest builder, which has no `.catch()` in `supabase-js@2.98.0` → uncaught `TypeError`. Full diagnosis + fix in §1.9 Closeout 5 (branch `fix/cron-data-retention-crash`). Only 500 in 7 days of logs. | Vercel logs + `cron_runs` table + `api/cron/data-retention.js` |
 
 ---
 
@@ -265,4 +265,65 @@ The brief's hypothesis ("likely `UnifiedGlobe.tsx`") is **partly right but indir
 
 ---
 
-*End of Phase 1 audit. Phase 2 (build plan) does not begin until Phil has reviewed this and given explicit go.*
+## 1.9 Closeouts (autonomous, post-Phil)
+
+The four ⚠️/partial items from the original audit, closed out using Supabase data, DNS, and the connected Chrome browser. Plus the prepared fix for the live cron 500.
+
+### Closeout 1 — BLK-03 Resend / SMTP sender domain → ✅ VERIFIED
+
+DNS evidence that the Resend sending domain is configured and verified:
+
+| Record | Value | Meaning |
+|---|---|---|
+| `resend._domainkey.hotmessldn.com` TXT | valid DKIM public key (`p=MIGfMA0…IDAQAB`) | DKIM signing key published ✅ |
+| `send.hotmessldn.com` TXT | `v=spf1 include:amazonses.com ~all` | Resend-over-SES SPF on the send subdomain ✅ |
+| `send.hotmessldn.com` MX | `feedback-smtp.eu-west-1.amazonses.com` | Resend/SES bounce-feedback path ✅ |
+| `_dmarc.hotmessldn.com` TXT | `v=DMARC1; p=none;` | DMARC present (monitor mode) ✅ |
+| `hotmessldn.com` MX | `mail.hotmessldn.com` | inbound mail (separate) |
+
+Combined with auth health (`auth.users`: 157 total, 126 confirmed, 5 sign-ins in 7 days, last 2026-05-21), email delivery is operational. **Residual ⚠️:** whether Supabase Auth is wired to Resend SMTP vs Supabase's built-in sender is not exposed by the available MCP tooling (`get_project` returns DB info only) — but auth emails are demonstrably delivering regardless. *Source: `dig` TXT/MX; Supabase `auth.users`.*
+
+### Closeout 2 — BLK-04 push delivery → ✅ server-side VERIFIED · ⚠️ on-device receipt UNPROVEN
+
+- `notification_outbox`: **121 sent / 20 failed** (latest 2026-05-17). App push dispatch works server-side.
+- `push_subscriptions` by provider: **14 FCM** (Android/Chrome), **1 WNS**, **0 Apple Web Push**.
+- `safety_delivery_log` (SOS → trusted contacts), by channel/status: push **20 skipped** (SOS does not push to contacts); SMS **15 sent** (Twilio `provider_id` present); WhatsApp **13 sent / 14 failed**; email **4 sent / 6 failed / 10 skipped**.
+- **`delivered_at` and `acked_at` are NULL on all 96 `safety_delivery_log` rows** — the system records gateway "sent" but never records a delivery/ack receipt.
+
+Verdict: gateway-accepted sends are real (provider IDs on SMS/WhatsApp + 121 outbox sends), but actual on-device delivery is recorded nowhere, so real lock-screen confirmation still needs a physical-device pass. Did not fire a synthetic push — it would add production noise without proving receipt, since receipts aren't persisted. *Source: Supabase `execute_sql`.*
+
+### Closeout 3 — Live DOM + console → ✅ VERIFIED (Chrome MCP)
+
+Captured on `https://hotmessldn.com` (logged-in session) via the connected macOS browser:
+
+- **Renders:** HOTMESS wordmark + notification bell + avatar; hero "Tonight's already started." / "Quiet nearby right now" + gold **Enter Pulse** button; "Complete your profile" card (Edit); Ghosted / Market / Music quick links; "See who's nearby — Go Live first, or just browse."; HNH MESS promo card ("Care hits different when it's dirty."); bottom nav **Home · Pulse · Ghosted · Music · Shop · More**. Dark + gold `#C8962C` brand intact.
+- **Console:** no errors or exceptions on load (read after a tracked reload).
+- **Network:** all requests succeed — `profiles` PATCH 204, `user_presence` POST 200 (Supabase). No 4xx/5xx observed.
+- Artefacts saved to `docs/audit-artifacts/2026-05-23/`. *Source: Chrome MCP navigate / screenshot / read_console_messages / read_network_requests.*
+
+### Closeout 4 — Open PRs → ✅ VERIFIED (2 open)
+
+| # | Title | Author | Created | Updated | Draft | Base (sha) | Head |
+|---|---|---|---|---|---|---|---|
+| 284 | audit/pre-release-may-20 | SICQR | 2026-05-20 | 2026-05-20 | no | main (`a5065a18`) | `audit/pre-release-may-20` |
+| 279 | design(system): canonical tokens, 8 primitives, 6 surface migrations + fix-in-pass | SICQR | 2026-05-19 | 2026-05-19 | no | main (`3197fa69`) | `design/system-reset-2026-05-19` |
+
+Both authored by the repo owner. Both base SHAs lag current `main` (`6f51d59`), so both have diverged and need rebase/conflict-resolution before merge. **`mergeable` flag not fetched** (⚠️ needs per-PR API call). **Build-plan collision note:** PR #279 migrates `Globe.jsx` + Safety + Music + Profile + Radio onto a new design system — it will conflict with any globe build work; #284 is a doc PR (low collision). *Source: GitHub REST API via Chrome MCP (`/repos/SICQR/hotmess-globe/pulls?state=open`).*
+
+### Closeout 5 — `/api/cron/data-retention` 500 → 🛠️ DIAGNOSED + correct fix prepared (NOT the dispatched null-guard)
+
+**The dispatched one-line null-guard was the wrong fix, and was not shipped.** Verification showed the handler *already* has an `if (!supabase)` guard (returns a clean 500, not a `TypeError`), and the `cron_runs` insert succeeds every run — so `supabase` is not null.
+
+**Real root cause (evidence-backed):** `cron_runs` shows this job stuck at `status='running'`, `ended_at=null` **every day for 12+ consecutive days** (2026-05-12 → 2026-05-23) — the run row is inserted but the handler dies before closing it. The only Supabase call in the handler *not* wrapped in try/catch is the final `cron_runs` status update, which chains `.catch(() => {})` directly on the Postgrest query builder. In `@supabase/supabase-js@2.98.0` that builder is a thenable implementing `.then()` but **not `.catch()`**, so `….eq('id', cronRunId).catch(...)` throws an uncaught `TypeError` ("…catch is not a function") → 500, and the run never closes. Matches the truncated Vercel log (`TypeError: supabase.from(...`) and the stuck rows exactly.
+
+**Fix applied** (branch `fix/cron-data-retention-crash`, commit `2c64dc9a`): removed the `.catch()` chain and `await` the final update inside a `try/catch`. No sibling cron shares the pattern. Diff: `cron-data-retention-fix.diff` (outputs).
+
+**Confidence:** high (consistent with all evidence) but not runtime-confirmed — final confirmation is a preview deploy / local run plus watching the next 02:00 UTC `cron_runs` row close to `ok`/`error`.
+
+**Optional cleanup:** the 12+ stuck `running` rows in `cron_runs` can be backfilled to `error` (not required for the fix).
+
+**Push/PR status:** committed locally only — the sandbox shell has no GitHub auth and the Mac Terminal is click-only to this agent. Needs a GitHub token/MCP (or Phil) to push `fix/cron-data-retention-crash` and open the PR.
+
+---
+
+*End of Phase 1 audit + closeouts. Phase 2 build plan follows in `docs/GLOBE_BUILD_PLAN_2026_05_23.md`.*
