@@ -168,13 +168,15 @@ export default async function handler(req, res) {
   // Close cron_runs record
   const totalProcessed = Object.values(stats).reduce((a, b) => a + b, 0);
   if (cronRunId) {
-    await supabase.from('cron_runs').update({
-      ended_at:  new Date().toISOString(),
-      status:    errors.length ? 'error' : 'ok',
-      processed: totalProcessed,
-      errors:    errors.length,
-      detail:    JSON.stringify({ stats, errors: errors.length ? errors : undefined }),
-    }).eq('id', cronRunId).catch(() => {});
+    try {
+      await supabase.from('cron_runs').update({
+        ended_at:  new Date().toISOString(),
+        status:    errors.length ? 'error' : 'ok',
+        processed: totalProcessed,
+        errors:    errors.length,
+        detail:    JSON.stringify({ stats, errors: errors.length ? errors : undefined }),
+      }).eq('id', cronRunId);
+    } catch (_) { /* non-fatal: cron_runs close is best-effort */ }
   }
 
   return res.status(200).json({
