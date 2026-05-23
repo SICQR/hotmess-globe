@@ -32,6 +32,115 @@ The Globe is not a blank surface. It already supports:
 - city overlay;
 - activity tracking.
 
+## Current visual problems to fix
+
+These are P0. Do not start decorative polish until these are solved.
+
+### 1. Close zoom becomes blurry
+
+Current issue:
+
+- `EnhancedGlobe3D` uses `earth-night.jpg` from the `three-globe` demo assets.
+- On point click, the camera zooms to altitude `0.8`.
+- At that altitude the texture does not hold up, so the Globe looks like a blurred ball rather than a real world surface.
+
+Required fix:
+
+- Introduce zoom-aware map detail.
+- Either use a higher-resolution earth/night texture or switch to a tile/detail strategy when zoomed.
+- Do not zoom closer than the current texture can support.
+- Add a min/max camera policy: overview, city, venue/detail.
+- If using Mapbox visual references, translate their map-detail behaviour into the current renderer; do not blindly replace the Globe engine unless there is a signed-off architecture decision.
+
+Recommended camera bands:
+
+| Mode | Altitude | Purpose |
+|---|---:|---|
+| Overview | 2.4–3.2 | global browsing |
+| City focus | 1.4–2.0 | readable city/region detail |
+| Signal focus | 1.1–1.4 | selected beacon/card context |
+| Forbidden blur zone | below 1.0 | avoid until real map/detail tiles exist |
+
+Immediate engineering change:
+
+- Change point-click zoom from altitude `0.8` to approximately `1.25`.
+- Make the final value responsive: mobile should stay farther out than desktop.
+- Add a named constant, not magic numbers.
+
+### 2. Beacons are too large and cover geography
+
+Current issue:
+
+- beacon point radii are visually too large;
+- point altitude makes nodes feel like towers rising out of the earth;
+- rings cover mass areas;
+- dense cities become unreadable blobs.
+
+Required fix:
+
+- shrink default marker radius;
+- reduce point altitude;
+- use selected/hovered state for emphasis instead of giant default nodes;
+- cluster or aggregate dense points;
+- make rings subtler and category-specific;
+- keep tap target accessible via interaction hit area, not visual bulk.
+
+Recommended point scale:
+
+| Signal | Default visual size | Selected size | Notes |
+|---|---:|---:|---|
+| city | label + small dot | label + halo | cities should anchor, not dominate |
+| venue | 0.16–0.24 | 0.32 | aggregate if dense |
+| event/beacon | 0.18–0.28 | 0.36 | no skyscraper pins |
+| person/nearby | 0.12–0.18 | 0.26 | privacy-soft, not precise-looking |
+| care/recovery | 0.24–0.34 | 0.42 | visible but calm |
+| SOS/urgent | 0.35–0.48 | 0.56 | red only for real urgent state |
+
+Immediate engineering change:
+
+- Replace current `PIN_SIZE` values with smaller layer-aware constants.
+- Lower `pointAltitude` from `0.07` to a subtler value around `0.018–0.03`.
+- Make `ringMaxRadius` category-aware or lower the global default.
+- Add selected/highlighted styling rather than making every pin huge.
+
+### 3. No real map feeling when close
+
+Current issue:
+
+- close view lacks roads, neighbourhoods, boundaries, or recognisable city context;
+- the user expects “map” detail after zoom but receives enlarged texture.
+
+Required fix:
+
+- treat the 3D Globe as the global browser;
+- when a user selects a city/venue/beacon, pair the globe with a detail drawer/card that gives map-like context;
+- for deeper location views, use a flat detail map or city inset rather than forcing the sphere to fake street detail.
+
+Recommended UX pattern:
+
+- globe overview stays cinematic;
+- city drawer contains real contextual detail;
+- venue/beacon panel can include a map tile/inset if available;
+- never pretend the sphere is a street map.
+
+### 4. Visual hierarchy is too equal
+
+Current issue:
+
+- every signal competes at once;
+- large nodes plus rings flatten all meaning;
+- layer colours read as demo-map rainbow.
+
+Required fix:
+
+- default state: quiet, small, elegant;
+- active layer: visible;
+- selected item: amplified;
+- urgent/care: semantically distinct;
+- commercial layer: secondary.
+
+Rule: the user should understand signal importance without needing to open the layer sheet.
+
 ## Mapbox patterns to translate
 
 Mapbox examples should inform interaction behaviour, not force a renderer swap.
@@ -115,13 +224,18 @@ Visual treatment:
 - gold primary pins;
 - restrained rings;
 - city labels in gold;
-- no pink/neon palette sprawl.
+- no pink/neon palette sprawl;
+- no close-zoom blur;
+- no oversized nodes covering landmass.
 
 Build need:
 
 - simplify current colour system;
 - make all six layers visually distinct but brand-coherent;
-- add data provenance badge.
+- add data provenance badge;
+- add zoom-aware camera constants;
+- reduce beacon/ring scale;
+- add clustering or overlap aggregation.
 
 ### 2. City View
 
@@ -163,7 +277,8 @@ Build need:
 
 - replace passive `CityDataOverlay` with a clearer city signal drawer;
 - show counts by layer;
-- keep selected city sticky until cleared.
+- keep selected city sticky until cleared;
+- avoid zooming below the texture-quality threshold.
 
 ### 3. Venue View
 
@@ -195,7 +310,8 @@ Build need:
 
 - introduce `VenueSignalCard`;
 - badge `Live`, `Recent`, or `Curated`;
-- never show exact private user identity from venue heat.
+- never show exact private user identity from venue heat;
+- add optional flat map/inset for real location detail.
 
 ### 4. People View
 
@@ -224,7 +340,8 @@ Build need:
 
 - rename visual language from `people` to `Nearby` or `Signal` in user-facing copy;
 - use blue/gold, not green gaming dots;
-- add privacy microcopy.
+- add privacy microcopy;
+- keep person pins deliberately smaller and less precise-looking.
 
 ### 5. Event / Beacon View
 
@@ -253,7 +370,8 @@ Build need:
 
 - make beacon types clearer;
 - add creation success state that routes onward;
-- never write directly to `beacons` view.
+- never write directly to `beacons` view;
+- make event pins small by default, larger only on selected/highlighted state.
 
 ### 6. Radio View
 
@@ -282,7 +400,8 @@ Build need:
 
 - add `RadioPulseCard`;
 - attach Now/Next to city/global card;
-- no fake live DJ metadata.
+- no fake live DJ metadata;
+- use waveform/ripple graphics, not oversized tower pins.
 
 ### 7. Care / Recovery View
 
@@ -312,7 +431,8 @@ Build need:
 
 - split `safety` into `Care` user-facing language where possible;
 - use white/gold/red only for real urgent states;
-- include aftercare-as-information microcopy.
+- include aftercare-as-information microcopy;
+- recovery can be slightly larger than other pins but must not cover geography.
 
 ### 8. Market View
 
@@ -339,7 +459,8 @@ Interactions:
 Build need:
 
 - keep market visually secondary;
-- always disclose sponsored/affiliate where relevant.
+- always disclose sponsored/affiliate where relevant;
+- market icons should feel tagged/pinned, not geographically dominant.
 
 ## Interaction taxonomy
 
@@ -412,6 +533,8 @@ Current palette is too rainbow-coded. Move to HOTMESS hierarchy:
 - `GlobeDataSourceBadge`
 - `GlobeLayerLegend`
 - `CitySignalDrawer`
+- `GlobeCameraPolicy`
+- `GlobeMarkerScale`
 
 ### P1 — cards
 
@@ -427,17 +550,21 @@ Current palette is too rainbow-coded. Move to HOTMESS hierarchy:
 - `GlobeIdleDriftController`
 - `GlobeKeyboardSignalList`
 - `GlobeReducedMotionFallback`
+- `GlobeDetailMapInset`
 
 ## Build sequence
 
 1. Audit exact current fields returned by realtime beacons, pulse places, venue intensity, venue vibes, nearby candidates, and city heat.
 2. Define `GlobeSignal` normalised type.
 3. Convert current mixed beacon/place/person/spike data into `GlobeSignal` before rendering.
-4. Replace visual colours with HOTMESS layer hierarchy.
-5. Add CitySignalDrawer.
-6. Add data-source/provenance badge to every preview/card.
-7. Add keyboard/list fallback.
-8. Add tests for adapter and click routing.
+4. Add `GlobeCameraPolicy`: overview, city focus, signal focus, forbidden blur zone.
+5. Add `GlobeMarkerScale`: layer-aware radii, altitude, ring scale, selected state.
+6. Replace visual colours with HOTMESS layer hierarchy.
+7. Add cluster/overlap aggregation for dense areas.
+8. Add CitySignalDrawer.
+9. Add data-source/provenance badge to every preview/card.
+10. Add keyboard/list fallback.
+11. Add tests for adapter, marker scale, camera policy, and click routing.
 
 ## Acceptance criteria
 
@@ -451,3 +578,9 @@ Current palette is too rainbow-coded. Move to HOTMESS hierarchy:
 - Mobile nav remains tappable.
 - Reduced-motion users get a usable static/list experience.
 - Visual system feels black/gold HOTMESS, not demo-map rainbow.
+- Zooming in must not reveal a blurry low-resolution earth texture.
+- Point-click camera altitude must not enter the forbidden blur zone.
+- Default beacons must not cover entire neighbourhoods/countries.
+- Dense areas must cluster, aggregate, or list signals rather than stack giant pins.
+- Rings must communicate pulse/intensity without blanketing the map.
+- Real street-level detail must be shown through drawers/cards/map insets, not fake close sphere zoom.
