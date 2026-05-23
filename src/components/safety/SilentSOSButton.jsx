@@ -137,8 +137,8 @@ export default function SilentSOSButton() {
       const attempts = body?.dispatch?.attempts || [];
       const opsAttempts = body?.dispatch?.ops_alert?.attempts || [];
       const merged = [...opsAttempts, ...attempts]
-        .filter(a => a && (a.channel || a.deliveryId))
-        .map(a => ({ channel: a.channel || 'channel', ok: !!a.ok, skipped: !!a.skipped, error: a.error || null }));
+        .filter(a => a && a.channel)
+        .map(a => ({ channel: a.channel, ok: !!a.ok, skipped: !!a.skipped, error: a.error || null }));
       setChannelResults(merged);
       HAPTIC(120);
       setPhase('sent');
