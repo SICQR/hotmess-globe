@@ -48,3 +48,8 @@
 ## Role division
 - **Phil (cofounder):** decisions only he can make + strategic sequencing + post-hoc review of verified work.
 - **Cowork (engineer):** builds and verifies its own work to this protocol.
+
+
+## Credentials — verify-it-exists before flagging a Phil-action
+Before flagging that something needs a NEW credential / secret / env var / service account / API key, exhaustively check existing state first: Vercel env vars, Supabase secrets, GitHub repo (Actions) secrets, `.env.example` + any committed `.env*`, the codebase (`grep -ri <name>.*token`), and any connected MCP's secrets. On a mature project the credential probably already exists. A Phil-action fires ONLY if the exhaustive check returns nothing.
+Note: Vercel env *values* aren't readable via the current MCP toolset — cross-check `docs/SECURITY_AUDIT.md` / `docs/SYSTEM_MAP.md` and the production bundle; treat "set in Vercel" as confirmed if those say so. (Same discipline as the cron-500 and AgeGate catches: verify the assumption against reality before asking Phil.)
