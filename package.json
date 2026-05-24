@@ -94,6 +94,7 @@
     "lodash": "^4.17.21",
     "lucide-react": "^0.475.0",
     "mapbox-gl": "^3.1.0",
+    "maplibre-gl": "^4.7.1",
     "nanoid": "^5.1.7",
     "otpauth": "^9.4.1",
     "qrcode": "^1.5.4",
