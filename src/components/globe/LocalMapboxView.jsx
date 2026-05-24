@@ -170,7 +170,7 @@ export default function LocalMapboxView({ focus, beacons, onClose, onReady }) {
       )}
       <button
         onClick={onClose}
-        className="absolute top-[calc(16px+env(safe-area-inset-top,0px))] left-4 z-[121] px-4 py-2 bg-black/70 border border-white/20 backdrop-blur-md rounded-full text-white text-sm font-bold flex items-center gap-2 hover:bg-white hover:text-black transition-all"
+        className="absolute top-[calc(128px+env(safe-area-inset-top,0px))] right-4 z-[151] px-4 py-2 bg-black/70 border border-white/20 backdrop-blur-md rounded-full text-white text-sm font-bold flex items-center gap-2 hover:bg-white hover:text-black transition-all"
         data-pull-refresh-ignore
       >
         <X className="w-4 h-4" /> Globe
