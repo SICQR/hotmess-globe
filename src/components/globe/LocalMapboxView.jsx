@@ -1,13 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { X } from 'lucide-react';
 
-// Phase A — local street-level map for deep-zoom detail (fixes the blurry globe
-// deep-zoom). Engine: MapLibre GL + free Carto "dark-matter" vector tiles —
-// token-free and zero tile cost at any scale (no Mapbox billing). Same seam, so
-// it can be upgraded to Mapbox later if higher fidelity is ever wanted.
-const CARTO_DARK = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
+// Phase A — Mapbox local mode. Read-only street-level map for deep-zoom detail
+// (the proper fix for the blurry globe deep-zoom). Token VITE_MAPBOX_TOKEN is
+// provisioned in Vercel (Dev/Preview/Prod). Lazy-loaded from Globe.jsx.
+mapboxgl.accessToken = (import.meta && import.meta.env && import.meta.env.VITE_MAPBOX_TOKEN) || '';
+
 const GOLD = '#C8962C';
 
 function toFeatureCollection(beacons) {
@@ -27,18 +27,15 @@ export default function LocalMapboxView({ focus, beacons, onClose }) {
   const mapRef = useRef(null);
 
   useEffect(() => {
-    if (!containerRef.current) return undefined;
+    if (!containerRef.current || !mapboxgl.accessToken) return undefined;
     const f = focus || { lat: 51.5074, lng: -0.1278 };
-    let map;
-    try {
-      map = new maplibregl.Map({
-        container: containerRef.current,
-        style: CARTO_DARK,
-        center: [f.lng, f.lat],
-        zoom: 14,
-        attributionControl: true,
-      });
-    } catch (e) { return undefined; }
+    const map = new mapboxgl.Map({
+      container: containerRef.current,
+      style: 'mapbox://styles/mapbox/dark-v11',
+      center: [f.lng, f.lat],
+      zoom: 14,
+      attributionControl: true,
+    });
     mapRef.current = map;
     map.on('load', () => {
       try {
@@ -63,6 +60,9 @@ export default function LocalMapboxView({ focus, beacons, onClose }) {
   return (
     <div className="fixed inset-0 z-[120] bg-black">
       <div ref={containerRef} className="absolute inset-0" />
+      {!mapboxgl.accessToken && (
+        <div className="absolute inset-0 flex items-center justify-center text-white/60 text-sm">Map unavailable</div>
+      )}
       <button
         onClick={onClose}
         className="absolute top-[calc(16px+env(safe-area-inset-top,0px))] left-4 z-[121] px-4 py-2 bg-black/70 border border-white/20 backdrop-blur-md rounded-full text-white text-sm font-bold flex items-center gap-2 hover:bg-white hover:text-black transition-all"
