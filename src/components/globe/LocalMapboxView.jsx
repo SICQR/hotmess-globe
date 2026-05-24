@@ -20,13 +20,19 @@ function toFeatureCollection(beacons) {
   };
 }
 
-export default function LocalMapboxView({ focus, beacons, onClose }) {
+export default function LocalMapboxView({ focus, beacons, onClose, onReady }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   // Latest props read via refs so the map-creation effect can run exactly once.
   const beaconsRef = useRef(beacons);
   beaconsRef.current = beacons;
   const focusRef = useRef(focus);
+  // onReady fires once the map's 'load' completes. The parent uses it to unmount
+  // the three.js globe AFTER mapbox has finished initialising (never during init —
+  // that starves the worker handshake and regresses load badly). Held in a ref so
+  // the mount-once effect always calls the latest callback.
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
   const [status, setStatus] = useState('loading'); // loading | ready | error
 
   // Create the map ONCE on mount. The parent globe page re-renders frequently and
@@ -58,6 +64,7 @@ export default function LocalMapboxView({ focus, beacons, onClose }) {
           if (cancelled) return;
           try { map.resize(); } catch (e) { /* non-fatal */ }
           setStatus('ready');
+          try { if (onReadyRef.current) onReadyRef.current(); } catch (e) { /* non-fatal */ }
           try {
             map.addSource('beacons', { type: 'geojson', data: toFeatureCollection(beaconsRef.current) });
             map.addLayer({
