@@ -394,6 +394,13 @@ export default function GlobePage({ embedded = false }) {
     <ErrorBoundary>
       <div className="relative w-full h-full bg-black overflow-hidden">
         <div className="relative w-full h-full touch-none" data-pull-refresh-ignore data-globe-interactive>
+          {/* Phase B hardening: unmount the three.js globe while local mode is active.
+              react-globe.gl disposes its WebGL renderer on unmount, releasing the GPU
+              context so mapbox-gl gets a sole, fresh context — this prevents the
+              dual-engine WebGL contention that caused intermittent cold-load stalls.
+              Camera position is preserved via GlobeContext.rotationRef (restored on
+              remount); beacon-selection state lives in GlobePage and also survives. */}
+          {!localFocus && (
           <EnhancedGlobe3D
             ref={globeRef}
             beacons={mergeFoundingIntoBeacons(filteredBeacons, founding.foundingBeacons)}
@@ -434,6 +441,7 @@ export default function GlobePage({ embedded = false }) {
             className="w-full h-full"
             autoRotate={false}
           />
+          )}
         </div>
 
         <div className="absolute top-16 left-0 right-0 z-20 pointer-events-none text-center">
