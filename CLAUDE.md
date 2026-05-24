@@ -559,3 +559,6 @@ All files now organised in `~/Downloads/HOTMESS-PROJECT/`
 03-ASSETS/          - Images, CSVs, JSONs, brand assets
 04-ARCHIVE-CODE/    - Old code zips + old extracted folders (safe to ignore)
 ```
+
+## Cowork operating protocol (self-verify by default)
+Cowork self-verifies every change before claiming it done — Phil reviews artefacts after, not before. No "check it on your iPhone" gate. Full protocol: `docs/COWORK_VERIFICATION_PROTOCOL.md`. A daily production health check runs ~06:00 UTC and logs to `docs/health-checks/`.
