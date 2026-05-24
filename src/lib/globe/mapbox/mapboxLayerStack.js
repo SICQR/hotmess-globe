@@ -88,20 +88,32 @@ export function toPublicSafeFeatureCollection(beacons) {
   return { type: 'FeatureCollection', features };
 }
 
+// Time-of-day environmental atmosphere (docs/GLOBE_WEATHER_TIME_AND_ENVIRONMENTAL_RENDERING.md):
+// the local map's fog shifts dawn → day → dusk → night so it feels temporally alive
+// rather than a static utility map. Keeps a HOTMESS dark/gold bias at night.
+export function environmentalFog(hour, reducedMotion) {
+  const h = Number.isFinite(hour) ? hour : 22;
+  let cfg;
+  if (h >= 5 && h < 8) {           // dawn — warm gold horizon
+    cfg = { color: 'rgba(20,14,8,0.55)', 'high-color': '#caa15a', 'space-color': '#241d2e', 'horizon-blend': 0.3, 'star-intensity': 0 };
+  } else if (h >= 8 && h < 17) {   // day — cool, light, no stars
+    cfg = { color: 'rgba(20,22,28,0.4)', 'high-color': '#9fb6cc', 'space-color': '#1a2433', 'horizon-blend': 0.4, 'star-intensity': 0 };
+  } else if (h >= 17 && h < 20) {  // dusk — amber
+    cfg = { color: 'rgba(20,12,8,0.55)', 'high-color': '#c8762c', 'space-color': '#1a1020', 'horizon-blend': 0.3, 'star-intensity': reducedMotion ? 0 : 0.03 };
+  } else {                          // night — deep gold (nightlife default)
+    cfg = { color: 'rgba(10,8,5,0.6)', 'high-color': '#3a2a10', 'space-color': '#050507', 'horizon-blend': 0.2, 'star-intensity': reducedMotion ? 0 : 0.05 };
+  }
+  return cfg;
+}
+
 // Adds sources + layers in contract order on top of the base style. Idempotent:
 // guards every add so re-invocation (style reload) can't throw.
 export function addLayerStack(map, opts) {
   const reducedMotion = !!(opts && opts.reducedMotion);
 
-  // L1 — atmospheric tint: subtle dark/gold mood so it doesn't feel like a utility map.
+  // L1 — atmospheric tint, time-of-day aware so the map feels temporally alive.
   try {
-    map.setFog({
-      color: 'rgba(10,8,5,0.6)',
-      'high-color': '#3a2a10',
-      'space-color': '#050507',
-      'horizon-blend': 0.2,
-      'star-intensity': reducedMotion ? 0 : 0.05,
-    });
+    map.setFog(environmentalFog(new Date().getHours(), reducedMotion));
   } catch (e) { /* fog unsupported on some styles — non-fatal */ }
 
   if (!map.getSource(SOURCE_IDS.public)) {
