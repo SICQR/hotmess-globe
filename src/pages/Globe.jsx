@@ -29,7 +29,7 @@ import { useVenueIntensity } from '@/hooks/useVenueIntensity';
 import BeaconDropModal from '../components/globe/BeaconDropModal';
 import { MapPin, X } from 'lucide-react';
 
-const LocalMapboxView = React.lazy(() => import('../components/globe/LocalMapboxView'));
+import LocalMapboxView from '../components/globe/LocalMapboxView';
 
 const CITY_COORDS = {
   'London':    { lat: 51.5074, lng: -0.1278 },
@@ -517,9 +517,7 @@ export default function GlobePage({ embedded = false }) {
           </div>
         )}
         {localFocus && (
-          <React.Suspense fallback={null}>
-            <LocalMapboxView focus={localFocus} beacons={filteredBeacons} onClose={() => setLocalFocus(null)} />
-          </React.Suspense>
+          <LocalMapboxView focus={localFocus} beacons={filteredBeacons} onClose={() => setLocalFocus(null)} />
         )}
         <LayersSheet key="layers-sheet" open={showLayersSheet} onClose={() => setShowLayersSheet(false)} activeLayer={activeLayer} setActiveLayer={setActiveLayer} />
       </div>
