@@ -136,6 +136,9 @@ export default function EnhancedGlobe3D({
     globeRef.current.controls().autoRotate = false;
     globeRef.current.controls().enableDamping = true;
     globeRef.current.controls().dampingFactor = 0.1;
+    // Camera floor: react-globe.gl distance = (1+altitude)*100. Floor ~altitude 1.3
+    // so manual pinch/scroll can't dive into the low-res-texture blur zone.
+    globeRef.current.controls().minDistance = 230;
   }, [rotationRef]);
 
   // Update rotation ref when user moves the globe
@@ -179,7 +182,7 @@ export default function EnhancedGlobe3D({
             globeRef.current.pointOfView({ 
               lat: point.lat, 
               lng: point.lng, 
-              altitude: 0.8 
+              altitude: 1.5 // city band (was 0.8 -> blurry) 
             }, 1000);
           }
           
