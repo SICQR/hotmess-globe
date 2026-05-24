@@ -13,7 +13,7 @@ const BEACON_TYPES = [
 ];
 
 
-export default function BeaconDropModal({ isOpen, onClose, onComplete }) {
+export default function BeaconDropModal({ isOpen, onClose, onComplete, location }) {
   const [title, setTitle] = useState('');
   const [kind, setKind] = useState('social');
   const [loading, setLoading] = useState(false);
@@ -29,15 +29,22 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Get current location
-      const pos = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, { 
-          enableHighAccuracy: true, 
-          timeout: 10000 
+      // Location: use the explicit point if given (e.g. local-map centre — drop
+      // exactly where you're looking), otherwise fall back to device GPS.
+      let lat, lng;
+      if (location && Number.isFinite(Number(location.lat)) && Number.isFinite(Number(location.lng))) {
+        lat = Number(location.lat);
+        lng = Number(location.lng);
+      } else {
+        const pos = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000
+          });
         });
-      });
-
-      const { latitude: lat, longitude: lng } = pos.coords;
+        lat = pos.coords.latitude;
+        lng = pos.coords.longitude;
+      }
       
       if (kind === 'recovery') {
         // Permanent Cultural Anchor
@@ -102,7 +109,7 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[130]"
           />
           <motion.div
             drag="y"
@@ -115,7 +122,7 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete }) {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed inset-x-0 bottom-0 z-[101] bg-[#0A0A0A] border-t border-white/10 rounded-t-[32px] px-6 pt-4 pb-[calc(80px+env(safe-area-inset-bottom,20px))]"
+            className="fixed inset-x-0 bottom-0 z-[131] bg-[#0A0A0A] border-t border-white/10 rounded-t-[32px] px-6 pt-4 pb-[calc(80px+env(safe-area-inset-bottom,20px))]"
           >
 
             <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-8" />

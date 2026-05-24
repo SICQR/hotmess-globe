@@ -112,6 +112,7 @@ export default function GlobePage({ embedded = false }) {
   const [localFocus, setLocalFocus] = useState(null);
   const localModeEnabled = ((import.meta && import.meta.env && import.meta.env.VITE_LOCAL_MODE_ENABLED) === 'true') || (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('localmode'));
   const [showBeaconModal, setShowBeaconModal] = useState(false);
+  const [beaconDropLocation, setBeaconDropLocation] = useState(null); // local-map drop point (null = use GPS)
 
   const {
     selectedCity: ctxSelectedCity,
@@ -510,7 +511,8 @@ export default function GlobePage({ embedded = false }) {
         <BeaconDropModal
           key="beacon-modal"
           isOpen={showBeaconModal}
-          onClose={() => setShowBeaconModal(false)}
+          location={beaconDropLocation}
+          onClose={() => { setShowBeaconModal(false); setBeaconDropLocation(null); }}
           onComplete={() => {
             queryClient.invalidateQueries({ queryKey: ['beacons'] });
             queryClient.invalidateQueries({ queryKey: ['pulse-places'] });
@@ -525,7 +527,7 @@ export default function GlobePage({ embedded = false }) {
           </div>
         )}
         {localFocus && (
-          <LocalMapboxView focus={localFocus} beacons={filteredBeacons} onClose={() => setLocalFocus(null)} />
+          <LocalMapboxView focus={localFocus} beacons={filteredBeacons} onClose={() => setLocalFocus(null)} onDropBeacon={(c) => { setBeaconDropLocation(c); setShowBeaconModal(true); }} />
         )}
         {localFocus && <DistrictEditorialCard citySlug={localFocus.slug} />}
         {localFocus && <CareDecompressionCue />}
