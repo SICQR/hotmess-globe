@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 // Static CSS import: mapbox-gl needs its stylesheet for the canvas to size and
-// paint correctly. Dynamic CSS import was unreliable in the prod bundle
-// (hasMapboxCSS:false → black canvas), so load it statically. ~30KB, cheap.
+// paint correctly. ~30KB, cheap, and reliable in the prod bundle.
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { X } from 'lucide-react';
 
@@ -23,10 +22,19 @@ function toFeatureCollection(beacons) {
 
 export default function LocalMapboxView({ focus, beacons, onClose }) {
   const containerRef = useRef(null);
+  const mapRef = useRef(null);
+  // Latest props read via refs so the map-creation effect can run exactly once.
+  const beaconsRef = useRef(beacons);
+  beaconsRef.current = beacons;
+  const focusRef = useRef(focus);
   const [status, setStatus] = useState('loading'); // loading | ready | error
 
+  // Create the map ONCE on mount. The parent globe page re-renders frequently and
+  // passes a fresh `beacons` array each time; if that array were an effect dep the
+  // map would be torn down + recreated on every render and never finish loading
+  // (it would sit on "Loading map…" forever). So we depend on nothing and read the
+  // initial focus/beacons from refs.
   useEffect(() => {
-    let map;
     let cancelled = false;
     let resizeTimer;
     (async () => {
@@ -36,38 +44,52 @@ export default function LocalMapboxView({ focus, beacons, onClose }) {
         const mapboxgl = mod.default || mod;
         mapboxgl.accessToken = TOKEN;
         if (cancelled || !containerRef.current) return;
-        const f = focus || { lat: 51.5074, lng: -0.1278 };
-        map = new mapboxgl.Map({
+        const f = focusRef.current || { lat: 51.5074, lng: -0.1278 };
+        const map = new mapboxgl.Map({
           container: containerRef.current,
           style: 'mapbox://styles/mapbox/dark-v11',
           center: [f.lng, f.lat],
           zoom: 14,
           attributionControl: true,
         });
-        map.on('error', () => {});
+        mapRef.current = map;
+        map.on('error', () => { /* keep overlay graceful; do not throw */ });
         map.on('load', () => {
           if (cancelled) return;
-          // Guard against a 0-size init (container layout not flushed yet) which
-          // renders a black canvas — force a resize once the map is ready.
           try { map.resize(); } catch (e) { /* non-fatal */ }
           setStatus('ready');
           try {
-            map.addSource('beacons', { type: 'geojson', data: toFeatureCollection(beacons) });
+            map.addSource('beacons', { type: 'geojson', data: toFeatureCollection(beaconsRef.current) });
             map.addLayer({
               id: 'beacons-circle', type: 'circle', source: 'beacons',
               paint: { 'circle-radius': 7, 'circle-color': GOLD, 'circle-opacity': 0.85, 'circle-stroke-width': 2, 'circle-stroke-color': 'rgba(255,255,255,0.5)' },
             });
           } catch (e) { /* non-fatal */ }
         });
-        // Belt-and-suspenders: resize shortly after mount in case 'load' fires
-        // before the overlay has its final dimensions.
-        resizeTimer = setTimeout(() => { try { if (map) map.resize(); } catch (e) {} }, 250);
+        // Guard against a 0-size init (overlay layout not flushed yet) → black canvas.
+        resizeTimer = setTimeout(() => { try { map.resize(); } catch (e) {} }, 250);
       } catch (e) {
         if (!cancelled) setStatus('error');
       }
     })();
-    return () => { cancelled = true; if (resizeTimer) clearTimeout(resizeTimer); try { if (map) map.remove(); } catch (e) {} };
-  }, [focus, beacons]);
+    return () => {
+      cancelled = true;
+      if (resizeTimer) clearTimeout(resizeTimer);
+      try { if (mapRef.current) mapRef.current.remove(); } catch (e) {}
+      mapRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Update beacon data in place when it changes — never recreate the map.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    try {
+      const src = map.getSource && map.getSource('beacons');
+      if (src && src.setData) src.setData(toFeatureCollection(beacons));
+    } catch (e) { /* source not ready yet; initial data is set on load */ }
+  }, [beacons]);
 
   return (
     <div className="fixed inset-0 z-[120] bg-[#050507]">
