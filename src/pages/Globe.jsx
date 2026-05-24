@@ -29,6 +29,8 @@ import { useVenueIntensity } from '@/hooks/useVenueIntensity';
 import BeaconDropModal from '../components/globe/BeaconDropModal';
 import { MapPin, X } from 'lucide-react';
 
+const LocalMapboxView = React.lazy(() => import('../components/globe/LocalMapboxView'));
+
 const CITY_COORDS = {
   'London':    { lat: 51.5074, lng: -0.1278 },
   'Berlin':    { lat: 52.52,   lng: 13.405  },
@@ -105,6 +107,8 @@ export default function GlobePage({ embedded = false }) {
   const { openProfile } = useProfileOpener();
   const { openSheet } = useSheet();
   const [showLayersSheet, setShowLayersSheet] = useState(false);
+  const [localFocus, setLocalFocus] = useState(null);
+  const localModeEnabled = ((import.meta && import.meta.env && import.meta.env.VITE_LOCAL_MODE_ENABLED) === 'true') || (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('localmode'));
   const [showBeaconModal, setShowBeaconModal] = useState(false);
 
   const {
@@ -505,6 +509,18 @@ export default function GlobePage({ embedded = false }) {
           }}
         />
 
+        {localModeEnabled && (
+          <div className="absolute top-[calc(118px+env(safe-area-inset-top,0px))] right-4 z-30 pointer-events-none">
+            <button onClick={() => { const c = (selectedCity && CITY_COORDS[selectedCity.name]) || CITY_COORDS['London']; setLocalFocus(c); }} className="p-3 bg-black/60 border border-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-black transition-all pointer-events-auto shadow-lg" title="Local map" data-pull-refresh-ignore>
+              <MapPin className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+        {localFocus && (
+          <React.Suspense fallback={null}>
+            <LocalMapboxView focus={localFocus} beacons={filteredBeacons} onClose={() => setLocalFocus(null)} />
+          </React.Suspense>
+        )}
         <LayersSheet key="layers-sheet" open={showLayersSheet} onClose={() => setShowLayersSheet(false)} activeLayer={activeLayer} setActiveLayer={setActiveLayer} />
       </div>
     </ErrorBoundary>
