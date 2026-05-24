@@ -2,24 +2,29 @@ import React, { useEffect, useRef, useMemo, useState } from 'react';
 import Globe from 'react-globe.gl';
 
 const DEFAULT_ROTATION = { lat: 20, lng: 0 };
+// Altitude at which an inward zoom hands off to the local street map (the city
+// band, just above the #294 minDistance floor) — fixes the "zoom goes blurry".
+const DEEP_ZOOM_ALT = 1.8;
 
-export default function EnhancedGlobe3D({ 
-  beacons = [], 
-  cities = [], 
+export default function EnhancedGlobe3D({
+  beacons = [],
+  cities = [],
   recoveryPins = [],
   // Founding-cohort layer (passed through from FoundingTierLayer):
   foundingHtmlElements = [],
   foundingArcs = [],
   foundingSosRings = [],
   renderHtmlElement,
-  onBeaconClick, 
+  onBeaconClick,
   onCityClick,
   onRecoveryClick,
-  rotationRef 
+  onDeepZoom,
+  rotationRef
 }) {
 
   const globeRef     = useRef();
   const containerRef = useRef(null);
+  const prevAltRef   = useRef(Infinity);
   const [size, setSize] = useState({ w: 0, h: 0 });
 
   // 2026-05-13: react-globe.gl sizes itself from container offsetWidth/Height
@@ -143,9 +148,16 @@ export default function EnhancedGlobe3D({
 
   // Update rotation ref when user moves the globe
   const handleCameraChange = () => {
-    if (!globeRef.current || !rotationRef?.current) return;
+    if (!globeRef.current) return;
     const { lat, lng, altitude } = globeRef.current.pointOfView();
-    rotationRef.current = { lat, lng, altitude };
+    if (rotationRef?.current) rotationRef.current = { lat, lng, altitude };
+    // Deep-zoom auto-handoff: fire once on an inward crossing of the city band so
+    // the globe hands off to the local street map instead of degrading to a blur.
+    const prev = prevAltRef.current;
+    prevAltRef.current = altitude;
+    if (onDeepZoom && prev >= DEEP_ZOOM_ALT && altitude < DEEP_ZOOM_ALT) {
+      try { onDeepZoom({ lat, lng, altitude }); } catch (e) { /* non-fatal */ }
+    }
   };
 
   return (
