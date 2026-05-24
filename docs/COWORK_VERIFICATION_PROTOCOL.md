@@ -5,6 +5,9 @@
 ## Before executing a dispatch — surface the timing question
 Dispatches that touch **subsystem interactions, teardown/dispose sequences, or lifecycle ordering** (e.g. "unmount X", "free the WebGL context", "tear down Y when Z") must answer **when**, not just **what**, before executing. Teardown of one engine *during* another engine's init can starve it. Real example (2026-05-24): unmounting the three.js globe at the instant mapbox-gl initialised regressed local-map load from <7s to 40s+; the fix was to defer the unmount until after the map's `load` event. If a dispatch gives the *what* but not the *when*, Cowork raises the timing question and proposes the safe ordering before shipping. Prefer a design that **degrades to the proven-good state** if the new path fails (e.g. if the map never loads, the globe simply stays mounted).
 
+## Verify that the verification itself is valid
+**If the measuring instrument is degraded or contaminated, do not produce a number.** Surface the instrument limit and propose how to restore a clean measurement environment. A confident-looking metric from a compromised tool is worse than no metric — it injects false confidence into the protocol. (Origin 2026-05-24: after creating/destroying ~12 WebGL contexts in one session, the browser's GPU process was degraded and map load-time readings ballooned to ~40s; the right move was to refuse the number and restart Chrome for a clean read, not to report the contaminated figure.)
+
 ## Verification toolkit — use all of it
 
 **Visual / UX (Chrome MCP on the Mac):**
