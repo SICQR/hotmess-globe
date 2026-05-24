@@ -108,6 +108,10 @@ export default function GlobePage({ embedded = false }) {
   const { openSheet } = useSheet();
   const [showLayersSheet, setShowLayersSheet] = useState(false);
   const [localFocus, setLocalFocus] = useState(null);
+  // Delay-unmount: globe stays mounted until the local map has finished loading
+  // (onReady), then unmounts to free its WebGL context for the duration of local
+  // mode. Unmounting DURING mapbox init regressed load badly, so we wait for 'load'.
+  const [localMapReady, setLocalMapReady] = useState(false);
   const localModeEnabled = ((import.meta && import.meta.env && import.meta.env.VITE_LOCAL_MODE_ENABLED) === 'true') || (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('localmode'));
   const [showBeaconModal, setShowBeaconModal] = useState(false);
 
@@ -394,11 +398,12 @@ export default function GlobePage({ embedded = false }) {
     <ErrorBoundary>
       <div className="relative w-full h-full bg-black overflow-hidden">
         <div className="relative w-full h-full touch-none" data-pull-refresh-ignore data-globe-interactive>
-          {/* Globe stays mounted while local mode overlays on top. We tried
-              unmounting it in local mode to free the WebGL context, but the
-              synchronous three.js teardown during mapbox init severely regressed
-              map load time (<7s → 40s+). Keeping it mounted is the proven-fast path;
-              a future memory optimisation should unmount only AFTER the map's 'load'. */}
+          {/* Delay-unmount hardening: keep the globe mounted while the local map is
+              still initialising (proven-fast init), then unmount it once the map is
+              ready (localMapReady) to free the three.js WebGL context for the duration
+              of local mode. If the map never loads, localMapReady stays false and the
+              globe stays mounted — i.e. it degrades to the proven-good behaviour. */}
+          {(!localFocus || !localMapReady) && (
           <EnhancedGlobe3D
             ref={globeRef}
             beacons={mergeFoundingIntoBeacons(filteredBeacons, founding.foundingBeacons)}
@@ -439,6 +444,7 @@ export default function GlobePage({ embedded = false }) {
             className="w-full h-full"
             autoRotate={false}
           />
+          )}
         </div>
 
         <div className="absolute top-16 left-0 right-0 z-20 pointer-events-none text-center">
@@ -522,7 +528,12 @@ export default function GlobePage({ embedded = false }) {
           </div>
         )}
         {localFocus && (
-          <LocalMapboxView focus={localFocus} beacons={filteredBeacons} onClose={() => setLocalFocus(null)} />
+          <LocalMapboxView
+            focus={localFocus}
+            beacons={filteredBeacons}
+            onReady={() => setLocalMapReady(true)}
+            onClose={() => { setLocalFocus(null); setLocalMapReady(false); }}
+          />
         )}
         <LayersSheet key="layers-sheet" open={showLayersSheet} onClose={() => setShowLayersSheet(false)} activeLayer={activeLayer} setActiveLayer={setActiveLayer} />
       </div>
