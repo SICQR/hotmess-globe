@@ -1,67 +1,71 @@
-import React, { useEffect, useRef } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import React, { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 
-// Phase A — Mapbox local mode. Read-only street-level map for deep-zoom detail
-// (the proper fix for the blurry globe deep-zoom). Token VITE_MAPBOX_TOKEN is
-// provisioned in Vercel (Dev/Preview/Prod). Lazy-loaded from Globe.jsx.
-mapboxgl.accessToken = (import.meta && import.meta.env && import.meta.env.VITE_MAPBOX_TOKEN) || '';
-
+// Phase A — local street-level map (deep-zoom detail). mapbox-gl is dynamically
+// imported on open so it stays out of the Pulse bundle AND a load/init failure
+// degrades gracefully (overlay + message) instead of a black ErrorBoundary takeover.
+const TOKEN = (import.meta && import.meta.env && import.meta.env.VITE_MAPBOX_TOKEN) || '';
 const GOLD = '#C8962C';
 
 function toFeatureCollection(beacons) {
   const list = Array.isArray(beacons) ? beacons : [];
-  const features = list
-    .filter((b) => b && Number.isFinite(Number(b.lat)) && Number.isFinite(Number(b.lng)))
-    .map((b) => ({
-      type: 'Feature',
-      geometry: { type: 'Point', coordinates: [Number(b.lng), Number(b.lat)] },
-      properties: { id: b.id != null ? String(b.id) : '', title: b.title || b.name || '' },
-    }));
-  return { type: 'FeatureCollection', features };
+  return {
+    type: 'FeatureCollection',
+    features: list
+      .filter((b) => b && Number.isFinite(Number(b.lat)) && Number.isFinite(Number(b.lng)))
+      .map((b) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [Number(b.lng), Number(b.lat)] }, properties: { id: b.id != null ? String(b.id) : '' } })),
+  };
 }
 
 export default function LocalMapboxView({ focus, beacons, onClose }) {
   const containerRef = useRef(null);
-  const mapRef = useRef(null);
+  const [status, setStatus] = useState('loading'); // loading | ready | error
 
   useEffect(() => {
-    if (!containerRef.current || !mapboxgl.accessToken) return undefined;
-    const f = focus || { lat: 51.5074, lng: -0.1278 };
-    const map = new mapboxgl.Map({
-      container: containerRef.current,
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: [f.lng, f.lat],
-      zoom: 14,
-      attributionControl: true,
-    });
-    mapRef.current = map;
-    map.on('load', () => {
+    let map;
+    let cancelled = false;
+    (async () => {
+      if (!TOKEN) { setStatus('error'); return; }
       try {
-        map.addSource('beacons', { type: 'geojson', data: toFeatureCollection(beacons) });
-        map.addLayer({
-          id: 'beacons-circle',
-          type: 'circle',
-          source: 'beacons',
-          paint: {
-            'circle-radius': 7,
-            'circle-color': GOLD,
-            'circle-opacity': 0.85,
-            'circle-stroke-width': 2,
-            'circle-stroke-color': 'rgba(255,255,255,0.5)',
-          },
+        const mod = await import('mapbox-gl');
+        await import('mapbox-gl/dist/mapbox-gl.css');
+        const mapboxgl = mod.default || mod;
+        mapboxgl.accessToken = TOKEN;
+        if (cancelled || !containerRef.current) return;
+        const f = focus || { lat: 51.5074, lng: -0.1278 };
+        map = new mapboxgl.Map({
+          container: containerRef.current,
+          style: 'mapbox://styles/mapbox/dark-v11',
+          center: [f.lng, f.lat],
+          zoom: 14,
+          attributionControl: true,
         });
-      } catch (e) { /* non-fatal: map renders without the beacon layer */ }
-    });
-    return () => { try { map.remove(); } catch (e) {} mapRef.current = null; };
+        map.on('error', () => {});
+        map.on('load', () => {
+          if (cancelled) return;
+          setStatus('ready');
+          try {
+            map.addSource('beacons', { type: 'geojson', data: toFeatureCollection(beacons) });
+            map.addLayer({
+              id: 'beacons-circle', type: 'circle', source: 'beacons',
+              paint: { 'circle-radius': 7, 'circle-color': GOLD, 'circle-opacity': 0.85, 'circle-stroke-width': 2, 'circle-stroke-color': 'rgba(255,255,255,0.5)' },
+            });
+          } catch (e) { /* non-fatal */ }
+        });
+      } catch (e) {
+        if (!cancelled) setStatus('error');
+      }
+    })();
+    return () => { cancelled = true; try { if (map) map.remove(); } catch (e) {} };
   }, [focus, beacons]);
 
   return (
-    <div className="fixed inset-0 z-[120] bg-black">
+    <div className="fixed inset-0 z-[120] bg-[#050507]">
       <div ref={containerRef} className="absolute inset-0" />
-      {!mapboxgl.accessToken && (
-        <div className="absolute inset-0 flex items-center justify-center text-white/60 text-sm">Map unavailable</div>
+      {status !== 'ready' && (
+        <div className="absolute inset-0 flex items-center justify-center text-white/60 text-sm pointer-events-none">
+          {status === 'error' ? 'Map unavailable' : 'Loading map…'}
+        </div>
       )}
       <button
         onClick={onClose}
