@@ -34,15 +34,30 @@ export default function LocalMapboxView({ focus, beacons, onClose, onReady }) {
   onReadyRef.current = onReady;
   const [status, setStatus] = useState('loading'); // loading | ready | error
 
+  // Globe→local transition (docs/GLOBE_GLOBE_TO_LOCAL_TRANSITION_ANIMATION_SYSTEM.md,
+  // Stage 5 "Local Reveal"): crossfade the overlay in over the globe and descend
+  // district→street so the handoff feels deliberate, not a teleport. Honoured only
+  // when the user hasn't asked for reduced motion.
+  const reducedMotionRef = useRef(
+    typeof window !== 'undefined' && window.matchMedia
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false
+  );
+  const reducedMotion = reducedMotionRef.current;
+  const [shown, setShown] = useState(reducedMotion); // reduced motion → visible immediately
+  useEffect(() => {
+    if (reducedMotion) return undefined;
+    const id = requestAnimationFrame(() => setShown(true));
+    return () => cancelAnimationFrame(id);
+  }, [reducedMotion]);
+
   // Create the map ONCE on mount. The parent re-renders frequently and passes a
   // fresh `beacons` array each time; making that an effect dep would tear the map
   // down + rebuild it on every render and it would never finish loading.
   useEffect(() => {
     let cancelled = false;
     let resizeTimer;
-    const reducedMotion = typeof window !== 'undefined' && window.matchMedia
-      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      : false;
+    const reducedMotion = reducedMotionRef.current;
     (async () => {
       if (!TOKEN) { setStatus('error'); return; }
       try {
@@ -55,7 +70,9 @@ export default function LocalMapboxView({ focus, beacons, onClose, onReady }) {
           container: containerRef.current,
           style: 'mapbox://styles/mapbox/dark-v11', // L0 — dark, muted, premium base
           center: [f.lng, f.lat],
-          zoom: 14,
+          // Start at district scale and descend to street on load (the transition);
+          // reduced motion lands directly at street level.
+          zoom: reducedMotion ? 14.5 : 11,
           attributionControl: true,
         });
         mapRef.current = map;
@@ -73,6 +90,12 @@ export default function LocalMapboxView({ focus, beacons, onClose, onReady }) {
             const src = map.getSource(SOURCE_IDS.public);
             if (src && src.setData) src.setData(toPublicSafeFeatureCollection(beaconsRef.current));
           } catch (e) { /* non-fatal: map still usable as base */ }
+
+          // Stage-5 descent: district → street, a gentle decelerating pull (no
+          // violent easing). Skipped under reduced motion (we start at street zoom).
+          if (!reducedMotion) {
+            try { map.easeTo({ zoom: 14.5, duration: 1400, easing: (t) => 1 - Math.pow(1 - t, 3) }); } catch (e) { /* non-fatal */ }
+          }
 
           // L6 interaction — tap cluster expands (no immediate pin explosion).
           map.on('click', LAYER_IDS.clusterCircles, (e) => {
