@@ -31,6 +31,7 @@ import { MapPin, X } from 'lucide-react';
 
 import LocalMapboxView from '../components/globe/LocalMapboxView';
 import DistrictEditorialCard from '../components/editorial/DistrictEditorialCard';
+import CareDecompressionCue from '../components/editorial/CareDecompressionCue';
 
 const CITY_COORDS = {
   'London':    { lat: 51.5074, lng: -0.1278 },
@@ -526,6 +527,7 @@ export default function GlobePage({ embedded = false }) {
           <LocalMapboxView focus={localFocus} beacons={filteredBeacons} onClose={() => setLocalFocus(null)} />
         )}
         {localFocus && <DistrictEditorialCard citySlug={localFocus.slug} />}
+        {localFocus && <CareDecompressionCue />}
         <LayersSheet key="layers-sheet" open={showLayersSheet} onClose={() => setShowLayersSheet(false)} activeLayer={activeLayer} setActiveLayer={setActiveLayer} />
       </div>
     </ErrorBoundary>
