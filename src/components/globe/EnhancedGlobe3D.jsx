@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useMemo, useState } from 'react';
 import Globe from 'react-globe.gl';
-import { makeBloomElement } from '../../lib/globe/beaconBloom';
 
 const DEFAULT_ROTATION = { lat: 20, lng: 0 };
 // Altitude at which an inward zoom hands off to the local street map (the city
@@ -20,19 +19,12 @@ export default function EnhancedGlobe3D({
   onCityClick,
   onRecoveryClick,
   onDeepZoom,
-  bloomMarkers = false,
   rotationRef
 }) {
 
   const globeRef     = useRef();
   const containerRef = useRef(null);
   const prevAltRef   = useRef(Infinity);
-  const selectedRef  = useRef(null);
-  // Interaction states swap instantly under reduced motion (no crossfade), but
-  // hover/active still fire — interaction never depends on motion.
-  const reducedMotion = typeof window !== 'undefined' && window.matchMedia
-    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    : false;
   const [size, setSize] = useState({ w: 0, h: 0 });
 
   // 2026-05-13: react-globe.gl sizes itself from container offsetWidth/Height
@@ -94,10 +86,8 @@ export default function EnhancedGlobe3D({
       };
     }).filter(Boolean);
 
-    // When bloomMarkers is on (local-mode flag), beacons render as interactive
-    // HTML blooms instead of plain points; recovery stays as points.
-    return [...(bloomMarkers ? [] : beaconPoints), ...recoveryPoints];
-  }, [beacons, recoveryPins, bloomMarkers]);
+    return [...beaconPoints, ...recoveryPoints];
+  }, [beacons, recoveryPins]);
 
   const labelsData = useMemo(() => {
     return (Array.isArray(cities) ? cities : [])
@@ -121,20 +111,9 @@ export default function EnhancedGlobe3D({
   }, [pointsData, foundingSosRings]);
 
   const htmlElementsData = useMemo(() => {
-    const founding = (Array.isArray(foundingHtmlElements) ? foundingHtmlElements : [])
+    return (Array.isArray(foundingHtmlElements) ? foundingHtmlElements : [])
       .filter(d => Number.isFinite(Number(d.lat)) && Number.isFinite(Number(d.lng)));
-    if (!bloomMarkers) return founding;
-    // Beacons as interaction-first blooms (merged into the single html layer).
-    const blooms = (Array.isArray(beacons) ? beacons : [])
-      .map(b => {
-        const lat = Number(b.lat ?? b.geo_lat ?? b.latitude);
-        const lng = Number(b.lng ?? b.geo_lng ?? b.longitude);
-        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-        return { ...b, lat, lng, __bloom: true };
-      })
-      .filter(Boolean);
-    return [...founding, ...blooms];
-  }, [foundingHtmlElements, beacons, bloomMarkers]);
+  }, [foundingHtmlElements]);
 
   const arcsData = useMemo(() => {
     return (Array.isArray(foundingArcs) ? foundingArcs : [])
@@ -272,9 +251,7 @@ export default function EnhancedGlobe3D({
         htmlLat="lat"
         htmlLng="lng"
         htmlAltitude={0.1}
-        htmlElement={(d) => (d && d.__bloom)
-          ? makeBloomElement(d, { reducedMotion, selectedRef, onActivate: onBeaconClick })
-          : (renderHtmlElement ? renderHtmlElement(d) : document.createElement('div'))}
+        htmlElement={renderHtmlElement}
 
         // --- Arcs (Founding Promoter migration animations) ---
         arcsData={arcsData}
