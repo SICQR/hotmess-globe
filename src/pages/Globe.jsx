@@ -412,7 +412,6 @@ export default function GlobePage({ embedded = false }) {
             pulsePlaces={pulsePlaces}
             rotationRef={rotationRef}
             onDeepZoom={localModeEnabled ? (c) => setLocalFocus((prev) => prev || { lat: c.lat, lng: c.lng }) : undefined}
-            bloomMarkers={localModeEnabled}
             venueIntensity={venueIntensity}
             venueVibes={venueVibes}
             userIntents={userIntents}
