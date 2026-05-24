@@ -136,4 +136,30 @@ Effort: **S** (doc edits); Cowork autonomous.
 
 ---
 
-*End of Phase 2 build plan. After Phil signs off, the actual build work becomes a separate brief based on §2.6.*
+## 2.8 Sprint 1 — SOS reliability workstream + `VITE_SOS_ENABLED` go/no-go
+
+**Context (verified):** SOS currently runs behind `VITE_SOS_ENABLED=false` — pressing SOS surfaces crisis resources, **not** live dispatch. So the items below are **prerequisites for turning on live dispatch**, not fixes for actively-broken production. The flag flip itself is the final gate, with its own review.
+
+**Shipping now (preview PRs under the new flow):**
+- **SOS FAB placement** (PR #289) — top-right + safe-area inset, menu opens downward; clears the beacon bottom-sheet (`z-101`) and radio mini-player collisions.
+- **CHANNEL-chip fix** (PR #290) — drop channel-less delivery rows instead of rendering the literal "channel" chip.
+
+**Prerequisites for the flag flip (build in Sprint 1):**
+1. **Delivery receipts** — wire Twilio status callback + WhatsApp delivery webhook → `safety_delivery_log.delivered_at` / `acked_at`; persist the provider IDs already captured. (Today both are NULL on all 96 rows — the "Glen-incident signature.")
+2. **Trusted-contact E.164 validation** — validate/normalise phone numbers on insert/update; one-off sweep of existing rows → produce a list of affected user IDs → app prompts those users to re-enter on next session (**do not silently delete**). (Triage found 8 Twilio-invalid numbers.)
+3. **Token-expiry monitoring** — replace the Meta WhatsApp token with a long-lived/system token; add an expiry monitor (cron or boot check) that warns ≥7 days before expiry. Apply the same pattern to other expiring creds (Twilio, Apple Sign-In). (The Meta token expired silently for ~33 days — a safety channel must never die unnoticed again.)
+4. **Shake-SOS discoverability** — `useShakeSOS` / `ShakeSOS.tsx` works but is buried behind the FAB menu. Surface the opt-in in onboarding (a BLK-06 step) and in Profile → Safety settings, so the no-button second path is discoverable.
+
+### Go/No-Go gate for `VITE_SOS_ENABLED=true`
+The highest-stakes test in HOTMESS so far — turning on live safety-of-life dispatch. **Do not flip the flag until ALL pass, on a real device, repeatably:**
+1. Two phones (or Phil + one trusted contact).
+2. Trigger SOS via the **FAB** on device A → confirm SMS / WhatsApp / email lands on device B **within 30s**.
+3. Confirm `safety_delivery_log` records **`delivered_at` AND `acked_at`** on the relevant rows.
+4. Repeat via **shake-SOS** → confirm both entry paths fire.
+5. Only then flip the flag — and the flip itself gets a **dedicated go/no-go review** (it's a real duty-of-care threshold, not a routine deploy).
+
+This protocol doubles as a **quarterly regression check** for the safety pipeline.
+
+---
+
+*End of Phase 2 build plan. After Phil signs off, the actual build work becomes a separate brief based on §2.6 + §2.8.*
