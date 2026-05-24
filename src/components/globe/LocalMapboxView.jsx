@@ -1,7 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
+// Static CSS import: mapbox-gl needs its stylesheet for the canvas to size and
+// paint correctly. Dynamic CSS import was unreliable in the prod bundle
+// (hasMapboxCSS:false → black canvas), so load it statically. ~30KB, cheap.
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { X } from 'lucide-react';
 
-// Phase A — local street-level map (deep-zoom detail). mapbox-gl is dynamically
+// Phase A — local street-level map (deep-zoom detail). mapbox-gl JS is dynamically
 // imported on open so it stays out of the Pulse bundle AND a load/init failure
 // degrades gracefully (overlay + message) instead of a black ErrorBoundary takeover.
 const TOKEN = (import.meta && import.meta.env && import.meta.env.VITE_MAPBOX_TOKEN) || '';
@@ -24,11 +28,11 @@ export default function LocalMapboxView({ focus, beacons, onClose }) {
   useEffect(() => {
     let map;
     let cancelled = false;
+    let resizeTimer;
     (async () => {
       if (!TOKEN) { setStatus('error'); return; }
       try {
         const mod = await import('mapbox-gl');
-        await import('mapbox-gl/dist/mapbox-gl.css');
         const mapboxgl = mod.default || mod;
         mapboxgl.accessToken = TOKEN;
         if (cancelled || !containerRef.current) return;
@@ -43,6 +47,9 @@ export default function LocalMapboxView({ focus, beacons, onClose }) {
         map.on('error', () => {});
         map.on('load', () => {
           if (cancelled) return;
+          // Guard against a 0-size init (container layout not flushed yet) which
+          // renders a black canvas — force a resize once the map is ready.
+          try { map.resize(); } catch (e) { /* non-fatal */ }
           setStatus('ready');
           try {
             map.addSource('beacons', { type: 'geojson', data: toFeatureCollection(beacons) });
@@ -52,16 +59,19 @@ export default function LocalMapboxView({ focus, beacons, onClose }) {
             });
           } catch (e) { /* non-fatal */ }
         });
+        // Belt-and-suspenders: resize shortly after mount in case 'load' fires
+        // before the overlay has its final dimensions.
+        resizeTimer = setTimeout(() => { try { if (map) map.resize(); } catch (e) {} }, 250);
       } catch (e) {
         if (!cancelled) setStatus('error');
       }
     })();
-    return () => { cancelled = true; try { if (map) map.remove(); } catch (e) {} };
+    return () => { cancelled = true; if (resizeTimer) clearTimeout(resizeTimer); try { if (map) map.remove(); } catch (e) {} };
   }, [focus, beacons]);
 
   return (
     <div className="fixed inset-0 z-[120] bg-[#050507]">
-      <div ref={containerRef} className="absolute inset-0" />
+      <div ref={containerRef} className="absolute inset-0" style={{ width: '100%', height: '100%' }} />
       {status !== 'ready' && (
         <div className="absolute inset-0 flex items-center justify-center text-white/60 text-sm pointer-events-none">
           {status === 'error' ? 'Map unavailable' : 'Loading map…'}
