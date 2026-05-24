@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 // Static CSS import: mapbox-gl needs its stylesheet for the canvas to size and
 // paint correctly. ~30KB, cheap, and reliable in the prod bundle.
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { X } from 'lucide-react';
+import { X, MapPin } from 'lucide-react';
 import {
   LAYER_IDS,
   SOURCE_IDS,
@@ -23,7 +23,7 @@ function escapeHtml(s) {
   ));
 }
 
-export default function LocalMapboxView({ focus, beacons, onClose, onReady }) {
+export default function LocalMapboxView({ focus, beacons, onClose, onReady, onDropBeacon }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   // Latest props read via refs so the map-creation effect can run exactly once.
@@ -175,6 +175,25 @@ export default function LocalMapboxView({ focus, beacons, onClose, onReady }) {
       >
         <X className="w-4 h-4" /> Globe
       </button>
+      {onDropBeacon && status === 'ready' && (
+        <button
+          onClick={() => {
+            try {
+              const m = mapRef.current;
+              if (m && m.getCenter) {
+                const c = m.getCenter();
+                onDropBeacon({ lat: c.lat, lng: c.lng });
+              }
+            } catch (e) { /* non-fatal */ }
+          }}
+          className="absolute bottom-[calc(150px+env(safe-area-inset-bottom,0px))] right-4 z-[123] w-14 h-14 bg-[#C8962C] rounded-2xl flex items-center justify-center shadow-[0_15px_35px_-12px_rgba(200,150,44,0.6)] border border-white/30 hover:brightness-110 transition-all"
+          title="Drop beacon here"
+          aria-label="Drop a beacon at the map centre"
+          data-pull-refresh-ignore
+        >
+          <MapPin className="w-6 h-6 text-black" />
+        </button>
+      )}
     </div>
   );
 }
