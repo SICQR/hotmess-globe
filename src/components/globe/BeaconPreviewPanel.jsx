@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
-import { X, MapPin, HeartHandshake, UserCircle2 } from 'lucide-react';
+import { MapPin, HeartHandshake, UserCircle2 } from 'lucide-react';
 import { createPageUrl } from '../../utils';
 
 export default function BeaconPreviewPanel({ beacon, onClose, onViewFull, onViewProfile }) {
@@ -63,9 +63,6 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull, onView
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/40 transition-colors">
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Content */}

@@ -8,7 +8,7 @@
 // fall back to cached HTML on momentary network hiccup and the v5 STATIC_CACHE
 // still held the pre-"Get into HOTMESS" index.html. Bump every time a fully
 // fresh boot is required for safety.
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v7-__SW_BUILD_ID__'; // stamped per-build by scripts/stamp-sw.mjs (durable cache-bust); 'v7-...' alone still purges v6
 const STATIC_CACHE = `hotmess-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `hotmess-dynamic-${CACHE_VERSION}`;
 const API_CACHE = `hotmess-api-${CACHE_VERSION}`;
