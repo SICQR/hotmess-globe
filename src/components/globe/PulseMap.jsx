@@ -31,7 +31,27 @@ const GLOBE_ZOOM = 3.2;   // macro: curvature + cluster visible
 const LOCAL_ZOOM = 15;    // micro: street detail + individual blooms
 const LONDON = { lat: 51.5074, lng: -0.1278 };
 
-export default function PulseMap({ beacons = [], userLocation, onBeaconClick, onMapApi, onReady }) {
+// Cities that have an editorial profile (district_editorial_profiles). That table
+// has no geometry, so the map centre → slug match is done here with a tiny
+// centroid table. Extend as editorial coverage grows.
+const EDITORIAL_CITIES = [
+  { slug: 'london',   lat: 51.5074, lng: -0.1278 },
+  { slug: 'berlin',   lat: 52.5200, lng: 13.4050 },
+  { slug: 'new-york', lat: 40.7128, lng: -74.0060 },
+];
+const LOCAL_FOCUS_ZOOM = 10;      // at/above this the camera is "inside" a city
+const LOCAL_FOCUS_MAX_DEG = 1.5;  // accept a city within ~150km of the centre
+function resolveEditorialCity(lat, lng, zoom) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !(zoom >= LOCAL_FOCUS_ZOOM)) return null;
+  let best = null, bestD = Infinity;
+  for (const c of EDITORIAL_CITIES) {
+    const d = Math.hypot(lat - c.lat, lng - c.lng);
+    if (d < bestD) { bestD = d; best = c; }
+  }
+  return best && bestD <= LOCAL_FOCUS_MAX_DEG ? best : null;
+}
+
+export default function PulseMap({ beacons = [], userLocation, onBeaconClick, onMapApi, onReady, onLocalFocus }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   // Latest props via refs so the create-once effect never needs to re-run.
@@ -45,6 +65,8 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
   onMapApiRef.current = onMapApi;
   const onReadyRef = useRef(onReady);
   onReadyRef.current = onReady;
+  const onLocalFocusRef = useRef(onLocalFocus);
+  onLocalFocusRef.current = onLocalFocus;
 
   const [status, setStatus] = useState('loading'); // loading | ready | error
   const reducedMotion = typeof window !== 'undefined' && window.matchMedia
@@ -203,6 +225,24 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
               });
             }
           } catch (e) { /* non-fatal */ }
+
+          // District editorial focus — single-engine replacement for the retired
+          // react-globe localFocus path. When the camera settles inside a city at
+          // local zoom, tell the parent which editorial slug to surface (district
+          // card + care cue); clear it on pull-back to the globe. Fires only on change.
+          let lastFocusSlug = null;
+          const reportLocalFocus = () => {
+            try {
+              const cc = map.getCenter();
+              const city = resolveEditorialCity(cc.lat, cc.lng, map.getZoom());
+              const slug = city ? city.slug : null;
+              if (slug === lastFocusSlug) return;
+              lastFocusSlug = slug;
+              if (onLocalFocusRef.current) onLocalFocusRef.current(city ? { slug: city.slug, lat: cc.lat, lng: cc.lng } : null);
+            } catch (e) { /* non-fatal */ }
+          };
+          map.on('moveend', reportLocalFocus);
+          reportLocalFocus();
         });
 
         // Guard against a 0-size init (layout not flushed) → blank canvas.
