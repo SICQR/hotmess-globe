@@ -19,10 +19,8 @@ import {
   ProductFilters,
   getShopifyProducts,
   getInternalProducts,
-  getProductsByBrand,
 } from '@/lib/data/market';
 import { HNHMarketHero } from '@/components/home/HNHMarketHero';
-import { BRAND_CONFIG } from '@/config/brands';
 import { HNHMessStrip } from '@/components/home/HNHMessStrip';
 import { AppBanner } from '@/components/banners/AppBanner';
 
@@ -123,8 +121,6 @@ export function ShopEngine({ search, className = '' }: { search: string; classNa
   const queryClient = useQueryClient();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [brandFilter, setBrandFilter] = useState<string | null>(null);
-  const [productTypeFilter, setProductTypeFilter] = useState<string>('all');
 
   const filters: ProductFilters = useMemo(
     () => ({ source: 'shopify', search: search || undefined }),
@@ -132,25 +128,14 @@ export function ShopEngine({ search, className = '' }: { search: string; classNa
   );
 
   const { data: allFetchedProducts = [], isLoading, isError } = useQuery<Product[]>({
-    queryKey: brandFilter
-      ? ['shop-brand', brandFilter, search]
-      : ['shop-products', filters],
-    queryFn: () => {
-      if (brandFilter) return getProductsByBrand(brandFilter);
-      return getShopifyProducts(filters);
-    },
+    queryKey: ['shop-products', filters],
+    queryFn: () => getShopifyProducts(filters),
     staleTime: 2 * 60 * 1000,
   });
 
-  const availableTypes = useMemo(() => {
-    const types = [...new Set(allFetchedProducts.map(p => p.category).filter(Boolean))] as string[];
-    return types;
-  }, [allFetchedProducts]);
-
-  const products = useMemo(() => {
-    if (productTypeFilter === 'all') return allFetchedProducts;
-    return allFetchedProducts.filter(p => p.category === productTypeFilter);
-  }, [allFetchedProducts, productTypeFilter]);
+  // Category/brand filter chips were removed (Phil 2026-05-25): search is the only
+  // filter. The grid shows every fetched product, search-narrowed via `filters`.
+  const products = allFetchedProducts;
 
   const visibleProducts = useMemo(() => products.slice(0, visibleCount), [products, visibleCount]);
   const hasMore = visibleCount < products.length;
@@ -170,13 +155,9 @@ export function ShopEngine({ search, className = '' }: { search: string; classNa
     return () => el.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [filters, brandFilter, productTypeFilter]);
-
-
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [filters]);
 
   const gridProducts = visibleProducts;
-
-  const activeBrandName = brandFilter ? (BRAND_CONFIG[brandFilter]?.name ?? brandFilter.toUpperCase()) : null;
 
   return (
     <div
@@ -190,33 +171,6 @@ export function ShopEngine({ search, className = '' }: { search: string; classNa
       }}
     >
 
-
-      {/* Dynamic Product Type Filters */}
-      <div className="px-4 pt-5 pb-2 flex gap-2 overflow-x-auto scrollbar-hide">
-        <button
-          onClick={() => setProductTypeFilter('all')}
-          className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border whitespace-nowrap transition-all active:scale-95 ${
-            productTypeFilter === 'all'
-              ? 'bg-[#C8962C] border-[#C8962C] text-black'
-              : 'bg-white/5 border-white/5 text-white/40 hover:text-white hover:border-white/10'
-          }`}
-        >
-          All
-        </button>
-        {availableTypes.map(type => (
-          <button
-            key={type}
-            onClick={() => setProductTypeFilter(type)}
-            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border whitespace-nowrap transition-all active:scale-95 ${
-              productTypeFilter === type
-                ? 'bg-[#C8962C] border-[#C8962C] text-black'
-                : 'bg-white/5 border-white/5 text-white/40 hover:text-white hover:border-white/10'
-            }`}
-          >
-            {type}
-          </button>
-        ))}
-      </div>
 
       {isLoading && (
         <div className="grid grid-cols-2 gap-3 px-4 pt-4">
@@ -252,58 +206,12 @@ export function ShopEngine({ search, className = '' }: { search: string; classNa
             <ShoppingBag className="w-8 h-8 text-white/10" />
           </div>
           <h3 className="text-lg font-bold text-white mb-1 uppercase tracking-tight">No match found</h3>
-          <p className="text-sm text-white/40">Try a different filter or check back later.</p>
+          <p className="text-sm text-white/40">Try a different search or check back later.</p>
         </div>
       )}
 
       {!isLoading && !isError && products.length > 0 && (
         <>
-          {/* Brand pills */}
-          {!search && (
-            <div className="px-4 pt-4 pb-1">
-              <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-                {([
-                  { key: 'raw', label: 'RAW' },
-                  { key: 'hung', label: 'HUNG' },
-                  { key: 'high', label: 'HIGH' },
-                  { key: 'hungmess', label: 'HUNGMESS' },
-                  { key: 'superhung', label: 'SUPERHUNG' },
-                ] as const).map(b => {
-                  const isActive = brandFilter === b.key;
-                  return (
-                    <button
-                      key={b.key}
-                      onClick={() => setBrandFilter(isActive ? null : b.key)}
-                      className={`h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all active:scale-95 ${
-                        isActive ? 'text-black border border-[#C8962C]' : 'bg-[#1C1C1E] border border-white/10 text-white/70'
-                      }`}
-                      style={isActive ? { backgroundColor: AMBER } : undefined}
-                      aria-pressed={isActive}
-                    >
-                      {b.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Section header */}
-          <div className="px-4 pt-3 pb-1 flex items-center justify-between">
-            <h2 className="text-white font-black text-xs uppercase tracking-widest text-white/30">
-              {brandFilter ? activeBrandName : productTypeFilter === 'all' ? 'All Products' : productTypeFilter}
-            </h2>
-            {brandFilter && (
-              <button
-                onClick={() => setBrandFilter(null)}
-                className="text-xs font-semibold text-[#C8962C] active:scale-95 transition-transform"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-
-
           {/* Product grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 px-4 pt-1">
             {gridProducts.map((product, i) => (
