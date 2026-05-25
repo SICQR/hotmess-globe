@@ -348,8 +348,14 @@ export default function GlobePage({ embedded = false }) {
   const handleBeaconClick = useCallback((beacon) => {
     if (!beacon || beacon.isCluster) return;
     setFocusedBeaconId(beacon.id);
-    if (beacon?.kind === 'person' && beacon?.email) {
-      openProfile({ userId: beacon.user_id || beacon.id, source: 'globe', email: beacon.email, preferSheet: true });
+    // Person / social beacons → resolve the owner and open the boo-gated profile
+    // sheet (L2GhostedPreviewSheet via openProfile). Message/BOO gating + the mutual-
+    // boo doctrine live INSIDE that sheet — we only wire the routing here, no new gate.
+    const cat = String(beacon.kind || beacon.beacon_category || beacon.type || '').toLowerCase();
+    const ownerId = beacon.user_id || beacon.owner_id;
+    const isPersonish = /person|people|user|social|chill|meet|hookup|promoter/.test(cat);
+    if ((beacon?.kind === 'person' && beacon?.email) || (isPersonish && ownerId)) {
+      openProfile({ userId: beacon.user_id || ownerId || beacon.id, source: 'globe', email: beacon.email, preferSheet: true });
       return;
     }
     if (beacon?.mode === 'location' && Array.isArray(beacon.shopify_handles) && beacon.shopify_handles.length > 0) {
