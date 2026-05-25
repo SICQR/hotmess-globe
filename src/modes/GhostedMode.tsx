@@ -238,7 +238,7 @@ export default function GhostedMode() {
           music/radio entry points (the GHOSTED radio play + /music nav) now
           live here so there's one consistent control surface and no duplicate
           buttons elsewhere on the page. */}
-      <div className="absolute top-[calc(132px+env(safe-area-inset-top,0px))] right-4 z-30 flex flex-col items-end gap-2 pointer-events-none">
+      <div className="absolute top-[calc(88px+env(safe-area-inset-top,0px))] right-4 z-30 flex flex-col items-end gap-2 pointer-events-none">
         <GhostedRailButton icon={Music} label="Music" onClick={() => navigate('/music')} />
         <GhostedRailButton icon={Radio} label="Radio" onClick={() => navigate('/radio')} />
       </div>
