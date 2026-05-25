@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
+import { useSheet } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
@@ -26,10 +27,27 @@ export function ShopCartPanel({ showTitle = true } = {}) {
     removeLine,
     applyDiscountCode,
   } = useShopCart();
+  const { openSheet } = useSheet();
 
   const [code, setCode] = useState('');
 
   const lines = cart?.lines?.nodes || [];
+
+  // Checkout consolidated onto the Stripe embedded sheet (server-side priced).
+  const handleCheckout = () => {
+    if (!lines.length) return;
+    openSheet('checkout', {
+      cartItems: lines.map((line) => ({
+        id: line.id,
+        variantId: line.merchandise?.id,
+        title: line.merchandise?.product?.title || line.merchandise?.title || 'Item',
+        price: parseFloat(line.merchandise?.price?.amount || '0'),
+        qty: line.quantity,
+        source: 'shopify',
+      })),
+      total: parseFloat(cart?.cost?.totalAmount?.amount || cart?.cost?.subtotalAmount?.amount || '0'),
+    });
+  };
   const currency = cart?.cost?.totalAmount?.currencyCode || cart?.cost?.subtotalAmount?.currencyCode || 'GBP';
 
 
@@ -160,11 +178,11 @@ export function ShopCartPanel({ showTitle = true } = {}) {
 
       <SheetClose asChild>
         <Button
-          asChild
           disabled={isLoading || lines.length === 0}
           className="w-full bg-[#C8962C] text-black hover:bg-[#B07F1F] font-black uppercase py-6"
+          onClick={handleCheckout}
         >
-          <Link to="/checkout/start">Checkout</Link>
+          Checkout
         </Button>
       </SheetClose>
 
