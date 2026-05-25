@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, X, Info, Sparkles, Rocket, Ghost, ShoppingBag, Radio, Loader2, HeartPulse } from 'lucide-react';
+import { MapPin, Info, Sparkles, Rocket, Ghost, ShoppingBag, Radio, Loader2, HeartPulse } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 
@@ -134,9 +134,6 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
                 </div>
                 <h3 className="text-xl font-black italic tracking-tight text-white uppercase">Drop Beacon</h3>
               </div>
-              <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/40">
-                <X className="w-5 h-5" />
-              </button>
             </div>
 
             <div className="bg-white/5 border border-white/5 rounded-2xl p-4 mb-8 flex gap-3">
