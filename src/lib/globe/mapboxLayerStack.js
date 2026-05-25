@@ -93,15 +93,18 @@ export function toPublicSafeFeatureCollection(beacons) {
 // rather than a static utility map. Keeps a HOTMESS dark/gold bias at night.
 export function environmentalFog(hour, reducedMotion) {
   const h = Number.isFinite(hour) ? hour : 22;
+  // Blue-marble palette: deep-blue space, a luminous blue atmospheric limb, and a
+  // star field at night — tuned to sit under the satellite imagery so the globe reads
+  // as Earth-from-space. The limb warmth shifts gently with the daylight cycle.
   let cfg;
-  if (h >= 5 && h < 8) {           // dawn — warm gold horizon
-    cfg = { color: 'rgba(20,14,8,0.55)', 'high-color': '#caa15a', 'space-color': '#241d2e', 'horizon-blend': 0.3, 'star-intensity': 0 };
-  } else if (h >= 8 && h < 17) {   // day — cool, light, no stars
-    cfg = { color: 'rgba(20,22,28,0.4)', 'high-color': '#9fb6cc', 'space-color': '#1a2433', 'horizon-blend': 0.4, 'star-intensity': 0 };
-  } else if (h >= 17 && h < 20) {  // dusk — amber
-    cfg = { color: 'rgba(20,12,8,0.55)', 'high-color': '#c8762c', 'space-color': '#1a1020', 'horizon-blend': 0.3, 'star-intensity': reducedMotion ? 0 : 0.03 };
-  } else {                          // night — deep gold (nightlife default)
-    cfg = { color: 'rgba(10,8,5,0.6)', 'high-color': '#3a2a10', 'space-color': '#050507', 'horizon-blend': 0.2, 'star-intensity': reducedMotion ? 0 : 0.05 };
+  if (h >= 5 && h < 8) {           // dawn — blue limb breaking warm
+    cfg = { color: 'rgba(16,16,22,0.5)', 'high-color': '#7fa6d8', 'space-color': '#0a1326', 'horizon-blend': 0.32, 'star-intensity': reducedMotion ? 0 : 0.06 };
+  } else if (h >= 8 && h < 17) {   // day — bright blue atmosphere
+    cfg = { color: 'rgba(18,24,34,0.38)', 'high-color': '#8fb4e0', 'space-color': '#0a1626', 'horizon-blend': 0.42, 'star-intensity': 0 };
+  } else if (h >= 17 && h < 20) {  // dusk — cooling blue
+    cfg = { color: 'rgba(16,16,24,0.5)', 'high-color': '#6f93c8', 'space-color': '#080f20', 'horizon-blend': 0.3, 'star-intensity': reducedMotion ? 0 : 0.1 };
+  } else {                          // night — deep blue space, glowing limb, stars
+    cfg = { color: 'rgba(8,10,18,0.55)', 'high-color': '#4d77b0', 'space-color': '#05070f', 'horizon-blend': 0.28, 'star-intensity': reducedMotion ? 0 : 0.18 };
   }
   return cfg;
 }
