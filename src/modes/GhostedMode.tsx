@@ -1,7 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { requestGeoPermissionOnce } from '@/lib/geo/sharedGeolocation';
 import { motion } from 'framer-motion';
-import { Users, MessageCircle } from 'lucide-react';
+import { Users, MessageCircle, Music, Radio } from 'lucide-react';
 import { useGhostedGrid } from '@/hooks/useGhostedGrid';
 import { useGPS } from '@/hooks/useGPS';
 import { useSheet } from '@/contexts/SheetContext';
@@ -15,7 +16,29 @@ import LocationConsentScreen from '@/components/onboarding/screens/LocationConse
 
 const GHOSTED_VOL_1 = 'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/records-audio/1764584744541-Ghosted%20(are%20you%20looking_)%20blended%20version%20(Remastered).mp3';
 
+// Right-rail control for the Ghosted page. Visual pattern mirrors the Pulse
+// rail's RailButton (src/pages/Globe.jsx): icons-only pill, label slides out
+// on hover. Kept as its own component so the Pulse rail wiring is never touched.
+function GhostedRailButton({ icon: Icon, label, onClick }: { icon: React.FC<{ className?: string }>; label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      data-pull-refresh-ignore
+      className="group pointer-events-auto flex items-center justify-end gap-0 hover:gap-2 h-11 px-3 bg-black/60 border border-white/20 backdrop-blur-md rounded-full text-white shadow-lg overflow-hidden transition-all hover:bg-white hover:text-black"
+    >
+      <span className="max-w-0 group-hover:max-w-[120px] overflow-hidden whitespace-nowrap text-[11px] font-black uppercase tracking-wider transition-[max-width] duration-200">{label}</span>
+      <span className="relative flex-shrink-0">
+        <Icon className="w-5 h-5" />
+      </span>
+    </button>
+  );
+}
+
 export default function GhostedMode() {
+  const navigate = useNavigate();
   const { position } = useGPS();
   const { openSheet } = useSheet();
   const [filter, setFilter] = React.useState<'nearby' | 'recent'>('recent');
@@ -200,6 +223,17 @@ export default function GhostedMode() {
             })}
           </div>
         )}
+      </div>
+
+      {/* Right control rail — page-aware (Phil 2026-05-25): Ghosted gains a
+          rail with Music + Radio. Styled to match the Pulse rail (right-edge
+          vertical icon stack, hover-expand labels). The previously in-page
+          music/radio entry points (the GHOSTED radio play + /music nav) now
+          live here so there's one consistent control surface and no duplicate
+          buttons elsewhere on the page. */}
+      <div className="absolute top-[calc(56px+env(safe-area-inset-top,0px))] right-4 z-30 flex flex-col items-end gap-2 pointer-events-none">
+        <GhostedRailButton icon={Music} label="Music" onClick={() => navigate('/music')} />
+        <GhostedRailButton icon={Radio} label="Radio" onClick={() => navigate('/radio')} />
       </div>
 
       {/* Floating Inbox/Messages button — shifted specifically into GhostedMode per Zia's request */}

@@ -21,7 +21,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Ghost, MessageCircle, Navigation, Heart, Shield, Share2, BadgeCheck, X, ChevronLeft, MapPin, Clock, Car } from 'lucide-react';
+import { Ghost, MessageCircle, Navigation, Heart, Shield, Share2, BadgeCheck, MapPin, Clock, Car } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSheet } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
@@ -482,15 +482,6 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
             </span>
           </div>
         )}
-
-        {/* Back button */}
-        <button
-          onClick={closeSheet}
-          className="absolute top-4 left-4 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center active:scale-95 transition-transform"
-          aria-label="Close"
-        >
-          <ChevronLeft className="w-5 h-5 text-white" />
-        </button>
 
         {/* Online dot */}
         {profile.is_online && (
