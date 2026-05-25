@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
+import { useSheet } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
 import PageShell from '@/components/shell/PageShell';
 
@@ -18,6 +19,7 @@ const money = (amount, currency) => {
 
 export default function ShopCart() {
   const { cart, isLoading, lastError, updateLineQuantity, removeLine, applyDiscountCode } = useShopCart();
+  const { openSheet } = useSheet();
   const [code, setCode] = useState('');
 
   const lines = cart?.lines?.nodes || [];
@@ -37,7 +39,21 @@ export default function ShopCart() {
     }
   };
 
-  // Checkout happens via the branded handoff page.
+  // Checkout consolidated onto the Stripe embedded sheet (server-side priced).
+  const handleCheckout = () => {
+    if (!lines.length) return;
+    openSheet('checkout', {
+      cartItems: lines.map((line) => ({
+        id: line.id,
+        variantId: line.merchandise?.id,
+        title: line.merchandise?.product?.title || line.merchandise?.title || 'Item',
+        price: parseFloat(line.merchandise?.price?.amount || '0'),
+        qty: line.quantity,
+        source: 'shopify',
+      })),
+      total: parseFloat(cart?.cost?.totalAmount?.amount || cart?.cost?.subtotalAmount?.amount || '0'),
+    });
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -153,12 +169,12 @@ export default function ShopCart() {
 
             <Button
               disabled={isLoading || lines.length === 0}
-              asChild
               variant="cyan"
               size="xl"
               className="w-full font-black uppercase"
+              onClick={handleCheckout}
             >
-              <Link to="/checkout/start">Checkout</Link>
+              Checkout
             </Button>
           </div>
         )}
