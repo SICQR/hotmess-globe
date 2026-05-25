@@ -1,5 +1,7 @@
 # Globe Component Contracts
 
+> **⚠️ RESTATE / CANONICAL CODE:** The shipped Globe is **single-engine Mapbox** (globe-projection, 2026-05-25). Canonical code: `src/pages/Globe.jsx`, `src/components/globe/PulseMap.jsx`, `src/components/globe/PulseSearch.jsx`, `src/lib/globe/mapbox/mapboxLayerStack.js`. The react-globe.gl path (`EnhancedGlobe3D`, `beaconBloom`) was **removed**. Where this doc and the code disagree, the code wins.
+
 Purpose: define the architectural boundaries, responsibilities, inputs, outputs, and interaction contracts for all major Globe rendering systems.
 
 This document exists to prevent:

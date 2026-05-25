@@ -1,5 +1,7 @@
 # Globe Documentation Train
 
+> **⚠️ RESTATE:** Reading order is guidance only. Single-engine Mapbox is the shipped Globe (2026-05-25); the react-globe path is retired. For current behaviour, read the code (`src/pages/Globe.jsx`, `src/components/globe/PulseMap.jsx`) over any doc in this train.
+
 Purpose: make the Globe work actionable. This is the reading order, ownership map, and build sequence for HOTMESS Globe refinement.
 
 This doc exists because the Globe has moved beyond a single feature brief. It now has product, data, visual, density, privacy, safety, monetisation, and implementation concerns that must not be mixed together.

@@ -804,7 +804,10 @@ export default function L2ProfileSheet({ email, uid, id }) {
   const name = profileUser.username || profileUser.profileName || profileUser.display_name || 'Anonymous';
   const avatarUrl = profileUser.avatar_url || profileUser.photos?.[0];
   const isTravel = profileUser.persona === 'TRAVEL' || profileUser.persona === 'travel';
-  const visitingCity = profileUser.city || profileUser.visiting_city;
+  const _rawCity = profileUser.city || profileUser.visiting_city;
+  // Guard: a profile's city field can hold raw PostGIS WKB (geography hex) — never
+  // surface it. Hide the field entirely when it isn't a human-readable place.
+  const visitingCity = (_rawCity && !/^[0-9A-Fa-f]{20,}$/.test(String(_rawCity).trim())) ? _rawCity : null;
   const distance = profileUser.distance_km || profileUser.distance;
   const etaMin = profileUser.eta_min || (distance ? Math.ceil(distance * 1.2) : null);
   const isVerified = profileUser.is_verified;
@@ -1519,4 +1522,3 @@ export default function L2ProfileSheet({ email, uid, id }) {
     </div>
   );
 }
-

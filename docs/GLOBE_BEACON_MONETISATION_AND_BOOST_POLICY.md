@@ -1,5 +1,22 @@
 # Globe Beacon Monetisation And Boost Policy
 
+> **⚠️ RESTATE / SOURCE OF TRUTH:** This is policy. The shipped boost products + prices are canonical in the `user_boost_types` table (Supabase) — see *Live boost catalogue* below. If this doc and the table disagree, the table wins.
+
+## Live boost catalogue (canonical: `user_boost_types`)
+
+> Source of truth is the **`user_boost_types`** table (Supabase `rfoftonnlwudilafhfkl`). Snapshot 2026-05-25 — if this table and the prose below ever disagree, **the table wins**. `price_pence` is pence; `duration_hours` null = one-shot.
+
+| key | Label | What it does | Price | Duration |
+|---|---|---|---|---|
+| `globe_glow` | Globe Glow | Presence dot pulses gold on the Globe | £2.99 | 24h |
+| `profile_bump` | Profile Bump | Jump to top of the Ghosted grid in your area | £1.99 | 3h |
+| `vibe_blast` | Vibe Blast | Send your tonight-intention to all connections at once | £2.49 | one-shot |
+| `incognito_week` | Incognito Mode | Browse Ghosted without appearing in anyone's grid | £4.99 | 7 days |
+| `extra_beacon_drop` | Extra Beacon Drop | One additional beacon drop beyond your monthly limit | £3.99 | one-shot |
+| `highlighted_message` | Highlighted Message | Your first message stands out in the recipient's inbox | £1.49 | one-shot |
+
+All six obey the non-negotiables above (no safety override, no privacy bypass, no giant markers, no pay-to-win). The abstract boost categories below (Discovery / District / Time / Momentum) describe the *policy envelope* these concrete products live inside.
+
 Purpose: define how beacon boosts, paid visibility, vendor offerings, sponsored placement, subscriptions, and partner monetisation work without turning the Globe into an ad board, game layer, or pay-to-win map.
 
 This policy is grounded in the existing Globe docs:
