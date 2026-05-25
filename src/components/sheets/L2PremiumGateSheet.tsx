@@ -12,7 +12,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Crown, Grid3x3, Music, Users, Sparkles, Check, X } from 'lucide-react';
+import { Crown, Grid3x3, Music, Users, Sparkles, Check } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
 
@@ -111,15 +111,6 @@ export default function L2PremiumGateSheet({ origin }: L2PremiumGateSheetProps) 
 
   return (
     <div className="flex flex-col h-full" style={{ background: '#050507' }}>
-      {/* Close button */}
-      <button
-        onClick={closeSheet}
-        className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-white/10 z-10"
-        aria-label="Close"
-      >
-        <X className="w-5 h-5 text-white/60" />
-      </button>
-
       <div className="flex-1 overflow-y-auto px-6 pt-10 pb-32">
         {/* Hero */}
         <motion.div

@@ -7,10 +7,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  MapPin, Navigation, Car, Bike, Footprints, Clock, X,
-  ExternalLink, Send, Check, ChevronRight,
-} from 'lucide-react';
+import { MapPin, Navigation, Car, Bike, Footprints, Clock, ExternalLink, Send, Check, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/components/utils/supabaseClient';
 import { haversineKm, estimateTravel } from '@/lib/locationParser';
@@ -170,12 +167,6 @@ export default function L2RouteSheet({ destination, chatThreadId, recipientUserI
         {/* Handle + close */}
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
           <div className="w-10 h-1 rounded-full bg-white/20" />
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center active:bg-white/20"
-          >
-            <X className="w-4 h-4 text-white/50" />
-          </button>
         </div>
 
         {/* Destination */}

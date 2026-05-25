@@ -643,13 +643,14 @@ export default function MusicTab() {
   }
 
   return (
-    <div
-      ref={scrollRef}
-      className="h-full w-full overflow-y-auto overscroll-contain"
-      style={{ backgroundColor: BG }}
-      {...pullHandlers}
-    >
-      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
+    <div className="h-full w-full flex flex-col overflow-hidden" style={{ backgroundColor: BG }}>
+      {/* Scrollable content region — mirrors Home/Ghosted flex-col scroll wrapper */}
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto overscroll-contain"
+        {...pullHandlers}
+      >
+        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
 
       {/* ═══════════════════════════════════════════════════════════════════════
           0. CONTINUE LISTENING — unfinished previews
@@ -897,6 +898,7 @@ export default function MusicTab() {
           />
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 }
