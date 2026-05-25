@@ -614,7 +614,7 @@ export default function MorePage() {
     { icon: Eye, label: 'Privacy', onTap: () => navigate('/settings') },
     { icon: Bell, label: 'Notifications', onTap: () => openSheet('notification-inbox') },
     { icon: Lock, label: 'Blocked', onTap: () => openSheet('blocked') },
-    { icon: HelpCircle, label: 'Help', onTap: () => navigate('/HelpCenter') },
+    { icon: HelpCircle, label: 'Help', onTap: () => openSheet('help') },
     { icon: Settings, label: 'Settings', onTap: () => navigate('/settings') },
   ], [navigate, openSheet]);
 
