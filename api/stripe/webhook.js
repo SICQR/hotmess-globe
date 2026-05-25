@@ -55,10 +55,25 @@ async function createShopifyOrder(session) {
     })
     .filter(item => !isNaN(item.variant_id));
 
-  console.log(`[Shopify] Detected ${shopifyItems.length} Shopify-ready items.`);
+  const intendedShopifyCount = order.items.filter(item => item.variantId || item.source === 'shopify').length;
+  console.log(`[Shopify] Detected ${shopifyItems.length}/${intendedShopifyCount} Shopify-ready items.`);
+
+  // P0: never silently drop a PAID order. If items were meant for Shopify but have no
+  // resolvable variant ID, flag the order for manual fulfillment and log loudly so it
+  // surfaces instead of vanishing.
+  if (shopifyItems.length < intendedShopifyCount) {
+    console.error(`[Shopify] PAID order ${orderId}: ${intendedShopifyCount - shopifyItems.length} Shopify item(s) have NO resolvable variant ID — flagging for manual fulfillment.`);
+    try {
+      await supabase.from('orders').update({ fulfillment_status: 'manual_required' }).eq('id', orderId);
+    } catch (e) {
+      console.error('[Shopify] Failed to flag order for manual fulfillment:', orderId, e?.message);
+    }
+  }
 
   if (shopifyItems.length === 0) {
-    console.log('[Shopify] No items found with valid Shopify Variant IDs. Skipping mirroring.');
+    // Nothing auto-mirrorable. If it was a Shopify order it's now flagged above; if it
+    // was a non-merch order (e.g. preloved only) there is simply nothing to mirror.
+    if (intendedShopifyCount === 0) console.log(`[Shopify] Order ${orderId} has no Shopify items; nothing to mirror.`);
     return;
   }
 

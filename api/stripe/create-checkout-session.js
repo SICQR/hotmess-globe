@@ -14,6 +14,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
+// P0: server-side Shopify price lookup — checkout prices must never be trusted from
+// the client. Shopify variant prices are fetched from the Storefront API here.
+import { getStorefrontConfig, storefrontFetch } from '../shopify/_storefront.js';
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' }) : null;
@@ -170,45 +173,68 @@ export default async function handler(req, res) {
 
   // ── Preloved or Shopify order checkout ──────────────────────────────────────────────
   if (type === 'preloved_order' || type === 'shopify_order') {
-    const { listing_id, price_gbp, title, order_id, items: lineItems } = body;
-    
-    // items from frontend (optional but preferred for multi-item carts)
-    const normalizedLines = lineItems?.length > 0 
-      ? lineItems.map((i, idx) => {
-          const rawPrice = i.price || (idx === 0 ? price_gbp : 0);
-          const unit_amount = Math.round(Number(rawPrice || 0) * 100);
-          
-          if (!unit_amount || unit_amount <= 0) {
-            throw new Error(`Item "${i.title || 'Unknown'}" has an invalid price: ${rawPrice}`);
-          }
+    // SECURITY (P0): NEVER trust client-supplied prices. Every line price is derived
+    // server-side — preloved from market_listings (our DB), shopify from the Shopify
+    // Storefront API by variant id. The request's price_gbp / items[].price are ignored
+    // entirely, so a tampered request cannot change what the customer is charged.
+    const { listing_id, order_id, items: lineItems } = body;
+    const itemsIn = Array.isArray(lineItems) ? lineItems : [];
 
+    let normalizedLines = [];
+    try {
+      if (type === 'preloved_order') {
+        const ids = (itemsIn.length ? itemsIn.map((i) => i.listing_id || i.id) : [listing_id]).filter(Boolean);
+        if (!ids.length) { res.statusCode = 400; return res.end(JSON.stringify({ error: 'No listing specified' })); }
+        const { data: listings, error: lErr } = await supabase
+          .from('market_listings').select('id, title, price, status').in('id', ids);
+        if (lErr || !listings || !listings.length) { res.statusCode = 404; return res.end(JSON.stringify({ error: 'Listing(s) not found' })); }
+        const byId = new Map(listings.map((l) => [String(l.id), l]));
+        normalizedLines = ids.map((id) => {
+          const l = byId.get(String(id));
+          if (!l) throw new Error(`Listing not found: ${id}`);
+          const st = String(l.status || '').toLowerCase();
+          if (st && !['active', 'approved', 'available', 'live', 'published'].includes(st)) throw new Error(`Listing not available: ${id}`);
+          const pence = Math.round(Number(l.price) * 100);
+          if (!pence || pence <= 0) throw new Error(`Listing has no valid price: ${id}`);
+          const want = itemsIn.find((i) => String(i.listing_id || i.id) === String(id));
           return {
-            price_data: {
-              currency: 'gbp',
-              unit_amount,
-              product_data: {
-                name: i.title || 'Item',
-                description: type === 'shopify_order' ? 'HOTMESS Merch' : 'Preloved item',
-              },
-            },
-            quantity: i.qty || 1,
+            price_data: { currency: 'gbp', unit_amount: pence, product_data: { name: l.title || 'Preloved item', description: 'Preloved item from HOTMESS Market' } },
+            quantity: Math.max(1, Number(want?.qty) || 1),
           };
-        })
-      : [
-          {
-            price_data: {
-              currency: 'gbp',
-              unit_amount: Math.round(Number(price_gbp || 0) * 100),
-              product_data: {
-                name: title || (type === 'shopify_order' ? 'Merch Order' : 'Preloved Item'),
-                description: type === 'shopify_order' ? 'HOTMESS Merch' : 'Preloved item from HOTMESS Market',
-              },
-            },
-            quantity: 1,
-          },
-        ];
+        });
+      } else {
+        // shopify_order — price strictly from Shopify, by variant id.
+        const sf = getStorefrontConfig();
+        if (!sf.shopDomain || !sf.token) { res.statusCode = 503; return res.end(JSON.stringify({ error: 'Shopify Storefront not configured' })); }
+        const toGid = (raw) => { const n = String(raw || '').split('/').pop(); return n ? `gid://shopify/ProductVariant/${n}` : null; };
+        const wanted = itemsIn
+          .map((i) => ({ gid: toGid(i.variantId || i.variant_id || i.shopify_variant_id || i.merchandiseId), qty: Math.max(1, Number(i.qty) || 1) }))
+          .filter((x) => x.gid);
+        if (!wanted.length) { res.statusCode = 400; return res.end(JSON.stringify({ error: 'Shopify order requires variant IDs' })); }
+        const gql = `query VariantPrices($ids:[ID!]!){ nodes(ids:$ids){ ... on ProductVariant { id title price { amount currencyCode } product { title } } } }`;
+        const payload = await storefrontFetch({ shopDomain: sf.shopDomain, token: sf.token, apiVersion: sf.apiVersion, query: gql, variables: { ids: wanted.map((w) => w.gid) } });
+        const nodes = (payload && payload.data && payload.data.nodes ? payload.data.nodes : []).filter(Boolean);
+        const byGid = new Map(nodes.map((n) => [n.id, n]));
+        normalizedLines = wanted.map(({ gid, qty }) => {
+          const n = byGid.get(gid);
+          if (!n) throw new Error(`Shopify variant not found: ${gid}`);
+          const cur = String(n.price?.currencyCode || 'GBP').toUpperCase();
+          if (cur !== 'GBP') throw new Error(`Unexpected currency ${cur} for ${gid}`);
+          const pence = Math.round(Number(n.price?.amount) * 100);
+          if (!pence || pence <= 0) throw new Error(`Shopify variant has no price: ${gid}`);
+          return {
+            price_data: { currency: 'gbp', unit_amount: pence, product_data: { name: [n.product?.title, n.title].filter(Boolean).join(' — ') || 'HOTMESS Merch', description: 'HOTMESS Merch' } },
+            quantity: qty,
+          };
+        });
+      }
+    } catch (e) {
+      console.error(`[${type}-checkout] server-side price derivation failed:`, e?.message);
+      res.statusCode = 400;
+      return res.end(JSON.stringify({ error: 'Could not price your order', detail: e?.message }));
+    }
 
-    if (!normalizedLines[0].price_data.unit_amount || normalizedLines[0].price_data.unit_amount <= 0) {
+    if (!normalizedLines.length || !normalizedLines[0].price_data.unit_amount || normalizedLines[0].price_data.unit_amount <= 0) {
       res.statusCode = 400;
       return res.end(JSON.stringify({ error: 'Checkout total cannot be zero.' }));
     }
