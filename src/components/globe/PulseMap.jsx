@@ -119,6 +119,31 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
           setStatus('ready');
           try { if (onReadyRef.current) onReadyRef.current(); } catch (e) { /* non-fatal */ }
 
+          // Blue-marble: real satellite imagery at globe scale (the hero "Earth from
+          // space" look) faded out by city zoom so street level stays the dark vector
+          // map. Inserted beneath the label symbols (which stay readable) — the beacon
+          // layers are added next with no beforeId, so blooms sit on top of everything.
+          try {
+            if (!map.getSource('hm-satellite')) {
+              map.addSource('hm-satellite', { type: 'raster', url: 'mapbox://mapbox.satellite', tileSize: 256 });
+            }
+            if (!map.getLayer('hm-satellite')) {
+              let firstSymbol;
+              const layers = (map.getStyle() && map.getStyle().layers) || [];
+              for (const l of layers) { if (l.type === 'symbol') { firstSymbol = l.id; break; } }
+              map.addLayer({
+                id: 'hm-satellite',
+                type: 'raster',
+                source: 'hm-satellite',
+                paint: {
+                  // full marble when pulled back → gone by the time streets matter
+                  'raster-opacity': ['interpolate', ['linear'], ['zoom'], 2, 0.92, 4, 0.85, 5.5, 0.5, 7, 0],
+                  'raster-fade-duration': 300,
+                },
+              }, firstSymbol);
+            }
+          } catch (e) { /* non-fatal: dark vector base still renders */ }
+
           // Beacon layer stack (clusters glow at macro, blooms at micro). Lower
           // clusterMaxZoom than the legacy local-only map so individuals separate
           // by street zoom on the single-engine globe.
