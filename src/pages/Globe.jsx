@@ -30,6 +30,8 @@ import BeaconDropModal from '../components/globe/BeaconDropModal';
 import { MapPin, X } from 'lucide-react';
 
 import LocalMapboxView from '../components/globe/LocalMapboxView';
+import PulseMap from '../components/globe/PulseMap';
+import PulseSearch from '../components/globe/PulseSearch';
 import BeaconA11yList from '../components/globe/BeaconA11yList';
 import DistrictEditorialCard from '../components/editorial/DistrictEditorialCard';
 import CareDecompressionCue from '../components/editorial/CareDecompressionCue';
@@ -183,6 +185,7 @@ export default function GlobePage({ embedded = false }) {
   const [previewBeacon, setPreviewBeacon] = useState(null);
   const [locationShopBeacon, setLocationShopBeacon] = useState(null);
   const autoZoomedRef = React.useRef(false);
+  const pulseApiRef = React.useRef(null); // imperative camera api from PulseMap (single-engine)
 
   const { recovery, allPlaces: pulsePlaces } = usePulsePlacesByType();
   const { intensityMap: venueIntensity } = useVenueIntensity();
@@ -320,6 +323,15 @@ export default function GlobePage({ embedded = false }) {
     return filtered;
   }, [realtimeBeacons, activeMode, beaconType, minIntensity, recencyFilter, searchResults, radiusSearch, nearbyPeoplePins, showPeoplePins, realtimeLocations, activeLayer]);
 
+  // Single-engine map feed: live beacons + persistent places (venues/recovery) so
+  // there's real density to cluster (the macro "city glow") and individual blooms
+  // at street zoom. Privacy + category mapping happens in the layer stack.
+  const mapSignals = useMemo(() => {
+    const bs = Array.isArray(filteredBeacons) ? filteredBeacons : [];
+    const places = Array.isArray(pulsePlaces) ? pulsePlaces : [];
+    return [...bs, ...places];
+  }, [filteredBeacons, pulsePlaces]);
+
   const handleBeaconClick = useCallback((beacon) => {
     if (!beacon || beacon.isCluster) return;
     setFocusedBeaconId(beacon.id);
@@ -403,6 +415,14 @@ export default function GlobePage({ embedded = false }) {
               (unmount-on-open → 40s+ load via teardown-during-init; unmount-after-load
               → map flickers then the globe reappears). Dual-engine mounted is the
               proven-clean state — accept the modest extra memory for reliability. */}
+          {localModeEnabled ? (
+          <PulseMap
+            beacons={mapSignals}
+            userLocation={userLocation}
+            onBeaconClick={handleBeaconClick}
+            onMapApi={(api) => { pulseApiRef.current = api; }}
+          />
+          ) : (
           <EnhancedGlobe3D
             ref={globeRef}
             beacons={mergeFoundingIntoBeacons(filteredBeacons, founding.foundingBeacons)}
@@ -445,6 +465,7 @@ export default function GlobePage({ embedded = false }) {
             className="w-full h-full"
             autoRotate={false}
           />
+          )}
         </div>
 
         <div className="absolute top-16 left-0 right-0 z-20 pointer-events-none text-center">
@@ -504,7 +525,14 @@ export default function GlobePage({ embedded = false }) {
         )}
 
         <div key="beacon-fab" className="absolute bottom-[calc(76px+env(safe-area-inset-bottom,0px))] right-6 z-[70]" data-pull-refresh-ignore>
-          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setShowBeaconModal(true)} className="w-16 h-16 bg-[#C8962C] rounded-2xl flex items-center justify-center shadow-[0_15px_35px_-12px_rgba(200,150,44,0.6)] border border-white/30 overflow-hidden group backdrop-blur-md">
+          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => {
+            // Single-engine: drop where the user is looking (map centre); else GPS.
+            if (localModeEnabled && pulseApiRef.current && pulseApiRef.current.getCenter) {
+              const c = pulseApiRef.current.getCenter();
+              if (c) setBeaconDropLocation(c);
+            }
+            setShowBeaconModal(true);
+          }} className="w-16 h-16 bg-[#C8962C] rounded-2xl flex items-center justify-center shadow-[0_15px_35px_-12px_rgba(200,150,44,0.6)] border border-white/30 overflow-hidden group backdrop-blur-md">
             <div className="absolute inset-0 bg-gradient-to-tr from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <MapPin className="w-7 h-7 text-black" />
           </motion.button>
@@ -523,12 +551,17 @@ export default function GlobePage({ embedded = false }) {
 
         {localModeEnabled && (
           <div className="absolute top-[calc(118px+env(safe-area-inset-top,0px))] right-4 z-30 pointer-events-none">
-            <button onClick={() => { const name = (selectedCity && selectedCity.name) || 'London'; const c = CITY_COORDS[name] || CITY_COORDS['London']; setLocalFocus({ ...c, name, slug: name.toLowerCase().replace(/\s+/g, '-') }); }} className="p-3 bg-black/60 border border-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-black transition-all pointer-events-auto shadow-lg" title="Local map" data-pull-refresh-ignore>
+            <button onClick={() => { if (pulseApiRef.current && pulseApiRef.current.toggleLocal) pulseApiRef.current.toggleLocal(); }} className="p-3 bg-black/60 border border-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-black transition-all pointer-events-auto shadow-lg" title="Dive to local / back to globe" data-pull-refresh-ignore>
               <MapPin className="w-5 h-5" />
             </button>
           </div>
         )}
-        {localFocus && (
+        {/* Search city / area / postcode → fly the map there. Single-engine only. */}
+        {localModeEnabled && (
+          <PulseSearch onSelect={(loc) => { if (pulseApiRef.current && pulseApiRef.current.flyTo) pulseApiRef.current.flyTo(loc); }} />
+        )}
+        {/* Legacy globe→local overlay: only the old react-globe path can set localFocus. */}
+        {!localModeEnabled && localFocus && (
           <LocalMapboxView focus={localFocus} beacons={filteredBeacons} onClose={() => setLocalFocus(null)} onDropBeacon={(c) => { setBeaconDropLocation(c); setShowBeaconModal(true); }} />
         )}
         {localFocus && <DistrictEditorialCard citySlug={localFocus.slug} />}
@@ -537,7 +570,7 @@ export default function GlobePage({ embedded = false }) {
             EXACT beacon set the globe blooms from — incl. founding anchors — so keyboard
             users can reach every bloom a mouse user can. */}
         {localModeEnabled && (
-          <BeaconA11yList beacons={mergeFoundingIntoBeacons(filteredBeacons, founding.foundingBeacons)} viewerLocation={userLocation} onSelect={handleBeaconClick} />
+          <BeaconA11yList beacons={mapSignals} viewerLocation={userLocation} onSelect={handleBeaconClick} />
         )}
         <LayersSheet key="layers-sheet" open={showLayersSheet} onClose={() => setShowLayersSheet(false)} activeLayer={activeLayer} setActiveLayer={setActiveLayer} />
       </div>
