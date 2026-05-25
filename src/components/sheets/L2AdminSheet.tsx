@@ -24,25 +24,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import {
-  X,
-  Shield,
-  AlertTriangle,
-  Radio,
-  Activity,
-  Store,
-  Send,
-  RefreshCw,
-  CheckCircle,
-  Eye,
-  Lock,
-  MapPin,
-  ShoppingBag,
-  Clock,
-  CheckCircle2,
-  Truck,
-  Package,
-} from 'lucide-react';
+import { Shield, AlertTriangle, Radio, Activity, Store, Send, RefreshCw, CheckCircle, Eye, Lock, MapPin, ShoppingBag, Clock, CheckCircle2, Truck, Package } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useBootGuard } from '@/contexts/BootGuardContext';
 import { supabase } from '@/components/utils/supabaseClient';
@@ -153,13 +135,6 @@ export default function L2AdminSheet() {
             <p className="text-[10px] text-[#8E8E93] uppercase font-semibold">Admin Dashboard</p>
           </div>
         </div>
-        <button
-          onClick={closeSheet}
-          aria-label="Close admin panel"
-          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors focus:ring-2 focus:ring-[#C8962C]"
-        >
-          <X className="w-5 h-5 text-[#8E8E93]" />
-        </button>
       </div>
 
       {/* ---- Tab row ---- */}

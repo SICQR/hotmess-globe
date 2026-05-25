@@ -81,14 +81,6 @@ export default function L2CityPickerSheet() {
             Change City
           </h2>
         </div>
-        <button
-          onClick={closeSheet}
-          className="w-8 h-8 flex items-center justify-center rounded-full"
-          style={{ background: 'rgba(255,255,255,0.06)' }}
-          aria-label="Close"
-        >
-          <X className="w-4 h-4 text-white/60" />
-        </button>
       </div>
 
       {/* Search */}

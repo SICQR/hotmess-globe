@@ -9,7 +9,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Video, Shield, X, User, CheckCircle } from 'lucide-react';
+import { Video, Shield, User, CheckCircle } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 import VideoCallRoom from './VideoCallRoom';
@@ -93,13 +93,6 @@ export default function VideoCallModal({
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           className="w-full max-w-sm bg-[#1C1C1E] rounded-2xl p-6"
         >
-          {/* Close */}
-          <div className="flex justify-end mb-2">
-            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 text-white/60">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
           {/* Person */}
           <div className="flex flex-col items-center mb-6">
             <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center mb-3 border-2 border-[#C8962C]/40">
