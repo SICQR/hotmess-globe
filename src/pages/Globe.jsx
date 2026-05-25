@@ -468,6 +468,7 @@ export default function GlobePage({ embedded = false }) {
             userLocation={userLocation}
             onBeaconClick={handleBeaconClick}
             onMapApi={(api) => { pulseApiRef.current = api; }}
+            onLocalFocus={(focus) => setLocalFocus(focus)}
           />
         </div>
 
@@ -566,10 +567,12 @@ export default function GlobePage({ embedded = false }) {
         />
 
         {/* Search now lives in the top nav (TopHUD) → drives the map via window event. */}
-        {/* Legacy globe→local overlay: only the old react-globe path can set localFocus. */}
+        {/* Legacy globe→local overlay (react-globe path only; dead while single-engine). */}
         {!localModeEnabled && localFocus && (
           <LocalMapboxView focus={localFocus} beacons={filteredBeacons} onClose={() => setLocalFocus(null)} onDropBeacon={(c) => { setBeaconDropLocation(c); setShowBeaconModal(true); }} />
         )}
+        {/* District editorial + care surfaces. In single-engine mode localFocus is set
+            by PulseMap (onLocalFocus) when the camera dives into an editorial city. */}
         {localFocus && <DistrictEditorialCard citySlug={localFocus.slug} />}
         {localFocus && <CareDecompressionCue />}
         {/* Keyboard / screen-reader parity for the bloom sprites (sr-only). Mirror the
