@@ -533,9 +533,11 @@ export default function GlobePage({ embedded = false }) {
         )}
         {localFocus && <DistrictEditorialCard citySlug={localFocus.slug} />}
         {localFocus && <CareDecompressionCue />}
-        {/* Keyboard / screen-reader parity for the bloom sprites (sr-only). */}
+        {/* Keyboard / screen-reader parity for the bloom sprites (sr-only). Mirror the
+            EXACT beacon set the globe blooms from — incl. founding anchors — so keyboard
+            users can reach every bloom a mouse user can. */}
         {localModeEnabled && (
-          <BeaconA11yList beacons={filteredBeacons} viewerLocation={userLocation} onSelect={handleBeaconClick} />
+          <BeaconA11yList beacons={mergeFoundingIntoBeacons(filteredBeacons, founding.foundingBeacons)} viewerLocation={userLocation} onSelect={handleBeaconClick} />
         )}
         <LayersSheet key="layers-sheet" open={showLayersSheet} onClose={() => setShowLayersSheet(false)} activeLayer={activeLayer} setActiveLayer={setActiveLayer} />
       </div>
