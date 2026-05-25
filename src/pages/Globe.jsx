@@ -131,7 +131,10 @@ export default function GlobePage({ embedded = false }) {
   const { openSheet } = useSheet();
   const [showLayersSheet, setShowLayersSheet] = useState(false);
   const [localFocus, setLocalFocus] = useState(null);
-  const localModeEnabled = ((import.meta && import.meta.env && import.meta.env.VITE_LOCAL_MODE_ENABLED) === 'true') || (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('localmode'));
+  // Flag flipped 2026-05-25: the single-engine Mapbox globe is now the default for
+  // everyone. The react-globe path is being removed in the cleanup PR; this constant
+  // stays only so the existing localModeEnabled gates resolve true until that lands.
+  const localModeEnabled = true;
   const [showBeaconModal, setShowBeaconModal] = useState(false);
   const [beaconDropLocation, setBeaconDropLocation] = useState(null); // local-map drop point (null = use GPS)
 
