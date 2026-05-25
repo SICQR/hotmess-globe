@@ -164,9 +164,6 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
               <h2 id="new-message-title" className="text-2xl font-black uppercase tracking-tighter">NEW MESSAGE</h2>
               <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono">START A CONVERSATION</p>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="text-white/60 hover:text-white">
-              <X className="w-6 h-6" />
-            </Button>
           </div>
 
           {/* Tabs */}
