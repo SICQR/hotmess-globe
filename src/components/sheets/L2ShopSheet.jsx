@@ -42,6 +42,26 @@ const getProductImages = (p) => {
   return Array.from(new Set(all));
 };
 
+// Inline SVG placeholder shown when a product image fails to load.
+const IMG_FALLBACK =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">' +
+    '<rect width="200" height="200" fill="#0A0A0B"/>' +
+    '<rect x="70" y="78" width="60" height="44" rx="6" fill="none" stroke="#2a2a2e" stroke-width="3"/>' +
+    '<circle cx="100" cy="100" r="9" fill="none" stroke="#2a2a2e" stroke-width="3"/>' +
+    '</svg>'
+  );
+
+// Swap a broken product image to the placeholder once (avoid infinite onError loops).
+const handleImgError = (e) => {
+  const el = e.currentTarget;
+  if (el.dataset.fallbackApplied) return;
+  el.dataset.fallbackApplied = '1';
+  el.src = IMG_FALLBACK;
+  el.classList.add('opacity-40');
+};
+
 /**
  * Image Gallery — Stacked for clarity (User request: simpler, no swiping)
  */
@@ -56,7 +76,7 @@ function ImageGallery({ images = [], alt = 'Product' }) {
     <div className="space-y-4 max-w-[600px] mx-auto px-4 mt-6">
       {/* Primary Image */}
       <div className="aspect-[1/1] rounded-2xl overflow-hidden bg-black border border-white/5">
-        <img src={images[0]} alt={alt} className="w-full h-full object-contain" />
+        <img src={images[0]} alt={alt} className="w-full h-full object-contain" onError={handleImgError} />
       </div>
       
       {/* Secondary Grid */}
@@ -64,7 +84,7 @@ function ImageGallery({ images = [], alt = 'Product' }) {
         <div className="grid grid-cols-3 gap-3">
           {images.slice(1).map((url, i) => (
             <div key={i} className="aspect-square rounded-xl overflow-hidden bg-black border border-white/5">
-              <img src={url} alt={`${alt} ${i+2}`} className="w-full h-full object-cover" loading="lazy" />
+              <img src={url} alt={`${alt} ${i+2}`} className="w-full h-full object-cover" loading="lazy" onError={handleImgError} />
             </div>
           ))}
         </div>
@@ -153,7 +173,6 @@ export default function L2ShopSheet({ handle, product: initialPropProduct, selle
     const isInternal = activeProduct.id?.startsWith('internal_');
     const isPreloved = source === 'preloved' || activeProduct.seller_id;
     const images = getProductImages(activeProduct);
-    const price = getProductPrice(activeProduct);
 
     // Shopify Multi-Variant Logic
     const options = activeProduct.options || [];
@@ -168,6 +187,15 @@ export default function L2ShopSheet({ handle, product: initialPropProduct, selle
       });
     }) || variants[0];
 
+    // Price reflects the SELECTED variant when available (variant price can be a
+    // number or a Shopify { amount } shape), falling back to the product min price.
+    const variantPrice = selectedVariant?.price?.amount != null
+      ? parseFloat(selectedVariant.price.amount)
+      : (typeof selectedVariant?.price === 'number' ? selectedVariant.price : null);
+    const price = (variantPrice != null && !Number.isNaN(variantPrice))
+      ? variantPrice
+      : getProductPrice(activeProduct);
+
     const allOptionsSelected = options.every(opt => selections[opt.name]);
 
     const handleMessageSeller = () => {
@@ -175,8 +203,28 @@ export default function L2ShopSheet({ handle, product: initialPropProduct, selle
       openSheet('chat', { recipientId: activeProduct.seller_id });
     };
 
+    // Preloved Buy Now (existing behaviour for seller listings).
     const handleBuyNow = () => {
       openSheet('checkout', { id: activeProduct.id, total: price });
+    };
+
+    // Shopify "Buy now" — open the checkout sheet directly with just THIS item.
+    // Server re-prices at checkout; the price/variantId here are cosmetic/identity only.
+    const handleShopifyBuyNow = () => {
+      if (!allOptionsSelected && options.length > 0) {
+        toast.error('Please select all options');
+        return;
+      }
+      const vid = selectedVariant?.id || import.meta.env.VITE_SHOPIFY_LUBE_VARIANT_ID;
+      const item = {
+        id: activeProduct.id,
+        variantId: vid,
+        title: activeProduct.title,
+        price,
+        qty: 1,
+        source: 'shopify',
+      };
+      openSheet('checkout', { cartItems: [item], total: price });
     };
 
     const onAdd = async () => {
@@ -318,15 +366,25 @@ export default function L2ShopSheet({ handle, product: initialPropProduct, selle
                 </Button>
               </>
             ) : (
-              <Button
-                  disabled={addingToCart}
-                  onClick={onAdd}
-                  className={`w-full h-16 rounded-2xl font-black text-[14px] uppercase tracking-[0.25em] transition-all active:scale-[0.97] ${
-                      addedSuccess ? 'bg-green-600' : 'hm-gold-gradient text-black shadow-2xl shadow-amber-900/30'
-                  }`}
-              >
-                  {addingToCart ? <Loader2 className="animate-spin" /> : addedSuccess ? 'Added ✓ View Bag' : 'Add to Bag'}
-              </Button>
+              <>
+                <Button
+                    disabled={addingToCart}
+                    onClick={onAdd}
+                    variant="outline"
+                    className={`flex-1 h-16 rounded-2xl font-black text-[12px] uppercase tracking-[0.15em] transition-all active:scale-[0.97] ${
+                        addedSuccess ? 'bg-green-600 border-green-600 text-white' : 'border-white/15 text-white/80 hover:bg-white/5'
+                    }`}
+                >
+                    {addingToCart ? <Loader2 className="animate-spin" /> : addedSuccess ? 'Added ✓ View Bag' : 'Add to Bag'}
+                </Button>
+                <Button
+                    disabled={addingToCart}
+                    onClick={handleShopifyBuyNow}
+                    className="flex-[1.3] h-16 rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] transition-all active:scale-[0.97] hm-gold-gradient text-black shadow-2xl shadow-amber-900/30"
+                >
+                    Buy Now
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -359,7 +417,7 @@ export default function L2ShopSheet({ handle, product: initialPropProduct, selle
                         className="bg-black p-6 flex flex-col text-left group active:bg-white/[0.02] transition-colors"
                     >
                         <div className="aspect-[4/5] bg-white/[0.03] overflow-hidden rounded-2xl mb-6 shadow-2xl">
-                            <img src={img} alt={p.title} className="w-full h-full object-cover grayscale-[0.1] group-hover:grayscale-0 group-hover:scale-110 transition-all [transition-duration:1500ms]" />
+                            <img src={img} alt={p.title} className="w-full h-full object-cover grayscale-[0.1] group-hover:grayscale-0 group-hover:scale-110 transition-all [transition-duration:1500ms]" onError={handleImgError} />
                         </div>
                         <div className="mt-auto">
                             <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] mb-2 truncate">{p.vendor || 'HOTMESS'}</p>
