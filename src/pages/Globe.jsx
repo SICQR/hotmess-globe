@@ -504,7 +504,7 @@ export default function GlobePage({ embedded = false }) {
                 ? "You're online · the signal's quiet right now"
                 : onlineMemberCount >= 50
                 ? `${onlineMemberCount} online`
-                : `${onlineMemberCount} ${onlineMemberCount === 2 ? 'member' : 'members'} online`
+                : `${onlineMemberCount} members online`
             }</span>
           </div>
         </div>
