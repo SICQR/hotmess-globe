@@ -14,7 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
 import {
   MessageCircle, Shield, Plane, MapPin,
-  Loader2, MoreVertical, Flag, Ban, X, ChevronLeft, Ghost,
+  Loader2, MoreVertical, Flag, Ban, X, Ghost,
   Footprints, Bike, Car, Heart, Video, ShoppingBag, Music,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -910,14 +910,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
           style={{ background: 'linear-gradient(to top, #050507 0%, transparent 100%)' }}
         />
 
-        {/* Back button */}
-        <button
-          onClick={closeSheet}
-          className="absolute top-4 left-4 w-9 h-9 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm active:bg-black/70 z-20"
-          style={{ marginTop: 'env(safe-area-inset-top, 0px)' }}
-        >
-          <ChevronLeft className="w-5 h-5 text-white" />
-        </button>
+        {/* Top-left back chevron removed — drag handle / swipe / backdrop tap is the dismissal. */}
 
         {/* Top-right action: only More (report/block). Share is killed
             entirely — Phil exec review: profile sharing contradicts the

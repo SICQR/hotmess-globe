@@ -26,7 +26,7 @@
 
 import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Navigation, Info, Loader2 } from 'lucide-react';
+import { Navigation, Info, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSheet } from '@/contexts/SheetContext';
 import { useMovementSession, type MovementVisibility, type ShareUntil } from '@/hooks/useMovementSession';
@@ -112,13 +112,7 @@ export default function L2MovementShareSheet({
     <div className="h-full flex flex-col" style={{ background: '#0D0D0D' }}>
       {/* Header */}
       <div className="h-14 px-4 flex items-center gap-3 border-b border-white/5 flex-shrink-0">
-        <button
-          onClick={closeSheet}
-          className="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition-transform"
-          aria-label="Close"
-        >
-          <ChevronLeft className="w-5 h-5 text-white/60" />
-        </button>
+        {/* Dismiss via drag handle / swipe / backdrop tap — no redundant back chevron. */}
         <div className="flex items-center gap-2">
           <Navigation className="w-4 h-4" style={{ color: AMBER }} />
           <h1 className="text-lg font-bold text-white">Share Movement</h1>

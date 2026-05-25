@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { usePersona, PERSONA_TYPES } from '@/contexts/PersonaContext';
 import { useSheet } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
@@ -76,14 +76,8 @@ export default function L2CreatePersonaSheet({ onClose }) {
         <div className="w-10 h-1 rounded-full bg-white/20" />
       </div>
 
-      {/* Header */}
+      {/* Header — dismiss via drag handle / swipe; no redundant back arrow. */}
       <div className="flex items-center gap-3 px-5 py-3">
-        <button
-          onClick={handleClose}
-          className="w-8 h-8 rounded-full bg-white/8 flex items-center justify-center"
-        >
-          <ArrowLeft className="w-4 h-4 text-white/60" />
-        </button>
         <div>
           <p className="text-[10px] uppercase tracking-widest text-white/40 font-mono">New Persona</p>
           <p className="text-white font-black text-base leading-tight">Choose a type</p>
