@@ -13,7 +13,7 @@ import {
 import { activityTracker } from '../components/globe/ActivityTracker';
 import BeaconPreviewPanel from '../components/globe/BeaconPreviewPanel';
 import CityDataOverlay from '../components/globe/CityDataOverlay';
-import { Layers } from 'lucide-react';
+import { Layers, Globe2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import ErrorBoundary from '../components/error/ErrorBoundary';
@@ -103,6 +103,24 @@ function LayersSheet({ open, onClose, activeLayer, setActiveLayer }) {
       </div>
       <button onClick={onClose} className="w-full mt-4 py-3 bg-white/5 rounded-xl text-white/50 text-sm">Done</button>
     </motion.div>
+  );
+}
+
+// Right-rail control: icons-only by default, label slides out on hover. Used for
+// the grouped vertical rail (Layers / My area / Globe) below the pinned SOS.
+function RailButton({ icon: Icon, label, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      data-pull-refresh-ignore
+      className="group pointer-events-auto flex items-center justify-end gap-0 hover:gap-2 h-11 px-3 bg-black/60 border border-white/20 backdrop-blur-md rounded-full text-white shadow-lg overflow-hidden transition-all hover:bg-white hover:text-black"
+    >
+      <span className="max-w-0 group-hover:max-w-[120px] overflow-hidden whitespace-nowrap text-[11px] font-black uppercase tracking-wider transition-[max-width] duration-200">{label}</span>
+      <Icon className="w-5 h-5 flex-shrink-0" />
+    </button>
   );
 }
 
@@ -515,16 +533,16 @@ export default function GlobePage({ embedded = false }) {
           </div>
         </div>
 
-        {/* Right control rail — grouped vertical stack. Layers always; dive-to-local
-            toggle in single-engine mode. (SOS stays pinned by its own global overlay.) */}
-        <div className="absolute top-[calc(65px+env(safe-area-inset-top,0px))] right-4 z-30 flex flex-col items-center gap-2 pointer-events-none">
-          <button onClick={() => setShowLayersSheet(true)} className="p-3 bg-black/60 border border-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-black transition-all pointer-events-auto shadow-lg" title="Layers" data-pull-refresh-ignore>
-            <Layers className="w-5 h-5" />
-          </button>
+        {/* Right control rail — grouped vertical, icons-only with hover-expand labels,
+            below the pinned SOS shield. Legacy globe gets Layers only; the single-
+            engine map adds My-area (dive in) + Globe (pull out). */}
+        <div className="absolute top-[calc(88px+env(safe-area-inset-top,0px))] right-4 z-30 flex flex-col items-end gap-2 pointer-events-none">
+          <RailButton icon={Layers} label="Layers" onClick={() => setShowLayersSheet(true)} />
           {localModeEnabled && (
-            <button onClick={() => { if (pulseApiRef.current && pulseApiRef.current.toggleLocal) pulseApiRef.current.toggleLocal(); }} className="p-3 bg-black/60 border border-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-black transition-all pointer-events-auto shadow-lg" title="Dive to local / back to globe" data-pull-refresh-ignore>
-              <MapPin className="w-5 h-5" />
-            </button>
+            <RailButton icon={MapPin} label="My area" onClick={() => { if (pulseApiRef.current && pulseApiRef.current.flyToLocal) pulseApiRef.current.flyToLocal(); }} />
+          )}
+          {localModeEnabled && (
+            <RailButton icon={Globe2} label="Globe" onClick={() => { if (pulseApiRef.current && pulseApiRef.current.flyToGlobe) pulseApiRef.current.flyToGlobe(); }} />
           )}
         </div>
 
