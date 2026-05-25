@@ -13,7 +13,8 @@ import {
 import { activityTracker } from '../components/globe/ActivityTracker';
 import BeaconPreviewPanel from '../components/globe/BeaconPreviewPanel';
 import CityDataOverlay from '../components/globe/CityDataOverlay';
-import { Layers, Globe2 } from 'lucide-react';
+import { Layers, Globe2, Bell } from 'lucide-react';
+import { useNotifCount } from '@/hooks/useNotifCount';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import ErrorBoundary from '../components/error/ErrorBoundary';
@@ -31,7 +32,6 @@ import { MapPin, X } from 'lucide-react';
 
 import LocalMapboxView from '../components/globe/LocalMapboxView';
 import PulseMap from '../components/globe/PulseMap';
-import PulseSearch from '../components/globe/PulseSearch';
 import BeaconA11yList from '../components/globe/BeaconA11yList';
 import DistrictEditorialCard from '../components/editorial/DistrictEditorialCard';
 import CareDecompressionCue from '../components/editorial/CareDecompressionCue';
@@ -108,7 +108,7 @@ function LayersSheet({ open, onClose, activeLayer, setActiveLayer }) {
 
 // Right-rail control: icons-only by default, label slides out on hover. Used for
 // the grouped vertical rail (Layers / My area / Globe) below the pinned SOS.
-function RailButton({ icon: Icon, label, onClick }) {
+function RailButton({ icon: Icon, label, onClick, badge = 0 }) {
   return (
     <button
       type="button"
@@ -119,7 +119,14 @@ function RailButton({ icon: Icon, label, onClick }) {
       className="group pointer-events-auto flex items-center justify-end gap-0 hover:gap-2 h-11 px-3 bg-black/60 border border-white/20 backdrop-blur-md rounded-full text-white shadow-lg overflow-hidden transition-all hover:bg-white hover:text-black"
     >
       <span className="max-w-0 group-hover:max-w-[120px] overflow-hidden whitespace-nowrap text-[11px] font-black uppercase tracking-wider transition-[max-width] duration-200">{label}</span>
-      <Icon className="w-5 h-5 flex-shrink-0" />
+      <span className="relative flex-shrink-0">
+        <Icon className="w-5 h-5" />
+        {badge > 0 && (
+          <span className="absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-0.5 bg-[#C8962C] text-black text-[9px] font-black rounded-full flex items-center justify-center leading-none border border-[#050507]">
+            {badge > 9 ? '9+' : badge}
+          </span>
+        )}
+      </span>
     </button>
   );
 }
@@ -129,6 +136,7 @@ export default function GlobePage({ embedded = false }) {
   const navigate = useNavigate();
   const { openProfile } = useProfileOpener();
   const { openSheet } = useSheet();
+  const { notifCount, clearNotifBadge } = useNotifCount();
   const [showLayersSheet, setShowLayersSheet] = useState(false);
   const [localFocus, setLocalFocus] = useState(null);
   // Flag flipped 2026-05-25: the single-engine Mapbox globe is now the default for
@@ -300,6 +308,16 @@ export default function GlobePage({ embedded = false }) {
       setUserLocation({ lat: loc.lat, lng: loc.lng });
     });
     return () => { cancelled = true; };
+  }, []);
+
+  // Search lives in the global top nav (TopHUD); it reaches the map via a window
+  // event so the two don't need a shared ref across the shell/page boundary.
+  useEffect(() => {
+    const onFlyTo = (e) => {
+      try { if (pulseApiRef.current && pulseApiRef.current.flyTo) pulseApiRef.current.flyTo(e.detail); } catch (err) { /* non-fatal */ }
+    };
+    window.addEventListener('pulse:flyto', onFlyTo);
+    return () => window.removeEventListener('pulse:flyto', onFlyTo);
   }, []);
 
   useEffect(() => {
@@ -518,7 +536,7 @@ export default function GlobePage({ embedded = false }) {
           </div>
         )}
 
-        <div className="absolute top-[calc(140px+env(safe-area-inset-top,0px))] left-4 z-30 pointer-events-none">
+        <div className="absolute top-[calc(56px+env(safe-area-inset-top,0px))] left-4 z-30 pointer-events-none">
           <div className="px-3 py-1.5 bg-black/60 border border-white/20 backdrop-blur-md rounded-full flex items-center gap-2 pointer-events-auto shadow-lg">
             <div className="w-2 h-2 rounded-full bg-[#39FF14] animate-pulse shadow-[0_0_8px_#39FF14]" />
             <span className="text-[10px] font-black text-white uppercase tracking-widest">{
@@ -540,6 +558,7 @@ export default function GlobePage({ embedded = false }) {
             below the pinned SOS shield. Legacy globe gets Layers only; the single-
             engine map adds My-area (dive in) + Globe (pull out). */}
         <div className="absolute top-[calc(88px+env(safe-area-inset-top,0px))] right-4 z-30 flex flex-col items-end gap-2 pointer-events-none">
+          <RailButton icon={Bell} label="Alerts" badge={notifCount} onClick={() => { clearNotifBadge(); openSheet('notification-inbox'); }} />
           <RailButton icon={Layers} label="Layers" onClick={() => setShowLayersSheet(true)} />
           {localModeEnabled && (
             <RailButton icon={MapPin} label="My area" onClick={() => { if (pulseApiRef.current && pulseApiRef.current.flyToLocal) pulseApiRef.current.flyToLocal(); }} />
@@ -601,10 +620,7 @@ export default function GlobePage({ embedded = false }) {
           }}
         />
 
-        {/* Search city / area / postcode → fly the map there. Single-engine only. */}
-        {localModeEnabled && (
-          <PulseSearch onSelect={(loc) => { if (pulseApiRef.current && pulseApiRef.current.flyTo) pulseApiRef.current.flyTo(loc); }} />
-        )}
+        {/* Search now lives in the top nav (TopHUD) → drives the map via window event. */}
         {/* Legacy globe→local overlay: only the old react-globe path can set localFocus. */}
         {!localModeEnabled && localFocus && (
           <LocalMapboxView focus={localFocus} beacons={filteredBeacons} onClose={() => setLocalFocus(null)} onDropBeacon={(c) => { setBeaconDropLocation(c); setShowBeaconModal(true); }} />
