@@ -30,6 +30,7 @@ import BeaconDropModal from '../components/globe/BeaconDropModal';
 import { MapPin, X } from 'lucide-react';
 
 import LocalMapboxView from '../components/globe/LocalMapboxView';
+import BeaconA11yList from '../components/globe/BeaconA11yList';
 import DistrictEditorialCard from '../components/editorial/DistrictEditorialCard';
 import CareDecompressionCue from '../components/editorial/CareDecompressionCue';
 
@@ -412,6 +413,7 @@ export default function GlobePage({ embedded = false }) {
             cities={cities}
             pulsePlaces={pulsePlaces}
             rotationRef={rotationRef}
+            bloomMarkers={localModeEnabled}
             onDeepZoom={localModeEnabled ? (c) => setLocalFocus((prev) => prev || { lat: c.lat, lng: c.lng }) : undefined}
             venueIntensity={venueIntensity}
             venueVibes={venueVibes}
@@ -531,6 +533,10 @@ export default function GlobePage({ embedded = false }) {
         )}
         {localFocus && <DistrictEditorialCard citySlug={localFocus.slug} />}
         {localFocus && <CareDecompressionCue />}
+        {/* Keyboard / screen-reader parity for the bloom sprites (sr-only). */}
+        {localModeEnabled && (
+          <BeaconA11yList beacons={filteredBeacons} viewerLocation={userLocation} onSelect={handleBeaconClick} />
+        )}
         <LayersSheet key="layers-sheet" open={showLayersSheet} onClose={() => setShowLayersSheet(false)} activeLayer={activeLayer} setActiveLayer={setActiveLayer} />
       </div>
     </ErrorBoundary>
