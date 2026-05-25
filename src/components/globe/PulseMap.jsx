@@ -75,9 +75,13 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
           zoom: GLOBE_ZOOM,
           minZoom: 0.8,   // can pull back to whole-globe
           maxZoom: 18,    // street detail
-          attributionControl: true,
+          attributionControl: false, // swapped for the compact (i) control below
         });
         mapRef.current = map;
+        // Mapbox + OpenStreetMap attribution is REQUIRED by their ToS (can't be
+        // removed without a commercial plan) — the compact control collapses it to a
+        // small (i) so it's unobtrusive. The small Mapbox logo stays (also required).
+        try { map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right'); } catch (e) { /* non-fatal */ }
         map.on('error', () => { /* keep graceful; never throw */ });
 
         // Run setup on style.load (style parsed) rather than 'load' (which waits for
