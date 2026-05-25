@@ -10,6 +10,7 @@ import { useTaps } from '@/hooks/useTaps';
 import { useUnreadCount } from '@/hooks/useUnreadCount';
 import { GhostedCard } from '@/components/ghosted/GhostedCard';
 import { SignalStrip } from '@/components/ghosted/SignalStrip';
+import { GhostedRecentStories } from '@/components/ghosted/GhostedRecentStories';
 import { supabase } from '@/components/utils/supabaseClient';
 
 import LocationConsentScreen from '@/components/onboarding/screens/LocationConsentScreen';
@@ -172,6 +173,12 @@ export default function GhostedMode() {
             Nearby
           </button>
         </div>
+
+        {/* ── RECENT STORIES — IG-style avatar row of most recent chats.
+            Only on the Recent filter; tap a circle to open that conversation.
+            Renders nothing when there are no threads, so the field below
+            still carries the page. */}
+        {filter === 'recent' && <GhostedRecentStories currentUserEmail={myEmail} />}
 
         {/* ── LIVE FIELD — the emotional center. Orbit mechanics: zero
             gutters, deterministic per-index opacity jitter so the grid
