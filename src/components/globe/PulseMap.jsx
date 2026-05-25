@@ -80,14 +80,15 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
         mapRef.current = map;
         map.on('error', () => { /* keep graceful; never throw */ });
 
-        // Atmosphere + star field the moment the style is ready, so the globe
-        // reads as "space" immediately rather than popping in on full load.
+        // Run setup on style.load (style parsed) rather than 'load' (which waits for
+        // the first tile batch): the dark base + atmosphere + controls appear fast and
+        // tiles fill in progressively — no long "Loading the signal…" over a fresh area.
+        let setupDone = false;
         map.on('style.load', () => {
+          // Atmosphere + star field, re-applied on every style load.
           try { map.setFog(environmentalFog(new Date().getHours(), reducedMotion)); } catch (e) { /* non-fatal */ }
-        });
-
-        map.on('load', () => {
-          if (cancelled) return;
+          if (setupDone || cancelled) return;
+          setupDone = true;
           try { map.resize(); } catch (e) { /* non-fatal */ }
           setStatus('ready');
           try { if (onReadyRef.current) onReadyRef.current(); } catch (e) { /* non-fatal */ }
