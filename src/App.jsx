@@ -19,7 +19,6 @@ import { ShopCartProvider } from '@/features/shop/cart/ShopCartContext';
 import ShopCollection from '@/pages/ShopCollection';
 import ShopProduct from '@/pages/ShopProduct';
 import ShopCart from '@/pages/ShopCart';
-import CheckoutStart from '@/pages/CheckoutStart';
 import CreatorsCart from '@/pages/CreatorsCart';
 import CreatorsCheckout from '@/pages/CreatorsCheckout';
 import CreatorsCheckoutSuccess from '@/pages/CreatorsCheckoutSuccess';
@@ -332,14 +331,6 @@ const ShopCartRoute = () => {
   return (
     <LayoutWrapper currentPageName="Marketplace">
       <ShopCart />
-    </LayoutWrapper>
-  );
-};
-
-const ShopCheckoutStartRoute = () => {
-  return (
-    <LayoutWrapper currentPageName="Marketplace">
-      <CheckoutStart />
     </LayoutWrapper>
   );
 };

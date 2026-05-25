@@ -205,9 +205,16 @@ export default function L2ShopSheet({ handle, product: initialPropProduct, selle
       <div className="h-full flex flex-col bg-[#050507]">
         {/* Navigation Overlay */}
         <div className="absolute top-4 left-4 right-4 z-[100] flex items-center justify-between pointer-events-none">
-           <button onClick={handleBack} className="w-9 h-9 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white active:scale-90 transition-transform pointer-events-auto border border-white/5">
-             <ChevronRight className="rotate-180 w-5 h-5" />
-           </button>
+           {/* Back chevron only when navigating grid→product within the sheet.
+               When opened directly as ?sheet=product (from a Shop card), the
+               drag handle / swipe / backdrop is the dismissal — no redundant back. */}
+           {selectedProduct ? (
+             <button onClick={handleBack} className="w-9 h-9 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white active:scale-90 transition-transform pointer-events-auto border border-white/5">
+               <ChevronRight className="rotate-180 w-5 h-5" />
+             </button>
+           ) : (
+             <div className="w-9 h-9" />
+           )}
            <button onClick={() => openSheet('cart')} className="w-9 h-9 rounded-full bg-black/80 backdrop-blur-md flex items-center justify-center text-[#C8962C] border border-white/10 active:scale-90 transition-transform relative pointer-events-auto shadow-xl">
              <ShoppingBag className="w-4 h-4" />
              {cart?.totalQuantity > 0 && (
