@@ -13,7 +13,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  ChevronLeft,
   Flame,
   Sparkles,
   Crown,
@@ -850,14 +849,7 @@ export default function L2BrandSheet({ brand = 'raw' }: L2BrandSheetProps) {
 
   return (
     <div className="h-full flex flex-col" style={{ backgroundColor: config.headerBg }}>
-      {/* BACK BUTTON */}
-      <button
-        onClick={closeSheet}
-        className="absolute top-4 left-4 z-10 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform focus:outline-none focus:ring-2 focus:ring-[#C8962C]"
-        aria-label="Go back"
-      >
-        <ChevronLeft className="w-5 h-5 text-white" />
-      </button>
+      {/* Dismiss via drag handle / swipe / backdrop tap — no redundant back chevron. */}
 
       {/* SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto overscroll-y-contain">
