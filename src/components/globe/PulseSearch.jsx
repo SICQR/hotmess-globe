@@ -68,8 +68,8 @@ export default function PulseSearch({ onSelect }) {
   const clear = () => { setQ(''); setResults([]); setOpen(false); };
 
   return (
-    <div className="absolute top-[calc(74px+env(safe-area-inset-top,0px))] left-1/2 -translate-x-1/2 w-[min(90%,360px)] z-40" data-pull-refresh-ignore>
-      <div className="flex items-center gap-2 bg-black/60 border border-white/20 backdrop-blur-md rounded-full px-4 py-2.5 shadow-lg">
+    <div className="relative w-full" data-pull-refresh-ignore>
+      <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3.5 py-1.5 focus-within:border-[#C8962C]/40 transition-colors">
         {loading ? (
           <Loader2 className="w-4 h-4 text-white/50 animate-spin flex-shrink-0" />
         ) : (
@@ -85,7 +85,7 @@ export default function PulseSearch({ onSelect }) {
           }}
           placeholder="Search city, area, postcode"
           aria-label="Search for a city, area, or postcode"
-          className="flex-1 bg-transparent outline-none text-white text-sm placeholder:text-white/35"
+          className="flex-1 min-w-0 bg-transparent outline-none text-white text-sm placeholder:text-white/35"
         />
         {q && (
           <button onClick={clear} aria-label="Clear search" className="text-white/40 hover:text-white flex-shrink-0">
@@ -94,7 +94,7 @@ export default function PulseSearch({ onSelect }) {
         )}
       </div>
       {open && results.length > 0 && (
-        <ul className="mt-2 bg-[#0A0A0A]/95 border border-white/10 backdrop-blur-md rounded-2xl overflow-hidden shadow-2xl">
+        <ul className="absolute left-0 right-0 top-full mt-2 bg-[#0A0A0A]/95 border border-white/10 backdrop-blur-md rounded-2xl overflow-hidden shadow-2xl z-50">
           {results.map((r) => (
             <li key={r.id}>
               <button
