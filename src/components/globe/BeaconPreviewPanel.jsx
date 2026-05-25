@@ -90,21 +90,30 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull, onView
               </div>
             )}
 
-            {(beacon.address || beacon.metadata?.address) ? (
-              <div className="w-full flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10">
-                <MapPin className="w-5 h-5 text-[#00C2E0]" />
-                <span className="text-white font-bold text-sm uppercase tracking-tight">
-                  {beacon.address || beacon.metadata?.address}
-                </span>
-              </div>
-            ) : (
-              <div className="w-full flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10">
-                <MapPin className="w-5 h-5 text-[#00C2E0]/40" />
-                <span className="text-white/40 font-mono text-xs tracking-widest">
-                  LOC: {Number(beacon.lat).toFixed(4)}, {Number(beacon.lng).toFixed(4)}
-                </span>
-              </div>
-            )}
+            {(() => {
+              // Prefer a human-readable address. Never render raw lat/lng or a
+              // WKB/PostGIS hex string (e.g. "0101000020E6100000...") to the user.
+              const raw =
+                beacon.address ||
+                beacon.metadata?.address ||
+                beacon.location_name ||
+                beacon.metadata?.location_name ||
+                beacon.notes ||
+                beacon.metadata?.notes;
+              const readable =
+                typeof raw === "string" && raw.trim() && !/^[0-9A-Fa-f]{20,}$/.test(raw.trim())
+                  ? raw.trim()
+                  : null;
+              if (!readable) return null;
+              return (
+                <div className="w-full flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10">
+                  <MapPin className="w-5 h-5 text-[#00C2E0]" />
+                  <span className="text-white font-bold text-sm uppercase tracking-tight">
+                    {readable}
+                  </span>
+                </div>
+              );
+            })()}
 
             <div className="flex flex-wrap gap-2 pt-2">
                {!isRecovery && beacon.isRightNow && (
