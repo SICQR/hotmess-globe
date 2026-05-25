@@ -1,5 +1,7 @@
 # Globe Supabase Schema Map
 
+> **⚠️ RESTATE / CANONICAL SCHEMA:** This is a build contract, not a live dump. The live schema (Supabase `rfoftonnlwudilafhfkl`) is the source of truth — change it via migrations. Where this doc and the live schema disagree, the live schema wins.
+
 Purpose: map every Supabase table, view, RPC, storage bucket, and edge-function concern that can affect the HOTMESS Globe.
 
 This is a build contract, not a live database dump.

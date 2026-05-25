@@ -22,7 +22,7 @@ import LocationShopPanel from '../components/globe/LocationShopPanel';
 import { usePulsePlacesByType } from '@/hooks/usePulsePlaces';
 import { useVenueIntensity } from '@/hooks/useVenueIntensity';
 import BeaconDropModal from '../components/globe/BeaconDropModal';
-import { MapPin, X } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 
 import LocalMapboxView from '../components/globe/LocalMapboxView';
 import PulseMap from '../components/globe/PulseMap';
@@ -75,9 +75,6 @@ function LayersSheet({ open, onClose, activeLayer, setActiveLayer }) {
           </div>
           <h3 className="text-xl font-black italic tracking-tight text-white uppercase">Globe Layers</h3>
         </div>
-        <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/40">
-          <X className="w-5 h-5" />
-        </button>
       </div>
       <div className="space-y-1">
         {LAYER_DEFS.map(({ key, label, color }) => (

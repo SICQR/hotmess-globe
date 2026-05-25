@@ -12,7 +12,6 @@
 
 import React, { useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
-import { X } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSheet } from '@/contexts/SheetContext';
 import { useLocalPullToRefresh } from '@/hooks/useLocalPullToRefresh';
@@ -230,19 +229,8 @@ export default function L2SheetContainer({
                   )}
                 </div>
 
-                {showClose && (
-                  <button
-                    onClick={handleClose}
-                    className={cn(
-                      'min-h-[44px] min-w-[44px] -mr-2 flex items-center justify-center rounded-xl transition-colors',
-                      'text-white/60 hover:text-white hover:bg-white/10 active:bg-white/20',
-                      'focus:outline-none focus:ring-2 focus:ring-[#C8962C]'
-                    )}
-                    aria-label="Close sheet"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                )}
+                {/* Close X removed — pull-down handle + swipe-to-dismiss + backdrop tap
+                    + Escape are the dismissal pattern (no redundant X). */}
               </div>
             )}
 

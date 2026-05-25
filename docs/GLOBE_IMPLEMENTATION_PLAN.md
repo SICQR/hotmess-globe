@@ -1,5 +1,7 @@
 # Globe Implementation Plan
 
+> **⚠️ RESTATE:** Much of this plan is shipped. The Globe is now **single-engine Mapbox globe-projection**, default for all users (2026-05-25). Canonical: `src/pages/Globe.jsx`, `src/components/globe/PulseMap.jsx`. Treat unshipped sections as backlog, not current state.
+
 Purpose: convert the HOTMESS Globe strategy docs into an executable implementation sequence.
 
 This is the operational build plan.
