@@ -4,12 +4,6 @@ import { motion } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSheet } from '@/contexts/SheetContext';
 import { useGlobe } from '@/contexts/GlobeContext';
-import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
-import {
-  useFoundingTierLayer,
-  mergeFoundingIntoBeacons,
-  renderFoundingAnchorLabel,
-} from '../components/globe/FoundingTierLayer';
 import { activityTracker } from '../components/globe/ActivityTracker';
 import BeaconPreviewPanel from '../components/globe/BeaconPreviewPanel';
 import CityDataOverlay from '../components/globe/CityDataOverlay';
@@ -161,7 +155,6 @@ export default function GlobePage({ embedded = false }) {
   } = useGlobe();
 
   const { beacons: realtimeBeacons, loading: rawBeaconsLoading } = useRealtimeBeacons();
-  const founding = useFoundingTierLayer();
   const [beaconsLoading, setBeaconsLoading] = useState(true);
   useEffect(() => {
     if (!rawBeaconsLoading) setBeaconsLoading(false);
@@ -473,57 +466,12 @@ export default function GlobePage({ embedded = false }) {
               (unmount-on-open → 40s+ load via teardown-during-init; unmount-after-load
               → map flickers then the globe reappears). Dual-engine mounted is the
               proven-clean state — accept the modest extra memory for reliability. */}
-          {localModeEnabled ? (
           <PulseMap
             beacons={mapSignals}
             userLocation={userLocation}
             onBeaconClick={handleBeaconClick}
             onMapApi={(api) => { pulseApiRef.current = api; }}
           />
-          ) : (
-          <EnhancedGlobe3D
-            ref={globeRef}
-            beacons={mergeFoundingIntoBeacons(filteredBeacons, founding.foundingBeacons)}
-            foundingHtmlElements={founding.foundingHtmlElements}
-            foundingArcs={founding.foundingArcs}
-            foundingSosRings={founding.sosRings}
-            renderHtmlElement={renderFoundingAnchorLabel}
-            cities={cities}
-            pulsePlaces={pulsePlaces}
-            rotationRef={rotationRef}
-            bloomMarkers={localModeEnabled}
-            onDeepZoom={localModeEnabled ? (c) => setLocalFocus((prev) => prev || { lat: c.lat, lng: c.lng }) : undefined}
-            venueIntensity={venueIntensity}
-            venueVibes={venueVibes}
-            userIntents={userIntents}
-            routesData={realtimeRoutes}
-            globeActivity={globeActivity}
-            globeEvents={globeEvents}
-            onBeaconClick={(beacon) => {
-              if (!beacon) return;
-              handleBeaconClick(beacon);
-              setFocusedBeaconId(beacon.id);
-            }}
-            onRecoveryClick={(place) => setPreviewBeacon({ ...place, title: place.name, kind: 'recovery', beacon_category: 'recovery', description: place.notes || place.description })}
-            recoveryPins={recovery}
-            onCityClick={(city) => {
-              handleCityClick(city);
-              setCameraCity(city.name);
-              ctxSetSelectedCity(city.name);
-            }}
-            onPlaceClick={(place) => {
-              if (place.type === 'city') handleCityClick({ ...place, active: true });
-              else setFocusedPlace(place);
-            }}
-            selectedCity={selectedCity}
-            highlightedIds={(Array.isArray(searchResults?.beacons) ? searchResults.beacons.map((b) => b.id) : null) || (Array.isArray(radiusSearch?.beacons) ? radiusSearch.beacons.map((b) => b.id) : null) || []}
-            activeFilter={activeFilter}
-            focusedBeaconId={focusedBeaconId}
-            amplifiedBeaconIds={amplifiedBeaconIds}
-            className="w-full h-full"
-            autoRotate={false}
-          />
-          )}
         </div>
 
         {/* Map mode is search-first: the big PULSE wordmark + tagline collide with the
