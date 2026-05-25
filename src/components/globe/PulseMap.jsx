@@ -64,15 +64,14 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
         mapboxgl.accessToken = TOKEN;
         if (cancelled || !containerRef.current) return;
 
-        const loc = userLocRef.current && Number.isFinite(Number(userLocRef.current.lat))
-          ? { lat: Number(userLocRef.current.lat), lng: Number(userLocRef.current.lng) }
-          : LONDON;
-
+        // Always open on London — the brand home + where signal density lives — so
+        // the macro view reads as "the signal starts here". The user's own area is
+        // one tap away via the right-side dive-to-local toggle (uses userLocation).
         const map = new mapboxgl.Map({
           container: containerRef.current,
           style: 'mapbox://styles/mapbox/dark-v11', // dark, premium base
           projection: 'globe',                       // v3 native globe curvature
-          center: [loc.lng, loc.lat],
+          center: [LONDON.lng, LONDON.lat],
           zoom: GLOBE_ZOOM,
           minZoom: 0.8,   // can pull back to whole-globe
           maxZoom: 18,    // street detail
