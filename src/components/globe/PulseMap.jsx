@@ -128,17 +128,27 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
                 sel.setData({ type: 'FeatureCollection', features: [{ type: 'Feature', geometry: feat.geometry, properties: feat.properties }] });
               }
             } catch (er) { /* non-fatal */ }
-            // Hand the datum back so the parent opens its existing preview panel.
+            // Hand the FULL local record back (resolved by id) so the parent can route
+            // person/social beacons into the boo-gated profile/chat flow — the map
+            // feature only carries id/cat/title for privacy, but the client already
+            // holds the full signal list in memory. Falls back to feature props.
             try {
               if (onBeaconClickRef.current) {
-                onBeaconClickRef.current({
-                  id: feat.properties.id,
-                  title: feat.properties.title,
-                  kind: feat.properties.cat,
-                  beacon_category: feat.properties.cat,
-                  lat: feat.geometry.coordinates[1],
-                  lng: feat.geometry.coordinates[0],
-                });
+                const fid = feat.properties.id;
+                const list = Array.isArray(beaconsRef.current) ? beaconsRef.current : [];
+                const full = list.find((b) => b && String(b.id) === String(fid));
+                const coords = feat.geometry.coordinates;
+                const datum = full
+                  ? { ...full, lat: coords[1], lng: coords[0] }
+                  : {
+                      id: fid,
+                      title: feat.properties.title,
+                      kind: feat.properties.cat,
+                      beacon_category: feat.properties.cat,
+                      lat: coords[1],
+                      lng: coords[0],
+                    };
+                onBeaconClickRef.current(datum);
               }
             } catch (er) { /* non-fatal */ }
             // Lightweight on-map label too.
