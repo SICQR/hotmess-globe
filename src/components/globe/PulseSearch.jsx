@@ -68,7 +68,7 @@ export default function PulseSearch({ onSelect }) {
   const clear = () => { setQ(''); setResults([]); setOpen(false); };
 
   return (
-    <div className="absolute top-[calc(104px+env(safe-area-inset-top,0px))] left-1/2 -translate-x-1/2 w-[min(86%,340px)] z-40" data-pull-refresh-ignore>
+    <div className="absolute top-[calc(74px+env(safe-area-inset-top,0px))] left-1/2 -translate-x-1/2 w-[min(90%,360px)] z-40" data-pull-refresh-ignore>
       <div className="flex items-center gap-2 bg-black/60 border border-white/20 backdrop-blur-md rounded-full px-4 py-2.5 shadow-lg">
         {loading ? (
           <Loader2 className="w-4 h-4 text-white/50 animate-spin flex-shrink-0" />
