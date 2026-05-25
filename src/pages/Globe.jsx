@@ -29,6 +29,7 @@ import PulseMap from '../components/globe/PulseMap';
 import BeaconA11yList from '../components/globe/BeaconA11yList';
 import DistrictEditorialCard from '../components/editorial/DistrictEditorialCard';
 import CareDecompressionCue from '../components/editorial/CareDecompressionCue';
+import AtmosphereCue from '../components/environment/AtmosphereCue';
 
 const CITY_COORDS = {
   'London':    { lat: 51.5074, lng: -0.1278 },
@@ -574,6 +575,7 @@ export default function GlobePage({ embedded = false }) {
         {/* District editorial + care surfaces. In single-engine mode localFocus is set
             by PulseMap (onLocalFocus) when the camera dives into an editorial city. */}
         {localFocus && <DistrictEditorialCard citySlug={localFocus.slug} />}
+        {localFocus && <AtmosphereCue />}
         {localFocus && <CareDecompressionCue />}
         {/* Keyboard / screen-reader parity for the bloom sprites (sr-only). Mirror the
             EXACT beacon set the globe blooms from — incl. founding anchors — so keyboard
