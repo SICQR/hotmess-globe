@@ -298,12 +298,20 @@ function normalizeShopifyProduct(product: ShopifyProduct): Product {
   };
 }
 
+// The Shopify proxy (`/api/shopify/products`) hard-caps `limit` at 100 and returns
+// only `nodes` (no `pageInfo`/`endCursor`), so true Storefront cursor pagination must
+// happen server-side. Until the proxy exposes a cursor, the most products the client
+// can pull in a single list is this cap. Default to it so lists aren't truncated below 100.
+const SHOPIFY_PRODUCTS_PAGE_CAP = 100;
+
 export async function getShopifyProducts(filters: ProductFilters = {}): Promise<Product[]> {
   try {
     const params = new URLSearchParams();
     if (filters.category) params.set('category', filters.category);
     if (filters.search) params.set('search', filters.search);
-    if (filters.limit) params.set('limit', filters.limit.toString());
+    // Request the full page (server cap) by default so the grid isn't silently truncated.
+    const requested = Math.min(filters.limit || SHOPIFY_PRODUCTS_PAGE_CAP, SHOPIFY_PRODUCTS_PAGE_CAP);
+    params.set('limit', requested.toString());
 
     const response = await fetch(`/api/shopify/products?${params.toString()}`);
     if (!response.ok) {
@@ -326,12 +334,16 @@ export async function getShopifyProducts(filters: ProductFilters = {}): Promise<
  */
 export async function getShopifyProductById(handle: string): Promise<Product | null> {
   try {
-    const response = await fetch(`/api/shopify/products/${handle}`);
+    // The Shopify proxy resolves a single product via the `handle` QUERY param
+    // (`/api/shopify/product?handle=...`). A path-segment URL
+    // (`/api/shopify/products/<handle>`) has no matching serverless route and 404s.
+    const response = await fetch(`/api/shopify/product?handle=${encodeURIComponent(handle)}`);
     if (!response.ok) {
       throw new Error(`Shopify API error: ${response.status}`);
     }
 
     const data = await response.json();
+    if (!data?.product) return null;
     return normalizeShopifyProduct(data.product);
   } catch (error) {
     console.error('[market] getShopifyProductById error:', error);
