@@ -8,7 +8,7 @@
 
 import React from 'react';
 import { useSheet } from '@/contexts/SheetContext';
-import { X, Shield } from 'lucide-react';
+import { Shield } from 'lucide-react';
 
 const PRELOVED_BROWN = '#9E7D47';
 
@@ -43,9 +43,6 @@ export default function L2PrelovedTermsSheet() {
           <Shield className="w-4 h-4" style={{ color: PRELOVED_BROWN }} />
           <h2 className="text-sm font-bold text-white uppercase tracking-wider">Preloved Terms</h2>
         </div>
-        <button onClick={() => closeSheet()} className="w-8 h-8 flex items-center justify-center">
-          <X className="w-5 h-5 text-white/30" />
-        </button>
       </div>
 
       {/* Body */}

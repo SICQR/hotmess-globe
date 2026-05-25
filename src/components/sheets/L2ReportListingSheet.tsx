@@ -7,7 +7,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Flag, CheckCircle, Loader2, X } from 'lucide-react';
+import { Flag, CheckCircle, Loader2 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { reportListing, REPORT_REASONS } from '@/lib/reportListing';
 import { toast } from 'sonner';
@@ -70,9 +70,6 @@ export default function L2ReportListingSheet({ listingId, listingTitle }: {
           <Flag className="w-4 h-4 text-[#FF3B30]" />
           <h2 className="text-sm font-bold text-white">Report listing</h2>
         </div>
-        <button onClick={() => closeSheet()} className="w-8 h-8 flex items-center justify-center">
-          <X className="w-5 h-5 text-white/30" />
-        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">

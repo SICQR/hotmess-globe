@@ -512,7 +512,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
 
   return (
     <div
-      className={`h-full w-full flex flex-col pt-[calc(88px+env(safe-area-inset-top))] ${className}`}
+      className={`h-full w-full flex flex-col overflow-hidden ${className}`}
       style={{ backgroundColor: ROOT_BG }}
     >
 

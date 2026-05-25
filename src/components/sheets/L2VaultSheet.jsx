@@ -10,11 +10,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
-import {
-  Ticket, ShoppingBag, Archive, Loader2,
-  CheckCircle2, HelpCircle, XCircle, Truck,
-  Clock, QrCode, X,
-} from 'lucide-react';
+import { Ticket, ShoppingBag, Archive, Loader2, CheckCircle2, HelpCircle, XCircle, Truck, Clock, QrCode } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
@@ -73,14 +69,6 @@ function QROverlay({ value, label, onClose }) {
       className="fixed inset-0 z-[90] bg-black/95 flex flex-col items-center justify-center px-6"
       onClick={onClose}
     >
-      <button
-        onClick={onClose}
-        className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
-        aria-label="Close QR overlay"
-      >
-        <X className="w-5 h-5 text-white/70" />
-      </button>
-
       <p className="text-[10px] uppercase tracking-widest text-white/40 font-mono mb-6">
         Show at door
       </p>

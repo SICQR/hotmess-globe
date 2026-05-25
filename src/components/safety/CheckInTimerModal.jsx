@@ -8,7 +8,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, X, Check, AlertCircle } from 'lucide-react';
+import { Clock, Check, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCheckinTimer } from '@/contexts/CheckinTimerContext';
 
@@ -79,12 +79,6 @@ export default function CheckInTimerModal({ isOpen, onClose }) {
                 <Clock className="w-5 h-5 text-[#00C2E0]" />
                 <span className="text-white font-black text-lg uppercase">Check-In Timer</span>
               </div>
-              <button
-                onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 text-white/60"
-              >
-                <X className="w-4 h-4" />
-              </button>
             </div>
 
             {isActive ? (

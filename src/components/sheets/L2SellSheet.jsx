@@ -403,9 +403,6 @@ export default function L2SellSheet() {
           {stepName === 'delivery' && 'Delivery'}
           {stepName === 'review' && 'Review'}
         </h2>
-        <button onClick={closeSheet} className="w-8 h-8 flex items-center justify-center -mr-1">
-          <X className="w-5 h-5 text-white/30" />
-        </button>
       </div>
 
       <StepBar current={step} total={STEPS.length} />
