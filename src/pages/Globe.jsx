@@ -261,6 +261,19 @@ export default function GlobePage({ embedded = false }) {
 
   useEffect(() => {
     let cancelled = false;
+    // Dev location override: ?loc=lat,lng spoofs presence (e.g. faking a London
+    // W12 0NP presence while abroad) so dive-to-local / nearby / drop-at-me behave
+    // as if home. Bypasses GPS entirely when present.
+    try {
+      const raw = new URLSearchParams(window.location.search).get('loc');
+      if (raw) {
+        const [la, ln] = raw.split(',').map((n) => Number(n.trim()));
+        if (Number.isFinite(la) && Number.isFinite(ln)) {
+          setUserLocation({ lat: la, lng: ln });
+          return () => { cancelled = true; };
+        }
+      }
+    } catch (e) { /* fall through to GPS */ }
     safeGetViewerLatLng({ enableHighAccuracy: false, maximumAge: 60_000, timeout: 10_000 }, { retries: 2, logKey: 'globe' }).then((loc) => {
       if (cancelled || !loc) return;
       setUserLocation({ lat: loc.lat, lng: loc.lng });
@@ -468,10 +481,15 @@ export default function GlobePage({ embedded = false }) {
           )}
         </div>
 
-        <div className="absolute top-16 left-0 right-0 z-20 pointer-events-none text-center">
-          <motion.h1 initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter mix-blend-plus-lighter drop-shadow-2xl">Pulse</motion.h1>
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="text-white/60 font-bold tracking-tight text-xs uppercase mt-1">The signal starts here.</motion.p>
-        </div>
+        {/* Map mode is search-first: the big PULSE wordmark + tagline collide with the
+            search bar and cover the map, so it's suppressed in localmode (the HOTMESS
+            header already carries the brand). Legacy globe keeps the hero title. */}
+        {!localModeEnabled && (
+          <div className="absolute top-16 left-0 right-0 z-20 pointer-events-none text-center">
+            <motion.h1 initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter mix-blend-plus-lighter drop-shadow-2xl">Pulse</motion.h1>
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="text-white/60 font-bold tracking-tight text-xs uppercase mt-1">The signal starts here.</motion.p>
+          </div>
+        )}
 
         <div className="absolute top-[calc(140px+env(safe-area-inset-top,0px))] left-4 z-30 pointer-events-none">
           <div className="px-3 py-1.5 bg-black/60 border border-white/20 backdrop-blur-md rounded-full flex items-center gap-2 pointer-events-auto shadow-lg">
@@ -491,10 +509,17 @@ export default function GlobePage({ embedded = false }) {
           </div>
         </div>
 
-        <div className="absolute top-[calc(65px+env(safe-area-inset-top,0px))] right-4 z-30 pointer-events-none">
-          <button onClick={() => setShowLayersSheet(true)} className="p-3 bg-black/60 border border-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-black transition-all pointer-events-auto shadow-lg" data-pull-refresh-ignore>
+        {/* Right control rail — grouped vertical stack. Layers always; dive-to-local
+            toggle in single-engine mode. (SOS stays pinned by its own global overlay.) */}
+        <div className="absolute top-[calc(65px+env(safe-area-inset-top,0px))] right-4 z-30 flex flex-col items-center gap-2 pointer-events-none">
+          <button onClick={() => setShowLayersSheet(true)} className="p-3 bg-black/60 border border-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-black transition-all pointer-events-auto shadow-lg" title="Layers" data-pull-refresh-ignore>
             <Layers className="w-5 h-5" />
           </button>
+          {localModeEnabled && (
+            <button onClick={() => { if (pulseApiRef.current && pulseApiRef.current.toggleLocal) pulseApiRef.current.toggleLocal(); }} className="p-3 bg-black/60 border border-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-black transition-all pointer-events-auto shadow-lg" title="Dive to local / back to globe" data-pull-refresh-ignore>
+              <MapPin className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         {previewBeacon && (
@@ -549,13 +574,6 @@ export default function GlobePage({ embedded = false }) {
           }}
         />
 
-        {localModeEnabled && (
-          <div className="absolute top-[calc(118px+env(safe-area-inset-top,0px))] right-4 z-30 pointer-events-none">
-            <button onClick={() => { if (pulseApiRef.current && pulseApiRef.current.toggleLocal) pulseApiRef.current.toggleLocal(); }} className="p-3 bg-black/60 border border-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-black transition-all pointer-events-auto shadow-lg" title="Dive to local / back to globe" data-pull-refresh-ignore>
-              <MapPin className="w-5 h-5" />
-            </button>
-          </div>
-        )}
         {/* Search city / area / postcode → fly the map there. Single-engine only. */}
         {localModeEnabled && (
           <PulseSearch onSelect={(loc) => { if (pulseApiRef.current && pulseApiRef.current.flyTo) pulseApiRef.current.flyTo(loc); }} />
