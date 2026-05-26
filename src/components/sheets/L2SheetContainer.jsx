@@ -11,7 +11,7 @@
  */
 
 import React, { useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence, useAnimation } from 'framer-motion';
+import { motion, AnimatePresence, useAnimation, useDragControls } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSheet } from '@/contexts/SheetContext';
 import { useLocalPullToRefresh } from '@/hooks/useLocalPullToRefresh';
@@ -78,6 +78,7 @@ export default function L2SheetContainer({
   const { isOpen, closeSheet, onAnimationComplete, activeSheet } = useSheet();
   const sheetRef = useRef(null);
   const controls = useAnimation();
+  const dragControls = useDragControls();
   const queryClient = useQueryClient();
   const sheetScrollRef = useRef(null);
   const handleSheetRefresh = useCallback(async () => {
@@ -171,7 +172,18 @@ export default function L2SheetContainer({
             initial="hidden"
             animate="visible"
             exit="exit"
+            // Drag config — outer sheet is what slides, not the handle pip.
+            // dragControls.start(e) is called from the handle's onPointerDown
+            // so the handle is the ONLY initiation surface; body content still
+            // scrolls normally. dragListener=false prevents body taps from
+            // starting a drag. dragElastic top=0 so users can't pull UP.
+            drag="y"
+            dragControls={dragControls}
             dragListener={false}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.5 }}
+            onDragEnd={handleDragEnd}
+            animate={controls}
             style={{ height, overflowX: 'hidden' }}
             className={cn(
               'fixed bottom-0 left-0 right-0 z-[80]',
@@ -195,14 +207,11 @@ export default function L2SheetContainer({
               <motion.div
                 className={cn(
                   'flex justify-center cursor-grab active:cursor-grabbing touch-none',
-                  bareTop ? 'py-1.5' : 'py-3'
+                  bareTop ? 'py-3' : 'py-3'
                 )}
                 aria-hidden="true"
-                drag="y"
-                dragConstraints={{ top: 0, bottom: 0 }}
-                dragElastic={{ top: 0, bottom: 0.5 }}
-                onDragEnd={handleDragEnd}
-                style={{ minHeight: bareTop ? 14 : 48 }}
+                onPointerDown={(e) => dragControls.start(e)}
+                style={{ minHeight: bareTop ? 36 : 48, touchAction: 'none' }}
               >
                 <div className={cn(
                   'rounded-full',
