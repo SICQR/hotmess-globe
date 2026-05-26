@@ -12,6 +12,11 @@ const PUBLIC_PATH_PREFIXES = [
   '/guidelines',
   '/contact',
   '/accessibility',
+  // /auth must be reachable WITHOUT auth — pre-fix, unauth visitors got
+  // bounced to OnboardingRouter (splash) instead of seeing the email form.
+  // Audit 2026-05-26 confirmed: typing /auth/login while signed out =
+  // bounce to / via splash, email sign-in unreachable. Fix: whitelist.
+  '/auth',
   // Reentry + welcome portal pages MUST render for unauthenticated visitors —
   // these flows ARE the auth entry path (reentry email links for returning
   // beta members; portal magic links for paid partners). Pre-fix, BootRouter

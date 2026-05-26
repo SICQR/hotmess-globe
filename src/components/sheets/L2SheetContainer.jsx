@@ -63,7 +63,7 @@ export default function L2SheetContainer({
   subtitle,
   className,
   // Optional overrides
-  height = '85vh',
+  height = '78vh',
   showHandle = true,
   showClose = true,
   onClose: customOnClose,
