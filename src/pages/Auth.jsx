@@ -504,7 +504,7 @@ export default function Auth() {
               </button>
 
               <h2 className="text-2xl font-black text-white mb-1">Enter your email</h2>
-              <p className="text-white/40 text-sm mb-6">We will send you a magic link to sign in.</p>
+              <p className="text-white/40 text-sm mb-6">Enter your email to continue. We\u2019ll send a secure sign-in link.</p>
 
               <form onSubmit={handleMagicLink} className="space-y-4">
                 <Input
