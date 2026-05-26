@@ -87,6 +87,14 @@ export function toPublicSafeFeatureCollection(beacons) {
       geometry: { type: 'Point', coordinates: [lng, lat] },
       properties: {
         id: b.id != null ? String(b.id) : '',
+        // owner_id added 2026-05-26: belt-and-braces for the entity-aware
+        // beacon-tap-to-profile flow. PulseMap's click handler usually
+        // resolves the full beacon via in-memory lookup (and that path
+        // already has owner_id), but on cache miss or stale data it falls
+        // back to feature.properties — surfacing owner_id here makes that
+        // fallback work too. Per beacon doctrine §2: tap MUST resolve to
+        // creator's profile, never to a dead end.
+        owner_id: b.owner_id != null ? String(b.owner_id) : (b.user_id != null ? String(b.user_id) : ''),
         cat,
         // Fine-grained venue category for the HOTMESS Beacon Identity System.
         // null when input doesn't resolve to one of the 9 supported categories —
