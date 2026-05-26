@@ -38,6 +38,7 @@ import SplashScreen from './screens/SplashScreen';
 import AgeGateScreen from './screens/AgeGateScreen';
 import SignUpScreen from './screens/SignUpScreen';
 import QuickSetupScreen from './screens/QuickSetupScreen';
+import NotificationsScreen from './screens/NotificationsScreen';
 
 // Screen keys
 const SCREENS = {
@@ -46,6 +47,7 @@ const SCREENS = {
   SIGNUP: 'signup',
   SIGNIN: 'signin',
   QUICK_SETUP: 'quick_setup',
+  NOTIFICATIONS: 'notifications',
 };
 
 // Map onboarding_stage → screen.
@@ -56,7 +58,9 @@ const STAGE_TO_SCREEN = {
   age_gate: SCREENS.SIGNUP,        // authed, age already verified pre-auth
   age_verified: SCREENS.SIGNUP,    // explicit age_verified stage
   signed_up: SCREENS.QUICK_SETUP,  // signed up, quick setup not yet done
-  quick_setup: null,               // QuickSetup → finish (was: ProfileScreen / PinSetup)
+  quick_setup: SCREENS.NOTIFICATIONS, // QuickSetup → NotificationsScreen (PR 3)
+  notifications: SCREENS.NOTIFICATIONS,
+  notifications_complete: null, // legacy/future — finish
   profile_complete: null,          // legacy stage, also finishes
   vibe_complete: null,             // legacy stage, also finishes
   pin_complete: null,              // legacy stage, also finishes
@@ -323,10 +327,27 @@ export default function OnboardingRouter() {
     }
   }, [goTo]);
 
-  // QuickSetup is now the FINAL gate. Both ProfileScreen and PinSetup are
-  // deferred (vibe → L2EditProfileSheet, PIN → /safety settings).
-  const finishOnboarding = useCallback(async () => {
+  // QuickSetup advances to NotificationsScreen (PR 3). QuickSetup itself
+  // no longer marks onboarding complete — NotificationsScreen does.
+  const advanceFromQuickSetup = useCallback(async () => {
     track('onboarding_stage_completed', 'onboarding', 'quick_setup');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('profiles').update({
+          onboarding_stage: 'notifications',
+          updated_at: new Date().toISOString(),
+        }).eq('id', user.id);
+      }
+    } catch (e) {
+      console.warn('[OnboardingRouter] advanceFromQuickSetup write failed:', e);
+    }
+    goTo(SCREENS.NOTIFICATIONS);
+  }, [goTo]);
+
+  // NotificationsScreen → finish. This is the new final step.
+  const finishOnboarding = useCallback(async () => {
+    track('onboarding_stage_completed', 'onboarding', 'notifications');
     track('profile_complete', 'onboarding');
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -410,6 +431,15 @@ export default function OnboardingRouter() {
     case SCREENS.QUICK_SETUP:
       return (
         <QuickSetupScreen
+          session={session}
+          onComplete={advanceFromQuickSetup}
+          onBack={canGoBack ? goBack : undefined}
+        />
+      );
+
+    case SCREENS.NOTIFICATIONS:
+      return (
+        <NotificationsScreen
           session={session}
           onComplete={finishOnboarding}
           onBack={canGoBack ? goBack : undefined}
