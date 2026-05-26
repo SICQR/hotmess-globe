@@ -206,7 +206,6 @@ export async function reportSafetyConcern(
     .insert({
       type: 'safety',
       status: 'active',
-      active: true,
       title,
       description: options?.description,
       geo_lat: lat,
@@ -262,7 +261,6 @@ export async function createBeacon(input: CreateBeaconInput): Promise<Beacon | n
       owner_id: user.id,
       type: input.type,
       status: 'active',
-      active: true,
       title: input.title,
       description: input.description,
       geo_lat: input.latitude,
@@ -443,4 +441,5 @@ function normalizeBeacon(raw: RawBeacon): Beacon {
 
   return base;
 }
+
 
