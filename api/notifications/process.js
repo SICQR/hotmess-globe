@@ -11,6 +11,7 @@ import '../_silence-dep0169.js';
 import { createClient } from '@supabase/supabase-js';
 import webPush from 'web-push';
 import { json, getEnv } from '../shopify/_utils.js';
+import { sendTelegramMessage } from '../../src/lib/notifications/telegramSend.js';
 
 // ── Notifications hardening constants (spec §3, §4, §7) ──────────────────────
 const STALE_SIGNAL_TYPES = ['Movement', 'Arrival', 'Moment'];
@@ -98,6 +99,28 @@ export default async function handler(req, res) {
 
     for (const notification of sorted) {
       try {
+        // ── beacon_nearby dedup check (Phil brief 2026-05-26) ─────────────
+        // 30-minute cooldown via the dedup_key column added in PR 1.
+        if (notification.notification_type === 'beacon_nearby' && notification.dedup_key) {
+          const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+          const { count: dupCount } = await supabase
+            .from('notification_outbox')
+            .select('*', { count: 'exact', head: true })
+            .eq('notification_type', 'beacon_nearby')
+            .eq('dedup_key', notification.dedup_key)
+            .eq('user_id', notification.user_id)
+            .neq('id', notification.id)
+            .gte('created_at', thirtyMinAgo);
+          if ((dupCount ?? 0) > 0) {
+            await supabase
+              .from('notification_outbox')
+              .update({ status: 'dropped', updated_at: new Date().toISOString() })
+              .eq('id', notification.id);
+            dropped++;
+            continue;
+          }
+        }
+
         // ── Staleness check (spec §7) ──────────────────────────────────────
         const sigType = notification.signal_type ?? notification.notification_type ?? '';
         const isTimeSensitive = STALE_SIGNAL_TYPES.some(t =>
@@ -177,6 +200,36 @@ export default async function handler(req, res) {
           await sendWhatsAppAlert(notification);
         }
 
+        // 4b. Telegram channel (Phil brief 2026-05-26).
+        // The recipient's profile carries notification_channel='telegram' and
+        // telegram_chat_id. The notification row optionally carries the chat_id
+        // in metadata.telegram_chat_id (set by the dispatcher upstream); if not,
+        // we look it up here.
+        if (notification.channel === 'telegram') {
+          let tgChatId = notification.metadata?.telegram_chat_id;
+          if (!tgChatId && notification.user_id) {
+            const { data: prof } = await supabase
+              .from('profiles')
+              .select('telegram_chat_id, notification_channel')
+              .eq('id', notification.user_id)
+              .maybeSingle();
+            if (prof?.notification_channel === 'telegram' && prof?.telegram_chat_id) {
+              tgChatId = prof.telegram_chat_id;
+            }
+          }
+          if (tgChatId) {
+            const tgText = [notification.title, notification.message].filter(Boolean).join('\n').slice(0, 4000) || 'HOTMESS';
+            const tgResult = await sendTelegramMessage(tgChatId, tgText);
+            if (!tgResult?.ok) {
+              console.warn('[notif-process] telegram send failed:', tgResult?.error);
+              // Don't throw — outbox is marked sent for in-app at the bottom.
+              // The audit row covers the failure below if we want to mark it delivery_failed.
+            }
+          } else {
+            console.warn('[notif-process] telegram channel set but no chat_id for user', notification.user_id);
+          }
+        }
+
         // 4. Update outbox status to sent
         const { error: updateError } = await supabase
           .from('notification_outbox')
@@ -195,11 +248,18 @@ export default async function handler(req, res) {
 
       } catch (error) {
         
-        // Mark as failed
+        // Mark as failed (per delivery-failure policy from Phil brief 2026-05-26).
+        // For safety-tier notifications, escalate to delivery_failed so the
+        // audit trail is preserved and operators can act on it. Never delete.
+        const sigType2 = notification.signal_type ?? notification.notification_type ?? '';
+        const isSafety2 = SAFETY_TYPES.some(t => sigType2.toLowerCase().includes(t));
+        const failStatus2 = isSafety2 ? 'delivery_failed' : 'failed';
+        const errDetail2 = `${notification.channel || 'unknown'}: ${error?.message || 'unknown_error'} at ${new Date().toISOString()}`;
         await supabase
           .from('notification_outbox')
-          .update({ 
-            status: 'failed',
+          .update({
+            status: failStatus2,
+            error_detail: errDetail2,
             updated_at: new Date().toISOString(),
           })
           .eq('id', notification.id);
