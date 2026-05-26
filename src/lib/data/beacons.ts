@@ -205,8 +205,12 @@ export async function reportSafetyConcern(
     .from('beacons')
     .insert({
       type: 'safety',
-      lat,
-      lng,
+      status: 'active',
+      active: true,
+      title,
+      description: options?.description,
+      geo_lat: lat,
+      geo_lng: lng,
       owner_id: user?.id,
       metadata: {
         title,
@@ -214,7 +218,7 @@ export async function reportSafetyConcern(
         severity: options?.severity || 'warning',
         resolved: false,
       },
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24h
+      ends_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24h
     })
     .select()
     .single();
@@ -257,12 +261,15 @@ export async function createBeacon(input: CreateBeaconInput): Promise<Beacon | n
     .insert({
       owner_id: user.id,
       type: input.type,
-      lat: input.latitude,
-      lng: input.longitude,
+      status: 'active',
+      active: true,
+      title: input.title,
+      description: input.description,
+      geo_lat: input.latitude,
+      geo_lng: input.longitude,
       starts_at: input.startTime,
-      ends_at: input.endTime,
-      expires_at: input.expiresAt,
-      // Store rich fields in metadata (beacons view doesn't have text columns)
+      ends_at: input.endTime ?? input.expiresAt,
+      // Store rich fields in metadata as well for downstream readers
       metadata: {
         ...(input.metadata || {}),
         title: input.title,
@@ -436,3 +443,4 @@ function normalizeBeacon(raw: RawBeacon): Beacon {
 
   return base;
 }
+
