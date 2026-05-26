@@ -202,3 +202,70 @@ export function resolveBeaconCategory(input?: string | null): BeaconCategory | n
       return null;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Category palette + visual priority — used by the Ghosted card grid to paint
+// a reflective ring + corner glyph badge per user beacon. The map sprite
+// factory (beaconIconFactory.ts) deliberately keeps a single venue/care
+// colour pair for layer-stack simplicity; this palette is for surfaces that
+// want per-category identity (Ghosted cards, profile chips, future filters).
+// Values follow the Beacon Identity System hover-label tints.
+// ---------------------------------------------------------------------------
+
+/** Hex ring colour per beacon category. */
+export const BEACON_CATEGORY_COLORS: Record<BeaconCategory, string> = {
+  // Care states — off-white per identity spec.
+  clinic:    '#F4F1E8',
+  aftercare: '#F4F1E8',
+  // Venue states — distinct per category, harmonised with brand gold.
+  gym:       '#FF5500',
+  club:      '#A899D8',
+  sauna:     '#00C2E0',
+  leather:   '#C8962C',
+  cafe:      '#F5E6C8',
+  cruising:  '#FF2D78',
+  market:    '#C8962C',
+};
+
+/**
+ * Neutral fallback ring when the beacon has no resolvable category (e.g.
+ * legacy `beacon_category='user'`). Brand gold so a beacon still _reads_
+ * as a HOTMESS signal, not a generic accent.
+ */
+export const BEACON_NEUTRAL_RING = '#C8962C';
+
+/**
+ * Priority order (highest first) when a user has multiple active beacons —
+ * safety/care always win, then venue categories, then market. See spec:
+ *   docs/governance/sacred-invariants.md (rule #2 — "Care over commerce").
+ */
+const CATEGORY_PRIORITY: BeaconCategory[] = [
+  'clinic',
+  'aftercare',
+  'sauna',
+  'club',
+  'leather',
+  'cruising',
+  'gym',
+  'cafe',
+  'market',
+];
+
+/**
+ * Pick the highest-priority resolvable category from a list of raw beacon
+ * category strings. Returns `null` when none resolve.
+ */
+export function pickPrimaryBeaconCategory(
+  raw: Array<string | null | undefined>,
+): BeaconCategory | null {
+  const resolved = new Set<BeaconCategory>();
+  for (const r of raw) {
+    const c = resolveBeaconCategory(r);
+    if (c) resolved.add(c);
+  }
+  if (resolved.size === 0) return null;
+  for (const c of CATEGORY_PRIORITY) {
+    if (resolved.has(c)) return c;
+  }
+  return null;
+}
