@@ -294,7 +294,10 @@ export function ShopCartProvider({ children }) {
         if (count === 0) {
           console.log('[Discount] New user detected. Applying HOTMESS10...');
           await applyDiscountCode({ code: 'HOTMESS10' });
-          toast.success("First purchase 10% discount auto-applied!");
+          // Toast intentionally removed — the discount still applies and appears
+          // in the cart line. The toast was re-firing on every ShopCartProvider
+          // re-mount because the in-memory checkedEmailsRef resets, even though
+          // the discount itself was already applied. Silent apply is enough.
         } else {
           console.log(`[Discount] Returning user found (${count} orders). No discount.`);
         }

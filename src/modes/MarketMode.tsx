@@ -529,8 +529,10 @@ export function MarketMode({ className = '' }: MarketModeProps) {
             Market
           </h1>
 
-          <div className="flex items-center gap-2">
-            {/* Cart — visible on all engines */}
+          <div className="flex items-center gap-2 mr-14">
+            {/* Cart — visible on all engines. mr-14 clears the right lane for
+                the global SOS shield (fixed right-4 top-72 z-150) so cart/filter
+                no longer sit under it (Phil 2026-05-26 declutter). */}
             <button
               onClick={() => openSheet('cart', {})}
               className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.06] active:scale-90 transition-transform"
