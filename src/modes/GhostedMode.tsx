@@ -1,21 +1,16 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { requestGeoPermissionOnce } from '@/lib/geo/sharedGeolocation';
 import { motion } from 'framer-motion';
-import { Users, MessageCircle, Music, Radio } from 'lucide-react';
+import { MessageCircle, Music, Radio } from 'lucide-react';
 import { useGhostedGrid } from '@/hooks/useGhostedGrid';
 import { useGPS } from '@/hooks/useGPS';
 import { useSheet } from '@/contexts/SheetContext';
 import { useTaps } from '@/hooks/useTaps';
 import { useUnreadCount } from '@/hooks/useUnreadCount';
 import { GhostedCard } from '@/components/ghosted/GhostedCard';
-import { SignalStrip } from '@/components/ghosted/SignalStrip';
 import { GhostedRecentStories } from '@/components/ghosted/GhostedRecentStories';
 import { supabase } from '@/components/utils/supabaseClient';
 
-import LocationConsentScreen from '@/components/onboarding/screens/LocationConsentScreen';
-
-const GHOSTED_VOL_1 = 'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/records-audio/1764584744541-Ghosted%20(are%20you%20looking_)%20blended%20version%20(Remastered).mp3';
 
 // Right-rail control for the Ghosted page. Visual pattern mirrors the Pulse
 // rail's RailButton (src/pages/Globe.jsx): icons-only pill, label slides out
@@ -42,12 +37,13 @@ export default function GhostedMode() {
   const navigate = useNavigate();
   const { position } = useGPS();
   const { openSheet } = useSheet();
-  const [filter, setFilter] = React.useState<'nearby' | 'recent'>('recent');
-  const [showLocationGating, setShowLocationGating] = React.useState(false);
-  const [locationConsent, setLocationConsent] = React.useState<boolean | null>(null);
 
-  const { cards, isLoading, refetch } = useGhostedGrid(
-    filter === 'nearby' ? 'nearby' : 'recent',
+  // Grid auto-uses location when available (Phil 2026-05-26: removed the
+  // pointless Nearby toggle — the grid works on location anyway). Falls back
+  // to recent if no GPS yet.
+  const tab = position?.lat != null && position?.lng != null ? 'nearby' : 'recent';
+  const { cards, isLoading } = useGhostedGrid(
+    tab,
     position?.lat ?? null,
     position?.lng ?? null,
     null
@@ -61,56 +57,9 @@ export default function GhostedMode() {
       if (session?.user) {
         setMyUserId(session.user.id);
         setMyEmail(session.user.email ?? null);
-        
-        // Fetch location consent status from profiles table
-        supabase.from('profiles')
-          .select('location_consent')
-          .eq('id', session.user.id)
-          .maybeSingle()
-          .then(({ data, error }) => {
-            if (error) console.error('[Ghosted] Error fetching consent:', error);
-            setLocationConsent(!!data?.location_consent);
-          });
       }
     });
   }, []);
-
-  const handleToggleNearby = () => {
-    if (locationConsent === true) {
-      setFilter(filter === 'nearby' ? 'recent' : 'nearby');
-    } else if (locationConsent === false) {
-      setShowLocationGating(true);
-    }
-    // If null, we are still loading, do nothing yet
-  };
-
-  const handleLocationAllow = async () => {
-    if (!myUserId) {
-      console.error('[Ghosted] No user ID for consent update');
-      return;
-    }
-    
-    // Update profiles table
-    const { error } = await supabase.from('profiles').update({
-      location_consent: true,
-      location_consent_at: new Date().toISOString()
-    }).eq('id', myUserId);
-    
-    if (error) {
-      console.error('[Ghosted] Error saving consent to profiles:', error);
-      alert('Failed to save location choice: ' + (error.message || 'Unknown error'));
-      return;
-    }
-    
-    setLocationConsent(true);
-    setShowLocationGating(false);
-    setFilter('nearby');
-    
-    // Trigger GPS
-    requestGeoPermissionOnce()
-      .then(() => refetch())
-      .catch((err) => console.warn('[Ghosted] Geolocation trigger failed:', err));
-  };
 
   const { isTapped, isMutualBoo } = useTaps(myUserId, myEmail);
   const { unreadCount } = useUnreadCount();
@@ -128,16 +77,6 @@ export default function GhostedMode() {
       >
         <style dangerouslySetInnerHTML={{__html: `::-webkit-scrollbar { display: none; }`}} />
 
-        {/* ── SIGNAL STRIP — ambient transmission, never hero. Phil exec
-            review 2026-05-13: this used to be a giant TrackPlayer that
-            read as the primary product. Compressed to a 44px row that
-            sits above the filter and the live field. */}
-        <SignalStrip
-          src={GHOSTED_VOL_1}
-          title="GHOSTED — Vol 1"
-          artist="GHOSTED"
-        />
-
 
         {/* ── RECENT — IG/Grindr-style avatar row of recent chats + active
             beacon-droppers (gold ring = active beacon). Always-on, above the
@@ -146,50 +85,18 @@ export default function GhostedMode() {
             nobody to show, so the grid below always carries the page. */}
         <GhostedRecentStories currentUserEmail={myEmail} currentUserId={myUserId} />
 
-        {/* Subtle Nearby toggle — keeps proximity discovery reachable without
-            a header chip row. Right-aligned, minimal so the grid still reads
-            as the first thing on the page. */}
-        <div className="flex justify-end px-3 pb-2 pt-1">
-          <button
-            type="button"
-            onClick={handleToggleNearby}
-            aria-pressed={filter === 'nearby'}
-            className="text-[10px] tracking-[0.28em] uppercase transition-colors"
-            style={{
-              padding: '5px 12px',
-              borderRadius: 2,
-              fontWeight: 500,
-              background: filter === 'nearby' ? 'rgba(200,150,44,0.10)' : 'transparent',
-              border: filter === 'nearby'
-                ? '0.5px solid rgba(200,150,44,0.45)'
-                : '0.5px solid rgba(255,255,255,0.08)',
-              color: filter === 'nearby' ? '#C8962C' : 'rgba(255,255,255,0.42)',
-            }}
-          >
-            Nearby
-          </button>
-        </div>
 
         {/* ── LIVE FIELD — the emotional center. Orbit mechanics: zero
             gutters, deterministic per-index opacity jitter so the grid
             doesn't read as uniform "app tiles." Full orbit pass (active
             card 1.06×, partial-clip, intersection-observer focus) is
             queued separately. */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-[#C8962C]/30 border-t-[#C8962C] rounded-full animate-spin" />
+        {isLoading && cards.length === 0 ? (
+          <div className="grid grid-cols-3 gap-0">
+            {Array.from({ length: 9 }).map((_, i) => (
+              <div key={i} className="aspect-square bg-white/[0.03] animate-pulse" />
+            ))}
           </div>
-        ) : cards.length === 0 ? (
-          <motion.div
-            className="text-center py-16"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Users className="w-10 h-10 mx-auto mb-4" style={{ color: 'rgba(255,255,255,0.12)' }} />
-            <p className="text-white/25 text-sm font-medium">
-              It's quiet around here.
-            </p>
-          </motion.div>
         ) : (
           <div className="grid grid-cols-3 gap-0">
             {cards.map((card, i) => {
@@ -219,6 +126,14 @@ export default function GhostedMode() {
               );
             })}
           </div>
+        )}
+
+        {/* Inline empty hint — never replaces the grid scaffold (Phil 2026-05-26:
+            'the grid should always be there'). Just a soft note when zero cards. */}
+        {!isLoading && cards.length === 0 && (
+          <p className="text-center text-white/25 text-[11px] tracking-wider uppercase py-3">
+            Field quiet · pull to refresh
+          </p>
         )}
       </div>
 
@@ -250,16 +165,6 @@ export default function GhostedMode() {
         </div>
       </motion.button>
 
-      {/* Location Permission Gating Overlay */}
-      {showLocationGating && (
-        <div className="z-[100]">
-          <LocationConsentScreen 
-            onAllow={handleLocationAllow} 
-            onSkip={() => setShowLocationGating(false)} 
-            progress={0} 
-          />
-        </div>
-      )}
     </div>
   );
 }
