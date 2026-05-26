@@ -18,6 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
 import { calculateDistance } from '@/lib/locationUtils';
 import type { GhostedCardProps, GhostedBeaconBadge } from '@/components/ghosted/GhostedCard';
+import useV6Flag from '@/hooks/useV6Flag';
 import {
   BEACON_CATEGORY_COLORS,
   BEACON_NEUTRAL_RING,
@@ -103,6 +104,11 @@ export function useGhostedGrid(
 ): UseGhostedGridReturn {
   const [myId, setMyId] = useState<string | null>(null);
   const [myEmail, setMyEmail] = useState<string | null>(null);
+
+  // Beacon reputation enforcement (Task #71). When flag is ON, get_nearby_ghosted
+  // server-side excludes profiles whose owner is suppressed (reputation state in
+  // suppressed/banned/under_review or has open moderation reports). Default OFF.
+  const enforceReputation = useV6Flag('beacon_reputation_enforcement');
 
   // Get auth user once
   useEffect(() => {
@@ -199,7 +205,7 @@ export function useGhostedGrid(
 
   // ── Nearby profiles ───────────────────────────────────────────────────────
   const nearbyQuery = useQuery({
-    queryKey: ['ghosted-nearby', myId, myLat, myLng, filterChip],
+    queryKey: ['ghosted-nearby', myId, myLat, myLng, filterChip, enforceReputation],
     enabled: tab === 'nearby' && !!myId && myLat != null && myLng != null,
     staleTime: 30_000,
     refetchInterval: 30_000,
@@ -209,7 +215,12 @@ export function useGhostedGrid(
         viewer_lng: myLng,
         viewer_lat: myLat,
         radius_meters: 80467, // 50 miles
-        limit_count: 100
+        limit_count: 100,
+        // Task #71 - flag-gated invisible reputation filter (server-side).
+        // Server treats undefined/false identically (no-op), so pre-migration
+        // callers stay valid. When flag is ON, suppressed owners are silently
+        // dropped before they ever reach the client.
+        enforce_reputation: enforceReputation
       });
 
       if (error) throw new Error(error.message);
