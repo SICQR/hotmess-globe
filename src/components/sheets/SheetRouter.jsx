@@ -43,6 +43,7 @@ const L2CheckoutSheet = lazy(() => import('./L2CheckoutSheet'));
 const L2SafetySheet = lazy(() => import('./L2SafetySheet'));
 const L2LiveLocationWatcherSheet = lazy(() => import('./L2LiveLocationWatcherSheet'));
 const L2NotificationInboxSheet = lazy(() => import('./L2NotificationInboxSheet'));
+const L2NotificationSettingsSheet = lazy(() => import('./L2NotificationSettingsSheet'));
 const L2PrivacySheet = lazy(() => import('./L2PrivacySheet'));
 const L2BlockedSheet = lazy(() => import('./L2BlockedSheet'));
 const L2NotificationsSheet = lazy(() => import('./L2NotificationsSheet'));
@@ -230,6 +231,7 @@ const SHEET_COMPONENTS = {
   'location-watcher': L2LiveLocationWatcherSheet,
   // Notification inbox (replaces prefs-only 'notifications' sheet as entry point)
   'notification-inbox': L2NotificationInboxSheet,
+  'notification-settings': L2NotificationSettingsSheet,
   // Admin — City Ops
   'admin': L2AdminSheet,
   // B2B — City Amplification
