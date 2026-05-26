@@ -311,6 +311,35 @@ export default function OnboardingGate() {
         if (pushConsent && 'Notification' in window && Notification.permission === 'default') {
           await Notification.requestPermission().catch(() => {});
         }
+
+        // Doctrine (Phil 2026-05-26): consent without coordinates is no good.
+        // If user opted into GPS, capture coords NOW so they actually appear
+        // on Ghosted. Approximate precision is enforced server-side by the
+        // update_my_location RPC (rounds to 4 decimals ~11m). Graceful
+        // degradation: if the browser denies, onboarding still completes —
+        // the user just won't be discoverable until they enable it later.
+        if (gpsConsent && 'geolocation' in navigator) {
+          await new Promise((resolve) => {
+            const finish = () => resolve();
+            navigator.geolocation.getCurrentPosition(
+              async (pos) => {
+                try {
+                  await supabase.rpc('update_my_location', {
+                    p_lng: pos.coords.longitude,
+                    p_lat: pos.coords.latitude,
+                  });
+                } catch (e) {
+                  // Non-fatal — user can re-enable later from settings.
+                  console.warn('[Onboarding] update_my_location failed:', e);
+                } finally {
+                  finish();
+                }
+              },
+              () => finish(),
+              { timeout: 8000, enableHighAccuracy: false, maximumAge: 60000 }
+            );
+          });
+        }
       }
       setStep((s) => s + 1);
     },
@@ -667,7 +696,7 @@ export default function OnboardingGate() {
                     Location Access
                   </p>
                   <p className="text-xs text-white/35 mt-1 leading-relaxed">
-                    Enables proximity features, beacons, and safety alerts.
+                    Enables proximity features, beacons, and safety alerts. Without it, others won’t see you nearby.
                   </p>
                 </div>
                 <Checkbox
