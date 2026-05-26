@@ -121,10 +121,14 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
           setStatus('ready');
           try { if (onReadyRef.current) onReadyRef.current(); } catch (e) { /* non-fatal */ }
 
-          // Blue-marble: real satellite imagery at globe scale (the hero "Earth from
-          // space" look) faded out by city zoom so street level stays the dark vector
-          // map. Inserted beneath the label symbols (which stay readable) — the beacon
-          // layers are added next with no beforeId, so blooms sit on top of everything.
+          // Night-earth re-tone (Phil 2026-05-26 globe-style overhaul):
+          // we keep mapbox.satellite-v9 as the source (one tile pipeline, no extra
+          // API key risk, no NASA Black Marble free-tier rate-limit exposure) and
+          // crush it into a dark earth + faint city-light scatter via raster paint.
+          // Result reads as "Earth at night from orbit", not "Google Maps with a
+          // logo on it". Faded out by street zoom so the dark vector base takes
+          // over for legibility — fadeout curve preserved verbatim (Phil: do not
+          // touch the z=10 handoff to street-level streets).
           try {
             if (!map.getSource('hm-satellite')) {
               map.addSource('hm-satellite', { type: 'raster', url: 'mapbox://mapbox.satellite', tileSize: 256 });
@@ -138,21 +142,69 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
                 type: 'raster',
                 source: 'hm-satellite',
                 paint: {
-                  // Cinematic blue-marble curve (Phil 2026-05-26 restoration):
-                  // hold the satellite higher and longer through country zoom so
-                  // the blue earth feel persists, fade out by street zoom where
-                  // the dark vector base takes over for legibility.
+                  // Cinematic dark-earth curve — opacity envelope preserved from
+                  // PR #408 (do not touch the z=10 city-zoom fadeout per Phil).
                   'raster-opacity': ['interpolate', ['linear'], ['zoom'], 1.5, 0.96, 4, 0.9, 6, 0.7, 8, 0.35, 10, 0],
-                  // Subtle cool cast — biases the realistic Earth tiles toward
-                  // the cyan-blue 'marble' look without losing real-place legibility.
-                  'raster-hue-rotate': -8,
-                  'raster-saturation': -0.05,
-                  'raster-contrast': 0.05,
+                  // Night-earth crush: desaturate to mono, drop brightness ceiling
+                  // so only the brightest pixels (city lights, ice, deserts) punch
+                  // through, lift contrast, and rotate hue cool so what does punch
+                  // through reads as neon-cyan city-light scatter, not yellow lamps.
+                  'raster-saturation': -1,
+                  'raster-brightness-max': 0.25,
+                  'raster-contrast': 0.4,
+                  'raster-hue-rotate': -20,
                   'raster-fade-duration': 300,
                 },
               }, firstSymbol);
             }
           } catch (e) { /* non-fatal: dark vector base still renders */ }
+
+          // CHANGE 2 — neon coastline + country-edge overlay (Phil 2026-05-26).
+          // The dark-v11 base style already loads the mapbox-streets-v8 vector
+          // tiles under the source id 'composite' (Mapbox convention for the
+          // bundled source on first-party styles). We tap that source twice:
+          //   - water polygon edges → coastlines (reads as the world's outline)
+          //   - admin lines (admin_level 0–1) → country/region edges
+          // Both use the neon purple-blue from the brief (#7A5BFF) with a soft
+          // blur for the orbital-neon feel. Inserted BEFORE the beacon clusters
+          // (beforeId = LAYER_IDS.clusterCircles) so beacons stay on top.
+          try {
+            if (map.getSource('composite')) {
+              const beforeId = map.getLayer(LAYER_IDS.clusterCircles) ? LAYER_IDS.clusterCircles : undefined;
+              if (!map.getLayer('hm-coastline-neon')) {
+                map.addLayer({
+                  id: 'hm-coastline-neon',
+                  type: 'line',
+                  source: 'composite',
+                  'source-layer': 'water',
+                  filter: ['==', ['geometry-type'], 'Polygon'],
+                  paint: {
+                    'line-color': '#7A5BFF',
+                    'line-width': ['interpolate', ['linear'], ['zoom'], 2, 0.4, 5, 1.0, 8, 1.6],
+                    'line-opacity': ['interpolate', ['linear'], ['zoom'], 2, 0.45, 6, 0.55, 9, 0.25, 11, 0],
+                    'line-blur': 0.6,
+                  },
+                }, beforeId);
+              }
+              if (!map.getLayer('hm-admin-neon')) {
+                map.addLayer({
+                  id: 'hm-admin-neon',
+                  type: 'line',
+                  source: 'composite',
+                  'source-layer': 'admin',
+                  // Country (0) + first-order region (1) edges only; drops noisy
+                  // sub-admin lines so the globe reads as nations, not counties.
+                  filter: ['all', ['<=', ['to-number', ['get', 'admin_level']], 1], ['!=', ['get', 'maritime'], 'true']],
+                  paint: {
+                    'line-color': '#7A5BFF',
+                    'line-width': ['interpolate', ['linear'], ['zoom'], 2, 0.3, 5, 0.7, 8, 1.1],
+                    'line-opacity': ['interpolate', ['linear'], ['zoom'], 2, 0.35, 6, 0.45, 9, 0.2, 11, 0],
+                    'line-blur': 0.5,
+                  },
+                }, beforeId);
+              }
+            }
+          } catch (e) { /* non-fatal: coastline overlay is purely decorative */ }
 
           // Beacon layer stack (clusters glow at macro, blooms at micro). Lower
           // clusterMaxZoom than the legacy local-only map so individuals separate

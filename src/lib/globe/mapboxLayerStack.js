@@ -116,18 +116,19 @@ export function environmentalFog(hour, reducedMotion) {
   // star field at night — tuned to sit under the satellite imagery so the globe reads
   // as Earth-from-space. The limb warmth shifts gently with the daylight cycle.
   let cfg;
-  // Cinematic blue globe restored 2026-05-26 (Phil regression flag):
-  //   wider horizon-blend (0.5+), brighter blue high-color (cyan-shifted),
-  //   richer deep-blue space-color, and a low-intensity star field even at
-  //   daytime so the globe always reads as Earth-from-space, not flat map.
-  if (h >= 5 && h < 8) {           // dawn — blue limb breaking warm
-    cfg = { color: 'rgba(14,18,28,0.55)', 'high-color': '#9bc4ff', 'space-color': '#06122a', 'horizon-blend': 0.52, 'star-intensity': reducedMotion ? 0 : 0.12 };
-  } else if (h >= 8 && h < 17) {   // day — bright cyan-blue atmosphere
-    cfg = { color: 'rgba(16,26,42,0.5)', 'high-color': '#a8caff', 'space-color': '#061128', 'horizon-blend': 0.55, 'star-intensity': reducedMotion ? 0 : 0.08 };
-  } else if (h >= 17 && h < 20) {  // dusk — cooling blue
-    cfg = { color: 'rgba(14,18,28,0.55)', 'high-color': '#82a8e0', 'space-color': '#050d22', 'horizon-blend': 0.48, 'star-intensity': reducedMotion ? 0 : 0.16 };
-  } else {                          // night — deep blue space, glowing limb, stars
-    cfg = { color: 'rgba(8,12,22,0.62)', 'high-color': '#5b8fd0', 'space-color': '#030717', 'horizon-blend': 0.42, 'star-intensity': reducedMotion ? 0 : 0.28 };
+  // Globe-style overhaul 2026-05-26 (Phil): deep-indigo space, blue limb,
+  // wider horizon blend (0.45-0.6) so the atmosphere reads as orbit, not
+  // weather app. Cool grey-blue ground colour to sit under the night-earth
+  // satellite re-tone in PulseMap.jsx. Star intensity preserved low-always-on
+  // (bumped at night per the brief) so the field is felt, not garish.
+  if (h >= 5 && h < 8) {           // dawn — indigo space, blue limb cracking warm
+    cfg = { color: 'rgba(12,14,32,0.6)', 'high-color': '#6d83e0', 'space-color': '#0c0a32', 'horizon-blend': 0.5, 'star-intensity': reducedMotion ? 0 : 0.18 };
+  } else if (h >= 8 && h < 17) {   // day — indigo space, brighter blue atmosphere
+    cfg = { color: 'rgba(14,18,36,0.55)', 'high-color': '#7a8ce8', 'space-color': '#0c0a32', 'horizon-blend': 0.55, 'star-intensity': reducedMotion ? 0 : 0.12 };
+  } else if (h >= 17 && h < 20) {  // dusk — cooling indigo, mid-blue limb
+    cfg = { color: 'rgba(12,14,32,0.6)', 'high-color': '#5b6fd0', 'space-color': '#0a0928', 'horizon-blend': 0.5, 'star-intensity': reducedMotion ? 0 : 0.22 };
+  } else {                          // night — deep indigo space, blue limb, star field
+    cfg = { color: 'rgba(10,12,28,0.65)', 'high-color': '#5b6fd0', 'space-color': '#0a0928', 'horizon-blend': 0.45, 'star-intensity': reducedMotion ? 0 : 0.35 };
   }
   return cfg;
 }
