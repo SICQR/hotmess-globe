@@ -17,7 +17,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
 import { calculateDistance } from '@/lib/locationUtils';
-import type { GhostedCardProps } from '@/components/ghosted/GhostedCard';
+import type { GhostedCardProps, GhostedBeaconBadge } from '@/components/ghosted/GhostedCard';
+import {
+  BEACON_CATEGORY_COLORS,
+  BEACON_NEUTRAL_RING,
+  pickPrimaryBeaconCategory,
+} from '@/components/globe/beaconGlyphs';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -122,6 +127,75 @@ export function useGhostedGrid(
       return new Set((data || []).map((r: any) => r.blocked_id));
     },
   });
+
+  // ── Active beacons (any owner) — keyed by owner_id for card overlay ──────
+  // The beacons table is tiny (one row per active drop), so it's cheaper to
+  // fetch the whole live set than to join per-card. We render a per-category
+  // ring + glyph badge on each Ghosted card whose owner appears here.
+  // Lifecycle: a beacon ending in the next 10 min is treated as 'decaying'
+  // (dimmer ring + "FADING" label). Already-expired beacons aren't returned
+  // because we constrain ends_at>now() at the query.
+  const activeBeaconsQuery = useQuery({
+    queryKey: ['ghosted-active-beacons'],
+    enabled: !!myId && (tab === 'nearby' || tab === 'live' || tab === 'recent'),
+    staleTime: 30_000,
+    refetchInterval: 30_000,
+    queryFn: async () => {
+      const nowIso = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('beacons')
+        .select('id, owner_id, beacon_category, type, title, ends_at, geo_lat, geo_lng, latitude, longitude')
+        .eq('active', true)
+        .gt('ends_at', nowIso);
+      if (error) throw new Error(error.message);
+      return data || [];
+    },
+  });
+
+  // Build owner_id -> primary badge (highest-priority category + colour +
+  // flyTo coords + venue label). The Ghosted card uses this purely for the
+  // visual ring/badge/label and the tap-to-fly nav-state.
+  const beaconBadgesByOwner = useMemo(() => {
+    const out = new Map<string, GhostedBeaconBadge>();
+    const grouped = new Map<string, any[]>();
+    for (const b of activeBeaconsQuery.data || []) {
+      if (!b.owner_id) continue;
+      const arr = grouped.get(b.owner_id) || [];
+      arr.push(b);
+      grouped.set(b.owner_id, arr);
+    }
+    const nowMs = Date.now();
+    for (const [ownerId, list] of grouped.entries()) {
+      // Highest-priority category. Fall back to neutral ring when the raw
+      // category isn't one of the 9 hero glyphs (e.g. legacy 'user').
+      const category = pickPrimaryBeaconCategory(
+        list.map((b) => b.beacon_category || b.type),
+      );
+      // Pick the beacon whose category was chosen (so flyTo + label match
+      // the visual). If none resolved, use the most recent.
+      const primary =
+        list.find((b) => {
+          const c = (b.beacon_category || b.type || '').toString().toLowerCase();
+          return category != null && c.includes(category);
+        }) || list[0];
+      const lat = Number(primary.geo_lat ?? primary.latitude);
+      const lng = Number(primary.geo_lng ?? primary.longitude);
+      const endsMs = primary.ends_at ? new Date(primary.ends_at).getTime() : 0;
+      const minsLeft = endsMs > 0 ? (endsMs - nowMs) / 60000 : Infinity;
+      const lifecycle: GhostedBeaconBadge['lifecycle'] =
+        minsLeft < 10 ? 'decaying' : 'active';
+      out.set(ownerId, {
+        beaconId: primary.id,
+        category,
+        color: category ? BEACON_CATEGORY_COLORS[category] : BEACON_NEUTRAL_RING,
+        venue: primary.title || null,
+        lat: Number.isFinite(lat) ? lat : null,
+        lng: Number.isFinite(lng) ? lng : null,
+        lifecycle,
+      });
+    }
+    return out;
+  }, [activeBeaconsQuery.data]);
 
   // ── Nearby profiles ───────────────────────────────────────────────────────
   const nearbyQuery = useQuery({
@@ -332,6 +406,7 @@ export function useGhostedGrid(
           vibe: null,
           intent: intent ? String(intent).toLowerCase() : null,
           email: p.email || null,
+          beacon: beaconBadgesByOwner.get(p.id) || null,
         } as GhostedCardProps;
       })
       .sort((a: GhostedCardProps, b: GhostedCardProps) => {
@@ -340,7 +415,7 @@ export function useGhostedGrid(
         if (!a.isOnline && b.isOnline) return 1;
         return (a.distanceM ?? Infinity) - (b.distanceM ?? Infinity);
       });
-  }, [nearbyQuery.data, blockedIds, myLat, myLng, filterChip]);
+  }, [nearbyQuery.data, blockedIds, myLat, myLng, filterChip, beaconBadgesByOwner]);
 
   // ── Transform live profiles to GhostedCardProps ───────────────────────────
   const liveCards = useMemo(() => {
@@ -397,9 +472,10 @@ export function useGhostedGrid(
           vibe: null,
           intent: null,
           email: p.email || null,
+          beacon: beaconBadgesByOwner.get(p.id) || null,
         } as GhostedCardProps;
       });
-  }, [liveQuery.data, blockedIds, myLat, myLng]);
+  }, [liveQuery.data, blockedIds, myLat, myLng, beaconBadgesByOwner]);
 
   // ── Transform recent profiles to GhostedCardProps ─────────────────────────
   const recentCards = useMemo(() => {
@@ -430,9 +506,10 @@ export function useGhostedGrid(
           vibe: null,
           intent: intent ? String(intent).toLowerCase() : null,
           email: p.email || null,
+          beacon: beaconBadgesByOwner.get(p.id) || null,
         } as GhostedCardProps;
       });
-  }, [recentQuery.data, blockedIds, myLat, myLng]);
+  }, [recentQuery.data, blockedIds, myLat, myLng, beaconBadgesByOwner]);
 
   // ── Select data based on active tab ───────────────────────────────────────
   const cards = tab === 'nearby'
