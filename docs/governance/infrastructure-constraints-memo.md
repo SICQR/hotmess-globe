@@ -93,3 +93,15 @@ Infrastructure is acceptable only if it can support:
 ## Final rule
 
 **If infrastructure makes governance harder to enforce, it is the wrong infrastructure.**
+
+## What this enforces
+
+This memo is the architectural substrate for the governance layer. Every constraint above traces to a rule in one of:
+
+- [`sacred-invariants.md`](./sacred-invariants.md) — the 18 rules that cannot be relaxed; constraints 1, 2, 8, 14, 15 directly enforce them.
+- [`ranking-constitution.md`](./ranking-constitution.md) — visibility law; constraints 2, 6, 7 (separation of ranking from other subsystems), 10 enforce its readability and bounded-amplification rules.
+- [`signal-economics-spec.md`](./signal-economics-spec.md) — scarcity, lifecycle, decay; constraints 3 (real-time integrity), 8 (conservative defaults), 11 (state discipline), 15 (failure-tolerance via decay) enforce the lifecycle and saturation rules.
+- [`trust-system-spec.md`](./trust-system-spec.md) — credibility model; constraints 5 (trust+moderation observability), 9 (reversibility of enforcement actions), 12 (auditability of trust transitions) enforce trust accumulation/decay/recovery.
+- [`metrics-and-instrumentation-spec.md`](./metrics-and-instrumentation-spec.md) and [`observability-and-alerting-spec.md`](./observability-and-alerting-spec.md) — what must be measured + how alerts route; constraints 5, 12, 15 make those measurements possible.
+
+If any of the 15 constraints above weakens an enforcement path defined in those docs, the constraint is wrong, not the spec.

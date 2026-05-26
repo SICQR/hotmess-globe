@@ -13,18 +13,11 @@ Define how HOTMESS scores, orders, and suppresses items for visibility.
 
 ## Ranking hierarchy
 
-Ranking must obey this order:
+Implements the canonical 8-layer hierarchy from [`sacred-invariants.md#decision-hierarchy`](./sacred-invariants.md#decision-hierarchy):
 
-1. Safety
-2. Truth
-3. Trust
-4. Freshness
-5. Momentum
-6. Readability
-7. Relevance
-8. Monetization
+**Safety → Truth → Trust → Freshness → Momentum → Readability → Relevance → Monetization**
 
-**If a lower layer conflicts with a higher layer, the higher layer wins.**
+**If a lower layer conflicts with a higher layer, the higher layer wins.** Each of the 8 layers below maps to a scoring component (gate, weighting, or suppression rule) in the order above.
 
 ## Inputs to ranking
 

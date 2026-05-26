@@ -243,16 +243,11 @@ See [sacred-invariants.md](./sacred-invariants.md).
 
 ## Constitutional decision hierarchy
 
-If rules conflict, priority is:
+The canonical 8-layer decision hierarchy lives in [`sacred-invariants.md#decision-hierarchy`](./sacred-invariants.md#decision-hierarchy) and is the single source of truth across the whole governance stack:
 
-1. Safety
-2. Trust
-3. Freshness
-4. Readability
-5. Relevance
-6. Monetization
+**Safety → Truth → Trust → Freshness → Momentum → Readability → Relevance → Monetization**
 
-This means: if a paid item is unsafe, it loses. If a fresh signal is low-trust and harmful, it loses. If density is too high, clarity wins over volume.
+Applied here: if a paid item is unsafe, it loses. If a fresh signal is low-trust and harmful, it loses. If a fresh item has no momentum, it loses to one that's accelerating. If density is too high, clarity wins over volume. **Anything below loses to anything above. No exceptions.**
 
 ## Operational questions to lock next
 

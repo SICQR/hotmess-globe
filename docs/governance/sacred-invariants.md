@@ -13,17 +13,22 @@ If any other governance doc contradicts something in this doc, **this doc wins.*
 
 ## Decision hierarchy
 
+**Canonical. Every other governance doc references this list. Never restated, never re-ordered, never abbreviated.**
+
 When rules conflict, priority is:
 
 1. **Safety**
 2. **Truth**
 3. **Trust**
 4. **Freshness**
-5. **Readability**
-6. **Relevance**
-7. **Monetization**
+5. **Momentum**
+6. **Readability**
+7. **Relevance**
+8. **Monetization**
 
-Anything below loses to anything above. No exceptions. A paid item that is unsafe loses. A trusted source whose claim is false loses. Density that destroys readability loses.
+Anything below loses to anything above. No exceptions. A paid item that is unsafe loses. A trusted source whose claim is false loses. A fresh signal with no momentum loses to a slightly older one that's accelerating. Density that destroys readability loses.
+
+> **Momentum** is the rate of change of activity (arrivals, queue growth, signal creation slope). It is distinct from Freshness (which is absolute recency) and distinct from raw historical Density. See [`ranking-formula-spec.md`](./ranking-formula-spec.md) for how the 8 layers map to scoring components.
 
 ## The Invariants
 
