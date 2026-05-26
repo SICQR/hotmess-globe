@@ -6,7 +6,7 @@
 
 Define how HOTMESS is introduced, controlled, and stabilized in live markets.
 
-Sits below: [Ranking Constitution](./ranking-constitution.md) · [Signal Economics](./signal-economics-spec.md) · [Trust System](./trust-system-spec.md) · [Developer Rules Checklist](./developer-rules-checklist.md) · [Ranking Formula Spec](./ranking-formula-spec.md).
+Sits below: [Ranking Constitution](../governance/ranking-constitution.md) · [Signal Economics](../governance/signal-economics-spec.md) · [Trust System](../governance/trust-system-spec.md) · [Developer Rules Checklist](../governance/developer-rules-checklist.md) · [Ranking Formula Spec](../governance/ranking-formula-spec.md).
 
 Turns the system into an operating rollout plan.
 
@@ -185,3 +185,15 @@ Small district count · limited source onboarding · strict posting quotas · sh
 ## Implementation rule
 
 If a launch rule cannot be enforced as a **cap · threshold · state transition · permission flag · moderation action · dashboard metric**, it is not ready for rollout.
+
+
+---
+
+## Doctrine + invariants
+
+This spec inherits from the canonical roots:
+
+- [`../doctrine/product-doctrine.md`](../doctrine/product-doctrine.md) — the constitutional root narrative + operational loops.
+- [`../doctrine/sacred-invariants.md`](../doctrine/sacred-invariants.md) — the 18 rules that cannot be relaxed + the canonical 8-layer decision hierarchy.
+
+If this spec conflicts with either, **the root wins.**

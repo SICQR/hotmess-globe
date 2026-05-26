@@ -189,7 +189,7 @@ Must not require invasive tracking. Built from: behavioral consistency · direct
 
 ## Decision hierarchy
 
-When trust conflicts with other factors, the canonical 8-layer hierarchy in [`sacred-invariants.md#decision-hierarchy`](./sacred-invariants.md#decision-hierarchy) applies:
+When trust conflicts with other factors, the canonical 8-layer hierarchy in [`sacred-invariants.md#decision-hierarchy`](../doctrine/sacred-invariants.md#decision-hierarchy) applies:
 
 **Safety → Truth → Trust → Freshness → Momentum → Readability → Relevance → Monetization**
 
@@ -206,3 +206,15 @@ A trusted false claim still loses (Truth > Trust). A low-trust truthful claim ma
 - freeze and appeal triggers
 - how trust affects boost caps
 - how quickly trust changes after abuse
+
+
+---
+
+## Doctrine + invariants
+
+This spec inherits from the canonical roots:
+
+- [`../doctrine/product-doctrine.md`](../doctrine/product-doctrine.md) — the constitutional root narrative + operational loops.
+- [`../doctrine/sacred-invariants.md`](../doctrine/sacred-invariants.md) — the 18 rules that cannot be relaxed + the canonical 8-layer decision hierarchy.
+
+If this spec conflicts with either, **the root wins.**

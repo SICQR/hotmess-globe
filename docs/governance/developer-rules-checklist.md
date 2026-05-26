@@ -70,7 +70,7 @@ If a rule cannot be monitored, it cannot be operationalized.
 
 If two docs disagree, use the hierarchy:
 
-1. [Sacred invariants](./sacred-invariants.md)
+1. [Sacred invariants](../doctrine/sacred-invariants.md)
 2. Governance canonical docs
 3. Related product briefs and doctrine
 4. Drafts and implementation docs
@@ -131,4 +131,16 @@ If the reviewer cannot explain the rule in one sentence and point to its owner a
 
 ---
 
-This doc is kept **short, strict, and enforceable**. See [sacred-invariants.md](./sacred-invariants.md) for the tie-breaker when other rules conflict.
+This doc is kept **short, strict, and enforceable**. See [sacred-invariants.md](../doctrine/sacred-invariants.md) for the tie-breaker when other rules conflict.
+
+
+---
+
+## Doctrine + invariants
+
+This spec inherits from the canonical roots:
+
+- [`../doctrine/product-doctrine.md`](../doctrine/product-doctrine.md) — the constitutional root narrative + operational loops.
+- [`../doctrine/sacred-invariants.md`](../doctrine/sacred-invariants.md) — the 18 rules that cannot be relaxed + the canonical 8-layer decision hierarchy.
+
+If this spec conflicts with either, **the root wins.**

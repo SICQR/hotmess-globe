@@ -188,3 +188,15 @@ A district is not ready if it only **looks** active. It must be operationally st
 ## Final rule
 
 **If a metric cannot trigger a decision, it is not a system metric. It is just reporting.**
+
+
+---
+
+## Doctrine + invariants
+
+This spec inherits from the canonical roots:
+
+- [`../doctrine/product-doctrine.md`](../doctrine/product-doctrine.md) — the constitutional root narrative + operational loops.
+- [`../doctrine/sacred-invariants.md`](../doctrine/sacred-invariants.md) — the 18 rules that cannot be relaxed + the canonical 8-layer decision hierarchy.
+
+If this spec conflicts with either, **the root wins.**

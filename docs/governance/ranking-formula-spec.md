@@ -13,7 +13,7 @@ Define how HOTMESS scores, orders, and suppresses items for visibility.
 
 ## Ranking hierarchy
 
-Implements the canonical 8-layer hierarchy from [`sacred-invariants.md#decision-hierarchy`](./sacred-invariants.md#decision-hierarchy):
+Implements the canonical 8-layer hierarchy from [`sacred-invariants.md#decision-hierarchy`](../doctrine/sacred-invariants.md#decision-hierarchy):
 
 **Safety → Truth → Trust → Freshness → Momentum → Readability → Relevance → Monetization**
 
@@ -177,3 +177,15 @@ The ranking formula should be tested against:
 ## Final rule
 
 A ranking system is only acceptable if it **improves utility without violating safety, truth, freshness, or readability.**
+
+
+---
+
+## Doctrine + invariants
+
+This spec inherits from the canonical roots:
+
+- [`../doctrine/product-doctrine.md`](../doctrine/product-doctrine.md) — the constitutional root narrative + operational loops.
+- [`../doctrine/sacred-invariants.md`](../doctrine/sacred-invariants.md) — the 18 rules that cannot be relaxed + the canonical 8-layer decision hierarchy.
+
+If this spec conflicts with either, **the root wins.**

@@ -66,7 +66,7 @@ Everything else serves it:
 | Signal Economics                    | Drafted twice in PR #411 (`docs/governance/` + `docs/economics/` — needs reconciliation) |
 | Launch Operations Playbook          | Drafted twice in PR #411 (`docs/ops/` + `docs/launch/` — needs reconciliation)          |
 | Infrastructure Constraints Memo     | **NOT YET WRITTEN**                                                                     |
-| Sacred Invariants                   | Drafted here in [`governance/sacred-invariants.md`](./governance/sacred-invariants.md)  |
+| Sacred Invariants                   | Drafted here in [`governance/sacred-invariants.md`](./doctrine/sacred-invariants.md)  |
 | v1 Product Ruleset (exact defaults) | **NOT YET WRITTEN** — highest-leverage missing doc (see Critique recommendation)        |
 
 ---

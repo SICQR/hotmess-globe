@@ -100,5 +100,5 @@ Recommend Phil pick (1) next.
 
 - [`HOTMESS_PRODUCT_BRIEF.md`](./HOTMESS_PRODUCT_BRIEF.md) — north star: what HOTMESS is.
 - [`HOTMESS_STRATEGIC_THESIS.md`](./HOTMESS_STRATEGIC_THESIS.md) — go-to-market: wedge, loops, monetisation, MVP, launch, metrics.
-- [`governance/sacred-invariants.md`](./governance/sacred-invariants.md) — ethical/operational spine: what HOTMESS must never become.
+- [`governance/sacred-invariants.md`](./doctrine/sacred-invariants.md) — ethical/operational spine: what HOTMESS must never become.
 - [`governance/`](./governance/) — tier-1/2/3 enforcement specs (PR #411 in flight).
