@@ -1,7 +1,11 @@
 # Developer Rules Checklist
 
-> **Canonical, 2026-05-26 (Phil).** Tier-2 system logic.
-> The review and implementation rules that keep HOTMESS governance enforceable.
+**Status:** Canonical governance.
+**Source:** Phil Gizzie, 2026-05-26.
+
+## Purpose
+
+Define the review and implementation rules that keep HOTMESS governance enforceable.
 
 ## Core rule
 
@@ -53,6 +57,7 @@ This checklist applies to all PRs, docs, and governance-bearing changes.
 ## 8. Enforcement alignment
 
 Every rule must have:
+
 - an owner
 - an observable signal
 - a threshold or trigger
@@ -70,12 +75,12 @@ If a rule cannot be monitored, it cannot be operationalized.
 
 If two docs disagree, use the hierarchy:
 
-1. [Sacred invariants](../doctrine/sacred-invariants.md)
+1. Sacred invariants
 2. Governance canonical docs
 3. Related product briefs and doctrine
 4. Drafts and implementation docs
 
-**Never silently merge conflicting rules.**
+Never silently merge conflicting rules.
 
 ## 11. Implementation review
 
@@ -127,20 +132,6 @@ A change should only pass if it improves, or at minimum does not degrade:
 
 ## 15. Final reviewer rule
 
-If the reviewer cannot explain the rule in one sentence and point to its owner and trigger, **the rule is incomplete.**
+If the reviewer cannot explain the rule in one sentence and point to its owner and trigger, the rule is incomplete.
 
----
-
-This doc is kept **short, strict, and enforceable**. See [sacred-invariants.md](../doctrine/sacred-invariants.md) for the tie-breaker when other rules conflict.
-
-
----
-
-## Doctrine + invariants
-
-This spec inherits from the canonical roots:
-
-- [`../doctrine/product-doctrine.md`](../doctrine/product-doctrine.md) — the constitutional root narrative + operational loops.
-- [`../doctrine/sacred-invariants.md`](../doctrine/sacred-invariants.md) — the 18 rules that cannot be relaxed + the canonical 8-layer decision hierarchy.
-
-If this spec conflicts with either, **the root wins.**
+This doc should be kept short, strict, and enforceable.
