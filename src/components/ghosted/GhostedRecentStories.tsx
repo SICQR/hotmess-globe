@@ -21,6 +21,7 @@
  */
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 
@@ -43,6 +44,7 @@ export function GhostedRecentStories({
   currentUserId?: string | null;
 }) {
   const { openSheet } = useSheet();
+  const navigate = useNavigate();
   const [people, setPeople] = React.useState<RowPerson[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -120,31 +122,15 @@ export function GhostedRecentStories({
         const seen = new Set<string>(); // dedupe key (userId or email)
         const out: RowPerson[] = [];
 
-        // a) Chat partners first (recency order).
-        for (const t of threadList) {
-          const other = (t.participant_emails || []).find(
-            (e: string) => e && e.toLowerCase() !== emailKey
-          );
-          if (!other) continue;
-          const prof = profByEmail.get(other.toLowerCase());
-          const uid = prof?.id || null;
-          const key = uid || other.toLowerCase();
-          if (seen.has(key)) continue;
-          seen.add(key);
-          const unread = Number((t.unread_count || {})[emailKey] || 0) > 0;
-          out.push({
-            userId: uid,
-            email: other,
-            name: prof?.display_name || other.split('@')[0],
-            avatar: prof?.avatar_url || null,
-            hasBeacon: uid ? beaconByOwner.has(uid) : false,
-            beaconId: uid ? beaconByOwner.get(uid) || null : null,
-            unread,
-            threadId: t.id,
-          });
-        }
-
-        // b) Beacon owners you haven't chatted with — appended, ringed.
+        // DOCTRINE (Phil 2026-05-26): the carousel above the Ghosted grid
+        // is the BEACON SURFACE. Only people with an active beacon belong
+        // here. Recent chat partners have been removed from this row —
+        // they belong in the dedicated chat surface, not stamped onto a
+        // beacon list. Per docs/doctrine/beacon-doctrine.md §11 (single-
+        // source rendering) the globe layer and this carousel both derive
+        // from the same active beacon set.
+        //
+        // a) Beacon owners only.
         for (const ownerId of beaconOwnerIds) {
           if (seen.has(ownerId)) continue;
           const prof = profById.get(ownerId);
@@ -181,8 +167,17 @@ export function GhostedRecentStories({
   if (loading || people.length === 0) return null;
 
   const open = (p: RowPerson) => {
-    if (p.userId) openSheet('profile', { uid: p.userId });
-    else if (p.threadId) openSheet('chat', { thread: p.threadId, to: p.email, title: p.name });
+    // Doctrine: globe tap AND carousel tap both resolve to the creator's
+    // canonical profile with the beacon id in the query string. The profile
+    // page renders ActiveBeaconModule when ?beacon= is present.
+    if (p.userId) {
+      const url = p.beaconId
+        ? `/profile/${p.userId}?beacon=${p.beaconId}`
+        : `/profile/${p.userId}`;
+      navigate(url);
+      return;
+    }
+    if (p.threadId) openSheet('chat', { thread: p.threadId, to: p.email, title: p.name });
   };
 
   return (
