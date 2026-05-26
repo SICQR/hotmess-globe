@@ -766,10 +766,10 @@ export default function MusicTab() {
       {/* PRODUCER MODE section removed 2026-05-12 \u2014 stems offering discontinued. */}
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          3. ALL RELEASES — horizontal carousel + browse-all CTA
+          3. ALL RELEASES — 2-col grid of record covers (Design Brief 08: RADIO + RECORDS)
           ═══════════════════════════════════════════════════════════════════ */}
-      <section className="mt-10 pl-6 pb-40">
-        <div className="flex items-center justify-between pr-6 mb-3">
+      <section className="mt-10 px-3 pb-40">
+        <div className="flex items-center justify-between px-3 mb-3">
           <SectionHeader>All Releases</SectionHeader>
           <button
             onClick={() => navigate('/music/library')}
@@ -780,7 +780,7 @@ export default function MusicTab() {
             Browse all &rarr;
           </button>
         </div>
-        <div className="flex gap-3 overflow-x-auto pb-4 pr-6 scrollbar-hide">
+        <div className="grid grid-cols-2 gap-3">
           {releases.map(rel => {
             const relTracks = tracksByRelease[rel.id] || [];
             const access = getReleaseAccessLevel(rel, relTracks);
@@ -795,18 +795,18 @@ export default function MusicTab() {
                 key={rel.id}
                 whileTap={{ scale: 0.96 }}
                 onClick={() => navigate(`/music/release/${rel.id}`)}
-                className="flex-shrink-0 w-[140px] text-left"
+                className="text-left focus:outline-none"
                 aria-label={`Open ${rel.title}`}
               >
-                {/* Artwork */}
-                <div className={`relative w-[140px] h-[140px] rounded-xl overflow-hidden bg-[#1C1C1E] ${
+                {/* Artwork — square 1:1 record cover */}
+                <div className={`relative aspect-square rounded-xl overflow-hidden bg-[#1C1C1E] ${
                   access === 'preview' ? 'opacity-70' : ''
                 }`}>
                   {rel.artwork_url ? (
                     <img src={rel.artwork_url} alt={rel.title} className="w-full h-full object-cover" loading="lazy" />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1C1C1E] to-[#0D0D0D]">
-                      <Disc3 className="w-8 h-8 text-[#C8962C]/30 mb-1" />
+                      <Disc3 className="w-10 h-10 text-[#C8962C]/30 mb-1" />
                       <span className="text-[8px] font-medium uppercase tracking-widest text-white/15">RCR</span>
                     </div>
                   )}
@@ -827,8 +827,8 @@ export default function MusicTab() {
                     </div>
                   )}
                 </div>
-                <p className="text-xs font-medium text-white truncate mt-2">{rel.title}</p>
-                <p className="text-[10px] text-white/40 truncate">
+                <p className="text-sm font-black uppercase tracking-wide text-white truncate mt-2 leading-tight">{rel.title}</p>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-white/40 truncate mt-0.5">
                   Smash Daddys{rel.genre ? ` · ${rel.genre}` : ''}
                 </p>
               </motion.button>
