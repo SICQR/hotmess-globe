@@ -393,16 +393,23 @@ export default function GlobePage({ embedded = false }) {
   const handleBeaconClick = useCallback((beacon) => {
     if (!beacon || beacon.isCluster) return;
     setFocusedBeaconId(beacon.id);
-    // Person / social beacons → resolve the owner and open the boo-gated profile
-    // sheet (L2GhostedPreviewSheet via openProfile). Message/BOO gating + the mutual-
-    // boo doctrine live INSIDE that sheet — we only wire the routing here, no new gate.
-    const cat = String(beacon.kind || beacon.beacon_category || beacon.type || '').toLowerCase();
+    // Entity-aware beacon doctrine (docs/doctrine/beacon-doctrine.md §2): a
+    // beacon tap MUST land on the owner's canonical profile with the beacon id
+    // in the query string. The carousel already does this (PR #442); the globe
+    // is the last unwired surface. ActiveBeaconModule on /profile/:userId
+    // renders the beacon context when ?beacon= is present.
     const ownerId = beacon.user_id || beacon.owner_id;
-    const isPersonish = /person|people|user|social|chill|meet|hookup|promoter/.test(cat);
-    if ((beacon?.kind === 'person' && beacon?.email) || (isPersonish && ownerId)) {
-      openProfile({ userId: beacon.user_id || ownerId || beacon.id, source: 'globe', email: beacon.email, preferSheet: true });
+    if (ownerId) {
+      activityTracker.trackActivity('beacon_click', { beacon_id: beacon.id, beacon_title: beacon.title }, { lat: beacon.lat, lng: beacon.lng });
+      const url = beacon.id
+        ? `/profile/${ownerId}?beacon=${encodeURIComponent(beacon.id)}`
+        : `/profile/${ownerId}`;
+      navigate(url);
       return;
     }
+    // Owner-less signal (e.g. seeded venue/event with no profile yet):
+    // fall back to the shop overlay if it carries shopify handles, else the
+    // legacy beacon sheet so the surface is never a dead tap.
     if (beacon?.mode === 'location' && Array.isArray(beacon.shopify_handles) && beacon.shopify_handles.length > 0) {
       setPreviewBeacon(null);
       setLocationShopBeacon(beacon);
@@ -416,7 +423,7 @@ export default function GlobePage({ embedded = false }) {
       return;
     }
     activityTracker.trackActivity('beacon_click', { beacon_id: beacon.id, beacon_title: beacon.title }, { lat: beacon.lat, lng: beacon.lng });
-  }, [openProfile, openSheet, setFocusedBeaconId]);
+  }, [navigate, openSheet, setFocusedBeaconId]);
 
   const handleViewFullDetails = useCallback(() => {
     if (!previewBeacon) return;
