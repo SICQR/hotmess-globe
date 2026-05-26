@@ -109,10 +109,48 @@ export function ActiveBeaconModule({ beacon, ownerId, ownerName }: ActiveBeaconM
     return formatRemaining(beacon.ends_at, nowMs);
   }, [beacon, nowMs]);
 
-  // Quiet states — render nothing.
-  if (!beacon) return null;
+  // Faded state: ?beacon= was in the URL but the row resolved to null
+  // (expired, cancelled, wrong owner, or missing). Per doctrine 2026-05-26,
+  // we show a soft "this beacon has faded" hint instead of disappearing,
+  // because the user clicked a real-looking link and deserves a signpost.
+  if (!beacon) {
+    if (!fadedBeaconId) return null;
+    return (
+      <section
+        aria-label="Faded beacon"
+        className="mx-4 mt-4 rounded-2xl p-4"
+        style={{ background: '#141416', border: '1px solid rgba(255,255,255,0.06)' }}
+      >
+        <div className="flex flex-col gap-1">
+          <span className="text-[11px] uppercase tracking-[0.12em] font-semibold text-white/35">
+            Beacon faded
+          </span>
+          <p className="text-[14px] text-white/65 leading-snug">
+            This beacon has faded. The signal ended, but you can still view the profile if they're visible to you.
+          </p>
+        </div>
+      </section>
+    );
+  }
   const endMs = new Date(beacon.ends_at).getTime();
-  if (!Number.isFinite(endMs) || endMs <= nowMs) return null;
+  if (!Number.isFinite(endMs) || endMs <= nowMs) {
+    return (
+      <section
+        aria-label="Faded beacon"
+        className="mx-4 mt-4 rounded-2xl p-4"
+        style={{ background: '#141416', border: '1px solid rgba(255,255,255,0.06)' }}
+      >
+        <div className="flex flex-col gap-1">
+          <span className="text-[11px] uppercase tracking-[0.12em] font-semibold text-white/35">
+            Beacon faded
+          </span>
+          <p className="text-[14px] text-white/65 leading-snug">
+            This beacon has faded. The signal ended, but you can still view the profile if they're visible to you.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   const accent = paletteColor(beacon.beacon_category, beacon.type);
   const loc = locationLabel(beacon);
