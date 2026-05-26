@@ -560,8 +560,10 @@ export function MarketMode({ className = '' }: MarketModeProps) {
           </div>
         </div>
 
-        {/* Search bar */}
-        <div className="px-4 pb-3">
+        {/* Search bar — right padding clears the global SOS shield lane
+            (fixed right-4 top-72 z-150, ~64px wide+gap) so the search input
+            never sits under the shield (Phil 2026-05-26 declutter). */}
+        <div className="pl-4 pr-16 pb-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none" />
             <input
