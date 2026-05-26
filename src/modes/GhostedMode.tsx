@@ -2,20 +2,17 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { requestGeoPermissionOnce } from '@/lib/geo/sharedGeolocation';
 import { motion } from 'framer-motion';
-import { Users, MessageCircle, Music, Radio } from 'lucide-react';
+import { MessageCircle, Music, Radio } from 'lucide-react';
 import { useGhostedGrid } from '@/hooks/useGhostedGrid';
 import { useGPS } from '@/hooks/useGPS';
 import { useSheet } from '@/contexts/SheetContext';
 import { useTaps } from '@/hooks/useTaps';
 import { useUnreadCount } from '@/hooks/useUnreadCount';
 import { GhostedCard } from '@/components/ghosted/GhostedCard';
-import { SignalStrip } from '@/components/ghosted/SignalStrip';
 import { GhostedRecentStories } from '@/components/ghosted/GhostedRecentStories';
 import { supabase } from '@/components/utils/supabaseClient';
 
 import LocationConsentScreen from '@/components/onboarding/screens/LocationConsentScreen';
-
-const GHOSTED_VOL_1 = 'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/records-audio/1764584744541-Ghosted%20(are%20you%20looking_)%20blended%20version%20(Remastered).mp3';
 
 // Right-rail control for the Ghosted page. Visual pattern mirrors the Pulse
 // rail's RailButton (src/pages/Globe.jsx): icons-only pill, label slides out
@@ -128,16 +125,6 @@ export default function GhostedMode() {
       >
         <style dangerouslySetInnerHTML={{__html: `::-webkit-scrollbar { display: none; }`}} />
 
-        {/* ── SIGNAL STRIP — ambient transmission, never hero. Phil exec
-            review 2026-05-13: this used to be a giant TrackPlayer that
-            read as the primary product. Compressed to a 44px row that
-            sits above the filter and the live field. */}
-        <SignalStrip
-          src={GHOSTED_VOL_1}
-          title="GHOSTED — Vol 1"
-          artist="GHOSTED"
-        />
-
 
         {/* ── RECENT — IG/Grindr-style avatar row of recent chats + active
             beacon-droppers (gold ring = active beacon). Always-on, above the
@@ -149,7 +136,7 @@ export default function GhostedMode() {
         {/* Subtle Nearby toggle — keeps proximity discovery reachable without
             a header chip row. Right-aligned, minimal so the grid still reads
             as the first thing on the page. */}
-        <div className="flex justify-end px-3 pb-2 pt-1">
+        <div className="flex justify-start px-3 pb-1 pt-0">
           <button
             type="button"
             onClick={handleToggleNearby}
@@ -175,21 +162,12 @@ export default function GhostedMode() {
             doesn't read as uniform "app tiles." Full orbit pass (active
             card 1.06×, partial-clip, intersection-observer focus) is
             queued separately. */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-[#C8962C]/30 border-t-[#C8962C] rounded-full animate-spin" />
+        {isLoading && cards.length === 0 ? (
+          <div className="grid grid-cols-3 gap-0">
+            {Array.from({ length: 9 }).map((_, i) => (
+              <div key={i} className="aspect-square bg-white/[0.03] animate-pulse" />
+            ))}
           </div>
-        ) : cards.length === 0 ? (
-          <motion.div
-            className="text-center py-16"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Users className="w-10 h-10 mx-auto mb-4" style={{ color: 'rgba(255,255,255,0.12)' }} />
-            <p className="text-white/25 text-sm font-medium">
-              It's quiet around here.
-            </p>
-          </motion.div>
         ) : (
           <div className="grid grid-cols-3 gap-0">
             {cards.map((card, i) => {
@@ -219,6 +197,14 @@ export default function GhostedMode() {
               );
             })}
           </div>
+        )}
+
+        {/* Inline empty hint — never replaces the grid scaffold (Phil 2026-05-26:
+            'the grid should always be there'). Just a soft note when zero cards. */}
+        {!isLoading && cards.length === 0 && (
+          <p className="text-center text-white/25 text-[11px] tracking-wider uppercase py-3">
+            Field quiet · pull to refresh
+          </p>
         )}
       </div>
 
