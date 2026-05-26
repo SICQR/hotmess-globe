@@ -71,7 +71,6 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
           title: title.trim(),
           type: kind,
           status: 'active',
-          active: true,
           geo_lat: lat,
           geo_lng: lng,
           starts_at: new Date().toISOString(),
@@ -202,4 +201,5 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
     </AnimatePresence>
   );
 }
+
 
