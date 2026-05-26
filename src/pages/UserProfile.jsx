@@ -114,10 +114,10 @@ function ProfileHero({ profile }) {
     >
       <div className="relative">
         {profile.avatar_url ? (
-          // eslint-disable-next-line jsx-a11y/img-redundant-alt
+          
           <img
             src={profile.avatar_url}
-            alt={`${name} avatar`}
+            alt={name}
             className="w-20 h-20 rounded-full object-cover"
             style={{ boxShadow: `0 0 0 2px ${AMBER}66` }}
           />
