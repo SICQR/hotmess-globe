@@ -124,6 +124,7 @@ const ProfileSetupScreen = lazy(() => import('@/examples/auth/ProfileSetupScreen
 
 // Legacy page imports
 const ChatHistoryPage = lazy(() => import('@/pages/ChatHistoryPage'));
+const UserProfile = lazy(() => import('@/pages/UserProfile'));
 
 const isProdBuild = import.meta.env.MODE === 'production';
 
@@ -480,6 +481,8 @@ const AuthenticatedApp = () => {
       {/* SETTINGS (Accessible via More) */}
       <Route path="/settings" element={<PageRoute pageKey="Settings" />} />
       <Route path="/settings/*" element={<PageRoute pageKey="Settings" />} />
+      {/* Entity-aware public profile route (beacon doctrine destination). Must come before the /profile -> /settings redirect. */}
+      <Route path="/profile/:userId" element={<Suspense fallback={<PageLoadingSkeleton type="profiles" />}><UserProfile /></Suspense>} />
       <Route path="/profile" element={<Navigate to="/settings" replace />} />
       
       {/* LEGAL (Accessible via More) */}
