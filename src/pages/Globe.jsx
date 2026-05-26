@@ -9,7 +9,7 @@ import BeaconPreviewPanel from '../components/globe/BeaconPreviewPanel';
 import CityDataOverlay from '../components/globe/CityDataOverlay';
 import { Layers, Globe2, Bell } from 'lucide-react';
 import { useNotifCount } from '@/hooks/useNotifCount';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation} from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import ErrorBoundary from '../components/error/ErrorBoundary';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
@@ -206,6 +206,21 @@ export default function GlobePage({ embedded = false }) {
   const [locationShopBeacon, setLocationShopBeacon] = useState(null);
   const autoZoomedRef = React.useRef(false);
   const pulseApiRef = React.useRef(null); // imperative camera api from PulseMap (single-engine)
+
+  // Pending flyTo dispatched via navigation state (e.g. ProfileBeaconsSection tap).
+  // The map handshake (onMapApi) drains this; the effect below fires it directly
+  // if the map is already ready when the state arrives.
+  const pendingFlyToRef = React.useRef(null);
+  const __location = useLocation();
+  React.useEffect(() => {
+    const ft = __location.state && __location.state.flyTo;
+    if (!ft || !Number.isFinite(ft.lat) || !Number.isFinite(ft.lng)) return;
+    pendingFlyToRef.current = ft;
+    if (pulseApiRef.current && pulseApiRef.current.flyTo) {
+      try { pulseApiRef.current.flyTo(ft); } catch (e) { /* non-fatal */ }
+      pendingFlyToRef.current = null;
+    }
+  }, [__location.state]);
 
   const { recovery, allPlaces: pulsePlaces } = usePulsePlacesByType();
   const { intensityMap: venueIntensity } = useVenueIntensity();
@@ -468,7 +483,16 @@ export default function GlobePage({ embedded = false }) {
             beacons={mapSignals}
             userLocation={userLocation}
             onBeaconClick={handleBeaconClick}
-            onMapApi={(api) => { pulseApiRef.current = api; }}
+            onMapApi={(api) => {
+              pulseApiRef.current = api;
+              // Drain any pending flyTo queued via navigation state before
+              // the map was ready (e.g. profile beacons tap -> /pulse).
+              const pft = pendingFlyToRef.current;
+              if (pft && api && api.flyTo) {
+                try { api.flyTo(pft); } catch (e) { /* non-fatal */ }
+                pendingFlyToRef.current = null;
+              }
+            }}
             onLocalFocus={(focus) => setLocalFocus(focus)}
           />
         </div>

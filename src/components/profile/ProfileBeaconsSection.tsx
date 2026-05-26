@@ -118,19 +118,17 @@ export default function ProfileBeaconsSection({ userId }: Props) {
 
   const handleTap = (b: Beacon) => {
     if (!Number.isFinite(b.geo_lat) || !Number.isFinite(b.geo_lng)) return;
+    // Navigate FIRST with flyTo in route state. closeSheet() runs after so its
+    // setSearchParams can't race with the route change (which was the live bug:
+    // sheet closed but URL stayed on /ghosted because the setSearchParams ran
+    // synchronously AFTER navigate). Globe.jsx picks up the state on mount and
+    // drains the pending flyTo via pendingFlyToRef when the map handshake fires
+    // (handles both 'map already ready' and 'map ready later' cases). The old
+    // setTimeout(250) fallback is gone — the new path is deterministic.
+    navigate('/pulse', {
+      state: { flyTo: { lat: b.geo_lat as number, lng: b.geo_lng as number, zoom: 16 } },
+    });
     try { closeSheet(); } catch { /* non-fatal */ }
-    navigate('/pulse');
-    // Give the route a beat to mount the map before the flyto fires.
-    // (Pattern verified in Globe.jsx pulse:flyto listener.)
-    setTimeout(() => {
-      try {
-        window.dispatchEvent(
-          new CustomEvent('pulse:flyto', {
-            detail: { lat: b.geo_lat as number, lng: b.geo_lng as number, zoom: 16 },
-          }),
-        );
-      } catch { /* non-fatal */ }
-    }, 250);
   };
 
   return (
