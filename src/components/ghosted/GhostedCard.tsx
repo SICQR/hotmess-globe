@@ -26,6 +26,7 @@ import {
   BEACON_GLYPHS,
   type BeaconCategory,
 } from '@/components/globe/beaconGlyphs';
+import { signalStrengthFromMeters } from '@/lib/signalStrength';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -140,37 +141,13 @@ function GhostedCardInner({
     : null;
   const ringAlpha = beacon?.lifecycle === 'decaying' ? 0.55 : 0.95;
 
-  // Merge distance + context into one human line. Distance alone reads as
-  // system copy ("340m"); context alone hides proximity. Combined feels
-  // intercepted, not browsed.
-  //
-  // 2026-05-20 boo-first doctrine (Phil): EXACT distance is consent-gated.
-  // Pre-mutual = coarse bands only (<200m → <1km → <5km → coarse km).
-  // Post-mutual = exact metres / 0.1km resolution.
-  // We never reveal sub-200m proximity to a stranger.
-  const distLabel = distanceM == null
-    ? null
-    : isMutual
-      ? (distanceM < 100  ? '<100m'
-        : distanceM < 1000 ? `${distanceM}m`
-        : `${(distanceM / 1000).toFixed(1)}km`)
-      : (distanceM < 200  ? '<200m'
-        : distanceM < 1000 ? '<1km'
-        : distanceM < 5000 ? '<5km'
-        : `${Math.round(distanceM / 1000)}km`);
-  const mergedLine = (() => {
-    if (!distLabel && !contextLabel) return null;
-    if (!distLabel) return contextLabel;
-    if (!contextLabel) return distLabel;
-    // Prefer "at {venue}" / "near {place}" prefixes if context already
-    // includes a preposition; otherwise interpose " · ".
-    const ctxLower = contextLabel.toLowerCase();
-    if (ctxLower.startsWith('at ') || ctxLower.startsWith('near ') ||
-        ctxLower.startsWith('in ')  || ctxLower.startsWith('from ')) {
-      return `${distLabel} · ${contextLabel}`;
-    }
-    return `${distLabel} · ${contextLabel}`;
-  })();
+  // Doctrine (Phil 2026-05-26): the Ghosted grid is a proximity radar, not
+  // a spreadsheet. Raw "<200m · Very close" reads as debug copy. Replace
+  // with signal-strength language. Consent invariant preserved: non-mutual
+  // strangers never get the "LOCKED" tier (helper coarsens to STRONG
+  // SIGNAL maximum for them).
+  const signal = signalStrengthFromMeters(distanceM, { isMutual: !!isMutual });
+  const mergedLine = signal.label;
 
   return (
     <motion.button
