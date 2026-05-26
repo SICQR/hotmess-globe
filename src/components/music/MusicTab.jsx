@@ -756,17 +756,6 @@ export default function MusicTab() {
                 SoundCloud
               </a>
             )}
-            {(artist?.spotify_url) && (
-              <a
-                href={artist.spotify_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="h-11 px-5 rounded-full border border-[#1DB954]/40 text-[#1DB954] font-medium text-xs uppercase flex items-center active:scale-95 transition-transform"
-                aria-label="Open Spotify"
-              >
-                Spotify
-              </a>
-            )}
           </div>
         </div>
       </section>
