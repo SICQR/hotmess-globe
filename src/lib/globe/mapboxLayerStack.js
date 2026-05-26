@@ -94,6 +94,16 @@ export function toPublicSafeFeatureCollection(beacons) {
         beacon_category: resolveBeaconCategory(b.beacon_category || b.category || b.type || b.kind || ''),
         color: CATEGORY_COLOR[cat] || CATEGORY_COLOR.other,
         title: String(b.title || b.name || ''),
+        // Lifecycle: epoch-ms expiry so the symbol layer can pick the right
+        // state-suffixed sprite (active / decaying / stale) via a Mapbox
+        // `now()` expression. Null when no end-time on the source row —
+        // the layer falls back to the active sprite for robustness.
+        ends_at_ms: (function () {
+          const v = b.ends_at != null ? b.ends_at : b.endsAt;
+          if (v == null || v === '') return null;
+          const t = typeof v === 'number' ? v : Date.parse(v);
+          return Number.isFinite(t) ? t : null;
+        })(),
         // Declutter sort-key input (see addLayerStack 'symbol-sort-key').
         // State-care icons get a +100 boost in the layer expression so they
         // always win the z-order tie at street zoom; here we just surface
@@ -234,18 +244,26 @@ export function addLayerStack(map, opts) {
         'icon-image': [
           'step', ['zoom'],
           '',
+          // Lifecycle-aware sprite picker (Sacred Invariants #4 + #5):
+          // builds `hm-beacon-<category><suffix>` where suffix is '' for active,
+          // '--decaying' (<=30min remaining) or '--stale' (<=5min remaining).
+          // Expired rows (ttl <= 0) should be dropped UPSTREAM by data callers;
+          // missing ends_at_ms falls through to the active sprite for robustness
+          // (treated as ttl = 30min+1ms so the `>` 30min branch wins).
           ICON_MIN_ZOOM, [
-            'match', ['get', 'beacon_category'],
-            'gym',       'hm-beacon-gym',
-            'club',      'hm-beacon-club',
-            'sauna',     'hm-beacon-sauna',
-            'leather',   'hm-beacon-leather',
-            'cafe',      'hm-beacon-cafe',
-            'clinic',    'hm-beacon-clinic',
-            'aftercare', 'hm-beacon-aftercare',
-            'cruising',  'hm-beacon-cruising',
-            'market',    'hm-beacon-market',
-            'hm-beacon-club',
+            'let', 'ttl',
+            ['-',
+              ['coalesce', ['get', 'ends_at_ms'], ['+', ['literal', 1800001], ['number', ['now']]]],
+              ['number', ['now']],
+            ],
+            ['concat', 'hm-beacon-', ['get', 'beacon_category'],
+              ['case',
+                ['>', ['var', 'ttl'], 1800000], '',
+                ['>', ['var', 'ttl'], 300000],  '--decaying',
+                ['>', ['var', 'ttl'], 0],        '--stale',
+                '',
+              ],
+            ],
           ],
         ],
         // Symbol sort key - Mapbox renders LOWER sort-key values on top, so
