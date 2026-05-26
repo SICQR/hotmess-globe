@@ -219,7 +219,7 @@ export function useGhostedGrid(
           is_online, age, looking_for, is_verified, last_seen
         `)
         .in('id', allUserIds)
-        .not('display_name', 'is', null);
+        ;
 
       // Merge right_now_status + movement data
       const statusMap = new Map((rnRows || []).map((r: any) => [r.user_id, r]));
