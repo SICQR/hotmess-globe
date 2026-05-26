@@ -29,7 +29,7 @@ function escapeHtml(s) {
   ));
 }
 
-const GLOBE_ZOOM = 3.2;   // macro: curvature + cluster visible
+const GLOBE_ZOOM = 2.2;   // macro: curvature + cluster visible
 const LOCAL_ZOOM = 15;    // micro: street detail + individual blooms
 const LONDON = { lat: 51.5074, lng: -0.1278 };
 
@@ -138,8 +138,16 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
                 type: 'raster',
                 source: 'hm-satellite',
                 paint: {
-                  // full marble when pulled back → gone by the time streets matter
-                  'raster-opacity': ['interpolate', ['linear'], ['zoom'], 2, 0.92, 4, 0.85, 5.5, 0.5, 7, 0],
+                  // Cinematic blue-marble curve (Phil 2026-05-26 restoration):
+                  // hold the satellite higher and longer through country zoom so
+                  // the blue earth feel persists, fade out by street zoom where
+                  // the dark vector base takes over for legibility.
+                  'raster-opacity': ['interpolate', ['linear'], ['zoom'], 1.5, 0.96, 4, 0.9, 6, 0.7, 8, 0.35, 10, 0],
+                  // Subtle cool cast — biases the realistic Earth tiles toward
+                  // the cyan-blue 'marble' look without losing real-place legibility.
+                  'raster-hue-rotate': -8,
+                  'raster-saturation': -0.05,
+                  'raster-contrast': 0.05,
                   'raster-fade-duration': 300,
                 },
               }, firstSymbol);

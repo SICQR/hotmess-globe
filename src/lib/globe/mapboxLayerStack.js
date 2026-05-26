@@ -104,14 +104,18 @@ export function environmentalFog(hour, reducedMotion) {
   // star field at night — tuned to sit under the satellite imagery so the globe reads
   // as Earth-from-space. The limb warmth shifts gently with the daylight cycle.
   let cfg;
+  // Cinematic blue globe restored 2026-05-26 (Phil regression flag):
+  //   wider horizon-blend (0.5+), brighter blue high-color (cyan-shifted),
+  //   richer deep-blue space-color, and a low-intensity star field even at
+  //   daytime so the globe always reads as Earth-from-space, not flat map.
   if (h >= 5 && h < 8) {           // dawn — blue limb breaking warm
-    cfg = { color: 'rgba(16,16,22,0.5)', 'high-color': '#7fa6d8', 'space-color': '#0a1326', 'horizon-blend': 0.32, 'star-intensity': reducedMotion ? 0 : 0.06 };
-  } else if (h >= 8 && h < 17) {   // day — bright blue atmosphere
-    cfg = { color: 'rgba(18,24,34,0.38)', 'high-color': '#8fb4e0', 'space-color': '#0a1626', 'horizon-blend': 0.42, 'star-intensity': 0 };
+    cfg = { color: 'rgba(14,18,28,0.55)', 'high-color': '#9bc4ff', 'space-color': '#06122a', 'horizon-blend': 0.52, 'star-intensity': reducedMotion ? 0 : 0.12 };
+  } else if (h >= 8 && h < 17) {   // day — bright cyan-blue atmosphere
+    cfg = { color: 'rgba(16,26,42,0.5)', 'high-color': '#a8caff', 'space-color': '#061128', 'horizon-blend': 0.55, 'star-intensity': reducedMotion ? 0 : 0.08 };
   } else if (h >= 17 && h < 20) {  // dusk — cooling blue
-    cfg = { color: 'rgba(16,16,24,0.5)', 'high-color': '#6f93c8', 'space-color': '#080f20', 'horizon-blend': 0.3, 'star-intensity': reducedMotion ? 0 : 0.1 };
+    cfg = { color: 'rgba(14,18,28,0.55)', 'high-color': '#82a8e0', 'space-color': '#050d22', 'horizon-blend': 0.48, 'star-intensity': reducedMotion ? 0 : 0.16 };
   } else {                          // night — deep blue space, glowing limb, stars
-    cfg = { color: 'rgba(8,10,18,0.55)', 'high-color': '#4d77b0', 'space-color': '#05070f', 'horizon-blend': 0.28, 'star-intensity': reducedMotion ? 0 : 0.18 };
+    cfg = { color: 'rgba(8,12,22,0.62)', 'high-color': '#5b8fd0', 'space-color': '#030717', 'horizon-blend': 0.42, 'star-intensity': reducedMotion ? 0 : 0.28 };
   }
   return cfg;
 }
