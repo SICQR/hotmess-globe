@@ -240,12 +240,16 @@ export default function UserProfile() {
       <TopBar />
       <ProfileHero profile={profile} />
 
-      {/* Entity-aware beacon module — the doctrine destination. */}
-      {activeBeacon && (
+      {/* Entity-aware beacon module — the doctrine destination.
+       *  When ?beacon= is in the URL but the row resolved null (expired /
+       *  cancelled / missing / wrong owner), render the faded state instead
+       *  of vanishing silently — the user clicked a real-looking link. */}
+      {(activeBeacon || beaconId) && (
         <ActiveBeaconModule
           beacon={activeBeacon}
           ownerId={profile.id}
           ownerName={ownerName}
+          fadedBeaconId={activeBeacon ? null : beaconId}
         />
       )}
 
