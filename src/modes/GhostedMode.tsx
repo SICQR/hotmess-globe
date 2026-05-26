@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { requestGeoPermissionOnce } from '@/lib/geo/sharedGeolocation';
 import { motion } from 'framer-motion';
 import { MessageCircle, Music, Radio } from 'lucide-react';
 import { useGhostedGrid } from '@/hooks/useGhostedGrid';
@@ -12,7 +11,6 @@ import { GhostedCard } from '@/components/ghosted/GhostedCard';
 import { GhostedRecentStories } from '@/components/ghosted/GhostedRecentStories';
 import { supabase } from '@/components/utils/supabaseClient';
 
-import LocationConsentScreen from '@/components/onboarding/screens/LocationConsentScreen';
 
 // Right-rail control for the Ghosted page. Visual pattern mirrors the Pulse
 // rail's RailButton (src/pages/Globe.jsx): icons-only pill, label slides out
@@ -39,12 +37,13 @@ export default function GhostedMode() {
   const navigate = useNavigate();
   const { position } = useGPS();
   const { openSheet } = useSheet();
-  const [filter, setFilter] = React.useState<'nearby' | 'recent'>('recent');
-  const [showLocationGating, setShowLocationGating] = React.useState(false);
-  const [locationConsent, setLocationConsent] = React.useState<boolean | null>(null);
 
-  const { cards, isLoading, refetch } = useGhostedGrid(
-    filter === 'nearby' ? 'nearby' : 'recent',
+  // Grid auto-uses location when available (Phil 2026-05-26: removed the
+  // pointless Nearby toggle — the grid works on location anyway). Falls back
+  // to recent if no GPS yet.
+  const tab = position?.lat != null && position?.lng != null ? 'nearby' : 'recent';
+  const { cards, isLoading } = useGhostedGrid(
+    tab,
     position?.lat ?? null,
     position?.lng ?? null,
     null
@@ -58,56 +57,9 @@ export default function GhostedMode() {
       if (session?.user) {
         setMyUserId(session.user.id);
         setMyEmail(session.user.email ?? null);
-        
-        // Fetch location consent status from profiles table
-        supabase.from('profiles')
-          .select('location_consent')
-          .eq('id', session.user.id)
-          .maybeSingle()
-          .then(({ data, error }) => {
-            if (error) console.error('[Ghosted] Error fetching consent:', error);
-            setLocationConsent(!!data?.location_consent);
-          });
       }
     });
   }, []);
-
-  const handleToggleNearby = () => {
-    if (locationConsent === true) {
-      setFilter(filter === 'nearby' ? 'recent' : 'nearby');
-    } else if (locationConsent === false) {
-      setShowLocationGating(true);
-    }
-    // If null, we are still loading, do nothing yet
-  };
-
-  const handleLocationAllow = async () => {
-    if (!myUserId) {
-      console.error('[Ghosted] No user ID for consent update');
-      return;
-    }
-    
-    // Update profiles table
-    const { error } = await supabase.from('profiles').update({
-      location_consent: true,
-      location_consent_at: new Date().toISOString()
-    }).eq('id', myUserId);
-    
-    if (error) {
-      console.error('[Ghosted] Error saving consent to profiles:', error);
-      alert('Failed to save location choice: ' + (error.message || 'Unknown error'));
-      return;
-    }
-    
-    setLocationConsent(true);
-    setShowLocationGating(false);
-    setFilter('nearby');
-    
-    // Trigger GPS
-    requestGeoPermissionOnce()
-      .then(() => refetch())
-      .catch((err) => console.warn('[Ghosted] Geolocation trigger failed:', err));
-  };
 
   const { isTapped, isMutualBoo } = useTaps(myUserId, myEmail);
   const { unreadCount } = useUnreadCount();
@@ -133,29 +85,6 @@ export default function GhostedMode() {
             nobody to show, so the grid below always carries the page. */}
         <GhostedRecentStories currentUserEmail={myEmail} currentUserId={myUserId} />
 
-        {/* Subtle Nearby toggle — keeps proximity discovery reachable without
-            a header chip row. Right-aligned, minimal so the grid still reads
-            as the first thing on the page. */}
-        <div className="flex justify-start px-3 pb-1 pt-0">
-          <button
-            type="button"
-            onClick={handleToggleNearby}
-            aria-pressed={filter === 'nearby'}
-            className="text-[10px] tracking-[0.28em] uppercase transition-colors"
-            style={{
-              padding: '5px 12px',
-              borderRadius: 2,
-              fontWeight: 500,
-              background: filter === 'nearby' ? 'rgba(200,150,44,0.10)' : 'transparent',
-              border: filter === 'nearby'
-                ? '0.5px solid rgba(200,150,44,0.45)'
-                : '0.5px solid rgba(255,255,255,0.08)',
-              color: filter === 'nearby' ? '#C8962C' : 'rgba(255,255,255,0.42)',
-            }}
-          >
-            Nearby
-          </button>
-        </div>
 
         {/* ── LIVE FIELD — the emotional center. Orbit mechanics: zero
             gutters, deterministic per-index opacity jitter so the grid
@@ -236,16 +165,6 @@ export default function GhostedMode() {
         </div>
       </motion.button>
 
-      {/* Location Permission Gating Overlay */}
-      {showLocationGating && (
-        <div className="z-[100]">
-          <LocationConsentScreen 
-            onAllow={handleLocationAllow} 
-            onSkip={() => setShowLocationGating(false)} 
-            progress={0} 
-          />
-        </div>
-      )}
     </div>
   );
 }
