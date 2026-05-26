@@ -18,7 +18,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bell, MessageCircle, Ghost, MapPin, Radio,
-  Calendar, CheckCheck, Loader2, Inbox,
+  Calendar, CheckCheck, Loader2, Inbox, Settings,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
@@ -208,15 +208,24 @@ export default function L2NotificationInboxSheet() {
             )}
           </span>
         </div>
-        {notifs.length > 0 && (
+        <div className="flex items-center gap-3">
+          {notifs.length > 0 && (
+            <button
+              onClick={() => userEmail && markAllRead(userEmail)}
+              className="flex items-center gap-1.5 text-xs text-white/40 hover:text-[#C8962C] transition-colors"
+            >
+              <CheckCheck className="w-3.5 h-3.5" />
+              Mark all read
+            </button>
+          )}
           <button
-            onClick={() => userEmail && markAllRead(userEmail)}
-            className="flex items-center gap-1.5 text-xs text-white/40 hover:text-[#C8962C] transition-colors"
+            onClick={() => openSheet('notification-settings', {})}
+            className="flex items-center justify-center w-8 h-8 rounded-full text-white/40 hover:text-[#C8962C] hover:bg-white/5 transition-colors"
+            aria-label="Notification settings"
           >
-            <CheckCheck className="w-3.5 h-3.5" />
-            Mark all read
+            <Settings className="w-4 h-4" />
           </button>
-        )}
+        </div>
       </div>
 
       {/* Empty state */}
