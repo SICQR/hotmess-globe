@@ -15,6 +15,11 @@ export const LAYER_IDS = {
 };
 export const SOURCE_IDS = { public: 'hm-public', selected: 'hm-selected' };
 
+// Declutter constants surfaced so callers can introspect the readability
+// contract (see addLayerStack header for doctrine references).
+export const CLUSTER_RADIUS = 80;
+export const ICON_MIN_ZOOM = 11;
+
 // Category → colour, aligned with the globe LAYER_DEFS so the two engines read alike.
 export const CATEGORY_COLOR = {
   events: '#FF4F9A',
@@ -89,6 +94,13 @@ export function toPublicSafeFeatureCollection(beacons) {
         beacon_category: resolveBeaconCategory(b.beacon_category || b.category || b.type || b.kind || ''),
         color: CATEGORY_COLOR[cat] || CATEGORY_COLOR.other,
         title: String(b.title || b.name || ''),
+        // Declutter sort-key input (see addLayerStack 'symbol-sort-key').
+        // State-care icons get a +100 boost in the layer expression so they
+        // always win the z-order tie at street zoom; here we just surface
+        // the raw signal-economics priority/intensity so the layer can read it.
+        priority: Number.isFinite(Number(b.priority))
+          ? Number(b.priority)
+          : (Number.isFinite(Number(b.intensity)) ? Number(b.intensity) : 0),
       },
     });
   }
@@ -122,6 +134,16 @@ export function environmentalFog(hour, reducedMotion) {
 
 // Adds sources + layers in contract order on top of the base style. Idempotent:
 // guards every add so re-invocation (style reload) can't throw.
+//
+// Doctrine — this layer stack operationalises the readability rules from
+//   docs/doctrine/product-doctrine.md ('Density must remain legible' +
+//   Operational Loop #6 'Readability Loop' + Anti-Goal 'buried under clutter')
+//   and docs/doctrine/sacred-invariants.md (rules 10-12 on readability).
+// The product should become CLEARER under pressure, not noisier: clusters
+// form from a wider radius (CLUSTER_RADIUS), individual icons are gated
+// until zoom >= ICON_MIN_ZOOM, higher-priority/state-care beacons sort on
+// top via 'symbol-sort-key', and street-zoom suppresses icon overlap so
+// each pin remains a decision-grade target.
 export function addLayerStack(map, opts) {
   const reducedMotion = !!(opts && opts.reducedMotion);
 
@@ -135,7 +157,7 @@ export function addLayerStack(map, opts) {
       type: 'geojson',
       data: { type: 'FeatureCollection', features: [] },
       cluster: true,        // L6 — density handled before individual pins
-      clusterRadius: 50,
+      clusterRadius: CLUSTER_RADIUS,
       // Single-engine globe wants individual blooms by street zoom; the legacy
       // local-only map kept 16. Caller can tune; default stays 16 for back-compat.
       clusterMaxZoom: (opts && Number.isFinite(opts.clusterMaxZoom)) ? opts.clusterMaxZoom : 16,
@@ -205,21 +227,47 @@ export function addLayerStack(map, opts) {
       source: SOURCE_IDS.public,
       filter: ['all', ['!', ['has', 'point_count']], ['has', 'beacon_category']],
       layout: {
+        // Per-zoom icon gating - below ICON_MIN_ZOOM the cluster layer owns
+        // the map exclusively (no overlapping pins at country/city zoom).
+        // At ICON_MIN_ZOOM the clusterMaxZoom (default 16) has long since
+        // started breaking clusters down, so the handoff stays clean.
         'icon-image': [
-          'match', ['get', 'beacon_category'],
-          'gym',       'hm-beacon-gym',
-          'club',      'hm-beacon-club',
-          'sauna',     'hm-beacon-sauna',
-          'leather',   'hm-beacon-leather',
-          'cafe',      'hm-beacon-cafe',
-          'clinic',    'hm-beacon-clinic',
-          'aftercare', 'hm-beacon-aftercare',
-          'cruising',  'hm-beacon-cruising',
-          'market',    'hm-beacon-market',
-          'hm-beacon-club',
+          'step', ['zoom'],
+          '',
+          ICON_MIN_ZOOM, [
+            'match', ['get', 'beacon_category'],
+            'gym',       'hm-beacon-gym',
+            'club',      'hm-beacon-club',
+            'sauna',     'hm-beacon-sauna',
+            'leather',   'hm-beacon-leather',
+            'cafe',      'hm-beacon-cafe',
+            'clinic',    'hm-beacon-clinic',
+            'aftercare', 'hm-beacon-aftercare',
+            'cruising',  'hm-beacon-cruising',
+            'market',    'hm-beacon-market',
+            'hm-beacon-club',
+          ],
         ],
-        'icon-allow-overlap': true,
-        'icon-ignore-placement': true,
+        // Symbol sort key - Mapbox renders LOWER sort-key values on top, so
+        // we negate the priority. State-care (recovery/aftercare/clinic) gets
+        // a +100 boost so safety glyphs always win the z-order tie in dense
+        // areas. Future event category also gets a smaller boost.
+        'symbol-sort-key': [
+          '-', 0, [
+            '+',
+            ['case',
+              ['==', ['get', 'cat'], 'care'], 100,
+              ['==', ['get', 'cat'], 'events'], 10,
+              0,
+            ],
+            ['coalesce', ['to-number', ['get', 'priority']], 0],
+          ],
+        ],
+        // Allow overlap at cluster-context zooms (low zoom = readability of
+        // density matters more than per-pin distinctness), suppress overlap
+        // at street zoom (>=15) where each pin is a decision target.
+        'icon-allow-overlap': ['step', ['zoom'], true, 15, false],
+        'icon-ignore-placement': ['step', ['zoom'], true, 15, false],
         'icon-size': 0.5, // 88-source / 44-css = 0.5 to match the 44px MAP-size spec
       },
     });
