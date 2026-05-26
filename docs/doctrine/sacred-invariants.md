@@ -1,7 +1,7 @@
 # Sacred Invariants
 
 > **The rules that cannot be relaxed, ever, under any pressure — monetisation, growth, sponsor, or otherwise.** This is the ethical and operational spine of HOTMESS. Every other governance doc refers back here.
-> Canonical, 2026-05-26. Synthesised from the [Product Brief](../HOTMESS_PRODUCT_BRIEF.md), [Revised Strategic Brief](../HOTMESS_REVISED_STRATEGIC_BRIEF.md), [Founder Critique](../HOTMESS_FOUNDER_CRITIQUE.md), [Ranking Constitution](./ranking-constitution.md), [Signal Economics](./signal-economics-spec.md), [Trust System](./trust-system-spec.md), [Metrics](./metrics-and-instrumentation-spec.md), and [Observability](./observability-and-alerting-spec.md).
+> Canonical, 2026-05-26. Synthesised from the [Product Brief](../HOTMESS_PRODUCT_BRIEF.md), [Revised Strategic Brief](../HOTMESS_REVISED_STRATEGIC_BRIEF.md), [Founder Critique](../HOTMESS_FOUNDER_CRITIQUE.md), [Ranking Constitution](../governance/ranking-constitution.md), [Signal Economics](../governance/signal-economics-spec.md), [Trust System](../governance/trust-system-spec.md), [Metrics](../operations/metrics-and-instrumentation-spec.md), and [Observability](../operations/observability-and-alerting-spec.md).
 
 ## Why this document exists
 
@@ -28,7 +28,7 @@ When rules conflict, priority is:
 
 Anything below loses to anything above. No exceptions. A paid item that is unsafe loses. A trusted source whose claim is false loses. A fresh signal with no momentum loses to a slightly older one that's accelerating. Density that destroys readability loses.
 
-> **Momentum** is the rate of change of activity (arrivals, queue growth, signal creation slope). It is distinct from Freshness (which is absolute recency) and distinct from raw historical Density. See [`ranking-formula-spec.md`](./ranking-formula-spec.md) for how the 8 layers map to scoring components.
+> **Momentum** is the rate of change of activity (arrivals, queue growth, signal creation slope). It is distinct from Freshness (which is absolute recency) and distinct from raw historical Density. See [`ranking-formula-spec.md`](../governance/ranking-formula-spec.md) for how the 8 layers map to scoring components.
 
 ## The Invariants
 
@@ -90,9 +90,9 @@ If those conversations happen, the answer is: re-read this document.
 - [`../HOTMESS_PRODUCT_BRIEF.md`](../HOTMESS_PRODUCT_BRIEF.md) — north star (what HOTMESS is).
 - [`../HOTMESS_REVISED_STRATEGIC_BRIEF.md`](../HOTMESS_REVISED_STRATEGIC_BRIEF.md) — go-to-market.
 - [`../HOTMESS_FOUNDER_CRITIQUE.md`](../HOTMESS_FOUNDER_CRITIQUE.md) — refinements (district-first, scarcity-as-core, venue ops moat, atmosphere as computed layer).
-- [`ranking-constitution.md`](./ranking-constitution.md) — visibility law.
-- [`signal-economics-spec.md`](./signal-economics-spec.md) — scarcity, lifecycle, amplification.
-- [`trust-system-spec.md`](./trust-system-spec.md) — credibility model.
-- [`launch-ops-playbook.md`](./launch-ops-playbook.md) — controlled density rollout.
-- [`metrics-and-instrumentation-spec.md`](./metrics-and-instrumentation-spec.md) — operational measurement.
-- [`observability-and-alerting-spec.md`](./observability-and-alerting-spec.md) — detection and response.
+- [`ranking-constitution.md`](../governance/ranking-constitution.md) — visibility law.
+- [`signal-economics-spec.md`](../governance/signal-economics-spec.md) — scarcity, lifecycle, amplification.
+- [`trust-system-spec.md`](../governance/trust-system-spec.md) — credibility model.
+- [`launch-ops-playbook.md`](../operations/launch-ops-playbook.md) — controlled density rollout.
+- [`metrics-and-instrumentation-spec.md`](../operations/metrics-and-instrumentation-spec.md) — operational measurement.
+- [`observability-and-alerting-spec.md`](../operations/observability-and-alerting-spec.md) — detection and response.

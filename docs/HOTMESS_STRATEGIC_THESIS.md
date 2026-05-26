@@ -120,7 +120,7 @@ It is **not** a dating app, swipe feed or generic directory; it is the infrastru
 - **Venue verification required for LIVE BEACON tier;** unverified venues limited to BASIC BEACON.
 - **Cooldown limits on signal boosts** to prevent spam.
 
-These rules are restated and bound in [`docs/governance/sacred-invariants.md`](./governance/sacred-invariants.md).
+These rules are restated and bound in [`docs/governance/sacred-invariants.md`](./doctrine/sacred-invariants.md).
 
 ---
 

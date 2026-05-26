@@ -239,11 +239,11 @@ These rules are never violated:
 - Stale data must not be presented as current truth
 - The map must not become unreadable for monetization
 
-See [sacred-invariants.md](./sacred-invariants.md).
+See [sacred-invariants.md](../doctrine/sacred-invariants.md).
 
 ## Constitutional decision hierarchy
 
-The canonical 8-layer decision hierarchy lives in [`sacred-invariants.md#decision-hierarchy`](./sacred-invariants.md#decision-hierarchy) and is the single source of truth across the whole governance stack:
+The canonical 8-layer decision hierarchy lives in [`sacred-invariants.md#decision-hierarchy`](../doctrine/sacred-invariants.md#decision-hierarchy) and is the single source of truth across the whole governance stack:
 
 **Safety → Truth → Trust → Freshness → Momentum → Readability → Relevance → Monetization**
 
@@ -260,3 +260,15 @@ Applied here: if a paid item is unsafe, it loses. If a fresh signal is low-trust
 - when to hide vs dim vs collapse
 - what thresholds make a district feel "alive"
 - what thresholds make it feel "quiet but usable"
+
+
+---
+
+## Doctrine + invariants
+
+This spec inherits from the canonical roots:
+
+- [`../doctrine/product-doctrine.md`](../doctrine/product-doctrine.md) — the constitutional root narrative + operational loops.
+- [`../doctrine/sacred-invariants.md`](../doctrine/sacred-invariants.md) — the 18 rules that cannot be relaxed + the canonical 8-layer decision hierarchy.
+
+If this spec conflicts with either, **the root wins.**

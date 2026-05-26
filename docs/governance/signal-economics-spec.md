@@ -175,7 +175,7 @@ Readability is an **economic constraint**. When dense: collapse into clusters ·
 - Safety outranks engagement
 - Stale data must not masquerade as current
 
-See [sacred-invariants.md](./sacred-invariants.md).
+See [sacred-invariants.md](../doctrine/sacred-invariants.md).
 
 ## Implementation questions to lock next
 
@@ -188,3 +188,15 @@ See [sacred-invariants.md](./sacred-invariants.md).
 - how long boost effects last
 - when a signal is hidden vs dimmed
 - whether premium changes quantity or just control
+
+
+---
+
+## Doctrine + invariants
+
+This spec inherits from the canonical roots:
+
+- [`../doctrine/product-doctrine.md`](../doctrine/product-doctrine.md) — the constitutional root narrative + operational loops.
+- [`../doctrine/sacred-invariants.md`](../doctrine/sacred-invariants.md) — the 18 rules that cannot be relaxed + the canonical 8-layer decision hierarchy.
+
+If this spec conflicts with either, **the root wins.**

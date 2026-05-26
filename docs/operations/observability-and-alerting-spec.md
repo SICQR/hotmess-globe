@@ -6,7 +6,7 @@
 
 Define how HOTMESS detects problems in real time, escalates them, and routes them to the right response.
 
-Sits below: [Ranking Constitution](./ranking-constitution.md) · [Signal Economics](./signal-economics-spec.md) · [Trust System](./trust-system-spec.md) · [Developer Rules Checklist](./developer-rules-checklist.md) · [Ranking Formula Spec](./ranking-formula-spec.md) · [Launch Ops Playbook](./launch-ops-playbook.md) · [Metrics and Instrumentation](./metrics-and-instrumentation-spec.md).
+Sits below: [Ranking Constitution](../governance/ranking-constitution.md) · [Signal Economics](../governance/signal-economics-spec.md) · [Trust System](../governance/trust-system-spec.md) · [Developer Rules Checklist](../governance/developer-rules-checklist.md) · [Ranking Formula Spec](../governance/ranking-formula-spec.md) · [Launch Ops Playbook](./launch-ops-playbook.md) · [Metrics and Instrumentation](./metrics-and-instrumentation-spec.md).
 
 **Its job is not to report performance. Its job is to detect failure early enough to act.**
 
@@ -217,3 +217,15 @@ Exact SLAs vary by team/incident type but must be explicit.
 - source-cluster alert grouping
 - automatic containment for critical safety and saturation incidents
 - manual review for trust and truth edge cases
+
+
+---
+
+## Doctrine + invariants
+
+This spec inherits from the canonical roots:
+
+- [`../doctrine/product-doctrine.md`](../doctrine/product-doctrine.md) — the constitutional root narrative + operational loops.
+- [`../doctrine/sacred-invariants.md`](../doctrine/sacred-invariants.md) — the 18 rules that cannot be relaxed + the canonical 8-layer decision hierarchy.
+
+If this spec conflicts with either, **the root wins.**

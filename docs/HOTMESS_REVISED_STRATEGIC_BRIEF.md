@@ -327,5 +327,5 @@ Alternative orderings (Risk Register + Mitigations · Launch Ops Playbook · Inf
 - [`HOTMESS_STRATEGIC_THESIS.md`](./HOTMESS_STRATEGIC_THESIS.md) — v1 thesis (kept as history).
 - [`HOTMESS_FOUNDER_CRITIQUE.md`](./HOTMESS_FOUNDER_CRITIQUE.md) — refinements applied into v2 (kept as journey-of-thinking).
 - [`HOTMESS_DOCTRINE_NOTES.md`](./HOTMESS_DOCTRINE_NOTES.md) — doctrine read + build-order recommendation.
-- [`governance/sacred-invariants.md`](./governance/sacred-invariants.md) — ethical/operational spine.
+- [`governance/sacred-invariants.md`](./doctrine/sacred-invariants.md) — ethical/operational spine.
 - [`governance/`](./governance/) — Tier-1/2/3 enforcement specs (PR #411 in flight).
