@@ -138,29 +138,25 @@ export default function GhostedMode() {
           artist="GHOSTED"
         />
 
-        {/* ── FILTER STATE — Recent / Nearby. Tight, minimal. ─────────── */}
-        <div className="flex justify-center gap-3 pt-4 pb-3">
+
+        {/* ── RECENT — IG/Grindr-style avatar row of recent chats + active
+            beacon-droppers (gold ring = active beacon). Always-on, above the
+            grid, no "Recent" label. Tap an avatar -> their profile (where
+            their active beacons are listed). Renders nothing when there's
+            nobody to show, so the grid below always carries the page. */}
+        <GhostedRecentStories currentUserEmail={myEmail} currentUserId={myUserId} />
+
+        {/* Subtle Nearby toggle — keeps proximity discovery reachable without
+            a header chip row. Right-aligned, minimal so the grid still reads
+            as the first thing on the page. */}
+        <div className="flex justify-end px-3 pb-2 pt-1">
           <button
-            onClick={() => setFilter('recent')}
-            className="text-[10px] tracking-[0.28em] uppercase transition-colors"
-            style={{
-              padding: '6px 14px',
-              borderRadius: 2,
-              fontWeight: 500,
-              background: filter === 'recent' ? 'rgba(200,150,44,0.10)' : 'transparent',
-              border: filter === 'recent'
-                ? '0.5px solid rgba(200,150,44,0.45)'
-                : '0.5px solid rgba(255,255,255,0.08)',
-              color: filter === 'recent' ? '#C8962C' : 'rgba(255,255,255,0.42)',
-            }}
-          >
-            Recent
-          </button>
-          <button
+            type="button"
             onClick={handleToggleNearby}
+            aria-pressed={filter === 'nearby'}
             className="text-[10px] tracking-[0.28em] uppercase transition-colors"
             style={{
-              padding: '6px 14px',
+              padding: '5px 12px',
               borderRadius: 2,
               fontWeight: 500,
               background: filter === 'nearby' ? 'rgba(200,150,44,0.10)' : 'transparent',
@@ -173,12 +169,6 @@ export default function GhostedMode() {
             Nearby
           </button>
         </div>
-
-        {/* ── RECENT STORIES — IG-style avatar row of most recent chats.
-            Only on the Recent filter; tap a circle to open that conversation.
-            Renders nothing when there are no threads, so the field below
-            still carries the page. */}
-        {filter === 'recent' && <GhostedRecentStories currentUserEmail={myEmail} />}
 
         {/* ── LIVE FIELD — the emotional center. Orbit mechanics: zero
             gutters, deterministic per-index opacity jitter so the grid
