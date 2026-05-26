@@ -285,6 +285,13 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: true,
     deepLinkParams: [],
   },
+  'notification-settings': {
+    id: 'notification-settings',
+    title: 'Notifications',
+    height: 'medium',
+    auth: true,
+    deepLinkParams: [],
+  },
   'privacy': {
     id: 'privacy',
     title: 'Privacy',
