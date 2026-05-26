@@ -154,7 +154,6 @@ function BeaconCreator({ onSuccess }) {
         ends_at:          endsAt.toISOString(),
         intensity:        intensity,
         status:           'active',
-        active:           true,
         title:            titleStr,
         description:      descStr,
         // Globe visual config
@@ -933,4 +932,5 @@ export default function L2BeaconSheet({ beaconId, beacon }) {
 
   return <BeaconCreator onSuccess={closeSheet} />;
 }
+
 

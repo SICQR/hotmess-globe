@@ -69,7 +69,8 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
         const { error } = await supabase.from('beacons').insert({
           owner_id: user.id,
           title: title.trim(),
-          type: kind, 
+          type: kind,
+          status: 'active',
           geo_lat: lat,
           geo_lng: lng,
           starts_at: new Date().toISOString(),
@@ -200,3 +201,5 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
     </AnimatePresence>
   );
 }
+
+
