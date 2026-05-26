@@ -189,16 +189,11 @@ Must not require invasive tracking. Built from: behavioral consistency · direct
 
 ## Decision hierarchy
 
-When trust conflicts with other factors:
+When trust conflicts with other factors, the canonical 8-layer hierarchy in [`sacred-invariants.md#decision-hierarchy`](./sacred-invariants.md#decision-hierarchy) applies:
 
-1. Safety
-2. Truth
-3. Trust
-4. Freshness
-5. Readability
-6. Monetization
+**Safety → Truth → Trust → Freshness → Momentum → Readability → Relevance → Monetization**
 
-A trusted false claim still loses. A low-trust truthful claim may be shown with caution. No payment overrides safety or core truth.
+A trusted false claim still loses (Truth > Trust). A low-trust truthful claim may be shown with caution. No payment overrides safety or core truth.
 
 ## Operational questions to lock next
 
