@@ -26,6 +26,7 @@ import { useV6Flag } from '@/hooks/useV6Flag';
 import { ProfileProximityPanel } from '@/components/profile/ProfileProximityPanel';
 import VaultAccessRequest from '@/components/messaging/VaultAccessRequest';
 import ProfileMediaStack from '@/components/profile/ProfileMediaStack';
+import ProfileBeaconsSection from '@/components/profile/ProfileBeaconsSection';
 import MutualStateOverlay from '@/components/profile/MutualStateOverlay';
 import IntentLayer from '@/components/profile/IntentLayer';
 import RecoveryStateCard from '@/components/profile/RecoveryStateCard';
@@ -1054,6 +1055,9 @@ export default function L2ProfileSheet({ email, uid, id }) {
           </span>
         )}
       </div>
+
+      {/* ── Active beacons (loop closer for PR #406 ring) ─────────────── */}
+      <ProfileBeaconsSection userId={profileUser.auth_user_id || profileUser.id} />
 
       {/* ── Logistics moved below content cards (descent into operational
           space per Phil exec review 2026-05-13). Proximity card still
