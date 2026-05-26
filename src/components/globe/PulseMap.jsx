@@ -8,6 +8,8 @@ import {
   toPublicSafeFeatureCollection,
   environmentalFog,
 } from '../../lib/globe/mapboxLayerStack';
+import { registerBeaconIcons } from './beaconIconFactory';
+import { BEACON_GLYPHS } from './beaconGlyphs';
 
 // Single-engine Pulse map. Mapbox GL v3 in GLOBE PROJECTION from load: cinematic
 // planetary curvature + atmosphere + stars at macro zoom, real street detail at
@@ -148,6 +150,10 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
           // clusterMaxZoom than the legacy local-only map so individuals separate
           // by street zoom on the single-engine globe.
           try {
+            // HOTMESS Beacon Identity System — async rasterise + register the 9
+            // category icons BEFORE the symbol layer is added so they resolve on
+            // first paint. The helper is idempotent and SSR-safe.
+            registerBeaconIcons(map).catch(() => { /* non-fatal: fallback gold dots render */ });
             addLayerStack(map, { reducedMotion, clusterMaxZoom: 13 });
             const src = map.getSource(SOURCE_IDS.public);
             if (src && src.setData) src.setData(toPublicSafeFeatureCollection(beaconsRef.current));
@@ -206,6 +212,75 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
                 .setHTML('<div style="font:600 12px/1.35 system-ui,sans-serif;color:#111;max-width:170px">' + escapeHtml(label) + '</div>')
                 .addTo(map);
             } catch (er) { /* non-fatal */ }
+          });
+
+          // ── Beacon Identity icons — mirror the beaconMarkers click handler so
+          //    tapping a category beacon opens the same preview flow.
+          map.on('click', LAYER_IDS.beaconIcons, (e) => {
+            const feat = e.features && e.features[0];
+            if (!feat) return;
+            try {
+              const sel = map.getSource(SOURCE_IDS.selected);
+              if (sel && sel.setData) {
+                sel.setData({ type: 'FeatureCollection', features: [{ type: 'Feature', geometry: feat.geometry, properties: feat.properties }] });
+              }
+            } catch (er) { /* non-fatal */ }
+            try {
+              if (onBeaconClickRef.current) {
+                const fid = feat.properties.id;
+                const list = Array.isArray(beaconsRef.current) ? beaconsRef.current : [];
+                const full = list.find((b) => b && String(b.id) === String(fid));
+                const coords = feat.geometry.coordinates;
+                const datum = full
+                  ? { ...full, lat: coords[1], lng: coords[0] }
+                  : {
+                      id: fid,
+                      title: feat.properties.title,
+                      kind: feat.properties.cat,
+                      beacon_category: feat.properties.beacon_category || feat.properties.cat,
+                      lat: coords[1],
+                      lng: coords[0],
+                    };
+                onBeaconClickRef.current(datum);
+              }
+            } catch (er) { /* non-fatal */ }
+          });
+
+          // ── Hover label — text hidden by default, appears on mouseenter, hides
+          //    on mouseleave. Matches the Beacon Identity hover spec
+          //    (CATEGORY · MOTION). Skip on touch where mouseenter never fires.
+          let __hmHoverPopup = null;
+          let __hmHoverFid = null;
+          map.on('mouseenter', LAYER_IDS.beaconIcons, (e) => {
+            const feat = e.features && e.features[0];
+            if (!feat) return;
+            try { map.getCanvas().style.cursor = 'pointer'; } catch (er) { /* non-fatal */ }
+            const cat = feat.properties.beacon_category;
+            const glyph = cat && BEACON_GLYPHS[cat];
+            if (!glyph) return;
+            const fid = feat.properties.id || (feat.geometry.coordinates[0] + ',' + feat.geometry.coordinates[1]);
+            if (__hmHoverFid === fid && __hmHoverPopup) return;
+            __hmHoverFid = fid;
+            if (__hmHoverPopup) { try { __hmHoverPopup.remove(); } catch (er) { /* non-fatal */ } __hmHoverPopup = null; }
+            const title = (feat.properties.title || '').toString();
+            const dotColor = glyph.state === 'care' ? '#F4F1E8' : '#E6BE5A';
+            const dotShadow = glyph.state === 'care' ? 'rgba(244,241,232,0.45)' : 'rgba(230,190,90,0.45)';
+            const html = '<div style="font:500 10px/1.2 ui-monospace,monospace;letter-spacing:0.28em;text-transform:uppercase;color:#EAE6DD;background:rgba(8,8,12,0.92);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.10);border-radius:4px;padding:6px 10px;white-space:nowrap;">'
+              + '<span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:' + dotColor + ';margin-right:8px;vertical-align:middle;box-shadow:0 0 6px ' + dotShadow + ';"></span>'
+              + escapeHtml(glyph.label) + ' &middot; ' + escapeHtml(glyph.motion)
+              + (title ? '<div style="margin-top:4px;font-weight:400;letter-spacing:0.08em;text-transform:none;color:rgba(255,255,255,0.62);font-size:11px;">' + escapeHtml(title) + '</div>' : '')
+              + '</div>';
+            try {
+              __hmHoverPopup = new mapboxgl.Popup({ offset: 18, closeButton: false, closeOnClick: false, className: 'hm-beacon-hover' })
+                .setLngLat(feat.geometry.coordinates)
+                .setHTML(html)
+                .addTo(map);
+            } catch (er) { /* non-fatal */ }
+          });
+          map.on('mouseleave', LAYER_IDS.beaconIcons, () => {
+            try { map.getCanvas().style.cursor = ''; } catch (er) { /* non-fatal */ }
+            __hmHoverFid = null;
+            if (__hmHoverPopup) { try { __hmHoverPopup.remove(); } catch (er) { /* non-fatal */ } __hmHoverPopup = null; }
           });
 
           // Pointer affordance on the hit layers (desktop).
