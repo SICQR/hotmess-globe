@@ -61,6 +61,62 @@ export default function GhostedMode() {
     });
   }, []);
 
+  // Backfill prompt for the 142 users with consent ticked but no location
+  // point ever captured (gap between consent flag and actual GPS write,
+  // fixed at source for new users in PR #444 — backfill for existing users
+  // surfaces here as a one-shot dismissable banner).
+  const [needsLocation, setNeedsLocation] = React.useState(false);
+  const [locationDismissed, setLocationDismissed] = React.useState<boolean>(
+    () => {
+      try { return window.localStorage.getItem('hm_loc_banner_dismissed') === '1'; }
+      catch { return false; }
+    }
+  );
+  const [enableLocPending, setEnableLocPending] = React.useState(false);
+  React.useEffect(() => {
+    if (!myUserId) return;
+    let cancelled = false;
+    supabase
+      .from('profiles')
+      .select('location, location_consent')
+      .eq('id', myUserId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled || !data) return;
+        // location is null OR location_consent off → can't appear on Ghosted
+        setNeedsLocation(!data.location || data.location_consent === false);
+      });
+    return () => { cancelled = true; };
+  }, [myUserId]);
+
+  const handleEnableLocation = React.useCallback(() => {
+    if (enableLocPending || !('geolocation' in navigator)) return;
+    setEnableLocPending(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          await supabase.rpc('update_my_location', {
+            p_lng: pos.coords.longitude,
+            p_lat: pos.coords.latitude,
+          });
+          setNeedsLocation(false);
+          try { window.localStorage.removeItem('hm_loc_banner_dismissed'); } catch {}
+        } catch (e) {
+          console.warn('[Ghosted] update_my_location failed:', e);
+        } finally {
+          setEnableLocPending(false);
+        }
+      },
+      () => { setEnableLocPending(false); },
+      { timeout: 8000, enableHighAccuracy: false, maximumAge: 60000 }
+    );
+  }, [enableLocPending]);
+
+  const handleDismissLocBanner = React.useCallback(() => {
+    try { window.localStorage.setItem('hm_loc_banner_dismissed', '1'); } catch {}
+    setLocationDismissed(true);
+  }, []);
+
   const { isTapped, isMutualBoo } = useTaps(myUserId, myEmail);
   const { unreadCount } = useUnreadCount();
 
@@ -84,6 +140,37 @@ export default function GhostedMode() {
             their active beacons are listed). Renders nothing when there's
             nobody to show, so the grid below always carries the page. */}
         <GhostedRecentStories currentUserEmail={myEmail} currentUserId={myUserId} />
+
+        {/* Backfill prompt — signed-in users without a location point won't
+            appear on Ghosted at all (RPC filter). One-shot, dismissable. */}
+        {needsLocation && !locationDismissed && (
+          <div
+            className="mx-3 mt-2 mb-1 p-3 rounded-xl flex items-center gap-3 text-[12px]"
+            style={{ background: 'rgba(200,150,44,0.10)', border: '1px solid rgba(200,150,44,0.30)' }}
+          >
+            <div className="flex-1 min-w-0">
+              <div className="text-[#C8962C] font-bold tracking-wide uppercase text-[11px] mb-0.5">Be seen</div>
+              <div className="text-white/75 leading-snug">Enable location so others can see you nearby. Approximate only.</div>
+            </div>
+            <button
+              type="button"
+              onClick={handleEnableLocation}
+              disabled={enableLocPending}
+              className="shrink-0 px-3 h-8 rounded-full text-[11px] font-bold uppercase tracking-wider"
+              style={{ background: '#C8962C', color: '#000', opacity: enableLocPending ? 0.6 : 1 }}
+            >
+              {enableLocPending ? 'Enabling…' : 'Enable'}
+            </button>
+            <button
+              type="button"
+              onClick={handleDismissLocBanner}
+              aria-label="Dismiss"
+              className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-white/40 hover:text-white/80"
+            >
+              ×
+            </button>
+          </div>
+        )}
 
 
         {/* ── LIVE FIELD — the emotional center. Orbit mechanics: zero
