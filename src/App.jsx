@@ -458,6 +458,7 @@ const AuthenticatedApp = () => {
       <Route path="/music/library" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><MusicLibraryPage /></Suspense>} />
       <Route path="/music/release/:id" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><MusicReleasePage /></Suspense>} />
       <Route path="/care" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><CarePage /></Suspense>} />
+      <Route path="/help" element={<Navigate to="/more?sheet=help" replace />} />
       <Route path="/more/*" element={<Suspense fallback={null}><MorePage /></Suspense>} />
       <Route path="/safety" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><SafetyPage /></Suspense>} />
       <Route path="/safety/*" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><SafetyPage /></Suspense>} />
