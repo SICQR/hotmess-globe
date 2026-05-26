@@ -3,11 +3,14 @@
 // construction, and the contract-ordered layer definitions. Kept framework-free
 // and side-effect-light so it stays unit-testable.
 
+import { resolveBeaconCategory } from '@/components/globe/beaconGlyphs';
+
 // Stable layer IDs (naming convention from the spec, §"Mapbox layer naming").
 export const LAYER_IDS = {
   clusterCircles: 'hm-cluster-circles',
   clusterCount: 'hm-cluster-symbols',
   beaconMarkers: 'hm-beacon-markers',
+  beaconIcons: 'hm-beacon-icons',
   selectedHalo: 'hm-selected-halo',
 };
 export const SOURCE_IDS = { public: 'hm-public', selected: 'hm-selected' };
@@ -80,6 +83,10 @@ export function toPublicSafeFeatureCollection(beacons) {
       properties: {
         id: b.id != null ? String(b.id) : '',
         cat,
+        // Fine-grained venue category for the HOTMESS Beacon Identity System.
+        // null when input doesn't resolve to one of the 9 supported categories —
+        // caller falls back to the generic gold circle marker.
+        beacon_category: resolveBeaconCategory(b.beacon_category || b.category || b.type || b.kind || ''),
         color: CATEGORY_COLOR[cat] || CATEGORY_COLOR.other,
         title: String(b.title || b.name || ''),
       },
@@ -171,7 +178,8 @@ export function addLayerStack(map, opts) {
       id: LAYER_IDS.beaconMarkers,
       type: 'circle',
       source: SOURCE_IDS.public,
-      filter: ['!', ['has', 'point_count']],
+      // Fallback gold dot — only when not a cluster AND no category icon available.
+      filter: ['all', ['!', ['has', 'point_count']], ['!', ['has', 'beacon_category']]],
       paint: {
         'circle-color': ['coalesce', ['get', 'color'], '#C8962C'],
         'circle-radius': 6,
@@ -181,6 +189,38 @@ export function addLayerStack(map, opts) {
       },
     });
   }
+  // L9a — HOTMESS Beacon Identity System icon (per-category glyph + gold/care ring).
+  // Sprite images are registered up-stream by registerBeaconIcons(map) before this
+  // layer is added; if a category has no matching sprite, the L9 fallback gold dot
+  // renders instead because the two layers' filters are mutually exclusive on
+  // 'has beacon_category'.
+  if (!map.getLayer(LAYER_IDS.beaconIcons)) {
+    map.addLayer({
+      id: LAYER_IDS.beaconIcons,
+      type: 'symbol',
+      source: SOURCE_IDS.public,
+      filter: ['all', ['!', ['has', 'point_count']], ['has', 'beacon_category']],
+      layout: {
+        'icon-image': [
+          'match', ['get', 'beacon_category'],
+          'gym',       'hm-beacon-gym',
+          'club',      'hm-beacon-club',
+          'sauna',     'hm-beacon-sauna',
+          'leather',   'hm-beacon-leather',
+          'cafe',      'hm-beacon-cafe',
+          'clinic',    'hm-beacon-clinic',
+          'aftercare', 'hm-beacon-aftercare',
+          'cruising',  'hm-beacon-cruising',
+          'market',    'hm-beacon-market',
+          'hm-beacon-club',
+        ],
+        'icon-allow-overlap': true,
+        'icon-ignore-placement': true,
+        'icon-size': 0.5, // 88-source / 44-css = 0.5 to match the 44px MAP-size spec
+      },
+    });
+  }
+
   // L10 — selected halo (rendered last → always on top)
   if (!map.getLayer(LAYER_IDS.selectedHalo)) {
     map.addLayer({
