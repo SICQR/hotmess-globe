@@ -112,8 +112,15 @@ export default function MusicLibraryPage() {
   }, [releases]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
+  // Outer fixed-height flex column + inner flex-1 overflow-y-auto mirrors
+  // the proven scroll pattern used by HomeMode/GhostedMode/MusicTab so the
+  // inner container can never collapse to 0px and scrolling works on iOS too.
   return (
-    <div className="h-full w-full overflow-y-auto pb-32" style={{ backgroundColor: BG, WebkitOverflowScrolling: "touch" }}>
+    <div className="h-full w-full flex flex-col overflow-hidden" style={{ backgroundColor: BG }}>
+      <div
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-32"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
       {/* Top bar */}
       <div className="sticky top-0 z-30 backdrop-blur-md bg-black/80 border-b border-white/5">
         <div className="h-14 px-4 flex items-center gap-3">
@@ -190,7 +197,7 @@ export default function MusicLibraryPage() {
         {loading ? (
           <div className="grid grid-cols-2 gap-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="aspect-[3/4] rounded-xl animate-pulse" style={{ backgroundColor: CARD }} />
+              <div key={i} className="aspect-square rounded-xl animate-pulse" style={{ backgroundColor: CARD }} />
             ))}
           </div>
         ) : visible.length === 0 ? (
@@ -229,7 +236,7 @@ export default function MusicLibraryPage() {
                   className="text-left focus:outline-none"
                   aria-label={`Open ${r.title}`}
                 >
-                  <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-black">
+                  <div className="relative aspect-square rounded-xl overflow-hidden bg-black">
                     {r.artwork_url ? (
                       <img src={r.artwork_url} alt={r.title} className="w-full h-full object-cover" loading="lazy" />
                     ) : (
@@ -255,8 +262,8 @@ export default function MusicLibraryPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs font-bold text-white truncate mt-2">{r.title || 'Untitled'}</p>
-                  <p className="text-[10px] text-white/40 truncate">
+                  <p className="text-sm font-black uppercase tracking-wide text-white truncate mt-2 leading-tight">{r.title || 'Untitled'}</p>
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-white/40 truncate mt-0.5">
                     {r.genre || 'Smash Daddys'}{r.release_date ? ` · ${(r.release_date || '').slice(0, 4)}` : ''}
                   </p>
                 </motion.button>
@@ -264,6 +271,7 @@ export default function MusicLibraryPage() {
             })}
           </div>
         )}
+      </div>
       </div>
     </div>
   );
