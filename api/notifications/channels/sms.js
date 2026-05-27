@@ -93,6 +93,33 @@ function clamp(body) {
  * Never throws.
  */
 export async function sendSms({ to, body }) {
+  // Phil 2026-05-27 — global daily SMS budget kill-switch. Set
+  // MAX_DAILY_SMS_SENDS (env, integer). When today's total >= cap, stop
+  // sending. Returns skipped so caller doesn't retry. Defaults to 500/day
+  // if env unset — safe ceiling for current scale ($20/day worst case).
+  try {
+    const cap = parseInt(process.env.MAX_DAILY_SMS_SENDS || '500', 10);
+    if (Number.isFinite(cap) && cap > 0) {
+      const { createClient } = await import('@supabase/supabase-js');
+      const supaUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+      const supaKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (supaUrl && supaKey) {
+        const adminClient = createClient(supaUrl, supaKey, { auth: { persistSession: false } });
+        const todayStart = new Date(); todayStart.setUTCHours(0, 0, 0, 0);
+        const { count } = await adminClient
+          .from('safety_delivery_log')
+          .select('id', { count: 'exact', head: true })
+          .eq('channel', 'sms')
+          .eq('status', 'delivered')
+          .gte('attempted_at', todayStart.toISOString());
+        if ((count ?? 0) >= cap) {
+          console.warn(`[sms] daily budget reached (${count}/${cap}) — skipping send`);
+          return { ok: false, error: 'daily_sms_budget_reached', skipped: true };
+        }
+      }
+    }
+  } catch (_e) { /* swallow — never block on budget check failure */ }
+
   const dest = normaliseTo(to);
   if (!dest) return { ok: false, skipped: true, error: 'no_phone' };
 
