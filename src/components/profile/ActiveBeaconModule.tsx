@@ -61,11 +61,25 @@ function paletteColor(category: string | null | undefined, type: string | null |
   return AMBER;
 }
 
+// SACRED INVARIANT #7: no exact tracking, fuzzy ≤200m, no trails.
+// Raw lat/lng is NEVER rendered. Prefer human-readable city/slug; if neither
+// exists, return a generic placeholder. The map still uses precise coords;
+// only the *display* is fuzzed.
 function locationLabel(b: ActiveBeacon): string | null {
-  if (b.city && b.city.trim().length > 0) return b.city;
-  if (b.city_slug && b.city_slug.trim().length > 0) return b.city_slug;
+  // Guard against PostGIS WKB-hex leaking through the .city field.
+  const safeCity = (v: unknown) => {
+    if (!v || typeof v !== 'string') return null;
+    const t = v.trim();
+    if (!t) return null;
+    if (/^[0-9A-Fa-f]{20,}$/.test(t)) return null;
+    return t;
+  };
+  const c = safeCity(b.city) || safeCity(b.city_slug as unknown);
+  if (c) return c;
+  // Coords present but no human label — show a generic 'approximate area'
+  // instead of the lat/lng pair. Sacred Invariant compliance.
   if (typeof b.geo_lat === 'number' && typeof b.geo_lng === 'number') {
-    return `${b.geo_lat.toFixed(2)}, ${b.geo_lng.toFixed(2)}`;
+    return 'Approximate area';
   }
   return null;
 }
