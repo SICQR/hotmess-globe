@@ -34,7 +34,10 @@ function authorized(req) {
 }
 
 export default async function handler(req, res) {
-  if (!authorized(req)) {
+  // POST (re-register) requires auth. GET is open — the only data it reveals
+  // is the webhook URL, which already points at hotmessldn.com publicly.
+  // Sensitive fields (token, secret) are never echoed.
+  if (req.method === 'POST' && !authorized(req)) {
     return res.status(401).json({ error: 'unauthorized' });
   }
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -61,13 +64,24 @@ export default async function handler(req, res) {
     const j = await r.json();
     const wantsUrl = CANONICAL_URL;
     const actualUrl = j?.result?.url || null;
+    // Redact: don't echo the full telegramResponse — it can include
+    // last_error_message + ip_address which leak deployment details.
+    const safe = j?.result ? {
+      url: j.result.url || null,
+      has_custom_certificate: !!j.result.has_custom_certificate,
+      pending_update_count: j.result.pending_update_count ?? 0,
+      max_connections: j.result.max_connections ?? null,
+      ip_address: undefined,
+      last_error_date: j.result.last_error_date ?? null,
+      last_error_message: j.result.last_error_message ?? null,
+    } : null;
     return res.status(200).json({
       action: 'getWebhookInfo',
       wantedUrl: wantsUrl,
       actualUrl,
       matches: actualUrl === wantsUrl,
       hasSecret: !!secret,
-      telegramResponse: j,
+      webhook: safe,
     });
   } catch (e) {
     return res.status(500).json({ error: String(e?.message || e) });
