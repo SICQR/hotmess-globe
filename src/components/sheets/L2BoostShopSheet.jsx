@@ -34,7 +34,7 @@ export default function L2BoostShopSheet() {
   //   no caller ever passes the prop. Engine wired, plumbing missing.
   //
   // Restore each only when its experiential effect is fully observable.
-  const HIDDEN_UNTIL_WIRED = new Set(['globe_glow', 'incognito_week']);
+  const HIDDEN_UNTIL_WIRED = new Set(['incognito_week']);
 
   const load = async () => {
     try {

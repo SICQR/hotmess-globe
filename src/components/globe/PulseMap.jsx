@@ -9,6 +9,7 @@ import {
   environmentalFog,
 } from '../../lib/globe/mapboxLayerStack';
 import { registerBeaconIcons } from './beaconIconFactory';
+import { useGlowUserIds } from '@/hooks/useGlowUserIds';
 import { BEACON_GLYPHS } from './beaconGlyphs';
 
 // Single-engine Pulse map. Mapbox GL v3 in GLOBE PROJECTION from load: cinematic
@@ -70,6 +71,12 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
   // Latest props via refs so the create-once effect never needs to re-run.
   const beaconsRef = useRef(beacons);
   beaconsRef.current = beacons;
+  // globe_glow: amplify aura ONLY for owners with an active boost. Empty Set
+  // in steady state → zero render impact. Hook silently falls back to empty
+  // on RPC error so a Supabase blip never blanks the globe.
+  const glowUserIds = useGlowUserIds();
+  const glowUserIdsRef = useRef(glowUserIds);
+  glowUserIdsRef.current = glowUserIds;
   const userLocRef = useRef(userLocation);
   userLocRef.current = userLocation;
   const onBeaconClickRef = useRef(onBeaconClick);
@@ -257,7 +264,7 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
               addLayerStack(map, { reducedMotion, clusterMaxZoom: 13 });
               const src = map.getSource(SOURCE_IDS.public);
               if (src && src.setData) {
-                src.setData(toPublicSafeFeatureCollection(beaconsRef.current));
+                src.setData(toPublicSafeFeatureCollection(beaconsRef.current, glowUserIdsRef.current));
               } else {
                 console.error('[PulseMap] hm-public source missing after addLayerStack (' + origin + ')');
               }
@@ -503,9 +510,9 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
     if (!map) return;
     try {
       const src = map.getSource(SOURCE_IDS.public);
-      if (src && src.setData) src.setData(toPublicSafeFeatureCollection(beacons));
+      if (src && src.setData) src.setData(toPublicSafeFeatureCollection(beacons, glowUserIds));
     } catch (e) { /* source not ready; initial data set on load */ }
-  }, [beacons]);
+  }, [beacons, glowUserIds]);
 
   return (
     <div className="absolute inset-0">
