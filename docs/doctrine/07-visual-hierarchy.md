@@ -4,6 +4,9 @@ Locked Phil 2026-05-27 (post `profile_bump` ship, pre `globe_glow` ship).
 
 ## 1. Visual hierarchy rule (sacred)
 
+> Monetisation may amplify atmosphere, but must never override relational truth.
+> — Phil, 2026-05-27
+
 Relationship signals **always** outrank monetisation signals.
 
 | Tier | Signal | Rationale |
