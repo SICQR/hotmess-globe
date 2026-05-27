@@ -152,7 +152,7 @@ export default function GlobePage({ embedded = false }) {
     rotationRef,
   } = useGlobe();
 
-  const { beacons: realtimeBeacons, loading: rawBeaconsLoading } = useRealtimeBeacons();
+  const { beacons: realtimeBeacons, loading: rawBeaconsLoading, refresh: refreshBeacons } = useRealtimeBeacons();
   const [beaconsLoading, setBeaconsLoading] = useState(true);
   useEffect(() => {
     if (!rawBeaconsLoading) setBeaconsLoading(false);
@@ -592,9 +592,20 @@ export default function GlobePage({ embedded = false }) {
           isOpen={showBeaconModal}
           location={beaconDropLocation}
           onClose={() => { setShowBeaconModal(false); setBeaconDropLocation(null); }}
-          onComplete={() => {
+          onComplete={(drop) => {
+            // Invalidate React Query caches (for any feeds using rq)
             queryClient.invalidateQueries({ queryKey: ['beacons'] });
             queryClient.invalidateQueries({ queryKey: ['pulse-places'] });
+            // useRealtimeBeacons is a custom useState hook — manually refresh it.
+            // Don't trust realtime INSERT subscription alone (latency / channel hiccup).
+            try { refreshBeacons && refreshBeacons(); } catch (_e) { /* non-fatal */ }
+            // Fly the camera to the drop point at street-zoom so Phil
+            // actually SEES the beacon land — at globe-zoom a single
+            // beacon is invisible. Phil 2026-05-27: drops confirmed by
+            // DB but never visible on the map.
+            if (drop && Number.isFinite(drop.lat) && Number.isFinite(drop.lng) && pulseApiRef.current && pulseApiRef.current.flyTo) {
+              try { pulseApiRef.current.flyTo({ lat: drop.lat, lng: drop.lng, zoom: 14 }); } catch (_e) { /* non-fatal */ }
+            }
           }}
         />
 
