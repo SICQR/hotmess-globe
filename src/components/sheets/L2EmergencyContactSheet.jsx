@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Trash2, Plus, Loader2, User, Phone, Users, Mail, Send, Check } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
+import { trackEvent } from '@/components/utils/analytics';
 
 const RELATIONS = ['Friend', 'Partner', 'Family', 'Other'];
 
@@ -22,7 +23,7 @@ export default function L2EmergencyContactSheet() {
   const [testStatus, setTestStatus] = useState({}); // { [contactId]: 'sent' | 'failed' }
   const [error, setError] = useState('');
 
-  const [form, setForm] = useState({ contact_name: '', contact_phone: '', contact_email: '', relationship: 'Friend' });
+  const [form, setForm] = useState({ contact_name: '', contact_phone: '', contact_email: '', contact_telegram_handle: '', relationship: 'Friend' });
 
   // ─── Load contacts ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -60,6 +61,7 @@ export default function L2EmergencyContactSheet() {
       user_id: user.id,
       contact_name: form.contact_name.trim(),
       contact_phone: form.contact_phone.trim(),
+      contact_telegram_handle: form.contact_telegram_handle.trim().replace(/^@/, '') || null,
       relationship: form.relationship,
     };
     const trimmedEmail = form.contact_email.trim();
@@ -80,7 +82,14 @@ export default function L2EmergencyContactSheet() {
       return;
     }
 
-    setForm({ contact_name: '', contact_phone: '', contact_email: '', relationship: 'Friend' });
+    trackEvent('trusted_contact_added', {
+      category: 'safety',
+      has_telegram: !!insertPayload.contact_telegram_handle,
+      has_email: !!insertPayload.contact_email,
+      relationship: insertPayload.relationship,
+    });
+
+    setForm({ contact_name: '', contact_phone: '', contact_email: '', contact_telegram_handle: '', relationship: 'Friend' });
     setShowForm(false);
     loadContacts();
   }
@@ -260,6 +269,21 @@ export default function L2EmergencyContactSheet() {
                 />
               </div>
 
+              {/* Telegram (optional, signal-fast aftercare channel) */}
+              <div className="relative">
+                <Send className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Telegram @handle (optional)"
+                  value={form.contact_telegram_handle}
+                  onChange={e => setForm(f => ({ ...f, contact_telegram_handle: e.target.value }))}
+                  className="w-full bg-white/5 rounded-xl pl-9 pr-4 py-3 text-white text-sm placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-[#C8962C]/50"
+                />
+                <p className="text-white/30 text-[10px] mt-1 px-1">
+                  They'll need to message @{(import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'HotmessAuthBot').replace(/^@/, '')} to receive alerts.
+                </p>
+              </div>
+
               {/* Relation */}
               <select
                 value={form.relationship}
@@ -280,7 +304,7 @@ export default function L2EmergencyContactSheet() {
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"
-                  onClick={() => { setShowForm(false); setError(''); setForm({ contact_name: '', contact_phone: '', contact_email: '', relationship: 'Friend' }); }}
+                  onClick={() => { setShowForm(false); setError(''); setForm({ contact_name: '', contact_phone: '', contact_email: '', contact_telegram_handle: '', relationship: 'Friend' }); }}
                   className="flex-1 py-3 bg-white/5 rounded-xl text-white/60 font-bold text-sm"
                 >
                   Cancel

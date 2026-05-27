@@ -403,11 +403,29 @@ export default function GlobePage({ embedded = false }) {
   // Single-engine map feed: live beacons + persistent places (venues/recovery) so
   // there's real density to cluster (the macro "city glow") and individual blooms
   // at street zoom. Privacy + category mapping happens in the layer stack.
+  // 2026-05-27 Phil: Layer toggles now also filter places (gyms/saunas/clubs =>
+  // venues; AA/NA rooms => safety; etc). Previously only realtimeBeacons were
+  // filtered which meant toggling "Venues" off did nothing to gym pins.
   const mapSignals = useMemo(() => {
     const bs = Array.isArray(filteredBeacons) ? filteredBeacons : [];
-    const places = Array.isArray(pulsePlaces) ? pulsePlaces : [];
+    const placesRaw = Array.isArray(pulsePlaces) ? pulsePlaces : [];
+    const placeMatches = (p, ...needles) => {
+      const cat = String(p.beacon_category || '').toLowerCase();
+      const type = String(p.type || '').toLowerCase();
+      const kind = String(p.kind || '').toLowerCase();
+      const placeType = String(p.place_type || '').toLowerCase();
+      return needles.some(n => cat === n || type === n || kind === n || placeType === n);
+    };
+    const places = placesRaw.filter(p => {
+      if (!activeLayer.venues && placeMatches(p, 'venue', 'signal', 'gym', 'sauna', 'club', 'bar')) return false;
+      if (!activeLayer.safety && placeMatches(p, 'safety', 'recovery', 'support', 'harm_reduction')) return false;
+      if (!activeLayer.events && placeMatches(p, 'event')) return false;
+      if (!activeLayer.market && placeMatches(p, 'market', 'vendor')) return false;
+      if (!activeLayer.radio  && placeMatches(p, 'radio')) return false;
+      return true;
+    });
     return [...bs, ...places];
-  }, [filteredBeacons, pulsePlaces]);
+  }, [filteredBeacons, pulsePlaces, activeLayer]);
 
   const handleBeaconClick = useCallback((beacon) => {
     if (!beacon || beacon.isCluster) return;

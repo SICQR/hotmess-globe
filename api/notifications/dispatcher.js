@@ -100,7 +100,7 @@ async function loadUser(supabase, userId) {
 async function loadContacts(supabase, userId) {
   const { data } = await supabase
     .from('trusted_contacts')
-    .select('id, contact_name, contact_phone, contact_email, role, notify_on_sos')
+    .select('id, contact_name, contact_phone, contact_email, contact_whatsapp, contact_telegram_handle, contact_telegram_chat_id, channels_enabled, preferred_channel, role, notify_on_sos')
     .eq('user_id', userId)
     .eq('notify_on_sos', true)
     .limit(5);

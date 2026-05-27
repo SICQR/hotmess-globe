@@ -105,7 +105,17 @@ function ProfileHero({ profile }) {
     profile.full_name ||
     'HOTMESS member';
   const verified = Boolean(profile.is_verified);
-  const location = profile.location_name || profile.city || profile.location_area || null;
+  // SACRED INVARIANT: profile.city can hold raw PostGIS WKB-hex (geography
+  // bytes) — never render that to other users. Strip when it's not a
+  // human-readable place. Also fall back to location_area / location_name.
+  const _safeCity = (v) => {
+    if (!v || typeof v !== 'string') return null;
+    const t = v.trim();
+    if (!t) return null;
+    if (/^[0-9A-Fa-f]{20,}$/.test(t)) return null;
+    return t;
+  };
+  const location = profile.location_name || _safeCity(profile.city) || profile.location_area || null;
 
   return (
     <div

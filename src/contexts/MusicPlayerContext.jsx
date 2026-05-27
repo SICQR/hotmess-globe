@@ -7,6 +7,7 @@
  */
 
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react';
+import { trackEvent } from '@/components/utils/analytics';
 
 const MusicPlayerContext = createContext(null);
 
@@ -90,6 +91,16 @@ export function MusicPlayerProvider({ children }) {
     audio.play().catch(() => {});
     setCurrentTrack(track);
     setIsPlaying(true);
+    try {
+      trackEvent('music_play', {
+        category: 'music',
+        track_id: track.id || null,
+        track_title: track.title || null,
+        artist: track.artist || null,
+        queue_size: trackQueue.length,
+        queue_index: index,
+      });
+    } catch { /* ignore */ }
     setProgress(0);
     setCurrentTime(0);
     setIsMiniPlayerVisible(true);

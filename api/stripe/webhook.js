@@ -327,6 +327,29 @@ ${session.shipping_details.address.line1}, ${session.shipping_details.address.ci
     await supabase.from('cart_items').delete().eq('auth_user_id', userId);
   }
 
+  // 3a. Analytics — checkout_completed for the funnel dashboard.
+  // 2026-05-27 Phil: pairs with client-side checkout_started (L2CheckoutSheet)
+  // and add_to_cart (cartStorage.addToCart).
+  try {
+    await supabase.from('analytics_events').insert({
+      user_id:    userId || null,
+      event_name: 'checkout_completed',
+      category:   'commerce',
+      label:      orderId,
+      value:      Number(session.amount_total ? session.amount_total / 100 : 0) || null,
+      properties: {
+        order_id:          orderId,
+        stripe_session_id: session.id,
+        currency:          session.currency || 'gbp',
+        amount_total:      session.amount_total ?? null,
+        payment_status:    session.payment_status ?? null,
+        customer_email:    customerEmail ?? null,
+      },
+    });
+  } catch (anErr) {
+    console.error('[Webhook] analytics insert fail:', anErr?.message);
+  }
+
   // 4. Shopify Mirroring
   console.log(`[Webhook] Checking for Shopify mirroring for order ${orderId}...`);
   await createShopifyOrder(session);

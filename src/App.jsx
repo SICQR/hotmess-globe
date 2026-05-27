@@ -52,7 +52,7 @@ import { GlobeProvider } from '@/contexts/GlobeContext';
 import { LiveModeProvider } from '@/contexts/LiveModeContext';
 import LiveModeOverlay from '@/components/live/LiveModeOverlay';
 import { RadioMiniPlayer } from '@/components/radio/RadioMiniPlayer';
-import { MusicPlayerProvider } from '@/contexts/MusicPlayerContext';
+import { MusicPlayerProvider, useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { MusicMiniPlayer } from '@/components/music/MusicMiniPlayer';
 import { GlobalTicker } from '@/components/banners/GlobalTicker';
 import { TopHUD } from '@/components/shell/TopHUD';
@@ -695,6 +695,10 @@ function OSArchitecture() {
   }, []);
 
   const onRadioActive = location.pathname.startsWith('/more/radio') || location.pathname === '/radio';
+  // 2026-05-27 Phil: mutually exclusive mini players — when music has a current
+  // track, hide the radio mini bar so we never stack two playback bars at the
+  // bottom of the screen.
+  const musicHasTrack = !!useMusicPlayer().currentTrack;
 
   return (
     <div className="hotmess-os relative h-dvh w-full overflow-hidden bg-[#050507]">
@@ -736,8 +740,11 @@ function OSArchitecture() {
           re-mount this line if/when the ticker is wanted again. */}
       {/* <GlobalTicker className="fixed top-12 left-0 right-0 z-[60]" /> */}
 
-      {/* Radio Mini Player — sits just above OSBottomNav (Z-40) */}
-      <RadioMiniPlayer hidden={onRadioActive} />
+      {/* Radio Mini Player — sits just above OSBottomNav (Z-40).
+          2026-05-27 Phil: hide when music is also playing — avoids the
+          "duplicate play bars" stack at the bottom of the screen. The
+          radio audio keeps streaming; user pauses via Radio page. */}
+      <RadioMiniPlayer hidden={onRadioActive || musicHasTrack} />
 
 
       {/* Music Mini Player — sits just above radio player or nav (Z-50) */}
