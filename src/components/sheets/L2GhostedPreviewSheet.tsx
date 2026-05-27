@@ -31,6 +31,7 @@ import { useNearbyMovement } from '@/hooks/useNearbyMovement';
 import { useGPS } from '@/hooks/useGPS';
 import { MatchOverlay } from '@/components/ghosted/MatchOverlay';
 import { calculateMidpoint, calculateDistance } from '@/lib/locationUtils';
+import { ProximityRow } from '@/components/ui/ProximityRow';
 import { logConsentBlock, type ConsentBlockAction } from '@/lib/consent/telemetry';
 import { createLocationSession, DEFAULT_LOCATION_TTL_MIN } from '@/lib/ghosted/locationSession';
 
@@ -534,6 +535,23 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
             binary blob so the sheet never renders cryptic strings as a city. */}
         {profile.city && !/^[0-9A-Fa-f]{20,}$/.test(String(profile.city).trim()) && (
           <p className="text-sm text-white/40 mb-3">{profile.city}</p>
+        )}
+
+        {/* Bucketed travel cue — Phase 2 doctrine (Phil 2026-05-26).
+            Person card: walk-only, "< 5 min away" / "~10 min away" buckets,
+            "location approximate" in expanded view. Renders nothing when
+            viewer location is stale or > 30km away. */}
+        {profile.last_lat != null && profile.last_lng != null && (
+          <div className="mb-3 -mx-4">
+            <ProximityRow
+              type="person"
+              venueLat={Number(profile.last_lat)}
+              venueLng={Number(profile.last_lng)}
+              viewerLat={myPosition?.lat ?? null}
+              viewerLng={myPosition?.lng ?? null}
+              locationUpdatedAt={myPosition?.timestamp ?? null}
+            />
+          </div>
         )}
 
         {/* Bio */}
