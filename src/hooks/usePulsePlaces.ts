@@ -22,6 +22,11 @@ export interface PulsePlace {
   /** HOTMESS Beacon Identity category — picks the per-category Mapbox sprite.
    *  Distinct from `type` (constraint-restricted legacy bucket: club/zone/city/curated/recovery). */
   beacon_category: 'gym' | 'club' | 'sauna' | 'leather' | 'cafe' | 'clinic' | 'aftercare' | 'cruising' | 'market' | null;
+  // Venue details (Phil 2026-05-27): surfaced on tap.
+  address: string | null;
+  opening_hours: Record<string, unknown> | null;
+  website: string | null;
+  phone: string | null;
 }
 
 /**
@@ -34,7 +39,7 @@ export function usePulsePlaces() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pulse_places')
-        .select('id, slug, name, type, country, lat, lng, priority, parent_slug, is_active, notes, tier, event_active, subscription_status, beacon_category')
+        .select('id, slug, name, type, country, lat, lng, priority, parent_slug, is_active, notes, tier, event_active, subscription_status, beacon_category, address, opening_hours, website, phone')
         .eq('is_active', true)
         .order('priority', { ascending: false });
 
