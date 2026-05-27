@@ -103,7 +103,7 @@ async function loadContacts(supabase, userId) {
     .select('id, contact_name, contact_phone, contact_email, contact_whatsapp, contact_telegram_handle, contact_telegram_chat_id, channels_enabled, preferred_channel, role, notify_on_sos')
     .eq('user_id', userId)
     .eq('notify_on_sos', true)
-    .limit(5);
+    .limit(3); // Phil 2026-05-27 — cost cap: max 3 SOS recipients per fanout
   // Best-effort: see if the contact's phone matches an internal HOTMESS user
   // — if so, web push becomes possible. Skipped if no matching profile.
   const enriched = [];
