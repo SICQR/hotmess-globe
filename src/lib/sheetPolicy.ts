@@ -21,11 +21,22 @@ export function canOpenSheet(
   type: string,
   pathname: string,
   sheetStack: Array<{ type: string }>,
+  activeSheet?: string | null,
 ): boolean {
   if (!GATED_TYPES.includes(type)) return true;
 
+  // Allowed surfaces for chat/video/travel sheets:
+  //   1. /ghosted (and nested /ghosted/* routes) — primary discovery context
+  //   2. /profile/:id — entity-aware profile route (carousel + globe-click destinations)
+  //   3. Profile sheet open in stack OR as activeSheet — so the Message button on a
+  //      profile sheet opens chat directly. Pre-mutual-boo gating is the caller's
+  //      job (handleMessage shouldn't even fire pre-mutual; that check lives in the
+  //      action button rendering, not here).
   const onGhosted = pathname === '/ghosted' || pathname.startsWith('/ghosted/');
+  const onProfile = pathname.startsWith('/profile/');
   const profileInStack = sheetStack.some((s) => s.type === 'profile');
+  const profileActive = activeSheet === 'profile';
 
-  return onGhosted || profileInStack;
+  return onGhosted || onProfile || profileInStack || profileActive;
 }
+
