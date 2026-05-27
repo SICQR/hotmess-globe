@@ -34,39 +34,14 @@ function authorized(req) {
 }
 
 export default async function handler(req, res) {
-  // POST (re-register) requires auth, EXCEPT for the one-shot SECRET-UPGRADE
-  // case: webhook URL is already canonical AND no secret_token is set yet.
-  // In that case an unauthed POST can only ever do the right thing (add a
-  // signing secret to an already-correct URL — never change the URL, never
-  // overwrite an existing secret). Once hasSecret=true, future POSTs lock
-  // back behind CRON_SECRET auth.
-  //
-  // The original no-URL bootstrap path was removed (Phil 2026-05-27 brief).
-  // Webhook is already registered; the only remaining bootstrap gap was the
-  // missing signing secret.
+  // POST (re-register) ALWAYS requires CRON_SECRET auth now.
+  // The earlier bootstrap-open paths (no-URL bootstrap + secret-upgrade
+  // bootstrap) were one-shot enablers — both have done their job. Removed
+  // per Phil brief 2026-05-27 task 2: "Remove the bootstrap-open POST path."
+  // Webhook URL is canonical, signing secret is registered with Telegram.
+  // Any future re-register requires auth.
   if (req.method === 'POST' && !authorized(req)) {
-    try {
-      const token0 = process.env.TELEGRAM_BOT_TOKEN;
-      if (!token0) return res.status(401).json({ error: 'unauthorized' });
-      const probe = await fetch(`https://api.telegram.org/bot${token0}/getWebhookInfo`);
-      const pj = await probe.json();
-      const currentUrl = pj?.result?.url || null;
-      const hasSecretAlready = !!pj?.result?.url && pj?.result?.has_custom_certificate === false
-        && (pj?.result?.allowed_updates !== undefined ? false : false);
-      // Telegram doesn't expose the secret in getWebhookInfo. We track
-      // hasSecret server-side via TELEGRAM_WEBHOOK_SECRET env presence.
-      const serverHasSecret = !!process.env.TELEGRAM_WEBHOOK_SECRET;
-      const targetIsCanonical = currentUrl === CANONICAL_URL;
-      if (!targetIsCanonical || serverHasSecret) {
-        return res.status(401).json({
-          error: 'unauthorized',
-          reason: serverHasSecret ? 'secret_already_set' : 'webhook_not_canonical',
-        });
-      }
-      // Secret-upgrade bootstrap allowed.
-    } catch (e) {
-      return res.status(500).json({ error: String(e?.message || e) });
-    }
+    return res.status(401).json({ error: 'unauthorized' });
   }
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) {
