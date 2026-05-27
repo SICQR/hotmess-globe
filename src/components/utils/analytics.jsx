@@ -23,6 +23,100 @@ const config = {
 let initialized = false;
 let userId = null;
 
+// 2026-05-27 Phil — first-party telemetry sink. Foundations for return-user
+// identification, session lifetime, and funnel analysis written to our own
+// Supabase table (analytics_events) so we own the data. GA4 / Mixpanel
+// remain as parallel sinks for marketing dashboards.
+const DEVICE_KEY = 'hm_device_id';
+const SESSION_KEY = 'hm_session';
+const SESSION_IDLE_MS = 30 * 60 * 1000; // 30 minute idle timeout
+
+function ensureDeviceId() {
+  if (typeof window === 'undefined') return null;
+  try {
+    let id = localStorage.getItem(DEVICE_KEY);
+    if (!id) {
+      id = (crypto?.randomUUID?.() || (Date.now() + '-' + Math.random().toString(36).slice(2)));
+      localStorage.setItem(DEVICE_KEY, id);
+    }
+    return id;
+  } catch { return null; }
+}
+
+function ensureSessionId() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    const now = Date.now();
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.id && parsed?.lastSeen && (now - parsed.lastSeen) < SESSION_IDLE_MS) {
+        parsed.lastSeen = now;
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(parsed));
+        return parsed.id;
+      }
+    }
+    const id = (crypto?.randomUUID?.() || (now + '-' + Math.random().toString(36).slice(2)));
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ id, started: now, lastSeen: now }));
+    // Fire a session_start event so we can count sessions in the dashboard.
+    sendToBackend('session_start', { device_id: ensureDeviceId() });
+    return id;
+  } catch { return null; }
+}
+
+async function sendToBackend(eventName, properties = {}) {
+  if (typeof window === 'undefined') return;
+  try {
+    // Best-effort token forwarding — analytics endpoint resolves anonymous if no auth.
+    let auth = '';
+    try {
+      const raw = localStorage.getItem('sb-' + (import.meta.env.VITE_SUPABASE_URL || '').split('//')[1]?.split('.')[0] + '-auth-token');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.access_token) auth = 'Bearer ' + parsed.access_token;
+      }
+    } catch { /* ignore */ }
+    const body = JSON.stringify({
+      event_name: eventName,
+      category: properties.category || null,
+      label: properties.label || null,
+      value: typeof properties.value === 'number' ? properties.value : null,
+      properties: {
+        ...properties,
+        device_id: ensureDeviceId(),
+        session_id: ensureSessionId(),
+        path: window.location.pathname,
+        url: window.location.href,
+        referrer: document.referrer || null,
+        viewport: { w: window.innerWidth, h: window.innerHeight },
+      },
+    });
+    const headers = { 'Content-Type': 'application/json' };
+    if (auth) headers['Authorization'] = auth;
+    // sendBeacon for unload reliability; fall back to fetch.
+    if (navigator.sendBeacon) {
+      const blob = new Blob([body], { type: 'application/json' });
+      navigator.sendBeacon('/api/analytics/track', blob);
+      return;
+    }
+    await fetch('/api/analytics/track', { method: 'POST', headers, body, keepalive: true });
+  } catch { /* swallow — analytics must never break UX */ }
+}
+
+// Page-view duration tracking: when path changes, fire page_view with
+// time-on-previous-page. Set up in initAnalytics().
+let lastPageStart = 0;
+let lastPagePath = null;
+function recordPageDuration() {
+  if (lastPagePath && lastPageStart) {
+    const ms = Date.now() - lastPageStart;
+    if (ms > 0 && ms < 6 * 60 * 60 * 1000) {
+      sendToBackend('page_duration', { category: 'navigation', path: lastPagePath, value: ms, ms });
+    }
+  }
+}
+
+
 /**
  * Initialize analytics providers
  * Call this once in your app's entry point
@@ -45,7 +139,45 @@ export function initAnalytics() {
   
   // Track web vitals
   trackWebVitals();
-  
+
+  // First-party telemetry: stamp device + session, fire initial page_view.
+  ensureDeviceId();
+  ensureSessionId();
+  lastPagePath = window.location.pathname;
+  lastPageStart = Date.now();
+  sendToBackend('page_view', { category: 'navigation', path: lastPagePath });
+
+  // Route-change listener — works for history.pushState/replaceState + popstate.
+  const _pushState = history.pushState;
+  history.pushState = function(...args) {
+    const r = _pushState.apply(this, args);
+    queueMicrotask(() => {
+      const next = window.location.pathname;
+      if (next !== lastPagePath) {
+        recordPageDuration();
+        lastPagePath = next;
+        lastPageStart = Date.now();
+        sendToBackend('page_view', { category: 'navigation', path: next });
+      }
+    });
+    return r;
+  };
+  window.addEventListener('popstate', () => {
+    const next = window.location.pathname;
+    if (next !== lastPagePath) {
+      recordPageDuration();
+      lastPagePath = next;
+      lastPageStart = Date.now();
+      sendToBackend('page_view', { category: 'navigation', path: next });
+    }
+  });
+
+  // Flush page duration on hide/unload so we capture the final page-time.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') recordPageDuration();
+  });
+  window.addEventListener('pagehide', recordPageDuration);
+
   initialized = true;
   
   if (config.debug) {
@@ -227,7 +359,10 @@ export function trackEvent(eventName, properties = {}) {
   if (window.mixpanel) {
     window.mixpanel.track(eventName, eventData);
   }
-  
+
+  // First-party sink (Supabase analytics_events).
+  sendToBackend(eventName, eventData);
+
   if (config.debug) {
     void('[Analytics] Event:', eventName, eventData);
   }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Info, Sparkles, Loader2, ShoppingBag, Dumbbell, PartyPopper, Flame, Crown, Coffee, Plus, HandHeart, Eye, Crosshair, Search } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
+import { trackEvent } from '@/components/utils/analytics';
 import { toast } from 'sonner';
 
 // HOTMESS Beacon Identity System — 9 doctrine sprite categories.
@@ -103,6 +104,12 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
       });
       if (error) throw error;
       toast.success('Beacon dropped on the globe!');
+      trackEvent('beacon_dropped', {
+        category: 'beacon',
+        beacon_category: kind,
+        has_title: !!title.trim(),
+        from: location ? 'map_pick' : 'gps',
+      });
 
       // Pass the resolved coords back so the parent can refresh the beacon
       // feed AND flyTo the drop point — the realtime INSERT subscription
