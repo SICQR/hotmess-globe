@@ -134,9 +134,9 @@ export default function L2SheetContainer({
       hapticPattern();
       handleClose();
     } else {
-      // Snap back
+      // Snap back — framer's dragConstraints (top:0, bottom:0) + dragElastic
+      // already spring the sheet back to y:0 on release. The haptic still fires.
       hapticSnap();
-      controls.start({ y: 0 });
     }
   }, [handleClose, controls]);
 
@@ -183,7 +183,14 @@ export default function L2SheetContainer({
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.5 }}
             onDragEnd={handleDragEnd}
-            animate={controls}
+            // CRITICAL: Do NOT re-add `animate={controls}` here. JSX last-prop-wins
+            // means a second `animate` prop overrides the variant-driven
+            // `animate="visible"` above — and useAnimation() controls that are
+            // never .start()'d leave the element at initial=hidden (translateY 100%
+            // off-screen). The visible backdrop with no visible sheet underneath
+            // = "screens just blur and unable to open" (Phil 2026-05-27).
+            // Snap-back on cancelled drag is handled by framer's own dragConstraints
+            // top=0 bottom=0 spring-return.
             style={{ height, overflowX: 'hidden' }}
             className={cn(
               'fixed bottom-0 left-0 right-0 z-[80]',
