@@ -21,7 +21,6 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { BadgeCheck, Ghost } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import {
   BEACON_GLYPHS,
   type BeaconCategory,
@@ -117,19 +116,13 @@ function GhostedCardInner({
   onTap,
 }: GhostedCardComponentProps) {
   const intentColor = intent ? INTENT_RING[intent] : undefined;
-  const navigate = useNavigate();
-
-  // Tap-to-fly: cards with an active beacon hand off to /pulse with the
-  // beacon coords in route state (drained by Globe.jsx via
-  // pendingFlyToRef — same nav-state pattern as PR #423). Cards without a
-  // beacon retain their existing tap behaviour (open profile).
+  // Card tap = open profile. Always. (Grindr/Sniffies/Scruff parity —
+  // tapping a person opens their preview/profile, never reroutes the user
+  // away from the discovery surface.) The "find on map" flyTo was making
+  // every card with a beacon — i.e. all of them — jump straight to /pulse
+  // and bypass the profile entirely. Tap-to-fly belongs on the beacon
+  // ring/badge as a secondary action, not on the whole card body.
   const handleTap = () => {
-    if (beacon && beacon.lat != null && beacon.lng != null) {
-      navigate('/pulse', {
-        state: { flyTo: { lat: beacon.lat, lng: beacon.lng, zoom: 16 } },
-      });
-      return;
-    }
     onTap(id);
   };
 
@@ -406,3 +399,4 @@ function GhostedCardInner({
 
 export const GhostedCard = memo(GhostedCardInner);
 export default GhostedCard;
+
