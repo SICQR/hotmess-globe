@@ -112,6 +112,17 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
         // the first tile batch): the dark base + atmosphere + controls appear fast and
         // tiles fill in progressively — no long "Loading the signal…" over a fresh area.
         let setupDone = false;
+        // Fallback: if style.load didn't install the beacon stack (race with sprite
+        // loading or earlier throw), retry on 'load' which fires once tiles arrive.
+        map.on('load', () => {
+          if (cancelled) return;
+          try {
+            if (!map.getSource('hm-public')) {
+              console.warn('[PulseMap] beacon stack missing after style.load — retrying on load');
+              if (typeof installBeaconStack === 'function') installBeaconStack('load-fallback');
+            }
+          } catch (e) { console.error('[PulseMap] load-fallback threw:', e); }
+        });
         map.on('style.load', () => {
           // Atmosphere + star field, re-applied on every style load.
           try { map.setFog(environmentalFog(new Date().getHours(), reducedMotion)); } catch (e) { /* non-fatal */ }
@@ -209,15 +220,28 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
           // Beacon layer stack (clusters glow at macro, blooms at micro). Lower
           // clusterMaxZoom than the legacy local-only map so individuals separate
           // by street zoom on the single-engine globe.
-          try {
-            // HOTMESS Beacon Identity System — async rasterise + register the 9
-            // category icons BEFORE the symbol layer is added so they resolve on
-            // first paint. The helper is idempotent and SSR-safe.
-            registerBeaconIcons(map).catch(() => { /* non-fatal: fallback gold dots render */ });
-            addLayerStack(map, { reducedMotion, clusterMaxZoom: 13 });
-            const src = map.getSource(SOURCE_IDS.public);
-            if (src && src.setData) src.setData(toPublicSafeFeatureCollection(beaconsRef.current));
-          } catch (e) { /* non-fatal: base map still usable */ }
+          //
+          // 2026-05-27 (Phil): silent catch was hiding addLayerStack failures —
+          // production globe had NO beacon source/layers and we never knew.
+          // Errors now surface to console; the fallback on map.on('load') retries
+          // if style.load fired before things were ready.
+          const installBeaconStack = (origin) => {
+            try {
+              registerBeaconIcons(map).catch((err) => {
+                console.warn('[PulseMap] beacon icon registration failed (will fall back to gold dots):', err && err.message || err);
+              });
+              addLayerStack(map, { reducedMotion, clusterMaxZoom: 13 });
+              const src = map.getSource(SOURCE_IDS.public);
+              if (src && src.setData) {
+                src.setData(toPublicSafeFeatureCollection(beaconsRef.current));
+              } else {
+                console.error('[PulseMap] hm-public source missing after addLayerStack (' + origin + ')');
+              }
+            } catch (e) {
+              console.error('[PulseMap] addLayerStack threw (' + origin + '):', e && e.message || e, e && e.stack);
+            }
+          };
+          installBeaconStack('style.load');
 
           // Cluster tap → expand toward its constituents.
           map.on('click', LAYER_IDS.clusterCircles, (e) => {
