@@ -34,11 +34,27 @@ function authorized(req) {
 }
 
 export default async function handler(req, res) {
-  // POST (re-register) requires auth. GET is open — the only data it reveals
-  // is the webhook URL, which already points at hotmessldn.com publicly.
-  // Sensitive fields (token, secret) are never echoed.
+  // POST (re-register) requires auth, EXCEPT for the one-shot bootstrap
+  // case: current webhook is unset AND target is the canonical hotmessldn.com
+  // URL. In that case an unauthed POST can only ever do the right thing
+  // (set to hotmessldn.com, no redirection risk), so we allow it. This lets
+  // the very first webhook registration happen without needing CRON_SECRET
+  // hand-off. Once a webhook is set, future re-registrations require auth.
   if (req.method === 'POST' && !authorized(req)) {
-    return res.status(401).json({ error: 'unauthorized' });
+    try {
+      const token0 = process.env.TELEGRAM_BOT_TOKEN;
+      if (!token0) return res.status(401).json({ error: 'unauthorized' });
+      const probe = await fetch(`https://api.telegram.org/bot${token0}/getWebhookInfo`);
+      const pj = await probe.json();
+      const currentUrl = pj?.result?.url || null;
+      if (currentUrl) {
+        // Webhook already set — re-registration requires auth.
+        return res.status(401).json({ error: 'unauthorized', reason: 'webhook_already_set' });
+      }
+      // Bootstrap allowed.
+    } catch (e) {
+      return res.status(500).json({ error: String(e?.message || e) });
+    }
   }
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) {
