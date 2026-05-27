@@ -74,6 +74,9 @@ export interface GhostedCardProps {
   isBood?: boolean;
   /** Whether this is a mutual boo (both boo'd each other) */
   isMutual?: boolean;
+  /** Looking-for tags surfaced on the card. Up to 3 rendered; rest truncated.
+   *  Doctrine (Brief 03): no popularity metrics; intent surface only. */
+  lookingFor?: string[] | null;
   /** Active beacon overlay — when set, the card renders a coloured ring,
    *  a category glyph badge, a LIVE label, and tap-to-fly navigates to
    *  /pulse with the beacon coords in route state (mirrors PR #423). */
@@ -108,6 +111,7 @@ function GhostedCardInner({
   intent,
   isBood,
   isMutual,
+  lookingFor,
   beacon,
   index,
   onTap,
@@ -358,6 +362,25 @@ function GhostedCardInner({
             />
             <span className="truncate">{beaconLabel}</span>
           </span>
+        )}
+
+        {/* Looking-for tags — up to 3 chips. Brief 03 doctrine: intent surface
+            not popularity. Tags rendered with dashed border per brief. */}
+        {Array.isArray(lookingFor) && lookingFor.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1 mb-0.5">
+            {lookingFor.slice(0, 3).map((tag) => (
+              <span
+                key={tag}
+                className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[3px] text-white/70"
+                style={{
+                  border: '1px dashed rgba(255,255,255,0.20)',
+                  background: 'rgba(255,255,255,0.04)',
+                }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
         )}
 
         {/* Single human proximity line — distance + place merged. */}
