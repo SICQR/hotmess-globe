@@ -11,6 +11,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, Package, Loader2, CheckCircle, MessageCircle, CreditCard, HandshakeIcon, ShieldCheck, ArrowRight } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
+import { trackEvent } from '@/components/utils/analytics';
 import { useSheet } from '@/contexts/SheetContext';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import { toast } from 'sonner';
@@ -220,6 +221,14 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
         })),
         price_gbp: orderTotal,
       };
+
+      try {
+        trackEvent('checkout_started', {
+          category: 'commerce',
+          item_count: payload.items?.length || 0,
+          total_gbp: orderTotal,
+        });
+      } catch { /* ignore */ }
 
       const res = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',

@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Trash2, Plus, Loader2, User, Phone, Users, Mail, Send, Check } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
+import { trackEvent } from '@/components/utils/analytics';
 
 const RELATIONS = ['Friend', 'Partner', 'Family', 'Other'];
 
@@ -80,6 +81,13 @@ export default function L2EmergencyContactSheet() {
       }
       return;
     }
+
+    trackEvent('trusted_contact_added', {
+      category: 'safety',
+      has_telegram: !!insertPayload.contact_telegram_handle,
+      has_email: !!insertPayload.contact_email,
+      relationship: insertPayload.relationship,
+    });
 
     setForm({ contact_name: '', contact_phone: '', contact_email: '', contact_telegram_handle: '', relationship: 'Friend' });
     setShowForm(false);
