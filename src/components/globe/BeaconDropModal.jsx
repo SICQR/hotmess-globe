@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Info, Sparkles, Loader2, ShoppingBag, Dumbbell, PartyPopper, Flame, Crown, Coffee, Plus, HandHeart, Eye } from 'lucide-react';
+import { MapPin, Info, Sparkles, Loader2, ShoppingBag, Dumbbell, PartyPopper, Flame, Crown, Coffee, Plus, HandHeart, Eye, Crosshair, Search } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 
@@ -23,15 +23,23 @@ const BEACON_TYPES = [
 export default function BeaconDropModal({ isOpen, onClose, onComplete, location }) {
   const [title, setTitle] = useState('');
   const [kind, setKind] = useState('club');
-  // Postcode override — dropper-private input. Postcode text is NEVER written
-  // to the beacons row; we forward-geocode via api.postcodes.io and persist
-  // only the resolved coordinates. Other users see the bucketed cue.
+  // Location: a single autocompleting search resolves city / area / postcode /
+  // street / venue name via Mapbox geocoding (same token + endpoint used by
+  // the header PulseSearch — no CSP issues, no carrier blocks, works without
+  // device GPS). The chosen entry hands { lat, lng } that we'll persist. The
+  // search text itself is NEVER written to the beacons row — only the resolved
+  // coords (which are privacy-snapped to ~1.1km on the read path).
   // Per sacred-invariants rule #7 (no exact tracking).
-  const [locationMode, setLocationMode] = useState('gps'); // 'gps' | 'postcode'
-  const [postcode, setPostcode] = useState('');
-  const [postcodeCoords, setPostcodeCoords] = useState(null);
-  const [postcodeError, setPostcodeError] = useState(null);
-  const [resolvingPostcode, setResolvingPostcode] = useState(false);
+  const [placeQuery, setPlaceQuery] = useState('');
+  const [placeResults, setPlaceResults] = useState([]);
+  const [placeOpen, setPlaceOpen] = useState(false);
+  const [pickedPlace, setPickedPlace] = useState(null); // { name, lat, lng }
+  const [geocoding, setGeocoding] = useState(false);
+  const [geocodeError, setGeocodeError] = useState(null);
+  const [usingGps, setUsingGps] = useState(false);
+  const [gpsCoords, setGpsCoords] = useState(null);
+  const placeDebounceRef = React.useRef(null);
+  const MAPBOX_TOKEN = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_MAPBOX_TOKEN) || '';
   const [loading, setLoading] = useState(false);
 
   const handleDrop = async () => {
@@ -46,25 +54,23 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
       if (!user) throw new Error('Not authenticated');
 
       // Location resolution priority:
-      //  1. Postcode mode + resolved coords (dropper-private input)
-      //  2. Explicit point passed by caller (e.g. local-map centre)
-      //  3. Device GPS
+      //  1. Picked place from the Mapbox autocomplete (typed city/area/postcode/venue)
+      //  2. Device GPS captured via the inline "use my location" button
+      //  3. Explicit point passed by caller (e.g. local-map centre tap)
+      //  Fallback ladder so the user is NEVER blocked by GPS permission alone —
+      //  the typed search is the primary input; GPS is just a shortcut.
       let lat, lng;
-      if (locationMode === 'postcode' && postcodeCoords) {
-        lat = postcodeCoords.lat;
-        lng = postcodeCoords.lng;
+      if (pickedPlace) {
+        lat = pickedPlace.lat;
+        lng = pickedPlace.lng;
+      } else if (gpsCoords) {
+        lat = gpsCoords.lat;
+        lng = gpsCoords.lng;
       } else if (location && Number.isFinite(Number(location.lat)) && Number.isFinite(Number(location.lng))) {
         lat = Number(location.lat);
         lng = Number(location.lng);
       } else {
-        const pos = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 10000
-          });
-        });
-        lat = pos.coords.latitude;
-        lng = pos.coords.longitude;
+        throw new Error('NO_LOCATION_PICKED');
       }
       
       // All user-dropped beacons go in via the beacons table with a 9-cat sprite
@@ -101,12 +107,14 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
       onClose();
     } catch (err) {
       console.error('Beacon drop error:', err);
-      if (err.code === 1) {
-        toast.error('Location denied. Please enable GPS permissions to drop a beacon.');
-      } else if (err.code === 3) {
-        toast.error('Location timeout. Please try again.');
+      if (err && err.message === 'NO_LOCATION_PICKED') {
+        toast.error('Pick a place or tap "use my location" first.');
+      } else if (err && err.code === 1) {
+        toast.error('Location denied. Allow GPS or type a postcode/area instead.');
+      } else if (err && err.code === 3) {
+        toast.error('Location timed out. Try typing a postcode or area.');
       } else {
-        toast.error('Failed to drop beacon. Ensure GPS is enabled.');
+        toast.error('Failed to drop beacon. Try a different location.');
       }
     } finally {
 
@@ -114,31 +122,93 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
     }
   };
 
-  // Forward-geocode UK postcode via postcodes.io (free, no auth, UK-only).
-  // We never store the raw postcode — only resolved coords on the row, and
-  // those get privacy-snapped to a ~1.1km grid on read by toPublicSafeFeatureCollection.
-  const lookupPostcode = async () => {
-    const pc = (postcode || '').trim();
-    if (!pc) { setPostcodeError('Enter a UK postcode'); return; }
-    setResolvingPostcode(true);
-    setPostcodeError(null);
-    try {
-      const res = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc)}`, { headers: { Accept: 'application/json' } });
-      if (!res.ok) {
-        if (res.status === 404) throw new Error('Postcode not found');
-        throw new Error('Lookup failed — try again');
+  // Forward-geocode via Mapbox places (same endpoint + token used by the
+  // header PulseSearch). Accepts cities, areas, postcodes, addresses, and POIs
+  // — one input handles "Soho", "E1 6AN", "Eagle London", etc. Privacy: the
+  // query text never lands on the beacons row, only resolved coords.
+  const runPlaceSearch = (value) => {
+    setPlaceQuery(value);
+    setPickedPlace(null);
+    setGeocodeError(null);
+    if (placeDebounceRef.current) clearTimeout(placeDebounceRef.current);
+    if (!value || value.trim().length < 2 || !MAPBOX_TOKEN) {
+      setPlaceResults([]);
+      setPlaceOpen(false);
+      return;
+    }
+    setGeocoding(true);
+    placeDebounceRef.current = setTimeout(async () => {
+      try {
+        const url = 'https://api.mapbox.com/geocoding/v5/mapbox.places/'
+          + encodeURIComponent(value.trim()) + '.json'
+          + '?limit=6&types=place,locality,neighborhood,postcode,district,address,poi'
+          + '&access_token=' + encodeURIComponent(MAPBOX_TOKEN);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Geocode failed');
+        const json = await res.json();
+        const feats = Array.isArray(json.features) ? json.features : [];
+        setPlaceResults(feats
+          .filter((f) => Array.isArray(f.center) && f.center.length === 2)
+          .map((f) => ({
+            id: f.id,
+            name: f.place_name || f.text || '',
+            lng: f.center[0],
+            lat: f.center[1],
+          })));
+        setPlaceOpen(true);
+      } catch (err) {
+        setGeocodeError('Could not search places — try GPS instead');
+        setPlaceResults([]);
+      } finally {
+        setGeocoding(false);
       }
-      const json = await res.json();
-      const r = json && json.result;
-      if (!r || r.latitude == null || r.longitude == null) throw new Error('No coordinates for that postcode');
-      setPostcodeCoords({ lat: Number(r.latitude), lng: Number(r.longitude) });
+    }, 280);
+  };
+
+  const pickPlace = (r) => {
+    if (!r) return;
+    setPickedPlace({ name: r.name, lat: r.lat, lng: r.lng });
+    setPlaceQuery(r.name);
+    setPlaceOpen(false);
+    setPlaceResults([]);
+    setGpsCoords(null); // explicit picks override any prior GPS capture
+  };
+
+  const captureGps = async () => {
+    if (!navigator.geolocation) {
+      setGeocodeError('GPS not supported in this browser');
+      return;
+    }
+    setUsingGps(true);
+    setGeocodeError(null);
+    try {
+      const pos = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+        });
+      });
+      setGpsCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      setPickedPlace(null);
+      setPlaceQuery('My current location');
     } catch (err) {
-      setPostcodeError(err.message || 'Postcode lookup failed');
-      setPostcodeCoords(null);
+      setGeocodeError(err && err.code === 1
+        ? 'GPS denied — type a postcode or area instead'
+        : 'GPS failed — type a postcode or area instead');
     } finally {
-      setResolvingPostcode(false);
+      setUsingGps(false);
     }
   };
+
+  // Clean up debounce timer on unmount
+  useEffect(() => () => { if (placeDebounceRef.current) clearTimeout(placeDebounceRef.current); }, []);
+
+  // A location is set if we've picked a place OR captured GPS OR a caller-passed location exists
+  const hasLocation = Boolean(
+    pickedPlace ||
+    gpsCoords ||
+    (location && Number.isFinite(Number(location.lat)) && Number.isFinite(Number(location.lng)))
+  );
 
     return (
     <AnimatePresence>
@@ -162,10 +232,17 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed inset-x-0 bottom-0 z-[131] bg-[#0A0A0A] border-t border-white/10 rounded-t-[32px] px-6 pt-4 pb-[calc(80px+env(safe-area-inset-bottom,20px))]"
+            // Sheet caps at 88vh so the drag handle + DROP BEACON header stay visible
+            // on small phones; the content area below scrolls. PR fixed Phil's
+            // 2026-05-27 report that the modal was pushing off the top of the
+            // screen because the 9-cat picker + location UI was tall.
+            style={{ maxHeight: '88vh' }}
+            className="fixed inset-x-0 bottom-0 z-[131] bg-[#0A0A0A] border-t border-white/10 rounded-t-[32px] flex flex-col overflow-hidden"
           >
 
-            <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-8" />
+            <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto my-3 flex-shrink-0" />
+
+            <div className="flex-1 overflow-y-auto px-6 pb-[calc(80px+env(safe-area-inset-bottom,20px))]">
 
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
@@ -219,66 +296,71 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
                 </div>
               </div>
 
-              {/* Location mode — GPS (default) or UK postcode override.
-                  Postcode is dropper-private: text never stored, only resolved coords. */}
+              {/* Location — one input for city / area / postcode / venue name (Mapbox
+                  autocomplete) + a "use my location" shortcut. The search text never
+                  lands on the beacons row — only resolved coords. */}
               <div>
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-3 block">Location</label>
-                <div className="flex gap-2 mb-3">
-                  <button
-                    onClick={() => { setLocationMode('gps'); setPostcodeError(null); }}
-                    className={`flex-1 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all ${
-                      locationMode === 'gps' ? 'bg-[#C8962C] text-black' : 'bg-white/5 text-white/55 border border-white/10'
-                    }`}
-                  >
-                    Use my GPS
-                  </button>
-                  <button
-                    onClick={() => setLocationMode('postcode')}
-                    className={`flex-1 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all ${
-                      locationMode === 'postcode' ? 'bg-[#C8962C] text-black' : 'bg-white/5 text-white/55 border border-white/10'
-                    }`}
-                  >
-                    Use postcode
-                  </button>
-                </div>
-                {locationMode === 'postcode' && (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex gap-2">
-                      <input
-                        value={postcode}
-                        onChange={(e) => { setPostcode(e.target.value.toUpperCase()); setPostcodeError(null); }}
-                        onKeyDown={(e) => { if (e.key === 'Enter') lookupPostcode(); }}
-                        placeholder="E.g. E1 6AN"
-                        maxLength={10}
-                        autoCapitalize="characters"
-                        autoComplete="postal-code"
-                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm tracking-wider font-mono placeholder:text-white/20 focus:border-[#C8962C]/50 outline-none"
-                      />
-                      <button
-                        onClick={lookupPostcode}
-                        disabled={!postcode || resolvingPostcode}
-                        className={`px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all ${
-                          postcode && !resolvingPostcode ? 'bg-[#C8962C] text-black' : 'bg-white/5 text-white/25 cursor-not-allowed'
-                        }`}
-                      >
-                        {resolvingPostcode ? <Loader2 className="w-4 h-4 animate-spin" /> : 'PIN'}
-                      </button>
-                    </div>
-                    {postcodeError && <p className="text-[11px] text-[#FF4F9A]">{postcodeError}</p>}
-                    {postcodeCoords && !postcodeError && (
-                      <p className="text-[11px] text-[#C8962C] font-semibold">Postcode pinned — fuzzy radius set</p>
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-3 block">Where</label>
+                <div className="relative">
+                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-3 focus-within:border-[#C8962C]/50 transition-colors">
+                    {geocoding ? (
+                      <Loader2 className="w-4 h-4 text-white/50 animate-spin flex-shrink-0" />
+                    ) : (
+                      <Search className="w-4 h-4 text-white/50 flex-shrink-0" />
                     )}
-                    <p className="text-[10px] text-white/30 leading-snug">
-                      Your postcode stays private. Only an approximate radius is shown.
-                    </p>
+                    <input
+                      value={placeQuery}
+                      onChange={(e) => runPlaceSearch(e.target.value)}
+                      onFocus={() => { if (placeResults.length) setPlaceOpen(true); }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && placeResults[0]) pickPlace(placeResults[0]);
+                      }}
+                      placeholder="Type a postcode, area, or venue"
+                      className="flex-1 min-w-0 bg-transparent outline-none text-white text-sm placeholder:text-white/30"
+                    />
                   </div>
+                  {placeOpen && placeResults.length > 0 && (
+                    <ul className="absolute left-0 right-0 top-full mt-2 bg-[#0A0A0A]/95 border border-white/10 backdrop-blur-md rounded-xl overflow-hidden shadow-2xl z-50 max-h-64 overflow-y-auto">
+                      {placeResults.map((r) => (
+                        <li key={r.id}>
+                          <button
+                            onClick={() => pickPlace(r)}
+                            className="w-full text-left px-4 py-2.5 text-sm text-white/85 hover:bg-white/10 transition-colors border-b border-white/5 last:border-0"
+                          >
+                            {r.name}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 mt-3">
+                  <button
+                    onClick={captureGps}
+                    disabled={usingGps}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all ${
+                      gpsCoords ? 'bg-[#C8962C] text-black' : 'bg-white/5 text-white/65 border border-white/10'
+                    }`}
+                  >
+                    {usingGps ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Crosshair className="w-3.5 h-3.5" />}
+                    {gpsCoords ? 'GPS pinned' : 'Use my location'}
+                  </button>
+                  {pickedPlace && !gpsCoords && (
+                    <span className="text-[11px] text-[#C8962C] font-semibold truncate">Pinned · {pickedPlace.name}</span>
+                  )}
+                </div>
+                {geocodeError && (
+                  <p className="text-[11px] text-[#FF4F9A] mt-2">{geocodeError}</p>
                 )}
+                <p className="text-[10px] text-white/30 leading-snug mt-2">
+                  Your location stays private. Only an approximate radius is shown to others.
+                </p>
               </div>
 
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={handleDrop}
-                disabled={loading || !title.trim() || (locationMode === 'postcode' && !postcodeCoords)}
+                disabled={loading || !title.trim() || !hasLocation}
                 className="w-full h-16 bg-[#C8962C] disabled:bg-white/10 disabled:text-white/20 rounded-2xl text-black font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all"
                 style={{ boxShadow: !loading && title.trim() ? '0 10px 40px -10px rgba(200, 150, 44, 0.5)' : 'none' }}
               >
@@ -290,12 +372,14 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
                 )}
               </motion.button>
             </div>
+            </div>{/* /scroll wrapper */}
           </motion.div>
         </>
       )}
     </AnimatePresence>
   );
 }
+
 
 
 
