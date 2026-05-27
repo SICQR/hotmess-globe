@@ -32,6 +32,8 @@ import IntentLayer from '@/components/profile/IntentLayer';
 import RecoveryStateCard from '@/components/profile/RecoveryStateCard';
 import useProfileDwell from '@/hooks/useProfileDwell';
 import useRecoveryState from '@/hooks/useRecoveryState';
+import { ProximityRow } from '@/components/ui/ProximityRow';
+import { useGPS } from '@/hooks/useGPS';
 
 const Chip = ({ children, gold = false }) => (
   <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
@@ -115,6 +117,7 @@ function PhotoCarousel({ images = [], fallbackInitial = '?', onIndexChange }) {
 export default function L2ProfileSheet({ email, uid, id }) {
   const navigate = useNavigate();
   const { openSheet, closeSheet } = useSheet();
+  const { position: viewerPos } = useGPS();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
@@ -991,14 +994,24 @@ export default function L2ProfileSheet({ email, uid, id }) {
                 {profileUser.country_flag ? ` ${profileUser.country_flag}` : ''}
               </span>
             )}
-            {(distance || etaMin) && (
-              <span className="text-white/40 text-sm">
-                {distance ? `${(distance / 1.60934).toFixed(1)} mi away` : ''}
-                {profileUser.location_area ? ` in ${profileUser.location_area}` : ''}
-                {etaMin ? ` · ${etaMin} min` : ''}
-              </span>
-            )}
           </div>
+
+          {/* Bucketed travel cue — Phase 2 doctrine (Phil 2026-05-26).
+              Person card: walk-only "< 5 min away" / "~10 min away" buckets,
+              "location approximate" in expanded view. Renders nothing when
+              viewer location is stale or > 30km. Replaces the previous
+              "X mi away · Y min" line which leaked raw distance + minutes
+              (brief violation). */}
+          {profileUser?.last_lat != null && profileUser?.last_lng != null && (
+            <ProximityRow
+              type="person"
+              venueLat={Number(profileUser.last_lat)}
+              venueLng={Number(profileUser.last_lng)}
+              viewerLat={viewerPos?.lat ?? null}
+              viewerLng={viewerPos?.lng ?? null}
+              locationUpdatedAt={viewerPos?.timestamp ?? null}
+            />
+          )}
         </div>
       </div>
       ); if (v6GhostedLoop && photoUrls.length > 0 && !isOwnProfile) {
