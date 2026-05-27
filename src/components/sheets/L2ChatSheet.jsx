@@ -244,7 +244,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   // Accept both prop names — callers may pass userId or legacy toUid
   const resolvedUserId = initialUserId || toUid;
   const { openSheet, updateSheetProps } = useSheet();
-  const { isActive: isBoostActive, refresh: refreshBoosts } = usePowerups();
+  const { isActive: isBoostActive, refresh: refreshBoosts, consume: consumeBoost } = usePowerups();
 
   const [currentUser, setCurrentUser]   = useState(null); // { id, email }
   const [threads, setThreads]           = useState([]);
@@ -540,7 +540,12 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         throw msgError;
       }
 
-      if (isHighlighted) setHighlightNext(false);
+      if (isHighlighted) {
+        setHighlightNext(false);
+        // Phil 2026-05-27 — decrement the active charge after the highlighted
+        // message lands. Async no-block; usePowerups.consume refreshes the set.
+        try { await consumeBoost('highlighted_message'); } catch { /* never block UX */ }
+      }
 
       // 4. Update thread metadata (last message, unread counts)
       const recipientEmail = thread.participant_emails?.find(e => e !== currentUser.email);
