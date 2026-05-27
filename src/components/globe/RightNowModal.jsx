@@ -46,7 +46,7 @@ export default function RightNowModal({ isOpen, onClose, intent: intentProp = 'e
   const [vibeBlast, setVibeBlast]     = useState(false);
   const fileInputRef = useRef(null);
   const { emitPulse } = useGlobe();
-  const { isActive: isBoostActive, expiresAt: boostExpiresAt } = usePowerups();
+  const { isActive: isBoostActive, expiresAt: boostExpiresAt, consume: consumeBoost } = usePowerups();
   const { openSheet } = useSheet();
 
   // Fetch venues for autocomplete
@@ -168,6 +168,13 @@ export default function RightNowModal({ isOpen, onClose, intent: intentProp = 'e
         }, { onConflict: 'user_id' });
 
       if (error) throw error;
+
+      // Phil 2026-05-27 — vibe_blast is a single-use credit. Decrement
+      // after the right_now upsert lands so the user can't blast more
+      // than once per £2.49 purchase.
+      if (vibeBlast && isBoostActive('vibe_blast')) {
+        try { await consumeBoost('vibe_blast'); } catch { /* never block UX */ }
+      }
 
       // Signal the Globe
       emitPulse?.({

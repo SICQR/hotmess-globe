@@ -79,7 +79,7 @@ function BeaconCreator({ onSuccess }) {
   const [saved, setSaved] = useState(false);
   const [beaconCount, setBeaconCount] = useState(0);
   const [limitChecked, setLimitChecked] = useState(false);
-  const { isActive: isBoostActive } = usePowerups();
+  const { isActive: isBoostActive, consume: consumeBoost } = usePowerups();
   const { openSheet } = useSheet();
 
   const set = (key, value) => setFormData(f => ({ ...f, [key]: value }));
@@ -230,6 +230,15 @@ function BeaconCreator({ onSuccess }) {
       });
 
       if (error) throw error;
+
+      // Phil 2026-05-27 — if this drop was the 'extra' enabled by the
+      // power-up, decrement the credit. consumeBoost is a no-op if no
+      // extra_beacon_drop is active. Awaited so the UI's next refresh
+      // sees the new count, but errors are swallowed so a consume
+      // failure never blocks the user from seeing their beacon land.
+      if (isBoostActive('extra_beacon_drop')) {
+        try { await consumeBoost('extra_beacon_drop'); } catch { /* never block UX */ }
+      }
 
       setSaved(true);
       toast.success('Beacon dropped!');
