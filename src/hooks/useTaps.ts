@@ -226,8 +226,12 @@ export function useTaps(myUserId: string | null, myEmail?: string | null) {
           url: '/ghosted',
         });
       } else {
-        const notifTitle = 'Boo\'d you! 👻';
-        const notifBody = `${myDisplayName} boo'd you!`;
+        // Doctrine Brief 04 (Phil 2026-05-26): incoming boo identity is
+        // anonymised until the recipient boos back (mutual). Reveals only on
+        // mutual, where MatchOverlay name + the existing match notification
+        // surface the identity. Pre-mutual: "Someone boo'd you."
+        const notifTitle = 'Someone boo\'d you 👻';
+        const notifBody = 'You\'ve got a Boo waiting in HOTMESS.';
 
         supabase
           .from('notifications')
