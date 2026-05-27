@@ -82,6 +82,16 @@ export function toPublicSafeFeatureCollection(beacons) {
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
     if (isApprox(b)) { lat = snap(lat); lng = snap(lng); }
     const cat = categoryOf(b);
+    // Fine-grained venue category for the HOTMESS Beacon Identity System.
+    // CRITICAL: when resolution fails (e.g. category='user', 'event', or any
+    // value outside the 9-category whitelist) we OMIT this property entirely
+    // rather than emitting null. Mapbox's `['has', 'beacon_category']` filter
+    // returns true for any KEY that exists regardless of value, so a null
+    // emission routed EVERY beacon into the icons layer (where the sprite
+    // lookup then resolved to 'hm-beacon-' = no sprite = invisible) and
+    // starved the fallback markers layer. Resulted in an empty globe even
+    // though beacons were loaded (Phil 2026-05-27).
+    const resolvedBeaconCategory = resolveBeaconCategory(b.beacon_category || b.category || b.type || b.kind || '');
     features.push({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [lng, lat] },
@@ -96,10 +106,7 @@ export function toPublicSafeFeatureCollection(beacons) {
         // creator's profile, never to a dead end.
         owner_id: b.owner_id != null ? String(b.owner_id) : (b.user_id != null ? String(b.user_id) : ''),
         cat,
-        // Fine-grained venue category for the HOTMESS Beacon Identity System.
-        // null when input doesn't resolve to one of the 9 supported categories —
-        // caller falls back to the generic gold circle marker.
-        beacon_category: resolveBeaconCategory(b.beacon_category || b.category || b.type || b.kind || ''),
+        ...(resolvedBeaconCategory ? { beacon_category: resolvedBeaconCategory } : {}),
         color: CATEGORY_COLOR[cat] || CATEGORY_COLOR.other,
         title: String(b.title || b.name || ''),
         // Lifecycle: epoch-ms expiry so the symbol layer can pick the right
@@ -315,3 +322,4 @@ export function addLayerStack(map, opts) {
     });
   }
 }
+
