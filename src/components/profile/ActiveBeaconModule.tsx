@@ -90,9 +90,20 @@ export type ActiveBeaconModuleProps = {
   ownerId?: string | null;
   /** Optional display name shown in the compact entity row. */
   ownerName?: string | null;
+  /**
+   * Beacon id from the URL when the row resolves to null (expired /
+   * cancelled / wrong owner / not visible). When provided, the component
+   * renders the soft "this beacon has faded" hint instead of vanishing
+   * silently. Required for the doctrine'd `?beacon=` fallback (UserProfile
+   * passes `fadedBeaconId={activeBeacon ? null : beaconId}`). Without
+   * destructuring this prop the component threw a ReferenceError at
+   * line 117 (`if (!fadedBeaconId)`) every time `beacon` was null while
+   * the URL still had `?beacon=`. Phil 2026-05-27 SMASH carousel crash.
+   */
+  fadedBeaconId?: string | null;
 };
 
-export function ActiveBeaconModule({ beacon, ownerId, ownerName }: ActiveBeaconModuleProps) {
+export function ActiveBeaconModule({ beacon, ownerId, ownerName, fadedBeaconId }: ActiveBeaconModuleProps) {
   const { openSheet } = useSheet();
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
 
@@ -302,3 +313,4 @@ export function ActiveBeaconModule({ beacon, ownerId, ownerName }: ActiveBeaconM
 }
 
 export default ActiveBeaconModule;
+
