@@ -20,6 +20,22 @@ export default function L2BoostShopSheet() {
 
   useEffect(() => { load(); }, []);
 
+  // 2026-05-27 Phil — trust integrity: hide power-ups whose downstream effect
+  // is not wired or only partially wired. Removing the purchase affordance
+  // entirely (no "coming soon" / no disabled card) — users do not distinguish
+  // between preview / bug / temporary limitation once money is involved.
+  //
+  // Hidden:
+  // - globe_glow: zero renderer reads isBoostActive('globe_glow') in PulseMap
+  //   or layer stack. Vapourware.
+  // - incognito_week: only changes the settings menu label. No actual hide
+  //   logic exists. Creates dangerous false-safety expectation.
+  // - profile_bump: ProfilesGrid accepts a boostUserIds prop and sorts, but
+  //   no caller ever passes the prop. Engine wired, plumbing missing.
+  //
+  // Restore each only when its experiential effect is fully observable.
+  const HIDDEN_UNTIL_WIRED = new Set(['globe_glow', 'incognito_week', 'profile_bump']);
+
   const load = async () => {
     try {
       let { data: { user } } = await supabase.auth.getUser();
@@ -27,7 +43,8 @@ export default function L2BoostShopSheet() {
         supabase.from('user_boost_types').select('*').order('price_pence'),
         supabase.from('user_active_boosts').select('boost_key,expires_at').eq('user_id', user.id).gt('expires_at', new Date().toISOString()),
       ]);
-      setTypes(bt || []);
+      const visible = (bt || []).filter(b => !HIDDEN_UNTIL_WIRED.has(b.key));
+      setTypes(visible);
       setActive(new Set((ab || []).map(b => b.boost_key)));
       const exp = {};
       (ab || []).forEach(b => { exp[b.boost_key] = new Date(b.expires_at); });
@@ -78,7 +95,7 @@ export default function L2BoostShopSheet() {
     <div className="flex flex-col h-full">
       <div className="px-4 pt-4 pb-2">
         <h2 className="text-xl font-black text-white">POWER-UPS</h2>
-        <p className="text-white/40 text-sm mt-0.5">One-time purchases. No subscription needed.</p>
+        <p className="text-white/40 text-sm mt-0.5">Real charges with real consequences. No subscription needed.</p>
       </div>
       <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-3">
         {types.length === 0 && (
