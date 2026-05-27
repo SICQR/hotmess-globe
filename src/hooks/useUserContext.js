@@ -143,8 +143,27 @@ export function useUserContext() {
     // Status flags
     isLoggedIn: !!authUser,
     isLoading: loading || authLoading,
-    isPremium: tier === 'PREMIUM' || tier === 'ELITE' || isBetaActive,
-    isElite: tier === 'ELITE',
+    // 2026-05-27 Phil — CRITICAL fix. The membership_tiers DB stores
+    // mess/hotmess/connected/promoter/venue (lowercase in benefits.label
+    // but uppercase in profiles.subscription_tier). Previously this gate
+    // only matched legacy PREMIUM/ELITE strings — every paid user was
+    // treated as MESS (free). Sacred Invariant violation #2: paid for
+    // something, got nothing observable. Same pattern as boost vapourware.
+    //
+    // tier UPPERCASE → boolean:
+    //   MESS / FREE          → free
+    //   HOTMESS              → £7.99/mo — full ghosted + music + messaging + RightNow
+    //   CONNECTED            → £19.99/mo — adds seller/creator/brand
+    //   PROMOTER             → £44.99/mo — adds events/ticketing
+    //   VENUE                → £99.99/mo — adds permanent globe + door app
+    //   PREMIUM / ELITE      → legacy strings, kept for backward-compat with
+    //                          pre-rename rows, treated as HOTMESS-equivalent.
+    isPremium: ['HOTMESS', 'CONNECTED', 'PROMOTER', 'VENUE', 'PREMIUM', 'ELITE'].includes(String(tier).toUpperCase()) || isBetaActive,
+    isHotmess: String(tier).toUpperCase() === 'HOTMESS' || ['CONNECTED','PROMOTER','VENUE'].includes(String(tier).toUpperCase()),
+    isConnected: ['CONNECTED','PROMOTER','VENUE'].includes(String(tier).toUpperCase()),
+    isPromoter: ['PROMOTER','VENUE'].includes(String(tier).toUpperCase()),
+    isVenue: String(tier).toUpperCase() === 'VENUE',
+    isElite: ['VENUE', 'PROMOTER', 'ELITE'].includes(String(tier).toUpperCase()),
     isBetaActive,
     betaUntil,
     betaMsRemaining,
