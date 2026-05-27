@@ -282,9 +282,17 @@ export default function GhostedMode() {
       >
         <div className="relative">
           <MessageCircle className="w-6 h-6 text-black" strokeWidth={2.5} />
-          {/* Subtle indicator if unread */}
+          {/* Unread badge — numbered so the user knows how much is waiting.
+              The pulsing dot variant hid the actual count; if you can see a
+              number you know exactly what's there (Phil 2026-05-27). */}
           {unreadCount > 0 && (
-            <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-[#C8962C] animate-pulse" style={{ background: '#FF3B30' }} />
+            <div
+              className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full border-2 border-[#C8962C] flex items-center justify-center text-[10px] font-black text-white animate-pulse"
+              style={{ background: '#FF3B30' }}
+              aria-label={`${unreadCount} unread`}
+            >
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </div>
           )}
         </div>
       </motion.button>
@@ -292,4 +300,5 @@ export default function GhostedMode() {
     </div>
   );
 }
+
 
