@@ -19,7 +19,7 @@ const PRODUCTS = [
     size: '50ml',
     price: '£10',
     image:
-      'https://cdn.shopify.com/s/files/1/0898/3245/6517/files/IMG_1401.heic?v=1751020652',
+      'https://cdn.shopify.com/s/files/1/0898/3245/6517/files/IMG_1401.jpg?v=1751020652',
     featured: false,
     badge: null,
   },
@@ -130,7 +130,7 @@ export function HNHMarketHero({ className = '' }: { className?: string }) {
                 }
               >
                 <ShoppingBag className="w-3.5 h-3.5" />
-                Select
+                View
               </button>
             </div>
           </div>
