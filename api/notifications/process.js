@@ -11,7 +11,7 @@ import '../_silence-dep0169.js';
 import { createClient } from '@supabase/supabase-js';
 import webPush from 'web-push';
 import { json, getEnv } from '../shopify/_utils.js';
-import { sendTelegramMessage } from '../../src/lib/notifications/telegramSend.js';
+import { send as sendTelegramChannel } from './channels/telegram.js';
 import { TYPE_PRIORITY, PRIORITY, tierFor } from '../../src/lib/notifications/notificationPriority.js';
 
 // ── Notifications hardening constants (spec §3, §4, §7) ──────────────────────
@@ -240,7 +240,7 @@ export default async function handler(req, res) {
           }
           if (tgChatId) {
             const tgText = [notification.title, notification.message].filter(Boolean).join('\n').slice(0, 4000) || 'HOTMESS';
-            const tgResult = await sendTelegramMessage(tgChatId, tgText);
+            const tgResult = await sendTelegramChannel({ chatId: tgChatId, text: tgText });
             if (!tgResult?.ok) {
               console.warn('[notif-process] telegram send failed:', tgResult?.error);
               // Don't throw — outbox is marked sent for in-app at the bottom.

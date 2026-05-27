@@ -85,7 +85,8 @@ export default function NotificationsScreen({ session, onComplete, onBack }) {
       setTelegramToken(token);
       await supabase.from('profiles').update({ telegram_link_token: token }).eq('id', userId);
     }
-    window.open(`https://t.me/HOTMESSBot?start=${token}`, '_blank', 'noopener,noreferrer');
+    const bot = (import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'HotmessAuthBot').replace(/^@/, '');
+    window.open(`https://t.me/${bot}?start=${token}`, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -143,7 +144,7 @@ export default function NotificationsScreen({ session, onComplete, onBack }) {
 
           <Option
             label="Telegram"
-            subline="Connect @HOTMESSBot to receive updates."
+            subline="Connect the HOTMESS bot to receive updates."
             icon={<Send className="w-4 h-4" />}
             selected={selected === 'telegram'}
             onClick={() => setSelected('telegram')}
