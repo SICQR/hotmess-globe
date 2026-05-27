@@ -122,8 +122,6 @@ export function useUserContext() {
   // 250-user 2-week cohort; auto-expires per row.
   const betaUntil = userData?.beta_access_until ? new Date(userData.beta_access_until) : null;
   const isBetaActive = !!(betaUntil && betaUntil.getTime() > Date.now());
-  // 2026-05-27 Phil — global flag for analytics auto-tag (is_beta on every event).
-  if (typeof window !== 'undefined') { window.__hm_is_beta = isBetaActive; }
   const betaMsRemaining = isBetaActive ? betaUntil.getTime() - Date.now() : 0;
 
   const computed = useMemo(() => ({

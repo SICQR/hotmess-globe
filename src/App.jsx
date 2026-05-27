@@ -53,7 +53,6 @@ import { LiveModeProvider } from '@/contexts/LiveModeContext';
 import LiveModeOverlay from '@/components/live/LiveModeOverlay';
 import { RadioMiniPlayer } from '@/components/radio/RadioMiniPlayer';
 import { MusicPlayerProvider, useMusicPlayer } from '@/contexts/MusicPlayerContext';
-import { PulseFeedbackButton } from '@/components/feedback/PulseFeedbackButton';
 import { MusicMiniPlayer } from '@/components/music/MusicMiniPlayer';
 import { GlobalTicker } from '@/components/banners/GlobalTicker';
 import { TopHUD } from '@/components/shell/TopHUD';
@@ -87,8 +86,6 @@ const ModerationPage = lazy(() => import('@/pages/admin/ModerationPage'));
 const FlagsAdmin    = lazy(() => import('@/pages/admin/FlagsAdmin'));
 const FunnelPage    = lazy(() => import('@/pages/admin/FunnelPage'));
 const RedeemPage    = lazy(() => import('@/pages/beta/RedeemPage'));
-const AdminFeedbackPage = lazy(() => import('@/pages/admin/AdminFeedbackPage'));
-
 const RevenueDashboard = lazy(() => import('@/pages/admin/RevenueDashboard'));
 const VerificationQueue = lazy(() => import('@/pages/admin/VerificationQueue'));
 const SOSPage = lazy(() => import('@/pages/SOSPage'));
@@ -517,7 +514,6 @@ const AuthenticatedApp = () => {
       <Route path="/admin/flags" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><FlagsAdmin /></Suspense>} />
       {/* ADMIN — v6 Funnel Dashboard */}
       <Route path="/admin/funnel" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><FunnelPage /></Suspense>} />
-      <Route path="/admin/feedback" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><AdminFeedbackPage /></Suspense>} />
       {/* Beta access — Phil 2026-05-27 — 250-user 2-week cohort */}
       <Route path="/redeem" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><RedeemPage /></Suspense>} />
       <Route path="/redeem/:code" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><RedeemPage /></Suspense>} />
@@ -617,21 +613,6 @@ function OSArchitecture() {
       syncLocation();
     }
   }, [isAuthenticated]);
-
-  // 2026-05-27 Phil — pending beta code recovery.
-  // /redeem/CODE writes hm_pending_beta_code to localStorage before bouncing
-  // to /auth. Onboarding can swallow the redirect param. Once the user is
-  // authenticated, navigate back to /redeem/CODE so the claim can fire.
-  // The redeem page itself clears the localStorage key on success.
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    try {
-      const pending = localStorage.getItem('hm_pending_beta_code');
-      if (pending && !location.pathname.startsWith('/redeem')) {
-        navigate(`/redeem/${encodeURIComponent(pending)}`, { replace: true });
-      }
-    } catch { /* ignore */ }
-  }, [isAuthenticated, location.pathname, navigate]);
 
   // Aftercare nudge state for check-in expiry
   const [showAftercare, setShowAftercare] = useState(false);
@@ -772,9 +753,6 @@ function OSArchitecture() {
 
       {/* Music Mini Player — sits just above radio player or nav (Z-50) */}
       <MusicMiniPlayer />
-
-      {/* Pulse Feedback — floating 'HOW\'S IT FEEL?' button (Phil 2026-05-27). Visible to all signed-in users. */}
-      <PulseFeedbackButton />
 
       {/* Global Ticker was moved to the very top to prevent hiding Shopping buttons */}
 
