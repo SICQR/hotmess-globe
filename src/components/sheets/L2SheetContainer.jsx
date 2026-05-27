@@ -176,37 +176,30 @@ export default function L2SheetContainer({
             aria-hidden="true"
           />
 
-          {/* Sheet */}
+          {/* Sheet — static initial/animate/exit objects. We tried variants +
+              animate="visible" (broken because drag="y" claims y-axis) and
+              also variants + animate={controls} (broken because controls weren't
+              firing reliably with AnimatePresence mode="wait"). Static object
+              animate is the framer-motion pattern that actually works with drag
+              enabled: the spring runs to the explicit target on mount, then drag
+              handles take over during interaction, then dragConstraints + spring
+              snap-back return to {y:0} on release. Phil 2026-05-27 — sheet has
+              been stuck below the viewport for three iterations; this is the
+              final shape. */}
           <motion.div
             ref={sheetRef}
             key={`sheet-${activeSheet}`}
-            variants={sheetVariants}
-            initial="hidden"
-            // animate is driven by `controls` below (drag-y conflicts with
-            // static variant-driven animate). The isOpen useEffect kicks
-            // `controls.start('visible')` on open and 'exit' on close.
-            exit="exit"
+            initial={{ y: '100%', opacity: 0.8 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '100%', opacity: 0.8 }}
+            transition={{ type: 'spring', damping: 22, stiffness: 400, mass: 0.8 }}
             // Drag config — outer sheet is what slides, not the handle pip.
-            // dragControls.start(e) is called from the handle's onPointerDown
-            // so the handle is the ONLY initiation surface; body content still
-            // scrolls normally. dragListener=false prevents body taps from
-            // starting a drag. dragElastic top=0 so users can't pull UP.
             drag="y"
             dragControls={dragControls}
             dragListener={false}
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.5 }}
             onDragEnd={handleDragEnd}
-            // `drag="y"` claims the y-axis transform, so the variant-driven
-            // `animate="visible"` (which sets y:0) is silently ignored — the
-            // sheet would sit at initial=hidden (translateY 100%) forever.
-            // Fix: bind a useAnimation controller and call `controls.start('visible')`
-            // in the isOpen effect below. The controller owns y; the drag layer
-            // takes over during interaction; snap-back returns to controller's
-            // last value. PR #504 removed this binding to fix the duplicate-animate
-            // bug — but the right fix is to keep the controller and remove the
-            // variant `animate=`. Phil 2026-05-27: sheets reopened broken after #504.
-            animate={controls}
             style={{ height, overflowX: 'hidden' }}
             className={cn(
               'fixed bottom-0 left-0 right-0 z-[80]',
@@ -326,4 +319,5 @@ export function SheetActions({ children, className }) {
 export function SheetDivider() {
   return <div className="h-px bg-white/10 mx-4" />;
 }
+
 
