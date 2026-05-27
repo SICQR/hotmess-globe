@@ -78,6 +78,18 @@ export default function L2SheetContainer({
   const { isOpen, closeSheet, onAnimationComplete, activeSheet } = useSheet();
   const sheetRef = useRef(null);
   const controls = useAnimation();
+
+  // Fire the entrance animation when the sheet opens. `drag="y"` on the
+  // motion.div takes over y-axis transforms, so the static
+  // `animate="visible"` variant prop is silently ignored and the sheet
+  // stays at initial=hidden (translateY 100% / opacity 0.8). Driving
+  // animation through the controller is the framer-motion supported
+  // pattern when drag is enabled. Phil 2026-05-27: sheets stuck below
+  // viewport after PR #504 — this restores the controller binding.
+  useEffect(() => {
+    if (!isOpen) return;
+    controls.start('visible');
+  }, [isOpen, controls]);
   const dragControls = useDragControls();
   const queryClient = useQueryClient();
   const sheetScrollRef = useRef(null);
@@ -170,7 +182,9 @@ export default function L2SheetContainer({
             key={`sheet-${activeSheet}`}
             variants={sheetVariants}
             initial="hidden"
-            animate="visible"
+            // animate is driven by `controls` below (drag-y conflicts with
+            // static variant-driven animate). The isOpen useEffect kicks
+            // `controls.start('visible')` on open and 'exit' on close.
             exit="exit"
             // Drag config — outer sheet is what slides, not the handle pip.
             // dragControls.start(e) is called from the handle's onPointerDown
@@ -183,14 +197,16 @@ export default function L2SheetContainer({
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.5 }}
             onDragEnd={handleDragEnd}
-            // CRITICAL: Do NOT re-add `animate={controls}` here. JSX last-prop-wins
-            // means a second `animate` prop overrides the variant-driven
-            // `animate="visible"` above — and useAnimation() controls that are
-            // never .start()'d leave the element at initial=hidden (translateY 100%
-            // off-screen). The visible backdrop with no visible sheet underneath
-            // = "screens just blur and unable to open" (Phil 2026-05-27).
-            // Snap-back on cancelled drag is handled by framer's own dragConstraints
-            // top=0 bottom=0 spring-return.
+            // `drag="y"` claims the y-axis transform, so the variant-driven
+            // `animate="visible"` (which sets y:0) is silently ignored — the
+            // sheet would sit at initial=hidden (translateY 100%) forever.
+            // Fix: bind a useAnimation controller and call `controls.start('visible')`
+            // in the isOpen effect below. The controller owns y; the drag layer
+            // takes over during interaction; snap-back returns to controller's
+            // last value. PR #504 removed this binding to fix the duplicate-animate
+            // bug — but the right fix is to keep the controller and remove the
+            // variant `animate=`. Phil 2026-05-27: sheets reopened broken after #504.
+            animate={controls}
             style={{ height, overflowX: 'hidden' }}
             className={cn(
               'fixed bottom-0 left-0 right-0 z-[80]',
@@ -310,3 +326,4 @@ export function SheetActions({ children, className }) {
 export function SheetDivider() {
   return <div className="h-px bg-white/10 mx-4" />;
 }
+
