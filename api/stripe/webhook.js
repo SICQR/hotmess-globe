@@ -190,6 +190,9 @@ async function processOrderCompletion(session, eventType, req) {
         purchased_at: new Date().toISOString(),
         expires_at: expiresAt,
         stripe_payment_intent_id: paymentIntentId,
+        // Phil 2026-05-27 — single-use credits get uses_remaining=1.
+        // Timed boosts (duration_hours set) get NULL = unlimited within window.
+        uses_remaining: catalog.duration_hours === null ? 1 : null,
       });
 
     if (insErr) {
