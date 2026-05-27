@@ -63,7 +63,7 @@ export default function L2SheetContainer({
   subtitle,
   className,
   // Optional overrides
-  height = '78vh',
+  height = '70dvh',  // dvh accounts for mobile browser chrome (Safari address bar). 70 leaves room for status bar + drag pip header.
   showHandle = true,
   showClose = true,
   onClose: customOnClose,
@@ -319,5 +319,6 @@ export function SheetActions({ children, className }) {
 export function SheetDivider() {
   return <div className="h-px bg-white/10 mx-4" />;
 }
+
 
 
