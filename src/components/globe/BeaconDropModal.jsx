@@ -1,21 +1,37 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Info, Sparkles, Rocket, Ghost, ShoppingBag, Radio, Loader2, HeartPulse } from 'lucide-react';
+import { MapPin, Info, Sparkles, Loader2, ShoppingBag, Dumbbell, PartyPopper, Flame, Crown, Coffee, Plus, HandHeart, Eye } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 
+// HOTMESS Beacon Identity System — 9 doctrine sprite categories.
+// Each id is a valid beacon_category value per migration
+// expand_beacon_category_to_9_doctrine_sprites (2026-05-27).
 const BEACON_TYPES = [
-  { id: 'social', label: 'Social', icon: Ghost, color: '#C8962C' },
-  { id: 'event', label: 'Event', icon: Rocket, color: '#FF4F9A' },
-  { id: 'market', label: 'Market', icon: ShoppingBag, color: '#FFD700' },
-  { id: 'recovery', label: 'Recovery', icon: HeartPulse, color: '#FFFFFF' },
-  { id: 'radio', label: 'Radio', icon: Radio, color: '#B026FF' },
+  { id: 'gym',       label: 'Gym',       icon: Dumbbell,    color: '#FF5500' },
+  { id: 'club',      label: 'Club',      icon: PartyPopper, color: '#A899D8' },
+  { id: 'sauna',     label: 'Sauna',     icon: Flame,       color: '#00C2E0' },
+  { id: 'leather',   label: 'Leather',   icon: Crown,       color: '#C8962C' },
+  { id: 'cafe',      label: 'Café',      icon: Coffee,      color: '#F5E6C8' },
+  { id: 'clinic',    label: 'Clinic',    icon: Plus,        color: '#F4F1E8' },
+  { id: 'aftercare', label: 'Aftercare', icon: HandHeart,   color: '#F4F1E8' },
+  { id: 'cruising',  label: 'Cruising',  icon: Eye,         color: '#FF2D78' },
+  { id: 'market',    label: 'Market',    icon: ShoppingBag, color: '#C8962C' },
 ];
 
 
 export default function BeaconDropModal({ isOpen, onClose, onComplete, location }) {
   const [title, setTitle] = useState('');
-  const [kind, setKind] = useState('social');
+  const [kind, setKind] = useState('club');
+  // Postcode override — dropper-private input. Postcode text is NEVER written
+  // to the beacons row; we forward-geocode via api.postcodes.io and persist
+  // only the resolved coordinates. Other users see the bucketed cue.
+  // Per sacred-invariants rule #7 (no exact tracking).
+  const [locationMode, setLocationMode] = useState('gps'); // 'gps' | 'postcode'
+  const [postcode, setPostcode] = useState('');
+  const [postcodeCoords, setPostcodeCoords] = useState(null);
+  const [postcodeError, setPostcodeError] = useState(null);
+  const [resolvingPostcode, setResolvingPostcode] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleDrop = async () => {
@@ -29,10 +45,15 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Location: use the explicit point if given (e.g. local-map centre — drop
-      // exactly where you're looking), otherwise fall back to device GPS.
+      // Location resolution priority:
+      //  1. Postcode mode + resolved coords (dropper-private input)
+      //  2. Explicit point passed by caller (e.g. local-map centre)
+      //  3. Device GPS
       let lat, lng;
-      if (location && Number.isFinite(Number(location.lat)) && Number.isFinite(Number(location.lng))) {
+      if (locationMode === 'postcode' && postcodeCoords) {
+        lat = postcodeCoords.lat;
+        lng = postcodeCoords.lng;
+      } else if (location && Number.isFinite(Number(location.lat)) && Number.isFinite(Number(location.lng))) {
         lat = Number(location.lat);
         lng = Number(location.lng);
       } else {
@@ -46,43 +67,35 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
         lng = pos.coords.longitude;
       }
       
-      if (kind === 'recovery') {
-        // Permanent Cultural Anchor
-        const slug = title.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Math.random().toString(36).substring(2, 5);
-        const { error } = await supabase.from('pulse_places').insert({
-          slug,
-          name: title.trim(),
-          type: 'recovery',
-          lat,
-          lng,
-          priority: 50,
-          is_active: true,
-          notes: 'Community-dropped recovery resource',
-          tier: 'community',
-          subscription_status: 'active'
-        });
-        if (error) throw error;
-        toast.success('Permanent Recovery Resource added to the globe!');
-      } else {
-        // Temporary Beacon
-        const expiresAt = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
-        const { error } = await supabase.from('beacons').insert({
-          owner_id: user.id,
-          title: title.trim(),
-          type: kind,
-          status: 'active',
-          geo_lat: lat,
-          geo_lng: lng,
-          starts_at: new Date().toISOString(),
-          ends_at: expiresAt,
-          intensity: 80,
-          visibility: 'public',
-          code: `B44-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-          metadata: { title: title.trim() }
-        });
-        if (error) throw error;
-        toast.success('Beacon dropped on the globe!');
-      }
+      // All user-dropped beacons go in via the beacons table with a 9-cat sprite
+      // identity (clinic + aftercare are care states, both still beacons — the
+      // legacy pulse_places branch for 'recovery' is removed; aftercare lives
+      // alongside the others now).
+      const expiresAt = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
+      const { error } = await supabase.from('beacons').insert({
+        owner_id: user.id,
+        title: title.trim(),
+        // type is the broad enum (CHECK: social/event/drop/market/radio/safety/user).
+        // All user-dropped beacons are 'user' — the sprite identity lives in
+        // beacon_category. Keep the two in sync per doctrine.
+        type: 'user',
+        beacon_category: kind,
+        status: 'active',
+        geo_lat: lat,
+        geo_lng: lng,
+        // Mirror to latitude/longitude for legacy mapboxLayerStack payload
+        // (toPublicSafeFeatureCollection reads `lat || location_lat`).
+        latitude: lat,
+        longitude: lng,
+        starts_at: new Date().toISOString(),
+        ends_at: expiresAt,
+        intensity: 80,
+        visibility: 'public',
+        code: `B44-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+        metadata: { title: title.trim() }
+      });
+      if (error) throw error;
+      toast.success('Beacon dropped on the globe!');
 
       onComplete?.();
       onClose();
@@ -101,7 +114,33 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
     }
   };
 
-  return (
+  // Forward-geocode UK postcode via postcodes.io (free, no auth, UK-only).
+  // We never store the raw postcode — only resolved coords on the row, and
+  // those get privacy-snapped to a ~1.1km grid on read by toPublicSafeFeatureCollection.
+  const lookupPostcode = async () => {
+    const pc = (postcode || '').trim();
+    if (!pc) { setPostcodeError('Enter a UK postcode'); return; }
+    setResolvingPostcode(true);
+    setPostcodeError(null);
+    try {
+      const res = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc)}`, { headers: { Accept: 'application/json' } });
+      if (!res.ok) {
+        if (res.status === 404) throw new Error('Postcode not found');
+        throw new Error('Lookup failed — try again');
+      }
+      const json = await res.json();
+      const r = json && json.result;
+      if (!r || r.latitude == null || r.longitude == null) throw new Error('No coordinates for that postcode');
+      setPostcodeCoords({ lat: Number(r.latitude), lng: Number(r.longitude) });
+    } catch (err) {
+      setPostcodeError(err.message || 'Postcode lookup failed');
+      setPostcodeCoords(null);
+    } finally {
+      setResolvingPostcode(false);
+    }
+  };
+
+    return (
     <AnimatePresence>
       {isOpen && (
         <>
@@ -161,7 +200,7 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
 
               <div>
                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-3 block">Beacon Kind</label>
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-3 gap-2">
 
                   {BEACON_TYPES.map((type) => (
                     <button
@@ -180,10 +219,66 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
                 </div>
               </div>
 
+              {/* Location mode — GPS (default) or UK postcode override.
+                  Postcode is dropper-private: text never stored, only resolved coords. */}
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-3 block">Location</label>
+                <div className="flex gap-2 mb-3">
+                  <button
+                    onClick={() => { setLocationMode('gps'); setPostcodeError(null); }}
+                    className={`flex-1 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all ${
+                      locationMode === 'gps' ? 'bg-[#C8962C] text-black' : 'bg-white/5 text-white/55 border border-white/10'
+                    }`}
+                  >
+                    Use my GPS
+                  </button>
+                  <button
+                    onClick={() => setLocationMode('postcode')}
+                    className={`flex-1 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all ${
+                      locationMode === 'postcode' ? 'bg-[#C8962C] text-black' : 'bg-white/5 text-white/55 border border-white/10'
+                    }`}
+                  >
+                    Use postcode
+                  </button>
+                </div>
+                {locationMode === 'postcode' && (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <input
+                        value={postcode}
+                        onChange={(e) => { setPostcode(e.target.value.toUpperCase()); setPostcodeError(null); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') lookupPostcode(); }}
+                        placeholder="E.g. E1 6AN"
+                        maxLength={10}
+                        autoCapitalize="characters"
+                        autoComplete="postal-code"
+                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm tracking-wider font-mono placeholder:text-white/20 focus:border-[#C8962C]/50 outline-none"
+                      />
+                      <button
+                        onClick={lookupPostcode}
+                        disabled={!postcode || resolvingPostcode}
+                        className={`px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all ${
+                          postcode && !resolvingPostcode ? 'bg-[#C8962C] text-black' : 'bg-white/5 text-white/25 cursor-not-allowed'
+                        }`}
+                      >
+                        {resolvingPostcode ? <Loader2 className="w-4 h-4 animate-spin" /> : 'PIN'}
+                      </button>
+                    </div>
+                    {postcodeError && <p className="text-[11px] text-[#FF4F9A]">{postcodeError}</p>}
+                    {postcodeCoords && !postcodeError && (
+                      <p className="text-[11px] text-[#C8962C] font-semibold">Postcode pinned — fuzzy radius set</p>
+                    )}
+                    <p className="text-[10px] text-white/30 leading-snug">
+                      Your postcode stays private. Only an approximate radius is shown.
+                    </p>
+                  </div>
+                )}
+              </div>
+
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={handleDrop}
-                disabled={loading || !title.trim()}
+                disabled={loading || !title.trim() || (locationMode === 'postcode' && !postcodeCoords)}
                 className="w-full h-16 bg-[#C8962C] disabled:bg-white/10 disabled:text-white/20 rounded-2xl text-black font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all"
                 style={{ boxShadow: !loading && title.trim() ? '0 10px 40px -10px rgba(200, 150, 44, 0.5)' : 'none' }}
               >
@@ -201,5 +296,6 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
     </AnimatePresence>
   );
 }
+
 
 
