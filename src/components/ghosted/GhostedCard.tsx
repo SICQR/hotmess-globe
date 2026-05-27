@@ -80,6 +80,10 @@ export interface GhostedCardProps {
    *  a category glyph badge, a LIVE label, and tap-to-fly navigates to
    *  /pulse with the beacon coords in route state (mirrors PR #423). */
   beacon?: GhostedBeaconBadge | null;
+  /** This user has an active profile_bump boost — surfaces an outer gold
+   *  glow distinct from the beacon ring. Sort-to-top is handled upstream
+   *  in GhostedMode; this prop is purely visual affordance. */
+  isBoosted?: boolean;
 }
 
 interface GhostedCardComponentProps extends GhostedCardProps {
@@ -112,6 +116,7 @@ function GhostedCardInner({
   isMutual,
   lookingFor,
   beacon,
+  isBoosted,
   index,
   onTap,
 }: GhostedCardComponentProps) {
@@ -167,6 +172,12 @@ function GhostedCardInner({
         }
         if (isMutual) {
           shadows.push('inset 0 0 0 0.5px rgba(200,150,44,0.55)');
+        }
+        if (isBoosted) {
+          // Outer gold glow — separate from beacon ring (which is inset).
+          // Reads as "promoted" without imitating beacon liveness or boo.
+          shadows.push('0 0 0 1.5px rgba(200,150,44,0.85)');
+          shadows.push('0 0 14px rgba(200,150,44,0.45)');
         }
         return shadows.length ? { boxShadow: shadows.join(', '), opacity: ringAlpha < 0.95 ? 0.9 : 1 } : undefined;
       })()}

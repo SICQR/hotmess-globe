@@ -7,6 +7,7 @@ import { useGPS } from '@/hooks/useGPS';
 import { useSheet } from '@/contexts/SheetContext';
 import { useTaps } from '@/hooks/useTaps';
 import { useUnreadCount } from '@/hooks/useUnreadCount';
+import { useBoostedUserIds } from '@/hooks/useBoostedUserIds';
 import { GhostedCard } from '@/components/ghosted/GhostedCard';
 import { GhostedRecentStories } from '@/components/ghosted/GhostedRecentStories';
 import { supabase } from '@/components/utils/supabaseClient';
@@ -121,6 +122,10 @@ export default function GhostedMode() {
   const { isTapped, isMutualBoo } = useTaps(myUserId, myEmail);
   const { unreadCount } = useUnreadCount();
 
+  // profile_bump — paying users sort to top of grid + render outer gold glow.
+  // Empty set when nobody is boosted (steady state) → zero render impact.
+  const boostedUserIds = useBoostedUserIds();
+
   return (
     <div className="relative h-full w-full bg-[#050507] flex flex-col overflow-hidden">
 
@@ -223,7 +228,14 @@ export default function GhostedMode() {
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-0">
-            {cards.map((card, i) => {
+            {(boostedUserIds.size === 0
+              ? cards
+              : [...cards].sort((a, b) => {
+                  const aBoosted = boostedUserIds.has(a.id) ? 1 : 0;
+                  const bBoosted = boostedUserIds.has(b.id) ? 1 : 0;
+                  return bBoosted - aBoosted; // boosted first, stable otherwise
+                })
+            ).map((card, i) => {
               // Index-based jitter — quietly breaks "app grid" feel without
               // requiring scroll detection. Pattern repeats every 7 cards
               // so the field has rhythm but no obvious tile.
@@ -244,6 +256,7 @@ export default function GhostedMode() {
                     index={i}
                     isBood={isTapped(card.id, 'boo')}
                     isMutual={isMutualBoo(card.id)}
+                    isBoosted={boostedUserIds.has(card.id)}
                     onTap={(id) => openSheet('profile', { id })}
                   />
                 </div>
