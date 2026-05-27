@@ -104,7 +104,13 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
       if (error) throw error;
       toast.success('Beacon dropped on the globe!');
 
-      onComplete?.();
+      // Pass the resolved coords back so the parent can refresh the beacon
+      // feed AND flyTo the drop point — the realtime INSERT subscription
+      // shouldn't be the only path to "see your beacon land", because
+      // even when realtime fires the map is at globe-zoom and a single
+      // beacon is invisible until the camera moves. Phil 2026-05-27:
+      // drops confirmed by DB but never seen on the map.
+      onComplete?.({ lat, lng });
       onClose();
     } catch (err) {
       console.error('Beacon drop error:', err);
@@ -383,6 +389,7 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
     </AnimatePresence>
   );
 }
+
 
 
 
