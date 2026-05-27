@@ -52,10 +52,8 @@ import { ShopEngine } from '@/modes/market/ShopEngine';
 import { DropsEngine } from '@/modes/market/DropsEngine';
 import { PrelovedEngine } from '@/modes/market/PrelovedEngine';
 import L2OrderSheet from '@/components/sheets/L2OrderSheet';
-import { MarketEditorialShell } from '@/components/market/MarketEditorialV2';
-import { useV6Flag } from '@/hooks/useV6Flag';
 import { useQuery } from '@tanstack/react-query';
-import { getShopifyProducts, getInternalProducts, type Product } from '@/lib/data/market';
+import { getShopifyProducts, type Product } from '@/lib/data/market';
 
 // Drop-brand discriminator — these are limited-run clothing brands that belong in
 // the Drops engine, not Shop. SuperHung is a DROP. See src/config/brands.ts.
@@ -66,19 +64,6 @@ const DROP_BRANDS = new Set(['raw', 'hung', 'high', 'hungmess', 'superhung', 'su
 // to be in stock continuously, not framed as scarcity drops.
 const SHOP_FOREVER_CATEGORIES = new Set(['wellness', 'aftercare', 'lube', 'hnh', 'hnh mess']);
 
-function isDropBrand(p: Product): boolean {
-  const vendor = (p.vendor || '').toLowerCase();
-  if (DROP_BRANDS.has(vendor)) return true;
-  if (p.tags?.some(t => DROP_BRANDS.has((t || '').toLowerCase()))) return true;
-  // Explicit drop/limited tag wins regardless of category
-  if (p.tags?.some(t => ['drop', 'limited'].includes((t || '').toLowerCase()))) return true;
-  // Quantity fallback — but never for wellness staples like HNH MESS lube
-  const cat = (p.category || '').toLowerCase();
-  if (SHOP_FOREVER_CATEGORIES.has(cat)) return false;
-  if (p.tags?.some(t => SHOP_FOREVER_CATEGORIES.has((t || '').toLowerCase()))) return false;
-  if (p.quantity != null && p.quantity <= 20) return true;
-  return false;
-}
 
 // Transform unified Product to editorial-card shape used by MarketEditorialShell.
 // Original product fields are preserved so onProductTap can pass them to L2ProductSheet.
@@ -108,20 +93,6 @@ function cleanVendor(v?: string): string | undefined {
   return v;
 }
 
-function toEditorialItem(p: Product) {
-  const symbol = p.currency === 'GBP' ? '£' : '$';
-  return {
-    ...p,
-    id: p.id,
-    title: p.title,
-    subtitle: cleanVendor(p.vendor) || p.category || undefined,
-    price: `${symbol}${Number(p.price || 0).toFixed(2)}`,
-    img: p.images?.[0] || 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=800&q=80',
-    tag: p.compareAtPrice && p.compareAtPrice > p.price ? 'JUST DROPPED' : null,
-    micro: cleanMicro(p.description),
-    dist: null,
-  };
-}
 
 // ---- Types ------------------------------------------------------------------
 
@@ -253,36 +224,11 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   const { openSheet } = useSheet();
   const { clearCart } = useShopCart();
 
-  // v6_market_v2 — editorial UI flag gate
-  const isMarketV2 = useV6Flag('v6_market_v2');
+
 
   // Live Shopify + internal product feed for v2 editorial shell.
   // Shopify products are partitioned by brand: DROP_BRANDS (raw/hung/high/hungmess/superhung/superraw)
   // and low-quantity/tagged items go to Drops; everything else (HNH MESS + general merch) goes to Shop.
-  // Internal/creator products augment Drops.
-  const { data: v2Shopify = [] } = useQuery<Product[]>({
-    queryKey: ['market-v2', 'shopify-all'],
-    queryFn: () => getShopifyProducts({ source: 'shopify' }),
-    staleTime: 2 * 60 * 1000,
-    enabled: isMarketV2,
-  });
-  const { data: v2Internal = [] } = useQuery<Product[]>({
-    queryKey: ['market-v2', 'internal-drops'],
-    queryFn: () => getInternalProducts({ source: 'creator' as Product['source'] }),
-    staleTime: 2 * 60 * 1000,
-    enabled: isMarketV2,
-  });
-  const v2ShopItems = useMemo(
-    () => v2Shopify.filter(p => !isDropBrand(p)).map(toEditorialItem),
-    [v2Shopify],
-  );
-  const v2DropItems = useMemo(
-    () => [
-      ...v2Shopify.filter(p => isDropBrand(p)).map(toEditorialItem),
-      ...v2Internal.map(toEditorialItem),
-    ],
-    [v2Shopify, v2Internal],
-  );
 
   // ---- All hooks must be called unconditionally before any early returns ----
   const { isAuthenticated } = useBootGuard();
@@ -416,20 +362,6 @@ export function MarketMode({ className = '' }: MarketModeProps) {
 
   // ---- Now conditional early returns (after ALL hooks) ----
 
-  // v6_market_v2 editorial shell — wired to live Shopify + internal product feeds
-  if (isMarketV2) {
-    return (
-      <MarketEditorialShell
-        shopItems={v2ShopItems}
-        dropItems={v2DropItems}
-        onProductTap={(item: Record<string, unknown>) => openSheet('product', { product: item, source: 'shop' })}
-        onListingTap={(listing: Record<string, unknown>) => openSheet('product', { id: (listing as { id: string }).id, source: 'preloved' })}
-        onChipTap={(chip: string, listing: Record<string, unknown>) => openSheet('chat', { prefill: chip, userId: (listing as { seller_id: string }).seller_id })}
-        onMessageSeller={(listing: Record<string, unknown>) => openSheet('chat', { userId: (listing as { seller_id: string }).seller_id })}
-        onSellFAB={() => openSheet('sell', {})}
-      />
-    );
-  }
 
   // ---- Render ---------------------------------------------------------------
 
@@ -614,14 +546,6 @@ export function MarketMode({ className = '' }: MarketModeProps) {
               </button>
             );
           })}
-        </div>
-        {/* Engine context line */}
-        <div className="px-4 pb-3">
-          <p className="text-[11px] text-white/25">
-            {activeEngine === 'shop' && 'Official merch + HNH MESS. Direct checkout.'}
-            {activeEngine === 'drops' && 'Limited runs from HOTMESS brands. Gone when gone.'}
-            {activeEngine === 'preloved' && 'Community marketplace. Chat first, deal in person.'}
-          </p>
         </div>
       </div>
 

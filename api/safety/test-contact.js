@@ -19,6 +19,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { sendSms } from '../notifications/channels/sms.js';
+import { send as sendTelegram } from '../notifications/channels/telegram.js';
 
 const supabaseUrl =
   process.env.SUPABASE_URL ??
@@ -49,7 +50,7 @@ export default async function handler(req, res) {
   // Ownership check + phone lookup in one shot.
   const { data: contact, error: lookupErr } = await supabaseAdmin
     .from('trusted_contacts')
-    .select('id, contact_name, contact_phone, user_id')
+    .select('id, contact_name, contact_phone, contact_telegram_chat_id, contact_telegram_handle, user_id')
     .eq('id', contactId)
     .eq('user_id', user.id)
     .maybeSingle();
@@ -103,6 +104,22 @@ export default async function handler(req, res) {
   }
 
   const result = await sendSms({ to: contact.contact_phone, body: text });
+
+  // 2026-05-27 Phil — best-effort Telegram side-channel test. If the contact
+  // has completed the /start handshake with @HotmessAuthBot (chat_id present),
+  // also fire a Telegram test message. Failure does NOT affect the response;
+  // SMS remains the authoritative test result for the UI badge.
+  if (contact.contact_telegram_chat_id) {
+    try {
+      await sendTelegram({
+        chatId: contact.contact_telegram_chat_id,
+        text: `${ownerName} added you as a trusted contact on HOTMESS. This is a test — no action needed. Real SOS alerts will come via this chat.`,
+      });
+    } catch (_tgErr) {
+      // Silent — SMS already handles UI feedback.
+    }
+  }
+
 
   if (result.ok) {
     await supabaseAdmin.from('safety_alerts')

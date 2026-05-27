@@ -1,4 +1,5 @@
 import { supabase } from '@/components/utils/supabaseClient';
+import { trackEvent } from '@/components/utils/analytics';
 
 const GUEST_CART_STORAGE_KEY = 'hotmess_guest_cart_v1';
 
@@ -167,6 +168,14 @@ export const addToCart = async ({ productId, quantity = 1, currentUser, variantI
   if (!productId) throw new Error('Missing product id');
   const qty = Number.isFinite(quantity) ? quantity : 1;
   if (qty <= 0) return;
+  try {
+    trackEvent('add_to_cart', {
+      category: 'commerce',
+      product_id: productId,
+      quantity: qty,
+      variant_id: variantId || null,
+    });
+  } catch { /* ignore */ }
 
   const normalizedVariantId = variantId ? String(variantId).trim() : null;
   const normalizedVariantTitle = variantTitle ? String(variantTitle).trim() : null;
