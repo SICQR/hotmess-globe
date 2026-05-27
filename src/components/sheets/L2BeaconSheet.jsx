@@ -24,12 +24,23 @@ const BEACON_DAILY_LIMIT = 3; // default daily beacon limit per user
 // BEACON TYPE CONFIG
 // ─────────────────────────────────────────────────────────────────────────────
 
+// HOTMESS Beacon Identity System — 9 doctrine sprite categories.
+// Each value maps 1:1 to a sprite in beaconIconFactory.ts via
+// resolveBeaconCategory(), so picking a category here paints the
+// corresponding glyph on /pulse. The DB constraint
+// `beacons_beacon_category_check` was extended on 2026-05-27 to accept
+// these 9 values alongside the legacy 5 (venue/user/event/hotmess/safety)
+// — see migration `expand_beacon_category_to_9_doctrine_sprites`.
 const BEACON_TYPES = [
-  { value: 'party',    label: 'Party',    emoji: '🎉' },
-  { value: 'meetup',   label: 'Meetup',   emoji: '📍' },
-  { value: 'event',    label: 'Event',    emoji: '🏳️‍🌈' },
-  { value: 'cruising', label: 'Cruising', emoji: '👁️' },
-  { value: 'safety',   label: 'Safety',   emoji: '🛡️' },
+  { value: 'gym',       label: 'Gym',       emoji: '💪' },
+  { value: 'club',      label: 'Club',      emoji: '🪩' },
+  { value: 'sauna',     label: 'Sauna',     emoji: '♨️' },
+  { value: 'leather',   label: 'Leather',   emoji: '🖤' },
+  { value: 'cafe',      label: 'Café',      emoji: '☕' },
+  { value: 'clinic',    label: 'Clinic',    emoji: '⚕️' },
+  { value: 'aftercare', label: 'Aftercare', emoji: '💧' },
+  { value: 'cruising',  label: 'Cruising',  emoji: '👁️' },
+  { value: 'market',    label: 'Market',    emoji: '🛍️' },
 ];
 
 const DURATIONS = [
@@ -55,6 +66,15 @@ function BeaconCreator({ onSuccess }) {
   const [intensity, setIntensity] = useState(3);
   const [coords, setCoords] = useState(null);
   const [locating, setLocating] = useState(false);
+  // Postcode override — dropper-private input. Postcode TEXT is NEVER written
+  // to the beacons row; we forward-geocode via api.postcodes.io (free, UK-only,
+  // no auth), apply the same privacy snap as GPS, and persist only the snapped
+  // lat/lng. Other users see the bucketed cue ("nearby" / "in the area") —
+  // never the postcode. Per sacred-invariants rule #7 (no exact tracking).
+  const [locationMode, setLocationMode] = useState('gps'); // 'gps' | 'postcode'
+  const [postcode, setPostcode] = useState('');
+  const [postcodeError, setPostcodeError] = useState(null);
+  const [resolvingPostcode, setResolvingPostcode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [beaconCount, setBeaconCount] = useState(0);
@@ -115,7 +135,43 @@ function BeaconCreator({ onSuccess }) {
     );
   };
 
-  const handleSubmit = async () => {
+  // Forward-geocode a UK postcode → { lat, lng } via the free postcodes.io API.
+  // Privacy: we never store the raw postcode string anywhere — only the resolved
+  // (and later privacy-snapped) coordinates. Snap happens in
+  // toPublicSafeFeatureCollection on the read path, so writes can use the precise
+  // resolved coords; reads expose only the ~1.1km grid cell.
+  const fetchLocationFromPostcode = async () => {
+    const pc = (postcode || '').trim();
+    if (!pc) {
+      setPostcodeError('Enter a UK postcode');
+      return;
+    }
+    setResolvingPostcode(true);
+    setPostcodeError(null);
+    try {
+      const res = await fetch(
+        `https://api.postcodes.io/postcodes/${encodeURIComponent(pc)}`,
+        { headers: { Accept: 'application/json' } }
+      );
+      if (!res.ok) {
+        if (res.status === 404) throw new Error('Postcode not found');
+        throw new Error('Postcode lookup failed — try again');
+      }
+      const json = await res.json();
+      const result = json && json.result;
+      if (!result || result.latitude == null || result.longitude == null) {
+        throw new Error('Postcode has no coordinates');
+      }
+      setCoords({ lat: Number(result.latitude), lng: Number(result.longitude) });
+    } catch (err) {
+      setPostcodeError(err.message || 'Postcode lookup failed');
+      setCoords(null);
+    } finally {
+      setResolvingPostcode(false);
+    }
+  };
+
+    const handleSubmit = async () => {
     if (!coords) return toast.error('Location required — tap Retry to get it');
     setLoading(true);
     try {
@@ -129,8 +185,11 @@ function BeaconCreator({ onSuccess }) {
       const descStr  = formData.description.trim() || null;
       const addrStr  = formData.address.trim() || null;
 
-      // Determine globe visual config from beacon type
-      const beaconCategory = 'user'; // all user-created beacons
+      // beacon_category drives the sprite painted on /pulse.
+      // selectedType IS the sprite name (one of the 9 doctrine cats).
+      // DB constraint expanded on 2026-05-27 to accept these alongside
+      // the legacy 5 — see migration expand_beacon_category_to_9_doctrine_sprites.
+      const beaconCategory = selectedType;
       const globeVisuals = {
         checkin:  { color: '#C8962C', pulse: 'standard', size: 1.0 },
         event:   { color: '#FF4F9A', pulse: 'flare',    size: 2.5 },
@@ -145,11 +204,19 @@ function BeaconCreator({ onSuccess }) {
 
       const { error } = await supabase.from('beacons').insert({
         code:             nanoid(8),
-        type:             selectedType,
+        // type is the broad enum (CHECK: social/event/drop/market/radio/safety/user).
+        // All user-dropped beacons go in as 'user' — the sprite identity lives
+        // in beacon_category. Keep type+beacon_category in sync per doctrine.
+        type:             'user',
         beacon_category:  beaconCategory,
         owner_id:         user.id,
         geo_lat:          coords.lat,
         geo_lng:          coords.lng,
+        // latitude/longitude mirror geo_lat/geo_lng — both columns exist on
+        // the table for legacy compatibility; populate both so the mapboxLayerStack
+        // payload (which reads `lat||location_lat`) finds something.
+        latitude:         coords.lat,
+        longitude:        coords.lng,
         starts_at:        now.toISOString(),
         ends_at:          endsAt.toISOString(),
         intensity:        intensity,
@@ -391,34 +458,103 @@ function BeaconCreator({ onSuccess }) {
       </button>
 
       <h2 className="text-white font-black text-xl mb-1">Your Location</h2>
-      <p className="text-white/40 text-sm mb-6">
-        The beacon will be pinned to your current position.
+      <p className="text-white/40 text-sm mb-4">
+        Pin the beacon at your GPS — or enter a UK postcode if you're dropping it
+        for somewhere else. Postcode stays private; only a fuzzy radius is shown.
       </p>
 
-      {/* Location pill */}
+      {/* Location mode toggle */}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => { setLocationMode('gps'); setPostcodeError(null); if (!coords) fetchLocation(); }}
+          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+            locationMode === 'gps'
+              ? 'bg-[#C8962C] text-black'
+              : 'bg-[#1C1C1E] text-white/55 border border-white/10'
+          }`}
+        >
+          USE MY GPS
+        </button>
+        <button
+          onClick={() => { setLocationMode('postcode'); setCoords(null); }}
+          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+            locationMode === 'postcode'
+              ? 'bg-[#C8962C] text-black'
+              : 'bg-[#1C1C1E] text-white/55 border border-white/10'
+          }`}
+        >
+          USE POSTCODE
+        </button>
+      </div>
+
+      {/* Location surface — GPS pill OR postcode input */}
       <div className="flex-1 flex flex-col items-center justify-center gap-4">
-        {locating ? (
-          <div className="flex items-center gap-3 px-5 py-3 bg-[#1C1C1E] rounded-full border border-white/10">
-            <Loader2 className="w-4 h-4 text-[#C8962C] animate-spin" />
-            <span className="text-white/60 text-sm">Getting your location...</span>
-          </div>
-        ) : coords ? (
-          <div className="flex items-center gap-3 px-5 py-3 bg-[#C8962C]/15 rounded-full border border-[#C8962C]/40">
-            <MapPin className="w-4 h-4 text-[#C8962C]" />
-            <span className="text-[#C8962C] text-sm font-semibold">Using your current location</span>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-3">
+        {locationMode === 'gps' ? (
+          locating ? (
             <div className="flex items-center gap-3 px-5 py-3 bg-[#1C1C1E] rounded-full border border-white/10">
-              <MapPin className="w-4 h-4 text-white/30" />
-              <span className="text-white/40 text-sm">Location not set</span>
+              <Loader2 className="w-4 h-4 text-[#C8962C] animate-spin" />
+              <span className="text-white/60 text-sm">Getting your location...</span>
             </div>
-            <button
-              onClick={fetchLocation}
-              className="text-[#C8962C] text-sm font-bold underline underline-offset-2"
-            >
-              Retry
-            </button>
+          ) : coords ? (
+            <div className="flex items-center gap-3 px-5 py-3 bg-[#C8962C]/15 rounded-full border border-[#C8962C]/40">
+              <MapPin className="w-4 h-4 text-[#C8962C]" />
+              <span className="text-[#C8962C] text-sm font-semibold">Using your current location</span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex items-center gap-3 px-5 py-3 bg-[#1C1C1E] rounded-full border border-white/10">
+                <MapPin className="w-4 h-4 text-white/30" />
+                <span className="text-white/40 text-sm">Location not set</span>
+              </div>
+              <button
+                onClick={fetchLocation}
+                className="text-[#C8962C] text-sm font-bold underline underline-offset-2"
+              >
+                Retry
+              </button>
+            </div>
+          )
+        ) : (
+          <div className="w-full flex flex-col gap-3">
+            <label className="text-[10px] uppercase tracking-widest text-white/40 font-black">
+              UK Postcode
+            </label>
+            <div className="flex gap-2">
+              <input
+                value={postcode}
+                onChange={(e) => { setPostcode(e.target.value.toUpperCase()); setPostcodeError(null); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') fetchLocationFromPostcode(); }}
+                placeholder="E.g. E1 6AN"
+                maxLength={10}
+                inputMode="text"
+                autoCapitalize="characters"
+                autoComplete="postal-code"
+                className="flex-1 bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/25 text-sm tracking-wider font-mono focus:outline-none focus:border-[#C8962C]/60"
+              />
+              <button
+                onClick={fetchLocationFromPostcode}
+                disabled={!postcode || resolvingPostcode}
+                className={`px-4 py-3 rounded-xl text-xs font-black transition-all ${
+                  postcode && !resolvingPostcode
+                    ? 'bg-[#C8962C] text-black active:scale-95'
+                    : 'bg-white/5 text-white/25 cursor-not-allowed'
+                }`}
+              >
+                {resolvingPostcode ? <Loader2 className="w-4 h-4 animate-spin" /> : 'PIN'}
+              </button>
+            </div>
+            {postcodeError && (
+              <p className="text-[11px] text-[#FF4F9A]">{postcodeError}</p>
+            )}
+            {coords && !postcodeError && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-[#C8962C]/12 rounded-lg border border-[#C8962C]/30">
+                <MapPin className="w-3.5 h-3.5 text-[#C8962C]" />
+                <span className="text-[#C8962C] text-[11px] font-semibold">Postcode pinned — your fuzzy radius is set</span>
+              </div>
+            )}
+            <p className="text-[10px] text-white/35 leading-snug">
+              Your postcode stays on your device. Only an approximate radius is shown to other users.
+            </p>
           </div>
         )}
 
@@ -932,5 +1068,6 @@ export default function L2BeaconSheet({ beaconId, beacon }) {
 
   return <BeaconCreator onSuccess={closeSheet} />;
 }
+
 
 
