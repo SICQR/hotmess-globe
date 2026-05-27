@@ -38,6 +38,7 @@ import SplashScreen from './screens/SplashScreen';
 import AgeGateScreen from './screens/AgeGateScreen';
 import SignUpScreen from './screens/SignUpScreen';
 import QuickSetupScreen from './screens/QuickSetupScreen';
+import NotificationsScreen from './screens/NotificationsScreen';
 
 // Screen keys
 const SCREENS = {
@@ -46,6 +47,7 @@ const SCREENS = {
   SIGNUP: 'signup',
   SIGNIN: 'signin',
   QUICK_SETUP: 'quick_setup',
+  NOTIFICATIONS: 'notifications',  // T5 (Phil 2026-05-26): channel pref before completion
 };
 
 // Map onboarding_stage → screen.
@@ -410,6 +412,15 @@ export default function OnboardingRouter() {
     case SCREENS.QUICK_SETUP:
       return (
         <QuickSetupScreen
+          session={session}
+          onComplete={() => goTo(SCREENS.NOTIFICATIONS)}
+          onBack={canGoBack ? goBack : undefined}
+        />
+      );
+
+    case SCREENS.NOTIFICATIONS:
+      return (
+        <NotificationsScreen
           session={session}
           onComplete={finishOnboarding}
           onBack={canGoBack ? goBack : undefined}
