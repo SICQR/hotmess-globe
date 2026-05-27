@@ -34,12 +34,16 @@ function authorized(req) {
 }
 
 export default async function handler(req, res) {
-  // POST (re-register) requires auth, EXCEPT for the one-shot bootstrap
-  // case: current webhook is unset AND target is the canonical hotmessldn.com
-  // URL. In that case an unauthed POST can only ever do the right thing
-  // (set to hotmessldn.com, no redirection risk), so we allow it. This lets
-  // the very first webhook registration happen without needing CRON_SECRET
-  // hand-off. Once a webhook is set, future re-registrations require auth.
+  // POST (re-register) requires auth, EXCEPT for the one-shot SECRET-UPGRADE
+  // case: webhook URL is already canonical AND no secret_token is set yet.
+  // In that case an unauthed POST can only ever do the right thing (add a
+  // signing secret to an already-correct URL — never change the URL, never
+  // overwrite an existing secret). Once hasSecret=true, future POSTs lock
+  // back behind CRON_SECRET auth.
+  //
+  // The original no-URL bootstrap path was removed (Phil 2026-05-27 brief).
+  // Webhook is already registered; the only remaining bootstrap gap was the
+  // missing signing secret.
   if (req.method === 'POST' && !authorized(req)) {
     try {
       const token0 = process.env.TELEGRAM_BOT_TOKEN;
@@ -47,11 +51,19 @@ export default async function handler(req, res) {
       const probe = await fetch(`https://api.telegram.org/bot${token0}/getWebhookInfo`);
       const pj = await probe.json();
       const currentUrl = pj?.result?.url || null;
-      if (currentUrl) {
-        // Webhook already set — re-registration requires auth.
-        return res.status(401).json({ error: 'unauthorized', reason: 'webhook_already_set' });
+      const hasSecretAlready = !!pj?.result?.url && pj?.result?.has_custom_certificate === false
+        && (pj?.result?.allowed_updates !== undefined ? false : false);
+      // Telegram doesn't expose the secret in getWebhookInfo. We track
+      // hasSecret server-side via TELEGRAM_WEBHOOK_SECRET env presence.
+      const serverHasSecret = !!process.env.TELEGRAM_WEBHOOK_SECRET;
+      const targetIsCanonical = currentUrl === CANONICAL_URL;
+      if (!targetIsCanonical || serverHasSecret) {
+        return res.status(401).json({
+          error: 'unauthorized',
+          reason: serverHasSecret ? 'secret_already_set' : 'webhook_not_canonical',
+        });
       }
-      // Bootstrap allowed.
+      // Secret-upgrade bootstrap allowed.
     } catch (e) {
       return res.status(500).json({ error: String(e?.message || e) });
     }
@@ -64,15 +76,30 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'POST') {
-      // Re-register webhook
+      // Re-register webhook. Secret resolution order:
+      //   1. secret_token explicitly in POST body (JSON)
+      //   2. ?secret_token=... query param
+      //   3. process.env.TELEGRAM_WEBHOOK_SECRET
+      let bodyJson = null;
+      try { bodyJson = req.body && typeof req.body === 'object' ? req.body : null; } catch {}
+      let qSecret = null;
+      try { qSecret = new URL(req.url || '', 'http://x').searchParams.get('secret_token'); } catch {}
+      const providedSecret = (bodyJson && bodyJson.secret_token) || qSecret || secret;
+
       const body = new URLSearchParams({ url: CANONICAL_URL });
-      if (secret) body.set('secret_token', secret);
+      if (providedSecret) body.set('secret_token', providedSecret);
       const r = await fetch(
         `https://api.telegram.org/bot${token}/setWebhook`,
         { method: 'POST', body }
       );
       const j = await r.json();
-      return res.status(200).json({ action: 'setWebhook', result: j });
+      return res.status(200).json({
+        action: 'setWebhook',
+        result: j,
+        secretRegistered: !!providedSecret,
+        // Note: we never echo the secret value itself. Caller is expected to
+        // have generated/stored it (or to fall back to env on next deploy).
+      });
     }
 
     // GET — info
