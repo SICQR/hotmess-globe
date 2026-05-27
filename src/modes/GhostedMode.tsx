@@ -42,11 +42,12 @@ export default function GhostedMode() {
   // pointless Nearby toggle — the grid works on location anyway). Falls back
   // to recent if no GPS yet.
   const tab = position?.lat != null && position?.lng != null ? 'nearby' : 'recent';
+  const [activeFilter, setActiveFilter] = React.useState<string | null>(null);
   const { cards, isLoading } = useGhostedGrid(
     tab,
     position?.lat ?? null,
     position?.lng ?? null,
-    null
+    activeFilter,
   );
   
   const [myUserId, setMyUserId] = React.useState<string | null>(null);
@@ -140,6 +141,42 @@ export default function GhostedMode() {
             their active beacons are listed). Renders nothing when there's
             nobody to show, so the grid below always carries the page. */}
         <GhostedRecentStories currentUserEmail={myEmail} currentUserId={myUserId} />
+
+        {/* Filter chips — Brief 03 doctrine. Tap to toggle; second tap clears.
+            Filter logic lives in useGhostedGrid (server-side row filter).
+            Doctrine: no popularity counts on chips (no "ALL · 247"). */}
+        <div
+          className="px-3 pt-2 pb-1 flex gap-2 overflow-x-auto"
+          style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
+        >
+          <style dangerouslySetInnerHTML={{ __html: `.gh-filters::-webkit-scrollbar{display:none}` }} />
+          {[
+            { key: null, label: 'ALL' },
+            { key: 'online', label: 'ONLINE' },
+            { key: 'new', label: 'NEW' },
+            { key: 'looking', label: 'LOOKING' },
+            { key: 'hang', label: 'HANG' },
+            { key: 'tonight', label: 'TONIGHT' },
+          ].map((chip) => {
+            const isActive = activeFilter === chip.key || (chip.key === null && !activeFilter);
+            return (
+              <button
+                key={chip.label}
+                type="button"
+                onClick={() => setActiveFilter(chip.key === activeFilter ? null : chip.key)}
+                data-pull-refresh-ignore
+                className="shrink-0 px-3 h-7 rounded-full text-[10px] font-black uppercase tracking-wider transition-colors"
+                style={{
+                  background: isActive ? '#C8962C' : 'rgba(255,255,255,0.04)',
+                  color: isActive ? '#000' : 'rgba(255,255,255,0.55)',
+                  border: isActive ? '1px solid #C8962C' : '1px solid rgba(255,255,255,0.08)',
+                }}
+              >
+                {chip.label}
+              </button>
+            );
+          })}
+        </div>
 
         {/* Backfill prompt — signed-in users without a location point won't
             appear on Ghosted at all (RPC filter). One-shot, dismissable. */}
