@@ -28,10 +28,10 @@ Legend: ✅ included · ⚠️ limited · ❌ not included
 |---|:-:|:-:|:-:|:-:|
 | Browse the global pulse | ✅ | ✅ | ✅ | ✅ |
 | Drop beacons / day | 1 | 5 | unlimited | unlimited |
-| Beacon duration max | 1h | 4h | 12h | 24h |
-| Boos / day | 5 | 50 | unlimited | unlimited |
+| Beacon duration max | 1h | 4h | 8h | 12h |   *(any tier can manually extend; see §Beacon ritual)*
+| Boos / day | 5 | 50 | unlimited¹ | unlimited¹ |   *¹ velocity-dampened; see §Soft friction*
 | Layers / filters card | ⚠️ (Venues + People only) | ✅ all 6 | ✅ all 6 | ✅ all 6 |
-| Beacon cluster priority (top of city glow) | ❌ | ❌ | ✅ | ✅ |
+| Pulse glow amplification (enhanced atmosphere presence) | ❌ | ❌ | ✅ | ✅ |   *internal = cluster priority; never marketed as "rank higher"*
 | Custom beacon glow color | ❌ | ❌ | ✅ (3 colors) | ✅ (unlock palette) |
 
 ### Ghosted / connection
@@ -40,7 +40,7 @@ Legend: ✅ included · ⚠️ limited · ❌ not included
 | View Ghosted grid | ✅ | ✅ | ✅ | ✅ |
 | Open chats once mutual | ✅ | ✅ | ✅ | ✅ |
 | See who booed you | ⚠️ (count only) | ✅ (full list) | ✅ | ✅ |
-| Read receipts | ❌ | ❌ | ✅ | ✅ |
+| Read receipts (per-user opt-in) | ❌ | ❌ | ✅² | ✅² |   *² consent-native: any user can disable, even at CLOSE/CONVICT*
 | Voice notes | ❌ | ❌ | ✅ | ✅ |
 | 30s video DM | ❌ | ❌ | ✅ | ✅ |
 | Profile boosts (1 per week) | ❌ | ❌ | ✅ | ✅ |
@@ -50,7 +50,8 @@ Legend: ✅ included · ⚠️ limited · ❌ not included
 |---|:-:|:-:|:-:|:-:|
 | Drop SOS | ✅ | ✅ | ✅ | ✅ |
 | Trusted contacts max | 1 | 3 | unlimited | unlimited |
-| Telegram bridge SOS | ❌ | ⚠️ (1 contact) | ✅ | ✅ |
+| Telegram bridge SOS — base (1 contact, manual setup) | ✅ (verified) | ✅ | ✅ | ✅ |
+| Telegram bridge SOS — multi-contact + auto-escalation | ❌ | ❌ | ✅ | ✅ |
 | Automated check-in expiry | ❌ | ❌ | ✅ | ✅ |
 | Silent panic mode | ❌ | ❌ | ✅ | ✅ |
 | Get Out + fake call | ✅ | ✅ | ✅ | ✅ |
@@ -93,6 +94,50 @@ Legend: ✅ included · ⚠️ limited · ❌ not included
 `profiles.beta_access_until > now()` is treated as `isPremium === true` AND `isClose === true` by the gate helper.
 
 ---
+
+
+
+---
+
+## §Beacon ritual — duration philosophy (Phil 2026-05-27 adjustment)
+
+Beacons should make Pulse feel **alive, not archived**.
+
+- Default durations capped tier-by-tier (1h / 4h / 8h / 12h) prevent stale-map pollution.
+- Any user, any tier, can **manually extend** a beacon they own — capped at +50% of their tier ceiling (so a CONVICT beacon can run up to ~18h with an extension, never 24h).
+- Extension prompts at 25% remaining: *"Still going? Tap to keep it up."*
+- Beacons enter `decaying` visual state at 80% lifetime (per existing lifecycle doctrine) — encourages either extension or graceful expiry, never silent persistence.
+
+---
+
+## §Soft friction — unlimited boos doctrine
+
+"Unlimited" is technically true but socially supervised.
+
+- **Velocity dampening:** more than 20 boos in 60 seconds → 5-second cooldown between sends, with a soft prompt: *"Slow it down. Real ones land harder."*
+- **Spam heuristics:** identical message body to >10 recipients in 24h → flagged for review, sender silently rate-limited to 1 boo / 30 sec until a real human reaction lands.
+- **Diminishing visibility:** receivers who haven't engaged with a sender's boos in 7 days see new boos demoted (still delivered, less surfaced).
+- **No public counter:** sender never sees their own boo count. Removes the high-score incentive.
+
+Goal: protect culture without policing intimacy.
+
+---
+
+## §MESS dignity (visual & psychological)
+
+MESS must feel **exploratory, alive, welcomed** — never "restricted peasant mode."
+
+- No greyed-out feature lists shown to MESS users.
+- No "Locked — upgrade to use" overlays on features they can't access — those features are simply absent from their UI.
+- MESS users get FULL identity surface (avatar, bio, beacon, boos) — no visible second-class signal.
+- Upgrade prompts surface only at the moment a user hits a real limit (see `04-upgrade-surface-doctrine.md`), never as ambient noise.
+- MESS *is* a tier. It has a name. It has a vibe. It is not "the freeloader cohort."
+
+---
+
+## §Downgrade & grace (see `05-downgrade-and-grace-period-doctrine.md`)
+
+When a user drops tier (subscription lapse, beta expiry), entitlements **degrade gracefully, not punitively**. Excess data is frozen, not destroyed. 7-day grace + soft reminders. No mid-session interruption. Full rules in doc 05.
 
 ## Anti-patterns (NEVER do)
 
