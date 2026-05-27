@@ -46,17 +46,24 @@ export function useUnreadCount(): { unreadCount: number; clearTapsBadge: () => v
           .eq('active', true);
 
         if (!error && threads) {
-          const hasUnreadCountField = threads.some(
-            (t) => t.unread_count !== undefined && t.unread_count !== null
-          );
+          // 2026-05-27 Phil report: badge never lit. Root cause — chat_threads.unread_count
+          // is empty JSONB ({}) on every row because no server-side trigger increments it
+          // on chat_messages INSERT. Hook was detecting "field exists" and summing zero,
+          // never falling through to the last_message_at fallback below. Now we only trust
+          // the JSONB path when at least one row has real counter data for the current user;
+          // otherwise we fall through to the working last_message_at + localStorage path.
+          const userKey = userEmail.toLowerCase();
+          const hasRealCounters = threads.some((t) => {
+            const counts = (t.unread_count as Record<string, number>) || {};
+            return Object.entries(counts).some(([k, v]) => k.toLowerCase() === userKey && Number(v) > 0);
+          });
 
-          if (hasUnreadCountField) {
+          if (hasRealCounters) {
             const total = threads.reduce((sum, thread) => {
-              const counts = thread.unread_count as Record<string, number> || {};
-              const userKey = userEmail.toLowerCase();
+              const counts = (thread.unread_count as Record<string, number>) || {};
               const threadUnread = Object.entries(counts)
                 .filter(([k]) => k.toLowerCase() === userKey)
-                .reduce((s, [_, v]) => s + v, 0);
+                .reduce((s, [_, v]) => s + Number(v || 0), 0);
               return sum + threadUnread;
             }, 0);
             if (mountedRef.current) setChatCount(total);
@@ -157,3 +164,4 @@ export function useUnreadCount(): { unreadCount: number; clearTapsBadge: () => v
 }
 
 export default useUnreadCount;
+
