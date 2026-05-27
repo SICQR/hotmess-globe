@@ -316,17 +316,11 @@ export function PrelovedEngine({ search, className = '' }: PrelovedEngineProps) 
       }}
     >
 
-      {/* Header Actions */}
-      <div className="px-4 mt-6 flex items-center justify-between">
+      {/* Header — Phil 2026-05-27: removed duplicate Sell button.
+          Sell affordance is now ONLY the FAB (always visible) + empty-state
+          CTA (contextual). Three sell buttons on one page was confusing. */}
+      <div className="px-4 mt-6">
         <h1 className="text-xl font-black text-white uppercase tracking-tight">Marketplace</h1>
-        <button
-          onClick={() => openSheet('sell', {})}
-          className="h-10 px-5 rounded-2xl flex items-center gap-2 active:scale-95 transition-transform font-black text-xs uppercase"
-          style={{ backgroundColor: PRELOVED_BROWN, color: '#000' }}
-        >
-          <Plus className="w-4 h-4" />
-          Sell something
-        </button>
       </div>
 
       {/* Trust banner */}
