@@ -22,8 +22,14 @@ function distanceKm(a, b) {
 
 function formatDistance(km) {
   if (km == null || !Number.isFinite(km)) return '';
-  if (km < 1) return `${Math.round(km * 1000)} metres away`;
-  return `${km < 10 ? km.toFixed(1) : Math.round(km)} kilometres away`;
+  // Doctrine (Phil 2026-05-26 + sacred invariant 7): no exact tracking exposed
+  // in user-visible text. Bucket into sensed-not-measured language. Screen
+  // readers get the same protection as visual users.
+  if (km < 0.1) return 'very close';
+  if (km < 1) return 'nearby';
+  if (km < 5) return 'in the area';
+  if (km < 50) return 'across town';
+  return 'far away';
 }
 
 // Mirror of categoryColor()'s buckets, in human words for the SR announcement.
