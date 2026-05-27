@@ -41,6 +41,16 @@ export default async function handler(req, res) {
   }
 
   const { boostKey } = (await readJsonBody(req)) || {};
+
+  // 2026-05-27 Phil — trust integrity gate. Power-ups whose downstream
+  // effect is not wired must not be purchasable, even via direct API hit.
+  // Single source of truth: src/components/sheets/L2BoostShopSheet.jsx
+  // also hides these from the UI. Keep these two lists in sync.
+  const DISABLED_UNTIL_WIRED = new Set(['globe_glow', 'incognito_week', 'profile_bump']);
+  if (DISABLED_UNTIL_WIRED.has(boostKey)) {
+    return res.status(400).json({ error: 'This boost is temporarily unavailable.' });
+  }
+
   const priceId = PRICE_MAP[boostKey];
   if (!priceId) {
     return res.status(400).json({
