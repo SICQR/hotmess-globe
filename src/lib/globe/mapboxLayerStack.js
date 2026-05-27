@@ -231,11 +231,21 @@ export function addLayerStack(map, opts) {
       type: 'circle',
       source: SOURCE_IDS.public,
       // Fallback gold dot — only when not a cluster AND no category icon available.
-      filter: ['all', ['!', ['has', 'point_count']], ['!', ['has', 'beacon_category']]],
+      // 2026-05-27: marker now matches ALL single (non-clustered) beacons,
+      // not just ones missing a sprite. Old filter required beacon_category
+      // to be ABSENT, which combined with the icons layer being gated to
+      // zoom >= ICON_MIN_ZOOM (11) meant single category-bearing beacons
+      // (e.g. user-dropped Club beacons) were INVISIBLE at globe/city zoom.
+      // Now the gold dot is the always-on legibility floor; sprite icons
+      // overlay on top at street zoom. Phil 2026-05-27 — beacon in DB but
+      // not on the globe.
+      filter: ['!', ['has', 'point_count']],
       paint: {
         'circle-color': ['coalesce', ['get', 'color'], '#C8962C'],
-        'circle-radius': 6,
-        'circle-opacity': 0.92,
+        // Smaller at low zoom (cluster context), grow toward street zoom
+        // where icons take over and the marker becomes the underglow.
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, 4, 8, 6, 14, 8],
+        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 2, 0.85, 14, 0.95],
         'circle-stroke-width': 2,
         'circle-stroke-color': 'rgba(255,255,255,0.55)',
       },
