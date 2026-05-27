@@ -7,7 +7,7 @@ import { useGlobe } from '@/contexts/GlobeContext';
 import { activityTracker } from '../components/globe/ActivityTracker';
 import BeaconPreviewPanel from '../components/globe/BeaconPreviewPanel';
 import CityDataOverlay from '../components/globe/CityDataOverlay';
-import { Layers, Globe2, Bell } from 'lucide-react';
+import { Layers, Globe2, Bell, Map, Building2, Crosshair, Navigation } from 'lucide-react';
 import { useNotifCount } from '@/hooks/useNotifCount';
 import { useNavigate, useLocation} from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -100,7 +100,7 @@ function LayersSheet({ open, onClose, activeLayer, setActiveLayer }) {
 
 // Right-rail control: icons-only by default, label slides out on hover. Used for
 // the grouped vertical rail (Layers / My area / Globe) below the pinned SOS.
-function RailButton({ icon: Icon, label, onClick, badge = 0 }) {
+function RailButton({ icon: Icon, label, onClick, badge = 0, active = false }) {
   return (
     <button
       type="button"
@@ -131,6 +131,25 @@ export default function GlobePage({ embedded = false }) {
   const { notifCount, clearNotifBadge } = useNotifCount();
   const [showLayersSheet, setShowLayersSheet] = useState(false);
   const [localFocus, setLocalFocus] = useState(null);
+  const [pulseTier, setPulseTier] = useState('globe');
+  const [tierToast, setTierToast] = useState('');
+  // Tier auto-detect listener — PulseMap emits 'pulse:tier' on every moveend
+  // when tier crosses a boundary. We highlight the active rail button + show
+  // a brief atmospheric toast ("WORLDWIDE" / "IN REGION" / "IN CITY" / "NEARBY").
+  useEffect(() => {
+    const TOAST = { globe: 'WORLDWIDE', region: 'IN REGION', city: 'IN CITY', local: 'NEARBY' };
+    const handler = (e) => {
+      const t = e?.detail?.tier;
+      if (!t) return;
+      setPulseTier(t);
+      setTierToast(TOAST[t] || '');
+      window.clearTimeout(handler.__tid);
+      handler.__tid = window.setTimeout(() => setTierToast(''), 900);
+    };
+    window.addEventListener('pulse:tier', handler);
+    return () => { window.removeEventListener('pulse:tier', handler); window.clearTimeout(handler.__tid); };
+  }, []);
+
   // Flag flipped 2026-05-25: the single-engine Mapbox globe is now the default for
   // everyone. The react-globe path is being removed in the cleanup PR; this constant
   // stays only so the existing localModeEnabled gates resolve true until that lands.
@@ -514,6 +533,17 @@ export default function GlobePage({ embedded = false }) {
           </div>
         )}
 
+                {/* Tier toast — brief atmospheric label on tier change (Phil 2026-05-27) */}
+        {tierToast && (
+          <div
+            className="absolute bottom-[calc(96px+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 z-[60] pointer-events-none transition-opacity duration-300"
+            style={{ opacity: tierToast ? 1 : 0 }}
+          >
+            <div className="px-3 py-1 bg-black/70 backdrop-blur-md border border-[#C8962C]/40 rounded-full">
+              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#C8962C]">{tierToast}</span>
+            </div>
+          </div>
+        )}
         <div className="absolute top-[calc(56px+env(safe-area-inset-top,0px))] left-4 z-30 pointer-events-none">
           <div className="px-3 py-1.5 bg-black/60 border border-white/20 backdrop-blur-md rounded-full flex items-center gap-2 pointer-events-auto shadow-lg">
             <div className="w-2 h-2 rounded-full bg-[#39FF14] animate-pulse shadow-[0_0_8px_#39FF14]" />
@@ -539,10 +569,23 @@ export default function GlobePage({ embedded = false }) {
           <RailButton icon={Bell} label="Alerts" badge={notifCount} onClick={() => { clearNotifBadge(); openSheet('notification-inbox'); }} />
           <RailButton icon={Layers} label="Layers" onClick={() => setShowLayersSheet(true)} />
           {localModeEnabled && (
-            <RailButton icon={MapPin} label="My area" onClick={() => { if (pulseApiRef.current && pulseApiRef.current.flyToLocal) pulseApiRef.current.flyToLocal(); }} />
-          )}
-          {localModeEnabled && (
-            <RailButton icon={Globe2} label="Globe" onClick={() => { if (pulseApiRef.current && pulseApiRef.current.flyToGlobe) pulseApiRef.current.flyToGlobe(); }} />
+            <>
+              {/* 4-tier spatial rail — Phil 2026-05-27 (replaces binary GLOBE/LOCAL toggle).
+                  Active tier highlighted in gold; auto-updates on pinch/drag via the
+                  'pulse:tier' window event dispatched by PulseMap. */}
+              <RailButton icon={Globe2}    label="Globe"  onClick={() => pulseApiRef.current?.setTier?.('globe')}  active={pulseTier === 'globe'} />
+              <RailButton icon={Map}       label="Region" onClick={() => pulseApiRef.current?.setTier?.('region')} active={pulseTier === 'region'} />
+              <RailButton icon={Building2} label="City"   onClick={() => pulseApiRef.current?.setTier?.('city')}   active={pulseTier === 'city'} />
+              <RailButton icon={Crosshair} label="Local"  onClick={() => pulseApiRef.current?.setTier?.('local')}  active={pulseTier === 'local'} />
+              <RailButton icon={Navigation} label="Me"    onClick={() => {
+                if (!navigator.geolocation || !pulseApiRef.current?.flyTo) return;
+                navigator.geolocation.getCurrentPosition(
+                  (pos) => pulseApiRef.current.flyTo({ lat: pos.coords.latitude, lng: pos.coords.longitude, zoom: 14 }),
+                  () => {},
+                  { enableHighAccuracy: true, timeout: 8000 },
+                );
+              }} />
+            </>
           )}
         </div>
 
