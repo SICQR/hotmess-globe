@@ -85,6 +85,7 @@ const ChatMeetupPage = lazy(() => import('@/pages/ChatMeetupPage'));
 const ModerationPage = lazy(() => import('@/pages/admin/ModerationPage'));
 const FlagsAdmin    = lazy(() => import('@/pages/admin/FlagsAdmin'));
 const FunnelPage    = lazy(() => import('@/pages/admin/FunnelPage'));
+const RedeemPage    = lazy(() => import('@/pages/beta/RedeemPage'));
 const RevenueDashboard = lazy(() => import('@/pages/admin/RevenueDashboard'));
 const VerificationQueue = lazy(() => import('@/pages/admin/VerificationQueue'));
 const SOSPage = lazy(() => import('@/pages/SOSPage'));
@@ -513,6 +514,9 @@ const AuthenticatedApp = () => {
       <Route path="/admin/flags" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><FlagsAdmin /></Suspense>} />
       {/* ADMIN — v6 Funnel Dashboard */}
       <Route path="/admin/funnel" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><FunnelPage /></Suspense>} />
+      {/* Beta access — Phil 2026-05-27 — 250-user 2-week cohort */}
+      <Route path="/redeem" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><RedeemPage /></Suspense>} />
+      <Route path="/redeem/:code" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><RedeemPage /></Suspense>} />
       {/* ADMIN — D3 Revenue Dashboard */}
       <Route path="/admin/revenue" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><RevenueDashboard /></Suspense>} />
       {/* ADMIN — selfie verification queue (MEGA-3 §3.4) */}

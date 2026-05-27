@@ -89,7 +89,8 @@ export function useUserContext() {
             profile_type,
             is_verified,
             created_at,
-            last_active
+            last_active,
+            beta_access_until
           `)
           .eq('email', authUser.email)
           .single();
@@ -117,6 +118,12 @@ export function useUserContext() {
   const tier = userData?.subscription_tier || 'FREE';
   const limits = TIER_LIMITS[tier] || TIER_LIMITS.FREE;
 
+  // 2026-05-27 Phil — beta access window grants premium-equivalent rights.
+  // 250-user 2-week cohort; auto-expires per row.
+  const betaUntil = userData?.beta_access_until ? new Date(userData.beta_access_until) : null;
+  const isBetaActive = !!(betaUntil && betaUntil.getTime() > Date.now());
+  const betaMsRemaining = isBetaActive ? betaUntil.getTime() - Date.now() : 0;
+
   const computed = useMemo(() => ({
     // User info
     user: userData,
@@ -136,8 +143,11 @@ export function useUserContext() {
     // Status flags
     isLoggedIn: !!authUser,
     isLoading: loading || authLoading,
-    isPremium: tier === 'PREMIUM' || tier === 'ELITE',
+    isPremium: tier === 'PREMIUM' || tier === 'ELITE' || isBetaActive,
     isElite: tier === 'ELITE',
+    isBetaActive,
+    betaUntil,
+    betaMsRemaining,
     isVerified: userData?.is_verified || false,
     
     // Preferences
