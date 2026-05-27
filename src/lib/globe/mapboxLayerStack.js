@@ -9,6 +9,7 @@ import { resolveBeaconCategory } from '@/components/globe/beaconGlyphs';
 export const LAYER_IDS = {
   clusterCircles: 'hm-cluster-circles',
   clusterCount: 'hm-cluster-symbols',
+  beaconGlow: 'hm-beacon-glow',
   beaconMarkers: 'hm-beacon-markers',
   beaconIcons: 'hm-beacon-icons',
   selectedHalo: 'hm-selected-halo',
@@ -72,8 +73,12 @@ const snap = (n) => Math.round(n * 100) / 100;
 
 // Build the privacy-checked PUBLIC FeatureCollection. Private safety signals are
 // dropped entirely; people/preloved/etc. are snapped to a coarse grid.
-export function toPublicSafeFeatureCollection(beacons) {
+export function toPublicSafeFeatureCollection(beacons, glowUserIds) {
   const list = Array.isArray(beacons) ? beacons : [];
+  // Phil 2026-05-27 globe_glow: amplify aura ONLY for owners with an active
+  // boost. We accept a Set<string> (or null) — keeping the API tolerant means
+  // no caller has to special-case the empty-state.
+  const glowSet = (glowUserIds && typeof glowUserIds.has === 'function') ? glowUserIds : null;
   const features = [];
   for (const b of list) {
     if (!b || isPrivate(b)) continue;
@@ -126,6 +131,12 @@ export function toPublicSafeFeatureCollection(beacons) {
         priority: Number.isFinite(Number(b.priority))
           ? Number(b.priority)
           : (Number.isFinite(Number(b.intensity)) ? Number(b.intensity) : 0),
+        // Atmospheric amplification flag (Phil 2026-05-27, doctrine: like
+        // someone carrying heat, not buying billboard space). Only set when
+        // the beacon's owner has an active globe_glow boost; omitted
+        // otherwise so the L8 glow layer's ['has', 'glow'] filter stays
+        // a precise lookup, not a value check.
+        ...(glowSet && (b.owner_id || b.user_id) && glowSet.has(String(b.owner_id || b.user_id)) ? { glow: 1 } : {}),
       },
     });
   }
@@ -222,6 +233,43 @@ export function addLayerStack(map, opts) {
         'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
       },
       paint: { 'text-color': '#050507' },
+    });
+  }
+  // L8 — globe_glow atmospheric aura (Phil 2026-05-27 doctrine: amplification,
+  // NOT billboard). Only renders for beacons whose owner has an active
+  // globe_glow boost (filtered by `['has', 'glow']`). Sits beneath the
+  // marker + icon layers so the focal pin still reads first. The opacity,
+  // radius and blur are all tuned to "atmosphere", not "neon": no pulse,
+  // no animation, no opacity spikes. Future restraint clauses (subtle pulse
+  // cadence, smoother fade curve) can layer on later WITHOUT touching the
+  // base render contract.
+  if (!map.getLayer(LAYER_IDS.beaconGlow)) {
+    map.addLayer({
+      id: LAYER_IDS.beaconGlow,
+      type: 'circle',
+      source: SOURCE_IDS.public,
+      filter: ['all', ['!', ['has', 'point_count']], ['has', 'glow']],
+      paint: {
+        // Slightly warm-gold default; falls back to beacon's own colour so
+        // category-coloured beacons keep their identity inside the aura.
+        'circle-color': ['coalesce', ['get', 'color'], '#C8962C'],
+        // Atmospheric radius: ~2.5x the L9 marker dot at street zoom, scales
+        // gently across zooms so the aura is visible but never dominates.
+        // Cap at zoom 16 — beyond that the user has zoomed for detail, not vibe.
+        'circle-radius': ['interpolate', ['linear'], ['zoom'],
+          2, 8,
+          8, 14,
+          14, 22,
+          16, 26,
+        ],
+        // Heavy blur turns the circle into an aura, not a halo.
+        'circle-blur': 1.4,
+        // Opacity stays well under the marker (0.85-0.95) so the marker
+        // remains the decision-grade target. This is the single most
+        // important restraint — without it the glow becomes a billboard.
+        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 2, 0.22, 8, 0.30, 14, 0.38, 16, 0.32],
+        // No stroke — the aura is light, not edged.
+      },
     });
   }
   // L9 — individual beacons (category-coloured, capped size; no giant glow)

@@ -391,11 +391,19 @@ const AuthenticatedApp = () => {
     const tier = p.get('tier');
 
     if (bs) {
-      const L = {
-        globe_glow: 'Globe Glow', profile_bump: 'Profile Bump', vibe_blast: 'Vibe Blast',
-        incognito_week: 'Incognito Mode', extra_beacon_drop: 'Extra Beacon Drop', highlighted_message: 'Highlighted Message'
+      // Phil 2026-05-27 doctrine: one-line confirmation, no feature explanation.
+      // Each boost has its own felt copy — what the user EXPERIENCES, not what
+      // they bought. Generic 'Boost activated' fallback stays for any future
+      // boost added before its copy is locked.
+      const FELT = {
+        globe_glow: 'Your pulse is glowing tonight.',
+        profile_bump: "You're at the top of the field.",
+        vibe_blast: 'Your vibe is going out.',
+        incognito_week: "You're off the grid.",
+        extra_beacon_drop: 'Drop another. The room is listening.',
+        highlighted_message: 'Your message stands out.',
       };
-      toast.success(`${L[bs] || 'Boost'} activated! ⚡`);
+      toast.success(FELT[bs] || 'Boost activated.');
       window.history.replaceState({}, '', window.location.pathname);
     }
 
