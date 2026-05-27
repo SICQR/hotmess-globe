@@ -1254,23 +1254,10 @@ export default function L2ProfileSheet({ email, uid, id }) {
               )}
             </div>
           )}
+          {/* Share Location moved to chat-only — Phil 2026-05-27. Location sharing
+              is consent-bound and belongs inside an established conversation,
+              not as a one-tap action from any profile view. */}
           <div className="flex gap-2">
-            <button
-              onClick={handleShareLocation}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 active:scale-95 transition-all"
-              style={{
-                background: 'rgba(200,150,44,0.04)',
-                border: '0.5px solid rgba(200,150,44,0.28)',
-                borderRadius: 6,
-                color: 'rgba(255,255,255,0.72)',
-                fontSize: 11,
-                fontWeight: 500,
-                letterSpacing: '0.04em',
-              }}
-            >
-              <MapPin className="w-3.5 h-3.5" style={{ color: 'rgba(200,150,44,0.55)' }} />
-              Share location
-            </button>
             {travelTimes?.uber && (
               <button
                 onClick={() => openSheet?.('uber', {
