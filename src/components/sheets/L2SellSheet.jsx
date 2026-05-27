@@ -203,8 +203,13 @@ export default function L2SellSheet() {
   };
 
   // ---- Submit ---------------------------------------------------------------
+  // Unverified sellers ARE allowed to publish — the listing lands at
+  // status='pending_review' instead of 'active', and an admin promotes it
+  // after a quick safety pass. Old gate (Phil 2026-05-27): on a verification
+  // hard-gate the draft was lost when the user bounced to the verification
+  // sheet; nothing in the marketplace ever landed. Now both flows run in
+  // parallel — publish is never blocked, verification just unlocks 'active'.
   const handlePublish = async () => {
-    if (!isVerified) { setNeedsVerify(true); return; }
     if (!isStepValid()) return;
     setSubmitting(true);
 
@@ -269,7 +274,10 @@ export default function L2SellSheet() {
           condition: condition,
           price_pence: Math.round(parseFloat(price) * 100),
           quantity: finalQuantity,
-          status: 'active',
+          // Unverified sellers land at pending_review; admin promotes to active
+          // after a safety pass (see /admin/verification). Verified sellers go live
+          // immediately.
+          status: isVerified ? 'active' : 'pending_review',
           delivery_type: deliveryType || 'both',
           open_to_offers: openToOffers,
           pickup_notes: pickupNotes.trim() || null,
@@ -351,8 +359,12 @@ export default function L2SellSheet() {
           <CheckCircle className="w-10 h-10" style={{ color: PRELOVED_BROWN }} />
         </motion.div>
         <div>
-          <h2 className="text-xl font-black text-white uppercase">Listed</h2>
-          <p className="text-white/50 text-sm mt-2">Your listing is live. Buyers can message you now.</p>
+          <h2 className="text-xl font-black text-white uppercase">{isVerified ? 'Listed' : 'Pending review'}</h2>
+          <p className="text-white/50 text-sm mt-2">
+            {isVerified
+              ? 'Your listing is live. Buyers can message you now.'
+              : 'Submitted. We safety-check first-time sellers within a few hours — you\'ll get an email when it goes live. Complete your verification to skip the queue next time.'}
+          </p>
         </div>
         <div className="flex gap-3 w-full max-w-xs">
           <button
