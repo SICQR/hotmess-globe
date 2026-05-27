@@ -14,18 +14,23 @@
 const CANONICAL_URL = 'https://hotmessldn.com/api/telegram/bot';
 
 function authorized(req) {
-  const secret =
-    process.env.CRON_SECRET ||
-    process.env.OUTBOX_CRON_SECRET ||
-    process.env.EVENT_SCRAPER_CRON_SECRET;
-  if (!secret) return false;
+  // Accept any of the three CRON secret env-var names — Vercel may store
+  // the value under any of them per the existing convention in api/events/cron.js.
+  const candidates = [
+    process.env.CRON_SECRET,
+    process.env.OUTBOX_CRON_SECRET,
+    process.env.EVENT_SCRAPER_CRON_SECRET,
+  ].filter(Boolean);
+  if (candidates.length === 0) return false;
   const header = req.headers?.authorization || req.headers?.Authorization;
   const m = header && String(header).match(/^Bearer\s+(.+)$/i);
   const t = m?.[1] || null;
-  const q =
-    (req.query && req.query.secret) ||
-    new URL(req.url || '', 'http://x').searchParams.get('secret');
-  return t === secret || q === secret;
+  let q = (req.query && req.query.secret) || null;
+  if (!q) {
+    try { q = new URL(req.url || '', 'http://x').searchParams.get('secret'); }
+    catch { q = null; }
+  }
+  return candidates.some((s) => t === s || q === s);
 }
 
 export default async function handler(req, res) {
