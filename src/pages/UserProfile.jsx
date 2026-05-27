@@ -30,7 +30,7 @@ const CARD_BG = '#1C1C1E';
 function Shell({ children }) {
   return (
     <div
-      className="min-h-screen w-full overflow-y-auto pb-36"
+      className="min-h-dvh w-full overflow-y-auto pb-48"
       style={{ background: ROOT_BG, color: '#fff' }}
     >
       {children}
