@@ -121,14 +121,30 @@ export function useGlobeRealtime() {
 
   const fetchBeacons = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('beacons')
-        .select(
-          'id, code, type, beacon_category, title, status, geo_lat, geo_lng, city_slug, ' +
-          'globe_color, globe_pulse_type, globe_size_base, intensity, checkin_count, ' +
-          'venue_id, ends_at, starts_at, description, owner_id'
-        )
-        .eq('status', 'active');
+      // Fetch in parallel:
+      //   1. Temporary user beacons (beacons table — 4hr cap per RLS)
+      //   2. Permanent venues (pulse_places — clubs/saunas/cafes/recovery/cities)
+      // Both render on the same map layer through the same beacon model so a
+      // single source-of-truth feeds toPublicSafeFeatureCollection.
+      // Phil 2026-05-27: pulse_places had 81 rows that were never on the globe
+      // because this hook only read beacons. Fixed.
+      const [{ data, error }, { data: placesData, error: placesError }] = await Promise.all([
+        supabase
+          .from('beacons')
+          .select(
+            'id, code, type, beacon_category, title, status, geo_lat, geo_lng, city_slug, ' +
+            'globe_color, globe_pulse_type, globe_size_base, intensity, checkin_count, ' +
+            'venue_id, ends_at, starts_at, description, owner_id'
+          )
+          .eq('status', 'active'),
+        supabase
+          .from('pulse_places')
+          .select('slug, name, type, lat, lng, priority, is_active, notes')
+          .eq('is_active', true),
+      ]);
+      if (placesError) {
+        console.warn('[GlobeRealtime] pulse_places fetch failed:', placesError.message);
+      }
       if (error) {
         console.warn('[GlobeRealtime] beacons fetch failed:', {
           message: error.message,
@@ -141,8 +157,44 @@ export function useGlobeRealtime() {
       if (!mountedRef.current) return;
 
       const now = new Date();
-      setBeacons(
-        (data || [])
+      // Map pulse_places → beacon shape. type ∈ (club, zone, city, curated, recovery)
+      // — known sprite categories pass through, the rest fall back to gold marker.
+      const PLACE_TYPE_TO_SPRITE: Record<string, string | null> = {
+        club: 'club', sauna: 'sauna', gym: 'gym', cafe: 'cafe',
+        clinic: 'clinic', leather: 'leather', cruising: 'cruising', market: 'market',
+        recovery: 'aftercare', // recovery places get the aftercare sprite
+        city: 'club',   // city anchors visible at globe scale — paint as club for visibility
+        zone: null, curated: null,
+      };
+      const placeBeacons = (placesData || []).map((p: Record<string, unknown>) => {
+        const placeType = String(p.type || '').toLowerCase();
+        const sprite = PLACE_TYPE_TO_SPRITE[placeType] ?? null;
+        return {
+          id: 'place-' + String(p.slug),
+          code: String(p.slug),
+          type: 'venue',
+          beacon_category: sprite || 'venue',
+          title: String(p.name || ''),
+          status: 'active',
+          geo_lat: Number(p.lat),
+          geo_lng: Number(p.lng),
+          city_slug: null,
+          globe_color: BEACON_VISUALS[sprite || '']?.color || '#C8962C',
+          globe_pulse_type: BEACON_VISUALS[sprite || '']?.pulse || 'steady',
+          globe_size_base: BEACON_VISUALS[sprite || '']?.size || 1.0,
+          intensity: Number(p.priority) || 1,
+          checkin_count: 0,
+          venue_id: null,
+          ends_at: null,           // persistent — never expires
+          starts_at: null,
+          description: String(p.notes || ''),
+          owner_id: null,
+        };
+      });
+
+      setBeacons([
+        ...placeBeacons,
+        ...(data || [])
           .filter((b: Record<string, unknown>) => !b.ends_at || new Date(String(b.ends_at)) > now)
           .map((b: Record<string, unknown>) => ({
             id: String(b.id),
@@ -164,8 +216,8 @@ export function useGlobeRealtime() {
             starts_at: b.starts_at ? String(b.starts_at) : null,
             description: b.description ? String(b.description) : null,
             owner_id: b.owner_id ? String(b.owner_id) : null,
-          }))
-      );
+          })),
+      ]);
     } catch (e) {
       console.warn(
         '[GlobeRealtime] beacons fetch threw:',
@@ -295,3 +347,4 @@ export function useGlobeRealtime() {
 
   return { cityHeat, beacons, globeEvents };
 }
+

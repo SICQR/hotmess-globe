@@ -236,22 +236,25 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
             // on small phones; the content area below scrolls. PR fixed Phil's
             // 2026-05-27 report that the modal was pushing off the top of the
             // screen because the 9-cat picker + location UI was tall.
-            style={{ maxHeight: '88vh' }}
+            style={{ maxHeight: '75vh' }}
             className="fixed inset-x-0 bottom-0 z-[131] bg-[#0A0A0A] border-t border-white/10 rounded-t-[32px] flex flex-col overflow-hidden"
           >
 
-            <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto my-3 flex-shrink-0" />
-
-            <div className="flex-1 overflow-y-auto px-6 pb-[calc(80px+env(safe-area-inset-bottom,20px))]">
-
-            <div className="flex items-center justify-between mb-6">
+            {/* Drag handle + DROP BEACON header — pinned outside the scroll
+                area so the user can always see what sheet they're in and grab
+                the drag pip to dismiss. Phil 2026-05-27: sheet was still scrolling
+                title off-screen because the header was inside the overflow-y-auto. */}
+            <div className="flex-shrink-0 px-6 pt-3 pb-4 border-b border-white/5">
+              <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-3" />
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#C8962C]/10 rounded-xl flex items-center justify-center">
-                  <MapPin className="w-5 h-5 text-[#C8962C]" />
+                <div className="w-9 h-9 bg-[#C8962C]/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <MapPin className="w-4.5 h-4.5 text-[#C8962C]" />
                 </div>
-                <h3 className="text-xl font-black italic tracking-tight text-white uppercase">Drop Beacon</h3>
+                <h3 className="text-base font-black italic tracking-tight text-white uppercase">Drop Beacon</h3>
               </div>
             </div>
+
+            <div className="flex-1 overflow-y-auto px-6 pt-4 pb-[calc(80px+env(safe-area-inset-bottom,20px))]">
 
             <div className="bg-white/5 border border-white/5 rounded-2xl p-4 mb-8 flex gap-3">
               <Info className="w-5 h-5 text-[#C8962C] flex-shrink-0 mt-0.5" />
@@ -379,6 +382,7 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
     </AnimatePresence>
   );
 }
+
 
 
 
