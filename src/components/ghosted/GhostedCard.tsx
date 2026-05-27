@@ -26,7 +26,9 @@ import {
   BEACON_GLYPHS,
   type BeaconCategory,
 } from '@/components/globe/beaconGlyphs';
-import { signalStrengthFromMeters } from '@/lib/signalStrength';
+// signalStrengthFromMeters import removed — replaced with travelTime.personDefaultCue
+// per Phil brief 2026-05-26 Phase 2 (bucketed walk-only cue, no signal jargon).
+import { personDefaultCue } from '@/lib/travelTime';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -141,13 +143,14 @@ function GhostedCardInner({
     : null;
   const ringAlpha = beacon?.lifecycle === 'decaying' ? 0.55 : 0.95;
 
-  // Doctrine (Phil 2026-05-26): the Ghosted grid is a proximity radar, not
-  // a spreadsheet. Raw "<200m · Very close" reads as debug copy. Replace
-  // with signal-strength language. Consent invariant preserved: non-mutual
-  // strangers never get the "LOCKED" tier (helper coarsens to STRONG
-  // SIGNAL maximum for them).
-  const signal = signalStrengthFromMeters(distanceM, { isMutual: !!isMutual });
-  const mergedLine = signal.label;
+  // Doctrine v2 (Phil 2026-05-26 Phase 2): bucketed walk-only travel cue.
+  // No signal jargon. No raw metres. "Travel time" expand button lives in
+  // the preview sheet (L2GhostedPreviewSheet), not on grid tiles — tiles
+  // stay quiet. Suppress entirely when distance unavailable OR > 30km
+  // (silence beats a wrong number).
+  const mergedLine = (distanceM != null && Number.isFinite(distanceM) && distanceM <= 30000)
+    ? personDefaultCue(distanceM)
+    : null;
 
   return (
     <motion.button
