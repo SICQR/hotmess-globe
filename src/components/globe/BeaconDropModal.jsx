@@ -89,10 +89,11 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
         status: 'active',
         geo_lat: lat,
         geo_lng: lng,
-        // Mirror to latitude/longitude for legacy mapboxLayerStack payload
-        // (toPublicSafeFeatureCollection reads `lat || location_lat`).
-        latitude: lat,
-        longitude: lng,
+        // NOTE: do NOT set latitude/longitude — those are GENERATED columns
+        // (derived from geo_lat/geo_lng by Postgres). Postgres errors out
+        // with 'cannot insert a non-DEFAULT value into column latitude' if
+        // we try. PR #518 added them by mistake — Phil reported "Failed to
+        // drop beacon, try a different location" on every attempt since.
         starts_at: new Date().toISOString(),
         ends_at: expiresAt,
         intensity: 80,
@@ -236,7 +237,7 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
             // on small phones; the content area below scrolls. PR fixed Phil's
             // 2026-05-27 report that the modal was pushing off the top of the
             // screen because the 9-cat picker + location UI was tall.
-            style={{ maxHeight: '75vh' }}
+            style={{ maxHeight: '70dvh' }}  // dvh = dynamic viewport height; accounts for mobile browser chrome
             className="fixed inset-x-0 bottom-0 z-[131] bg-[#0A0A0A] border-t border-white/10 rounded-t-[32px] flex flex-col overflow-hidden"
           >
 
@@ -382,6 +383,7 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
     </AnimatePresence>
   );
 }
+
 
 
 
