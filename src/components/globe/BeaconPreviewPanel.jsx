@@ -36,16 +36,28 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull, onView
           if (offset.y > 100 || velocity.y > 500) onClose();
         }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="fixed bottom-0 left-0 right-0 z-[200] bg-[#0A0A0A] border-t border-white/10 rounded-t-[32px] px-6 pt-4 pb-[calc(80px+env(safe-area-inset-bottom,20px))] shadow-[0_-20px_50px_rgba(0,0,0,0.8)] touch-none"
-        style={{ height: 'auto', minHeight: '40vh' }}
+        className="fixed left-2 right-2 z-[200] bg-[#0A0A0A]/95 backdrop-blur-md border border-white/10 rounded-2xl px-4 pt-3 pb-3 shadow-[0_-12px_30px_rgba(0,0,0,0.6)] touch-none"
+        style={{
+          height: 'auto',
+          maxHeight: '38vh',
+          overflowY: 'auto',
+          // 2026-05-27 Phil — lift above the FAB cluster (z-150) + rail (z-30) +
+          // beacon-drop button (z-40) + bottom nav. Was full-width sheet covering
+          // everything. Now a floating card that sits just above the FAB zone so
+          // the user can still see online indicator, drop beacons, use the rail.
+          bottom: 'calc(168px + env(safe-area-inset-bottom, 0px))',
+          maxWidth: 'min(420px, calc(100vw - 16px))',
+          marginLeft: 'auto',
+          marginRight: 'auto',
+        }}
       >
         {/* Drag Handle */}
-        <div className="flex justify-center py-4">
-          <div className="w-12 h-1.5 bg-white/10 rounded-full" />
+        <div className="flex justify-center py-1.5">
+          <div className="w-10 h-1 bg-white/10 rounded-full" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center"

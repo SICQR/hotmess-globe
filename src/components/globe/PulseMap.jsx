@@ -415,7 +415,36 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
                   try { map.flyTo({ center: [c.lng, c.lat], zoom: LOCAL_ZOOM, duration: dur, essential: true }); } catch (e) {}
                 },
                 flyToGlobe: () => {
-                  try { const cc = map.getCenter(); map.flyTo({ center: [cc.lng, cc.lat], zoom: GLOBE_ZOOM, duration: dur, essential: true }); } catch (e) {}
+                  try { const cc = map.getCenter(); map.flyTo({ center: [cc.lng, cc.lat], zoom: GLOBE_ZOOM, pitch: TIER_PITCH.globe, duration: dur, essential: true }); } catch (e) {}
+                },
+                flyToRegion: () => {
+                  const u = userLocRef.current;
+                  const c = (u && Number.isFinite(Number(u.lat))) ? { lat: Number(u.lat), lng: Number(u.lng) } : (() => { const cc = map.getCenter(); return { lat: cc.lat, lng: cc.lng }; })();
+                  try { map.flyTo({ center: [c.lng, c.lat], zoom: REGION_ZOOM, pitch: TIER_PITCH.region, duration: dur, essential: true }); } catch (e) {}
+                },
+                flyToCity: () => {
+                  const u = userLocRef.current;
+                  const c = (u && Number.isFinite(Number(u.lat))) ? { lat: Number(u.lat), lng: Number(u.lng) } : (() => { const cc = map.getCenter(); return { lat: cc.lat, lng: cc.lng }; })();
+                  try { map.flyTo({ center: [c.lng, c.lat], zoom: CITY_ZOOM, pitch: TIER_PITCH.city, duration: dur, essential: true }); } catch (e) {}
+                },
+                // 2026-05-27 Phil — single setTier entry point for the 4-button rail.
+                // Maps tier string -> the right flyTo (current center, current user loc).
+                setTier: (tier) => {
+                  const t = String(tier || '').toLowerCase();
+                  const pitch = TIER_PITCH[t] ?? TIER_PITCH.globe;
+                  const zoom = t === 'globe' ? GLOBE_ZOOM
+                             : t === 'region' ? REGION_ZOOM
+                             : t === 'city' ? CITY_ZOOM
+                             : t === 'local' ? LOCAL_ZOOM
+                             : GLOBE_ZOOM;
+                  const u = userLocRef.current;
+                  const c = (u && Number.isFinite(Number(u.lat))) ? { lat: Number(u.lat), lng: Number(u.lng) } : (() => { const cc = map.getCenter(); return { lat: cc.lat, lng: cc.lng }; })();
+                  try { map.flyTo({ center: [c.lng, c.lat], zoom, pitch, duration: dur, essential: true }); } catch (e) {}
+                },
+                currentTier: () => {
+                  let z = GLOBE_ZOOM;
+                  try { z = map.getZoom(); } catch (e) {}
+                  return tierForZoom(z);
                 },
                 // The right-side toggle: dive to local when we're at globe scale,
                 // pull back out to the globe when we're already down at street.
