@@ -4,9 +4,12 @@ import { useNavigate } from 'react-router-dom';
 
 import { MapPin, HeartHandshake, UserCircle2 } from 'lucide-react';
 import { createPageUrl } from '../../utils';
+import { ProximityRow } from '@/components/ui/ProximityRow';
+import { useGPS } from '@/hooks/useGPS';
 
 export default function BeaconPreviewPanel({ beacon, onClose, onViewFull, onViewProfile }) {
   const navigate = useNavigate();
+  const { position: viewerPos } = useGPS();
   if (!beacon) return null;
 
   const isPerson = beacon.kind === 'person';
@@ -109,6 +112,24 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull, onView
                     {readable}
                   </span>
                 </div>
+              );
+            })()}
+
+            {/* Proximity travel cues (Phil brief 2026-05-26). Renders nothing
+                when viewer location is missing, stale (>2h), or >50km away. */}
+            {(() => {
+              const venueLat = Number(beacon.lat ?? beacon.location_lat ?? beacon.geo_lat);
+              const venueLng = Number(beacon.lng ?? beacon.location_lng ?? beacon.geo_lng);
+              if (!Number.isFinite(venueLat) || !Number.isFinite(venueLng)) return null;
+              return (
+                <ProximityRow
+                  type="venue"
+                  venueLat={venueLat}
+                  venueLng={venueLng}
+                  viewerLat={viewerPos?.lat ?? null}
+                  viewerLng={viewerPos?.lng ?? null}
+                  locationUpdatedAt={viewerPos?.timestamp ?? null}
+                />
               );
             })()}
 
