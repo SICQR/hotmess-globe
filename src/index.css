@@ -4,11 +4,24 @@
 
 @layer base {
   :root {
-    /* Dynamic viewport height (set by JS for mobile browser chrome) */
+    /* Dynamic viewport height — dvh accounts for mobile browser chrome
+       (Safari address bar, Android tab bar) without needing JS resize listeners.
+       vh fallback for legacy browsers; older WebKit ignores dvh and falls through.
+       2026-05-27 Phil: sheets pushing off the top on iPhone. */
     --vh: 1vh;
     --vvh: 1vh;
     --real-vh: 100vh;
     --visual-vh: 100vh;
+  }
+
+  /* dvh is supported in iOS Safari 15.4+, Chrome 108+, Firefox 101+.
+     When supported, override the variables — content sizes to the visible
+     viewport even as the browser chrome shows/hides. */
+  @supports (height: 100dvh) {
+    :root {
+      --real-vh: 100dvh;
+      --visual-vh: 100dvh;
+    }
     
     /* Safe area insets (fallback values) */
     --sat: env(safe-area-inset-top, 0px);
@@ -958,3 +971,4 @@
   }
   #root::after { display: none; }
 }
+
