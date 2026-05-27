@@ -76,9 +76,114 @@ Rename PR is owed. Doctrine docs ship first so the rename PR has a clear target.
 
 ---
 
+
+
+---
+
+## Sacred Invariant: HOTMESS never sells symbolic capability
+
+**Locked Phil 2026-05-27 after the power-up vapourware audit.**
+
+If a user pays for a feature, the effect must be:
+
+- **observable** — the user can see / feel / hear / count the difference
+- **experiential** — it changes their actual moment, not just a database row
+- **truthful** — the displayed state matches the real state
+- **operational** — it does the thing it says it does, every time
+
+This governs boosts, subscriptions, visibility, safety, identity, moderation, and commerce.
+
+**Forbidden patterns** (each one a real instance caught in audit):
+
+- Database row written but no renderer reads it (e.g. globe_glow vapourware)
+- UI label flipped to "Active" without behavioural change (e.g. incognito-as-label-only)
+- Feature gate accepts boost but engine never plumbed (e.g. profile_bump dead-wired)
+- Single-use credit with no decrement (effectively infinite use for a token price)
+- Tier upgrade that grants nothing the user couldn't already do
+
+**Detection ritual:** every monetised feature gets a single end-to-end test answering:
+*"If I pay for this, what does another user / my own future session OBSERVE differently?"*
+If the answer is "nothing" or "a label changed," it does not ship.
+
+
 ## Cross-references
 
 - `01-relationship-permissions-matrix.md` — what each state can DO
 - `02-membership-entitlement-matrix.md` — what each tier UNLOCKS
 - `03-identity-system-spec.md` — what each profile SHOWS (badges, rings, streaks, XP)
 - `04-upgrade-surface-doctrine.md` — when / how to ask for the upgrade
+
+
+---
+
+## Tone doctrine — voice rules for every surface
+
+**Locked Phil 2026-05-27.** Apply everywhere copy is written — app, invites, push notifications, emails, marketing.
+
+HOTMESS voice should feel:
+
+- confident
+- slightly dangerous
+- emotionally literate
+- understated
+- lived-in
+- *not* trying to sound edgy
+
+The product is already the atmosphere. **The copy doesn't need to cosplay it.**
+
+### Avoid (tells someone we're outside the world looking in)
+
+- "actually"
+- "no bullshit"
+- "hits different"
+- "for the chase"
+- "dirty" used performatively
+- startup swagger
+- over-explaining features emotionally
+- oversexualised marketing copy
+- fake underground energy
+
+### Prefer (tells someone we're already inside the world)
+
+- "You're in."
+- "Stay close."
+- "See who's still around."
+- "The pulse is live."
+- "Trusted circle."
+- "Aftercare available."
+- "Tonight's moving."
+- "You made it home?"
+- "Forever. Sacred."
+- implication > exposition
+- restraint > emphasis
+- ritual language > feature lists
+- nightlife realism > marketing tone
+
+### Cultural truth
+
+> You do not need to convince people HOTMESS is interesting. The product itself is strange enough, coherent enough, emotionally differentiated enough.
+
+The marketing tone can relax. Confidence comes from not needing to perform.
+
+### Application — beta invite v3 (canonical)
+
+```
+HOTMESS is open.
+
+14 days free.
+No card.
+First 250 get the Founding 250 badge permanently.
+
+Map. Ghosted. Radio. SOS. Aftercare.
+The whole thing.
+
+Built for the nights that blur a bit at the edges.
+
+If you know, you know.
+
+https://hotmessldn.com/redeem/BETA-HOTMESS
+
+— Phil
+```
+
+This replaces all earlier invite drafts. Any future invite copy follows this register.
