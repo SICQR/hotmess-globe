@@ -29,8 +29,19 @@ function escapeHtml(s) {
   ));
 }
 
-const GLOBE_ZOOM = 2.2;   // macro: curvature + cluster visible
-const LOCAL_ZOOM = 15;    // micro: street detail + individual blooms
+// 4-tier spatial model (Phil 2026-05-27): GLOBE → REGION → CITY → LOCAL.
+// Each tier has its own pitch so the camera feels atmospheric, not geopolitical.
+const GLOBE_ZOOM = 2.2;
+const REGION_ZOOM = 5.5;
+const CITY_ZOOM = 9.5;
+const LOCAL_ZOOM = 14;
+const TIER_PITCH = { globe: 15, region: 10, city: 30, local: 45 };
+function tierForZoom(z) {
+  if (z < 4) return 'globe';
+  if (z < 7) return 'region';
+  if (z < 12) return 'city';
+  return 'local';
+}
 const LONDON = { lat: 51.5074, lng: -0.1278 };
 
 // Cities that have an editorial profile (district_editorial_profiles). That table
@@ -107,6 +118,19 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
         // small (i) so it's unobtrusive. The small Mapbox logo stays (also required).
         try { map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right'); } catch (e) { /* non-fatal */ }
         map.on('error', () => { /* keep graceful; never throw */ });
+
+        // Tier auto-detect — emit current tier on every move so the rail UI
+        // can highlight whichever tier the user is in (after pinch/drag too).
+        let lastTier = tierForZoom(GLOBE_ZOOM);
+        map.on('moveend', () => {
+          const t = tierForZoom(map.getZoom());
+          if (t !== lastTier) {
+            lastTier = t;
+            if (typeof window !== 'undefined') {
+              try { window.dispatchEvent(new CustomEvent('pulse:tier', { detail: { tier: t } })); } catch (_) {}
+            }
+          }
+        });
 
         // Run setup on style.load (style parsed) rather than 'load' (which waits for
         // the first tile batch): the dark base + atmosphere + controls appear fast and

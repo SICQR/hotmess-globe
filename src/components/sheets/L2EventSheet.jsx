@@ -13,6 +13,7 @@
  * - Related events
  */
 
+import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
@@ -302,7 +303,7 @@ export default function L2EventSheet({ id }) {
             {/* Mini map or directions button */}
             {(event.lat && event.lng) && (
               <a
-                href={`https://maps.google.com/?q=${event.lat},${event.lng}`}
+                href="/pulse" onClick={(e) => { e.preventDefault(); navigate('/pulse', { state: { flyTo: { lat: event.lat, lng: event.lng, zoom: 14 } } }); }}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-3 flex items-center gap-2 text-[#00C2E0] text-sm hover:underline"
