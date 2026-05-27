@@ -137,7 +137,8 @@ export default function L2NotificationSettingsSheet() {
     if (!userId) return null;
     // Reuse existing token if one is already pending
     if (profile?.telegram_link_token) {
-      return `https://t.me/HOTMESSBot?start=${profile.telegram_link_token}`;
+      const bot1 = ((import.meta as any).env?.VITE_TELEGRAM_BOT_USERNAME || 'HotmessAuthBot').replace(/^@/, '');
+      return `https://t.me/${bot1}?start=${profile.telegram_link_token}`;
     }
     const token =
       typeof crypto !== 'undefined' && crypto.randomUUID
@@ -152,7 +153,8 @@ export default function L2NotificationSettingsSheet() {
       return null;
     }
     setProfile((p) => (p ? { ...p, telegram_link_token: token } : p));
-    return `https://t.me/HOTMESSBot?start=${token}`;
+    const bot2 = ((import.meta as any).env?.VITE_TELEGRAM_BOT_USERNAME || 'HotmessAuthBot').replace(/^@/, '');
+    return `https://t.me/${bot2}?start=${token}`;
   };
 
   const openTelegram = async () => {
