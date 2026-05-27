@@ -130,10 +130,99 @@ async function createShopifyOrder(session) {
 async function processOrderCompletion(session, eventType, req) {
   const orderId = session.metadata?.order_id;
   const stripeType = session.metadata?.type;
+  const boostKey = session.metadata?.boost_key;
 
-  console.log(`[Webhook] Processing ${eventType} (Type: ${stripeType})`);
+  console.log(`[Webhook] Processing ${eventType} (Type: ${stripeType}, boost: ${boostKey || 'n/a'})`);
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  // ── Handle Power-Up (Boost) Purchases ──────────────────────────────────
+  // 2026-05-27 Phil — CRITICAL FIX. Until now boost_key metadata was set on
+  // Stripe Checkout sessions by create-boost-checkout.js but NEVER handled
+  // here. Every power-up purchase since launch has been money taken with
+  // zero row written to user_active_boosts (verified: 0 rows in prod DB).
+  // The client-side toast.success('boost activated!') in App.jsx was a lie.
+  if (boostKey) {
+    const userId = session.metadata?.user_id;
+    if (!userId) {
+      console.error('[Webhook] boost purchase missing user_id metadata');
+      return;
+    }
+
+    // Idempotency — Stripe webhook can retry. stripe_payment_intent_id is unique.
+    const paymentIntentId = session.payment_intent || session.id;
+
+    // Read the catalog row to know the duration.
+    const { data: catalog } = await supabase
+      .from('user_boost_types')
+      .select('key, label, duration_hours')
+      .eq('key', boostKey)
+      .maybeSingle();
+
+    if (!catalog) {
+      console.error(`[Webhook] unknown boost_key '${boostKey}' — not in user_boost_types catalog`);
+      return;
+    }
+
+    // Timed boosts → expires_at = now + duration_hours.
+    // Single-use credits (duration_hours null) → 1-year shelf life so client
+    // can still surface them as "available" until consumed.
+    const hours = catalog.duration_hours ?? (365 * 24);
+    const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+
+    // Check for existing same payment_intent (idempotent retry).
+    const { data: existing } = await supabase
+      .from('user_active_boosts')
+      .select('id')
+      .eq('stripe_payment_intent_id', paymentIntentId)
+      .maybeSingle();
+
+    if (existing?.id) {
+      console.log(`[Webhook] boost ${boostKey} already credited for payment ${paymentIntentId} (idempotent retry)`);
+      return;
+    }
+
+    const { error: insErr } = await supabase
+      .from('user_active_boosts')
+      .insert({
+        user_id: userId,
+        boost_key: boostKey,
+        purchased_at: new Date().toISOString(),
+        expires_at: expiresAt,
+        stripe_payment_intent_id: paymentIntentId,
+      });
+
+    if (insErr) {
+      console.error(`[Webhook] boost insert failed for user ${userId} key ${boostKey}:`, insErr.message);
+      return;
+    }
+
+    // Analytics — fire boost_activated for the funnel
+    try {
+      await supabase.from('analytics_events').insert({
+        user_id: userId,
+        event_name: 'boost_activated',
+        category: 'commerce',
+        label: boostKey,
+        value: Number(session.amount_total ? session.amount_total / 100 : 0) || null,
+        properties: {
+          boost_key: boostKey,
+          duration_hours: catalog.duration_hours,
+          expires_at: expiresAt,
+          stripe_session_id: session.id,
+          payment_intent: paymentIntentId,
+          amount_total: session.amount_total ?? null,
+          currency: session.currency || 'gbp',
+        },
+      });
+    } catch (anErr) {
+      console.error('[Webhook] boost analytics insert fail:', anErr?.message);
+    }
+
+    console.log(`[Webhook] boost '${boostKey}' credited to user ${userId}, expires ${expiresAt}`);
+    return;
+  }
+
 
   // ── Handle Membership Upgrades ──────────────────────────────────────────
   if (stripeType === 'membership') {
