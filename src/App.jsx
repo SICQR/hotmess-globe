@@ -85,6 +85,8 @@ const ChatMeetupPage = lazy(() => import('@/pages/ChatMeetupPage'));
 const ModerationPage = lazy(() => import('@/pages/admin/ModerationPage'));
 const FlagsAdmin    = lazy(() => import('@/pages/admin/FlagsAdmin'));
 const FunnelPage    = lazy(() => import('@/pages/admin/FunnelPage'));
+const AdminFeedbackPage = lazy(() => import('@/pages/admin/AdminFeedbackPage'));
+const PulseFeedbackButton = lazy(() => import('@/components/feedback/PulseFeedbackButton').then(m => ({ default: m.PulseFeedbackButton || m.default })).catch(() => ({ default: () => null })));
 const RedeemPage    = lazy(() => import('@/pages/beta/RedeemPage'));
 const RevenueDashboard = lazy(() => import('@/pages/admin/RevenueDashboard'));
 const VerificationQueue = lazy(() => import('@/pages/admin/VerificationQueue'));
@@ -514,6 +516,7 @@ const AuthenticatedApp = () => {
       <Route path="/admin/flags" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><FlagsAdmin /></Suspense>} />
       {/* ADMIN — v6 Funnel Dashboard */}
       <Route path="/admin/funnel" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><FunnelPage /></Suspense>} />
+      <Route path="/admin/feedback" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><AdminFeedbackPage /></Suspense>} />
       {/* Beta access — Phil 2026-05-27 — 250-user 2-week cohort */}
       <Route path="/redeem" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><RedeemPage /></Suspense>} />
       <Route path="/redeem/:code" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><RedeemPage /></Suspense>} />
@@ -753,6 +756,12 @@ function OSArchitecture() {
 
       {/* Music Mini Player — sits just above radio player or nav (Z-50) */}
       <MusicMiniPlayer />
+
+      {/* Pulse Feedback floating button — Phil-locked V1. Lazy + error-boundary
+          wrapped internally. Failure = silent no-op, never blocks route render. */}
+      <Suspense fallback={null}>
+        <PulseFeedbackButton />
+      </Suspense>
 
       {/* Global Ticker was moved to the very top to prevent hiding Shopping buttons */}
 
