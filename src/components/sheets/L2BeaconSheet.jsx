@@ -938,7 +938,7 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
               Directions
             </button>
             <button
-              onClick={() => window.open(`https://maps.google.com/?q=${lat},${lng}`, '_blank')}
+              onClick={() => navigate('/pulse', { state: { flyTo: { lat, lng, zoom: 14 } } })}
               className="flex-1 bg-[#1C1C1E] text-white font-bold text-sm rounded-2xl py-3 flex items-center justify-center gap-2 border border-white/10 active:scale-95 transition-transform"
             >
               <ExternalLink className="w-4 h-4 text-white/40" />
