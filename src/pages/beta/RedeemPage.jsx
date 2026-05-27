@@ -49,8 +49,12 @@ export default function RedeemPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        // Not signed in — bounce to auth with a return path that re-tries the redemption.
-        navigate(`/auth?next=${encodeURIComponent(`/redeem/${encodeURIComponent(c)}`)}`);
+        // Not signed in — store pending code (survives onboarding) + bounce to auth.
+        // Auth.jsx supports ?redirect= but onboarding can swallow it, so localStorage
+        // is the resilient fallback. After onboarding completes, App.jsx checks for
+        // hm_pending_beta_code and redirects to /redeem/CODE to fire the claim.
+        try { localStorage.setItem('hm_pending_beta_code', c); } catch { /* ignore */ }
+        navigate(`/auth?redirect=${encodeURIComponent(`/redeem/${encodeURIComponent(c)}`)}`);
         return;
       }
       const res = await fetch('/api/beta/redeem', {
@@ -75,6 +79,7 @@ export default function RedeemPage() {
         trackEvent('beta_redeem_failed', { category: 'beta', code: c, reason: json.error });
         return;
       }
+      try { localStorage.removeItem('hm_pending_beta_code'); } catch { /* ignore */ }
       setUntil(json.beta_access_until);
       setStatus('success');
       trackEvent('beta_redeem_success', { category: 'beta', code: c });
