@@ -12,6 +12,7 @@ import { createClient } from '@supabase/supabase-js';
 import webPush from 'web-push';
 import { json, getEnv } from '../shopify/_utils.js';
 import { sendTelegramMessage } from '../../src/lib/notifications/telegramSend.js';
+import { TYPE_PRIORITY, PRIORITY, tierFor } from '../../src/lib/notifications/notificationPriority.js';
 
 // ── Notifications hardening constants (spec §3, §4, §7) ──────────────────────
 const STALE_SIGNAL_TYPES = ['Movement', 'Arrival', 'Moment'];
@@ -28,6 +29,22 @@ const PUSH_PRIORITY = {
   System:   5,
 };
 const SAFETY_TYPES = ['sos', 'get_out', 'land_time_miss']; // bypass all caps
+
+/**
+ * isCriticalType — uses canonical TYPE_PRIORITY first (PR 4 of notification
+ * stack), falls back to legacy SAFETY_TYPES substring match for signal_type
+ * values that predate the taxonomy. Cowork dispatch T6 (Phil 2026-05-26).
+ */
+function isCriticalType(typeOrSignalType) {
+  if (!typeOrSignalType) return false;
+  const t = String(typeOrSignalType).toLowerCase();
+  if (TYPE_PRIORITY[t] === PRIORITY.CRITICAL) return true;
+  return SAFETY_TYPES.some((s) => t.includes(s));
+}
+function isAmbientType(typeOrSignalType) {
+  if (!typeOrSignalType) return true; // default AMBIENT per taxonomy
+  return tierFor(typeOrSignalType) === PRIORITY.AMBIENT;
+}
 
 const supabaseUrl = getEnv('SUPABASE_URL', ['VITE_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_URL']);
 const supabaseServiceKey = getEnv('SUPABASE_SERVICE_ROLE_KEY');
@@ -59,10 +76,14 @@ export default async function handler(req, res) {
 
   try {
     // Fetch pending/queued notifications (both status values used in codebase)
+    // T7 (Phil 2026-05-26): skip rows still inside a retry backoff window.
+    // retry_after IS NULL → never deferred; retry_after <= now() → due to retry.
+    const nowIso = new Date().toISOString();
     const { data: queuedNotifications, error: fetchError } = await supabase
       .from('notification_outbox')
       .select('*')
       .in('status', ['queued', 'pending'])
+      .or(`retry_after.is.null,retry_after.lte.${nowIso}`)
       .order('created_at', { ascending: true })
       .limit(100);
 
@@ -249,19 +270,36 @@ export default async function handler(req, res) {
       } catch (error) {
         
         // Mark as failed (per delivery-failure policy from Phil brief 2026-05-26).
-        // For safety-tier notifications, escalate to delivery_failed so the
-        // audit trail is preserved and operators can act on it. Never delete.
+        // Cowork dispatch T7: CRITICAL gets a retry loop with 5-minute backoff
+        // via re-queue (retry_count + retry_after columns). On the third
+        // failure we escalate to delivery_failed and preserve the audit row.
         const sigType2 = notification.signal_type ?? notification.notification_type ?? '';
-        const isSafety2 = SAFETY_TYPES.some(t => sigType2.toLowerCase().includes(t));
-        const failStatus2 = isSafety2 ? 'delivery_failed' : 'failed';
+        const isCritical2 = isCriticalType(sigType2);
         const errDetail2 = `${notification.channel || 'unknown'}: ${error?.message || 'unknown_error'} at ${new Date().toISOString()}`;
-        await supabase
-          .from('notification_outbox')
-          .update({
-            status: failStatus2,
+        const currentRetry = Number(notification.retry_count || 0);
+        let nextUpdate;
+        if (isCritical2 && currentRetry < 2) {
+          // Retry path: schedule next attempt 5min from now, keep status pending.
+          const nextRetryAfter = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+          nextUpdate = {
+            status: 'pending',
+            retry_count: currentRetry + 1,
+            retry_after: nextRetryAfter,
             error_detail: errDetail2,
             updated_at: new Date().toISOString(),
-          })
+          };
+        } else {
+          // Terminal failure. CRITICAL on its 3rd strike → delivery_failed for
+          // operator visibility; non-critical stays generic failed.
+          nextUpdate = {
+            status: isCritical2 ? 'delivery_failed' : 'failed',
+            error_detail: errDetail2,
+            updated_at: new Date().toISOString(),
+          };
+        }
+        await supabase
+          .from('notification_outbox')
+          .update(nextUpdate)
           .eq('id', notification.id);
         
         errors++;
