@@ -38,6 +38,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 export default function L2EventSheet({ id }) {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { openSheet, closeSheet } = useSheet();
   const [isSharing, setIsSharing] = useState(false);
