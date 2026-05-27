@@ -49,26 +49,52 @@ export default async function handler(req, res) {
   const body = (typeof req.body === 'object' && req.body) ? req.body : {};
   const { lat = null, lng = null, trigger = 'silent_gesture', escalation = false } = body;
 
-  // ── Rate limit (Polish sweep 2026-05-18 Issue 1) ──────────────────────────
-  // Hard cap: 3 SOS events / 1 hour / user, UNLESS metadata.escalation=true.
-  // Why: prevents duplicate-alert spam (cost + anxiety for trusted contacts)
-  // while keeping the escape hatch for genuine worsening situations.
+  // ── Rate limits — cost + abuse + alert-fatigue protection ────────────────
+  // Phil 2026-05-27: every SOS event triggers SMS fanout to trusted contacts
+  // via Twilio at ~$0.04/SMS. Without caps a single user (or a stuck button)
+  // could rack up serious money + spam contacts. Two layers:
+  //   1. HOURLY: 3 / hour / user — bypass with escalation=true (worsening)
+  //   2. DAILY:  10 / 24h / user — NO bypass. Hard ceiling on cost + alert-fatigue.
+  //
+  // Recipients per event also capped (dispatcher.js loadContacts .limit(3)) so
+  // max SMS per day per user = 10 events × 3 contacts × 2 retries = 60. At
+  // $0.04 that's $2.40/user/day worst case — bounded.
+
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const oneDayAgo  = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  // 1. Hourly cap (escalation bypasses)
   if (!escalation) {
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const { count: recent } = await supabaseAdmin
+    const { count: recentHour } = await supabaseAdmin
       .from('safety_events')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .eq('type', 'sos')
       .gte('created_at', oneHourAgo);
-    if ((recent ?? 0) >= 3) {
+    if ((recentHour ?? 0) >= 3) {
       return res.status(429).json({
         error: 'rate_limited',
         message: "You've sent 3 help signals in the last hour. Confirm escalation only if your situation has worsened.",
-        recent_count: recent,
+        recent_count: recentHour,
         window: '1h',
       });
     }
+  }
+
+  // 2. Daily hard cap — NO escalation bypass
+  const { count: recentDay } = await supabaseAdmin
+    .from('safety_events')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('type', 'sos')
+    .gte('created_at', oneDayAgo);
+  if ((recentDay ?? 0) >= 10) {
+    return res.status(429).json({
+      error: 'daily_cap_reached',
+      message: "Daily SOS cap reached (10 / 24h). For continued emergencies call 999.",
+      recent_count: recentDay,
+      window: '24h',
+    });
   }
 
   try {
