@@ -188,8 +188,12 @@ function LayoutInner({ children, currentPageName }) {
           }
         }
 
-        // GATEKEEPER: Block all access until consent_accepted is true
-        if (currentPageName !== 'AccountConsents' && currentPageName !== 'AgeGate' && !currentUser?.consent_accepted) {
+        // GATEKEEPER: Block all access until consent_accepted is true.
+        // /auth (currentPageName='Auth') is exempt — it's a public sign-in surface
+        // and the consent check happens AFTER successful login. Without this
+        // exemption, /auth bounces to AccountConsents which cascades into the
+        // splash + navigate('/') chain (Phil bug report 2026-05-27).
+        if (currentPageName !== 'AccountConsents' && currentPageName !== 'AgeGate' && currentPageName !== 'Auth' && !currentUser?.consent_accepted) {
           navigate(createPageUrl('AccountConsents'));
           return;
         }
@@ -201,6 +205,7 @@ function LayoutInner({ children, currentPageName }) {
           currentPageName !== 'AccountConsents' &&
           currentPageName !== 'AgeGate' &&
           currentPageName !== 'Settings' &&
+          currentPageName !== 'Auth' &&
           (!currentUser?.has_agreed_terms || !currentUser?.has_consented_data)
         ) {
           navigate(createPageUrl('OnboardingGate'));
@@ -214,6 +219,7 @@ function LayoutInner({ children, currentPageName }) {
           currentPageName !== 'OnboardingGate' &&
           currentPageName !== 'AccountConsents' &&
           currentPageName !== 'AgeGate' &&
+          currentPageName !== 'Auth' &&
           (!currentUser?.full_name || !currentUser?.avatar_url)
         ) {
           const next = encodeURIComponent(`${window.location.pathname}${window.location.search || ''}`);
