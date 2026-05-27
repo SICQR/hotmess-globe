@@ -379,9 +379,13 @@ const ALL_CATEGORIES: BeaconCategory[] = [
 /** Register all 27 icons on a Mapbox map instance via map.addImage — 9 categories
  *  × 3 lifecycle states (active / decaying / stale). Idempotent — skips any id
  *  already registered. Sprites are registered at pixelRatio: 2 for retina. */
-export function registerBeaconIcons(map: mapboxgl.Map): void {
-  if (!isBrowser()) return;
-  if (!map || typeof (map as any).addImage !== 'function') return;
+export function registerBeaconIcons(map: mapboxgl.Map): Promise<void> {
+  // 2026-05-27 Phil: return type was void with `void Promise.all(...)` —
+  // PulseMap chains `.catch` on the call so undefined.catch threw a TypeError
+  // that aborted addLayerStack. Beacon source/layers were NEVER installed
+  // on production for any user. Now returns the actual promise.
+  if (!isBrowser()) return Promise.resolve();
+  if (!map || typeof (map as any).addImage !== 'function') return Promise.resolve();
 
   const tasks: Array<{ cat: BeaconCategory; state: BeaconLifecycleState }> = [];
   for (const cat of ALL_CATEGORIES) {
@@ -390,8 +394,9 @@ export function registerBeaconIcons(map: mapboxgl.Map): void {
     }
   }
 
-  // Fire-and-forget: each icon is added when its SVG decodes.
-  void Promise.all(
+  // Each icon is added asynchronously when its SVG decodes. We return the
+  // promise so callers can chain (PulseMap uses .catch for diagnostics).
+  return Promise.all(
     tasks.map(async ({ cat, state }) => {
       const id = beaconIconId(cat, state);
       try {
@@ -417,5 +422,5 @@ export function registerBeaconIcons(map: mapboxgl.Map): void {
         // Swallow — one bad icon shouldn't break the map.
       }
     }),
-  );
+  ).then(() => undefined);
 }
