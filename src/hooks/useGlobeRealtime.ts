@@ -139,7 +139,7 @@ export function useGlobeRealtime() {
           .eq('status', 'active'),
         supabase
           .from('pulse_places')
-          .select('slug, name, type, lat, lng, priority, is_active, notes')
+          .select('slug, name, type, lat, lng, priority, is_active, notes, address, opening_hours, website, phone')
           .eq('is_active', true),
       ]);
       if (placesError) {
@@ -189,6 +189,11 @@ export function useGlobeRealtime() {
           starts_at: null,
           description: String(p.notes || ''),
           owner_id: null,
+          // Venue details surfaced on tap (Phil 2026-05-27)
+          address: p.address ? String(p.address) : null,
+          opening_hours: (p.opening_hours && typeof p.opening_hours === 'object') ? p.opening_hours : null,
+          website: p.website ? String(p.website) : null,
+          phone: p.phone ? String(p.phone) : null,
         };
       });
 
