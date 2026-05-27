@@ -416,6 +416,7 @@ export function useGhostedGrid(
           contextLabel,
           vibe: null,
           intent: intent ? String(intent).toLowerCase() : null,
+          lookingFor: Array.isArray(p.looking_for) ? p.looking_for.filter(Boolean) : null,
           email: p.email || null,
           beacon: beaconBadgesByOwner.get(p.id) || null,
         } as GhostedCardProps;
@@ -516,6 +517,7 @@ export function useGhostedGrid(
           contextLabel,
           vibe: null,
           intent: intent ? String(intent).toLowerCase() : null,
+          lookingFor: Array.isArray(p.looking_for) ? p.looking_for.filter(Boolean) : null,
           email: p.email || null,
           beacon: beaconBadgesByOwner.get(p.id) || null,
         } as GhostedCardProps;
