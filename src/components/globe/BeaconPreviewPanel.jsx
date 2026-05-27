@@ -115,6 +115,40 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull, onView
               );
             })()}
 
+            {/* Venue extras (Phil 2026-05-27): hours / website / phone if present.
+                Render only what exists — graceful no-info state. */}
+            {beacon.opening_hours && typeof beacon.opening_hours === 'object' && (
+              (() => {
+                const oh = beacon.opening_hours;
+                const today = ['sun','mon','tue','wed','thu','fri','sat'][new Date().getDay()];
+                let label = null;
+                if (oh.always_open === true) label = 'OPEN 24/7';
+                else if (oh.permanently_closed === true) label = 'PERMANENTLY CLOSED';
+                else if (Array.isArray(oh[today]) && oh[today].length === 2) label = `TODAY ${oh[today][0]} – ${oh[today][1]}`;
+                if (!label) return null;
+                return (
+                  <div className="flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/40">HOURS</span>
+                    <span className="text-white font-bold text-xs uppercase tracking-wider">{label}</span>
+                  </div>
+                );
+              })()
+            )}
+            {beacon.website && typeof beacon.website === 'string' && (
+              <a href={beacon.website} target="_blank" rel="noopener noreferrer"
+                 className="flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                <span className="text-[10px] font-black uppercase tracking-widest text-white/40">WEB</span>
+                <span className="text-white font-semibold text-xs truncate">{beacon.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
+              </a>
+            )}
+            {beacon.phone && typeof beacon.phone === 'string' && (
+              <a href={`tel:${beacon.phone}`}
+                 className="flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                <span className="text-[10px] font-black uppercase tracking-widest text-white/40">CALL</span>
+                <span className="text-white font-semibold text-xs">{beacon.phone}</span>
+              </a>
+            )}
+
             {/* Proximity travel cues (Phil brief 2026-05-26). Renders nothing
                 when viewer location is missing, stale (>2h), or >50km away. */}
             {(() => {
