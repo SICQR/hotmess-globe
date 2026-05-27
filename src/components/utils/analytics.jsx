@@ -85,7 +85,6 @@ async function sendToBackend(eventName, properties = {}) {
         ...properties,
         device_id: ensureDeviceId(),
         session_id: ensureSessionId(),
-        is_beta: window.__hm_is_beta || false,
         path: window.location.pathname,
         url: window.location.href,
         referrer: document.referrer || null,
