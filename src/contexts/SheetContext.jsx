@@ -130,7 +130,7 @@ export function SheetProvider({ children }) {
 
   // Open a sheet — enforces UI policy (chat/video/travel gated to Ghosted context)
   const openSheet = useCallback((type, props = {}) => {
-    if (!canOpenSheet(type, location.pathname, state.sheetStack)) {
+    if (!canOpenSheet(type, location.pathname, state.sheetStack, state.activeSheet)) {
       toast('Go to Ghosted to start a conversation', { duration: 2500 });
       return;
     }
@@ -358,3 +358,4 @@ export function useMarketplaceSheet() {
 }
 
 export default SheetContext;
+
