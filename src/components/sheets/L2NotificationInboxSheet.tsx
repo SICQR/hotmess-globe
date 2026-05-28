@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, MessageCircle, Ghost, MapPin, Radio, Calendar, CheckCheck, Loader2, Inbox, Settings } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -55,7 +56,8 @@ function typeConfig(type: string): { Icon: React.ElementType; color: string; bg:
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function L2NotificationInboxSheet() {
-  const { openSheet } = useSheet();
+  const { openSheet, closeSheet } = useSheet();
+  const navigate = useNavigate();
   const [notifs, setNotifs]     = useState<Notif[]>([]);
   const [loading, setLoading]   = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -143,7 +145,11 @@ export default function L2NotificationInboxSheet() {
 
     switch (n.type) {
       case 'boo':
-        openSheet('taps', {});
+        // Phil 2026-05-28 (#263): unified inbox — boos no longer pop a separate
+        // 'taps' sheet; tapping the boo row sends the user to /ghosted where
+        // they can boo back. Single inbox surface for both boos + chats.
+        closeSheet();
+        navigate('/ghosted');
         break;
 
       case 'message':
