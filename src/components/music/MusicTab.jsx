@@ -311,7 +311,7 @@ function ReleaseDetailSheet({ release, tracks, onClose }) {
         )}
 
         {/* Lyrics */}
-        <LyricsAccordion lyrics={release.lyrics} />
+        {/* M10 (Phil 2026-05-28): lyrics stripped per #192 (completion was incomplete in code). */}
 
         {/* Linked entity */}
         <LinkedEntityCard release={release} />
