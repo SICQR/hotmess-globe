@@ -123,9 +123,12 @@ export default function SignUpScreen({ isSignIn = false }) {
       <div className="w-full max-w-xs">
         {!isSignIn && <ProgressDots current={2} total={3} />}
 
-        <h2 className="text-white text-xl font-bold mb-8">
-          {isSignIn ? 'Welcome back' : 'Create your account'}
+        <h2 className="text-white text-xl font-bold mb-2">
+          {isSignIn ? 'Welcome back' : 'How HOTMESS knows it\'s you'}
         </h2>
+        <p className="text-white/45 text-[12px] mb-7 leading-relaxed">
+          Whichever you pick, we never post anywhere and never use your contacts.
+        </p>
 
         {/* OAuth buttons — primary 1-tap paths */}
         <div className="flex flex-col gap-3 mb-3">
@@ -173,7 +176,7 @@ export default function SignUpScreen({ isSignIn = false }) {
           className="w-full py-3 mt-2 mb-2 flex items-center justify-center gap-1 text-white/40 text-xs font-semibold tracking-wider uppercase hover:text-white/70 transition-colors"
           aria-expanded={showMoreOptions}
         >
-          More options
+          {showMoreOptions ? 'Hide email signup' : 'Use email — keep it private'}
           {showMoreOptions ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
         </button>
 
