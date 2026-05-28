@@ -87,6 +87,13 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
   onReadyRef.current = onReady;
   const onLocalFocusRef = useRef(onLocalFocus);
   onLocalFocusRef.current = onLocalFocus;
+  // M-self (Phil 2026-05-28 #259): persistent self-marker. Camera flyTo was
+  // the only proof a user was on the map — they couldn't actually see themselves.
+  // Now: a pulsing gold dot painted at userLocation, always visible, no presence
+  // dependency, distinct from beacons.
+  const selfMarkerRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const mapboxglRef = useRef(null);
 
   const [status, setStatus] = useState('loading'); // loading | ready | error
   const reducedMotion = typeof window !== 'undefined' && window.matchMedia
@@ -119,6 +126,8 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
           maxZoom: 18,    // street detail
           attributionControl: false, // swapped for the compact (i) control below
         });
+        mapInstanceRef.current = map;
+        mapboxglRef.current = mapboxgl;
         mapRef.current = map;
         // Mapbox + OpenStreetMap attribution is REQUIRED by their ToS (can't be
         // removed without a commercial plan) — the compact control collapses it to a
@@ -513,6 +522,58 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
       if (src && src.setData) src.setData(toPublicSafeFeatureCollection(beacons, glowUserIds));
     } catch (e) { /* source not ready; initial data set on load */ }
   }, [beacons, glowUserIds]);
+
+  // Self-marker effect: keeps a pulsing gold dot at the user's current location.
+  // Re-runs whenever userLocation changes; tolerates map not ready yet.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    const mapboxgl = mapboxglRef.current;
+    if (!map || !mapboxgl) return;
+    const u = userLocation;
+    // Remove marker if location is missing/invalid (user toggled off).
+    if (!u || !Number.isFinite(Number(u.lat)) || !Number.isFinite(Number(u.lng))) {
+      if (selfMarkerRef.current) {
+        try { selfMarkerRef.current.remove(); } catch (e) {}
+        selfMarkerRef.current = null;
+      }
+      return;
+    }
+    const lng = Number(u.lng);
+    const lat = Number(u.lat);
+    if (!selfMarkerRef.current) {
+      const el = document.createElement('div');
+      el.setAttribute('aria-label', 'You are here');
+      el.style.cssText = 'width:18px;height:18px;border-radius:50%;background:#C8962C;box-shadow:0 0 0 4px rgba(200,150,44,0.25),0 0 18px rgba(200,150,44,0.6);position:relative;pointer-events:none;';
+      // Pulsing ring (CSS animation injected once)
+      if (!document.getElementById('hm-self-pulse-style')) {
+        const style = document.createElement('style');
+        style.id = 'hm-self-pulse-style';
+        style.textContent = '@keyframes hm-self-pulse { 0% { box-shadow: 0 0 0 0 rgba(200,150,44,0.55), 0 0 18px rgba(200,150,44,0.6); } 70% { box-shadow: 0 0 0 22px rgba(200,150,44,0), 0 0 18px rgba(200,150,44,0.6); } 100% { box-shadow: 0 0 0 0 rgba(200,150,44,0), 0 0 18px rgba(200,150,44,0.6); } } .hm-self-pulse { animation: hm-self-pulse 2.2s infinite ease-out; }';
+        document.head.appendChild(style);
+      }
+      el.className = 'hm-self-pulse';
+      try {
+        selfMarkerRef.current = new mapboxgl.Marker({ element: el, anchor: 'center' })
+          .setLngLat([lng, lat])
+          .addTo(map);
+      } catch (e) {
+        console.warn('[PulseMap] self-marker create failed', e);
+      }
+    } else {
+      try { selfMarkerRef.current.setLngLat([lng, lat]); } catch (e) {}
+    }
+    return () => {
+      // Don't remove on every re-render — only on unmount or location-null path
+    };
+  }, [userLocation]);
+
+  // Unmount cleanup
+  useEffect(() => () => {
+    if (selfMarkerRef.current) {
+      try { selfMarkerRef.current.remove(); } catch (e) {}
+      selfMarkerRef.current = null;
+    }
+  }, []);
 
   return (
     <div className="absolute inset-0">
