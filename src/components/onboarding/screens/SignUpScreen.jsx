@@ -96,16 +96,43 @@ export default function SignUpScreen({ isSignIn = false }) {
           options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
         });
         if (signUpError) {
-          setError(signUpError.message);
+          // Phil 2026-05-28 hotfix — surface duplicate-email errors cleanly
+          // when Supabase does return them.
+          const msg = String(signUpError.message || '').toLowerCase();
+          if (msg.includes('already') || msg.includes('exists') || msg.includes('registered')) {
+            setError("This email is already on HOTMESS. Sign in instead?");
+          } else {
+            setError(signUpError.message);
+          }
         } else if (data?.session) {
           track('signup', 'onboarding', 'password');
           window.location.assign('/auth/callback');
         } else {
-          // Email confirmation required (Supabase default). User gets a
-          // confirmation link via email — but Phil's directive removes
-          // magic-link UX so we just say so in plain text.
-          track('signup', 'onboarding', 'password_pending_confirm');
-          setInfo("Account created. Check your email to confirm, then sign in.");
+          // Phil 2026-05-28 hotfix: Supabase email confirmation is OFF in
+          // this project (verified — every signup auto-confirms within ms).
+          // So signUp returning no error AND no session means Supabase's
+          // anti-enumeration response: the email is ALREADY on HOTMESS.
+          // Previously we showed 'Check your email' which was a lie + a
+          // dead screen. Now we tell the truth + try the password as a
+          // sign-in attempt (one-tap recovery for users who actually
+          // remember their password).
+          track('signup', 'onboarding', 'existing_account_detected');
+          const { data: siData, error: siError } = await supabase.auth.signInWithPassword({
+            email: email.trim(),
+            password,
+          });
+          if (siData?.session) {
+            track('signin', 'onboarding', 'password_after_existing_detect');
+            window.location.assign('/auth/callback');
+          } else {
+            // Wrong password or genuine new-account creation issue —
+            // surface the felt copy + offer the sign-in switch.
+            setError("That email is already on HOTMESS. Sign in instead — or use a different email.");
+            // Auto-flip into sign-in mode would be cleaner if isSignIn was
+            // local state. For now, surface the error + 'Forgot password?'
+            // appears via the existing isSignIn path; users can switch
+            // manually via the splash back-button.
+          }
         }
       }
     } catch (err) {
