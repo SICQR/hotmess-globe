@@ -28,6 +28,13 @@ export function MusicPlayerProvider({ children }) {
   const [progress, setProgress] = useState(0);       // 0-1
   const [currentTime, setCurrentTime] = useState(0);  // seconds
   const [duration, setDuration] = useState(0);         // seconds
+
+  // Tier-aware preview cap. Default Infinity = no cap (existing behaviour).
+  // Set by a tiny <MusicTierGuard /> mounted near the provider — failure to
+  // mount it leaves the cap as Infinity which means everyone gets full
+  // playback (fail-open for media; never silently mid-cut someone).
+  const [previewCapSeconds, setPreviewCapSecondsState] = useState(Infinity);
+  const [previewCapHit, setPreviewCapHit] = useState(false);
   const [volume, setVolume] = useState(1);
   const [isMiniPlayerVisible, setIsMiniPlayerVisible] = useState(false);
 
@@ -61,7 +68,7 @@ export function MusicPlayerProvider({ children }) {
     return audioRef.current;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Progress tracking
+  // Progress tracking + tier preview cap enforcement
   useEffect(() => {
     if (isPlaying) {
       progressInterval.current = setInterval(() => {
@@ -69,13 +76,25 @@ export function MusicPlayerProvider({ children }) {
         if (audio && audio.duration) {
           setCurrentTime(audio.currentTime);
           setProgress(audio.currentTime / audio.duration);
+          // Tier preview cap: pause + flag if user hits the limit.
+          // Number.isFinite excludes Infinity (no cap) and NaN.
+          if (Number.isFinite(previewCapSeconds) && previewCapSeconds > 0 && audio.currentTime >= previewCapSeconds) {
+            audio.pause();
+            setIsPlaying(false);
+            setPreviewCapHit(true);
+            try {
+              window.dispatchEvent(new CustomEvent('music:preview_cap_hit', {
+                detail: { cap: previewCapSeconds, trackId: (currentTrack && currentTrack.id) || null },
+              }));
+            } catch { /* event dispatch best-effort */ }
+          }
         }
       }, 250);
     } else {
       clearInterval(progressInterval.current);
     }
     return () => clearInterval(progressInterval.current);
-  }, [isPlaying]);
+  }, [isPlaying, previewCapSeconds, currentTrack]);
 
   // Volume sync
   useEffect(() => {
@@ -89,6 +108,7 @@ export function MusicPlayerProvider({ children }) {
 
     audio.src = url;
     audio.play().catch(() => {});
+    setPreviewCapHit(false);
     setCurrentTrack(track);
     setIsPlaying(true);
     try {
@@ -184,6 +204,15 @@ export function MusicPlayerProvider({ children }) {
     stop();
   }, [stop]);
 
+  // setPreviewCap is the only way external code mutates the cap. Caps below
+  // 5 seconds are clamped to Infinity (= no cap) to defend against a misread
+  // benefit accidentally cutting the track at 0.
+  const setPreviewCap = useCallback((seconds) => {
+    if (seconds == null || seconds < 0) { setPreviewCapSecondsState(Infinity); return; }
+    if (typeof seconds === 'number' && seconds >= 5) setPreviewCapSecondsState(seconds);
+    else setPreviewCapSecondsState(Infinity);
+  }, []);
+
   const value = {
     // State
     currentTrack,
@@ -195,6 +224,9 @@ export function MusicPlayerProvider({ children }) {
     duration,
     volume,
     isMiniPlayerVisible,
+    // Tier preview cap (Infinity when no cap; setter mounted by MusicTierGuard)
+    previewCapSeconds,
+    previewCapHit,
     // Actions
     playTrack,
     pause,
@@ -206,6 +238,7 @@ export function MusicPlayerProvider({ children }) {
     stop,
     setVolume,
     dismissMiniPlayer,
+    setPreviewCap,
     // Helpers
     hasNext: queueIndex < queue.length - 1,
     hasPrev: queueIndex > 0,

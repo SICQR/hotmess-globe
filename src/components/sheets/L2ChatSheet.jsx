@@ -20,6 +20,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SheetSection, SheetDivider } from './L2SheetContainer';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
+import { useUserBenefits } from '@/hooks/useUserBenefits';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { uploadToStorage } from '@/lib/uploadToStorage';
@@ -257,6 +259,12 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
 
   const [newMessage, setNewMessage]     = useState('');
   const [sending, setSending]           = useState(false);
+  // Tier gate — has_messaging. Defaults (MESS) = false. While loading we keep
+  // the composer hidden (fail-closed) so a free user can't accidentally send
+  // during the ~100ms before benefits resolve.
+  const _benefits = useUserBenefits();
+  const canMessage = !!_benefits.has_messaging;
+  const _navigateToUpgrade = useNavigate();
   const [searchQuery, setSearchQuery]   = useState('');
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showTravelModal, setShowTravelModal] = useState(false);
@@ -459,6 +467,12 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   const handleSend = async () => {
     const text = newMessage.trim();
     if (!text || !currentUser?.email || sending) return;
+    if (!canMessage) {
+      toast.info('Messaging is for HOTMESS — tap to unlock', {
+        action: { label: 'Unlock', onClick: () => _navigateToUpgrade('/upgrade') },
+      });
+      return;
+    }
 
     setSending(true);
     setNewMessage('');
@@ -1660,23 +1674,30 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
               e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Message..."
+            placeholder={canMessage ? "Message..." : "Messaging unlocks with HOTMESS"}
             rows={1}
             className="flex-1 bg-[#1C1C1E] border border-white/[0.06] rounded-2xl text-sm text-white placeholder-white/30 focus:border-[#C8962C]/40 focus:ring-1 focus:ring-[#C8962C]/20 transition-all resize-none py-2.5 px-4 min-h-[40px] max-h-[120px] overflow-y-auto"
-            disabled={sending}
+            disabled={sending || !canMessage}
+            readOnly={!canMessage}
+            onClick={() => { if (!canMessage) _navigateToUpgrade('/upgrade'); }}
             style={{ height: '40px' }}
           />
           <Button
-            onClick={handleSend}
-            disabled={sending || !newMessage.trim()}
+            onClick={() => { if (!canMessage) { _navigateToUpgrade('/upgrade'); return; } handleSend(); }}
+            disabled={sending || (canMessage && !newMessage.trim())}
             className={cn(
               'flex-shrink-0 w-9 h-9 p-0 rounded-full transition-colors',
-              newMessage.trim()
+              !canMessage
                 ? 'bg-[#C8962C] hover:bg-[#C8962C]/90 text-black'
-                : 'bg-[#1C1C1E] border border-white/10 text-white/50'
+                : newMessage.trim()
+                  ? 'bg-[#C8962C] hover:bg-[#C8962C]/90 text-black'
+                  : 'bg-[#1C1C1E] border border-white/10 text-white/50'
             )}
+            title={canMessage ? 'Send' : 'Unlock messaging'}
           >
-            {sending ? (
+            {!canMessage ? (
+              <span className="text-[10px] font-black tracking-wider">£</span>
+            ) : sending ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : newMessage.trim() ? (
               <Send className="w-4 h-4" />

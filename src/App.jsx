@@ -54,6 +54,8 @@ import LiveModeOverlay from '@/components/live/LiveModeOverlay';
 import { RadioMiniPlayer } from '@/components/radio/RadioMiniPlayer';
 import { MusicPlayerProvider, useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { MusicMiniPlayer } from '@/components/music/MusicMiniPlayer';
+const MusicTierGuard = lazy(() => import('@/components/music/MusicTierGuard'));
+const MusicPreviewCapCard = lazy(() => import('@/components/music/MusicPreviewCapCard'));
 import { GlobalTicker } from '@/components/banners/GlobalTicker';
 import { TopHUD } from '@/components/shell/TopHUD';
 import { MovementStatusCard } from '@/components/movement/MovementStatusCard';
@@ -761,6 +763,11 @@ function OSArchitecture() {
 
       {/* Music Mini Player — sits just above radio player or nav (Z-50) */}
       <MusicMiniPlayer />
+      {/* Tier preview-cap enforcement + upsell card (Phil 2026-05-28).
+          Lazy-loaded per PR #584 postmortem rule 1 — wrapped in Suspense
+          fallback null so they never block the shell render. */}
+      <Suspense fallback={null}><MusicTierGuard /></Suspense>
+      <Suspense fallback={null}><MusicPreviewCapCard /></Suspense>
 
       {/* Global Ticker was moved to the very top to prevent hiding Shopping buttons */}
 
