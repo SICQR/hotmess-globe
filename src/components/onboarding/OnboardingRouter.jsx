@@ -134,9 +134,18 @@ export default function OnboardingRouter() {
 
     if (!currentSession?.user) {
       const ageGatePassed = localStorage.getItem('hm_age_gate_passed');
+      const bridgeSeen = localStorage.getItem('hm_bridge_seen_v1');
       if (ageGatePassed === 'true') {
-        // Age already confirmed this session — go straight to signup
-        setScreen(SCREENS.SIGNUP);
+        // Age already confirmed — but Phase 1 (Phil 2026-05-28) added the
+        // Bridge between age-gate and signup. Returning users who passed
+        // age-gate before Bridge existed never see it. Show Bridge once,
+        // then stamp `hm_bridge_seen_v1` to never re-show.
+        if (bridgeSeen !== 'true') {
+          setScreen(SCREENS.BRIDGE);
+        } else {
+          // Age confirmed + bridge seen — straight to signup
+          setScreen(SCREENS.SIGNUP);
+        }
       } else {
         // Check if they've seen the splash before (localStorage persists across sessions)
         const splashSeen = localStorage.getItem('hm_splash_seen_v1');
@@ -331,6 +340,7 @@ export default function OnboardingRouter() {
   }, [goTo]);
 
   const handleBridgeContinue = useCallback(() => {
+    try { localStorage.setItem('hm_bridge_seen_v1', 'true'); } catch {}
     goTo(SCREENS.SIGNUP);
   }, [goTo]);
 
