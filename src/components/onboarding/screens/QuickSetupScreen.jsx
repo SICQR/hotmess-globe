@@ -15,7 +15,6 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { Loader2, MapPin, ToggleLeft, ToggleRight } from 'lucide-react';
 import OnboardingBackButton from '../OnboardingBackButton';
-import { isWebAuthnSupported, isPasskeyRegistered, registerPasskey } from '@/lib/passkey';
 import { track, trackOnce } from '@/lib/analytics';
 
 const GOLD = '#C8962C';
@@ -27,8 +26,6 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
   const [locationEnabled, setLocationEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showPasskeyPrompt, setShowPasskeyPrompt] = useState(false);
-  const [registeringPasskey, setRegisteringPasskey] = useState(false);
 
   const userId = session?.user?.id;
   const userEmail = session?.user?.email;
@@ -109,13 +106,6 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleEnablePasskey = async () => {
-    setRegisteringPasskey(true);
-    await registerPasskey();
-    setRegisteringPasskey(false);
-    onComplete();
   };
 
   return (
