@@ -226,6 +226,8 @@ export default function L2OrderSheet({ orderId, fromAdmin }) {
                 {format(new Date(order.created_at), 'd MMM yyyy · h:mm a')}
               </p>
               <p className="text-white/60 text-[10px] mt-1 uppercase font-bold tracking-tight">
+                {/* P0 2026-05-28: buyer email retained here is OK for fulfilment (consent-given at checkout),
+                    but visible only to the seller of THIS order, not third parties. */}
                 For: {order.buyer_name || order.buyer_email || 'Buyer'}
               </p>
             </div>
