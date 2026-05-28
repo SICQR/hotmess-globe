@@ -240,9 +240,21 @@ export default function SignUpScreen({ isSignIn = false }) {
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (isSignIn ? 'Sign in' : 'Create account')}
             </button>
             {!isSignIn && (
-              <p className="text-white/25 text-[10px] text-center leading-relaxed">
-                Use 8+ chars. We'll never email you marketing.
-              </p>
+              <>
+                <p className="text-white/25 text-[10px] text-center leading-relaxed">
+                  Use 8+ chars. We'll never email you marketing.
+                </p>
+                {/* M4 (Phil 2026-05-28): returning email-password users had no Sign in
+                    surface. The splash 'Sign in' link is skipped for any user with
+                    hm_splash_seen_v1 in localStorage. This link gives them a path. */}
+                <button
+                  type="button"
+                  onClick={() => { window.location.href = '/auth?mode=signin'; }}
+                  className="text-white/55 text-[11px] text-center mt-2 hover:text-white/85"
+                >
+                  Already on HOTMESS? <span style={{ color: GOLD }} className="font-semibold">Sign in</span>
+                </button>
+              </>
             )}
             {isSignIn && (
               <button

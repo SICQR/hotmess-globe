@@ -115,15 +115,6 @@ export default function BottomNav() {
                 />
               )}
 
-              {/* Unread Message Badge */}
-              {mode.id === 'messages' && unreadCount > 0 && (
-                <span 
-                  className="absolute top-1.5 right-1/2 translate-x-3 bg-[#FF3B30] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-black shadow-sm"
-                  style={{ animation: 'bounce 0.5s ease' }}
-                >
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
             </Link>
           );
         })}
