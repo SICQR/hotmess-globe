@@ -79,6 +79,19 @@ export default function SplashScreen({ onJoin, onSignIn, fastPath = false, onFas
         >
           London
         </p>
+        {/* Phase 1 conversion repair (Phil 2026-05-28): splash was naked —
+            no "what HOTMESS is" anywhere. One line below the wordmark gives
+            new arrivals enough context to decide to Join vs bounce. Felt-copy
+            doctrine 07: not "messaging app for gay men", but the room. */}
+        <p
+          className="text-center text-white/55 text-[12px] font-medium mt-5 leading-snug max-w-[260px]"
+          style={{
+            opacity: rulesIn ? 1 : 0,
+            transition: 'opacity 0.6s ease 0.7s',
+          }}
+        >
+          Real venues. Real boys. Built for the room you're already looking for.
+        </p>
       </div>
 
       {/* CTAs */}
