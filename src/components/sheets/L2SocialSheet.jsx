@@ -11,6 +11,7 @@ import { Heart, MapPin, Loader2, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { useSheet } from '@/contexts/SheetContext';
+import { safeName } from '@/lib/identity/safeName';
 
 const TABS = ['Feed', 'Nearby'];
 
@@ -60,7 +61,8 @@ export default function L2SocialSheet() {
           return follows.map(f => ({
             id: f.id,
             action_type: 'follow',
-            actor_name: f.followed_name || f.followed_email,
+            // P0 2026-05-28: no email fallback. Use display fallback for unknown names.
+            actor_name: f.followed_name || 'Member',
             actor_avatar: f.followed_avatar_url,
             actor_email: f.followed_email,
             created_at: f.created_date,

@@ -10,6 +10,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/components/utils/supabaseClient';
+import { safeName } from '@/lib/identity/safeName';
 import {
   Send, ArrowLeft,
   Loader2, Search, ChevronRight,
@@ -740,7 +741,8 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   // ── Derive other-party info (needed by Wingman + chat view) ───────────────
   const otherEmail = selectedThread ? getOtherEmail(selectedThread) : '';
   const otherProfile = otherEmail ? getProfile(otherEmail) : null;
-  const otherName = otherProfile?.display_name || otherEmail || title || 'Chat';
+  // P0 2026-05-28: NEVER fall back to email. safeName guarantees no '@'-containing string ever surfaces here.
+  const otherName = safeName(otherProfile, title || 'Member');
 
   const handleWingmanTap = useCallback(async () => {
     if (wingmanLoading) return;
