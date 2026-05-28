@@ -260,7 +260,10 @@ export default function L2EditProfileSheet() {
         .update({
           display_name: trimmedName,
           bio: bio.trim() || null,
-          location: locationVal,
+          // 2026-05-28 Phil hotfix: do NOT write `location` here — it's a PostGIS
+          // geography column managed by GPS sync (handleLocationToggle / user_presence).
+          // Writing the AREA/LOCATION text input here caused "parse error - invalid geometry"
+          // (e.g. Postgres trying to parse "Chiang Mai" as a POINT).
           city: locationVal,
           ...(ageNum && ageNum > 0 ? { age: ageNum } : {}),
           public_attributes: updatedPa,
