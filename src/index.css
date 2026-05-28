@@ -195,9 +195,14 @@
     scroll-behavior: smooth;
   }
   
-  /* ── PWA: Enable native pull-to-refresh while keeping shell stable ─────── */
+  /* ── PWA: Kill native pull-to-refresh app-wide ─────────────────────────── */
+  /* Phil 2026-05-28: pull-to-refresh on the body destroys the Pulse globe state
+     (camera position + WebGL layer stack rebuild on reload). Set contain so
+     overscroll never reaches Safari's pull-to-refresh chrome. In-app surfaces
+     that want their own refresh affordance can intercept touch events on their
+     own scroll containers (Music/Radio/Profile already do this). */
   html, body {
-    overscroll-behavior-y: auto;
+    overscroll-behavior-y: contain;
     overscroll-behavior-x: none;
     width: 100%;
     height: 100%;
