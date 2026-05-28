@@ -89,6 +89,7 @@ const FlagsAdmin    = lazy(() => import('@/pages/admin/FlagsAdmin'));
 const FunnelPage    = lazy(() => import('@/pages/admin/FunnelPage'));
 const RedeemPage    = lazy(() => import('@/pages/beta/RedeemPage'));
 const PrivacyPolicyStandalone = lazy(() => import('@/pages/legal/PrivacyPolicy'));
+const PulseFeedbackButton = lazy(() => import('@/components/feedback/PulseFeedbackButton'));
 const TermsOfServiceStandalone = lazy(() => import('@/pages/legal/TermsOfService'));
 const RevenueDashboard = lazy(() => import('@/pages/admin/RevenueDashboard'));
 const VerificationQueue = lazy(() => import('@/pages/admin/VerificationQueue'));
@@ -590,6 +591,8 @@ function App() {
               <Toaster />
               {/* SW update banner — listens for hm_sw_update_available and prompts refresh */}
               <SWUpdateBanner />
+            {/* Phil 2026-05-28 (#252): global beta feedback button — restores #206 surface */}
+            <Suspense fallback={null}><PulseFeedbackButton /></Suspense>
               {/* PIN Lock Overlay - Z-200, above everything */}
               <PinLockOverlay />
             </QueryClientProvider>

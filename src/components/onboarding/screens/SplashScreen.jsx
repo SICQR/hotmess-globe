@@ -79,6 +79,13 @@ export default function SplashScreen({ onJoin, onSignIn, fastPath = false, onFas
         >
           London
         </p>
+        {/* M-new (#252) Phil 2026-05-28: BETA badge — manages expectations cheaply. */}
+        <div
+          className="mt-3"
+          style={{ opacity: rulesIn ? 1 : 0, transition: 'opacity 0.5s ease 0.7s' }}
+        >
+          <BetaBadge size="lg" />
+        </div>
         {/* Phase 1 conversion repair (Phil 2026-05-28): splash was naked —
             no "what HOTMESS is" anywhere. One line below the wordmark gives
             new arrivals enough context to decide to Join vs bounce. Felt-copy
