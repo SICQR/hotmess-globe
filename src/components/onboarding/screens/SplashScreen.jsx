@@ -12,6 +12,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { HotmessWordmark } from '@/components/brand/HotmessWordmark';
+import BetaBadge from '@/components/feedback/BetaBadge';
 
 const GOLD = '#C8962C';
 
