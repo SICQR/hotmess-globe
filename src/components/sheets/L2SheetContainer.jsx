@@ -12,10 +12,7 @@
 
 import React, { useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useAnimation, useDragControls } from 'framer-motion';
-import { useQueryClient } from '@tanstack/react-query';
 import { useSheet } from '@/contexts/SheetContext';
-import { useLocalPullToRefresh } from '@/hooks/useLocalPullToRefresh';
-import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 
 import { cn } from '@/lib/utils';
 import { hapticPattern, hapticSnap } from '@/lib/haptics';
@@ -91,16 +88,7 @@ export default function L2SheetContainer({
     controls.start('visible');
   }, [isOpen, controls]);
   const dragControls = useDragControls();
-  const queryClient = useQueryClient();
   const sheetScrollRef = useRef(null);
-  const handleSheetRefresh = useCallback(async () => {
-    await queryClient.invalidateQueries();
-  }, [queryClient]);
-  
-  const { pullDistance, isRefreshing } = useLocalPullToRefresh({
-    onRefresh: handleSheetRefresh,
-    scrollRef: sheetScrollRef,
-  });
 
 
   const handleClose = useCallback(() => {
@@ -280,8 +268,6 @@ export default function L2SheetContainer({
               ref={sheetScrollRef}
               className="flex-1 overflow-y-auto overflow-x-hidden scroll-momentum touch-pan-y"
             >
-              <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
-
               {children}
             </div>
 
