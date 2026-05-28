@@ -8,6 +8,7 @@ import { useSheet } from '@/contexts/SheetContext';
 import { useTaps } from '@/hooks/useTaps';
 import { useUnreadCount } from '@/hooks/useUnreadCount';
 import { useBoostedUserIds } from '@/hooks/useBoostedUserIds';
+import { useUserBenefits } from '@/hooks/useUserBenefits';
 import { GhostedCard } from '@/components/ghosted/GhostedCard';
 import { GhostedRecentStories } from '@/components/ghosted/GhostedRecentStories';
 import { supabase } from '@/components/utils/supabaseClient';
@@ -126,6 +127,15 @@ export default function GhostedMode() {
   // Empty set when nobody is boosted (steady state) → zero render impact.
   const boostedUserIds = useBoostedUserIds();
 
+  // Tier gate — has_full_ghosted decides whether MESS users see the fog past
+  // ghosted_preview_limit. Defaults (MESS): limit=3, full=false. While loading
+  // we use those defaults — fail-closed: never accidentally show paid grid.
+  const benefits = useUserBenefits();
+  const hasFullGhosted = !!benefits.has_full_ghosted;
+  const previewLimit = typeof benefits.ghosted_preview_limit === 'number' ? benefits.ghosted_preview_limit : 3;
+  // -1 = unlimited (HOTMESS+); otherwise card index >= limit gets fogged for non-paying users
+  const isCardFogged = (index: number) => !hasFullGhosted && previewLimit !== -1 && index >= previewLimit;
+
   return (
     <div className="relative h-full w-full bg-[#050507] flex flex-col overflow-hidden">
 
@@ -242,11 +252,13 @@ export default function GhostedMode() {
               const cycle = i % 7;
               const dim   = cycle === 1 || cycle === 4 ? 0.82 : cycle === 6 ? 0.92 : 1.0;
               const scale = cycle === 2 ? 1.015 : cycle === 5 ? 0.985 : 1.0;
+              const fogged = isCardFogged(i);
               return (
                 <div
                   key={card.id}
+                  className="relative"
                   style={{
-                    opacity: dim,
+                    opacity: fogged ? 0.55 : dim,
                     transform: `scale(${scale})`,
                     transformOrigin: 'center',
                   }}
@@ -257,8 +269,26 @@ export default function GhostedMode() {
                     isBood={isTapped(card.id, 'boo')}
                     isMutual={isMutualBoo(card.id)}
                     isBoosted={boostedUserIds.has(card.id)}
-                    onTap={(id) => openSheet('profile', { id })}
+                    onTap={(id) => {
+                      if (fogged) {
+                        // Felt copy doctrine 07 — one line, no chrome.
+                        navigate('/upgrade');
+                      } else {
+                        openSheet('profile', { id });
+                      }
+                    }}
                   />
+                  {fogged && (
+                    <div
+                      aria-hidden="true"
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        backdropFilter: 'blur(14px) saturate(0.6)',
+                        WebkitBackdropFilter: 'blur(14px) saturate(0.6)',
+                        background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 100%)',
+                      }}
+                    />
+                  )}
                 </div>
               );
             })}
