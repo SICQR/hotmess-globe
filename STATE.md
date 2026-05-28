@@ -340,3 +340,28 @@ So:
 ---
 
 *Written by hotmess-ops. If this file is more than 7 days old and you're picking up the repo, the live numbers will be stale — re-pull from Supabase and update §2.*
+
+
+---
+
+## 15. Auth policy (Phil-locked 2026-05-28)
+
+**Email auto-confirm: ON.** No email confirmation step. Every signup is
+treated as verified at creation time.
+
+- Matches industry peers (Grindr, Sniffies) — minimal friction at the threshold.
+- Verification happens at higher-stakes moments instead: payment (Stripe handles
+  email verification at checkout), age (age gate is its own consent), trusted
+  contacts (SOS chain confirms separately).
+- The Supabase project is already configured this way; no change needed.
+
+**Implications captured in code:**
+- `SignUpScreen.jsx` no longer shows the "Check your email to confirm" message
+  for any case (PR #598 hotfix). That copy was always misleading.
+- The "no error, no session" branch from `supabase.auth.signUp()` now means
+  "existing email" (Supabase anti-enumeration response) — handled with a
+  password-as-signin attempt and felt-copy nudge.
+
+**What we will reconsider:**
+- If/when spam signups become a problem, revisit email confirmation as a
+  defence — but the cost of friction-now > the benefit of friction-then.
