@@ -88,6 +88,8 @@ const ModerationPage = lazy(() => import('@/pages/admin/ModerationPage'));
 const FlagsAdmin    = lazy(() => import('@/pages/admin/FlagsAdmin'));
 const FunnelPage    = lazy(() => import('@/pages/admin/FunnelPage'));
 const RedeemPage    = lazy(() => import('@/pages/beta/RedeemPage'));
+const PrivacyPolicyStandalone = lazy(() => import('@/pages/legal/PrivacyPolicy'));
+const TermsOfServiceStandalone = lazy(() => import('@/pages/legal/TermsOfService'));
 const RevenueDashboard = lazy(() => import('@/pages/admin/RevenueDashboard'));
 const VerificationQueue = lazy(() => import('@/pages/admin/VerificationQueue'));
 const SOSPage = lazy(() => import('@/pages/SOSPage'));
@@ -501,6 +503,13 @@ const AuthenticatedApp = () => {
       <Route path="/legal/privacy" element={<LegalPrivacyRoute />} />
       <Route path="/legal/terms" element={<LegalTermsRoute />} />
       <Route path="/legal/*" element={<AboutPage />} />
+      {/* Canonical /privacy and /terms — Phil 2026-05-28 hotfix.
+          Required by Google OAuth consent screen verification: those URLs
+          MUST resolve or Google will reject. Standalone (no LayoutWrapper)
+          so the crawler gets clean HTML + no auth-state computation.
+          Lazy + Suspense fallback null per #584 postmortem rule 1. */}
+      <Route path="/privacy" element={<Suspense fallback={null}><PrivacyPolicyStandalone /></Suspense>} />
+      <Route path="/terms" element={<Suspense fallback={null}><TermsOfServiceStandalone /></Suspense>} />
 
       {/* Fallback auto-generated /PageName routes for internal createPageUrl() redirects */}
       {Object.entries(Pages).map(([path, Page]) => {
