@@ -106,9 +106,20 @@ export default function NotificationsScreen({ session, onComplete, onBack }) {
       <div className="flex-1 flex flex-col justify-center px-6 py-8 max-w-md mx-auto w-full">
         <header className="mb-8 text-center">
           <Bell className="w-8 h-8 mx-auto mb-3" style={{ color: GOLD }} />
-          <h1 className="text-2xl font-black tracking-tight uppercase">How should we reach you?</h1>
+          <h1 className="text-2xl font-black tracking-tight uppercase">When does HOTMESS reach out?</h1>
           <p className="text-white/45 text-[13px] mt-2 leading-snug">
-            Safety alerts go to your chosen channel. Skip if you want the bell only.
+            Only three reasons. Pick how — or stay in-app only.
+          </p>
+          {/* Phase 1 conversion repair (Phil 2026-05-28): 65% of users
+              picked 'none' because they didn't know what would trigger a
+              message. Tell them up-front. */}
+          <ul className="text-white/55 text-[12px] mt-4 leading-snug text-left max-w-[280px] mx-auto space-y-1.5">
+            <li className="flex gap-2"><span style={{color: GOLD}}>·</span>Someone you boo'd boos you back</li>
+            <li className="flex gap-2"><span style={{color: GOLD}}>·</span>Your SOS contacts ping during a chain</li>
+            <li className="flex gap-2"><span style={{color: GOLD}}>·</span>An aftercare check-in you opted into</li>
+          </ul>
+          <p className="text-white/30 text-[11px] mt-3">
+            That's it. Nothing else. Marketing is never one of them.
           </p>
         </header>
 
