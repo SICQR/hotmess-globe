@@ -62,7 +62,7 @@ export default function L2SocialSheet() {
             id: f.id,
             action_type: 'follow',
             // P0 2026-05-28: no email fallback. Use display fallback for unknown names.
-            actor_name: f.followed_name || 'Member',
+            actor_name: safeName({ display_name: f.followed_name }, 'Member'),
             actor_avatar: f.followed_avatar_url,
             actor_email: f.followed_email,
             created_at: f.created_date,
