@@ -19,6 +19,10 @@ const money = (amount, currency) => {
 
 export default function ShopCart() {
   const { cart, isLoading, lastError, updateLineQuantity, removeLine, applyDiscountCode } = useShopCart();
+  const [welcomeApplied, setWelcomeApplied] = useState(() => {
+    try { return localStorage.getItem('hm_welcome10_applied') === 'true'; } catch { return false; }
+  });
+  const [welcomeBusy, setWelcomeBusy] = useState(false);
   const { openSheet } = useSheet();
   const [code, setCode] = useState('');
 
@@ -77,6 +81,49 @@ export default function ShopCart() {
             <p className="text-white/60 text-sm mt-1">{lastError?.message || 'Unknown error'}</p>
           </div>
         ) : null}
+
+        {/* HNHMESS Welcome 10% banner — first-purchase felt copy.
+            Phil 2026-05-28 (#240). Requires `HNHMESS_WELCOME10` discount
+            code to exist in Shopify Admin (one-per-customer, 10% off).
+            On click: applies via Shopify cart, persists flag so it never
+            shows again. */}
+        {!welcomeApplied && lines.length > 0 && (
+          <button
+            type="button"
+            disabled={welcomeBusy}
+            onClick={async () => {
+              setWelcomeBusy(true);
+              try {
+                await applyDiscountCode({ code: 'HNHMESS_WELCOME10' });
+                try { localStorage.setItem('hm_welcome10_applied', 'true'); } catch {}
+                setWelcomeApplied(true);
+                toast.success('10% off — welcome to HNHMESS', {
+                  description: "Applied to your first order. It's on us.",
+                });
+              } catch (e) {
+                toast.error('Could not claim — try again at checkout', { description: e?.message });
+              } finally {
+                setWelcomeBusy(false);
+              }
+            }}
+            className="w-full mb-4 border border-[#C8962C]/50 bg-[#C8962C]/10 rounded-lg p-4 text-left transition-opacity hover:bg-[#C8962C]/15 disabled:opacity-50"
+            style={{ color: '#fff' }}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-black tracking-tight">
+                  First HNHMESS order? <span style={{ color: '#C8962C' }}>10% off, on us.</span>
+                </p>
+                <p className="text-white/55 text-[11px] mt-1">
+                  One tap to apply. Auto-included at checkout.
+                </p>
+              </div>
+              <span className="text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 rounded-md whitespace-nowrap" style={{ background: '#C8962C', color: '#000' }}>
+                {welcomeBusy ? '…' : 'Claim'}
+              </span>
+            </div>
+          </button>
+        )}
 
         {lines.length === 0 ? (
           <div className="border border-white/10 bg-white/5 p-6">
