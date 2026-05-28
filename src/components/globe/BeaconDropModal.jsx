@@ -4,6 +4,7 @@ import { MapPin, Info, Sparkles, Loader2, ShoppingBag, Dumbbell, PartyPopper, Fl
 import { supabase } from '@/components/utils/supabaseClient';
 import { trackEvent } from '@/components/utils/analytics';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 // HOTMESS Beacon Identity System — 9 doctrine sprite categories.
 // Each id is a valid beacon_category value per migration
@@ -42,6 +43,21 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
   const placeDebounceRef = React.useRef(null);
   const MAPBOX_TOKEN = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_MAPBOX_TOKEN) || '';
   const [loading, setLoading] = useState(false);
+  const [quota, setQuota] = useState(null); // { used, cap, remaining, unlimited } | null
+  const navigate = useNavigate();
+
+  // Pull quota when modal opens so the chip reflects current month state.
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_beacon_quota');
+        if (!cancelled && !error && data) setQuota(data);
+      } catch { /* fail-open: no chip, drop attempt re-checks before insert */ }
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen]);
 
   const handleDrop = async () => {
     if (!title.trim()) {
@@ -53,6 +69,21 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+
+      // Tier quota precheck — never insert if user is over cap. The server
+      // side has RLS but the client-side guard prevents the round trip + the
+      // confusing 'Failed to drop beacon' toast that would otherwise fire.
+      try {
+        const { data: q } = await supabase.rpc('get_beacon_quota');
+        if (q && !q.unlimited && (q.cap === 0 || q.remaining === 0)) {
+          toast.info(
+            q.cap === 0 ? 'Beacon drops unlock with HOTMESS' : `You hit your monthly cap (${q.cap}). Top up your tier.`,
+            { action: { label: 'Unlock', onClick: () => navigate('/upgrade') } }
+          );
+          setLoading(false);
+          return;
+        }
+      } catch { /* on RPC failure, fall through — server RLS is the canonical guard */ }
 
       // Location resolution priority:
       //  1. Picked place from the Mapbox autocomplete (typed city/area/postcode/venue)
@@ -104,6 +135,8 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
       });
       if (error) throw error;
       toast.success('Beacon dropped on the globe!');
+      // Optimistic decrement so the chip reflects the new state immediately.
+      setQuota((prev) => prev && !prev.unlimited ? { ...prev, used: prev.used + 1, remaining: Math.max((prev.remaining ?? 0) - 1, 0) } : prev);
       trackEvent('beacon_dropped', {
         category: 'beacon',
         beacon_category: kind,
