@@ -25,7 +25,6 @@ export { default as WingmanPanel } from './messaging/WingmanPanel';
 
 // Monetization Components
 export { default as UpsellModal } from './monetization/UpsellModal';
-export { default as FeatureGate, useFeatureAccess, PremiumBadge } from './monetization/FeatureGate';
 
 // Notification Components
 export { default as NotificationCenter, NotificationBell } from './notifications/NotificationCenter';

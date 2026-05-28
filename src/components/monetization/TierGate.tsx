@@ -11,9 +11,9 @@
  *     <FullTrackPlayer />
  *   </TierGate>
  *
- * Replacing FeatureGate.jsx in stages — that one uses the dead PREMIUM/ELITE
- * tier names. Both will coexist until every call site is migrated; then
- * FeatureGate gets deleted in a cleanup PR.
+ * Replaced FeatureGate.jsx (PR #593 cleanup) — that component used dead
+ * PREMIUM/ELITE tier names that never matched the live mess/hotmess/
+ * connected/promoter/venue schema. TierGate reads benefits JSON directly.
  */
 
 import React from 'react';
