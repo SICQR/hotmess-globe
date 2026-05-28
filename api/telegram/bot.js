@@ -101,34 +101,44 @@ async function handleStart(chatId, telegramUserId, username, args) {
   const linkToken = args[0];
 
   if (linkToken) {
-    // Verify and link account
-    const { data: tokenData, error } = await supabase
-      .from('telegram_link_tokens')
-      .select('user_id, expires_at')
-      .eq('token', linkToken)
-      .single();
+    // M5 (Phil 2026-05-28) — schema reconciliation:
+    // The app writes the one-shot link token to `profiles.telegram_link_token`
+    // (NotificationsScreen + L2NotificationSettingsSheet). The bot was reading from
+    // a separate `telegram_link_tokens` table that nothing ever wrote to, so every
+    // Telegram link attempt hit "Invalid or expired link". Reading from profiles now.
+    const { data: profileRow, error } = await supabase
+      .from('profiles')
+      .select('id, telegram_link_token')
+      .eq('telegram_link_token', linkToken)
+      .maybeSingle();
 
-    if (error || !tokenData || new Date(tokenData.expires_at) < new Date()) {
+    if (error || !profileRow) {
       await sendMessage(chatId, '❌ Invalid or expired link. Generate a new one from the HOTMESS app.');
       return;
     }
 
-    // Create/update telegram user link
+    // Bind: write chat_id back so dispatcher (api/notifications/process.js + dispatcher.js)
+    // can route notifications. Also null the one-shot token so it can't be re-used.
+    const linkedAt = new Date().toISOString();
+    await supabase
+      .from('profiles')
+      .update({
+        telegram_chat_id: chatId,
+        telegram_link_token: null,
+        updated_at: linkedAt,
+      })
+      .eq('id', profileRow.id);
+
+    // Maintain the bot-internal telegram_users mapping (used by /unsubscribe etc.)
     await supabase
       .from('telegram_users')
       .upsert({
         telegram_id: telegramUserId.toString(),
-        user_id: tokenData.user_id,
+        user_id: profileRow.id,
         username: username,
         chat_id: chatId.toString(),
-        linked_at: new Date().toISOString()
+        linked_at: linkedAt
       }, { onConflict: 'telegram_id' });
-
-    // Delete used token
-    await supabase
-      .from('telegram_link_tokens')
-      .delete()
-      .eq('token', linkToken);
 
     await sendMessage(chatId, `
 ✅ *Account Linked!*
