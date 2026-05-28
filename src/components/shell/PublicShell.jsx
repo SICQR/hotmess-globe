@@ -46,8 +46,13 @@ export default function PublicShell({ startAt = '/' }) {
         {/* Legal */}
         <Route path="/legal/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/legal/terms" element={<LegalPage />} />
-        <Route path="/privacy" element={<PrivacyPolicyPage />} />
-        <Route path="/terms" element={<LegalPage />} />
+        {/* Phil 2026-05-28 (#251): /privacy + /terms removed from PublicShell.
+            App.jsx already declares standalone routes pointing to the new
+            PrivacyPolicy.jsx + TermsOfService.jsx components. Having them here
+            ALSO created a double-registration that React Router resolved to the
+            wrong target depending on render order — Google OAuth crawler hit
+            the wrong shell, Phil saw "Lost in the fog". Single source of truth
+            now: App.jsx. */}
         <Route path="/PrivacyHub" element={<PrivacyHub />} />
 
         {/* Catch-all → splash */}
