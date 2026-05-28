@@ -11,6 +11,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/components/utils/supabaseClient';
 import { safeName } from '@/lib/identity/safeName';
+import { useTaps } from '@/hooks/useTaps';
 import {
   Send, ArrowLeft,
   Loader2, Search, ChevronRight,
@@ -468,6 +469,15 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   const handleSend = async () => {
     const text = newMessage.trim();
     if (!text || !currentUser?.email || sending) return;
+    // M8: boo-first gate — first message in a thread requires mutual boo.
+    // (Existing conversations bypass; only the initial reach-out is gated.)
+    const isFirstMessage = !!selectedThread?._new || (Array.isArray(messages) && messages.length === 0);
+    if (isFirstMessage && otherProfile?.id && !isMutualBoo(otherProfile.id)) {
+      toast('Boo first. They have to want it back.', {
+        description: 'Send a boo from their profile — when they boo you back, the message goes through.',
+      });
+      return;
+    }
     if (!canMessage) {
       toast.info('Messaging is for HOTMESS — tap to unlock', {
         action: { label: 'Unlock', onClick: () => _navigateToUpgrade('/upgrade') },
@@ -741,6 +751,10 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   // ── Derive other-party info (needed by Wingman + chat view) ───────────────
   const otherEmail = selectedThread ? getOtherEmail(selectedThread) : '';
   const otherProfile = otherEmail ? getProfile(otherEmail) : null;
+  // M8 (Phil 2026-05-28 #260): boo-first chat gate. Pre-mutual users can't
+  // cold-message. Paid tier (canMessage) opens the door but the relational
+  // signal still has to land first — doctrine 07.
+  const { isMutualBoo } = useTaps(currentUser?.id || null, currentUser?.email || null);
   // P0 2026-05-28: NEVER fall back to email. safeName guarantees no '@'-containing string ever surfaces here.
   const otherName = safeName(otherProfile, title || 'Member');
 
