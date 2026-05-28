@@ -123,15 +123,27 @@ export default function L2SheetContainer({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, handleClose]);
 
-  // Lock body scroll when sheet is open
+  // Lock body scroll when sheet is open + prevent overscroll bubbling to Safari
+  // pull-to-refresh (#253 Phil 2026-05-28). html, body has
+  // `overscroll-behavior-y: auto` set globally to enable PWA pull-to-refresh
+  // on the main app, but this means sheet drag bleeds to the page when the
+  // drag gesture isn't fully captured. Toggling overscroll-behavior-y to
+  // 'contain' on body while a sheet is open kills the bleed without removing
+  // the feature elsewhere.
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      document.body.style.overscrollBehaviorY = 'contain';
+      document.documentElement.style.overscrollBehaviorY = 'contain';
     } else {
       document.body.style.overflow = '';
+      document.body.style.overscrollBehaviorY = '';
+      document.documentElement.style.overscrollBehaviorY = '';
     }
     return () => {
       document.body.style.overflow = '';
+      document.body.style.overscrollBehaviorY = '';
+      document.documentElement.style.overscrollBehaviorY = '';
     };
   }, [isOpen]);
 
@@ -200,7 +212,7 @@ export default function L2SheetContainer({
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.5 }}
             onDragEnd={handleDragEnd}
-            style={{ height, overflowX: 'hidden' }}
+            style={{ height, overflowX: 'hidden', overscrollBehavior: 'contain', touchAction: 'pan-y' }}
             className={cn(
               'fixed bottom-0 left-0 right-0 z-[80]',
               'bg-black border-t-2 border-x-2 border-[#C8962C]',
@@ -239,7 +251,11 @@ export default function L2SheetContainer({
             {/* Header — collapsed in bareTop mode. The host sheet supplies
                 its own header chrome (back button, more menu, close). */}
             {!bareTop && (
-              <div className="flex items-center justify-between px-4 pb-3 border-b border-white/10">
+              <div
+                className="flex items-center justify-between px-4 pb-3 border-b border-white/10 touch-none cursor-grab active:cursor-grabbing"
+                onPointerDown={(e) => dragControls.start(e)}
+                style={{ touchAction: 'none' }}
+              >
                 <div className="flex-1 min-w-0">
                   {title && (
                     <h2
