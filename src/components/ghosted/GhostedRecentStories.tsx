@@ -24,6 +24,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
+import { safeName } from '@/lib/identity/safeName';
 
 interface RowPerson {
   userId: string | null;
@@ -139,7 +140,8 @@ export function GhostedRecentStories({
           out.push({
             userId: ownerId,
             email: prof.email || '',
-            name: prof.display_name || (prof.email ? prof.email.split('@')[0] : 'Signal'),
+            // P0 2026-05-28: no email-username fallback. safeName returns 'Member' when display_name missing.
+            name: safeName(prof, 'Signal'),
             avatar: prof.avatar_url || null,
             hasBeacon: true,
             beaconId: beaconByOwner.get(ownerId) || null,
