@@ -20,6 +20,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Ghost, MessageSquare, Flag, MapPin, Clock } from 'lucide-react';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
+import { useTaps } from '@/hooks/useTaps';
 
 import type { ActiveBeacon } from '@/hooks/useBeaconById';
 
@@ -120,6 +121,18 @@ export type ActiveBeaconModuleProps = {
 export function ActiveBeaconModule({ beacon, ownerId, ownerName, fadedBeaconId }: ActiveBeaconModuleProps) {
   const { openSheet } = useSheet();
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
+  const [myUserId, setMyUserId] = useState<string | null>(null);
+
+  // Self id for boo (M9 Phil 2026-05-28: handleBoo was a console.log)
+  useEffect(() => {
+    let alive = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (alive) setMyUserId(data?.user?.id ?? null);
+    });
+    return () => { alive = false; };
+  }, []);
+
+  const { sendTap, isTapped } = useTaps(myUserId);
 
   // 1Hz tick for the countdown. Hook order must be stable, so we run the
   // timer unconditionally and just skip work when there's no beacon.
@@ -181,10 +194,13 @@ export function ActiveBeaconModule({ beacon, ownerId, ownerName, fadedBeaconId }
   const loc = locationLabel(beacon);
 
   const handleBoo = async () => {
-    // TODO(beacon-doctrine): wire to canonical "boo" endpoint when it lands.
-    // For now, log + optimistic toast so the CTA is non-blocking.
-    // eslint-disable-next-line no-console
-    console.log('[ActiveBeaconModule] boo', { beaconId: beacon.id, ownerId });
+    // M9 (Phil 2026-05-28): real boo via useTaps.sendTap (was console.log only).
+    if (!ownerId || !myUserId) return;
+    try {
+      await sendTap(ownerId, ownerName || 'them');
+    } catch (e) {
+      console.warn('[ActiveBeaconModule] sendTap failed', e);
+    }
   };
 
   const handleMessage = () => {
