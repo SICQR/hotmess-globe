@@ -43,23 +43,10 @@ export default function L2SettingsSheet() {
         { icon: Eye, label: 'Privacy', onTap: () => openSheet('privacy') },
         { icon: Bell, label: 'Notifications', onTap: () => openSheet('notifications') },
         { icon: Lock, label: 'Blocked Users', onTap: () => openSheet('blocked') },
-        {
-          icon: Eye,
-          label: isBoostActive('incognito_week') ? 'Incognito Mode (Active)' : 'Go Incognito',
-          onTap: () => {
-            if (isBoostActive('incognito_week')) {
-              const exp = boostExpiresAt('incognito_week');
-              const m = exp ? Math.round((exp.getTime() - Date.now()) / 60000) : 0;
-              const timeLeft = m < 60 ? `${m}m` : m < 1440 ? `${Math.round(m / 60)}h` : `${Math.round(m / 1440)}d`;
-              toast(`Incognito active - ${timeLeft} left`, {
-                style: { background: '#1C1C1E', color: '#C8962C', border: '1px solid rgba(200,150,44,0.3)' },
-              });
-            } else {
-              openSheet('boost-shop');
-            }
-          },
-          highlight: isBoostActive('incognito_week'),
-        },
+        // M7 (Phil 2026-05-28): "Go Incognito" promised invisibility the backend doesn't enforce.
+        // incognito_week is HIDDEN_UNTIL_WIRED in boost-shop. Showing this menu item created a
+        // dangerous false-safety expectation per Sacred Invariant #4. Restore when doctrine 08
+        // visibility-state spec + #213 backend wiring lands.
       ],
     },
     {
