@@ -1,6 +1,6 @@
 # HOTMESS — System State
 
-**Last updated:** 2026-05-27, end of day, by hotmess-ops.
+**Last updated:** 2026-05-28, by hotmess-ops.
 **Audience:** anyone (human or LLM) walking into this repo cold and needing to know what's true *right now*.
 **If you read only one file in this repo before doing anything, read this one.**
 
@@ -16,23 +16,24 @@ The product is becoming "a slower, more atmospheric, more emotionally aware alte
 
 ---
 
-## 2. Live numbers (snapshot, 2026-05-27 16:10 UTC)
+## 2. Live numbers (snapshot, 2026-05-28 02:00 UTC)
 
 These are pulled from production Supabase, not estimates.
 
 | Metric | Value |
 |---|---|
-| Real profiles (excludes `is_demo` seeds) | 129 |
-| Signups last 24h | **19** (12 at 14:00 UTC, 5 at 15:00, 2 at 16:00) |
-| Signups last 7d | 20 |
-| Signups last 30d | 29 |
-| Paying subscribers (active) | 2 |
-| Active beta cohort | 2 |
-| Beacons dropped last 24h | 11 |
+| Real profiles (excludes `is_demo` seeds) | 140 (was 129; Ziaullah moved to demo) |
+| Signups last 24h | **31** |
+| Signups since yesterday 09:00 UTC | 31 |
+| Paying subscribers (active) | **1** (Bren only; Ziaullah was old dev, demoted) |
+| Active beta cohort (real) | 3 |
+| Beacons dropped last 24h | 12 (most expired at default 4h TTL) |
 | Boos (taps) last 24h | 2 |
-| Boost purchases since launch | 0 (boosts unhid ~16:00 UTC) |
-| Feedback submitted last 24h | 0 (V1 just shipped) |
+| Boost purchases since launch | 0 |
+| Feedback submitted last 24h | 0 |
 | Escalated feedback last 24h | 0 |
+| Beta invites claimed | **4** of 250-cap multi-use code (3 succeeded, 1 silent fail to investigate) |
+| **Onboarding abandon last 24h** | **37 of 61 (60.6%)** — drill target |
 
 **Live dashboard:** [hotmessldn.com/admin/analytics](https://hotmessldn.com/admin/analytics) (admin auth required). Component: `src/components/admin/AnalyticsDashboard.jsx`. NOTE: this page does `SELECT *` from `profiles`/`beacons`/`orders` — fine at 129 users, will need pagination at ~1000.
 
@@ -167,6 +168,31 @@ All four are `security_invoker = on` and granted `SELECT` to `authenticated`. Th
 | #585 | Morning observation digest → Telegram cron | Push observation, not pull. Runs 09:00 UTC daily. |
 
 All shipped via the deterministic commit-tree promote pattern, each verified live before the next.
+
+---
+
+## 8b. What shipped today (2026-05-28)
+
+| PR | Title | Why it matters |
+|---|---|---|
+| #588 | tiers foundation: `useUserBenefits` + `TierGate` + doctrine 02 rewrite | First true per-feature gating substrate. Reads `membership_tiers.benefits` JSON. |
+| #589 | music library full unlock — 90s preview cap for MESS, full for HOTMESS+ | First observable HOTMESS entitlement Bren can feel |
+| #590 | ghosted full grid — MESS fog past 3 cards, HOTMESS+ full | Second |
+| #591 | messaging unlock — MESS composer locked with £ button, HOTMESS+ unlocks | Third |
+| #592 | beacon drop monthly quota — 0/3/10/20/-1 per tier | Server RPC + client precheck + felt-copy toast |
+| #593 | cleanup: deleted dead FeatureGate.jsx PREMIUM/ELITE enum | Closeout of the series; -183 lines |
+| #594 | promote tier series to production | Live as `5a18c648` |
+
+Ziaullah (old dev account, was showing as "paying CONNECTED tier") demoted to `is_demo=true`, `membership_tier='mess'`, `subscription_status='canceled'`. Real paying-user count is now honestly **1** (Bren).
+
+## 8c. Phase shift (Phil 2026-05-28)
+
+> HOTMESS now has: doctrine, economy, identity, relational structure, safety semantics, progression, atmosphere. What it needs next is CLARITY. Not capability.
+
+This is recorded as a doctrine-level pivot:
+- **Stop adding capability.** No new boosts, gates, quotas, urgency, conversion timers, premium nags.
+- **Start measuring clarity.** Onboarding 60% abandon last 24h is the next leak. The entitlement series may have amplified it (users now see differentiated states + may feel "I'm already behind").
+- Next product artifact: `docs/doctrine/09-onboarding-truth-architecture.md` — *questions first, not UI first*. Promise vs belief vs reality, with focus on map presence / beacon meaning / Ghosted semantics / profile visibility / mutuality expectations.
 
 ---
 
