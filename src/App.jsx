@@ -591,8 +591,10 @@ function App() {
               <Toaster />
               {/* SW update banner — listens for hm_sw_update_available and prompts refresh */}
               <SWUpdateBanner />
-            {/* Phil 2026-05-28 (#252): global beta feedback button — restores #206 surface */}
-            <Suspense fallback={null}><PulseFeedbackButton /></Suspense>
+            {/* Phil 2026-05-28: PulseFeedbackButton UNMOUNTED.
+                Initial placement at bottom-right overlapped Ghosted inbox icon.
+                Need correct positioning before re-mounting. Lazy-import left
+                in place so the module bundles only when referenced again. */}
               {/* PIN Lock Overlay - Z-200, above everything */}
               <PinLockOverlay />
             </QueryClientProvider>
