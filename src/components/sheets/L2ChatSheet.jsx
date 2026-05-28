@@ -1658,26 +1658,25 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
 
         {/* Text input row — auto-grow textarea (WhatsApp pattern) */}
         <div className="flex items-end gap-2 px-3 pb-3">
-          {/* Highlight message button */}
-          <button
-            onClick={() => {
-              if (isBoostActive('highlighted_message')) {
-                setHighlightNext(prev => !prev);
-              } else {
-                openSheet('boost-shop', {});
-              }
-            }}
-            className={cn(
-              'flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full border transition-all active:scale-95',
-              highlightNext
-                ? 'bg-[#C8962C]/20 border-[#C8962C]/50'
-                : 'bg-white/5 border-white/10'
-            )}
-            title={isBoostActive('highlighted_message') ? 'Highlight this message' : 'Get Highlighted Message power-up'}
-            aria-label="Highlight message"
-          >
-            <Zap className={cn('w-4 h-4', highlightNext ? 'text-[#C8962C]' : 'text-white/40')} />
-          </button>
+          {/* Highlight message button — only visible if user owns the boost.
+              Phil 2026-05-28 (#265): doctrine 07 — monetisation must never
+              override relational truth. Upsell in the chat composer is wrong-
+              moment promotion. Boost shop remains available from Settings. */}
+          {isBoostActive('highlighted_message') && (
+            <button
+              onClick={() => setHighlightNext(prev => !prev)}
+              className={cn(
+                'flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full border transition-all active:scale-95',
+                highlightNext
+                  ? 'bg-[#C8962C]/20 border-[#C8962C]/50'
+                  : 'bg-white/5 border-white/10'
+              )}
+              title="Highlight this message"
+              aria-label="Highlight message"
+            >
+              <Zap className={cn('w-4 h-4', highlightNext ? 'text-[#C8962C]' : 'text-white/40')} />
+            </button>
+          )}
 
           <textarea
             ref={inputRef}
