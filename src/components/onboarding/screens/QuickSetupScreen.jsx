@@ -15,7 +15,6 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { Loader2, MapPin, ToggleLeft, ToggleRight } from 'lucide-react';
 import OnboardingBackButton from '../OnboardingBackButton';
-import { isWebAuthnSupported, isPasskeyRegistered, registerPasskey } from '@/lib/passkey';
 import { track, trackOnce } from '@/lib/analytics';
 
 const GOLD = '#C8962C';
@@ -27,8 +26,6 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
   const [locationEnabled, setLocationEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showPasskeyPrompt, setShowPasskeyPrompt] = useState(false);
-  const [registeringPasskey, setRegisteringPasskey] = useState(false);
 
   const userId = session?.user?.id;
   const userEmail = session?.user?.email;
@@ -98,11 +95,11 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
 
       track('quick_setup_completed', 'onboarding', locationEnabled ? 'with_location' : 'no_location');
 
-      if (isWebAuthnSupported() && !isPasskeyRegistered()) {
-        setShowPasskeyPrompt(true);
-      } else {
-        onComplete();
-      }
+      // M6 (Phil 2026-05-28): Face ID/Passkey prompt stripped. Supabase auth doesn't support
+      // factor_type='webauthn' — registerPasskey errored silently and onComplete fired anyway.
+      // Sacred Invariant #4 violation (symbolic capability). Restore when Passkey is actually
+      // wired through Supabase factor_type='totp' or a real WebAuthn backend.
+      onComplete();
     } catch (err) {
       console.error('[QuickSetup] error:', err);
       setError(err.message || 'Something went wrong. Try again.');
@@ -111,44 +108,9 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
     }
   };
 
-  const handleEnablePasskey = async () => {
-    setRegisteringPasskey(true);
-    await registerPasskey();
-    setRegisteringPasskey(false);
-    onComplete();
-  };
-
   return (
     <div className="fixed inset-0 bg-black flex flex-col items-center justify-center px-6 overflow-y-auto">
-      {showPasskeyPrompt && (
-        <div
-          className="fixed inset-0 flex items-center justify-center px-6 z-50"
-          style={{ background: 'rgba(0,0,0,0.95)' }}
-        >
-          <div className="w-full max-w-xs text-center">
-            <p className="text-white text-lg font-black mb-2">Back in one tap.</p>
-            <p className="text-white/40 text-sm mb-8 leading-relaxed">
-              Use Face ID next time. No links, no waiting.
-            </p>
-            <button
-              onClick={handleEnablePasskey}
-              disabled={registeringPasskey}
-              className="w-full py-4 rounded-xl font-black text-sm tracking-widest uppercase mb-3 transition-opacity"
-              style={{ backgroundColor: GOLD, color: '#000', opacity: registeringPasskey ? 0.6 : 1 }}
-            >
-              {registeringPasskey ? 'Setting up…' : 'Enable Face ID'}
-            </button>
-            <button
-              onClick={() => onComplete()}
-              className="text-xs"
-              style={{ color: 'rgba(255,255,255,0.25)' }}
-            >
-              Maybe later
-            </button>
-          </div>
-        </div>
-      )}
-      <OnboardingBackButton onBack={onBack} />
+<OnboardingBackButton onBack={onBack} />
       <div className="w-full max-w-xs py-12">
         <h2 className="text-white text-2xl font-black mb-2 tracking-tight">One last thing.</h2>
         <p className="text-white/40 text-sm mb-10 leading-relaxed">

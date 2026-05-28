@@ -282,24 +282,7 @@ export default function MusicReleasePage() {
         )}
 
         {/* Lyrics */}
-        {release.lyrics && (
-          <div className="mt-6">
-            <button
-              onClick={() => setShowLyrics(v => !v)}
-              className="flex items-center justify-between w-full py-2"
-            >
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/30">Lyrics</p>
-              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: GOLD }}>
-                {showLyrics ? 'Hide' : 'Show'}
-              </p>
-            </button>
-            {showLyrics && (
-              <pre className="mt-2 text-sm text-white/70 leading-relaxed whitespace-pre-wrap font-sans">
-                {release.lyrics}
-              </pre>
-            )}
-          </div>
-        )}
+        {/* M10 (Phil 2026-05-28): lyrics stripped per #192 (completion was incomplete in code). */}
 
         {/* Platform links */}
         {platformLinks.length > 0 && (

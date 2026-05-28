@@ -489,6 +489,9 @@ const AuthenticatedApp = () => {
           component exists but was not routed; wiring here. The tier query
           param is read by Pricing if implemented; otherwise informational. */}
       <Route path="/pricing" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><PricingPage /></Suspense>} />
+      {/* M1 (Phil 2026-05-28): 6 paywall CTAs navigate('/upgrade') but the route never existed,
+          breaking the highest-intent conversion moments. Alias to /pricing so the dead button works. */}
+      <Route path="/upgrade" element={<Navigate to="/pricing" replace />} />
       <Route path="/onboarding" element={<PageRoute pageKey="OnboardingGate" />} />
       <Route path="/onboarding/*" element={<PageRoute pageKey="OnboardingGate" />} />
       
