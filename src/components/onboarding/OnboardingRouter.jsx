@@ -39,6 +39,7 @@ import AgeGateScreen from './screens/AgeGateScreen';
 import SignUpScreen from './screens/SignUpScreen';
 import QuickSetupScreen from './screens/QuickSetupScreen';
 import NotificationsScreen from './screens/NotificationsScreen';
+import BridgeScreen from './screens/BridgeScreen';
 
 // Screen keys
 const SCREENS = {
@@ -48,6 +49,7 @@ const SCREENS = {
   SIGNIN: 'signin',
   QUICK_SETUP: 'quick_setup',
   NOTIFICATIONS: 'notifications',  // T5 (Phil 2026-05-26): channel pref before completion
+  BRIDGE: 'bridge',  // Phase 1 conversion repair (Phil 2026-05-28): explanation layer between age_gate + signup
 };
 
 // Map onboarding_stage → screen.
@@ -320,9 +322,16 @@ export default function OnboardingRouter() {
       localStorage.removeItem('hm_age_gate_year');
       goTo(SCREENS.QUICK_SETUP);
     } else {
-      // Not authenticated — proceed to signup as normal
-      goTo(SCREENS.SIGNUP);
+      // Phase 1 (Phil 2026-05-28): bridge between age-gate + signup.
+      // The old straight-to-signup created a tonal cliff that probably
+      // accounted for the 18/7d signup-screen abandons. Bridge gives the
+      // user the explanation layer they have been waiting for since splash.
+      goTo(SCREENS.BRIDGE);
     }
+  }, [goTo]);
+
+  const handleBridgeContinue = useCallback(() => {
+    goTo(SCREENS.SIGNUP);
   }, [goTo]);
 
   // QuickSetup is now the FINAL gate. Both ProfileScreen and PinSetup are
@@ -399,6 +408,14 @@ export default function OnboardingRouter() {
       return (
         <AgeGateScreen
           onComplete={handleAgeGateComplete}
+          onBack={canGoBack ? goBack : undefined}
+        />
+      );
+
+    case SCREENS.BRIDGE:
+      return (
+        <BridgeScreen
+          onContinue={handleBridgeContinue}
           onBack={canGoBack ? goBack : undefined}
         />
       );
