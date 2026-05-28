@@ -10,7 +10,7 @@
  * here — onboarding only sets the external channel preference.
  */
 import React, { useState } from 'react';
-import { Bell, MessageCircle, Send, Check, ExternalLink, Loader2 } from 'lucide-react';
+import { Bell, Check, Loader2 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { track } from '@/lib/analytics';
 
@@ -19,8 +19,6 @@ const GOLD = '#C8962C';
 export default function NotificationsScreen({ session, onComplete, onBack }) {
   const userId = session?.user?.id;
   const [selected, setSelected] = useState(null); // 'none' | 'whatsapp' | 'telegram'
-  const [phone, setPhone] = useState('');
-  const [telegramToken, setTelegramToken] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -30,22 +28,6 @@ export default function NotificationsScreen({ session, onComplete, onBack }) {
     setError('');
     try {
       const update = { notification_channel: channel };
-      if (channel === 'whatsapp') {
-        const trimmed = phone.trim();
-        if (!/^\+?[1-9]\d{6,14}$/.test(trimmed)) {
-          setError('Enter a valid phone number (e.g. +44 7700 900123).');
-          setSaving(false);
-          return;
-        }
-        update.phone = trimmed;
-      }
-      if (channel === 'telegram' && !telegramToken) {
-        const token = typeof crypto !== 'undefined' && crypto.randomUUID
-          ? crypto.randomUUID()
-          : Math.random().toString(36).slice(2);
-        update.telegram_link_token = token;
-        setTelegramToken(token);
-      }
       const { error: dbErr } = await supabase
         .from('profiles')
         .update(update)
@@ -73,23 +55,7 @@ export default function NotificationsScreen({ session, onComplete, onBack }) {
     writeChannelAndContinue(selected);
   };
 
-  const openTelegramLink = async () => {
-    // Generate token + write first, then open the deep link.
-    if (!userId) return;
-    const token = telegramToken || (
-      typeof crypto !== 'undefined' && crypto.randomUUID
-        ? crypto.randomUUID()
-        : Math.random().toString(36).slice(2)
-    );
-    if (!telegramToken) {
-      setTelegramToken(token);
-      await supabase.from('profiles').update({ telegram_link_token: token }).eq('id', userId);
-    }
-    const bot = (import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'HotmessAuthBot').replace(/^@/, '');
-    window.open(`https://t.me/${bot}?start=${token}`, '_blank', 'noopener,noreferrer');
-  };
-
-  return (
+      const update = { notification_channel: channel };  return (
     <div className="min-h-screen bg-[#050507] text-white flex flex-col">
       {onBack && (
         <div className="px-4 pt-4">
@@ -132,50 +98,14 @@ export default function NotificationsScreen({ session, onComplete, onBack }) {
             onClick={() => setSelected('none')}
           />
 
-          <Option
-            label="WhatsApp"
-            subline="Safety alerts + key updates sent to your number."
-            icon={<MessageCircle className="w-4 h-4" />}
-            selected={selected === 'whatsapp'}
-            onClick={() => setSelected('whatsapp')}
-          >
-            {selected === 'whatsapp' && (
-              <div className="mt-3">
-                <input
-                  type="tel"
-                  inputMode="tel"
-                  placeholder="+44 7700 900123"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-black border border-white/15 rounded-lg px-3 py-2 text-[13px] text-white placeholder-white/30 focus:outline-none focus:border-[#C8962C]/60"
-                />
-              </div>
-            )}
-          </Option>
-
-          <Option
-            label="Telegram"
-            subline="Connect the HOTMESS bot to receive updates."
-            icon={<Send className="w-4 h-4" />}
-            selected={selected === 'telegram'}
-            onClick={() => setSelected('telegram')}
-          >
-            {selected === 'telegram' && (
-              <div className="mt-3">
-                <button
-                  type="button"
-                  onClick={openTelegramLink}
-                  className="inline-flex items-center gap-2 px-3 h-9 rounded-lg text-[11px] font-bold uppercase tracking-wider"
-                  style={{ background: GOLD, color: '#000' }}
-                >
-                  Open Telegram <ExternalLink className="w-3.5 h-3.5" />
-                </button>
-                <div className="text-[11px] text-white/35 mt-2 leading-snug">
-                  After tapping, send /start in the bot to confirm. You can also do this later in Settings.
-                </div>
-              </div>
-            )}
-          </Option>
+          {/* M11 (Phil 2026-05-28): WhatsApp + Telegram options stripped from
+              onboarding until the general-purpose dispatcher honors
+              profile.notification_channel for non-safety notification types.
+              Safety dispatcher does honor them; boo / aftercare / general do
+              not. Promising channels we can't reliably deliver = Sacred
+              Invariant #4 violation. Restore options when M11-followup ships
+              the channel routing wire. Both channels remain available from
+              Settings → Notifications for users who actively opt in there. */}
         </div>
 
         {error && (
