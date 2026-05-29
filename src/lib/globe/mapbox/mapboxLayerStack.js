@@ -13,18 +13,35 @@ export const LAYER_IDS = {
 export const SOURCE_IDS = { public: 'hm-public', selected: 'hm-selected' };
 
 // Category → colour, aligned with the globe LAYER_DEFS so the two engines read alike.
+//
+// Phil 2026-05-29: added `editorial` as a distinct category for curated district
+// pulse beacons (Soho · Warming, Vauxhall · Eyes on tonight, etc.) so they paint
+// in brand gold rather than the events-pink default — the operator's editorial
+// voice must be visually distinct from user-hosted event invites. Locks the
+// Doctrine 11 visual contract: editorial reads atmospheric, events read social.
 export const CATEGORY_COLOR = {
+  editorial: '#C8962C', // brand gold — curated district pulse
   events: '#FF4F9A',
   venues: '#00C2E0',
   people: '#39FF14',
   market: '#FFD700',
   radio: '#B026FF',
-  care: '#FFFFFF',
+  care: '#F4ECD8',  // cream — care reads soft, not clinical white
   other: '#C8962C',
 };
 
 // Privacy contract (§"Privacy constraints"): these never enter the PUBLIC source.
+//
+// Phil 2026-05-29: the safety/aftercare distinction matters. `safety` as a TYPE
+// covers operator-placed care-available beacons ("Aftercare available · Land
+// here if you need it") which are public-by-intent — they're an offering, not
+// an emergency. The PRIVATE set still drops genuine SOS / location-share /
+// trusted-contact rows. The `isPrivate` check below carves out aftercare so
+// the offering surfaces while the emergency channel stays sealed.
 const PRIVATE = new Set(['help', 'sos', 'safety', 'location_share', 'location_shares', 'trusted_contact', 'sos_ring', 'checkin']);
+// Public-by-intent overrides — even if the row's type/kind says "safety",
+// these category values mean "I am offering care", which is publishable.
+const PUBLIC_CARE_OVERRIDE = new Set(['aftercare', 'recovery', 'clinic']);
 // Categories that must render with APPROXIMATE (coarsened) coordinates, never exact
 // (§L9: "no raw people GPS; Chill/Meetup approximate; Preloved never exposes home").
 const APPROX = new Set(['person', 'people', 'user', 'chill', 'meetup', 'hookup', 'social', 'preloved']);
@@ -37,10 +54,34 @@ function field(b, ...keys) {
   return '';
 }
 
+function metaField(b, key) {
+  try {
+    const meta = b && (b.metadata || b.meta);
+    if (!meta) return '';
+    const v = typeof meta === 'string' ? JSON.parse(meta)[key] : meta[key];
+    return v == null ? '' : String(v).toLowerCase();
+  } catch (_) { return ''; }
+}
+
+function isCurated(b) {
+  // metadata.curated === true → operator drop (district / hotmess / care)
+  try {
+    const meta = b && (b.metadata || b.meta);
+    if (!meta) return false;
+    const c = typeof meta === 'string' ? JSON.parse(meta).curated : meta.curated;
+    return c === true || c === 'true';
+  } catch (_) { return false; }
+}
+
 export function isPrivate(b) {
   const k = field(b, 'kind');
   const c = field(b, 'beacon_category', 'category');
   const m = field(b, 'mode');
+  // Public-by-intent override: an aftercare/recovery/clinic offering renders
+  // even when the row's broad type is 'safety'. Genuine SOS rows have type
+  // 'safety' AND category in {help, sos, sos_ring, location_share, ...} —
+  // those still get dropped because the category check below them still hits.
+  if (PUBLIC_CARE_OVERRIDE.has(c)) return false;
   return PRIVATE.has(k) || PRIVATE.has(c) || PRIVATE.has(m);
 }
 
@@ -50,6 +91,18 @@ function isApprox(b) {
 
 export function categoryOf(b) {
   const all = `${field(b, 'kind')} ${field(b, 'beacon_category', 'category')} ${field(b, 'type')}`;
+  // Curated district editorial — operator-placed atmospheric reads, not real
+  // events. Must paint in brand gold so the user can tell editorial voice
+  // apart from user-hosted invites at a glance. Doctrine 11.
+  if (isCurated(b)) {
+    const metaKind = metaField(b, 'kind');
+    if (metaKind === 'district' || metaKind === 'hotmess') return 'editorial';
+    // Curated event-shaped beacons without a venue or scheduled start time
+    // are district reads dressed up as events. They paint editorial too.
+    const hasVenue = b && (b.venue_id || b.venueId);
+    const hasSchedule = b && (b.event_start_at || b.event_end_at);
+    if (/event/.test(all) && !hasVenue && !hasSchedule) return 'editorial';
+  }
   if (/recovery|care|sober|na_aa|naaa|aftercare/.test(all)) return 'care';
   if (/event|ticket/.test(all)) return 'events';
   if (/venue/.test(all)) return 'venues';
@@ -191,3 +244,4 @@ export function addLayerStack(map, opts) {
     });
   }
 }
+
