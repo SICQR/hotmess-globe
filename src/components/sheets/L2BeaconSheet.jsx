@@ -1146,7 +1146,11 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
         )}
       </div>
 
-      <div className="px-4 py-4 flex flex-col gap-2 mt-auto">
+      {/* Action block — Phil 2026-05-29: must be above-fold at peek state.
+          Was `mt-auto` (pinned to bottom of expanded sheet, hidden at 50dvh
+          peek). Now renders immediately after the content so Directions /
+          On the map / Boo / Message land in the first 50dvh the user sees. */}
+      <div className="px-4 pt-2 pb-4 flex flex-col gap-2">
         {/* ── kind: user — Boo / Message — never both, never neither ── */}
         {kind === 'user' && ownerId && myUserId && ownerId !== myUserId && (
           mutual ? (
@@ -1227,19 +1231,47 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
 
         {/* Directions are universally useful for any beacon with a real
             lat/lng — district, venue, event, user. We never expose exact
-            coords; we hand the values off to the directions sheet which uses
-            the same ≤200m privacy snap as the rest of the app. */}
+            coords; we hand the values off to the existing L2DirectionsSheet
+            (registered in SHEET_REGISTRY) which uses the same ≤200m privacy
+            snap as the rest of the app.
+            Phil 2026-05-29: previously both buttons just `openSheet`d or
+            `navigate`d immediately. The L2 sheet system only tracks one
+            active sheet, so calling openSheet from inside an open sheet
+            triggered a half-transition (backdrop blurred, no new content).
+            Fix: closeSheet() first, defer the next action by a tick so the
+            exit animation completes before the next mount. Same pattern
+            used in L2ClusterPreviewSheet for tap-on-signal. */}
         {(lat && lng) && (
           <div className="flex gap-3">
             <button
-              onClick={() => openSheet('directions', { lat, lng, label: title })}
+              onClick={() => {
+                closeSheet();
+                window.setTimeout(() => openSheet('directions', { lat, lng, label: title }), 80);
+              }}
               className="flex-1 bg-[#1C1C1E] text-white font-bold text-sm rounded-2xl py-3 flex items-center justify-center gap-2 border border-white/10 active:scale-95 transition-transform"
             >
               <Navigation className="w-4 h-4 text-white/40" />
               Directions
             </button>
             <button
-              onClick={() => { closeSheet(); navigate('/pulse', { state: { flyTo: { lat, lng, zoom: 14 } } }); }}
+              onClick={() => {
+                closeSheet();
+                // Globe.jsx subscribes to 'pulse:flyto' (line 343). On the
+                // same /pulse route, navigate({state}) is a no-op because
+                // React Router doesn't re-render the page — dispatching
+                // the event drives the camera api directly. Off-route the
+                // listener would just no-op so this is safe everywhere.
+                window.setTimeout(() => {
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('pulse:flyto', {
+                      detail: { lat, lng, zoom: 14 },
+                    }));
+                  }
+                  if (typeof window === 'undefined' || window.location.pathname !== '/pulse') {
+                    navigate('/pulse', { state: { flyTo: { lat, lng, zoom: 14 } } });
+                  }
+                }, 80);
+              }}
               className="flex-1 bg-[#1C1C1E] text-white font-bold text-sm rounded-2xl py-3 flex items-center justify-center gap-2 border border-white/10 active:scale-95 transition-transform"
             >
               <ExternalLink className="w-4 h-4 text-white/40" />
@@ -1369,6 +1401,7 @@ export default function L2BeaconSheet({ beaconId, beacon }) {
 
   return <BeaconCreator onSuccess={closeSheet} />;
 }
+
 
 
 
