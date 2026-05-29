@@ -30,6 +30,7 @@ import BeaconA11yList from '../components/globe/BeaconA11yList';
 import DistrictEditorialCard from '../components/editorial/DistrictEditorialCard';
 import CareDecompressionCue from '../components/editorial/CareDecompressionCue';
 import AtmosphereCue from '../components/environment/AtmosphereCue';
+import ArrivalSignal from '@/components/arrival/ArrivalSignal';
 
 const CITY_COORDS = {
   'London':    { lat: 51.5074, lng: -0.1278 },
@@ -677,6 +678,11 @@ export default function GlobePage({ embedded = false }) {
         )}
         {/* District editorial + care surfaces. In single-engine mode localFocus is set
             by PulseMap (onLocalFocus) when the camera dives into an editorial city. */}
+        {/* PR 4 (Phil 2026-05-29) — single-shot arrival confirmation pill.
+            Reads hm_arrival_signal from sessionStorage (set by
+            claimPendingBetaCode in /auth/callback or BootRouter fallback).
+            Quiet gold ribbon under safe-area. Dismisses on tap or 4s timeout. */}
+        <ArrivalSignal />
         {localFocus && <DistrictEditorialCard citySlug={localFocus.slug} />}
         {localFocus && <AtmosphereCue />}
         {localFocus && <CareDecompressionCue />}

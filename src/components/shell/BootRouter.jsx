@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useBootGuard, BOOT_STATES } from '@/contexts/BootGuardContext';
 import PublicShell from '@/components/shell/PublicShell';
+import { claimPendingBetaCode } from '@/lib/beta/claimPendingBetaCode';
 
 // Routes that must remain accessible without auth (legal, callbacks, etc.)
 // Doctrine 11 (Single Auth Authority): /auth is INTENTIONALLY ABSENT here.
@@ -91,6 +92,18 @@ export default function BootRouter({ children }) {
   if (isLoading || bootState === BOOT_STATES.LOADING) {
     return <LoadingSpinner />;
   }
+
+  // PR 4 (Phil 2026-05-29) — Doctrine 11 silent-state-death recovery sweep.
+  // /auth/callback is the primary claim site, but stale sessions, refreshed
+  // tabs, interrupted OAuth, and mobile deep-link inconsistencies can land a
+  // user in READY with a beta code still sitting in sessionStorage. Run the
+  // same idempotent helper on the first READY render to close intent. No-op
+  // if no code is pending.
+  React.useEffect(() => {
+    if (bootState === BOOT_STATES.READY) {
+      claimPendingBetaCode().catch(() => { /* helper is safe */ });
+    }
+  }, [bootState]);
 
   // READY — render full app
   if (bootState === BOOT_STATES.READY) {
