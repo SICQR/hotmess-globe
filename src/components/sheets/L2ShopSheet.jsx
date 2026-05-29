@@ -196,7 +196,16 @@ export default function L2ShopSheet({ handle, product: initialPropProduct, selle
       ? variantPrice
       : getProductPrice(activeProduct);
 
-    const allOptionsSelected = options.every(opt => selections[opt.name]);
+    // Phil 2026-05-29 — only count REAL options for the cart-gate.
+    // Shopify's default 'Title: Default Title' placeholder + any single-value
+    // option should not block add-to-cart. Same filter as the UI render above.
+    const allOptionsSelected = options.every(opt => {
+      const name = String(opt.name || '').toLowerCase();
+      const values = Array.isArray(opt.values) ? opt.values : [];
+      if (name === 'title' && values.length === 1 && String(values[0]).toLowerCase() === 'default title') return true;
+      if (values.length <= 1) return true;
+      return !!selections[opt.name];
+    });
 
     const handleMessageSeller = () => {
       if (!activeProduct.seller_id) return;
@@ -295,10 +304,27 @@ export default function L2ShopSheet({ handle, product: initialPropProduct, selle
                     )}
                 </div>
 
-                {/* SIZES / COLORS */}
-                {options.length > 0 && (
+                {/* SIZES / COLORS — Phil 2026-05-29 filter out Shopify default placeholder.
+                    When a Shopify product has no real variation, its options come back as
+                    [{name: 'Title', values: ['Default Title']}]. Rendering a 'Title' selector
+                    with one fake choice is dead UI. Also strip any option that has only one
+                    value — there's no choice to make. Same logic applies to single-size lubes
+                    where each size is its own Shopify product (so the size IS the card,
+                    no selector needed). */}
+                {(() => {
+                  const realOptions = options.filter((opt) => {
+                    const name = String(opt.name || '').toLowerCase();
+                    const values = Array.isArray(opt.values) ? opt.values : [];
+                    // Hide Shopify's default placeholder.
+                    if (name === 'title' && values.length === 1 && String(values[0]).toLowerCase() === 'default title') return false;
+                    // Hide any option with no choice to make.
+                    if (values.length <= 1) return false;
+                    return true;
+                  });
+                  if (realOptions.length === 0) return null;
+                  return (
                   <div className="space-y-8 mb-12 text-left bg-white/[0.02] p-6 rounded-2xl border border-white/5">
-                    {options.map((opt) => (
+                    {realOptions.map((opt) => (
                       <div key={opt.name}>
                         <div className="flex items-center justify-between mb-4 px-1">
                           <span className="text-[11px] font-black text-white/30 uppercase tracking-[0.2em]">{opt.name}</span>
@@ -327,7 +353,8 @@ export default function L2ShopSheet({ handle, product: initialPropProduct, selle
                       </div>
                     ))}
                   </div>
-                )}
+                  );
+                })()}
 
                 {/* DESC */}
                 <div className="mb-12 text-left">
