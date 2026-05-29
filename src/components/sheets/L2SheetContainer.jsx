@@ -1,16 +1,34 @@
 /**
- * L2SheetContainer — The slide-up sheet wrapper
- * 
- * Features:
- * - 85% viewport height
- * - Backdrop blur over Globe
- * - Swipe-to-dismiss
- * - Keyboard accessible (Escape to close)
- * - Framer Motion animations
- * - Scanner-style border (London OS aesthetic)
+ * L2SheetContainer — The slide-up sheet wrapper.
+ *
+ * Peek + expand contract (Phil locked 2026-05-29).
+ *
+ * Every L2 sheet opens at a half-screen PEEK by default. Users can drag the
+ * sheet up to EXPAND to ~90dvh. Drag down past the peek floor dismisses.
+ * Backdrop tap, Escape, and drag-down all dismiss. No X close button — drag
+ * gestures are the reverse action (matches the app-wide audit #82, #88).
+ *
+ * Snap points:
+ *   PEEK     — sheet shows the bottom 50dvh. The default open state.
+ *   EXPANDED — sheet shows the bottom 90dvh. Drag up beyond ~peek/2 + velocity
+ *              snaps here. Drag down (from expanded) collapses to peek.
+ *   DISMISS  — sheet animates fully offscreen. Drag down past peek + threshold
+ *              or velocity dismisses; backdrop tap, Escape, and the dismiss
+ *              callbacks all reach the same end state.
+ *
+ * Implementation: the motion.div is always rendered at the EXPANDED height
+ * (90dvh). Visual peek is a translateY offset of (EXPANDED - PEEK) dvh —
+ * essentially we "slide the expanded sheet up" to reveal only the peek
+ * portion. Dragging modifies translateY; on release we snap to the nearest
+ * sensible target.
+ *
+ * Backward compat: the `height` prop still exists but is treated as the
+ * EXPANDED max. `peekFraction` lets a sheet override the peek default.
+ * `expandable={false}` collapses behaviour into a single fixed-peek sheet
+ * (no drag-to-expand) for sheets that don't have additional content to show.
  */
 
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { motion, AnimatePresence, useAnimation, useDragControls } from 'framer-motion';
 import { useSheet } from '@/contexts/SheetContext';
 
@@ -24,44 +42,34 @@ const backdropVariants = {
   exit: { opacity: 0 },
 };
 
-const sheetVariants = {
-  hidden: {
-    y: '100%',
-    opacity: 0.8,
-  },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: {
-      type: 'spring',
-      damping: 22,
-      stiffness: 400,
-      mass: 0.8,
-    },
-  },
-  exit: {
-    y: '100%',
-    opacity: 0.8,
-    transition: {
-      type: 'spring',
-      damping: 22,
-      stiffness: 400,
-    },
-  },
-};
+// Snap geometry — fractions of the viewport.
+const PEEK_FRAC = 0.50;       // sheet shows bottom 50dvh at peek (Phil 2026-05-29)
+const EXPANDED_FRAC = 0.90;   // sheet shows bottom 90dvh when expanded
 
-// Swipe threshold to close (pixels)
-const SWIPE_THRESHOLD = 100;
-const VELOCITY_THRESHOLD = 500;
+// Drag thresholds (pixels / px·s⁻¹).
+const DISMISS_OFFSET = 120;   // drag-down from peek past this = dismiss
+const EXPAND_OFFSET  = 80;    // drag-up from peek past this = expand
+const VELOCITY_FLICK = 500;   // velocity at which a small offset still triggers a snap
 
 export default function L2SheetContainer({
   children,
   title,
   subtitle,
   className,
-  // Optional overrides
-  height = '70dvh',  // dvh accounts for mobile browser chrome (Safari address bar). 70 leaves room for status bar + drag pip header.
+  // Optional overrides — see contract comment at top of file.
+  // `height` now means "expanded max height" (default 90dvh) — sheets that
+  // pass a smaller value get a smaller expanded ceiling. Peek baseline is
+  // controlled by `peekFraction` (default 50% of viewport).
+  height = `${EXPANDED_FRAC * 100}dvh`,
+  peekFraction = PEEK_FRAC,
+  // Default: every sheet IS expandable. The drag-up gesture is always
+  // available unless the host explicitly opts out (e.g. directions confirm
+  // — single-purpose sheets where there's nothing more to reveal).
+  expandable = true,
   showHandle = true,
+  // showClose is retained for back-compat but the system no longer renders
+  // an X close. Sheets that need a non-drag dismissal should call closeSheet
+  // from their own content (back chevron etc).
   showClose = true,
   onClose: customOnClose,
   // Phil exec direction 2026-05-13: profile (and other photo-led) sheets
@@ -75,21 +83,34 @@ export default function L2SheetContainer({
   const { isOpen, closeSheet, onAnimationComplete, activeSheet } = useSheet();
   const sheetRef = useRef(null);
   const controls = useAnimation();
-
-  // Fire the entrance animation when the sheet opens. `drag="y"` on the
-  // motion.div takes over y-axis transforms, so the static
-  // `animate="visible"` variant prop is silently ignored and the sheet
-  // stays at initial=hidden (translateY 100% / opacity 0.8). Driving
-  // animation through the controller is the framer-motion supported
-  // pattern when drag is enabled. Phil 2026-05-27: sheets stuck below
-  // viewport after PR #504 — this restores the controller binding.
-  useEffect(() => {
-    if (!isOpen) return;
-    controls.start('visible');
-  }, [isOpen, controls]);
   const dragControls = useDragControls();
   const sheetScrollRef = useRef(null);
 
+  // Resting snap targets in pixels. Computed once per open from the live
+  // viewport height; recomputed on resize to keep the geometry honest when
+  // the address bar shrinks/grows on iOS.
+  const [viewportH, setViewportH] = useState(() => (typeof window !== 'undefined' ? window.innerHeight : 0));
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onResize = () => setViewportH(window.innerHeight);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  const peekOffset = useMemo(
+    () => Math.max(0, viewportH * (EXPANDED_FRAC - peekFraction)),
+    [viewportH, peekFraction]
+  );
+
+  // Snap state — 'peek' (default), 'expanded' (user dragged up).
+  const [snap, setSnap] = useState('peek');
+
+  // Fire entrance animation: slide in from offscreen to peek translateY.
+  // Each time the sheet opens we reset to peek.
+  useEffect(() => {
+    if (!isOpen) return;
+    setSnap('peek');
+    controls.start({ y: peekOffset, transition: { type: 'spring', damping: 26, stiffness: 320, mass: 0.85 } });
+  }, [isOpen, controls, peekOffset]);
 
   const handleClose = useCallback(() => {
     if (customOnClose) {
@@ -99,14 +120,14 @@ export default function L2SheetContainer({
     }
   }, [customOnClose, closeSheet]);
 
-  // Keyboard: Escape to close
+  // Keyboard: Escape to close (collapse-to-peek-then-close would feel laggy
+  // for keyboard users; Escape is a single decisive dismiss).
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isOpen) {
         handleClose();
       }
     };
-
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, handleClose]);
@@ -135,24 +156,60 @@ export default function L2SheetContainer({
     };
   }, [isOpen]);
 
-  // Swipe to dismiss handler — velocity-weighted scoring
-  const handleDragEnd = useCallback((event, info) => {
+  // Drag-end logic — interpret offset + velocity relative to current snap.
+  //
+  //   At PEEK (rest y = peekOffset)
+  //     drag up   (offset.y < -EXPAND_OFFSET, or velocity.y < -VELOCITY_FLICK)  → expand
+  //     drag down (offset.y >  DISMISS_OFFSET, or velocity.y >  VELOCITY_FLICK) → dismiss
+  //     else                                                                    → snap back to peek
+  //
+  //   At EXPANDED (rest y = 0)
+  //     drag down halfway (offset.y > peekOffset/2) → collapse to peek
+  //     drag down past peek+DISMISS                  → dismiss
+  //     drag up (no-op)                              → stay expanded
+  //     else                                         → snap back to expanded
+  const handleDragEnd = useCallback((_event, info) => {
     const { offset, velocity } = info;
+    const dy = offset.y;
+    const vy = velocity.y;
 
-    // Velocity-weighted dismiss score
-    const dismissScore = offset.y + (velocity.y * 0.05);
-
-    if (dismissScore > SWIPE_THRESHOLD || velocity.y > VELOCITY_THRESHOLD) {
-      hapticPattern();
-      handleClose();
+    if (snap === 'peek') {
+      // Dismiss?
+      if (dy > DISMISS_OFFSET || vy > VELOCITY_FLICK) {
+        hapticPattern();
+        handleClose();
+        return;
+      }
+      // Expand?
+      if (expandable && (dy < -EXPAND_OFFSET || vy < -VELOCITY_FLICK)) {
+        setSnap('expanded');
+        hapticSnap();
+        controls.start({ y: 0, transition: { type: 'spring', damping: 28, stiffness: 320 } });
+        return;
+      }
+      // Snap back to peek.
+      controls.start({ y: peekOffset, transition: { type: 'spring', damping: 28, stiffness: 320 } });
     } else {
-      // Snap back — framer's dragConstraints (top:0, bottom:0) + dragElastic
-      // already spring the sheet back to y:0 on release. The haptic still fires.
-      hapticSnap();
+      // Currently expanded.
+      // Past peek into dismiss territory?
+      if (dy > peekOffset + DISMISS_OFFSET || vy > VELOCITY_FLICK * 1.5) {
+        hapticPattern();
+        handleClose();
+        return;
+      }
+      // Collapsed past halfway?
+      if (dy > peekOffset / 2 || vy > VELOCITY_FLICK) {
+        setSnap('peek');
+        hapticSnap();
+        controls.start({ y: peekOffset, transition: { type: 'spring', damping: 28, stiffness: 320 } });
+        return;
+      }
+      // Snap back to expanded.
+      controls.start({ y: 0, transition: { type: 'spring', damping: 28, stiffness: 320 } });
     }
-  }, [handleClose, controls]);
+  }, [snap, peekOffset, expandable, controls, handleClose]);
 
-  // Click backdrop to close
+  // Click backdrop to close — always dismisses, regardless of snap.
   const handleBackdropClick = useCallback((e) => {
     if (e.target === e.currentTarget) {
       handleClose();
@@ -189,16 +246,19 @@ export default function L2SheetContainer({
           <motion.div
             ref={sheetRef}
             key={`sheet-${activeSheet}`}
-            initial={{ y: '100%', opacity: 0.8 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0.8 }}
-            transition={{ type: 'spring', damping: 22, stiffness: 400, mass: 0.8 }}
+            initial={{ y: '100%' }}
+            animate={controls}
+            exit={{ y: '100%', transition: { type: 'spring', damping: 26, stiffness: 320 } }}
             // Drag config — outer sheet is what slides, not the handle pip.
+            // top: -peekOffset lets the user drag UP from peek to expanded (and
+            //   no further — the expanded snap is the ceiling).
+            // bottom: peekOffset + DISMISS_OFFSET gives a soft elastic floor
+            //   before the dismiss handler picks up beyond it.
             drag="y"
             dragControls={dragControls}
             dragListener={false}
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.5 }}
+            dragConstraints={{ top: 0, bottom: viewportH }}
+            dragElastic={{ top: 0.04, bottom: 0.35 }}
             onDragEnd={handleDragEnd}
             style={{ height, overflowX: 'hidden', overscrollBehavior: 'contain', touchAction: 'pan-y' }}
             className={cn(
@@ -321,6 +381,7 @@ export function SheetActions({ children, className }) {
 export function SheetDivider() {
   return <div className="h-px bg-white/10 mx-4" />;
 }
+
 
 
 
