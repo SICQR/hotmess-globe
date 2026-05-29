@@ -595,11 +595,18 @@ export default function L2ProfileSheet({ email, uid, id }) {
   };
 
   const handleMessage = () => {
-    if (!profileUser?.auth_user_id && !profileUser?.id) return;
-    // Pass uid instead of email (email is not exposed in profile response for GDPR)
-    // ChatSheet will look up the email server-side
+    const targetId = profileUser?.auth_user_id || profileUser?.id;
+    if (!targetId) return;
+    // Phil 2026-05-29 hard gate — chat is post-mutual-boo only.
+    // Pre-mutual taps on Message = toast nudge to Boo first.
+    // Boo lives on the profile (this sheet), so the user is already in the
+    // right place to send it. Doctrine 07: relational truth before writing surface.
+    if (!isMutualBoo(targetId)) {
+      toast('Boo first. They have to want it back.');
+      return;
+    }
     openSheet(SHEET_TYPES.CHAT, {
-      userId: profileUser.auth_user_id || profileUser.id,
+      userId: targetId,
       title: `Chat with ${profileUser.username || profileUser.profileName || profileUser.display_name || 'Anonymous'}`,
     });
   };

@@ -21,6 +21,7 @@ import { Ghost, MessageSquare, Flag, MapPin, Clock } from 'lucide-react';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useTaps } from '@/hooks/useTaps';
+import { toast } from 'sonner';
 
 import type { ActiveBeacon } from '@/hooks/useBeaconById';
 
@@ -132,7 +133,7 @@ export function ActiveBeaconModule({ beacon, ownerId, ownerName, fadedBeaconId }
     return () => { alive = false; };
   }, []);
 
-  const { sendTap, isTapped } = useTaps(myUserId);
+  const { sendTap, isTapped, isMutualBoo } = useTaps(myUserId);
 
   // 1Hz tick for the countdown. Hook order must be stable, so we run the
   // timer unconditionally and just skip work when there's no beacon.
@@ -205,6 +206,14 @@ export function ActiveBeaconModule({ beacon, ownerId, ownerName, fadedBeaconId }
 
   const handleMessage = () => {
     if (!ownerId) return;
+    // Phil 2026-05-29 hard gate — chat surface is post-mutual-boo only.
+    // Pre-mutual taps the Message button = nudge to Boo first, do not open chat.
+    // Doctrine 07: monetisation never overrides relational truth; the writing
+    // moment must be earned through reciprocity, not surfaced unconditionally.
+    if (!isMutualBoo(ownerId)) {
+      toast('Boo first. They have to want it back.');
+      return;
+    }
     openSheet(SHEET_TYPES.CHAT, { userId: ownerId, beaconId: beacon.id });
   };
 
