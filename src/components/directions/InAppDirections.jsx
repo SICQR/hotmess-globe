@@ -3,13 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { 
-  Navigation, 
-  Footprints, 
-  Bike, 
-  Car, 
-  X, 
-  Maximize2, 
+import {
+  Navigation,
+  Footprints,
+  Bike,
+  Car,
+  Moon,
+  X,
+  Maximize2,
   Minimize2,
   Clock,
   MapPin,
@@ -22,6 +23,7 @@ import { fetchRoutingDirections } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 import { decodeGooglePolyline } from '@/utils/googlePolyline';
 import { buildUberDeepLink } from '@/utils/uberDeepLink';
+import { supabase } from '@/components/utils/supabaseClient';
 import { cn } from '@/lib/utils';
 
 // Fix Leaflet default icons
@@ -39,10 +41,16 @@ L.Icon.Default.mergeOptions({
  * Supports walking, biking, driving, and Uber deep link
  */
 
+// D14 Slice 1 — mode-chip reframe (per docs/doctrine/14-routing-continuity-doctrine.md §3).
+// "Walk / Fastest / Night Route" replaces the literal "Walk / Bike / Drive" triad.
+// The id values stay stable so downstream consumers (ETABadges, fetchRoutingDirections,
+// query cache keys) keep working unchanged — only the user-facing label and subtitle
+// shift. The routing algorithm rewrite is Slice 4; this is the psychological reframe
+// the doctrine explicitly sequences first.
 const TRAVEL_MODES = [
-  { id: 'foot', label: 'Walk', icon: Footprints, apiMode: 'WALK', color: '#39FF14' },
-  { id: 'bike', label: 'Bike', icon: Bike, apiMode: 'BICYCLE', color: '#00C2E0' },
-  { id: 'drive', label: 'Drive', icon: Car, apiMode: 'DRIVE', color: '#C8962C' },
+  { id: 'foot',  label: 'Walk',       subtitle: 'Quiet, simple, present',         icon: Footprints, apiMode: 'WALK',    color: '#39FF14' },
+  { id: 'bike',  label: 'Fastest',    subtitle: 'You have somewhere to be',       icon: Bike,       apiMode: 'BICYCLE', color: '#00C2E0' },
+  { id: 'drive', label: 'Night Route', subtitle: 'Safer late-night path',         icon: Moon,       apiMode: 'DRIVE',   color: '#C8962C' },
 ];
 
 const makePinIcon = ({ label, color, glow }) => {
@@ -113,11 +121,17 @@ export default function InAppDirections({
   const [isExpanded, setIsExpanded] = useState(false);
   const [origin, setOrigin] = useState(null);
   const [locationError, setLocationError] = useState(null);
-  
+  // D14 Slice 1 — care-on-route. Active aftercare beacons within the
+  // origin↔destination bounding box. Care lives ON the route, not adjacent.
+  // See docs/doctrine/14-routing-continuity-doctrine.md §5 ("Care as
+  // spatial property of the city"). The query is silently no-op when
+  // either endpoint is missing — failure must never block the route view.
+  const [careBeacons, setCareBeacons] = useState([]);
+
   // Get user's location
   useEffect(() => {
     if (!destination) return;
-    
+
     safeGetViewerLatLng(
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 },
       { retries: 2, logKey: 'in-app-directions' }
@@ -130,6 +144,44 @@ export default function InAppDirections({
       }
     });
   }, [destination]);
+
+  // Fetch active aftercare beacons within the route bounding box (+ ~600m pad
+  // so pins near corners of the route still render). Refreshes whenever the
+  // endpoints move. Doctrine 12 intent: 'aftercare'; legacy fallback on
+  // beacon_category for pre-shim rows. ≤200m fuzz still applies to render.
+  useEffect(() => {
+    if (!origin || !destination) { setCareBeacons([]); return; }
+    let alive = true;
+    const PAD = 0.006; // ~600m at London latitudes
+    const minLat = Math.min(origin.lat, destination.lat) - PAD;
+    const maxLat = Math.max(origin.lat, destination.lat) + PAD;
+    const minLng = Math.min(origin.lng, destination.lng) - PAD;
+    const maxLng = Math.max(origin.lng, destination.lng) + PAD;
+
+    supabase
+      .from('beacons')
+      .select('id, title, geo_lat, geo_lng, lat, lng, metadata, beacon_category, ends_at, status')
+      .or('metadata->>intent.eq.aftercare,beacon_category.eq.aftercare')
+      .gte('geo_lat', minLat).lte('geo_lat', maxLat)
+      .gte('geo_lng', minLng).lte('geo_lng', maxLng)
+      .gt('ends_at', new Date().toISOString())
+      .limit(20)
+      .then(({ data, error }) => {
+        if (!alive) return;
+        if (error) { setCareBeacons([]); return; }
+        // Normalise lat/lng (geo_* preferred, lat/lng legacy fallback).
+        const pins = (data || [])
+          .map((b) => ({
+            id: b.id,
+            title: b.title || 'Aftercare',
+            lat: b.geo_lat ?? b.lat,
+            lng: b.geo_lng ?? b.lng,
+          }))
+          .filter((b) => Number.isFinite(b.lat) && Number.isFinite(b.lng));
+        setCareBeacons(pins);
+      });
+    return () => { alive = false; };
+  }, [origin?.lat, origin?.lng, destination?.lat, destination?.lng]);
   
   // Fetch directions
   const modeConfig = TRAVEL_MODES.find(m => m.id === mode);
@@ -186,6 +238,12 @@ export default function InAppDirections({
   );
   const destinationIcon = useMemo(
     () => makePinIcon({ label: 'GO', color: '#C8962C', glow: 'rgba(255,20,147,0.6)' }),
+    []
+  );
+  // D14 Slice 1 — care pin. Brand-locked cream (#F4ECD8) per the canonical
+  // mapboxLayerStack PUBLIC_CARE_OVERRIDE colour. Same on every surface.
+  const careIcon = useMemo(
+    () => makePinIcon({ label: 'CARE', color: '#F4ECD8', glow: 'rgba(244,236,216,0.55)' }),
     []
   );
   
@@ -301,34 +359,43 @@ export default function InAppDirections({
         </div>
       </div>
       
-      {/* Travel Mode Tabs */}
-      <div className="flex gap-1 p-2 border-b border-white/10">
-        {TRAVEL_MODES.map((m) => (
+      {/* Travel Mode Tabs — D14 §3 reframe (Walk / Fastest / Night Route).
+          Subtitle line below the row carries the active mode's emotional cue
+          per the doctrine; it is intentionally minimal (no metrics, no rank). */}
+      <div className="flex flex-col gap-1 p-2 border-b border-white/10">
+        <div className="flex gap-1">
+          {TRAVEL_MODES.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => setMode(m.id)}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold border-2 transition-all",
+                mode === m.id
+                  ? "bg-white/10 border-white/30 text-white"
+                  : "bg-transparent border-white/10 text-white/50 hover:text-white hover:border-white/20"
+              )}
+            >
+              <m.icon className="w-4 h-4" style={{ color: mode === m.id ? m.color : undefined }} />
+              <span>{m.label}</span>
+            </button>
+          ))}
+
+          {/* Uber button */}
           <button
-            key={m.id}
-            onClick={() => setMode(m.id)}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold border-2 transition-all",
-              mode === m.id
-                ? "bg-white/10 border-white/30 text-white"
-                : "bg-transparent border-white/10 text-white/50 hover:text-white hover:border-white/20"
-            )}
+            onClick={() => uberUrl && window.open(uberUrl, '_blank')}
+            disabled={!uberUrl}
+            className="flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold border-2 border-white/10 bg-transparent text-white/50 hover:text-white hover:border-white/20 transition-all"
           >
-            <m.icon className="w-4 h-4" style={{ color: mode === m.id ? m.color : undefined }} />
-            <span>{m.label}</span>
+            <Car className="w-4 h-4" />
+            <span>Uber</span>
+            <ExternalLink className="w-3 h-3 opacity-50" />
           </button>
-        ))}
-        
-        {/* Uber button */}
-        <button
-          onClick={() => uberUrl && window.open(uberUrl, '_blank')}
-          disabled={!uberUrl}
-          className="flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold border-2 border-white/10 bg-transparent text-white/50 hover:text-white hover:border-white/20 transition-all"
-        >
-          <Car className="w-4 h-4" />
-          <span>Uber</span>
-          <ExternalLink className="w-3 h-3 opacity-50" />
-        </button>
+        </div>
+        {modeConfig?.subtitle && (
+          <p className="text-[10px] text-white/40 text-center tracking-wide pt-0.5">
+            {modeConfig.subtitle}
+          </p>
+        )}
       </div>
       
       {/* Map */}
@@ -369,6 +436,13 @@ export default function InAppDirections({
                 />
               </>
             )}
+
+            {/* D14 Slice 1 — aftercare beacons on-route. Care is a spatial
+                property of the city (D14 §5), not a separate Care section.
+                Rendered as Markers along the same map as the route line. */}
+            {careBeacons.map((c) => (
+              <Marker key={c.id} position={[c.lat, c.lng]} icon={careIcon} />
+            ))}
           </MapContainer>
         )}
         
