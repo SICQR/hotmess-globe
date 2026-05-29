@@ -1188,7 +1188,13 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           </div>
         ) : messages.length === 0 ? (
           <div className="text-center py-10 px-6">
-            {/* Movement-aware contextual headline */}
+            {/* Phil 2026-05-29 — chat surface is post-mutual-boo only.
+                Pre-mutual entry is blocked at ActiveBeaconModule and other
+                Message buttons via isMutualBoo check. When the empty state
+                renders here, mutual already exists — no relational gate, no
+                Boo CTA, no auto-location prompt. Just a clean invitation to
+                speak. Doctrine 07: monetisation never overrides relational
+                truth at the writing moment. */}
             {(otherIsMoving || otherProfile?.movement_active || otherProfile?.is_moving) ? (
               <>
                 <div className="flex items-center justify-center gap-1.5 mb-3">
@@ -1196,8 +1202,8 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                   <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#C8962C' }}>Moving</span>
                 </div>
                 <p className="text-white font-bold text-base mb-1">He's on the move nearby</p>
-                <p className="text-white/40 text-sm mb-5">
-                  {suggestStop ? 'Suggest a quick stop' : meetMode ? 'Pick a meetpoint' : 'Share a meetpoint or suggest a stop'}
+                <p className="text-white/40 text-sm">
+                  Say something — the room is open
                 </p>
               </>
             ) : otherProfile?.venue_name || otherProfile?.checkin_venue ? (
@@ -1205,9 +1211,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                 <p className="text-white font-bold text-base mb-1">
                   {`He's at ${otherProfile.venue_name || otherProfile.checkin_venue}`}
                 </p>
-                <p className="text-white/40 text-sm mb-5">
-                  Send a Boo, share a meetpoint, or just say hey
-                </p>
+                <p className="text-white/40 text-sm">Say hey</p>
               </>
             ) : otherIsListening ? (
               <>
@@ -1218,130 +1222,15 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                 <p className="text-white font-bold text-base mb-1">
                   {otherRadioShow ? `You're both tuned in` : `He's listening live`}
                 </p>
-                <p className="text-white/40 text-sm mb-5">
-                  {otherRadioShow ? `Same moment — ${otherRadioShow}` : 'Send a Boo or say something'}
+                <p className="text-white/40 text-sm">
+                  {otherRadioShow ? `Same moment — ${otherRadioShow}` : 'Say hey'}
                 </p>
               </>
             ) : (
               <>
-                <p className="text-white font-bold text-base mb-1">You're both nearby</p>
-                <p className="text-white/40 text-sm mb-5">
-                  Send a Boo, share a meetpoint, or just say hey
-                </p>
+                <p className="text-white font-bold text-base mb-1">Say hi</p>
+                <p className="text-white/40 text-sm">The room is open</p>
               </>
-            )}
-
-            {/* Movement quick actions — different hierarchy when moving */}
-            {(otherIsMoving || otherProfile?.movement_active || otherProfile?.is_moving) ? (
-              <div className="flex flex-col items-center gap-2">
-                {/* Primary: Share meetpoint */}
-                <button
-                  onClick={() => {
-                    if (navigator.geolocation) {
-                      navigator.geolocation.getCurrentPosition(
-                        (pos) => {
-                          const lat = Math.round(pos.coords.latitude * 1000) / 1000;
-                          const lng = Math.round(pos.coords.longitude * 1000) / 1000;
-                          handleSendSpecial?.({
-                            content: '\u{1F4CD} My Location \u2014 meet here?',
-                            message_type: 'location',
-                            metadata: { approxLat: lat, approxLng: lng },
-                          });
-                        },
-                        () => toast('Location not available'),
-                        { enableHighAccuracy: false, timeout: 5000 }
-                      );
-                    }
-                  }}
-                  className="h-11 px-6 rounded-full text-sm font-bold active:scale-95 transition-transform"
-                  style={{ background: '#C8962C', color: '#000' }}
-                >
-                  Share meetpoint
-                </button>
-                <div className="flex items-center gap-2">
-                  {/* Suggest Stop pre-seeded message */}
-                  <button
-                    onClick={() => {
-                      setNewMessage("You\u2019re passing near me \u2014 quick stop?");
-                      setTimeout(() => inputRef.current?.focus(), 100);
-                    }}
-                    className="h-10 px-4 rounded-full text-xs font-bold active:scale-95 transition-transform"
-                    style={{ background: 'rgba(200,150,44,0.12)', color: '#C8962C', border: '1px solid rgba(200,150,44,0.2)' }}
-                  >
-                    Suggest a stop
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (!currentUser?.id || !otherProfile?.id) return;
-                      try {
-                        await supabase.from('taps').insert({
-                          from_user_id: currentUser.auth_user_id || currentUser.id,
-                          to_user_id: otherProfile.id,
-                          tapper_email: currentUser.email || '',
-                          tapped_email: otherEmail || '',
-                          tap_type: 'boo',
-                        });
-                        if (typeof window !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(50);
-                        toast('Boo sent');
-                      } catch { /* best-effort */ }
-                    }}
-                    className="h-10 px-4 rounded-full text-xs font-bold bg-white/8 text-white/60 active:scale-95 transition-transform border border-white/10"
-                  >
-                    Boo
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-2">
-                <button
-                  onClick={async () => {
-                    if (!currentUser?.id || !otherProfile?.id) return;
-                    try {
-                      await supabase.from('taps').insert({
-                        from_user_id: currentUser.auth_user_id || currentUser.id,
-                        to_user_id: otherProfile.id,
-                        tapper_email: currentUser.email || '',
-                        tapped_email: otherEmail || '',
-                        tap_type: 'boo',
-                      });
-                      if (typeof window !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(50);
-                      toast('Boo sent');
-                    } catch { /* best-effort */ }
-                  }}
-                  className="h-10 px-5 rounded-full text-sm font-bold active:scale-95 transition-transform"
-                  style={{ background: '#C8962C', color: '#000' }}
-                >
-                  Boo
-                </button>
-                <button
-                  onClick={() => {
-                    if (navigator.geolocation) {
-                      navigator.geolocation.getCurrentPosition(
-                        (pos) => {
-                          const lat = Math.round(pos.coords.latitude * 1000) / 1000;
-                          const lng = Math.round(pos.coords.longitude * 1000) / 1000;
-                          handleSendSpecial?.({
-                            content: `\u{1F4CD} My Location`,
-                            message_type: 'location',
-                            metadata: { approxLat: lat, approxLng: lng },
-                          });
-                        },
-                        () => toast('Location not available'),
-                        { enableHighAccuracy: false, timeout: 5000 }
-                      );
-                    }
-                  }}
-                  className="h-10 px-5 rounded-full text-sm font-bold bg-white/10 text-white active:scale-95 transition-transform border border-white/10"
-                >
-                  Share location
-                </button>
-                <button
-                  onClick={() => inputRef.current?.focus()}
-                  className="h-10 px-5 rounded-full text-sm font-bold bg-white/5 text-white/60 active:scale-95 transition-transform border border-white/8"
-                >
-                  Message
-                </button>
-              </div>
             )}
           </div>
         ) : (
@@ -1574,6 +1463,19 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         )}
       </AnimatePresence>
 
+      {/* Defense-in-depth gate (Phil 2026-05-29) — composer renders ONLY when
+          mutual boo exists. Pre-mutual entry shouldn't happen because openers
+          like ActiveBeaconModule and L2ProfileSheet already toast-block, but if
+          a stale link / deep-link / dev fallthrough opens the sheet anyway, the
+          composer disappears and a clean Boo-first prompt shows instead. */}
+      {otherProfile?.id && !isMutualBoo(otherProfile.id) && !selectedThread?.id ? (
+        <div className="border-t border-[#C8962C]/15 px-6 py-8 text-center" style={{ background: 'rgba(5,5,7,0.92)' }}>
+          <Ghost className="w-7 h-7 mx-auto mb-3" style={{ color: '#C8962C', opacity: 0.6 }} />
+          <p className="text-white font-bold text-base mb-1">Boo first</p>
+          <p className="text-white/45 text-sm">Messaging opens after they Boo back.</p>
+        </div>
+      ) : (
+      <>
       {/* Composer — noir glass with gold top accent */}
       <div className="border-t border-[#C8962C]/15 flex-shrink-0 relative" style={{ background: 'rgba(5,5,7,0.92)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C8962C]/30 to-transparent" />
@@ -1722,6 +1624,8 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           </Button>
         </div>
       </div>
+      </>
+      )}
 
       {/* Video call modal */}
       {showVideoModal && otherProfile?.id && (

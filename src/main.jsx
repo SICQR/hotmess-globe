@@ -64,6 +64,28 @@ window.addEventListener('unhandledrejection', (event) => {
 // This MUST run before Supabase client initializes
 clearBadSupabaseSessions();
 
+// Phil 2026-05-29 HOTFIX — Doctrine 11 Single Auth Authority.
+// Capture beta-invite code from /redeem/:code IN sessionStorage BEFORE
+// BootRouter intercepts. /redeem is no longer in PUBLIC_PATH_PREFIXES, so
+// unauth invitees go through the canonical gate chain (Splash → AgeGate →
+// Bridge → SignUp) and the code rides through sessionStorage. PR 4's
+// claimPendingBetaCode resolves it at /auth/callback → ArrivalSignal pill.
+// This MUST run synchronously before React mounts so the URL's still intact.
+(function captureBetaInviteFromUrl() {
+  try {
+    const m = window.location.pathname.match(/^\/redeem\/([^/?#]+)/);
+    if (m && m[1]) {
+      const code = decodeURIComponent(m[1]).toUpperCase();
+      // Don't overwrite an existing code unless the URL one is different.
+      // The most-recent intent wins (user pasted a newer link).
+      sessionStorage.setItem('hm_pending_beta_code', code);
+      sessionStorage.setItem('hm_referral_code', code);
+    }
+  } catch {
+    /* private mode / SSR — silently ignore, /redeem authed path still works */
+  }
+})();
+
 // Initialize Sentry as early as possible
 if (import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({

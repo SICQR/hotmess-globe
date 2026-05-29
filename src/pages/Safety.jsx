@@ -314,18 +314,26 @@ export default function Safety() {
             </div>
           </section>
 
-          {/* Bottom spacer so the sticky disclaimer doesn't overlap content */}
-          <div className="h-10" aria-hidden />
+          {/* Bottom spacer so the sticky disclaimer doesn't overlap content.
+              Phil 2026-05-29 — disclaimer's gradient bar + iOS safe-area inset
+              renders ~80-100px tall. Spacer was h-10 (40px) which let the last
+              50px of content slide under it. Bumped to h-24 + safe-area inset. */}
+          <div
+            className="h-24"
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px))' }}
+            aria-hidden
+          />
         </div>
 
         {/* 6. Persistent disclaimer — sticky thin bar at the bottom of the
             scroll container. Calm, product-positioning copy (no 999 line). */}
         <div
-          className="sticky bottom-0 left-0 right-0 z-20 px-4 pt-2 pb-3"
+          className="sticky bottom-0 left-0 right-0 z-20 px-4 pt-2"
           style={{
             background: 'linear-gradient(to top, rgba(5,5,7,0.92) 60%, rgba(5,5,7,0))',
             backdropFilter: 'blur(8px)',
             WebkitBackdropFilter: 'blur(8px)',
+            paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.75rem)',
           }}
         >
           <p className="text-[11px] text-white/45 text-center leading-snug max-w-md mx-auto">
