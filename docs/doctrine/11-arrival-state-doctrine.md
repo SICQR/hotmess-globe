@@ -585,6 +585,72 @@ on canonical screens. This is invariant.
 ---
 
 
+## Pulse Doctrine — probability + momentum, not occupancy
+
+Pulse is not CCTV. The map is not literal headcount. We map **cultural
+momentum and nightlife probability** — the city's tides, its pressure
+systems, its currents. Editorial intelligence, not surveillance.
+
+**Forbidden:**
+- Declarative status copy at a time the city doesn't support it.
+  "Vauxhall — PEAK" at 12:30 BST is a fake-certainty claim. The user
+  knows Vauxhall isn't peaking at lunch. The signal is wrong, the
+  trust is damaged.
+- Implying live occupancy when no live density exists.
+- Inflated intensity values that don't track the time of day.
+- "Active", "Live", "Buzzing", "Full" when the truth is "later".
+
+**Required:**
+- **Anticipatory language** — "warming", "later", "eyes on tonight",
+  "pull increasing", "afterhours likely", "signal building",
+  "night forming", "quiet hold", "afterhours residue".
+- **Time-aware editorial intelligence.** A district's tone shifts
+  through the day. Soho at 13:00 reads differently from Soho at 02:00.
+  The system narrates the city's circadian rhythm honestly.
+- **Texture diversity.** Not just nightlife. Gym signal, recovery
+  signal, daytime coffee/social, cruising/outdoor, weather-linked,
+  "quiet tonight" — so the map breathes as a city, not as a
+  party-spam feed.
+
+**The single most important rule: never fake certainty.**
+
+Editorial prediction is honest. Atmospheric reading is honest.
+Cultural intelligence is honest. Fake occupancy is death.
+
+The trust layer is the entire moat. Once a user catches the system
+claiming activity that isn't there, the moat is gone — and HOTMESS
+collapses into "another queer app that lies about who's around".
+
+> Pulse maps probability + momentum, not occupancy.
+
+---
+
+## The Globe Should Breathe
+
+Pulse is not a dashboard. It is the city's body. The signal layer
+should behave like:
+
+- **weather** — building, holding, breaking
+- **tides** — rising into night, ebbing toward morning
+- **pressure systems** — energy gathers somewhere, then disperses
+- **nightlife currents** — Soho draws first, then Vauxhall, then
+  Dalston catches the spillover, then everything fractures outward
+  toward afterhours by 05:00
+
+What the globe does NOT do:
+
+- Render data flatly. Beacons are not pins.
+- Hold static intensity across hours. A signal that hasn't moved in
+  three hours isn't honest.
+- Pretend the city is always at the same temperature.
+
+This is what makes Pulse a living signal layer instead of a map with
+dots on it. The globe is alive. Tired. Horny. Building. Fading.
+Recovering. Just like the room it's mapping.
+
+---
+
+
 ## Final Principle
 
 > Do not welcome the user like a customer.
