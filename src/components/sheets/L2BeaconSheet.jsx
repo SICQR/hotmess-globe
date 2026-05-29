@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { nanoid } from 'nanoid';
 import {
   MapPin, Clock, Radio, Loader2, Navigation, ExternalLink,
-  CheckCircle, ChevronRight, ChevronLeft, Zap, X, Heart, MessageCircle,
+  CheckCircle, ChevronRight, ChevronLeft, Zap, Heart, MessageCircle,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
@@ -980,19 +980,12 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
 
   return (
     <div className="relative flex flex-col h-full overflow-y-auto">
-      {/* Close affordance — Phil 2026-05-29: every beacon card must have a
-          reverse action. Drag-to-dismiss is provided by L2SheetContainer; this
-          X is the explicit tap target. */}
-      <button
-        type="button"
-        onClick={() => closeSheet()}
-        aria-label="Close beacon"
-        className="absolute top-3 right-3 z-20 w-9 h-9 rounded-full flex items-center justify-center bg-white/5 border border-white/10 active:scale-90 transition-transform"
-      >
-        <X className="w-4 h-4 text-white/70" />
-      </button>
-
-      <div className="px-4 pt-4 pb-2 pr-14">
+      {/* No X close button — Phil 2026-05-29 (matches audit #82/#88).
+          Drag-to-dismiss (via L2SheetContainer), backdrop tap, and Escape
+          are the reverse actions. The peek state keeps the bottom half of
+          the globe visible behind the card; dragging up reveals more,
+          dragging down dismisses. */}
+      <div className="px-4 pt-4 pb-2">
         <div className="flex items-center gap-2 mb-2">
           <span
             className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border"
