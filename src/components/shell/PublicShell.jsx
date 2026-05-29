@@ -35,10 +35,11 @@ export default function PublicShell({ startAt = '/' }) {
         <Route path="/age" element={<AgeGate />} />
         <Route path="/AgeGate" element={<AgeGate />} />
 
-        {/* Legacy auth route */}
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/auth/*" element={<Auth />} />
-        <Route path="/Auth" element={<Auth />} />
+        {/* Legacy /auth routes removed 2026-05-29 (Doctrine 11 Single Auth
+            Authority + compliance audit). App.jsx now redirects /auth and
+            /auth/* → /. The Auth.jsx import is preserved temporarily so the
+            file does not become an orphaned dead import; PR 5 deletes the
+            file once telemetry confirms zero /auth traffic. */}
 
         {/* Password reset — linked from Supabase reset email */}
         <Route path="/reset-password" element={<ResetPassword />} />

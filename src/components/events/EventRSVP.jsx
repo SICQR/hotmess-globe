@@ -70,7 +70,7 @@ export default function EventRSVP({ event, currentUser }) {
       <div className="flex items-center gap-3">
         <Button
           onClick={async () => {
-            const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
+            const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/"; return false; } return true; })();
             if (!ok) return;
             rsvpMutation.mutate('going');
           }}
@@ -96,7 +96,7 @@ export default function EventRSVP({ event, currentUser }) {
 
         <Button
           onClick={async () => {
-            const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
+            const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/"; return false; } return true; })();
             if (!ok) return;
             rsvpMutation.mutate('interested');
           }}
