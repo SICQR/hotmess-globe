@@ -42,6 +42,12 @@ function normaliseBeaconId(raw) {
 /**
  * detectBeaconKind — pure function. NEVER reads owner_id.
  * Returns one of: 'district' | 'hotmess' | 'care' | 'event' | 'venue' | 'user'
+ *
+ * Resolution order:
+ *   1. metadata.kind — explicit operator override (curated seeds, ops tools)
+ *   2. metadata.curated === true → district (atmospheric pulse read)
+ *   3. metadata.intent — first-class user-drop semantic (Slice 1, 2026-05-29)
+ *   4. structural type + beacon_category heuristics — legacy fallback
  */
 function detectBeaconKind(beacon) {
   if (!beacon) return 'user';
@@ -51,6 +57,22 @@ function detectBeaconKind(beacon) {
 
   // Explicit operator hint wins. Seeded district beacons set metadata.curated=true.
   if (meta.kind && typeof meta.kind === 'string') return meta.kind;
+  if (meta.curated === true) {
+    // (handled below, after intent check)
+  }
+
+  // First-class user intent (Slice 1). Map intent → card-rendering kind.
+  // Looking/Arriving/Cruising/Quiet hold → user (Boo/Message branch).
+  // Hosting → event (party invite, "I'm going" CTA).
+  // Aftercare offered → care (no Boo, "What this offers" CTA).
+  // Selling/swap → user for now; Slice 2 may split to a market kind.
+  const intent = String(meta.intent || '').toLowerCase();
+  if (intent) {
+    if (intent === 'aftercare') return 'care';
+    if (intent === 'hosting') return 'event';
+    return 'user';
+  }
+
   if (meta.curated === true) {
     // Curated editorial that isn't tied to a specific venue or scheduled event
     // is a district pulse read, not a party invite.
@@ -84,24 +106,82 @@ const BEACON_DAILY_LIMIT = 3; // default daily beacon limit per user
 // BEACON TYPE CONFIG
 // ─────────────────────────────────────────────────────────────────────────────
 
-// HOTMESS Beacon Identity System — 9 doctrine sprite categories.
-// Each value maps 1:1 to a sprite in beaconIconFactory.ts via
-// resolveBeaconCategory(), so picking a category here paints the
-// corresponding glyph on /pulse. The DB constraint
-// `beacons_beacon_category_check` was extended on 2026-05-27 to accept
-// these 9 values alongside the legacy 5 (venue/user/event/hotmess/safety)
-// — see migration `expand_beacon_category_to_9_doctrine_sprites`.
-const BEACON_TYPES = [
-  { value: 'gym',       label: 'Gym',       emoji: '💪' },
-  { value: 'club',      label: 'Club',      emoji: '🪩' },
-  { value: 'sauna',     label: 'Sauna',     emoji: '♨️' },
-  { value: 'leather',   label: 'Leather',   emoji: '🖤' },
-  { value: 'cafe',      label: 'Café',      emoji: '☕' },
-  { value: 'clinic',    label: 'Clinic',    emoji: '⚕️' },
-  { value: 'aftercare', label: 'Aftercare', emoji: '💧' },
-  { value: 'cruising',  label: 'Cruising',  emoji: '👁️' },
-  { value: 'market',    label: 'Market',    emoji: '🛍️' },
+// Drop Beacon — INTENT picker (Phil locked 2026-05-29).
+//
+// A beacon answers "what are you signalling right now?" — NOT "what type of
+// place are you?" Venues (gym/sauna/cafe/clinic/club/leather/market-as-place)
+// are a different entity that belongs in the venue catalog, not the user
+// drop flow. See docs/doctrine/12-drop-beacon-doctrine.md.
+//
+// Each option carries:
+//   intent           — first-class semantic; written to metadata.intent and
+//                      used by the kind-router to render the right card.
+//   label            — what the user sees.
+//   subtitle         — micro-copy under the label (one short line, optional).
+//   legacyType       — slotted into `beacons.type` so the existing CHECK
+//                      constraint (social/event/drop/market/radio/safety/user)
+//                      accepts the row. Replaced by Slice 2 schema.
+//   legacyCategory   — slotted into `beacons.beacon_category` for back-compat
+//                      with the sprite renderer (CHECK accepts venue/user/
+//                      event/hotmess/safety/gym/club/sauna/leather/cafe/clinic
+//                      /aftercare/cruising/market). Replaced by Slice 2.
+//   globeColor       — gold for personal user signals, pink for hosting,
+//                      cream for care, kept honest with the L2 sheet accent.
+//   globePulseType   — visual rhythm; matches Beacon Identity System palette.
+//   globeSizeBase    — relative footprint on /pulse.
+const BEACON_INTENTS = [
+  {
+    intent: 'looking',
+    label: 'Looking',
+    subtitle: 'Open to connect',
+    legacyType: 'user',     legacyCategory: 'user',
+    globeColor: '#C8962C',  globePulseType: 'standard', globeSizeBase: 1.0,
+  },
+  {
+    intent: 'hosting',
+    label: 'Hosting',
+    subtitle: 'Party or play at my place',
+    legacyType: 'event',    legacyCategory: 'event',
+    globeColor: '#FF4F9A',  globePulseType: 'flare',    globeSizeBase: 2.0,
+  },
+  {
+    intent: 'arriving',
+    label: 'Arriving',
+    subtitle: 'Just landed somewhere',
+    legacyType: 'social',   legacyCategory: 'user',
+    globeColor: '#C8962C',  globePulseType: 'standard', globeSizeBase: 1.2,
+  },
+  {
+    intent: 'cruising',
+    label: 'Cruising',
+    subtitle: 'Active signal, eyes up',
+    legacyType: 'social',   legacyCategory: 'cruising',
+    globeColor: '#C8962C',  globePulseType: 'ripple',   globeSizeBase: 1.0,
+  },
+  {
+    intent: 'aftercare',
+    label: 'Aftercare offered',
+    subtitle: 'Land here if you need it',
+    legacyType: 'safety',   legacyCategory: 'aftercare',
+    globeColor: '#F4ECD8',  globePulseType: 'steady',   globeSizeBase: 1.0,
+  },
+  {
+    intent: 'quiet_hold',
+    label: 'Quiet hold',
+    subtitle: 'Low-key, around if needed',
+    legacyType: 'social',   legacyCategory: 'user',
+    globeColor: '#C8962C',  globePulseType: 'steady',   globeSizeBase: 0.8,
+  },
+  {
+    intent: 'market',
+    label: 'Selling / swap',
+    subtitle: 'I have something to move',
+    legacyType: 'market',   legacyCategory: 'market',
+    globeColor: '#C8962C',  globePulseType: 'standard', globeSizeBase: 1.0,
+  },
 ];
+
+const INTENT_BY_VALUE = Object.fromEntries(BEACON_INTENTS.map((i) => [i.intent, i]));
 
 const DURATIONS = [
   { label: 'Tonight', ms: 6 * 60 * 60 * 1000 },
@@ -245,30 +325,19 @@ function BeaconCreator({ onSuccess }) {
       const descStr  = formData.description.trim() || null;
       const addrStr  = formData.address.trim() || null;
 
-      // beacon_category drives the sprite painted on /pulse.
-      // selectedType IS the sprite name (one of the 9 doctrine cats).
-      // DB constraint expanded on 2026-05-27 to accept these alongside
-      // the legacy 5 — see migration expand_beacon_category_to_9_doctrine_sprites.
-      const beaconCategory = selectedType;
-      const globeVisuals = {
-        checkin:  { color: '#C8962C', pulse: 'standard', size: 1.0 },
-        event:   { color: '#FF4F9A', pulse: 'flare',    size: 2.5 },
-        drop:    { color: '#C8962C', pulse: 'standard', size: 1.0 },
-        chat:    { color: '#C8962C', pulse: 'ripple',   size: 1.5 },
-        party:   { color: '#FF4F9A', pulse: 'flare',    size: 2.0 },
-        meetup:  { color: '#C8962C', pulse: 'standard', size: 1.5 },
-        cruising:{ color: '#C8962C', pulse: 'standard', size: 1.0 },
-        safety:  { color: '#FF3B30', pulse: 'private',  size: 0   },
-      };
-      const vis = globeVisuals[selectedType] || globeVisuals.checkin;
+      // Slice 1 (Phil 2026-05-29) — beacon-as-INTENT, not beacon-as-venue-type.
+      //
+      // `selectedType` here holds the intent value (e.g. 'looking', 'hosting').
+      // We persist the intent in metadata.intent as the source of truth, and
+      // shim `type` + `beacon_category` to legacy CHECK-accepted values so the
+      // existing DB constraint passes without a migration. Slice 2 will add
+      // first-class entity_kind + intent columns and retire this shim.
+      const intentSpec = INTENT_BY_VALUE[selectedType] || INTENT_BY_VALUE.looking;
 
       const { error } = await supabase.from('beacons').insert({
         code:             nanoid(8),
-        // type is the broad enum (CHECK: social/event/drop/market/radio/safety/user).
-        // All user-dropped beacons go in as 'user' — the sprite identity lives
-        // in beacon_category. Keep type+beacon_category in sync per doctrine.
-        type:             'user',
-        beacon_category:  beaconCategory,
+        type:             intentSpec.legacyType,
+        beacon_category:  intentSpec.legacyCategory,
         owner_id:         user.id,
         geo_lat:          coords.lat,
         geo_lng:          coords.lng,
@@ -283,10 +352,13 @@ function BeaconCreator({ onSuccess }) {
         status:           'active',
         title:            titleStr,
         description:      descStr,
-        // Globe visual config
-        globe_color:      vis.color,
-        globe_pulse_type: vis.pulse,
-        globe_size_base:  vis.size,
+        // Globe visual config — derived from the intent spec.
+        globe_color:      intentSpec.globeColor,
+        globe_pulse_type: intentSpec.globePulseType,
+        globe_size_base:  intentSpec.globeSizeBase,
+        // First-class semantic. Read by detectBeaconKind() in this file and
+        // by future consumers; survives the Slice 2 migration unchanged.
+        metadata:         { intent: intentSpec.intent, intent_label: intentSpec.label },
       });
 
       if (error) throw error;
@@ -342,25 +414,38 @@ function BeaconCreator({ onSuccess }) {
       <div className="flex flex-col h-full px-4 py-4">
         <h2 className="text-white font-black text-xl mb-1">Drop a Beacon</h2>
         <p className="text-white/40 text-sm mb-5">
-          What kind of beacon is this?
+          What are you signalling right now?
           {limitChecked && <span className="ml-2 text-white/20">({beaconCount}/{effectiveLimit} today)</span>}
         </p>
 
-        <div className="grid grid-cols-2 gap-3 flex-1">
-          {BEACON_TYPES.map((t) => (
-            <button
-              key={t.value}
-              onClick={() => setSelectedType(t.value)}
-              className={`bg-[#1C1C1E] rounded-2xl p-4 text-left transition-all active:scale-95 ${
-                selectedType === t.value
-                  ? 'border border-[#C8962C]'
-                  : 'border border-white/10'
-              }`}
-            >
-              <span className="text-2xl block mb-2">{t.emoji}</span>
-              <span className="text-white font-bold text-sm">{t.label}</span>
-            </button>
-          ))}
+        <div className="grid grid-cols-1 gap-2 flex-1">
+          {BEACON_INTENTS.map((t) => {
+            const isSelected = selectedType === t.intent;
+            return (
+              <button
+                key={t.intent}
+                onClick={() => setSelectedType(t.intent)}
+                className={`bg-[#1C1C1E] rounded-2xl px-4 py-3 text-left transition-all active:scale-[0.98] flex items-center justify-between gap-3 ${
+                  isSelected ? 'border border-[#C8962C]' : 'border border-white/10'
+                }`}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="text-white font-bold text-sm">{t.label}</div>
+                  {t.subtitle && (
+                    <div className="text-white/45 text-xs leading-snug mt-0.5">{t.subtitle}</div>
+                  )}
+                </div>
+                <span
+                  aria-hidden
+                  className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${isSelected ? '' : 'opacity-40'}`}
+                  style={{
+                    background: t.globeColor,
+                    boxShadow: isSelected ? `0 0 10px ${t.globeColor}` : 'none',
+                  }}
+                />
+              </button>
+            );
+          })}
         </div>
 
         <div className="pt-4">
