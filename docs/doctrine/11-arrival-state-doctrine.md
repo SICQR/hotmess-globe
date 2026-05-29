@@ -428,6 +428,113 @@ Arrival is correct when:
 
 ---
 
+## Single Auth Authority
+
+There is exactly one authority over the gate chain: `BootRouter`.
+
+All other components in the arrival path are implementation details
+of that authority. None of them may decide on their own who passes,
+who waits, or where a user lands.
+
+| Role                | Component                                     |
+| ------------------- | --------------------------------------------- |
+| Authority           | `src/components/shell/BootRouter.jsx`         |
+| Chain implementation| `src/components/onboarding/OnboardingRouter` |
+| Auth surface        | `screens/SignUpScreen.jsx`                    |
+| OAuth return        | `src/pages/auth/callback.jsx` (public)        |
+| Shells / Layouts    | rendering layer only                          |
+| Helpers / hooks     | call-into, never decide                       |
+
+**Forbidden:**
+
+- A parallel auth surface that renders outside BootRouter (e.g.
+  `/auth` rendering its own chooser without splash / age / consent).
+- A second "gate" component that decides redirects on its own
+  (e.g. a `BootGuardGate` that whitelists routes or redirects
+  to a route that BootRouter does not own).
+- An app-internal navigation that targets an auth path other than
+  the canonical entry. Unauth flows go to `/` and BootRouter
+  resolves them.
+
+The architectural test: removing any non-authority component must
+not change who reaches the OS. If it does, that component had
+authority it should not have had.
+
+`/auth/callback` is the single exception — it is the OAuth return
+endpoint, must remain public, and is handled by BootRouter's own
+early-return. It is not an auth surface; it is a result handler.
+
+---
+
+## First-time vs Returning
+
+The doctrine of "arrival" applies differently depending on whether
+the user is meeting HOTMESS for the first time or returning to it.
+
+**First-time / unauthenticated:**
+
+> Full gate chain.
+> Splash → AgeGate → Bridge / Consent → SignUpScreen → Pulse.
+
+This is the only path through which a stranger becomes a member.
+None of these screens may be skipped via deep-link, query param,
+beta invite, or referral code. The gate chain is the contract that
+makes everything downstream — visibility, consent, safety — true.
+
+**Returning / authenticated:**
+
+> Signal restore.
+> Light splash (\< 600ms hold). Direct re-entry to Pulse.
+
+A returning user is not re-onboarded. They are received. Their
+session, location consent, age confirmation, terms acceptance,
+notification preference, and visibility state are already known.
+The system restores their last signal — the room they were in —
+rather than re-introducing itself.
+
+A returning user only sees additional gates when the system can
+prove one of these specific re-consent triggers:
+
+- age confirmation has lapsed beyond the configured TTL
+- terms or privacy text has materially changed since last accept
+- consent record is missing or corrupt for this device
+- safety policy has changed since last session
+- location permission needs re-explanation due to OS-level revoke
+- account / session state is inconsistent and must be reconciled
+
+Outside these triggers, a returning user goes straight back into
+the signal. **Do not re-onboard returning users. Restore their signal.**
+
+---
+
+## Silent State Death Is Forbidden
+
+A user action that creates an intention — a beta code submitted,
+a beacon dropped, an SOS sent, a boo offered, a care tap — must
+always resolve to a visible state. Success, failure, queued, expired,
+revoked, deferred. Any visible state at all.
+
+State that lands in storage and is never read again is **silent state
+death**. It is forbidden across:
+
+- invite systems (beta codes, referral codes, portal links)
+- signal systems (beacons, presence, visibility)
+- care systems (SOS, trusted contact, aftercare)
+- relational systems (boo, mutual, chat)
+- commerce systems (purchase, tier, entitlement)
+
+If the system writes intent, the system must close intent. The user
+must always know how their gesture landed. Quiet is fine; invisibility
+is not.
+
+This is the principle the beta-claim continuity work must satisfy:
+a code held in sessionStorage that no code path ever reads is not
+"deferred" — it is dead. Architectures that allow that are
+themselves doctrine violations and must be repaired at the source.
+
+---
+
+
 ## Final Principle
 
 > Do not welcome the user like a customer.
