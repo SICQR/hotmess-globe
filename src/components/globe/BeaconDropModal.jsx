@@ -6,25 +6,68 @@ import { trackEvent } from '@/components/utils/analytics';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
-// HOTMESS Beacon Identity System — 9 doctrine sprite categories.
-// Each id is a valid beacon_category value per migration
-// expand_beacon_category_to_9_doctrine_sprites (2026-05-27).
-const BEACON_TYPES = [
-  { id: 'gym',       label: 'Gym',       icon: Dumbbell,    color: '#FF5500' },
-  { id: 'club',      label: 'Club',      icon: PartyPopper, color: '#A899D8' },
-  { id: 'sauna',     label: 'Sauna',     icon: Flame,       color: '#00C2E0' },
-  { id: 'leather',   label: 'Leather',   icon: Crown,       color: '#C8962C' },
-  { id: 'cafe',      label: 'Café',      icon: Coffee,      color: '#F5E6C8' },
-  { id: 'clinic',    label: 'Clinic',    icon: Plus,        color: '#F4F1E8' },
-  { id: 'aftercare', label: 'Aftercare', icon: HandHeart,   color: '#F4F1E8' },
-  { id: 'cruising',  label: 'Cruising',  icon: Eye,         color: '#FF2D78' },
-  { id: 'market',    label: 'Market',    icon: ShoppingBag, color: '#C8962C' },
+// Drop Beacon — INTENT picker (Phil locked 2026-05-29).
+//
+// A beacon answers "what are you signalling right now?" — not "what type of
+// place are you?" Venues (gym/sauna/cafe/clinic/club/leather/market-as-place)
+// belong in the venue catalog, not the user drop flow. See
+// docs/doctrine/12-drop-beacon-doctrine.md.
+//
+// Each option carries:
+//   id              — written to metadata.intent as the first-class semantic.
+//   label/subtitle  — UI copy.
+//   icon            — lucide icon for the picker tile.
+//   color           — globe accent the beacon will render with.
+//   legacyType      — slotted into beacons.type to pass the existing CHECK
+//                     constraint (social/event/drop/market/radio/safety/user).
+//   legacyCategory  — slotted into beacons.beacon_category to pass that
+//                     CHECK constraint. Replaced by Slice 2 schema columns.
+const BEACON_INTENTS = [
+  {
+    id: 'looking',     label: 'Looking',           subtitle: 'Open to connect',
+    icon: Eye,         color: '#C8962C',
+    legacyType: 'user',   legacyCategory: 'user',
+  },
+  {
+    id: 'hosting',     label: 'Hosting',           subtitle: 'Party or play at my place',
+    icon: PartyPopper, color: '#FF4F9A',
+    legacyType: 'event',  legacyCategory: 'event',
+  },
+  {
+    id: 'arriving',    label: 'Arriving',          subtitle: 'Just landed somewhere',
+    icon: MapPin,      color: '#C8962C',
+    legacyType: 'social', legacyCategory: 'user',
+  },
+  {
+    id: 'cruising',    label: 'Cruising',          subtitle: 'Active signal, eyes up',
+    icon: Crosshair,   color: '#C8962C',
+    legacyType: 'social', legacyCategory: 'cruising',
+  },
+  {
+    id: 'aftercare',   label: 'Aftercare offered', subtitle: 'Land here if you need it',
+    icon: HandHeart,   color: '#F4ECD8',
+    legacyType: 'safety', legacyCategory: 'aftercare',
+  },
+  {
+    id: 'quiet_hold',  label: 'Quiet hold',        subtitle: 'Low-key, around if needed',
+    icon: Sparkles,    color: '#C8962C',
+    legacyType: 'social', legacyCategory: 'user',
+  },
+  {
+    id: 'market',      label: 'Selling / swap',    subtitle: 'I have something to move',
+    icon: ShoppingBag, color: '#C8962C',
+    legacyType: 'market', legacyCategory: 'market',
+  },
 ];
+
+const INTENT_BY_ID = Object.fromEntries(BEACON_INTENTS.map((i) => [i.id, i]));
 
 
 export default function BeaconDropModal({ isOpen, onClose, onComplete, location }) {
   const [title, setTitle] = useState('');
-  const [kind, setKind] = useState('club');
+  // Default intent: 'looking'. Was 'club' (venue-as-kind) — replaced 2026-05-29
+  // per Drop Beacon Doctrine. `kind` here is the intent id, not a venue category.
+  const [kind, setKind] = useState('looking');
   // Location: a single autocompleting search resolves city / area / postcode /
   // street / venue name via Mapbox geocoding (same token + endpoint used by
   // the header PulseSearch — no CSP issues, no carrier blocks, works without
@@ -114,19 +157,17 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
         throw new Error('NO_LOCATION_PICKED');
       }
       
-      // All user-dropped beacons go in via the beacons table with a 9-cat sprite
-      // identity (clinic + aftercare are care states, both still beacons — the
-      // legacy pulse_places branch for 'recovery' is removed; aftercare lives
-      // alongside the others now).
+      // Slice 1 — beacon-as-INTENT (Phil 2026-05-29).
+      // metadata.intent is the first-class semantic that survives Slice 2.
+      // beacons.type + beacons.beacon_category are shimmed to legacy
+      // CHECK-accepted values so no DB constraint change is required.
+      const intentSpec = INTENT_BY_ID[kind] || INTENT_BY_ID.looking;
       const expiresAt = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
       const { error } = await supabase.from('beacons').insert({
         owner_id: user.id,
         title: title.trim(),
-        // type is the broad enum (CHECK: social/event/drop/market/radio/safety/user).
-        // All user-dropped beacons are 'user' — the sprite identity lives in
-        // beacon_category. Keep the two in sync per doctrine.
-        type: 'user',
-        beacon_category: kind,
+        type: intentSpec.legacyType,
+        beacon_category: intentSpec.legacyCategory,
         status: 'active',
         geo_lat: lat,
         geo_lng: lng,
@@ -140,7 +181,9 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
         intensity: 80,
         visibility: 'public',
         code: `B44-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-        metadata: { title: title.trim() }
+        // Surface the intent at the data layer so the kind-router renders
+        // the right card on tap (no "Boo SMASH" on Aftercare beacons).
+        metadata: { title: title.trim(), intent: intentSpec.id, intent_label: intentSpec.label }
       });
       if (error) throw error;
       toast.success('Beacon dropped on the globe!');
@@ -335,23 +378,43 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
               </div>
 
               <div>
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-3 block">Beacon Kind</label>
-                <div className="grid grid-cols-3 gap-2">
-
-                  {BEACON_TYPES.map((type) => (
-                    <button
-                      key={type.id}
-                      onClick={() => setKind(type.id)}
-                      className={`flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all ${
-                        kind === type.id 
-                          ? 'bg-white/10 border-white/20 scale-[1.02]' 
-                          : 'bg-transparent border-transparent grayscale opacity-40'
-                      }`}
-                    >
-                      <type.icon className="w-5 h-5" style={{ color: kind === type.id ? type.color : 'white' }} />
-                      <span className="text-[9px] font-black uppercase tracking-wider text-white">{type.label}</span>
-                    </button>
-                  ))}
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-3 block">
+                  What are you signalling right now?
+                </label>
+                <div className="flex flex-col gap-2">
+                  {BEACON_INTENTS.map((opt) => {
+                    const isSelected = kind === opt.id;
+                    const Icon = opt.icon;
+                    return (
+                      <button
+                        key={opt.id}
+                        onClick={() => setKind(opt.id)}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-2xl border text-left transition-all active:scale-[0.98] ${
+                          isSelected
+                            ? 'bg-white/10 border-[#C8962C]/40'
+                            : 'bg-transparent border-white/10 opacity-70'
+                        }`}
+                      >
+                        <Icon
+                          className="w-5 h-5 flex-shrink-0"
+                          style={{ color: isSelected ? opt.color : 'rgba(255,255,255,0.5)' }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-white font-bold text-sm">{opt.label}</div>
+                          <div className="text-white/45 text-xs leading-snug">{opt.subtitle}</div>
+                        </div>
+                        <span
+                          aria-hidden
+                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                          style={{
+                            background: opt.color,
+                            boxShadow: isSelected ? `0 0 10px ${opt.color}` : 'none',
+                            opacity: isSelected ? 1 : 0.35,
+                          }}
+                        />
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -438,6 +501,7 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
     </AnimatePresence>
   );
 }
+
 
 
 
