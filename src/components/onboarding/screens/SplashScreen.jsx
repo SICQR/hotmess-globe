@@ -103,8 +103,12 @@ export default function SplashScreen({ onJoin, onSignIn, fastPath = false, onFas
             default tagline so beta invitees feel recognised before walking
             the gate chain. Default tagline still renders for non-invitees. */}
         {inviteCode ? (
+          // Phil 2026-05-29 locked copy — recognised entry, not a sales page.
+          // Two lines of body. The CTA button does the rest ('Continue to claim').
+          // Code is not shown on splash — the user already typed/clicked the link;
+          // showing it again is decorative weight. Doctrine 07 felt-copy: room not pitch.
           <div
-            className="flex flex-col items-center mt-6 max-w-[300px]"
+            className="flex flex-col items-center mt-6 max-w-[280px]"
             style={{
               opacity: rulesIn ? 1 : 0,
               transition: 'opacity 0.6s ease 0.7s',
@@ -116,30 +120,8 @@ export default function SplashScreen({ onJoin, onSignIn, fastPath = false, onFas
             >
               You've been invited
             </p>
-            <p className="text-white/55 text-[11px] mt-2 text-center">
+            <p className="text-white/55 text-[12px] mt-3 text-center">
               14 days. Full access. No card.
-            </p>
-            <div
-              className="mt-5 px-4 py-2 rounded-lg border"
-              style={{
-                borderColor: 'rgba(200, 150, 44, 0.35)',
-                background: 'rgba(200, 150, 44, 0.06)',
-              }}
-            >
-              <span
-                style={{
-                  color: GOLD,
-                  fontSize: 14,
-                  letterSpacing: '0.16em',
-                  fontWeight: 800,
-                  fontFamily: 'ui-monospace, SFMono-Regular, monospace',
-                }}
-              >
-                {inviteCode}
-              </span>
-            </div>
-            <p className="text-white/40 text-[11px] mt-4 text-center leading-snug">
-              Continue below to claim. Your invite will land automatically after sign-in.
             </p>
           </div>
         ) : (
