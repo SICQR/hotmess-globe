@@ -793,6 +793,28 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
   // ── Owner display name for user-kind branch ──
   const [ownerName, setOwnerName] = useState(null);
 
+  // Fetch the owner's display name only when we're in the user-beacon branch.
+  // (Curated beacons must never surface the operator account that owns them.)
+  //
+  // Hooks rule: this effect MUST sit above the loading / !beacon early-returns
+  // below (rules-of-hooks). The branch is gated by kind/ownerId INSIDE the
+  // effect, so it's a no-op while beacon is loading or absent.
+  useEffect(() => {
+    const k = beacon ? detectBeaconKind(beacon) : null;
+    const oId = (beacon && beacon.owner_id) || null;
+    if (k !== 'user' || !oId) { setOwnerName(null); return; }
+    let alive = true;
+    supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', oId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (alive) setOwnerName(data?.display_name ?? null);
+      });
+    return () => { alive = false; };
+  }, [beacon]);
+
   // Check-in modal state (venue/event kinds only)
   const [showCheckinModal, setShowCheckinModal]   = useState(false);
   const [checkinStep, setCheckinStep]             = useState(1);
@@ -1008,21 +1030,7 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
   const ownerId = beacon.owner_id || null; // ONLY read in the user-kind branch.
   const mutual = kind === 'user' && ownerId ? isMutualBoo(ownerId) : false;
 
-  // Fetch the owner's display name only when we're in the user-beacon branch.
-  // (Curated beacons must never surface the operator account that owns them.)
-  useEffect(() => {
-    if (kind !== 'user' || !ownerId) { setOwnerName(null); return; }
-    let alive = true;
-    supabase
-      .from('profiles')
-      .select('display_name')
-      .eq('id', ownerId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (alive) setOwnerName(data?.display_name ?? null);
-      });
-    return () => { alive = false; };
-  }, [kind, ownerId]);
+  // (owner-name fetch effect hoisted above early-returns — see top of BeaconViewer)
 
   const handleBoo = async () => {
     if (kind !== 'user' || !ownerId || !myUserId) return;
