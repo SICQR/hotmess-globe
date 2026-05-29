@@ -52,7 +52,7 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
 
   const createThreadMutation = useMutation({
     mutationFn: async () => {
-      const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
+      const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/"; return false; } return true; })();
       if (!ok) return null;
 
       let participantEmails = [currentUser.email];
