@@ -4,6 +4,10 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 // Public pages (no auth required)
 const HotmessSplash = lazy(() => import('@/components/splash/HotmessSplash'));
 import AgeGate from '@/pages/AgeGate';
+// Auth.jsx is preserved as a parked orphan until task #274 confirms zero /auth
+// traffic via telemetry (Doctrine 11 Single Auth Authority). Lint must not
+// drop it — deletion is a doctrinal decision, not a hygiene one.
+// eslint-disable-next-line unused-imports/no-unused-imports
 import Auth from '@/pages/Auth';
 import ResetPassword from '@/pages/ResetPassword';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
