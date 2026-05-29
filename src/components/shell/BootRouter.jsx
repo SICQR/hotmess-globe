@@ -73,6 +73,22 @@ export default function BootRouter({ children }) {
   const { bootState, isLoading } = useBootGuard();
   const location = useLocation();
 
+  // PR 4 (Phil 2026-05-29) — Doctrine 11 silent-state-death recovery sweep.
+  // /auth/callback is the primary claim site, but stale sessions, refreshed
+  // tabs, interrupted OAuth, and mobile deep-link inconsistencies can land a
+  // user in READY with a beta code still sitting in sessionStorage. Run the
+  // same idempotent helper on the first READY render to close intent. No-op
+  // if no code is pending.
+  //
+  // Hooks rule: this effect MUST sit above every early-return below
+  // (rules-of-hooks). The READY guard lives INSIDE the effect; the early-returns
+  // for reset-password / auth-callback / loading still run after, unchanged.
+  React.useEffect(() => {
+    if (bootState === BOOT_STATES.READY) {
+      claimPendingBetaCode().catch(() => { /* helper is safe */ });
+    }
+  }, [bootState]);
+
   // Always allow password reset page
   if (location.pathname === '/reset-password') {
     return <PublicShell />;
@@ -95,18 +111,6 @@ export default function BootRouter({ children }) {
   if (isLoading || bootState === BOOT_STATES.LOADING) {
     return <LoadingSpinner />;
   }
-
-  // PR 4 (Phil 2026-05-29) — Doctrine 11 silent-state-death recovery sweep.
-  // /auth/callback is the primary claim site, but stale sessions, refreshed
-  // tabs, interrupted OAuth, and mobile deep-link inconsistencies can land a
-  // user in READY with a beta code still sitting in sessionStorage. Run the
-  // same idempotent helper on the first READY render to close intent. No-op
-  // if no code is pending.
-  React.useEffect(() => {
-    if (bootState === BOOT_STATES.READY) {
-      claimPendingBetaCode().catch(() => { /* helper is safe */ });
-    }
-  }, [bootState]);
 
   // READY — render full app
   if (bootState === BOOT_STATES.READY) {
