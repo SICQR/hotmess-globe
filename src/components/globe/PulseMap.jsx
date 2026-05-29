@@ -283,15 +283,58 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
           };
           installBeaconStack('style.load');
 
-          // Cluster tap → expand toward its constituents.
+          // Cluster tap → open cluster preview sheet (Phil locked 2026-05-29).
+          // Was: blind zoom into the cluster. Replaced with a peek-sheet that
+          // surfaces "N signals here" with the strongest title and a list of
+          // the constituent signals. The Zoom-in action stays available as a
+          // secondary CTA inside the sheet.
+          //
+          // We pre-resolve the leaves here so the sheet doesn't need to know
+          // about Mapbox — it just receives a static snapshot of the cluster.
           map.on('click', LAYER_IDS.clusterCircles, (e) => {
             const feat = e.features && e.features[0];
-            if (!feat) return;
+            if (!feat || !onBeaconClickRef.current) return;
             const src = map.getSource(SOURCE_IDS.public);
-            if (!src || !src.getClusterExpansionZoom) return;
-            src.getClusterExpansionZoom(feat.properties.cluster_id, (err, zoom) => {
-              if (err || cancelled) return;
-              map.easeTo({ center: feat.geometry.coordinates, zoom, duration: reducedMotion ? 0 : 500 });
+            if (!src || !src.getClusterLeaves) return;
+            const clusterId = feat.properties.cluster_id;
+            const count = Number(feat.properties.point_count) || 0;
+            const coords = feat.geometry.coordinates;
+            // getClusterLeaves can return up to `limit` features. Cap at 30 —
+            // beyond that the preview list isn't readable and Zoom-in is
+            // the right move anyway.
+            const limit = Math.min(count, 30);
+            src.getClusterLeaves(clusterId, limit, 0, (err, leaves) => {
+              if (err || cancelled || !onBeaconClickRef.current) return;
+              const leafItems = (leaves || []).map((leaf) => {
+                const p = leaf.properties || {};
+                return {
+                  id: p.id,
+                  title: p.title || (p.cat ? p.cat[0].toUpperCase() + p.cat.slice(1) : 'Signal'),
+                  beacon_category: p.beacon_category || p.cat,
+                  color: p.color,
+                  priority: Number(p.priority) || 0,
+                  ends_at_ms: Number(p.ends_at_ms) || 0,
+                };
+              });
+              // Strongest = highest priority, ties broken by latest ends_at.
+              leafItems.sort((a, b) => (b.priority - a.priority) || (b.ends_at_ms - a.ends_at_ms));
+              onBeaconClickRef.current({
+                isCluster: true,
+                cluster_id: clusterId,
+                count,
+                lat: coords[1],
+                lng: coords[0],
+                leaves: leafItems,
+                // Used by Globe.jsx when the user picks "Zoom in" — falls back
+                // to a sensible level if the source doesn't expose expansion.
+                expansion_resolver: () => new Promise((resolve) => {
+                  try {
+                    src.getClusterExpansionZoom(clusterId, (zErr, zoom) => {
+                      resolve(zErr ? null : zoom);
+                    });
+                  } catch (_) { resolve(null); }
+                }),
+              });
             });
           });
 
@@ -472,9 +515,20 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
             const point = e.point;
             __hmTouchTimer = window.setTimeout(() => {
               try {
-                const feats = map.queryRenderedFeatures([point.x, point.y], { layers: [LAYER_IDS.beaconMarkers, LAYER_IDS.beaconIcons] });
+                // Look at markers + icons + cluster circles. The cluster layer
+                // gets its own popup shape ("N signals here") so the user can
+                // read what they're about to commit to at any zoom level.
+                const feats = map.queryRenderedFeatures([point.x, point.y], {
+                  layers: [LAYER_IDS.beaconMarkers, LAYER_IDS.beaconIcons, LAYER_IDS.clusterCircles],
+                });
                 const feat = feats && feats[0];
-                if (feat) __showHoverPopup(feat);
+                if (feat) {
+                  if (feat.layer && feat.layer.id === LAYER_IDS.clusterCircles) {
+                    __showClusterHoverPopup(feat);
+                  } else {
+                    __showHoverPopup(feat);
+                  }
+                }
               } catch (er) { /* non-fatal */ }
               __hmTouchTimer = null;
             }, 350);
@@ -492,9 +546,59 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
           map.on('touchend', () => { __hmTouchClear(); window.setTimeout(__dismissHoverPopup, 600); });
           map.on('touchcancel', () => { __hmTouchClear(); __dismissHoverPopup(); });
 
-          // Pointer affordance on cluster circles (desktop).
-          map.on('mouseenter', LAYER_IDS.clusterCircles, () => { try { map.getCanvas().style.cursor = 'pointer'; } catch (er) {} });
-          map.on('mouseleave', LAYER_IDS.clusterCircles, () => { try { map.getCanvas().style.cursor = ''; } catch (er) {} });
+          // ── Cluster hover preview (Phil 2026-05-29) ──
+          // Show "N signals here · {strongest title}" before the user commits
+          // to opening the cluster sheet. Uses getClusterLeaves to grab the
+          // strongest constituent's title for the chip. Falls back to plain
+          // count if leaves haven't loaded yet.
+          const __showClusterHoverPopup = (feat) => {
+            if (!feat || !feat.properties) return;
+            const count = Number(feat.properties.point_count) || 0;
+            const fid = 'cluster:' + feat.properties.cluster_id;
+            if (__hmHoverFid === fid && __hmHoverPopup) return;
+            __hmHoverFid = fid;
+            if (__hmHoverPopup) { try { __hmHoverPopup.remove(); } catch (er) { /* non-fatal */ } __hmHoverPopup = null; }
+            const renderChip = (strongestTitle) => {
+              const titleHtml = strongestTitle
+                ? `<div style="margin-top:4px;font-weight:500;letter-spacing:0.04em;text-transform:none;color:rgba(255,255,255,0.78);font-size:11px;">${escapeHtml(strongestTitle)}</div>`
+                : '';
+              const html = '<div style="font:500 10px/1.2 ui-monospace,monospace;letter-spacing:0.28em;text-transform:uppercase;color:#EAE6DD;background:rgba(8,8,12,0.92);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.10);border-radius:4px;padding:6px 10px;max-width:240px;">'
+                + '<span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#E6BE5A;margin-right:8px;vertical-align:middle;box-shadow:0 0 6px rgba(230,190,90,0.45);"></span>'
+                + escapeHtml(String(count)) + ' SIGNAL' + (count === 1 ? '' : 'S') + ' HERE'
+                + titleHtml
+                + '</div>';
+              try {
+                __hmHoverPopup = new mapboxgl.Popup({ offset: 18, closeButton: false, closeOnClick: false, className: 'hm-beacon-hover' })
+                  .setLngLat(feat.geometry.coordinates)
+                  .setHTML(html)
+                  .addTo(map);
+              } catch (er) { /* non-fatal */ }
+            };
+            const src = map.getSource(SOURCE_IDS.public);
+            if (src && src.getClusterLeaves) {
+              src.getClusterLeaves(feat.properties.cluster_id, Math.min(count, 30), 0, (err, leaves) => {
+                if (err || cancelled) return renderChip(null);
+                const items = (leaves || []).map((l) => ({
+                  title: l.properties?.title || '',
+                  priority: Number(l.properties?.priority) || 0,
+                  ends_at_ms: Number(l.properties?.ends_at_ms) || 0,
+                }));
+                items.sort((a, b) => (b.priority - a.priority) || (b.ends_at_ms - a.ends_at_ms));
+                renderChip(items[0]?.title || null);
+              });
+            } else {
+              renderChip(null);
+            }
+          };
+          map.on('mouseenter', LAYER_IDS.clusterCircles, (e) => {
+            try { map.getCanvas().style.cursor = 'pointer'; } catch (er) {}
+            const feat = e.features && e.features[0];
+            if (feat) __showClusterHoverPopup(feat);
+          });
+          map.on('mouseleave', LAYER_IDS.clusterCircles, () => {
+            try { map.getCanvas().style.cursor = ''; } catch (er) {}
+            __dismissHoverPopup();
+          });
 
           // Hand the imperative camera api to the parent (right-side toggle, drop-at-centre).
           try {
@@ -669,4 +773,5 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
     </div>
   );
 }
+
 

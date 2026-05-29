@@ -37,6 +37,7 @@ const L2MyListingsSheet = lazy(() => import('./L2MyListingsSheet'));
 const L2EditProfileSheet = lazy(() => import('./L2EditProfileSheet'));
 const L2SearchSheet = lazy(() => import('./L2SearchSheet'));
 const L2DirectionsSheet = lazy(() => import('./L2DirectionsSheet'));
+const L2ClusterPreviewSheet = lazy(() => import('./L2ClusterPreviewSheet'));
 const L2FiltersSheet = lazy(() => import('./L2FiltersSheet'));
 const L2CartSheet = lazy(() => import('./L2CartSheet'));
 const L2CheckoutSheet = lazy(() => import('./L2CheckoutSheet'));
@@ -220,6 +221,7 @@ const SHEET_COMPONENTS = {
   'create-persona': L2CreatePersonaSheet,
   'favorites': L2FavoritesSheet,
   'beacon': L2BeaconSheet,
+  'beacon-cluster': L2ClusterPreviewSheet,
   'schedule': L2ScheduleSheet,
   'radio-player': L2RadioPlayerSheet,
   'show': L2ScheduleSheet,
@@ -374,3 +376,4 @@ export function SheetLink({
     </button>
   );
 }
+
