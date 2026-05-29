@@ -535,6 +535,56 @@ themselves doctrine violations and must be repaired at the source.
 ---
 
 
+## The Flows Are Paid; The Assurance Is Universal
+
+The safety surface — trusted contacts, Silent SOS, aftercare check-ins —
+appears on canonical surfaces (Home, Profile) for **every** user, paid or
+not. Its visibility is universal. Hiding the existence of care features
+from free users would signal that HOTMESS treats safety as a paid
+feature — which it isn't. Care is the operating system, not the
+add-on.
+
+Care **flows** may be tier-gated:
+- Beta cohort gets capped activation (3 trusted contacts, Telegram-first
+  channel, rate-limited dispatch).
+- Paid tiers get the full ceiling.
+- Free users see the Care Suite exists and what it does. Activation copy
+  reads "Beta access required" or "Rolling out during beta" — never
+  "Available with HOTMESS". Operational language, not paywall language.
+
+Care **existence** may not be hidden. Ever. This is invariant.
+
+> The flows are paid; the assurance is universal.
+
+---
+
+## Care Outranks Commerce
+
+The Home priority ladder places care signal above commerce signal.
+
+The order on the Home surface:
+
+1. Hero / state — who are you, where are you
+2. State card — what's happening to you right now
+3. **Care Suite** — the system that's protecting you
+4. Lanes — where you can go
+5. Ghosted / Pulse / Market hooks — navigation
+6. Drops, merch, promos, events — commerce
+
+The Care Suite card on Home is not feature discovery, not upsell, not
+safety advertisement. It feels like battery status, like emergency exit
+lighting, like infrastructure access. Quiet confidence. It carries an
+explicit status line — **active** or **inactive** — so the user
+understands the system has a real state, not a marketed promise.
+
+Commerce surfaces (drops, merch, promos) ALWAYS sit below care surfaces
+on canonical screens. This is invariant.
+
+> Care outranks commerce.
+
+---
+
+
 ## Final Principle
 
 > Do not welcome the user like a customer.
