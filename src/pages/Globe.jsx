@@ -429,7 +429,24 @@ export default function GlobePage({ embedded = false }) {
   }, [filteredBeacons, pulsePlaces, activeLayer]);
 
   const handleBeaconClick = useCallback((beacon) => {
-    if (!beacon || beacon.isCluster) return;
+    if (!beacon) return;
+
+    // Cluster tap → cluster preview sheet (Phil locked 2026-05-29).
+    // PulseMap pre-resolves the cluster leaves and hands them through with
+    // isCluster=true. We open the cluster preview sheet at peek so the user
+    // sees "N signals here" + the constituent list before committing to a
+    // zoom-in or picking a specific signal to open.
+    if (beacon.isCluster) {
+      openSheet('beacon-cluster', {
+        count: beacon.count,
+        lat: beacon.lat,
+        lng: beacon.lng,
+        leaves: beacon.leaves || [],
+        expansion_resolver: beacon.expansion_resolver,
+      });
+      return;
+    }
+
     setFocusedBeaconId(beacon.id);
 
     // Phil 2026-05-29 — locked interaction contract.
@@ -702,4 +719,5 @@ export default function GlobePage({ embedded = false }) {
     </ErrorBoundary>
   );
 }
+
 
