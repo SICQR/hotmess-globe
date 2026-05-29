@@ -878,15 +878,20 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
       expires.setHours(6, 0, 0, 0);
       if (expires <= now) expires.setDate(expires.getDate() + 1);
 
-      // Write venue_checkins — fires trg_checkin_beacon_count + trg_checkin_globe_event
+      // Write venue_checkins — fires trg_checkin_beacon_count + trg_checkin_globe_event.
+      // Phil 2026-05-29: `source` was 'globe_tap' which violates the
+      // venue_checkins_source_check CHECK constraint (allows: qr, beacon, manual).
+      // The check-in originates from a beacon tap on /pulse, so 'beacon' is the
+      // semantically correct allowed value.
       const { error: vcErr } = await supabase.from('venue_checkins').insert({
         venue_id:      beacon.venue_id || beacon.id,
         user_id:       user.id,
-        source:        'globe_tap',
+        source:        'beacon',
         checked_in_at: now.toISOString(),
         metadata: {
           beacon_id:          beacon.id,
           checkin_visibility: checkinVisibility,
+          origin:             'globe_tap',
         },
       });
       if (vcErr) throw vcErr;
@@ -1401,6 +1406,7 @@ export default function L2BeaconSheet({ beaconId, beacon }) {
 
   return <BeaconCreator onSuccess={closeSheet} />;
 }
+
 
 
 

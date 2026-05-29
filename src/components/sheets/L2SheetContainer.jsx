@@ -263,14 +263,15 @@ export default function L2SheetContainer({
             style={{ height, overflowX: 'hidden', overscrollBehavior: 'contain', touchAction: 'pan-y' }}
             className={cn(
               'fixed bottom-0 left-0 right-0 z-[80]',
-              'bg-black border-t-2 border-x-2 border-[#C8962C]',
-              'rounded-none overflow-hidden',
+              'bg-black border-t border-[#C8962C]/40',
+              // Phil 2026-05-29 — unified rounded-top across all L2 sheets.
+              // The previous `rounded-none` + brutalist scanner-corner pseudo
+              // elements made the sheet feel like a kiosk, not a peek card.
+              // Doctrine 13 (Spatial Continuity): the sheet is a continuation
+              // of the city, not a hardware terminal — softer top corners
+              // read more atmospheric and match the rest of the app.
+              'rounded-t-3xl overflow-hidden',
               'flex flex-col',
-              // Scanner corner effect - brutalist 0px radius
-              'before:absolute before:top-0 before:left-0 before:w-8 before:h-8',
-              'before:border-t-2 before:border-l-2 before:border-[#C8962C]/60',
-              'after:absolute after:top-0 after:right-0 after:w-8 after:h-8',
-              'after:border-t-2 after:border-r-2 after:border-[#C8962C]/60',
               className
             )}
             role="dialog"
@@ -381,6 +382,7 @@ export function SheetActions({ children, className }) {
 export function SheetDivider() {
   return <div className="h-px bg-white/10 mx-4" />;
 }
+
 
 
 
