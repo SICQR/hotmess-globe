@@ -24,11 +24,14 @@ const PUBLIC_PATH_PREFIXES = [
   // of runtime logs. Whitelist or the funnel is dead on arrival.
   '/reentry',
   '/portal',
-  // Phil 2026-05-28 (#268): /redeem MUST be public. Beta invitees arriving
-  // unauthenticated were silently bounced to OnboardingRouter, RedeemPage
-  // never mounted, persistCodeForPostAuthClaim() never ran, sessionStorage
-  // stayed empty, beta invite died. Conversion-killer. Now whitelisted.
-  '/redeem',
+  // Phil 2026-05-29 HOTFIX — /redeem REMOVED from public prefix list to
+  // restore Doctrine 11 Single Auth Authority. Unauth invitees were
+  // landing on the RedeemPage hero without splash/age/consent. The code
+  // is now captured in sessionStorage by src/main.jsx BEFORE React mounts,
+  // so unauth invitees go through the canonical gate chain and the code
+  // rides through to /auth/callback where claimPendingBetaCode resolves it.
+  // Authed users still hit RedeemPage normally (BootRouter passes through
+  // when READY) and the auto-claim path works as before.
 ];
 
 // Branded loading — cinematic pulse

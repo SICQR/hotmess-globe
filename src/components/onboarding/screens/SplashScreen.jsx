@@ -19,6 +19,17 @@ const GOLD = '#C8962C';
 export default function SplashScreen({ onJoin, onSignIn, fastPath = false, onFastPath }) {
   const [rulesIn, setRulesIn] = useState(false);
   const [ctasIn, setCtasIn] = useState(false);
+  // Phil 2026-05-29 HOTFIX — surface invite framing during the gate chain.
+  // Code was captured into sessionStorage by main.jsx when the URL was
+  // /redeem/:code. Splash now shows the invite tag so the user understands
+  // their beta link landed even though they're still walking the gate chain.
+  const [inviteCode, setInviteCode] = useState(null);
+  useEffect(() => {
+    try {
+      const c = sessionStorage.getItem('hm_pending_beta_code');
+      if (c) setInviteCode(c);
+    } catch { /* private mode */ }
+  }, []);
 
   useEffect(() => {
     // Gold rules draw in at 300ms, CTAs at 900ms
@@ -87,19 +98,61 @@ export default function SplashScreen({ onJoin, onSignIn, fastPath = false, onFas
         >
           <BetaBadge size="lg" />
         </div>
-        {/* Phase 1 conversion repair (Phil 2026-05-28): splash was naked —
-            no "what HOTMESS is" anywhere. One line below the wordmark gives
-            new arrivals enough context to decide to Join vs bounce. Felt-copy
-            doctrine 07: not "messaging app for gay men", but the room. */}
-        <p
-          className="text-center text-white/55 text-[12px] font-medium mt-5 leading-snug max-w-[260px]"
-          style={{
-            opacity: rulesIn ? 1 : 0,
-            transition: 'opacity 0.6s ease 0.7s',
-          }}
-        >
-          Real venues. Real boys. Built for the room you're already looking for.
-        </p>
+        {/* Phil 2026-05-29 HOTFIX — the splash IS the redeem moment when an
+            invite is pending. We render the invite hero in place of the
+            default tagline so beta invitees feel recognised before walking
+            the gate chain. Default tagline still renders for non-invitees. */}
+        {inviteCode ? (
+          <div
+            className="flex flex-col items-center mt-6 max-w-[300px]"
+            style={{
+              opacity: rulesIn ? 1 : 0,
+              transition: 'opacity 0.6s ease 0.7s',
+            }}
+          >
+            <p
+              className="text-[10px] font-black uppercase tracking-[0.4em] text-center"
+              style={{ color: GOLD }}
+            >
+              You've been invited
+            </p>
+            <p className="text-white/55 text-[11px] mt-2 text-center">
+              14 days. Full access. No card.
+            </p>
+            <div
+              className="mt-5 px-4 py-2 rounded-lg border"
+              style={{
+                borderColor: 'rgba(200, 150, 44, 0.35)',
+                background: 'rgba(200, 150, 44, 0.06)',
+              }}
+            >
+              <span
+                style={{
+                  color: GOLD,
+                  fontSize: 14,
+                  letterSpacing: '0.16em',
+                  fontWeight: 800,
+                  fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+                }}
+              >
+                {inviteCode}
+              </span>
+            </div>
+            <p className="text-white/40 text-[11px] mt-4 text-center leading-snug">
+              Continue below to claim. Your invite will land automatically after sign-in.
+            </p>
+          </div>
+        ) : (
+          <p
+            className="text-center text-white/55 text-[12px] font-medium mt-5 leading-snug max-w-[260px]"
+            style={{
+              opacity: rulesIn ? 1 : 0,
+              transition: 'opacity 0.6s ease 0.7s',
+            }}
+          >
+            Real venues. Real boys. Built for the room you're already looking for.
+          </p>
+        )}
       </div>
 
       {/* CTAs */}
@@ -116,7 +169,7 @@ export default function SplashScreen({ onJoin, onSignIn, fastPath = false, onFas
           className="w-full py-4 rounded-xl font-black text-sm tracking-widest uppercase"
           style={{ backgroundColor: GOLD, color: '#000' }}
         >
-          Join
+          {inviteCode ? 'Continue to claim' : 'Join'}
         </button>
         <button
           onClick={onSignIn}
@@ -127,7 +180,7 @@ export default function SplashScreen({ onJoin, onSignIn, fastPath = false, onFas
             borderColor: `${GOLD}40`,
           }}
         >
-          Sign In
+          {inviteCode ? 'Already on HOTMESS · Sign in' : 'Sign In'}
         </button>
       </div>
     </div>
