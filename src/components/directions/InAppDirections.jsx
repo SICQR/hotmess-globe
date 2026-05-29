@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -110,7 +109,6 @@ export default function InAppDirections({
   expandable = true,
   className,
 }) {
-  const navigate = useNavigate();
   const [mode, setMode] = useState('foot');
   const [isExpanded, setIsExpanded] = useState(false);
   const [origin, setOrigin] = useState(null);
