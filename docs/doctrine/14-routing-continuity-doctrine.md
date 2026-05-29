@@ -71,6 +71,31 @@ What we do NOT do here:
 - We do not claim live venue density we don't have. If we don't know how many people are at the venue, we don't say a number.
 - We do not show real-time crowd counts. Beacon presence is enough. Aggregate signal, not surveillance.
 
+## 4.5. The density trap — anti-gamification clause
+
+Once routing renders beacon density along the path, the next failure mode is treating density itself as the score. That drift produces:
+
+- **"Busy route = good route"** as an implicit user heuristic.
+- **Density addiction** — users routing toward crowds because the line glowed brighter, not because they wanted to be there.
+- **Heat-chasing behaviour** — chasing whichever corridor pulses strongest.
+- **Optimisation loops** — the user starts treating their own night as a metric to maximise.
+
+Locked rule:
+
+> **HOTMESS does not rank human value by density.**
+
+Doctrine consequences:
+
+- **Density is texture, never a leaderboard.** The route may glow brighter near active beacons. It must never label that "Top Corridor," "Hottest Route," "Most Active Path," or any equivalent ranking copy. Brightness is mood, not score.
+- **No streaks, no totals, no nightlife distance counters.** "You walked 12.4km in nightlife last week" is the failure mode. Movement is not measured.
+- **A quiet route is not a lesser route.** Quiet Route and Follow The Signal are equal modes. The UI must never imply one is "more HOTMESS" than the other.
+- **No suggested routes ranked by density.** When the user is offered alternatives, the alternatives are framed by mood ("quieter back streets," "passes through more nightlife"), never by score ("busier route," "more active path").
+- **Curated atmosphere never reads as winning.** District editorial pins (D12 metadata.curated) light up where they pull the route gently, never as "you should be here instead."
+
+This clause reinforces Sacred Invariant #6 (the system never pretends activity) by closing the inverse drift: the system also never *rewards* activity. Care, atmosphere, and continuity are the values. Density is one of several textures that serves them.
+
+If a routing PR introduces ranking, scoring, leaderboarding, or streak language anywhere on the movement surface, it violates this clause and does not ship.
+
 ## 5. Care as spatial property of the city
 
 This was the unlock during the D14 conversation: **care is no longer a section of the app. It is a spatial property of the city.**
@@ -162,7 +187,7 @@ That is the line. Every routing PR must pass that test before it merges.
 - `docs/doctrine/12-drop-beacon-doctrine.md` — Four signal axes (Person / Place / Event / Route). Route is the fourth axis. This doctrine cannot be implemented until D12 is locked, which it is as of `514d781ace9b`.
 - `docs/doctrine/13-spatial-continuity-doctrine.md` — Four primitives (preview → commit → route → movement). D14 is the route + movement primitives expressed at city scale.
 - `docs/doctrine/07-visual-hierarchy.md` — Monetisation never overrides relational truth. Routing is never monetised by surfacing paid placements *on* the route.
-- Sacred Invariant #6 — System never pretends activity. No fake density, no fake transit certainty, no fake friend-on-route data.
+- Sacred Invariant #6 — System never pretends activity. No fake density, no fake transit certainty, no fake friend-on-route data. Section 4.5 (the density trap) is the inverse drift of the same invariant: the system never *rewards* activity either.
 - Sacred Invariant #7 — No exact tracking, ≤200m fuzz. Inherited by all route-surfaced location data including care pins and social-routing exposures.
 - Constraint #313 — InAppDirections must not become Google Maps. Doctrine ratifies and extends this.
 
