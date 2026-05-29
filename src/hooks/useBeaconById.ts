@@ -41,15 +41,35 @@ export type UseBeaconByIdResult = {
   error: Error | null;
 };
 
+/**
+ * Globe features and the `pulse_signals` view both surface beacon ids with a
+ * synthetic prefix to distinguish them from other signal kinds (presence,
+ * music, market). The prefix is structural — it is NOT part of the row's
+ * `beacons.id` column.
+ *
+ * Prefixes observed in production:
+ *   - `beacon:` — emitted by `useRealtimeBeacons.js` for GeoJSON feature ids
+ *   - `beacon_` — emitted by the `pulse_signals` view (`'beacon_' || b.id`)
+ *
+ * Both must be stripped before querying the `beacons` table, otherwise the
+ * row never matches and `ActiveBeaconModule` renders a faded card for an
+ * active beacon. Phil flagged this 2026-05-29 after the Friday seed run.
+ */
+function normaliseBeaconId(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  return raw.replace(/^beacon[:_]/, '');
+}
+
 export function useBeaconById(beaconId: string | null | undefined): UseBeaconByIdResult {
+  const normalisedId = normaliseBeaconId(beaconId);
   const [beacon, setBeacon] = useState<ActiveBeacon | null>(null);
-  const [loading, setLoading] = useState<boolean>(Boolean(beaconId));
+  const [loading, setLoading] = useState<boolean>(Boolean(normalisedId));
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    if (!beaconId) {
+    if (!normalisedId) {
       setBeacon(null);
       setLoading(false);
       setError(null);
@@ -67,7 +87,7 @@ export function useBeaconById(beaconId: string | null | undefined): UseBeaconByI
         const { data, error: queryError } = await supabase
           .from('beacons')
           .select('*')
-          .eq('id', beaconId)
+          .eq('id', normalisedId)
           .eq('status', 'active')
           .gt('ends_at', nowIso)
           .maybeSingle();
@@ -95,9 +115,10 @@ export function useBeaconById(beaconId: string | null | undefined): UseBeaconByI
     return () => {
       cancelled = true;
     };
-  }, [beaconId]);
+  }, [normalisedId]);
 
   return { beacon, loading, error };
 }
 
 export default useBeaconById;
+
