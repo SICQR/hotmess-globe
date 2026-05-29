@@ -1045,7 +1045,7 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <Link to="/auth">
+            <Link to="/">
               <Button className="bg-[#C8962C] hover:bg-white text-black font-black uppercase px-12 py-8 text-2xl">
                 GET STARTED
               </Button>

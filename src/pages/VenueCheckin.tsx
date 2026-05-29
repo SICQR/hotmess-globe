@@ -93,7 +93,7 @@ export default function VenueCheckin() {
   const handleCheckin = async () => {
     if (!user) {
       // Redirect to auth with return URL
-      navigate(`/auth?redirect=/v/${slug}`);
+      navigate('/');
       return;
     }
 
