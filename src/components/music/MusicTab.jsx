@@ -5,7 +5,7 @@
  * Sections: Hero → Hot Right Now → Producer Mode → All Releases → Preview/Stem overlays
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
