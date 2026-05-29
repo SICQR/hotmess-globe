@@ -370,29 +370,62 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
             } catch (er) { /* non-fatal */ }
           });
 
-          // ── Hover label — text hidden by default, appears on mouseenter, hides
-          //    on mouseleave. Matches the Beacon Identity hover spec
-          //    (CATEGORY · MOTION). Skip on touch where mouseenter never fires.
+          // ── Hover preview — Phil 2026-05-29 locked.
+          //    Every beacon must surface anticipatory copy (title + subtitle +
+          //    countdown if available) BEFORE the tap commits. Desktop:
+          //    mouseenter. Mobile: 350ms long-press (touchstart-with-no-move).
+          //    Wired on BOTH beaconIcons and beaconMarkers — the v2 silhouette
+          //    layer covers categories with registered glyphs; the v1 circle
+          //    layer covers everything else (seeded district/event/cafe/gym).
+          //    Glyph is optional in the popup body — falls back to title-only
+          //    when no glyph is registered for the category.
           let __hmHoverPopup = null;
           let __hmHoverFid = null;
-          map.on('mouseenter', LAYER_IDS.beaconIcons, (e) => {
-            const feat = e.features && e.features[0];
-            if (!feat) return;
-            try { map.getCanvas().style.cursor = 'pointer'; } catch (er) { /* non-fatal */ }
-            const cat = feat.properties.beacon_category;
-            const glyph = cat && BEACON_GLYPHS[cat];
-            if (!glyph) return;
-            const fid = feat.properties.id || (feat.geometry.coordinates[0] + ',' + feat.geometry.coordinates[1]);
+          const __escape = (s) => String(s || '').replace(/[&<>"']/g, (c) => ({
+            '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+          }[c] || c));
+          const __formatRemaining = (endsAtMs) => {
+            if (!endsAtMs) return null;
+            const diff = endsAtMs - Date.now();
+            if (diff <= 0) return null;
+            const h = Math.floor(diff / 3_600_000);
+            const m = Math.floor((diff % 3_600_000) / 60_000);
+            return h > 0 ? `${h}h ${m}m` : `${m}m`;
+          };
+          const __showHoverPopup = (feat) => {
+            if (!feat || !feat.properties) return;
+            const props = feat.properties;
+            const fid = props.id || (feat.geometry.coordinates[0] + ',' + feat.geometry.coordinates[1]);
             if (__hmHoverFid === fid && __hmHoverPopup) return;
             __hmHoverFid = fid;
             if (__hmHoverPopup) { try { __hmHoverPopup.remove(); } catch (er) { /* non-fatal */ } __hmHoverPopup = null; }
-            const title = (feat.properties.title || '').toString();
-            const dotColor = glyph.state === 'care' ? '#F4F1E8' : '#E6BE5A';
-            const dotShadow = glyph.state === 'care' ? 'rgba(244,241,232,0.45)' : 'rgba(230,190,90,0.45)';
-            const html = '<div style="font:500 10px/1.2 ui-monospace,monospace;letter-spacing:0.28em;text-transform:uppercase;color:#EAE6DD;background:rgba(8,8,12,0.92);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.10);border-radius:4px;padding:6px 10px;white-space:nowrap;">'
+            const cat = props.beacon_category;
+            const glyph = cat && BEACON_GLYPHS[cat];
+            const title = (props.title || '').toString();
+            const subtitle = (props.description || props.subtitle || '').toString();
+            const endsAtMs = Number(props.ends_at_ms) || (props.ends_at ? Date.parse(props.ends_at) : 0);
+            const remaining = __formatRemaining(endsAtMs);
+            // Care signals get cream accent, everything else gets brand gold.
+            const isCare = glyph?.state === 'care' || cat === 'aftercare' || cat === 'safety' || cat === 'clinic';
+            const dotColor = isCare ? '#F4F1E8' : '#E6BE5A';
+            const dotShadow = isCare ? 'rgba(244,241,232,0.45)' : 'rgba(230,190,90,0.45)';
+            // Header chip: glyph-label · motion if registered, otherwise just category.
+            const headerText = glyph
+              ? `${glyph.label} &middot; ${glyph.motion}`
+              : __escape(String(cat || 'signal').toUpperCase());
+            const remainingHtml = remaining
+              ? `<span style="margin-left:8px;font-weight:400;color:rgba(255,255,255,0.55);font-size:10px;letter-spacing:0.1em;text-transform:none;">${__escape(remaining)}</span>`
+              : '';
+            const subtitleHtml = subtitle && subtitle !== title
+              ? `<div style="margin-top:3px;font-weight:400;letter-spacing:0.04em;text-transform:none;color:rgba(255,255,255,0.55);font-size:11px;">${__escape(subtitle)}</div>`
+              : '';
+            const titleHtml = title
+              ? `<div style="margin-top:4px;font-weight:500;letter-spacing:0.08em;text-transform:none;color:rgba(255,255,255,0.78);font-size:11px;">${__escape(title)}</div>`
+              : '';
+            const html = '<div style="font:500 10px/1.2 ui-monospace,monospace;letter-spacing:0.28em;text-transform:uppercase;color:#EAE6DD;background:rgba(8,8,12,0.92);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.10);border-radius:4px;padding:6px 10px;max-width:240px;">'
               + '<span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:' + dotColor + ';margin-right:8px;vertical-align:middle;box-shadow:0 0 6px ' + dotShadow + ';"></span>'
-              + escapeHtml(glyph.label) + ' &middot; ' + escapeHtml(glyph.motion)
-              + (title ? '<div style="margin-top:4px;font-weight:400;letter-spacing:0.08em;text-transform:none;color:rgba(255,255,255,0.62);font-size:11px;">' + escapeHtml(title) + '</div>' : '')
+              + headerText + remainingHtml
+              + titleHtml + subtitleHtml
               + '</div>';
             try {
               __hmHoverPopup = new mapboxgl.Popup({ offset: 18, closeButton: false, closeOnClick: false, className: 'hm-beacon-hover' })
@@ -400,18 +433,68 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
                 .setHTML(html)
                 .addTo(map);
             } catch (er) { /* non-fatal */ }
-          });
-          map.on('mouseleave', LAYER_IDS.beaconIcons, () => {
-            try { map.getCanvas().style.cursor = ''; } catch (er) { /* non-fatal */ }
+          };
+          const __dismissHoverPopup = () => {
             __hmHoverFid = null;
             if (__hmHoverPopup) { try { __hmHoverPopup.remove(); } catch (er) { /* non-fatal */ } __hmHoverPopup = null; }
+          };
+
+          // Desktop hover — wire on BOTH layers so circle-rendered beacons
+          // (seeded district, event, cafe, gym) also get a preview.
+          ['beaconIcons', 'beaconMarkers'].forEach((key) => {
+            map.on('mouseenter', LAYER_IDS[key], (e) => {
+              try { map.getCanvas().style.cursor = 'pointer'; } catch (er) {}
+              const feat = e.features && e.features[0];
+              if (feat) __showHoverPopup(feat);
+            });
+            map.on('mouseleave', LAYER_IDS[key], () => {
+              try { map.getCanvas().style.cursor = ''; } catch (er) {}
+              __dismissHoverPopup();
+            });
           });
 
-          // Pointer affordance on the hit layers (desktop).
-          ['clusterCircles', 'beaconMarkers'].forEach((key) => {
-            map.on('mouseenter', LAYER_IDS[key], () => { try { map.getCanvas().style.cursor = 'pointer'; } catch (er) {} });
-            map.on('mouseleave', LAYER_IDS[key], () => { try { map.getCanvas().style.cursor = ''; } catch (er) {} });
+          // Mobile long-press — Phil 2026-05-29: every beacon must have
+          // hover-before-click. On touch, mouseenter never fires; 350ms hold
+          // without significant move shows the preview chip. If the user
+          // releases within 350ms we treat it as a tap (mapbox's own click
+          // handler fires elsewhere); if they release after the preview is
+          // shown we just dismiss the chip — preview without commit.
+          let __hmTouchTimer = null;
+          let __hmTouchStartXY = null;
+          const __hmTouchClear = () => {
+            if (__hmTouchTimer) { window.clearTimeout(__hmTouchTimer); __hmTouchTimer = null; }
+            __hmTouchStartXY = null;
+          };
+          map.on('touchstart', (e) => {
+            if (!e.originalEvent || e.originalEvent.touches.length !== 1) { __hmTouchClear(); return; }
+            const t = e.originalEvent.touches[0];
+            __hmTouchStartXY = { x: t.clientX, y: t.clientY };
+            const point = e.point;
+            __hmTouchTimer = window.setTimeout(() => {
+              try {
+                const feats = map.queryRenderedFeatures([point.x, point.y], { layers: [LAYER_IDS.beaconMarkers, LAYER_IDS.beaconIcons] });
+                const feat = feats && feats[0];
+                if (feat) __showHoverPopup(feat);
+              } catch (er) { /* non-fatal */ }
+              __hmTouchTimer = null;
+            }, 350);
           });
+          map.on('touchmove', (e) => {
+            if (!__hmTouchStartXY || !e.originalEvent || !e.originalEvent.touches[0]) { __hmTouchClear(); __dismissHoverPopup(); return; }
+            const t = e.originalEvent.touches[0];
+            const dx = t.clientX - __hmTouchStartXY.x;
+            const dy = t.clientY - __hmTouchStartXY.y;
+            if ((dx*dx + dy*dy) > 100) { // >10px move = scroll, not press
+              __hmTouchClear();
+              __dismissHoverPopup();
+            }
+          });
+          map.on('touchend', () => { __hmTouchClear(); window.setTimeout(__dismissHoverPopup, 600); });
+          map.on('touchcancel', () => { __hmTouchClear(); __dismissHoverPopup(); });
+
+          // Pointer affordance on cluster circles (desktop).
+          map.on('mouseenter', LAYER_IDS.clusterCircles, () => { try { map.getCanvas().style.cursor = 'pointer'; } catch (er) {} });
+          map.on('mouseleave', LAYER_IDS.clusterCircles, () => { try { map.getCanvas().style.cursor = ''; } catch (er) {} });
 
           // Hand the imperative camera api to the parent (right-side toggle, drop-at-centre).
           try {
@@ -586,3 +669,4 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
     </div>
   );
 }
+
