@@ -139,7 +139,7 @@ export const AuthProvider = ({ children }) => {
 
   const navigateToLogin = useCallback(() => {
     // Redirect to the app's Auth page.
-    window.location.href = "/"}` : "");
+    window.location.href = "/";
   }, []);
 
   return (
@@ -175,7 +175,7 @@ export const useAuth = () => {
       isLoadingAuth: false,
       authError: { type: 'auth_required', message: 'Authentication required' },
       logout: () => supabase.auth.signOut(),
-      navigateToLogin: () => window.location.href = "/"}` : ""),
+      navigateToLogin: () => { window.location.href = "/"; },
       checkAppState: async () => {},
     };
   }
