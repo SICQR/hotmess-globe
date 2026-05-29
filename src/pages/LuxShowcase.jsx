@@ -299,7 +299,7 @@ export default function LuxShowcase() {
             subtitle="HOTMESS LONDON"
             description="Where chaos meets connection"
             cta="SIGN UP FREE"
-            ctaHref="/auth"
+            ctaHref="/"
             secondaryCta="LEARN MORE"
             secondaryCtaHref="/more"
             image="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1920"

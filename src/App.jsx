@@ -480,10 +480,15 @@ const AuthenticatedApp = () => {
       <Route path="/fake-call" element={<Suspense fallback={null}><FakeCallPage /></Suspense>} />
 
       
-      {/* AUTH & INFRASTRUCTURE */}
-      <Route path="/auth" element={<PageRoute pageKey="Auth" />} />
-      <Route path="/auth/*" element={<PageRoute pageKey="Auth" />} />
+      {/* AUTH & INFRASTRUCTURE
+          Doctrine 11: Single Auth Authority. /auth is the legacy parallel
+          surface that bypassed the gate chain (compliance audit 2026-05-29).
+          Both /auth and /auth/* redirect to / so all unauthenticated entry
+          points resolve to OnboardingRouter (Splash → AgeGate → Bridge → SignUp).
+          /auth/callback remains the OAuth return endpoint and is public. */}
+      <Route path="/auth" element={<Navigate to="/" replace />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/auth/*" element={<Navigate to="/" replace />} />
       <Route path="/portal" element={<PortalPage />} />
       <Route path="/reentry" element={<ReentryPage />} />
       {/* v3 reentry welcome screen secondary CTA targets /pricing. Pricing.jsx
