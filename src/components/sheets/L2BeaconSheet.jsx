@@ -5,18 +5,79 @@
  * If no `beaconId` → shows multi-step beacon creation flow.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { nanoid } from 'nanoid';
 import {
   MapPin, Clock, Radio, Loader2, Navigation, ExternalLink,
-  CheckCircle, ChevronRight, ChevronLeft, Zap,
+  CheckCircle, ChevronRight, ChevronLeft, Zap, X, Heart, MessageCircle,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
+import { SHEET_TYPES } from '@/lib/sheetSystem';
+import { useTaps } from '@/hooks/useTaps';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { humanizeError } from '@/lib/errorUtils';
 import { usePowerups } from '@/hooks/usePowerups';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BEACON ID NORMALISATION + KIND DETECTION
+// Phil 2026-05-29: locked interaction contract.
+//
+// `owner_id` is IGNORED for kind detection. The seeded curated district/care
+// /event signals are technically owned by an operator account but must NEVER
+// render as a personal user-beacon (no "Boo SMASH" on Soho · Warming).
+//
+// Kind is computed purely from `metadata.curated`, `type`, `beacon_category`,
+// and structural signals (venue_id, event_start_at). owner_id is only read
+// inside the user-beacon branch, after the kind decision is final.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const BEACON_ID_PREFIX_RE = /^beacon[:_]/;
+function normaliseBeaconId(raw) {
+  if (!raw) return raw;
+  return String(raw).replace(BEACON_ID_PREFIX_RE, '');
+}
+
+/**
+ * detectBeaconKind — pure function. NEVER reads owner_id.
+ * Returns one of: 'district' | 'hotmess' | 'care' | 'event' | 'venue' | 'user'
+ */
+function detectBeaconKind(beacon) {
+  if (!beacon) return 'user';
+  const meta = beacon.metadata || {};
+  const t = String(beacon.type || '').toLowerCase();
+  const c = String(beacon.beacon_category || '').toLowerCase();
+
+  // Explicit operator hint wins. Seeded district beacons set metadata.curated=true.
+  if (meta.kind && typeof meta.kind === 'string') return meta.kind;
+  if (meta.curated === true) {
+    // Curated editorial that isn't tied to a specific venue or scheduled event
+    // is a district pulse read, not a party invite.
+    if (!beacon.venue_id && !beacon.event_start_at) return 'district';
+  }
+
+  // HOTMESS broadcasts (radio etc.) — operator-owned ambient signal.
+  if (t === 'radio' || c === 'hotmess') return 'hotmess';
+
+  // Care / safety / recovery — never a tap-to-Boo target.
+  if (t === 'safety' || c === 'safety' || c === 'aftercare' || c === 'clinic') return 'care';
+
+  // Real events with a venue OR a schedule.
+  if (t === 'event' && (beacon.venue_id || beacon.event_start_at)) return 'event';
+  if (c === 'event' && (beacon.venue_id || beacon.event_start_at)) return 'event';
+
+  // Curated event-shaped beacons without venue/schedule = district editorial.
+  if (t === 'event' || c === 'event') return 'district';
+
+  // Venue dots (gym/sauna/cafe/market/etc.)
+  if (c === 'venue' || c === 'gym' || c === 'sauna' || c === 'cafe' || c === 'market' ||
+      c === 'club' || c === 'leather' || c === 'cruising') return 'venue';
+
+  // Default: a real human's personal drop. Boo/Message branch applies.
+  return 'user';
+}
 
 const BEACON_DAILY_LIMIT = 3; // default daily beacon limit per user
 
@@ -631,9 +692,24 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
   const [loading, setLoading] = useState(!passedBeacon);
   const [checkinCount, setCheckinCount] = useState(0);
   const [recentPosts, setRecentPosts] = useState([]);
-  const { openSheet } = useSheet();
+  const { openSheet, closeSheet } = useSheet();
+  const navigate = useNavigate();
 
-  // Check-in modal state
+  // ── Viewer identity for user-beacon Boo/Message gate ──
+  const [myUserId, setMyUserId] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (alive) setMyUserId(data?.user?.id ?? null);
+    });
+    return () => { alive = false; };
+  }, []);
+  const { sendTap, isMutualBoo } = useTaps(myUserId);
+
+  // ── Owner display name for user-kind branch ──
+  const [ownerName, setOwnerName] = useState(null);
+
+  // Check-in modal state (venue/event kinds only)
   const [showCheckinModal, setShowCheckinModal]   = useState(false);
   const [checkinStep, setCheckinStep]             = useState(1);
   const [checkinVisibility, setCheckinVisibility] = useState('private');
@@ -641,19 +717,24 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
   const [checkingIn, setCheckingIn]               = useState(false);
   const [activeCheckin, setActiveCheckin]         = useState(null);
 
+  // The id arriving via deep-link / globe feature is sometimes prefixed
+  // (`beacon:` from useRealtimeBeacons.js, `beacon_` from the pulse_signals
+  // view). The raw uuid is what `beacons.id` stores — normalise before query.
+  const cleanBeaconId = useMemo(() => normaliseBeaconId(beaconId), [beaconId]);
+
   useEffect(() => {
     if (passedBeacon) { setBeacon(passedBeacon); setLoading(false); }
-    if (!beaconId) { setLoading(false); return; }
+    if (!cleanBeaconId) { setLoading(false); return; }
     supabase
       .from('beacons')
-      .select('id, code, type, beacon_category, geo_lat, geo_lng, starts_at, ends_at, intensity, title, description, city_slug, globe_color, globe_pulse_type, globe_size_base, checkin_count, venue_id, owner_id, event_start_at, event_end_at')
-      .eq('id', beaconId)
-      .single()
+      .select('id, code, type, beacon_category, geo_lat, geo_lng, starts_at, ends_at, intensity, title, description, city_slug, globe_color, globe_pulse_type, globe_size_base, checkin_count, venue_id, owner_id, event_start_at, event_end_at, metadata')
+      .eq('id', cleanBeaconId)
+      .maybeSingle()
       .then(({ data }) => {
-        setBeacon(data);
+        setBeacon(prev => prev || data);
         setLoading(false);
       });
-  }, [beaconId, passedBeacon]);
+  }, [cleanBeaconId, passedBeacon]);
 
   // Fetch venue-specific data
   useEffect(() => {
@@ -824,25 +905,122 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
   const title       = beacon.title || `${beacon.type || 'Beacon'}`;
   const description = beacon.description || null;
   const category    = beacon.beacon_category || 'user';
-  const categoryColor = beacon.globe_color || (category === 'venue' ? '#00C2E0' : category === 'event' ? '#FF4F9A' : '#C8962C');
+  const kind        = detectBeaconKind(beacon);
+  // Curated editorial gets brand gold regardless of category default colour.
+  // Doctrine 11 — never render district/hotmess in events-pink.
+  const isCurated = kind === 'district' || kind === 'hotmess';
+  const categoryColor = isCurated
+    ? '#C8962C'
+    : kind === 'care'
+      ? '#F4ECD8'
+      : (beacon.globe_color || (category === 'venue' ? '#00C2E0' : category === 'event' ? '#FF4F9A' : '#C8962C'));
   const lat = beacon.geo_lat ?? beacon.lat;
   const lng = beacon.geo_lng ?? beacon.lng;
+  const ownerId = beacon.owner_id || null; // ONLY read in the user-kind branch.
+  const mutual = kind === 'user' && ownerId ? isMutualBoo(ownerId) : false;
+
+  // Fetch the owner's display name only when we're in the user-beacon branch.
+  // (Curated beacons must never surface the operator account that owns them.)
+  useEffect(() => {
+    if (kind !== 'user' || !ownerId) { setOwnerName(null); return; }
+    let alive = true;
+    supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', ownerId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (alive) setOwnerName(data?.display_name ?? null);
+      });
+    return () => { alive = false; };
+  }, [kind, ownerId]);
+
+  const handleBoo = async () => {
+    if (kind !== 'user' || !ownerId || !myUserId) return;
+    try {
+      await sendTap(ownerId, ownerName || 'them');
+      toast('Boo sent. They have to want it back.');
+    } catch (e) {
+      console.warn('[L2BeaconSheet] sendTap failed', e);
+    }
+  };
+
+  const handleMessage = () => {
+    if (kind !== 'user' || !ownerId) return;
+    // Boo-first hard gate (Phil 2026-05-29, sacred-invariant from #656).
+    if (!mutual) {
+      toast('Boo first. They have to want it back.');
+      return;
+    }
+    closeSheet();
+    openSheet(SHEET_TYPES.CHAT, { userId: ownerId, beaconId: beacon.id });
+  };
+
+  // Time-remaining string for the sheet header chip.
+  const endsAtMs = beacon.ends_at ? new Date(beacon.ends_at).getTime() : null;
+  const remaining = (() => {
+    if (!endsAtMs || !Number.isFinite(endsAtMs)) return null;
+    const diff = endsAtMs - Date.now();
+    if (diff <= 0) return 'ended';
+    const h = Math.floor(diff / 3_600_000);
+    const m = Math.floor((diff % 3_600_000) / 60_000);
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m`;
+  })();
+
+  // Kind label shown in the small chip — never expose the operator-owner for
+  // curated kinds, and never lead with "user" for a personal drop.
+  const kindLabel = (() => {
+    if (kind === 'district') return 'district pulse';
+    if (kind === 'hotmess') return 'hotmess broadcast';
+    if (kind === 'care') return 'care available';
+    if (kind === 'event') return 'event';
+    if (kind === 'venue') return category;
+    return 'someone on pulse';
+  })();
 
   return (
     <div className="relative flex flex-col h-full overflow-y-auto">
-      <div className="px-4 pt-4 pb-2">
+      {/* Close affordance — Phil 2026-05-29: every beacon card must have a
+          reverse action. Drag-to-dismiss is provided by L2SheetContainer; this
+          X is the explicit tap target. */}
+      <button
+        type="button"
+        onClick={() => closeSheet()}
+        aria-label="Close beacon"
+        className="absolute top-3 right-3 z-20 w-9 h-9 rounded-full flex items-center justify-center bg-white/5 border border-white/10 active:scale-90 transition-transform"
+      >
+        <X className="w-4 h-4 text-white/70" />
+      </button>
+
+      <div className="px-4 pt-4 pb-2 pr-14">
         <div className="flex items-center gap-2 mb-2">
           <span
             className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border"
             style={{ color: categoryColor, borderColor: `${categoryColor}40`, backgroundColor: `${categoryColor}15` }}
           >
             <Radio className="w-2.5 h-2.5" />
-            {category}
+            {kindLabel}
           </span>
-          <span className="text-white/30 text-[10px] uppercase">{beacon.type}</span>
+          {remaining && (
+            <span
+              className="inline-flex items-center gap-1 text-[10px] font-semibold tabular-nums"
+              style={{ color: categoryColor }}
+            >
+              <Clock className="w-2.5 h-2.5" />
+              {remaining}
+            </span>
+          )}
         </div>
 
         <h2 className="text-white font-black text-xl leading-tight">{title}</h2>
+
+        {/* user-kind: surface the owner display name underneath the title so
+            the viewer knows whose signal this is. Curated kinds never show
+            owner_id-derived info. */}
+        {kind === 'user' && ownerName && (
+          <p className="text-white/60 text-[13px] mt-1">{ownerName}</p>
+        )}
 
         {description && (
           <p className="text-white/50 text-sm mt-2 leading-relaxed">{description}</p>
@@ -892,8 +1070,29 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
       </div>
 
       <div className="px-4 py-4 flex flex-col gap-2 mt-auto">
-        {/* Venue check-in / active state */}
-        {category === 'venue' && (
+        {/* ── kind: user — Boo / Message — never both, never neither ── */}
+        {kind === 'user' && ownerId && myUserId && ownerId !== myUserId && (
+          mutual ? (
+            <button
+              onClick={handleMessage}
+              className="w-full bg-[#C8962C] text-black font-black text-sm rounded-2xl py-3.5 flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Message
+            </button>
+          ) : (
+            <button
+              onClick={handleBoo}
+              className="w-full bg-[#C8962C] text-black font-black text-sm rounded-2xl py-3.5 flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            >
+              <Heart className="w-4 h-4" />
+              Boo
+            </button>
+          )
+        )}
+
+        {/* ── kind: venue — check-in flow (unchanged from prior behaviour) ── */}
+        {kind === 'venue' && (
           activeCheckin ? (
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2 px-3 py-2 bg-[#C8962C]/10 border border-[#C8962C]/30 rounded-xl">
@@ -925,8 +1124,8 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
           )
         )}
 
-        {/* Event: I'm going */}
-        {category === 'event' && (
+        {/* ── kind: event — I'm going (real scheduled event with venue) ── */}
+        {kind === 'event' && (
           <button
             onClick={handleCheckIn}
             disabled={checkingIn}
@@ -936,7 +1135,23 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
           </button>
         )}
 
-        {/* Directions */}
+        {/* ── kind: care — never a Boo target, surface care affordance only ── */}
+        {kind === 'care' && (
+          <button
+            onClick={() => { closeSheet(); navigate('/safety'); }}
+            className="w-full bg-white/5 border border-white/10 text-white font-bold text-sm rounded-2xl py-3 active:scale-95 transition-transform"
+          >
+            What this offers
+          </button>
+        )}
+
+        {/* ── kind: district / hotmess — no primary CTA; the pulse read IS the
+              card. No "Boo SMASH" on Soho · Warming, ever. ── */}
+
+        {/* Directions are universally useful for any beacon with a real
+            lat/lng — district, venue, event, user. We never expose exact
+            coords; we hand the values off to the directions sheet which uses
+            the same ≤200m privacy snap as the rest of the app. */}
         {(lat && lng) && (
           <div className="flex gap-3">
             <button
@@ -947,11 +1162,11 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
               Directions
             </button>
             <button
-              onClick={() => navigate('/pulse', { state: { flyTo: { lat, lng, zoom: 14 } } })}
+              onClick={() => { closeSheet(); navigate('/pulse', { state: { flyTo: { lat, lng, zoom: 14 } } }); }}
               className="flex-1 bg-[#1C1C1E] text-white font-bold text-sm rounded-2xl py-3 flex items-center justify-center gap-2 border border-white/10 active:scale-95 transition-transform"
             >
               <ExternalLink className="w-4 h-4 text-white/40" />
-              Map
+              On the map
             </button>
           </div>
         )}
@@ -1077,6 +1292,7 @@ export default function L2BeaconSheet({ beaconId, beacon }) {
 
   return <BeaconCreator onSuccess={closeSheet} />;
 }
+
 
 
 
