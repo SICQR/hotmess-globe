@@ -431,37 +431,42 @@ export default function GlobePage({ embedded = false }) {
   const handleBeaconClick = useCallback((beacon) => {
     if (!beacon || beacon.isCluster) return;
     setFocusedBeaconId(beacon.id);
-    // Entity-aware beacon doctrine (docs/doctrine/beacon-doctrine.md §2): a
-    // beacon tap MUST land on the owner's canonical profile with the beacon id
-    // in the query string. The carousel already does this (PR #442); the globe
-    // is the last unwired surface. ActiveBeaconModule on /profile/:userId
-    // renders the beacon context when ?beacon= is present.
-    const ownerId = beacon.user_id || beacon.owner_id;
-    if (ownerId) {
-      activityTracker.trackActivity('beacon_click', { beacon_id: beacon.id, beacon_title: beacon.title }, { lat: beacon.lat, lng: beacon.lng });
-      const url = beacon.id
-        ? `/profile/${ownerId}?beacon=${encodeURIComponent(beacon.id)}`
-        : `/profile/${ownerId}`;
-      navigate(url);
-      return;
-    }
-    // Owner-less signal (e.g. seeded venue/event with no profile yet):
-    // fall back to the shop overlay if it carries shopify handles, else the
-    // legacy beacon sheet so the surface is never a dead tap.
+
+    // Phil 2026-05-29 — locked interaction contract.
+    //
+    // Every beacon tap opens the L2 beacon sheet. The sheet's own kind-router
+    // branches by `beacon.type` + `beacon.beacon_category` (+ metadata.curated).
+    // It is NEVER a route navigation — sheets slide up from the bottom, drag
+    // to dismiss, X to close. owner_id plays no role in routing; the sheet
+    // consults it only inside the user-beacon branch.
+    //
+    // The prior "navigate to /profile/:userId?beacon=:id" architecture was
+    // wrong for two reasons: (1) curated district beacons rendered as if
+    // they belonged to the operator account that seeded them — "Boo SMASH"
+    // on Soho · Warming; (2) a full route page is a trapped state from the
+    // user's perspective with no reverse action.
+    //
+    // Doctrine: 11-arrival-state-doctrine (Pulse Doctrine), 07-visual-hierarchy.
+
+    // Shop overlay short-circuit: location beacons carrying shopify handles
+    // open the merch overlay directly. Only non-sheet path — established
+    // commerce surface, leave as-is.
     if (beacon?.mode === 'location' && Array.isArray(beacon.shopify_handles) && beacon.shopify_handles.length > 0) {
       setPreviewBeacon(null);
       setLocationShopBeacon(beacon);
       return;
     }
-    setPreviewBeacon(beacon);
-    setLocationShopBeacon(null);
-    const category = beacon?.beacon_category || 'user';
-    if (category === 'venue' || category === 'event' || category === 'hotmess') {
-      openSheet('beacon', { beaconId: beacon.id, beacon });
-      return;
-    }
+
     activityTracker.trackActivity('beacon_click', { beacon_id: beacon.id, beacon_title: beacon.title }, { lat: beacon.lat, lng: beacon.lng });
-  }, [navigate, openSheet, setFocusedBeaconId]);
+
+    // The id arriving from the globe layer is prefixed (`beacon:` from
+    // useRealtimeBeacons.js, `beacon_` from the pulse_signals view). Strip
+    // it so the sheet's Supabase fetch hits the right row. The full beacon
+    // object is also passed through so the viewer renders synchronously even
+    // before the fetch resolves.
+    const cleanId = typeof beacon.id === 'string' ? beacon.id.replace(/^beacon[:_]/, '') : beacon.id;
+    openSheet('beacon', { beaconId: cleanId, beacon });
+  }, [openSheet, setFocusedBeaconId]);
 
   const handleViewFullDetails = useCallback(() => {
     if (!previewBeacon) return;
@@ -697,3 +702,4 @@ export default function GlobePage({ embedded = false }) {
     </ErrorBoundary>
   );
 }
+
