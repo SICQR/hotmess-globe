@@ -67,7 +67,9 @@ export default function ReferralProgram() {
     return `${base.slice(0, 6)}${random}`;
   };
 
-  const referralUrl = `${window.location.origin}/auth/sign-up?ref=${referralCode}`;
+  // Doctrine 11 (Single Auth Authority): referral entry through canonical / surface.
+  // ?ref= is read by SignUpScreen during the gate chain and persisted into sessionStorage.
+  const referralUrl = `${window.location.origin}/?ref=${referralCode}`;
 
   const copyReferralLink = async () => {
     try {

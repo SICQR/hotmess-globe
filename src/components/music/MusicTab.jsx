@@ -14,8 +14,9 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
+// PTR removed 2026-05-29 (Phil) — Music is in the PTR disabled list per the
+// page-level opt-in directive. Music feed refresh now happens on focus / route
+// enter / manual user action. Doctrine 11: web-wrapper PTR breaks luxury feel.
 import { trackIntent } from '@/lib/notifications/templates';
 
 // ── Brand tokens ─────────────────────────────────────────────────────────────
@@ -585,16 +586,8 @@ export default function MusicTab() {
     }
   }, [player.isPlaying, player.progress, player.currentTrack]);
 
-  // ── Pull to refresh ────────────────────────────────────────────────────────
-
-  const handleRefresh = useCallback(async () => {
-    setReloadKey(k => k + 1);
-  }, []);
-
-  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
-    onRefresh: handleRefresh,
-    scrollRef,
-  });
+  // Pull-to-refresh removed 2026-05-29 (Phil) — Music is on the PTR disabled
+  // list. reloadKey is still incremented elsewhere on focus / route enter.
 
   // ── Derived data ───────────────────────────────────────────────────────────
 
@@ -648,9 +641,7 @@ export default function MusicTab() {
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto overscroll-contain"
-        {...pullHandlers}
       >
-        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
 
       {/* ═══════════════════════════════════════════════════════════════════════
           0. CONTINUE LISTENING — unfinished previews

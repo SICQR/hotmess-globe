@@ -48,6 +48,9 @@ export type UserBenefits = {
   beacon_drops_monthly?: number; // -1 = unlimited
   ghosted_preview_limit?: number; // -1 = unlimited
   music_preview_seconds?: number; // -1 = full track
+  // Phil 2026-05-29 — Founding 250 + Phil + e2e accounts get Ghosted unlocked
+  // + 4 beacon drops/day. Driven by public.is_beta_cohort() server-side.
+  beta_cohort_active?: boolean;
 };
 
 // Safe MESS defaults — used while loading + on RPC failure. Never grants paid
@@ -75,6 +78,7 @@ const MESS_DEFAULTS: Readonly<UserBenefits> = Object.freeze({
   beacon_drops_monthly: 0,
   ghosted_preview_limit: 3,
   music_preview_seconds: 90,
+  beta_cohort_active: false,
 });
 
 const REFRESH_MS = 120_000;
