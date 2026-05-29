@@ -25,6 +25,11 @@ const PUBLIC_PATH_PREFIXES = [
   // of runtime logs. Whitelist or the funnel is dead on arrival.
   '/reentry',
   '/portal',
+  // Phil 2026-05-28 (#268): /redeem MUST be public. Beta invitees arriving
+  // unauthenticated were silently bounced to OnboardingRouter, RedeemPage
+  // never mounted, persistCodeForPostAuthClaim() never ran, sessionStorage
+  // stayed empty, beta invite died. Conversion-killer. Now whitelisted.
+  '/redeem',
 ];
 
 // Branded loading — cinematic pulse
