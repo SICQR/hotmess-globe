@@ -13,8 +13,7 @@ import {
   CheckCircle, ChevronRight, ChevronLeft, Zap, X, Heart, MessageCircle,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
-import { useSheet } from '@/contexts/SheetContext';
-import { SHEET_TYPES } from '@/lib/sheetSystem';
+import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { useTaps } from '@/hooks/useTaps';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
