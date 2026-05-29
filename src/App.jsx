@@ -636,7 +636,16 @@ function OSArchitecture() {
   usePresenceHeartbeat();
   // iOS-style edge swipe to go back
   useSwipeBack();
-  const { pullProgress, isRefreshing } = usePullToRefresh();
+  // PTR allowlist (Phil 2026-05-29). The global pull-to-refresh bar previously
+  // appeared on every page including Home / Music / Shop / More — breaking the
+  // tactical/luxury feel and turning HOTMESS into a web wrapper. Page-level
+  // opt-in now: Ghosted only. Pulse already opts out separately via the
+  // data-globe-interactive marker checked in shouldIgnorePullToRefresh().
+  // For other surfaces refresh happens on focus / route enter / manual button.
+  const ptrLocation = useLocation();
+  const ptrAllowlist = ['/ghosted'];
+  const ptrAllowed = ptrAllowlist.some(p => ptrLocation.pathname === p || ptrLocation.pathname.startsWith(p + '/'));
+  const { pullProgress, isRefreshing } = usePullToRefresh({ disabled: !ptrAllowed });
 
 
   // Part B: Sync location on app open (once per mount)
@@ -738,8 +747,8 @@ function OSArchitecture() {
 
   return (
     <div className="hotmess-os relative h-dvh w-full overflow-hidden bg-[#050507]">
-      {/* Pull to Refresh Indicator */}
-      {pullProgress > 0 && (
+      {/* Pull to Refresh Indicator — page-level opt-in (see ptrAllowlist above) */}
+      {ptrAllowed && pullProgress > 0 && (
         <div 
           className="fixed top-0 left-0 right-0 z-[1000] pointer-events-none flex flex-col items-center pt-2"
           style={{ opacity: pullProgress }}
