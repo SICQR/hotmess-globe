@@ -22,18 +22,31 @@ export const CLUSTER_RADIUS = 80;
 export const ICON_MIN_ZOOM = 11;
 
 // Category → colour, aligned with the globe LAYER_DEFS so the two engines read alike.
+//
+// Phil 2026-05-29: added `editorial` for curated district pulse beacons (Soho ·
+// Warming etc.) — locks Doctrine 11's visual contract that operator editorial
+// voice is distinct from user-hosted event invites. Care nudged from clinical
+// white to cream so it feels soft, not sterile.
 export const CATEGORY_COLOR = {
+  editorial: '#C8962C', // brand gold — curated district pulse
   events: '#FF4F9A',
   venues: '#00C2E0',
   people: '#39FF14',
   market: '#FFD700',
   radio: '#B026FF',
-  care: '#FFFFFF',
+  care: '#F4ECD8',  // cream
   other: '#C8962C',
 };
 
 // Privacy contract (§"Privacy constraints"): these never enter the PUBLIC source.
+//
+// Phil 2026-05-29: the `safety` type is overloaded — it covers genuine SOS /
+// location-share / trusted-contact rows (private), AND operator-placed
+// aftercare offerings (public-by-intent). The PUBLIC_CARE_OVERRIDE below
+// carves out aftercare/recovery/clinic so the offering reaches the public
+// source while the emergency channel stays sealed.
 const PRIVATE = new Set(['help', 'sos', 'safety', 'location_share', 'location_shares', 'trusted_contact', 'sos_ring', 'checkin']);
+const PUBLIC_CARE_OVERRIDE = new Set(['aftercare', 'recovery', 'clinic']);
 // Categories that must render with APPROXIMATE (coarsened) coordinates, never exact
 // (§L9: "no raw people GPS; Chill/Meetup approximate; Preloved never exposes home").
 const APPROX = new Set(['person', 'people', 'user', 'chill', 'meetup', 'hookup', 'social', 'preloved']);
@@ -46,10 +59,33 @@ function field(b, ...keys) {
   return '';
 }
 
+function metaField(b, key) {
+  try {
+    const meta = b && (b.metadata || b.meta);
+    if (!meta) return '';
+    const v = typeof meta === 'string' ? JSON.parse(meta)[key] : meta[key];
+    return v == null ? '' : String(v).toLowerCase();
+  } catch (_) { return ''; }
+}
+
+function isCurated(b) {
+  // metadata.curated === true → operator drop (district / hotmess / care)
+  try {
+    const meta = b && (b.metadata || b.meta);
+    if (!meta) return false;
+    const c = typeof meta === 'string' ? JSON.parse(meta).curated : meta.curated;
+    return c === true || c === 'true';
+  } catch (_) { return false; }
+}
+
 export function isPrivate(b) {
   const k = field(b, 'kind');
   const c = field(b, 'beacon_category', 'category');
   const m = field(b, 'mode');
+  // Public-by-intent override: aftercare/recovery/clinic offerings reach the
+  // public source even when the row's broad type is 'safety'. The PRIVATE set
+  // still applies to genuine SOS rows whose CATEGORY is in {help, sos, ...}.
+  if (PUBLIC_CARE_OVERRIDE.has(c)) return false;
   return PRIVATE.has(k) || PRIVATE.has(c) || PRIVATE.has(m);
 }
 
@@ -59,6 +95,18 @@ function isApprox(b) {
 
 export function categoryOf(b) {
   const all = `${field(b, 'kind')} ${field(b, 'beacon_category', 'category')} ${field(b, 'type')}`;
+  // Curated district editorial — operator-placed atmospheric reads, not real
+  // events. Must paint in brand gold so the user can tell editorial voice
+  // apart from user-hosted invites at a glance. Doctrine 11.
+  if (isCurated(b)) {
+    const metaKind = metaField(b, 'kind');
+    if (metaKind === 'district' || metaKind === 'hotmess') return 'editorial';
+    // Curated event-shaped beacons without a venue or scheduled start time
+    // are district reads dressed up as events. They paint editorial too.
+    const hasVenue = b && (b.venue_id || b.venueId);
+    const hasSchedule = b && (b.event_start_at || b.event_end_at);
+    if (/event/.test(all) && !hasVenue && !hasSchedule) return 'editorial';
+  }
   if (/recovery|care|sober|na_aa|naaa|aftercare/.test(all)) return 'care';
   if (/event|ticket/.test(all)) return 'events';
   if (/venue/.test(all)) return 'venues';
@@ -380,4 +428,5 @@ export function addLayerStack(map, opts) {
     });
   }
 }
+
 
