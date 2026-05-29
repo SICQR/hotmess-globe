@@ -385,6 +385,18 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     deepLinkParams: ['beaconId'],
   },
 
+  // Cluster preview sheet (Phil 2026-05-29). Opens when the user taps a
+  // cluster bubble on /pulse — surfaces "N signals here · strongest title"
+  // + a tappable list of constituents + a Zoom closer CTA. Closes the
+  // all-zoom readability gap without changing the marker-level flow.
+  'beacon-cluster': {
+    id: 'beacon-cluster',
+    title: 'Signals here',
+    height: 'large',
+    auth: false,
+    deepLinkParams: ['lat', 'lng', 'count'],
+  },
+
   // ─────────────────────────────────────────────────────────────────────────
   // SELLING / ONBOARDING / PAYOUTS
   // ─────────────────────────────────────────────────────────────────────────
@@ -851,3 +863,4 @@ export function parseSheetFromUrl(searchParams: URLSearchParams): { type: string
   
   return { type, props };
 }
+
