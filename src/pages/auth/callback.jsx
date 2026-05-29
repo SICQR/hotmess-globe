@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
 import logger from '@/utils/logger';
+import { claimPendingBetaCode } from '@/lib/beta/claimPendingBetaCode';
 
 const CALLBACK_SETTLING_KEY = 'hm_auth_callback_settling';
 const isCallbackPath = () => (
@@ -250,6 +251,14 @@ async function routeAfterAuth(userId, navigate) {
         }
       }
     } catch {}
+
+    // PR 4 (Phil 2026-05-29) — Doctrine 11 silent-state-death prevention.
+    // Read hm_pending_beta_code from sessionStorage and claim it now.
+    // /auth/callback is the first guaranteed authenticated state, so the
+    // beta code resolves deterministically here. Writes hm_arrival_signal
+    // for the OS-arrival surface to render 'Founding access confirmed'
+    // (or 'failed') exactly once. Silent state death forbidden.
+    try { await claimPendingBetaCode(); } catch { /* helper is internally safe */ }
 
     const dest = profile?.onboarding_completed === true ? '/pulse' : '/';
     try { sessionStorage.removeItem(CALLBACK_SETTLING_KEY); } catch {}
