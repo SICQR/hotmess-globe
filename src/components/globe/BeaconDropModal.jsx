@@ -76,9 +76,18 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
       try {
         const { data: q } = await supabase.rpc('get_beacon_quota');
         if (q && !q.unlimited && (q.cap === 0 || q.remaining === 0)) {
+          // Phil 2026-05-29 — beta cohort gets 4/day (window: 'daily'); paid tiers
+          // get monthly window. Copy reflects which window the server applied.
+          const isDaily = q.window === 'daily';
+          const overCapCopy = isDaily
+            ? `That's your 4 for today. Drop again tomorrow.`
+            : `You hit your monthly cap (${q.cap}). Top up your tier.`;
+          const overCapAction = isDaily
+            ? undefined
+            : { action: { label: 'Unlock', onClick: () => navigate('/upgrade') } };
           toast.info(
-            q.cap === 0 ? 'Beacon drops unlock with HOTMESS' : `You hit your monthly cap (${q.cap}). Top up your tier.`,
-            { action: { label: 'Unlock', onClick: () => navigate('/upgrade') } }
+            q.cap === 0 ? 'Beacon drops unlock with HOTMESS' : overCapCopy,
+            overCapAction || {}
           );
           setLoading(false);
           return;
