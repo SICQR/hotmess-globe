@@ -138,7 +138,7 @@ export default function Social() {
                 <Button
                   type="button"
                   variant="hot"
-                  onClick={() => navigate(`/auth?next=${encodeURIComponent('/social?tab=inbox')}`)}
+                  onClick={() => navigate('/')}
                   className="font-black uppercase w-full sm:w-auto min-h-[44px]"
                 >
                   SIGN IN

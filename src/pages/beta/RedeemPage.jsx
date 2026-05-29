@@ -114,7 +114,12 @@ export default function RedeemPage() {
     const c = code || paramCode || '';
     if (c) persistCodeForPostAuthClaim(c);
     try { trackEvent('beta_invite_signin_tapped', { category: 'beta', code: c }); } catch { /* ignore */ }
-    navigate(`/auth?redirect=${encodeURIComponent(`/redeem/${encodeURIComponent(c)}`)}`);
+    // Doctrine 11: Single Auth Authority. Invitees go through the canonical
+    // gate chain (Splash → AgeGate → Bridge → SignUpScreen) at '/'.
+    // /auth is the legacy parallel auth surface that bypasses splash/age/consent
+    // — compliance audit 2026-05-29 (Phil locked). Beta code persists in
+    // sessionStorage and PR 4 (/auth/callback claim sweep) resolves it post-auth.
+    navigate('/');
   };
 
   if (status === 'checking_session') {
