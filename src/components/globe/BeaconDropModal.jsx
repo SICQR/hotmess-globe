@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Info, Sparkles, Loader2, ShoppingBag, Dumbbell, PartyPopper, Flame, Crown, Coffee, Plus, HandHeart, Eye, Crosshair, Search } from 'lucide-react';
+import { MapPin, Info, Sparkles, Loader2, ShoppingBag, PartyPopper, HandHeart, Eye, Crosshair, Search } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { trackEvent } from '@/components/utils/analytics';
 import { toast } from 'sonner';
