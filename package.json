@@ -11,7 +11,8 @@
     "dev": "vite",
     "dev:loopback": "vite --host 127.0.0.1 --port 5173 --clearScreen false --logLevel info",
     "dev:lan": "vite --host 0.0.0.0 --port 5173 --clearScreen false --logLevel info",
-    "build": "vite build && node scripts/stamp-sw.mjs",
+    "check:canonical-globe": "node ./scripts/check-canonical-globe-layer-stack.mjs",
+    "build": "node ./scripts/check-canonical-globe-layer-stack.mjs && vite build && node scripts/stamp-sw.mjs",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
     "typecheck": "node ./node_modules/typescript/bin/tsc -p ./tsconfig.json --noEmit",
@@ -153,3 +154,4 @@
     "bn.js": "5.2.3"
   }
 }
+

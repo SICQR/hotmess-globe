@@ -8,7 +8,7 @@ import {
   SOURCE_IDS,
   addLayerStack,
   toPublicSafeFeatureCollection,
-} from '../../lib/globe/mapbox/mapboxLayerStack';
+} from '../../lib/globe/mapboxLayerStack';
 
 // Local street-level map (deep-zoom detail). mapbox-gl JS is dynamically imported
 // on open so it stays out of the Pulse bundle AND a load/init failure degrades
@@ -197,3 +197,4 @@ export default function LocalMapboxView({ focus, beacons, onClose, onReady, onDr
     </div>
   );
 }
+
