@@ -87,7 +87,7 @@ export default function QuickActions({ profileUser, currentUser, isOwnProfile })
     <div className="flex gap-2 flex-wrap">
       <Button
         onClick={async () => {
-          const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/"; return false; } return true; })();
+          const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
           if (!ok) return;
           isFollowing ? unfollowMutation.mutate() : followMutation.mutate();
         }}
@@ -110,7 +110,7 @@ export default function QuickActions({ profileUser, currentUser, isOwnProfile })
 
       <Button
         onClick={async () => {
-          const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/"; return false; } return true; })();
+          const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
           if (!ok) return;
           handleMessage();
         }}

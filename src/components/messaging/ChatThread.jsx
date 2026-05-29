@@ -198,7 +198,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
 
   const sendMutation = useMutation({
     mutationFn: async (data) => {
-      const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/"; return false; } return true; })();
+      const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
       if (!ok) return null;
 
       const message = await supabase.from('messages').insert({
@@ -255,7 +255,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
   const handleSend = (e) => {
     e.preventDefault();
     if (readOnly) {
-      window.location.href = "/";
+      window.location.href = '/auth';
       return;
     }
     if (!messageText.trim()) return;
@@ -268,7 +268,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
 
   const handleImageUpload = async (e) => {
     if (readOnly) {
-      window.location.href = "/";
+      window.location.href = '/auth';
       return;
     }
     const file = e.target.files?.[0];
@@ -309,7 +309,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
 
   const handleVideoUpload = async (e) => {
     if (readOnly) {
-      window.location.href = "/";
+      window.location.href = '/auth';
       return;
     }
     const file = e.target.files?.[0];

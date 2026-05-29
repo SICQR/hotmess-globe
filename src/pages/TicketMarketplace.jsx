@@ -21,7 +21,7 @@ export default function TicketMarketplace() {
       try {
         const isAuth = await supabase.auth.getSession().then(r => !!r.data.session);
         if (!isAuth) {
-          window.location.href = "/";
+          window.location.href = "/auth";
           return;
         }
         let { data: { user } } = await supabase.auth.getUser();

@@ -528,7 +528,7 @@ function LayoutInner({ children, currentPageName }) {
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
-                      window.location.href = "/";
+                      window.location.href = '/auth';
                     }}
                     className="w-full text-left px-3 py-2 bg-[#C8962C] hover:bg-[#B07F1F] text-black text-xs uppercase tracking-wider font-bold mt-2"
                   >
@@ -649,7 +649,7 @@ function LayoutInner({ children, currentPageName }) {
                 </>
               ) : (
                 <button
-                  onClick={() => { window.location.href = "/"; }}
+                  onClick={() => { window.location.href = '/auth'; }}
                   className="w-full px-3 py-2 bg-[#C8962C] hover:bg-[#B07F1F] text-black text-xs uppercase tracking-wider font-bold transition-all"
                 >
                   Login

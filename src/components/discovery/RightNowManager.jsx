@@ -56,7 +56,7 @@ export default function RightNowManager({ currentUser }) {
         {activeStatus ? (
           <Button
             onClick={async () => {
-              const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/"; return false; } return true; })();
+              const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
               if (!ok) return;
               endNowMutation.mutate();
             }}
@@ -71,7 +71,7 @@ export default function RightNowManager({ currentUser }) {
         ) : (
           <Button
             onClick={async () => {
-              const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/"; return false; } return true; })();
+              const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
               if (!ok) return;
               setShowModal(true);
             }}
@@ -98,7 +98,7 @@ export default function RightNowManager({ currentUser }) {
           </ul>
           <Button
             onClick={async () => {
-              const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/"; return false; } return true; })();
+              const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
               if (!ok) return;
               setShowModal(true);
             }}

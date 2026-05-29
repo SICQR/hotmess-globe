@@ -241,7 +241,7 @@ export default function Features() {
             Join thousands of users who trust HOTMESS for safer, better nights out.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/">
+            <Link to="/auth">
               <Button variant="hot" size="xl" className="font-black uppercase">
                 Get Started Free
               </Button>

@@ -28,7 +28,7 @@ export const BRAND_CONFIG: Record<string, BrandConfig> = {
     name: 'HOTMESS',
     visible: true,
     description: 'The social OS',
-    routes: ['/', '/pulse', '/ghosted', '/profile', '/safety'],
+    routes: ['/', '/pulse', '/ghosted', '/profile', '/safety', '/auth'],
   },
 
   hotmessRadio: {

@@ -82,7 +82,7 @@ export function useNav() {
    */
   const goAuth = useCallback((returnUrl?: string) => {
     const next = returnUrl || location.pathname + location.search;
-    navigate('/');
+    navigate(`/auth?next=${encodeURIComponent(next)}`);
   }, [navigate, location]);
   
   /**

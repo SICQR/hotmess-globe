@@ -39,7 +39,7 @@ export default function Chat() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/"; return false; } return true; })();
+        const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
         if (!ok) return;
         let { data: { user } } = await supabase.auth.getUser();
       let currentUser; if (!user) { currentUser = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); currentUser = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };

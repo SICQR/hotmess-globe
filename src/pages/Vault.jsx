@@ -57,7 +57,7 @@ export default function Vault() {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6">
         <p className="text-white/60 font-mono uppercase text-sm mb-4">Access denied</p>
-        <Link to="/">
+        <Link to="/auth">
           <Button variant="outlineGold">Sign in to access THE VAULT</Button>
         </Link>
       </div>

@@ -4,9 +4,6 @@ import { useBootGuard, BOOT_STATES } from '@/contexts/BootGuardContext';
 import PublicShell from '@/components/shell/PublicShell';
 
 // Routes that must remain accessible without auth (legal, callbacks, etc.)
-// Doctrine 11 (Single Auth Authority): /auth is INTENTIONALLY ABSENT here.
-// It is no longer a public surface — it redirects to / at the route level
-// (App.jsx). /auth/callback is handled by the early-return below.
 const PUBLIC_PATH_PREFIXES = [
   '/legal',
   '/about',
@@ -15,6 +12,11 @@ const PUBLIC_PATH_PREFIXES = [
   '/guidelines',
   '/contact',
   '/accessibility',
+  // /auth must be reachable WITHOUT auth — pre-fix, unauth visitors got
+  // bounced to OnboardingRouter (splash) instead of seeing the email form.
+  // Audit 2026-05-26 confirmed: typing /auth/login while signed out =
+  // bounce to / via splash, email sign-in unreachable. Fix: whitelist.
+  '/auth',
   // Reentry + welcome portal pages MUST render for unauthenticated visitors —
   // these flows ARE the auth entry path (reentry email links for returning
   // beta members; portal magic links for paid partners). Pre-fix, BootRouter

@@ -173,7 +173,7 @@ function ProfileSignInPrompt({ className = '' }: { className?: string }) {
         </p>
       </div>
       <button
-        onClick={() => nav('/')}
+        onClick={() => nav('/auth')}
         className="h-12 px-10 rounded-xl font-bold text-black active:scale-95 transition-transform"
         style={{ background: AMBER }}
       >

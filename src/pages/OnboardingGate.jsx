@@ -265,8 +265,7 @@ export default function OnboardingGate() {
     if (isLoading) return;
 
     if (!session) {
-      // Doctrine 11 (Single Auth Authority): canonical entry is /
-      navigate('/', { replace: true });
+      navigate('/auth', { replace: true });
       return;
     }
 

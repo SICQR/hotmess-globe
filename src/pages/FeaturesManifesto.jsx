@@ -323,7 +323,7 @@ export default function FeaturesManifesto() {
                   View All Features
                 </Button>
               </Link>
-              <Link to="/">
+              <Link to="/auth">
                 <Button variant="outline" size="lg" className="font-black uppercase border-white/20">
                   Get Started
                 </Button>

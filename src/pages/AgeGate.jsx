@@ -117,7 +117,7 @@ export default function AgeGate() {
       await markAgeVerified();
       navigate(nextUrl);
     } else {
-      navigate('/');
+      navigate('/auth');
     }
   };
 

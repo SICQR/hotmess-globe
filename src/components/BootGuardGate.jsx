@@ -21,8 +21,7 @@ export function BootGuardGate({ children }) {
   }
 
   // Allow these paths without full gates
-  // Doctrine 11: /auth removed from public paths — it redirects to / now.
-  const publicPaths = ['/age', '/legal', '/help', '/contact', '/terms', '/privacy', '/guidelines'];
+  const publicPaths = ['/age', '/auth', '/legal', '/help', '/contact', '/terms', '/privacy', '/guidelines'];
   const isPublicPath = publicPaths.some(p => pathname.startsWith(p));
   
   if (isPublicPath) {
@@ -38,9 +37,8 @@ export function BootGuardGate({ children }) {
       break;
       
     case 'AUTH':
-      // Doctrine 11 (Single Auth Authority): canonical entry is / not /auth.
-      if (pathname !== '/') {
-        return <Navigate to="/" replace />;
+      if (!pathname.startsWith('/auth') && pathname !== '/Auth') {
+        return <Navigate to="/auth" replace />;
       }
       break;
       
