@@ -17,7 +17,7 @@ export default function ReportButton({ itemType, itemId, variant = 'ghost' }) {
     mutationFn: async (data) => {
       const isAuth = await supabase.auth.getSession().then(r => !!r.data.session);
       if (!isAuth) {
-        window.location.href = "/auth" + (window.location.href ? `?next=${encodeURIComponent(window.location.href)}` : "");
+        window.location.href = "/"}` : "");
         return;
       }
 
