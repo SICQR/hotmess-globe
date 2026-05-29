@@ -201,16 +201,17 @@ export default function InAppDirections({
     });
   }, [destination, destinationName]);
   
-  // Open full directions page
-  const openFullDirections = () => {
-    const params = new URLSearchParams();
-    params.set('lat', String(destination.lat));
-    params.set('lng', String(destination.lng));
-    if (destinationName) params.set('label', destinationName);
-    params.set('mode', mode);
-    navigate(`/directions?${params.toString()}`);
-  };
-  
+  // openFullDirections — removed Phil 2026-05-29.
+  // Previously navigated to `/directions?lat=…&lng=…` which is a route that
+  // doesn't exist (404 "Lost in the fog"). Doctrine 13 (Spatial Continuity)
+  // forbids hard route navigation from inside a sheet — the in-sheet expand
+  // already gives the user the full route. The button is dropped from the
+  // render block below; this handler stays as a no-op placeholder so that
+  // any third-party caller that imports it doesn't error out at runtime.
+  // Slice 2 cleanup may drop it entirely after a sweep confirms no callers.
+  const openFullDirections = () => { /* no-op — see comment above */ };
+
+
   if (!destination) return null;
   
   const duration = formatDuration(directions?.duration_seconds);
@@ -399,15 +400,10 @@ export default function InAppDirections({
             )}
           </div>
           
-          <Button
-            onClick={openFullDirections}
-            variant="outline"
-            size="sm"
-            className="border-white/20 text-white hover:bg-white/10"
-          >
-            <Navigation className="w-4 h-4 mr-1" />
-            Full Directions
-          </Button>
+          {/* Full Directions button removed Phil 2026-05-29 — see
+              openFullDirections() comment above. The sheet itself IS the
+              full directions view; the duplicate button navigated to a
+              non-existent /directions route. */}
         </div>
       </div>
     </motion.div>
@@ -507,3 +503,4 @@ export function ETABadges({ etas, onModeSelect, className }) {
     </div>
   );
 }
+
