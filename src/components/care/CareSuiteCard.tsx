@@ -102,13 +102,19 @@ export default function CareSuiteCard({ onOpen }: { onOpen: () => void }) {
           <div className="flex-1 min-w-0">
             <p className="text-white font-semibold text-[14px] leading-tight">Care Suite</p>
 
-            {/* Three-line body — minimum chrome */}
+            {/* Three-line body — minimum chrome.
+                Phil 2026-05-29 — 'Silent SOS' (active) vs 'SOS tools' (inactive).
+                Pre-setup the system can't actually deliver a silent SOS because
+                there's no trusted contact channel to send it to. Calling it
+                'Silent SOS' before contacts exist is overpromising. Sacred
+                Invariant #6 — system never pretends activity. Copy reflects
+                actual capability state. */}
             <div className="mt-2 space-y-0.5">
               <p className="text-[12px]" style={{ color: 'rgba(255,255,255,0.62)' }}>
                 Trusted contacts.
               </p>
               <p className="text-[12px]" style={{ color: 'rgba(255,255,255,0.62)' }}>
-                Silent SOS.
+                {isActive ? 'Silent SOS.' : 'SOS tools.'}
               </p>
               <p className="text-[12px]" style={{ color: 'rgba(255,255,255,0.62)' }}>
                 Aftercare check-ins.
