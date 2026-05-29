@@ -35,6 +35,8 @@ import { useRadio } from '@/contexts/RadioContext';
 import { useBootGuard } from '@/contexts/BootGuardContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { motionTokens, getMotion, useReducedMotion } from '@/lib/motionTokens';
+import CareSuiteCard from '@/components/care/CareSuiteCard';
+import CareSuiteExplainer from '@/components/care/CareSuiteExplainer';
 import RightNowModal from '@/components/globe/RightNowModal';
 import { trackEvent } from '@/components/utils/analytics';
 import { TrackPlayer } from '@/components/music/TrackPlayer';
@@ -130,6 +132,9 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
     trackEvent('home_cta_tap', { cta: 'enter_pulse' });
     navigate('/pulse');
   }, [navigate]);
+
+  // Phil 2026-05-29 — Care Suite explainer sheet state (slice 1).
+  const [showCareExplainer, setShowCareExplainer] = useState(false);
 
   // ── Signal line (compact, inline with hero) ───────────────────────────────
   const signalParts: string[] = [];
@@ -304,6 +309,12 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         </section>
 
         {/* ================================================================ */}
+        {/* 2b. CARE SUITE — doctrine 11: care outranks commerce            */}
+        {/*    Visibility universal, activation tiered. Stateful card.      */}
+        {/* ================================================================ */}
+        <CareSuiteCard onOpen={() => setShowCareExplainer(true)} />
+
+        {/* ================================================================ */}
         {/* 3. LANE STRIP — quick doors, not promos                        */}
         {/* ================================================================ */}
         <section className="px-5 pb-5">
@@ -458,6 +469,26 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
       {/* ── Right Now Modal (Go Live flow) ─────────────────────────────── */}
       {showRightNow && (
         <RightNowModal onClose={() => setShowRightNow(false)} />
+      )}
+
+      {/* Care Suite explainer (slice 1) — inline overlay */}
+      {showCareExplainer && (
+        <div
+          className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.75)' }}
+          onClick={() => setShowCareExplainer(false)}
+        >
+          <div
+            className="w-full sm:max-w-md bg-[#0a0a0c] rounded-t-2xl sm:rounded-2xl border-t sm:border border-white/10 max-h-[88vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.5rem)' }}
+          >
+            <CareSuiteExplainer
+              onSetup={() => { setShowCareExplainer(false); window.location.href = '/safety'; }}
+              onClose={() => setShowCareExplainer(false)}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
