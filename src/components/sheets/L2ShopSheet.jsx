@@ -339,9 +339,23 @@ export default function L2ShopSheet({ handle, product: initialPropProduct, selle
                     <DetailAccordion title="Shipping & Returns" icon={Truck}>
                         <p>Global shipping available. Standard delivery 3-5 days. Free returns on the Legend Drop series within 14 days.</p>
                     </DetailAccordion>
-                    <DetailAccordion title="Care Instructions" icon={ShieldCheck}>
-                        <p>Machine wash cold. Do not bleach. Tumble dry low for maximum longevity of the high-density print.</p>
-                    </DetailAccordion>
+                    {/* Phil 2026-05-29 — Care Instructions only render for APPAREL.
+                        Previously fired for every product including lube, which is
+                        absurd (lube does not need machine washing). Sacred Invariant
+                        principle: source of truth lives on Shopify. If Shopify
+                        provides care metafield for a product, render it; otherwise,
+                        only render the apparel-default copy when productType
+                        actually indicates apparel. */}
+                    {(() => {
+                      const t = String(activeProduct.category || activeProduct.productType || '').toUpperCase();
+                      const isApparel = /APPAREL|CLOTHING|SHIRT|TEE|HOODIE|CAP|JACKET|SWEAT|HAT|MERCH/.test(t);
+                      if (!isApparel) return null;
+                      return (
+                        <DetailAccordion title="Care Instructions" icon={ShieldCheck}>
+                          <p>Machine wash cold. Do not bleach. Tumble dry low for maximum longevity of the high-density print.</p>
+                        </DetailAccordion>
+                      );
+                    })()}
                 </div>
             </div>
         </div>
