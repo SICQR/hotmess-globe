@@ -1,6 +1,7 @@
-# Doctrine 12 — Drop Beacon
+# Doctrine 12 — Drop Beacon (& the Four Signal Axes)
 
 **Locked 2026-05-29 — Phil Gizzie.**
+**Append 2026-05-29 — Phil Gizzie:** signal-axes section (person / place / event / route) added after the Go Live vs Drop Beacon semantic audit. The original Drop Beacon ruling is unchanged; the append makes explicit that Drop Beacon is one of four signal axes, not the only one.
 Status: live as of Slice 1 (UI honesty); schema migration pending in Slice 2.
 
 ---
@@ -12,15 +13,34 @@ Status: live as of Slice 1 (UI honesty); schema migration pending in Slice 2.
 
 A beacon is a time-bounded human signal — a moment, not a venue.
 
-## Three entities, never conflated
+## The four signal axes — what's anchored
+
+All of HOTMESS's "I'm signalling now" surfaces answer the same emotional question. They differ on **what the signal is anchored to**:
+
+| Axis | Surface | Anchor | The user is saying |
+|---|---|---|---|
+| **Person** | Go Live | the user themself | "*I am* signalling now, find me." |
+| **Place** | Drop Beacon | a location (current GPS, ±200m fuzz, or linked venue) | "*This place* is signalling now." |
+| **Event** | Event Creator (Slice 3) | a venue + a time window | "*This gathering* is signalling now." |
+| **Route** | (D14, future) | a path between A and B | "*This movement* is signalling now." |
+
+Two iron rules across all four axes:
+
+1. **Person presence and Place beacon are never the same act.** A user choosing Go Live is broadcasting themselves to nearby peers, ephemerally. A user dropping a Beacon is anchoring a moment at a place — persistent for its declared duration, visible on the globe. The UI must signpost which one the user just did.
+2. **A signal answers one question — "what now" — on one axis at a time.** Conflating axes is what produced "drop a Gym beacon at the cafe" semantic rot. Each surface is single-axis by design.
+
+This is the ontology D14 (Routing as Continuity) builds on. Route signal is the fourth axis, not a feature bolted onto Beacon.
+
+## Four entities, never conflated
 
 | Entity | Time | Place | Owned by | Lives in |
 |---|---|---|---|---|
+| **Presence** (Go Live) | now → exitLive() or TTL | current GPS, ±200m fuzz, never persisted on globe | a user | `LiveModeContext` + `useLiveMoment` (peer discovery only — no globe row) |
 | **Venue** | always (no expiry) | precise lat/lng, public | catalog/operator | `pulse_places` (or future `venues`) |
 | **Beacon** | now → ends_at | current GPS ±200m fuzz, or linked to venue | a user | `beacons` |
 | **Event** | event_start_at → event_end_at | venue_id required (or explicit pin) | operator or user-host | `beacons` with event fields (Slice 3: separate `events`) |
 
-Each entity has its own creation surface. The Drop Beacon flow ONLY creates Beacons.
+Each entity has its own creation surface. **Go Live creates Presence. Drop Beacon ONLY creates Beacons.** A user closing the app exits Presence. A user closing the app does not retract a Beacon — that's the structural difference.
 
 ## Why this matters
 
@@ -135,11 +155,41 @@ They should create:
 - Does not move venues into a managed catalog. Slice 4 will, after Slice 2.
 - Does not retire any DB CHECK values. Existing seeded venue beacons keep working.
 
+## Surface signposting (Person vs Place — required copy)
+
+The Go Live and Drop Beacon flows must surface their distinction in copy. Without this, the user cannot tell which act they performed and the empty-state cold-start kills both features.
+
+**Go Live confirmation (replaces today's silent "You're live · No one in your moment right now"):**
+- If there are nearby live users: keep current LIVE NOW overlay; no copy change.
+- **If the user is the first live in their district tonight** (the cold-start state):
+  > "You're the first live in [district name] tonight. We'll ping you when someone else goes live near you."
+  - Cold-start is no longer "feature is broken." It's "you arrived early."
+- **Footer on the Go Live sheet (always present):**
+  > "Want to mark the *place* instead? Drop a beacon."
+  - Cross-link to Drop Beacon. Makes the person/place distinction explicit at the moment of choice.
+
+**Drop Beacon sheet (mirror):**
+- **Footer on the Drop Beacon sheet (always present):**
+  > "Want people to find *you* instead? Go Live."
+  - Cross-link to Go Live.
+
+**Profile / Visibility widget (single source of truth — Slice 2 follow-up):**
+- A single component shows: Beacons dropped (count + list) / Live now (yes/no + TTL) / Both / Neither.
+- Replaces today's scattered visibility surfaces. Implements the visibility-state architecture (task #222).
+
+The user must always be able to answer two questions at a glance:
+1. *Am I broadcasting myself right now?* (Presence axis — Go Live)
+2. *Have I anchored any signals at places?* (Place axis — Beacons)
+
+If either answer is ambiguous, the UX has failed Doctrine 12.
+
 ## Cross-references
 
 - `docs/doctrine/11-arrival-state-doctrine.md` — Pulse Doctrine (probability + momentum, not occupancy); the intent system gives the data layer the semantics needed to enforce anticipatory language and operator vs user differentiation honestly.
+- `docs/doctrine/13-spatial-continuity-doctrine.md` — Spatial Continuity / four primitives; D12's signal axes plug into the preview→commit→route→movement primitives.
+- `docs/doctrine/14-routing-continuity-doctrine.md` — Routing as Continuity (forthcoming); the fourth signal axis (Route). D14 must not be written until D12's four-axis ontology is locked.
 - `docs/doctrine/07-visual-hierarchy.md` — monetisation never overrides relational truth; intent-based beacons keep the user-vs-curated distinction structurally enforceable.
-- Sacred Invariant #6 — system never pretends activity. An intent picker that lets a user "drop a Gym" is structural pretence.
-- Sacred Invariant #7 — no exact tracking, ≤200m fuzz. Beacon location handling unchanged by this doctrine.
+- Sacred Invariant #6 — system never pretends activity. An intent picker that lets a user "drop a Gym" is structural pretence. The Go Live cold-start empty state was a softer version of the same sin (silent "no-one in your moment" reads as "feature is dead"); the "You're the first live tonight" copy converts it into honest anticipation.
+- Sacred Invariant #7 — no exact tracking, ≤200m fuzz. Presence and Beacon both observe this; Route signal (D14) inherits it.
 
 — end doctrine —
