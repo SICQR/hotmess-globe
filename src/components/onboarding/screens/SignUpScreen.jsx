@@ -42,7 +42,11 @@ function isInWebView() {
   return /FBAN|FBAV|Instagram|Twitter|Line\/|Musical\.ly/i.test(ua);
 }
 
-export default function SignUpScreen({ isSignIn = false }) {
+export default function SignUpScreen({ isSignIn: initialIsSignIn = false }) {
+  // Phil 2026-05-28 (#266): isSignIn is local state so the same form can flip
+  // between Create / Sign in without bouncing through OnboardingRouter or
+  // (broken) /auth?mode=signin URLs. Initialised from prop for back-compat.
+  const [isSignIn, setIsSignIn] = useState(initialIsSignIn);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -244,18 +248,28 @@ export default function SignUpScreen({ isSignIn = false }) {
                 <p className="text-white/25 text-[10px] text-center leading-relaxed">
                   Use 8+ chars. We'll never email you marketing.
                 </p>
-                {/* M4 (Phil 2026-05-28): returning email-password users had no Sign in
-                    surface. The splash 'Sign in' link is skipped for any user with
-                    hm_splash_seen_v1 in localStorage. This link gives them a path. */}
+                {/* M4 v2 (Phil 2026-05-28 #266): toggle isSignIn locally — same form,
+                    same OAuth buttons, just flip the submit handler + label. No
+                    nav, no /auth round-trip. */}
                 <button
                   type="button"
-                  onClick={() => { window.location.href = '/auth?mode=signin'; }}
+                  onClick={() => { setIsSignIn(true); setError(''); setInfo(''); }}
                   className="text-white/55 text-[11px] text-center mt-2 hover:text-white/85"
                 >
                   Already on HOTMESS? <span style={{ color: GOLD }} className="font-semibold">Sign in</span>
                 </button>
               </>
             )}
+            {isSignIn && (
+              <button
+                type="button"
+                onClick={() => { setIsSignIn(false); setError(''); setInfo(''); }}
+                className="text-white/55 text-[11px] text-center mt-2 hover:text-white/85"
+              >
+                Need an account? <span style={{ color: GOLD }} className="font-semibold">Create one</span>
+              </button>
+            )}
+
             {isSignIn && (
               <button
                 type="button"
