@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
 import {
-  MessageCircle, Shield, Plane,
+  MessageCircle, Plane,
   Loader2, MoreVertical, Flag, Ban, X, Ghost,
   Footprints, Bike, Car, Heart, Video, ShoppingBag, Music,
 } from 'lucide-react';
@@ -34,6 +34,25 @@ import useProfileDwell from '@/hooks/useProfileDwell';
 import useRecoveryState from '@/hooks/useRecoveryState';
 import { ProximityRow } from '@/components/ui/ProximityRow';
 import { useGPS } from '@/hooks/useGPS';
+import { safeName } from '@/lib/identity/safeName';
+
+// Slice A — D262 stable-online helper. Presence dot only when
+// is_online AND last_seen <= 5min. No "stale online" lies.
+const STABLE_ONLINE_MS = 5 * 60_000;
+function isStablyOnline(p) {
+  if (!p?.is_online) return false;
+  const ls = p?.last_seen;
+  if (!ls) return false;
+  const ms = Date.now() - new Date(ls).getTime();
+  return ms <= STABLE_ONLINE_MS;
+}
+
+// Slice A — D08 off-grid recognition. Hides distance row and replaces it
+// with the locked "Laying low" copy when the profile owner is hiding.
+function isOffGrid(p) {
+  const v = p?.visibility_state;
+  return v === 'off_grid' || v === 'off_grid_week' || v === 'trusted_only';
+}
 
 const Chip = ({ children, gold = false }) => (
   <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
@@ -46,7 +65,10 @@ const Chip = ({ children, gold = false }) => (
 );
 
 // ── Photo carousel (CSS snap-scroll, 3:4 portrait) ──────────────────────────
-function PhotoCarousel({ images = [], fallbackInitial = '?', onIndexChange }) {
+// D262 §2.5 / LOCKS.md — empty state never renders a letter monogram.
+// Silhouette gradient + small Ghost glyph instead. Dignity-floor invariant:
+// "If identity confidence is low, the UI becomes quieter, not faker."
+function PhotoCarousel({ images = [], onIndexChange }) {
   const scrollRef = useRef(null);
   const [activeIdx, setActiveIdx] = useState(0);
 
@@ -59,12 +81,21 @@ function PhotoCarousel({ images = [], fallbackInitial = '?', onIndexChange }) {
     onIndexChange?.(clamped);
   }, [images.length, onIndexChange]);
 
-  // 0 photos — initials fallback
+  // 0 photos — silhouette + Ghost glyph. No initial. No letter. No "A".
   if (!images.length) {
     return (
       <div className="relative" style={{ aspectRatio: '3/4', maxHeight: '55vh' }}>
-        <div className="w-full h-full bg-gradient-to-br from-[#C8962C]/40 via-[#1C1C1E] to-black flex items-center justify-center">
-          <span className="text-6xl font-black text-white/20">{fallbackInitial}</span>
+        <div
+          className="w-full h-full flex items-center justify-center"
+          style={{
+            background: 'radial-gradient(ellipse at 50% 42%, #1a1410 0%, #0d0a08 55%, #050405 100%)',
+          }}
+        >
+          <Ghost
+            className="w-16 h-16"
+            strokeWidth={1.4}
+            style={{ color: 'rgba(255,255,255,0.14)' }}
+          />
         </div>
       </div>
     );
@@ -590,7 +621,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
     if (!profileUser?.auth_user_id && !profileUser?.id) return;
     openSheet(SHEET_TYPES.VIDEO, {
       toUid: profileUser.auth_user_id || profileUser.id,
-      title: `Video with ${profileUser.username || profileUser.display_name || 'Anonymous'}`,
+      title: `Video with ${safeName(profileUser)}`,
     });
   };
 
@@ -607,7 +638,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
     }
     openSheet(SHEET_TYPES.CHAT, {
       userId: targetId,
-      title: `Chat with ${profileUser.username || profileUser.profileName || profileUser.display_name || 'Anonymous'}`,
+      title: `Chat with ${safeName(profileUser)}`,
     });
   };
 
@@ -628,7 +659,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
 
       if (error && !error.message?.includes('duplicate')) throw error;
 
-      toast.success(`${profileUser.username || profileUser.display_name || 'User'} blocked`);
+      toast.success(`${safeName(profileUser)} blocked`);
       setShowMoreMenu(false);
       closeSheet();
     } catch {
@@ -811,8 +842,17 @@ export default function L2ProfileSheet({ email, uid, id }) {
 
   // ── Derived data ────────────────────────────────────────────────────────
 
-  // IDENTITY MODEL: username is the public handle — never expose real name to other users
-  const name = profileUser.username || profileUser.profileName || profileUser.display_name || 'Anonymous';
+  // IDENTITY MODEL — D262 / LOCKS.md dignity-floor invariant.
+  // safeName() is the single source of truth: returns display_name (or
+  // displayName / name), rejects @-containing strings, falls back to
+  // "Member". Never "Anonymous", never the email, never the user id.
+  const name = safeName(profileUser);
+  // Mutual is required to unlock Message + Albums + Logistics descent per
+  // D262 §1.1 + §2.7. Compute once here so the JSX below stays readable.
+  const targetIdForMutual = profileUser.auth_user_id || profileUser.id;
+  const isMutual = !!targetIdForMutual && isMutualBoo(targetIdForMutual);
+  const offGrid = isOffGrid(profileUser) && !isMutual; // off-grid for mutuals = normal render
+  const stableOnline = !offGrid && isStablyOnline(profileUser);
   const avatarUrl = profileUser.avatar_url || profileUser.photos?.[0];
   const isTravel = profileUser.persona === 'TRAVEL' || profileUser.persona === 'travel';
   const _rawCity = profileUser.city || profileUser.visiting_city;
@@ -910,9 +950,28 @@ export default function L2ProfileSheet({ email, uid, id }) {
         ) : (
           <PhotoCarousel
             images={photoUrls}
-            fallbackInitial={name[0]}
             onIndexChange={setActivePhotoIdx}
           />
+        )}
+
+        {/* D262 §2.5.2 — photo counter pill on hero. "3 / 5" semi-transparent
+            top-right, reinforces that more photos exist before the user
+            scrolls the dots. Suppressed for 0 or 1 photo. */}
+        {photoUrls.length > 1 && (
+          <div
+            className="absolute z-30 px-2.5 py-1 rounded-full text-[11px] font-mono"
+            style={{
+              top: 'calc(env(safe-area-inset-top, 0px) + 16px)',
+              right: 64,
+              background: 'rgba(0,0,0,0.55)',
+              backdropFilter: 'blur(8px)',
+              color: 'rgba(255,255,255,0.85)',
+              letterSpacing: '0.04em',
+            }}
+            aria-label={`Photo ${activePhotoIdx + 1} of ${photoUrls.length}`}
+          >
+            {activePhotoIdx + 1} / {photoUrls.length}
+          </div>
         )}
 
         {/* Gradient overlay at bottom */}
@@ -952,64 +1011,77 @@ export default function L2ProfileSheet({ email, uid, id }) {
         {/* Name + presence + persona overlay at bottom of hero */}
         <div className="absolute bottom-4 left-4 right-4 z-20">
           <div className="flex items-center gap-2">
-            {/* Presence status */}
-            {(() => {
-              const ls = profileUser.last_seen;
-              const ms = ls ? Date.now() - new Date(ls).getTime() : Infinity;
-              const isOn = profileUser.is_online || ms < 10 * 60_000;
-              const isAway = !isOn && ms < 60 * 60_000;
-              const isOff = !isOn && !isAway;
-
-              const dot = isOn
-                ? { color: '#30D158', glow: '0 0 6px #30D158' }
-                : isAway
-                  ? { color: '#FFAB00', glow: undefined }
-                  : { color: '#8E8E93', glow: undefined };
-
-              return (
-                <span
-                  className="w-3 h-3 rounded-full flex-shrink-0"
-                  style={{ background: dot.color, boxShadow: dot.glow }}
-                  title={isOn ? 'Online now' : isAway ? 'Recently active' : 'Offline'}
-                />
-              );
-            })()}
+            {/* D262 — presence dot only on stable-online (is_online &&
+                last_seen <= 5min). No "recently active" amber, no fake
+                offline-but-greenish. Either online for real, or no dot. */}
+            {stableOnline && (
+              <span
+                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                style={{ background: '#30D158', boxShadow: '0 0 6px rgba(48,209,88,0.5)' }}
+                title="Online"
+                aria-label="Online"
+              />
+            )}
             <h2 className="text-2xl font-black text-white">{name}</h2>
             {isTravel && <Plane className="w-5 h-5 text-white/70 -rotate-45" />}
+            {/* D262 Q4 — verified = gold tick (not cyan shield). */}
             {isVerified && (
-              <div className="w-5 h-5 bg-[#00C2E0] rounded-full flex items-center justify-center">
-                <Shield className="w-3 h-3 text-black" />
+              <div
+                className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: '#C8962C' }}
+                aria-label="Verified"
+                title="Verified"
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
               </div>
             )}
-          </div>
-          {/* Status label */}
-          {(() => {
-            const ls = profileUser.last_seen;
-            const ms = ls ? Date.now() - new Date(ls).getTime() : Infinity;
-            const isOn = profileUser.is_online || ms < 10 * 60_000;
-            const isAway = !isOn && ms < 60 * 60_000;
-            const label = isOn ? 'Online now' : isAway ? 'Recently active' : 'Offline';
-            const color = isOn ? '#30D158' : isAway ? '#FFAB00' : '#8E8E93';
-            return (
-              <span className="text-xs font-medium mt-0.5 block" style={{ color }}>{label}</span>
-            );
-          })()}
-          <div className="flex items-center gap-2 mt-0.5">
-            {visitingCity && (
-              <span className="text-white/60 text-sm">
-                {isTravel ? 'Visiting' : ''} {visitingCity}
-                {profileUser.country_flag ? ` ${profileUser.country_flag}` : ''}
+            {/* D262 — mutual badge sits inline with the name when active. */}
+            {isMutual && (
+              <span
+                className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full flex-shrink-0"
+                style={{
+                  background: 'rgba(200,150,44,0.15)',
+                  color: '#C8962C',
+                  border: '1px solid rgba(200,150,44,0.5)',
+                  letterSpacing: '0.14em',
+                }}
+              >
+                Mutual
               </span>
             )}
           </div>
 
-          {/* Bucketed travel cue — Phase 2 doctrine (Phil 2026-05-26).
-              Person card: walk-only "< 5 min away" / "~10 min away" buckets,
-              "location approximate" in expanded view. Renders nothing when
-              viewer location is stale or > 30km. Replaces the previous
-              "X mi away · Y min" line which leaked raw distance + minutes
-              (brief violation). */}
-          {profileUser?.last_lat != null && profileUser?.last_lng != null && (
+          {/* Status sub-line. Off-grid → "Laying low" (Q5 locked copy).
+              Otherwise stable-online → "Online", and nothing when neither
+              applies. No "Recently active", no "Offline" — the absence of
+              the line is the absence. */}
+          {offGrid ? (
+            <span className="text-xs font-medium mt-0.5 block" style={{ color: '#8E8E93' }}>
+              Laying low
+            </span>
+          ) : stableOnline ? (
+            <span className="text-xs font-medium mt-0.5 block" style={{ color: '#30D158' }}>
+              Online
+            </span>
+          ) : null}
+
+          {/* City line — suppressed entirely when off-grid (no "Visiting X"
+              for someone who is hiding). */}
+          {!offGrid && visitingCity && (
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-white/60 text-sm">
+                {isTravel ? 'Visiting' : ''} {visitingCity}
+                {profileUser.country_flag ? ` ${profileUser.country_flag}` : ''}
+              </span>
+            </div>
+          )}
+
+          {/* Proximity row — bucketed walk distance for nearby viewers.
+              Suppressed entirely when the owner is off-grid (D08 contract
+              + LOCKS.md confidence-tier handling). */}
+          {!offGrid && profileUser?.last_lat != null && profileUser?.last_lng != null && (
             <ProximityRow
               type="person"
               venueLat={Number(profileUser.last_lat)}
@@ -1079,10 +1151,12 @@ export default function L2ProfileSheet({ email, uid, id }) {
       {/* ── Active beacons (loop closer for PR #406 ring) ─────────────── */}
       <ProfileBeaconsSection userId={profileUser.auth_user_id || profileUser.id} />
 
-      {/* ── Logistics moved below content cards (descent into operational
-          space per Phil exec review 2026-05-13). Proximity card still
-          renders here when v6_profile_proximity is on. ──────────────── */}
-      {isProximityCard && !isOwnProfile && travelTimes?.distKm && profileUser?.last_lat && (
+      {/* ── Logistics — D262 §1.1 + DECISIONS.md slice order.
+          Logistics is downstream of intent. The proximity panel and the
+          travel-mode chips only render for mutuals. Non-mutual viewers
+          see profile + bio + content cards, nothing operational.
+          Off-grid suppresses everything regardless. ─────────────────── */}
+      {isMutual && !offGrid && isProximityCard && !isOwnProfile && travelTimes?.distKm && profileUser?.last_lat && (
         <ProfileProximityPanel
           distanceM={Math.round(travelTimes.distKm * 1000)}
           approxLat={profileUser.last_lat}
@@ -1206,14 +1280,17 @@ export default function L2ProfileSheet({ email, uid, id }) {
       </div>
 
       {/* ── Logistics block — descent into operational (bible Part 7 +
-          Phil exec review 2026-05-13). Coordination AFTER intent, not
-          alongside it. Tone hierarchy:
+          Phil exec review 2026-05-13 + D262 §1.1 mutual gate).
+          Coordination AFTER intent and AFTER mutual. Pre-mutual viewers
+          never see Footprints / Bike / Car / Get Uber — those are
+          downstream operational concerns, not profile chrome.
+          Tone hierarchy:
             BOO       = full gold #C8962C  (primary)
             Location  = utility gold (muted)
             ETA       = metadata tone (neutral)
             Ride      = service tone (most muted)
           Suppressed when v6_profile_proximity already rendered above. */}
-      {!isProximityCard && !isOwnProfile && (
+      {isMutual && !offGrid && !isProximityCard && !isOwnProfile && travelTimes && (
         <div className="px-4 pt-3 pb-1 mt-2">
           <div
             className="text-[9px] font-medium tracking-[0.28em] uppercase mb-2"
