@@ -1007,23 +1007,10 @@ export default function L2ProfileSheet({ email, uid, id }) {
           </button>
         )}
 
-        {/* Top-right (under kebab): photo counter pill */}
-        {photoUrls.length > 1 && (
-          <div
-            className="absolute z-30 px-2.5 py-1 rounded-full text-[11px] font-mono"
-            style={{
-              top: 'calc(env(safe-area-inset-top, 0px) + 14px)',
-              right: 60,
-              background: 'rgba(0,0,0,0.55)',
-              backdropFilter: 'blur(8px)',
-              color: 'rgba(255,255,255,0.85)',
-              letterSpacing: '0.04em',
-            }}
-            aria-label={`Photo ${activePhotoIdx + 1} of ${photoUrls.length}`}
-          >
-            {activePhotoIdx + 1} / {photoUrls.length}
-          </div>
-        )}
+        {/* Photo counter pill killed 2026-05-30 per Phil — the dot
+            paginator already conveys "there are more photos here", and
+            the "1 / N" text on top of someone's face was reading as
+            chrome clutter, not affordance. */}
 
         {/* Bottom gradient — lets the identity overlay sit on the photo */}
         <div
