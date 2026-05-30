@@ -128,15 +128,22 @@ export function useGlobeRealtime() {
       // single source-of-truth feeds toPublicSafeFeatureCollection.
       // Phil 2026-05-27: pulse_places had 81 rows that were never on the globe
       // because this hook only read beacons. Fixed.
+      // D08 step 3 PR-3A (2026-05-30): server-side visibility filter via
+      // get_renderable_beacons_for_viewer RPC. The hook used to .from('beacons')
+      // directly; that path bypassed the visibility_snapshot filter and would
+      // have leaked off-grid beacons to non-mutual viewers.
+      //
+      // Hard invariant (D08): the client may receive less, the client must
+      // never decide less. All visibility filtering happens server-side via
+      // should_render_beacon, called from the RPC. No client-side filter.
+      //
+      // Anonymous viewers pass p_viewer = null; the RPC treats them as
+      // logged-out and returns only beacons with visibility_snapshot='visible'.
+      const { data: { user } } = await supabase.auth.getUser();
+      const viewerId = user?.id ?? null;
+
       const [{ data, error }, { data: placesData, error: placesError }] = await Promise.all([
-        supabase
-          .from('beacons')
-          .select(
-            'id, code, type, beacon_category, title, status, geo_lat, geo_lng, city_slug, ' +
-            'globe_color, globe_pulse_type, globe_size_base, intensity, checkin_count, ' +
-            'venue_id, ends_at, starts_at, description, owner_id'
-          )
-          .eq('status', 'active'),
+        supabase.rpc('get_renderable_beacons_for_viewer', { p_viewer: viewerId }),
         supabase
           .from('pulse_places')
           .select('slug, name, type, lat, lng, priority, is_active, notes, address, opening_hours, website, phone')
@@ -352,4 +359,5 @@ export function useGlobeRealtime() {
 
   return { cityHeat, beacons, globeEvents };
 }
+
 
