@@ -758,6 +758,21 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   // P0 2026-05-28: NEVER fall back to email. safeName guarantees no '@'-containing string ever surfaces here.
   const otherName = safeName(otherProfile, title || 'Member');
 
+  // #364 (Phil 2026-05-30 P0): Dynamic sheet title.
+  // When we have a real persona name for the counterpart, push it into
+  // sheetProps so the L2SheetContainer chrome reads "Chris" instead of the
+  // static "Messages". Skip when the name is the safe fallback ("Member") —
+  // pushing MEMBER to the chrome is just as dead as ANONYMOUS, so the static
+  // default is more dignified. handleBack already resets title to 'Messages'
+  // when the user returns to the inbox list.
+  useEffect(() => {
+    if (!selectedThread || selectedThread._new) return;
+    const display = otherProfile?.display_name?.trim();
+    if (display && !display.includes('@')) {
+      updateSheetProps?.({ title: display });
+    }
+  }, [selectedThread?.id, otherProfile?.display_name, updateSheetProps]);
+
   const handleWingmanTap = useCallback(async () => {
     if (wingmanLoading) return;
 
@@ -1010,7 +1025,9 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     if (!searchQuery) return true;
     const email = getOtherEmail(t);
     const p = getProfile(email);
-    return (p?.display_name || 'Anonymous').toLowerCase().includes(searchQuery.toLowerCase());
+    // #364: was `p?.display_name || 'Anonymous'`. safeName() is the single
+    // source of truth for counterpart display across the social layer.
+    return safeName(p).toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   // ── Thread list ────────────────────────────────────────────────────────────
@@ -1048,7 +1065,10 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                 const email = getOtherEmail(thread);
                 const p = getProfile(email);
                 const unread = isUnread(thread);
-                const name = p?.display_name || 'Anonymous';
+                // #364 (Phil 2026-05-30): one identity rule across the social
+                // layer. safeName drops to 'Member' when persona doesn't
+                // resolve — same fallback as the thread-detail header.
+                const name = safeName(p);
 
                 return (
                   <button
@@ -1061,7 +1081,12 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                         {p?.avatar_url ? (
                           <img src={p.avatar_url} alt="" className="w-full h-full object-cover" />
                         ) : (
-                          <span className="text-lg font-black text-white">{name[0]?.toUpperCase() || '?'}</span>
+                          // #364 (Phil 2026-05-30): no fake initials. Photo OR
+                          // Ghost glyph, never letters — even of resolved names.
+                          // Matches GhostedCard's photo-or-silhouette pattern.
+                          // The persona name (or 'Member') is carried by the
+                          // text row below the avatar.
+                          <Ghost className="w-6 h-6 text-white/40" aria-hidden="true" />
                         )}
                       </div>
                       {unread && (
