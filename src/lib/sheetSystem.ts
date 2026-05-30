@@ -93,6 +93,18 @@ export interface SheetDefinition {
   id: string;
   title: string;
   height: keyof typeof SHEET_HEIGHTS;
+  /**
+   * Peek floor as a fraction of viewport (0..1). Default 0.50.
+   * Phil 2026-05-30 (#362): list-type sheets (inbox, marketplace) benefit
+   * from a higher peek floor so users see primary content immediately
+   * instead of scrim. Preview cards keep the default 0.50.
+   * Common values:
+   *   0.50 — preview / picker (default)
+   *   0.70 — short list / medium content
+   *   0.85 — long list / inbox (near-full at peek)
+   *   0.92 — editor / photo-led (effectively full)
+   */
+  peekFraction?: number;
   auth: boolean;
   deepLinkParams: string[];
 }
@@ -105,6 +117,12 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     id: 'profile',
     title: 'Profile',
     height: 'medium',
+    // #365 (Slice 2 — Phil 2026-05-30): photo-led tier. The hero photo is the
+    // primary signal of the sheet; opening at 50dvh cuts the user's face at
+    // mid-forehead. 0.92 ≈ full at peek, so the photo + name + actions are
+    // all above the fold immediately. bareTop already handles the chrome
+    // collapse — peekFraction completes the contract.
+    peekFraction: 0.92,
     auth: false,
     deepLinkParams: ['id', 'email', 'handle'],
   },
@@ -133,6 +151,12 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     id: 'chat',
     title: 'Messages',
     height: 'large',
+    // #362 addendum 2026-05-30: live verify via Chrome MCP at hotmessldn.com
+    // confirmed the inbox FAB opens `?sheet=chat` (not notification-inbox).
+    // Phil's iPhone screenshots showed THIS surface at the default 0.50 peek
+    // = half-screen scrim above MESSAGES title. Bumping to 0.85 so the thread
+    // list (and thread detail after row tap) opens near-full immediately.
+    peekFraction: 0.85,
     auth: true,
     deepLinkParams: ['thread', 'recipientId'],
   },
@@ -218,6 +242,10 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     id: 'edit-profile',
     title: 'Edit Profile',
     height: 'medium',
+    // #365 (Slice 2): editor tier. Form fields + photo grid need most of
+    // the viewport from the start — peek at 0.50 puts the first field below
+    // the fold. bareTop handles chrome; this completes the contract.
+    peekFraction: 0.92,
     auth: true,
     deepLinkParams: [],
   },
@@ -239,6 +267,10 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     id: 'album-photos',
     title: 'Album',
     height: 'large',
+    // #365 (Slice 2): photo-led tier. Album grid is the primary signal —
+    // opening at 50dvh shows two rows of thumbnails. 0.92 lets the user
+    // scan the album at a glance. bareTop handles chrome.
+    peekFraction: 0.92,
     auth: true,
     deepLinkParams: ['albumId'],
   },
@@ -282,6 +314,9 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     id: 'notification-inbox',
     title: 'Notifications',
     height: 'full',
+    // #362: inbox is primary content, not a preview. Open near-full at peek
+    // so users see threads immediately instead of a half-screen scrim.
+    peekFraction: 0.85,
     auth: true,
     deepLinkParams: [],
   },
@@ -817,6 +852,17 @@ export function getSheetHeight(type: string): string {
   return SHEET_HEIGHTS[config.height];
 }
 
+/**
+ * Per-type peek floor lookup (#362). Returns the registry's peekFraction
+ * if set, otherwise undefined so L2SheetContainer uses its default (0.50).
+ * Phil 2026-05-30 — completes the per-type ruling. Previously the registry
+ * only controlled expanded ceiling.
+ */
+export function getSheetPeekFraction(type: string): number | undefined {
+  const config = SHEET_REGISTRY[type];
+  return config?.peekFraction;
+}
+
 export function requiresAuth(type: string): boolean {
   const config = SHEET_REGISTRY[type];
   return config?.auth ?? false;
@@ -863,4 +909,5 @@ export function parseSheetFromUrl(searchParams: URLSearchParams): { type: string
   
   return { type, props };
 }
+
 
