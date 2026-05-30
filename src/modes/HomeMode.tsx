@@ -310,33 +310,38 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         </section>
 
         {/* ================================================================ */}
-        {/* 2a. DROP A BEACON — Phil 2026-05-30: Home didn't teach the      */}
-        {/*    platform's primary write action. This hero card uses the     */}
-        {/*    designed Soho comp (image carries CARE label, headline,      */}
-        {/*    subhead, CTA, 4-chip row baked in). Code wires invisible     */}
-        {/*    click hotspots over the in-image CTA + chip row. D16 §2/§7:  */}
-        {/*    CENTER zone, regular content card, no floating elements.     */}
+        {/* 2b. CARE SUITE — doctrine 11: care outranks commerce            */}
+        {/*    Visibility universal, activation tiered. Stateful card.      */}
+        {/* ================================================================ */}
+        <CareSuiteCard onOpen={() => setShowCareExplainer(true)} />
+
+        {/* ================================================================ */}
+        {/* 2c. DROP A BEACON — Phil 2026-05-30 logical order: state first  */}
+        {/*    (section 2), care second (CareSuiteCard above), invitation   */}
+        {/*    third. Teach the platform's primary write action AFTER the   */}
+        {/*    user is oriented and safe, BEFORE the lane strip. Designed   */}
+        {/*    Soho comp (CARE label, headline, subhead, CTA, 4-chip row    */}
+        {/*    baked in). Code wires invisible click hotspots over the      */}
+        {/*    CTA + chip row. D16 §2/§7: CENTER zone, content card.        */}
         {/* ================================================================ */}
         <section className="px-5 pb-5">
           <div
             role="img"
             aria-label="Drop a Beacon. Let the right people find you."
             className="relative w-full overflow-hidden rounded-2xl border border-white/5"
-            style={{ aspectRatio: '3 / 4', background: '#0a0a0a' }}
+            style={{ aspectRatio: '3 / 2', background: '#0a0a0a' }}
           >
             {!homeBeaconImgFailed && (
               <img
                 src="https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/home/drop-a-beacon.png"
                 alt=""
-                loading="eager"
+                loading="lazy"
                 onError={() => setHomeBeaconImgFailed(true)}
                 className="absolute inset-0 w-full h-full object-cover"
                 style={{ display: 'block' }}
               />
             )}
 
-            {/* Fallback overlay — only renders if the image 404s. Keeps the
-                card readable + interactive so the CTA never disappears. */}
             {homeBeaconImgFailed && (
               <>
                 <div
@@ -349,7 +354,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
                 <div className="absolute left-5 top-6 text-[11px] tracking-[0.32em] font-bold text-white/90 select-none">
                   GHOSTED
                 </div>
-                <div className="absolute left-5 right-5 top-1/3 text-white font-black uppercase leading-[0.95]" style={{ fontSize: 'clamp(34px, 9vw, 56px)' }}>
+                <div className="absolute left-5 right-5 top-1/3 text-white font-black uppercase leading-[0.95]" style={{ fontSize: 'clamp(28px, 8vw, 48px)' }}>
                   Drop a<br />beacon.
                 </div>
                 <div className="absolute left-5 right-5 bottom-24 text-sm text-white/70 max-w-xs">
@@ -372,8 +377,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
             />
 
             {/* Invisible click grid — positioned over the visible 4-chip
-                row at the bottom ~22% of the comp. Each cell routes to its
-                destination per Phil 2026-05-30 wiring spec. */}
+                row at the bottom ~22% of the comp. */}
             <div
               className="absolute left-0 right-0 grid grid-cols-4"
               style={{ top: '76%', bottom: 0 }}
@@ -421,12 +425,6 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
             </div>
           </div>
         </section>
-
-        {/* ================================================================ */}
-        {/* 2b. CARE SUITE — doctrine 11: care outranks commerce            */}
-        {/*    Visibility universal, activation tiered. Stateful card.      */}
-        {/* ================================================================ */}
-        <CareSuiteCard onOpen={() => setShowCareExplainer(true)} />
 
         {/* ================================================================ */}
         {/* 3. LANE STRIP — quick doors, not promos                        */}
