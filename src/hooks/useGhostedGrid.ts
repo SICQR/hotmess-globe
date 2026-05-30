@@ -239,26 +239,18 @@ export function useGhostedGrid(
     staleTime: 30_000,
     refetchInterval: 60_000,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-          id, email, display_name, username, avatar_url, photos,
-          is_online, age, looking_for, is_verified, last_seen,
-          last_lat, last_lng, created_at, role
-        `)
-        .neq('id', myId!)
-        .not('display_name', 'is', null)
-        .order('is_online', { ascending: false })
-        .order('last_seen', { ascending: false, nullsFirst: false })
-        .limit(60);
-      if (error) throw new Error(error.message);
-      // Ghost-account filter — mirror /api/profiles behaviour
-      return (data || []).filter((p: any) => {
-        const e = (p.email || '').toLowerCase();
-        if (e.includes('@hotmess.app') || e.includes('@hotmess.test')) return false;
-        if (e.startsWith('demo_') || e.startsWith('admin_') || e.startsWith('e2e_')) return false;
-        return true;
+      // D08 step 3 PR-3B (2026-05-30): server-side visibility filter via
+      // get_ghosted_recent_for_viewer RPC. Hard invariant: the client may
+      // receive less, the client must never decide less. The RPC mirrors
+      // the previous direct query but appends should_show_profile_for_viewer
+      // — off-grid users are absent for non-mutuals, visible to mutual-boos.
+      // Ghost-account filter is also moved into the RPC so the filter point
+      // is single-sourced server-side.
+      const { data, error } = await supabase.rpc('get_ghosted_recent_for_viewer', {
+        p_viewer: myId,
       });
+      if (error) throw new Error(error.message);
+      return data || [];
     },
   });
 
@@ -297,13 +289,24 @@ export function useGhostedGrid(
       const allUserIds = [...new Set([...userIds, ...movementUserIds])];
       if (!allUserIds.length) return [];
 
+      // D08 step 3 PR-3B (2026-05-30): apply server-side visibility filter
+      // BEFORE doing the profiles fetch. filter_profile_ids_for_viewer drops
+      // off-grid users that the viewer isn't mutual-boo'd to. Hard invariant:
+      // never filter visibility client-side.
+      const { data: visibleRows } = await supabase.rpc('filter_profile_ids_for_viewer', {
+        p_viewer: myId,
+        p_ids: allUserIds,
+      });
+      const visibleIds = (visibleRows || []).map((r: any) => r.id);
+      if (!visibleIds.length) return [];
+
       const { data: profiles } = await supabase
         .from('profiles')
         .select(`
           id, email, display_name, username, avatar_url,
           is_online, age, looking_for, is_verified, last_seen
         `)
-        .in('id', allUserIds)
+        .in('id', visibleIds)
         ;
 
       // Merge right_now_status + movement data
@@ -555,3 +558,4 @@ export function useGhostedGrid(
 
   return { cards, chatThreads, isLoading, error, refetch };
 }
+
