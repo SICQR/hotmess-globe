@@ -135,6 +135,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
 
   // Phil 2026-05-29 — Care Suite explainer sheet state (slice 1).
   const [showCareExplainer, setShowCareExplainer] = useState(false);
+  const [homeBeaconImgFailed, setHomeBeaconImgFailed] = useState(false);
 
   // ── Signal line (compact, inline with hero) ───────────────────────────────
   const signalParts: string[] = [];
@@ -306,6 +307,119 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
               </div>
             )}
           </motion.div>
+        </section>
+
+        {/* ================================================================ */}
+        {/* 2a. DROP A BEACON — Phil 2026-05-30: Home didn't teach the      */}
+        {/*    platform's primary write action. This hero card uses the     */}
+        {/*    designed Soho comp (image carries CARE label, headline,      */}
+        {/*    subhead, CTA, 4-chip row baked in). Code wires invisible     */}
+        {/*    click hotspots over the in-image CTA + chip row. D16 §2/§7:  */}
+        {/*    CENTER zone, regular content card, no floating elements.     */}
+        {/* ================================================================ */}
+        <section className="px-5 pb-5">
+          <div
+            role="img"
+            aria-label="Drop a Beacon. Let the right people find you."
+            className="relative w-full overflow-hidden rounded-2xl border border-white/5"
+            style={{ aspectRatio: '3 / 4', background: '#0a0a0a' }}
+          >
+            {!homeBeaconImgFailed && (
+              <img
+                src="https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/home/drop-a-beacon.png"
+                alt=""
+                loading="eager"
+                onError={() => setHomeBeaconImgFailed(true)}
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{ display: 'block' }}
+              />
+            )}
+
+            {/* Fallback overlay — only renders if the image 404s. Keeps the
+                card readable + interactive so the CTA never disappears. */}
+            {homeBeaconImgFailed && (
+              <>
+                <div
+                  aria-hidden
+                  className="absolute inset-0"
+                  style={{
+                    background: 'linear-gradient(180deg, rgba(10,10,10,0.7) 0%, rgba(10,10,10,0.95) 100%)',
+                  }}
+                />
+                <div className="absolute left-5 top-6 text-[11px] tracking-[0.32em] font-bold text-white/90 select-none">
+                  GHOSTED
+                </div>
+                <div className="absolute left-5 right-5 top-1/3 text-white font-black uppercase leading-[0.95]" style={{ fontSize: 'clamp(34px, 9vw, 56px)' }}>
+                  Drop a<br />beacon.
+                </div>
+                <div className="absolute left-5 right-5 bottom-24 text-sm text-white/70 max-w-xs">
+                  Let the right people find you. When you&rsquo;re ready.
+                </div>
+              </>
+            )}
+
+            {/* Invisible click overlay — positioned over the visible CTA
+                button baked into the comp (~middle-left of the image). */}
+            <button
+              type="button"
+              aria-label="Drop a Beacon"
+              onClick={() => {
+                trackEvent('home_cta_tap', { cta: 'drop_beacon_hero' });
+                navigate('/pulse?drop=1');
+              }}
+              className="absolute left-[4%] w-[44%] h-[9%] active:bg-white/5 transition-colors"
+              style={{ top: '57%', background: 'transparent' }}
+            />
+
+            {/* Invisible click grid — positioned over the visible 4-chip
+                row at the bottom ~22% of the comp. Each cell routes to its
+                destination per Phil 2026-05-30 wiring spec. */}
+            <div
+              className="absolute left-0 right-0 grid grid-cols-4"
+              style={{ top: '76%', bottom: 0 }}
+            >
+              <button
+                type="button"
+                aria-label="Be seen — go live"
+                onClick={() => {
+                  trackEvent('home_cta_tap', { cta: 'be_seen' });
+                  handleGoLive();
+                }}
+                className="w-full h-full active:bg-white/5 transition-colors"
+                style={{ background: 'transparent' }}
+              />
+              <button
+                type="button"
+                aria-label="Find others"
+                onClick={() => {
+                  trackEvent('home_cta_tap', { cta: 'find_others' });
+                  navigate('/ghosted');
+                }}
+                className="w-full h-full active:bg-white/5 transition-colors"
+                style={{ background: 'transparent' }}
+              />
+              <button
+                type="button"
+                aria-label="Make a move"
+                onClick={() => {
+                  trackEvent('home_cta_tap', { cta: 'make_a_move' });
+                  navigate('/pulse');
+                }}
+                className="w-full h-full active:bg-white/5 transition-colors"
+                style={{ background: 'transparent' }}
+              />
+              <button
+                type="button"
+                aria-label="Stay in control"
+                onClick={() => {
+                  trackEvent('home_cta_tap', { cta: 'stay_in_control' });
+                  navigate('/safety');
+                }}
+                className="w-full h-full active:bg-white/5 transition-colors"
+                style={{ background: 'transparent' }}
+              />
+            </div>
+          </div>
         </section>
 
         {/* ================================================================ */}
@@ -493,3 +607,4 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
     </div>
   );
 }
+
