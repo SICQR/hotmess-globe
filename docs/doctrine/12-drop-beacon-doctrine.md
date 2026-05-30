@@ -187,7 +187,8 @@ If either answer is ambiguous, the UX has failed Doctrine 12.
 
 - `docs/doctrine/11-arrival-state-doctrine.md` — Pulse Doctrine (probability + momentum, not occupancy); the intent system gives the data layer the semantics needed to enforce anticipatory language and operator vs user differentiation honestly.
 - `docs/doctrine/13-spatial-continuity-doctrine.md` — Spatial Continuity / four primitives; D12's signal axes plug into the preview→commit→route→movement primitives.
-- `docs/doctrine/14-routing-continuity-doctrine.md` — Routing as Continuity (forthcoming); the fourth signal axis (Route). D14 must not be written until D12's four-axis ontology is locked.
+- `docs/doctrine/14-routing-continuity-doctrine.md` — Routing as Continuity; the fourth signal axis (Route).
+- `docs/doctrine/15-care-language-doctrine.md` — the surface-signposting copy in this doctrine (Go Live cold-start, cross-link footers) is the canonical example of D15 in production. Every future signal-surface copy line must pass the smoking-area test.
 - `docs/doctrine/07-visual-hierarchy.md` — monetisation never overrides relational truth; intent-based beacons keep the user-vs-curated distinction structurally enforceable.
 - Sacred Invariant #6 — system never pretends activity. An intent picker that lets a user "drop a Gym" is structural pretence. The Go Live cold-start empty state was a softer version of the same sin (silent "no-one in your moment" reads as "feature is dead"); the "You're the first live tonight" copy converts it into honest anticipation.
 - Sacred Invariant #7 — no exact tracking, ≤200m fuzz. Presence and Beacon both observe this; Route signal (D14) inherits it.
