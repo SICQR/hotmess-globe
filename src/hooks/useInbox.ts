@@ -76,12 +76,32 @@ export function useInbox(): UseInboxState {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+    // Slice 4.3 hotfix — supabase-js auth Web Lock races between three
+    // parallel hooks (this RPC + useInboxCounterparts + getUser) and
+    // throws AbortError: "Lock broken by another request with the
+    // 'steal' option". This is a known transient race; one retry after
+    // a short backoff is enough. Don't surface it to the user.
+    const isAbortError = (e: unknown) =>
+      (e instanceof Error && e.name === 'AbortError') ||
+      (typeof (e as any)?.message === 'string' && (e as any).message.includes('Lock broken'));
+
+    const tryOnce = async () => supabase.rpc('get_inbox_for_viewer');
+
     try {
-      const { data, error: rpcError } = await supabase
-        .rpc('get_inbox_for_viewer');
+      let { data, error: rpcError } = await tryOnce();
+      // Retry once on the auth-lock race.
+      if (rpcError && isAbortError(rpcError)) {
+        await new Promise(r => setTimeout(r, 150));
+        ({ data, error: rpcError } = await tryOnce());
+      }
 
       if (rpcError) {
-        // Soft-fail: return empty inbox instead of crashing.
+        if (isAbortError(rpcError)) {
+          // Still racing — treat as empty, no user-facing error. The
+          // realtime channel will reload us shortly anyway.
+          setItems([]);
+          return;
+        }
         console.error('[useInbox] RPC error:', rpcError.message);
         setError(rpcError.message);
         setItems([]);
@@ -104,15 +124,18 @@ export function useInbox(): UseInboxState {
 
       setItems(rows);
 
-      // Lightweight Slice 4.2 smoke log — confirms the client consumed the
-      // six-category shape. Removed in Slice 4.3 when the cell renderer
-      // proves it structurally.
+      // Slice 4.2 smoke log — removed in 4.6 once the gauntlet passes.
       if (typeof console !== 'undefined' && rows.length > 0) {
         const dist: Record<string, number> = {};
         for (const r of rows) dist[r.category] = (dist[r.category] || 0) + 1;
         console.log('[useInbox] D266 inbox loaded:', rows.length, 'items', dist);
       }
     } catch (e: unknown) {
+      if (isAbortError(e)) {
+        // Transient auth-lock race; ignore.
+        setItems([]);
+        return;
+      }
       const message = e instanceof Error ? e.message : String(e);
       console.error('[useInbox] Unexpected error:', message);
       setError(message);

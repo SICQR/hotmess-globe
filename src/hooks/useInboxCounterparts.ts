@@ -39,15 +39,34 @@ export function useInboxCounterparts(items: InboxItem[]): Map<string, InboxCount
     }
 
     let cancelled = false;
+
+    // Slice 4.3 hotfix — retry once on supabase-js Web Lock AbortError
+    // race, same pattern as useInbox. The counterpart fetch is the
+    // most likely victim because it fires AFTER useInbox returns,
+    // and both contend for the auth-refresh lock.
+    const isAbortError = (e: unknown) =>
+      (e instanceof Error && e.name === 'AbortError') ||
+      (typeof (e as any)?.message === 'string' && (e as any).message.includes('Lock broken'));
+
+    const tryOnce = async () => supabase
+      .from('profiles')
+      .select('id, display_name, avatar_url')
+      .in('id', ids);
+
+    // Stagger the fetch a tick to let useInbox's lock release first.
     (async () => {
+      await new Promise(r => setTimeout(r, 50));
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, display_name, avatar_url')
-          .in('id', ids);
+        let { data, error } = await tryOnce();
+        if (error && isAbortError(error)) {
+          await new Promise(r => setTimeout(r, 200));
+          ({ data, error } = await tryOnce());
+        }
         if (cancelled) return;
         if (error) {
-          console.error('[useInboxCounterparts] fetch error:', error.message);
+          if (!isAbortError(error)) {
+            console.error('[useInboxCounterparts] fetch error:', error.message);
+          }
           return;
         }
         const map = new Map<string, InboxCounterpart>();
@@ -57,7 +76,9 @@ export function useInboxCounterparts(items: InboxItem[]): Map<string, InboxCount
         setById(map);
       } catch (e) {
         if (cancelled) return;
-        console.error('[useInboxCounterparts] unexpected:', e);
+        if (!isAbortError(e)) {
+          console.error('[useInboxCounterparts] unexpected:', e);
+        }
       }
     })();
     return () => { cancelled = true; };
