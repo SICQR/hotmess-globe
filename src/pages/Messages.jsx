@@ -1,10 +1,17 @@
-import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
 import { MessageCircle, Plus } from 'lucide-react';
-import { useLocalPullToRefresh } from '@/hooks/useLocalPullToRefresh';
-import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
+// HOTFIX 2026-05-30 (#359): pull-to-refresh was breaking the global #261
+// overscroll-behavior invariant. iOS Safari was intercepting the gesture
+// before useLocalPullToRefresh's preventDefault could fire, leading to a
+// native browser reload. Realtime channel below (chat-threads-updates) already
+// invalidates threads on any insert/update/delete, so the manual refresh
+// affordance was redundant. Removed entirely; global overscroll-behavior:
+// contain on html/body + .scroll-momentum class handles the no-bounce contract.
+// import { useLocalPullToRefresh } from '@/hooks/useLocalPullToRefresh';
+// import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 
 import ChatThread from '../components/messaging/ChatThread';
@@ -22,14 +29,8 @@ export default function Messages() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const scrollRef = useRef(null);
-  const handleRefresh = useCallback(async () => {
-    await queryClient.invalidateQueries();
-  }, [queryClient]);
-
-  const { pullDistance, isRefreshing } = useLocalPullToRefresh({
-    onRefresh: handleRefresh,
-    scrollRef,
-  });
+  // #359: pull-to-refresh hook removed — realtime subscription below covers
+  // thread updates. handleRefresh/useLocalPullToRefresh deleted.
 
 
 
@@ -209,7 +210,7 @@ export default function Messages() {
           </div>
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum p-4">
-            <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
+            {/* #359: PullToRefreshIndicator removed; realtime covers updates. */}
 
             <ThreadList
               threads={threads}
