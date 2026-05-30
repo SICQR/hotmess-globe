@@ -425,6 +425,10 @@ Arrival is correct when:
   doctrine (skeleton, observation-gated)
 - `docs/doctrine/10-profile-identity-doctrine.md` — profile identity
   visibility ladder + system orthogonality
+- `docs/doctrine/15-care-language-doctrine.md` — every anticipatory and
+  cold-start copy line in Pulse passes through the smoking-area test.
+  "You're the first live in [district] tonight" is the canonical
+  example.
 
 ---
 
