@@ -1,0 +1,77 @@
+export const taxonomyConfig = {
+  tribes: [
+    { id: "bear", label: "Bear" },
+    { id: "otter", label: "Otter" },
+    { id: "twink", label: "Twink" },
+    { id: "twunk", label: "Twunk" },
+    { id: "jock", label: "Jock" },
+    { id: "hunk", label: "Hunk" },
+    { id: "muscle", label: "Muscle" },
+    { id: "daddy", label: "Daddy" },
+    { id: "leather", label: "Leather" },
+    { id: "rugged", label: "Rugged" },
+    { id: "clean_cut", label: "Clean-cut" },
+    { id: "geek", label: "Geek" },
+    { id: "discreet", label: "Discreet" },
+    { id: "pup_handler", label: "Pup/Handler" },
+    { id: "chub", label: "Chub" },
+    { id: "cub", label: "Cub" },
+    { id: "masc", label: "Masc" },
+    { id: "femme", label: "Femme" },
+    { id: "alt_goth", label: "Alt/Goth" },
+    { id: "raver", label: "Raver" }
+  ],
+  
+  tagCategories: [
+    { id: "care_consent", label: "Care & consent" },
+    { id: "substances", label: "Substances" },
+    { id: "logistics", label: "Logistics" },
+    { id: "connection", label: "Connection" },
+    { id: "culture", label: "Culture" },
+    { id: "fitness", label: "Fitness" },
+    { id: "relationship", label: "Relationship" },
+    { id: "kink", label: "Kink" }
+  ],
+  
+  tags: [
+    { id: "consent_forward", label: "Consent-forward", categoryId: "care_consent", isSensitive: false },
+    { id: "boundaries_first", label: "Boundaries first", categoryId: "care_consent", isSensitive: false },
+    { id: "aftercare_offered", label: "Aftercare offered", categoryId: "care_consent", isSensitive: false },
+    { id: "aftercare_needed", label: "Aftercare needed", categoryId: "care_consent", isSensitive: false },
+    { id: "check_in_text", label: "Check-in text", categoryId: "care_consent", isSensitive: false },
+    { id: "cuddles", label: "Cuddles", categoryId: "care_consent", isSensitive: false },
+    { id: "gentle", label: "Gentle", categoryId: "care_consent", isSensitive: false },
+    { id: "no_pressure", label: "No pressure", categoryId: "care_consent", isSensitive: false },
+    { id: "slow_pace", label: "Slow pace", categoryId: "care_consent", isSensitive: false },
+    { id: "direct_communicator", label: "Direct communicator", categoryId: "care_consent", isSensitive: false },
+    { id: "sober", label: "Sober", categoryId: "substances", isSensitive: true },
+    { id: "cali_sober", label: "Cali sober", categoryId: "substances", isSensitive: true },
+    { id: "friendly_420", label: "420-friendly", categoryId: "substances", isSensitive: true },
+    { id: "alcohol_ok", label: "Alcohol ok", categoryId: "substances", isSensitive: true },
+    { id: "chem_free", label: "Chem-free", categoryId: "substances", isSensitive: true },
+    { id: "recovery_friendly", label: "Recovery-friendly", categoryId: "substances", isSensitive: true },
+    { id: "ask_me_substances", label: "Ask me", categoryId: "substances", isSensitive: true },
+    { id: "can_host", label: "Can host", categoryId: "logistics", isSensitive: false },
+    { id: "can_travel", label: "Can travel", categoryId: "logistics", isSensitive: false },
+    { id: "hotel_ok", label: "Hotel ok", categoryId: "logistics", isSensitive: false },
+    { id: "friends_first", label: "Friends first", categoryId: "connection", isSensitive: false },
+    { id: "dates", label: "Dates", categoryId: "connection", isSensitive: false },
+    { id: "mates", label: "Mates", categoryId: "connection", isSensitive: false },
+    { id: "ongoing", label: "Ongoing", categoryId: "connection", isSensitive: false },
+    { id: "chatty", label: "Chatty", categoryId: "connection", isSensitive: false },
+    { id: "into_kissing", label: "Into kissing", categoryId: "connection", isSensitive: false },
+    { id: "kink_friendly", label: "Kink-friendly", categoryId: "kink", isSensitive: true }
+  ],
+  
+  synonyms: [
+    { input: "calisober", tagId: "cali_sober" },
+    { input: "cali-sober", tagId: "cali_sober" },
+    { input: "chem free", tagId: "chem_free" },
+    { input: "no chem", tagId: "chem_free" },
+    { input: "weed friendly", tagId: "friendly_420" },
+    { input: "420", tagId: "friendly_420" },
+    { input: "aftercare pls", tagId: "aftercare_needed" },
+    { input: "host", tagId: "can_host" },
+    { input: "travel", tagId: "can_travel" }
+  ]
+};

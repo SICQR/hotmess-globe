@@ -1,0 +1,84 @@
+name: Update README
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  update-readme:
+    name: Refresh README status
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 10
+
+      - name: Inject status block into README
+        run: |
+          SHA=$(git rev-parse --short HEAD)
+          NOW=$(date -u '+%a %d %b %Y %H:%M UTC')
+          BRANCH="${GITHUB_REF_NAME}"
+
+          python3 - "$SHA" "$NOW" "$BRANCH" <<'PYEOF'
+import sys, re, subprocess
+
+sha, now, branch = sys.argv[1], sys.argv[2], sys.argv[3]
+
+log = subprocess.check_output(
+  ['git','log','-7','--pretty=format:| `%h` | %s | %cr |','--no-merges'],
+  text=True
+).strip()
+
+block = f"""
+
+## Live Status
+
+| | |
+|---|---|
+| **Branch** | {branch} |
+| **Commit** | `{sha}` |
+| **Updated** | {now} |
+
+### Recent Commits
+
+| Commit | Message | When |
+|--------|---------|------|
+{log}
+
+"""
+
+START = '<!-- STATUS:START -->'
+END   = '<!-- STATUS:END -->'
+
+with open('README.md') as f:
+    content = f.read()
+
+if START in content and END in content:
+    updated = re.sub(
+        re.escape(START) + r'.*?' + re.escape(END),
+        START + block + END,
+        content, flags=re.DOTALL
+    )
+else:
+    updated = content + '\n' + START + block + END + '\n'
+
+with open('README.md', 'w') as f:
+    f.write(updated)
+
+print('README updated')
+PYEOF
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git diff --exit-code README.md || (
+            git add README.md &&
+            git commit -m "docs: auto-update README status [skip ci]" &&
+            git push
+          )

@@ -1,0 +1,331 @@
+{
+  "generated": "2026-04-16",
+  "generated_updated": "2026-04-16T04:15Z — updated after Shopify + env + radio verification",
+  "status": "audit_only",
+  "scope": ["hotmess-globe", "rawconvict-music", "rawmaster", "supabase:klsywpvncqqglhnhrjbh (frontend)", "supabase:rfoftonnlwudilafhfkl (backend)", "supabase:axxwdjmbwkvqhcpwters (edge)", "vercel:team_ctjjRDRV1EpYKYaO9wQSwRyv", "gumroad:scanme2", "shopify:hotmessldn.myshopify.com"],
+  "supabase_projects_discovered": {
+    "frontend": "klsywpvncqqglhnhrjbh (used by VITE_* client bundle — NOT accessible via my Supabase MCP)",
+    "backend": "rfoftonnlwudilafhfkl (used by /api/* serverless — the one I audited with 134 tables)",
+    "edge": "axxwdjmbwkvqhcpwters (PROD_SUPABASE_* for push notifications / edge fns)"
+  },
+  "live_urls": {
+    "hotmessldn.com": {"http": 200, "ok": true},
+    "shop.hotmessldn.com": {"http": 200, "ok": true, "note": "Shopify storefront"},
+    "rawconvict-music.com": {"http": 200, "ok": true},
+    "rawconvictrecords.com": {"http": 0, "ok": false, "note": "DNS / domain down"},
+    "radio.hotmessldn.com/radio.mp3": {"http": 0, "ok": false, "note": "OLD URL — stored in radio_shows.stream_url but the real stream moved to RadioKing"},
+    "listen.radioking.com/radio/736103/stream/802454": {"http": 200, "ok": true, "note": "REAL radio stream — confirmed working 2026-04-16", "provider": "RadioKing"},
+    "scanme2.gumroad.com/l/ttupfg": {"http": 200, "ok": true, "product": "GRANULE"},
+    "scanme2.gumroad.com/l/iolsms": {"http": 200, "ok": true, "product": "RAWMASTER CLI"}
+  },
+  "vercel_projects_active": [
+    {"name": "hotmess-globe", "id": "prj_xdS5EoLRDpGhj4GOIbtSLSrCmvJO", "state": "READY", "last_deploy": "2026-04-14"},
+    {"name": "rawconvict-music", "id": "prj_eQtf2hBAz5JDmg8IPd3qYn0kCFEY", "state": "READY", "last_deploy": "2026-04-08"},
+    {"name": "rawmaster-landing", "id": "prj_gR42D2lzuPvVeUuW5n0RlE217eto", "state": "READY", "last_deploy": "2026-04-14"},
+    {"name": "hotmess-website", "id": "prj_4o1SIZMPaiC6PuOqF8EfFr6w5BCj", "state": "new_project_created_2026-04-11"}
+  ],
+  "vercel_plugin_projects": [
+    {"plugin": "GRANULE", "id": "prj_4V0CEIGYqHKjikM0Mv3UIE0oSOKg", "gumroad": "ttupfg", "price_gbp": 15, "status": "live"},
+    {"plugin": "SCATTER", "id": "prj_91ceWhbsbuOOZI1YjP1H2bCYMiJu", "gumroad": null, "status": "vercel_only"},
+    {"plugin": "RUST", "id": "prj_qfBskwRwQZrQg2Z0lCOyfSc9bSUz", "gumroad": null, "status": "vercel_only"},
+    {"plugin": "FROST", "id": "prj_UoaXyizyDDtFDQAV20FGggxKr56U", "gumroad": null, "status": "vercel_only"},
+    {"plugin": "HAZE", "id": "prj_0KrRmu3dNGVXewyCZz9g2ca1utT1", "gumroad": null, "status": "vercel_only"},
+    {"plugin": "CRUSH", "id": "prj_pHlLqXyIbks0OqCTnVnoMcoJXcAt", "gumroad": null, "status": "vercel_only"}
+  ],
+  "vercel_stale_count": 40,
+  "supabase": {
+    "project_id": "rfoftonnlwudilafhfkl",
+    "region": "eu-west-2",
+    "total_public_tables": 134,
+    "storage_buckets": [
+      {"id": "avatars", "public": true},
+      {"id": "chat-uploads", "public": false, "objects": 1},
+      {"id": "messmarket-images", "public": true, "objects": 5, "size_mb": 22.74},
+      {"id": "radio-assets", "public": true, "objects": 0, "note": "EMPTY — ready for show artwork"},
+      {"id": "records-audio", "public": true, "objects": 6, "size_mb": 58.56},
+      {"id": "records-covers", "public": true, "objects": 5, "size_mb": 0.77},
+      {"id": "thread-attachments", "public": false},
+      {"id": "uploads", "public": true}
+    ],
+    "key_counts": {
+      "profiles": 123,
+      "memberships": 123,
+      "personas": 123,
+      "profile_settings": 123,
+      "profile_photos": 30,
+      "age_gate_consents": 20,
+      "user_consents": 26,
+      "beacons": 13,
+      "pulse_places": 60,
+      "venues": 8,
+      "clubs": 1,
+      "cities": 15,
+      "gay_world_knowledge": 13,
+      "globe_events": 10,
+      "label_artists": 8,
+      "label_releases": 36,
+      "tracks": 36,
+      "app_banners": 30,
+      "radio_shows": 5,
+      "radio_signals": 38,
+      "market_listings": 10,
+      "market_listings_archived": 10,
+      "market_listings_live": 0,
+      "market_sellers": 3,
+      "preloved_listings": 0,
+      "orders": 43,
+      "order_items": 38,
+      "shopify_orders_mirror": 0,
+      "conversations": 2,
+      "messages": 7,
+      "chat_threads": 3,
+      "chat_messages": 7,
+      "taps": 8,
+      "blocks": 0,
+      "saved_items": 0,
+      "vault_items": 0,
+      "safety_checkins": 0,
+      "timed_checkins": 1,
+      "trusted_contacts": 2,
+      "fake_call_callers": 2,
+      "emergency_contacts": 0,
+      "push_subscriptions": 8,
+      "notification_outbox": 0,
+      "whatsapp_messages": 0,
+      "user_active_boosts": 0,
+      "user_boost_types": 6,
+      "ai_tier_limits": 5,
+      "ai_usage": 0,
+      "referrals": 0,
+      "referral_rewards": 3,
+      "membership_tiers": 5,
+      "membership_annual_pricing": 4,
+      "user_vibes": 1,
+      "user_tribes": 3,
+      "user_tags": 0,
+      "reports": 0
+    }
+  },
+  "membership_tiers": [
+    {"name": "mess", "price_gbp": 0, "tagline": "You are in. Welcome to the mess.", "stripe_monthly": null, "stripe_annual": null},
+    {"name": "hotmess", "price_gbp": 7.99, "price_annual_gbp": 63.90, "stripe_monthly": "price_1THYR0RffzKIfelwmPeK6Imw", "stripe_annual": "price_1THYR1RffzKIfelw89RA7Rej"},
+    {"name": "connected", "price_gbp": 19.99, "price_annual_gbp": 159.90, "stripe_monthly": "price_1THYR3RffzKIfelwjjCXDoMh", "stripe_annual": "price_1THYR3RffzKIfelwKLvNdv85"},
+    {"name": "promoter", "price_gbp": 44.99, "price_annual_gbp": 359.90, "stripe_monthly": "price_1THYR5RffzKIfelwHBF1MbEV", "stripe_annual": "price_1THYR6RffzKIfelw32Ii4hBg"},
+    {"name": "venue", "price_gbp": 99.99, "price_annual_gbp": 799.90, "stripe_monthly": "price_1THYR7RffzKIfelwnns2hyyd", "stripe_annual": "price_1THYR8RffzKIfelwvjATSYZa"}
+  ],
+  "stripe_live_account_resolved": "Keys in .env.local confirmed LIVE mode (sk_live_51RrKkr...). Prefix matches price_1THYR*Rffz* in membership_annual_pricing = products DO exist in Stripe. My Stripe MCP was connected to a different account. 0 customers/subscriptions reflects no paying users yet, not a configuration problem.",
+  "shopify_live": {
+    "store_name": "HOTMESS LONDON",
+    "shop_domain": "hotmessldn.myshopify.com",
+    "primary_domain": "https://shop.hotmessldn.com",
+    "legacy_store_domain_in_env": "1e0297-a4.myshopify.com (stale — clean up)",
+    "products_live": 3,
+    "products": [
+      {"title": "HNH Mess Lube - 50ml", "handle": "hnh-mess-lube-50ml", "type": "LUBE", "price_gbp": 9.99, "inventory": 299, "variants": 1},
+      {"title": "HNH MESS LUBE 250ML", "handle": "hnh-mess-lube-250ml", "type": "LUBE", "price_gbp": 15.00, "inventory": 298, "variants": 1, "tags": ["FEATURED", "FRAMER-SYNC", "HNHMESS", "LUBE"]},
+      {"title": "SUPERHUNG VEST — RED LEGEND DROP", "handle": "superhung-vest-red-legend", "type": "Vests", "price_gbp": 100.00, "inventory": 155, "variants": [{"size": "M", "qty": 100}, {"size": "L", "qty": 30}, {"size": "XL", "qty": 25}], "tags": ["HUNG", "LIMITED", "SUPERHUNG", "Tee"]}
+    ],
+    "collections": ["shop-all", "hung", "raw", "high", "essentials", "drops", "drops-1 (dup)", "accessories", "swimwear-collection", "swimwear (dup)", "main-drop", "raw-mainline", "raw-mainline-1 (dup)", "high-st-drop", "superhung"],
+    "collection_dupes_to_consolidate": ["drops + drops-1", "swimwear + swimwear-collection", "raw-mainline + raw-mainline-1"],
+    "collections_with_no_live_products": ["hung", "raw", "high", "essentials", "swimwear", "main-drop", "high-st-drop", "raw-mainline", "accessories"],
+    "superhigh_collection_missing": true
+  },
+  "gumroad_products": [
+    {"product": "GRANULE reverb plugin", "id": "ttupfg", "price_gbp": 15, "url": "https://scanme2.gumroad.com/l/ttupfg", "http": 200},
+    {"product": "RAWMASTER CLI", "id": "iolsms", "price_gbp": 19, "url": "https://scanme2.gumroad.com/l/iolsms", "http": 200},
+    {"product": "RAWMASTER Desktop", "id": "kmgake", "price_gbp": 29, "url": "https://scanme2.gumroad.com/l/kmgake", "http": 200},
+    {"product": "Smash Daddys Toolkit", "id": "uvznyb", "price_gbp": 39, "url": "https://scanme2.gumroad.com/l/uvznyb", "http": 200}
+  ],
+  "gumroad_not_yet_listed": ["DJ Bookability Scorecard", "Nightlife Promoter Starter Kit"],
+  "radio": {
+    "real_stream_url": "https://listen.radioking.com/radio/736103/stream/802454",
+    "real_stream_http": 200,
+    "real_stream_provider": "RadioKing",
+    "env_var": "NEXT_PUBLIC_RADIOKING_STREAM_URL",
+    "env_status": "set_in_env_local",
+    "stale_url_in_radio_shows_table": "https://radio.hotmessldn.com/radio.mp3",
+    "stale_url_http": 0,
+    "stream_status": "LIVE (via RadioKing) but radio_shows.stream_url column is stale — needs UPDATE to match",
+    "shows_in_db": [
+      {"title": "Dial-A-Daddy", "host": "Papa Bear", "artwork_url": null, "is_live": false, "is_active": true},
+      {"title": "Hand-in-Hand", "host": "HNH Collective", "artwork_url": null, "is_live": false, "is_active": true},
+      {"title": "Drive Time Mess", "host": "The Collective", "artwork_url": null, "is_live": false, "is_active": true},
+      {"title": "HOTMESS Nights", "host": "SMASH DADDYS", "artwork_url": null, "is_live": false, "is_active": true},
+      {"title": "Wake the Mess", "host": "DJ Chaos", "artwork_url": null, "is_live": false, "is_active": true}
+    ],
+    "local_audio_assets": [
+      "public/audio/radio-in.mp3",
+      "public/audio/radio-out.mp3",
+      "public/audio/hand-n-hand.mp3",
+      "public/audio/dial-a-daddy.mp3",
+      "public/audio/wake-the-mess.mp3"
+    ]
+  },
+  "music": {
+    "releases_total": 36,
+    "releases_with_artwork": 3,
+    "releases_with_spotify": 0,
+    "releases_with_apple_music": 0,
+    "releases_with_beatport": 0,
+    "releases_with_soundcloud": 4,
+    "releases_with_duplicates": true,
+    "duplicate_catalog_numbers": ["SD001", "SD002", "SD003", "SD004", "SD005", "SD006", "SD013", "SD014", "SD015", "SD-EP01", "RCR001"],
+    "artists_total": 8,
+    "artists_with_photo": 0,
+    "artists_with_placeholder_spotify": ["Smash Daddys"]
+  },
+  "label_artists": [
+    {"name": "Jon Hemming", "slug": "jon-hemming", "photo_url": null, "spotify_url": null, "soundcloud_url": "https://soundcloud.com/jonhemmingdj"},
+    {"name": "Nik Denton", "slug": "nik-denton", "photo_url": null, "spotify_url": null, "soundcloud_url": "https://soundcloud.com/nikdenton"},
+    {"name": "Paul King", "slug": "paul-king", "photo_url": null, "spotify_url": null, "soundcloud_url": null},
+    {"name": "RAW CONVICT", "slug": "raw-convict", "photo_url": null, "spotify_url": null, "soundcloud_url": "https://soundcloud.com/rawconvictrecords"},
+    {"name": "Smash Daddys", "slug": "smash-daddys", "photo_url": null, "spotify_url": "https://open.spotify.com/artist/PLACEHOLDER", "soundcloud_url": "https://soundcloud.com/rawconvictrecords", "warn": "PLACEHOLDER"},
+    {"name": "Stephen Nicholls", "slug": "stephen-nicholls", "photo_url": null, "spotify_url": null, "soundcloud_url": "https://soundcloud.com/stephennicholls"},
+    {"name": "Stewart Who?", "slug": "stewart-who", "photo_url": null, "spotify_url": null, "soundcloud_url": null},
+    {"name": "Tony English", "slug": "tony-english", "photo_url": null, "spotify_url": null, "soundcloud_url": "https://soundcloud.com/djtonyenglish"}
+  ],
+  "rcr_artists_from_site_data": [
+    {"slug": "paul-king", "ig": "@paulf1king", "ig_followers": 1435, "image": "provided"},
+    {"slug": "tony-english", "ig": "@mrtonyenglish", "ig_followers": 9149, "image": "provided"},
+    {"slug": "nik-denton", "ig": "@nikdentonmusic", "ig_followers": 2203, "image": "provided"},
+    {"slug": "jon-hemming", "ig": "@jon_hemming_dj", "ig_followers": null, "image": "provided"},
+    {"slug": "smash-daddy", "ig": "@rawconvictrecords", "ig_followers": 131, "image": "provided"},
+    {"slug": "stewart-who", "ig": "@djstewartwho", "ig_followers": 3377, "image": null}
+  ],
+  "clothing_brands": {
+    "RAW": {"type": "minimal swimwear", "in_db": false, "local_assets": ["public/images/products/raw/raw-briefs-white.jpg"]},
+    "HUNG": {"type": "varsity swimwear", "in_db": false, "local_assets": 8, "paths": ["hung-hero.jpg", "hung-editorial.jpg", "hung-tee-white.jpg", "hung-tee-yellow.jpg", "hung-tee-black.jpg", "hung-tee-white-folded.jpg", "hung-briefs-white.jpg", "hung-shorts-rear.jpg"]},
+    "HIGH": {"type": "full varsity streetwear", "in_db": false, "local_assets": "likely under essentials/"},
+    "SUPERHUNG": {"type": "limited edition swimwear", "in_db": false, "local_assets": 0},
+    "SUPERHIGH": {"type": "limited edition streetwear", "in_db": false, "local_assets": ["public/images/products/superhigh/superhigh-briefs-rear.jpg"]},
+    "ESSENTIALS": {"type": "hoodies/basics", "in_db": false, "local_assets": ["hoodie-flat", "hoodie-hood", "hoodie-chest", "essentials-logo"]}
+  },
+  "env_vars_full_audit": {
+    "client_side_vite": {
+      "set_in_env_local": ["VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY", "VITE_STRIPE_PUBLISHABLE_KEY", "VITE_MAPBOX_TOKEN", "VITE_TELEGRAM_BOT_USERNAME", "VITE_VAPID_PUBLIC_KEY", "VITE_SENTRY_DSN", "NEXT_PUBLIC_RADIOKING_STREAM_URL"],
+      "referenced_but_missing_locally": ["VITE_APP_VERSION", "VITE_MUSIC_UPLOAD_EMAILS", "VITE_OWNER_EMAIL", "VITE_MIXPANEL_TOKEN", "VITE_GA_MEASUREMENT_ID", "VITE_BOOT_DEBUG", "VITE_SENTRY_DEBUG", "VITE_ANALYTICS_DEBUG", "VITE_SHOPIFY_STORE_URL", "VITE_SHOPIFY_LUBE_VARIANT_ID", "VITE_STRIPE_CHROME_PRICE_ID", "VITE_STRIPE_PLUS_PRICE_ID", "VITE_GAMIFICATION_ENABLED", "VITE_XP_PURCHASING_ENABLED", "VITE_PUBLIC_URL"]
+    },
+    "server_side": {
+      "set_in_env_local": ["SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY", "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "OPENAI_API_KEY", "TELEGRAM_BOT_TOKEN", "NOTION_CLIENT_ID", "NOTION_CLIENT_SECRET", "NOTION_REDIRECT_URI", "VAPID_PRIVATE_KEY", "VAPID_PUBLIC_KEY", "TICKET_QR_SIGNING_SECRET", "SHOPIFY_SHOP_DOMAIN", "SHOPIFY_ADMIN_ACCESS_TOKEN", "SHOPIFY_STOREFRONT_ACCESS_TOKEN"],
+      "referenced_but_missing_locally": ["ANTHROPIC_API_KEY", "RESEND_API_KEY", "WHATSAPP_VERIFY_TOKEN", "CRON_SECRET", "QR_SIGNING_SECRET", "APP_URL", "ALLOWED_ORIGIN", "EMAIL_FROM", "SUPPORT_EMAIL", "PLATFORM_FEE_PERCENT", "VAPID_SUBJECT", "ROUTING_DIRECTIONS_STRICT", "GOOGLE_ROUTES_DRIVE_TRAFFIC_AWARE", "ENABLE_LOGGING", "TELEGRAM_WEBHOOK_SECRET", "SHOPIFY_ALLOWED_PRODUCT_HANDLES", "SUPABASE_SERVICE_KEY", "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"],
+      "note": "Missing-locally vars are assumed to be set in Vercel (Vercel deploys succeed + cron jobs work). Phil cannot run these features locally without adding them to .env.local"
+    },
+    "name_mismatches": [
+      {"env_local_has": "HOTMESSLDN", "code_expects": "VITE_GA_MEASUREMENT_ID", "note": "GA4 ID stored under wrong variable name"},
+      {"env_local_has": "SHOPIFY_STOREFRONT_TOKEN (duplicate, unused)", "code_expects": "SHOPIFY_STOREFRONT_ACCESS_TOKEN", "note": "Clean up the stale duplicate"},
+      {"env_local_has": "NEXT_PUBLIC_RADIOKING_STREAM_URL (Next.js prefix)", "code_expects": "import.meta.env.NEXT_PUBLIC_RADIOKING_STREAM_URL", "note": "Works because Vite exposes all NEXT_PUBLIC_ vars too, but unusual"}
+    ],
+    "legacy_to_cleanup": ["SHOPIFY_STORE_DOMAIN=1e0297-a4.myshopify.com (old store)", "VITE_BASE44_APP_BASE_URL + VITE_BASE44_APP_ID (legacy Base44)"]
+  },
+  "cron_jobs": [
+    {"path": "/api/events/cron", "schedule": "0 3 * * *", "purpose": "events refresh"},
+    {"path": "/api/notifications/process", "schedule": "*/5 * * * *", "purpose": "notification processing"},
+    {"path": "/api/notifications/dispatch", "schedule": "*/5 * * * *", "purpose": "notification dispatch"},
+    {"path": "/api/admin/cleanup/rate-limits", "schedule": "20 4 * * *", "purpose": "rate limit cleanup"},
+    {"path": "/api/cron/referral-rewards", "schedule": "15 */6 * * *", "purpose": "referral rewards"},
+    {"path": "/api/whatsapp/daily-summary", "schedule": "0 7 * * *", "purpose": "daily Claude brief"}
+  ],
+  "broken_urls": [
+    {"url": "radio.hotmessldn.com/radio.mp3", "source": "radio_shows × 5", "http": 0, "severity": "high", "fix": "UPDATE radio_shows SET stream_url = 'https://listen.radioking.com/radio/736103/stream/802454' — the real stream works, just DB column is stale"},
+    {"url": "rawconvictrecords.com", "source": "known brand URL", "http": 0, "severity": "medium", "fix": "DNS to Vercel or redirect to rawconvict-music.com"},
+    {"url": "open.spotify.com/artist/PLACEHOLDER", "source": "label_artists smash-daddys", "http": "would_404", "severity": "high", "fix": "Replace with real Spotify artist URL or NULL"}
+  ],
+  "gmail_audit_incomplete": {
+    "reason": "Gmail MCP connector was unresponsive during second-pass audit attempt at 2026-04-16T04:15Z",
+    "covered_by_brief": ["Hotels.com booking dispute (HIGH)", "Crazy Factory Order #17229424 (MEDIUM)", "Fieldings/Vinterior glass sculpture (OVERDUE)", "Karinna direct email BOUNCED", "Cursor £150.51 failing", "Render/Aqua billing (ignore list)", "Paris wholesale Pierre/Cruz Bar (active)", "RAWMASTER MusicTech pitch (2026-04-15)"],
+    "not_yet_queried": ["Inbound enquiries not yet replied", "Threads with no reply >5 days", "Legal WOW/Child and Child", "Medical Pulse Clinic/Chelwest/Julie", "LGBTQ+ press — any prior outreach?"],
+    "retry_when_gmail_mcp_is_up": true
+  },
+  "feature_status_35": {
+    "built_working": ["3D Globe/Pulse", "Live beacons", "Ghosted grid", "Boo/match", "Meet halfway", "SOS button", "Fake call", "Trusted contacts", "Chat/messages", "Radio show schedule", "Membership tiers", "Onboarding flow", "Age gate", "Google OAuth", "Apple Sign-In", "Phone OTP", "Referral system", "Push notifications", "WhatsApp pipeline", "Daily Claude brief", "Profile blocks", "Saved items"],
+    "built_broken": ["Radio stream", "Music catalogue", "Stripe subscriptions (verify)"],
+    "partial": ["Market Shop Shopify", "Market Preloved", "Boosts/power-ups", "Scene Scout AI", "Venue profiles", "Vault private photos", "Check-in timer"],
+    "concept": ["Market Drops", "Promoter tools", "Ticket orders"],
+    "dropped": []
+  },
+  "outreach": {
+    "active_disputes": [
+      {"subject": "Hotels.com booking 72072973855301", "urgency": "high", "status": "unresolved"},
+      {"subject": "Crazy Factory Order #17229424", "urgency": "medium", "status": "awaiting"}
+    ],
+    "overdue": [
+      {"contact": "Fieldings Auctioneers", "email": "info@fieldingsauctioneers.co.uk", "subject": "Karinna glass sculpture", "sent": "2026-03-23", "days_no_reply": 24},
+      {"contact": "Vinterior", "email": "info@vinterior.co", "subject": "Karinna glass sculpture", "sent": "2026-03-23", "days_no_reply": 24}
+    ],
+    "closed": [
+      {"contact": "Lyon & Turnbull", "outcome": "PASSED"}
+    ],
+    "bounced": [
+      {"contact": "Karinna Sellars direct", "action": "find_new_email"}
+    ],
+    "billing_failing": [
+      {"service": "Cursor", "amount_gbp": 150.51, "status": "payment_failing"}
+    ],
+    "billing_ignore_list": ["Aqua credit card", "Render unpaid notices"],
+    "press_sent": [
+      {"to": "MusicTech editors", "subject": "RAWMASTER pitch", "date": "2026-04-15", "status": "awaiting_reply"}
+    ],
+    "press_not_sent": ["PinkNews", "Gay Times", "Attitude", "Boyz", "QX", "GUYLINER", "Them.", "Out", "DIVA", "LGBTQ+ Nation", "Metro UK", "The Advocate"]
+  },
+  "press_targets": [
+    {"pub": "PinkNews", "contact": "site_form", "angle": "Tech response to LGBTQ+ venue closures", "hook_article": "https://www.thepinknews.com/2025/12/21/lgbtq-nightlife-feature/"},
+    {"pub": "Gay Times", "contact": "gaytimes.com", "angle": "Right to Dance report tie-in", "hook_article": "https://www.timeout.com/about/industry-perspectives/the-right-to-dance-033126"},
+    {"pub": "Attitude", "editor": "Cliff Joannou", "features_editor": "Jamie Tabberer", "address": "33 Pear Tree Street, London EC1V 3AG", "angle": "Solo founder app launch"},
+    {"pub": "The Advocate", "angle": "Counter-narrative to gay tech billionaires piece", "hook_article": "https://www.advocate.com/cover-stories/gay-tech-billionaires-betray-lgbtq"}
+  ],
+  "partnership_contacts": [
+    {"org": "Albert Kennedy Trust", "general": "contact@akt.org.uk", "press": "press@akt.org.uk", "angle": "LGBTQ+ youth safety"},
+    {"org": "Stonewall UK", "press": "press.office@stonewall.org.uk", "angle": "Corporate partnership / tech"},
+    {"org": "LGBT Foundation", "general": "info@lgbt.foundation", "press": "media@lgbt.foundation", "angle": "Community health"},
+    {"org": "Galop", "website": "galop.org.uk", "angle": "Hate crime + SOS"},
+    {"org": "GMFA / LGBT HERO", "website": "lgbthero.org.uk", "angle": "Gay men's health"}
+  ],
+  "content_hooks": [
+    {"title": "The fight to keep LGBTQ+ venues from disappearing", "pub": "PinkNews", "date": "2025-12-21", "url": "https://www.thepinknews.com/2025/12/21/lgbtq-nightlife-feature/"},
+    {"title": "G-A-Y Bar announces permanent closure", "pub": "PinkNews", "date": "2025-10-02", "url": "https://www.thepinknews.com/2025/10/02/g-a-y-bar-to-close-its-doors-for-good/"},
+    {"title": "The Right to Dance: Queer nightlife 2026", "pub": "Time Out + Gay Times", "date": "2026-03", "url": "https://www.timeout.com/about/industry-perspectives/the-right-to-dance-033126"},
+    {"title": "World Cup 2026 LGBTQ+ travel safety", "pub": "PinkNews", "date": "2026-01-27", "url": "https://www.thepinknews.com/2026/01/27/world-cup-2026-lgbtq-safety/"},
+    {"title": "Have gay tech titans turned their backs?", "pub": "The Advocate", "date": "2025-12", "url": "https://www.advocate.com/cover-stories/gay-tech-billionaires-betray-lgbtq"}
+  ],
+  "awaiting_phil_signoff": {
+    "critical": [
+      "Radio stream DOWN — decide restart vs deprecate",
+      "Stripe price IDs don't match live Stripe — verify account/mode",
+      "Hotels.com dispute ongoing",
+      "Cursor £150.51 failing"
+    ],
+    "high": [
+      "Music metadata backfill (33/36 artwork, 36/36 streaming URLs)",
+      "Label artist photos (8 artists, 0 photos)",
+      "Smash Daddys Spotify PLACEHOLDER",
+      "label_releases dedupe",
+      "rawconvictrecords.com DNS",
+      "radio_shows artwork × 5",
+      "Market real products (HNH MESS + clothing)",
+      "Clothing brand storefront wiring"
+    ],
+    "medium": [
+      "WhatsApp webhook verify",
+      "notification_outbox empty investigation",
+      "Fieldings + Vinterior chase",
+      "Karinna new email",
+      "Press pitches × 10",
+      "Partnership outreach × 5",
+      "Safety feature adoption UX",
+      "Age gate funnel (16%)"
+    ],
+    "low": [
+      "40+ stale Vercel projects cleanup",
+      "dist/dist2/dist_old cleanup",
+      "5 plugin projects without Gumroad — SCATTER/RUST/FROST/HAZE/CRUSH launch plan",
+      "DJ Bookability Scorecard + Nightlife Promoter Starter Kit confirm"
+    ]
+  },
+  "not_audited": [
+    "Frontend Supabase project klsywpvncqqglhnhrjbh (different org — not reachable via my Supabase MCP)",
+    "Edge Functions Supabase project axxwdjmbwkvqhcpwters",
+    "Full Gmail thread catalogue (Gmail MCP down during second pass — retry when available)",
+    "Vercel-side env vars not in .env.local (inferred working from deploy success, not directly listed)",
+    "Stripe products/subscriptions (Stripe MCP pointing at different account — need reconnect)"
+  ]
+}

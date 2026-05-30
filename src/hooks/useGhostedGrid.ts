@@ -19,7 +19,6 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { calculateDistance } from '@/lib/locationUtils';
 import type { GhostedCardProps, GhostedBeaconBadge } from '@/components/ghosted/GhostedCard';
 import useV6Flag from '@/hooks/useV6Flag';
-import { safeName } from '@/lib/identity/safeName';
 import {
   BEACON_CATEGORY_COLORS,
   BEACON_NEUTRAL_RING,
@@ -54,26 +53,6 @@ export interface UseGhostedGridReturn {
 /** Round to nearest 10m for privacy */
 function roundDistance(meters: number): number {
   return Math.round(meters / 10) * 10;
-}
-
-/**
- * #368 (Phil 2026-05-30): online dot stabiliser.
- * The presence cron updates profiles.is_online every ~5 min via
- * usePresenceHeartbeat. Between heartbeats the boolean can be stale —
- * a user who closed the tab still reads is_online=true until the cron
- * sweeps them. Result: flicker as the grid refetches and downstream
- * components see the boolean toggle between fetches.
- *
- * Require both the flag AND last_seen within the past 5 minutes. If
- * is_online without a last_seen timestamp, trust the flag (no signal
- * to override). This dampens the dot without removing the feature.
- */
-function isStablyOnline(p: { is_online?: boolean | null; last_seen?: string | null }): boolean {
-  if (!p.is_online) return false;
-  if (!p.last_seen) return true;
-  const lastSeenMs = new Date(p.last_seen).getTime();
-  if (!Number.isFinite(lastSeenMs)) return true;
-  return Date.now() - lastSeenMs <= 5 * 60 * 1000;
 }
 
 /** Fuzzy time label: "just now", "5 min", "1h ago" */
@@ -381,7 +360,7 @@ export function useGhostedGrid(
         return {
           id: t.id,
           participantId: profile?.id || '',
-          participantName: safeName(profile),  // #368: was || 'Unknown' — safeName drops to 'Member'.
+          participantName: profile?.display_name || 'Unknown',
           participantAvatar: profile?.avatar_url || null,
           lastMessage: t.last_message,
           lastMessageAt: t.last_message_at,
@@ -431,16 +410,10 @@ export function useGhostedGrid(
 
         return {
           id: p.id,
-          // #368 (Phil 2026-05-30): doctrine identity. safeName drops to
-          // 'Member' — same fallback as inbox/thread (post-#364). No '?', no
-          // fake initials. Username intentionally NOT a fallback (could be
-          // email-derived); only display_name.
-          name: safeName({ display_name: p.display_name }),
+          name: p.display_name || p.username || '?',
           avatarUrl: avatar,
           distanceM: distanceM != null ? roundDistance(distanceM) : null,
-          // #368: stabilised online — require is_online AND last_seen <5m
-          // so the dot doesn't flicker between 30s heartbeat refetches.
-          isOnline: isStablyOnline(p),
+          isOnline: !!p.is_online,
           isVerified: !!p.is_verified,
           contextType,
           contextLabel,
@@ -504,14 +477,10 @@ export function useGhostedGrid(
 
         return {
           id: p.id,
-          // #368: doctrine identity (see nearbyCards).
-          name: safeName({ display_name: p.display_name }),
+          name: p.display_name || p.username || '?',
           avatarUrl: avatar,
           distanceM: distanceM != null ? roundDistance(distanceM) : null,
-          // #368: live mode previously passed `isOnline: true` unconditionally
-          // — faking a heartbeat the user may not have sent. Use the same
-          // stabiliser so a stale flag without recent last_seen reads offline.
-          isOnline: isStablyOnline({ is_online: true, last_seen: p.last_seen }),
+          isOnline: true,
           isVerified: !!p.is_verified,
           contextType,
           contextLabel,
@@ -542,11 +511,10 @@ export function useGhostedGrid(
 
         return {
           id: p.id,
-          // #368: doctrine identity.
-          name: safeName({ display_name: p.display_name }),
+          name: p.display_name || p.username || '?',
           avatarUrl: avatar,
           distanceM: distanceM != null ? roundDistance(distanceM) : null,
-          isOnline: isStablyOnline(p),
+          isOnline: !!p.is_online,
           isVerified: !!p.is_verified,
           contextType,
           contextLabel,
