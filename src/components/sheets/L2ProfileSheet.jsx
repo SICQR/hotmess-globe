@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
 import {
-  MessageCircle, Plane,
+  MessageCircle,
   Loader2, MoreVertical, Flag, Ban, X, Ghost,
   Footprints, Bike, Car, Heart, Video, ShoppingBag, Music,
 } from 'lucide-react';
@@ -25,10 +25,8 @@ import { useTaps } from '@/hooks/useTaps';
 import { useV6Flag } from '@/hooks/useV6Flag';
 import { ProfileProximityPanel } from '@/components/profile/ProfileProximityPanel';
 import VaultAccessRequest from '@/components/messaging/VaultAccessRequest';
-import ProfileMediaStack from '@/components/profile/ProfileMediaStack';
 import ProfileBeaconsSection from '@/components/profile/ProfileBeaconsSection';
 import MutualStateOverlay from '@/components/profile/MutualStateOverlay';
-import IntentLayer from '@/components/profile/IntentLayer';
 import RecoveryStateCard from '@/components/profile/RecoveryStateCard';
 import useProfileDwell from '@/hooks/useProfileDwell';
 import useRecoveryState from '@/hooks/useRecoveryState';
