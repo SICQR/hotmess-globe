@@ -103,11 +103,21 @@ export default function OnboardingRouter() {
   // Telemetry: abandon listener — fire 'onboarding_abandoned' if the user
   // closes the tab/window mid-flow (i.e. screen is set but not complete).
   // Uses navigator.sendBeacon for delivery reliability past page-unload.
+  //
+  // 2026-05-30 (#346): added visibilitychange:hidden alongside beforeunload.
+  // iOS Safari + Chrome mobile suppress beforeunload on swipe-close, which
+  // hid the Notifications-screen abandonment cliff identified in #344.
+  // visibilitychange:hidden fires reliably on backgrounding + swipe-close.
+  // Both fire in tab-close on desktop, hence the dedupe ref.
   useEffect(() => { screenRef.current = screen; }, [screen]);
   useEffect(() => {
-    const handler = () => {
+    // Dedupe across both events — desktop fires both; we only want one row.
+    let fired = false;
+    const fireAbandonment = () => {
+      if (fired) return;
       const s = screenRef.current;
       if (!s || s === SCREENS.COMPLETE) return;
+      fired = true;
       try {
         navigator.sendBeacon?.(
           '/api/analytics/track',
@@ -122,8 +132,15 @@ export default function OnboardingRouter() {
         );
       } catch { /* swallow — analytics must never block unload */ }
     };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') fireAbandonment();
+    };
+    window.addEventListener('beforeunload', fireAbandonment);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('beforeunload', fireAbandonment);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, []);
 
   // Determine which screen to show
@@ -458,3 +475,4 @@ export default function OnboardingRouter() {
       return null;
   }
 }
+
