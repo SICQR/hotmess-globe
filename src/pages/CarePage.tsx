@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalPullToRefresh } from '@/hooks/useLocalPullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
+import { AtmosphericImageCard } from '@/components/brand/AtmosphericImageCard';
 
 
 
@@ -84,6 +85,15 @@ export default function CarePage() {
             Whether it's after a night out or just a tough day — we've got you.
           </p>
         </motion.div>
+
+        {/* Atmospheric inhabited card — image-led, sits below the icon-led
+            intro hero. Phil 2026-05-30: "Imagery should make HOTMESS feel
+            INHABITED, not decorated." */}
+        <AtmosphericImageCard
+          imageUrl="https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/hotmess/campaign-after-midnight.png"
+          copy="After midnight, keep a way back."
+          aspect="21/9"
+        />
 
         {/* Aftercare tips */}
         <div>
