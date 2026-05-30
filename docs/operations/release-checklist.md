@@ -43,9 +43,52 @@ The SW is stamped per-build (PR #90 — `scripts/stamp-sw.mjs` runs after `vite 
 
 This means: a green Vercel deploy does NOT mean every active user sees the new build. Smoke test in a fresh window before claiming success.
 
+## Post-doctrine ship — rendered UI vocabulary walk
+
+Phil-locked 2026-05-30 after a live audit caught a D15 violation that grep
+had missed (the offending string was in a DB row, not in source).
+
+Whenever a PR ships that touches a D15-governed surface — care copy, Ghosted,
+routing, onboarding, check-ins, SOS, push notifications, marketplace, live
+presence, comedown states, moderation voice, or radio interstitials — the
+ship is not complete until the rendered UI on production has been walked
+live and visually verified to contain no D15 §5 forbidden vocabulary.
+
+**Grep is not enough.** Copy lives in:
+- React component strings (caught by grep on the repo)
+- Supabase rows (e.g. `district_editorial_profiles.blurb`)
+- JSON seed files (`public/data/cities/*.json`)
+- Dynamic templates (notification body builders, email renderers)
+- AI-generated text returned from `/api/ai/*` endpoints
+- Third-party content (Shopify product descriptions, etc.)
+
+Only a live walk catches all of these.
+
+Process for every doctrine-adjacent ship:
+
+1. **Open the changed surface on production** — `hotmessldn.com`, not a
+   preview URL. SW cache + dynamic content only match production state.
+2. **Walk every visible copy line** that could be related. Read each one
+   through the smoking-area test (D15 §2): would this sound right at 4am
+   outside a venue?
+3. **Search the rendered DOM** for the forbidden vocabulary list (D15 §5):
+   `sober`, `quiet space`, `soft landing`, `wellness`, `self-care`, `room`
+   (unless literal), `journey` (state-meaning), `safe space`, `wellbeing`,
+   `support nearby`, `reach out`, `centre yourself`, `we're here for you`.
+4. **Cross-check both states** of any conditional copy — e.g. the
+   `careCopy(hour)` time-of-day branches all need to be checked, not just
+   the one currently rendering.
+5. **If any line fails:** ship the fix before the doctrine ship is
+   considered complete. Same wave.
+
+This applies even when the doctrine PR doesn't itself touch user-visible
+copy. Drift from neighbour components, DB seeds, and dynamic content all
+surface independently and would have shipped silently.
+
 ## Cross-references
 
 - `docs/doctrine/11-arrival-state-doctrine.md` — Single Auth Authority, no Silent State Death
 - `docs/doctrine/12-drop-beacon-doctrine.md` — Drop Beacon entity separation
+- `docs/doctrine/15-care-language-doctrine.md` — HOTMESS Care Language; the rendered-UI walk above enforces this doctrine.
 - `docs/operations/` — operational runbooks
 - `scripts/stamp-sw.mjs` — per-build SW stamp implementation
