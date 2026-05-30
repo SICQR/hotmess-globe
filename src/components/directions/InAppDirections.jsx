@@ -20,6 +20,10 @@ import { safeGetViewerLatLng } from '@/utils/geolocation';
 import { decodeGooglePolyline } from '@/utils/googlePolyline';
 import { buildUberDeepLink } from '@/utils/uberDeepLink';
 import { supabase } from '@/components/utils/supabaseClient';
+// D12 Slice 2 / #303 Phase A — first-class entity_kind + intent readers.
+// These prefer the new beacon.entity_kind + beacon.intent columns and fall
+// back to the legacy metadata shim for unbackfilled rows.
+import { isAftercare, isCuratedEditorial } from '@/lib/beacons/beaconKind';
 import { cn } from '@/lib/utils';
 
 /**
@@ -168,11 +172,18 @@ const ensureConstellationKeyframes = () => {
 // Decide the constellation colour for a base-table beacon row.
 // Reads the FULL metadata (not pulse_signals' stripped projection), so the
 // curated vs care distinction stays honest at the source — per Phil's lock.
+//
+// D12 Slice 2 / #303 Phase A dual-read: prefer first-class entity_kind +
+// intent + metadata.kind (now mirrored through pulse_signals view too).
+// Falls back to legacy metadata.curated for unbackfilled rows.
 const constellationColourFor = (b) => {
-  const meta = b?.metadata || {};
-  const kind = (meta.kind || '').toLowerCase();
-  if (kind === 'district' || kind === 'hotmess') return CURATED_COLOR;
-  if (meta.curated === true && kind !== 'care') return CURATED_COLOR;
+  // Curated editorial (kind = district / hotmess) → gold. Helper checks both
+  // first-class and metadata-shim paths, gracefully.
+  if (isCuratedEditorial(b)) return CURATED_COLOR;
+  // Aftercare (first-class intent or legacy beacon_category) → cream.
+  if (isAftercare(b)) return CARE_COLOR;
+  // Default care colour for anything else that landed in the constellation
+  // bbox query (curated rows without district/hotmess kind read as care).
   return CARE_COLOR;
 };
 

@@ -27,6 +27,11 @@ export const ICON_MIN_ZOOM = 11;
 // Warming etc.) — locks Doctrine 11's visual contract that operator editorial
 // voice is distinct from user-hosted event invites. Care nudged from clinical
 // white to cream so it feels soft, not sterile.
+
+// D12 Slice 2 / #303 Phase A dual-read helpers — single point of truth for
+// reading the new entity_kind / intent columns with legacy fallback.
+import { readEntityKind, isAftercare } from '@/lib/beacons/beaconKind';
+
 export const CATEGORY_COLOR = {
   editorial: '#C8962C', // brand gold — curated district pulse
   events: '#FF4F9A',
@@ -94,6 +99,25 @@ function isApprox(b) {
 }
 
 export function categoryOf(b) {
+  // D12 Slice 2 / #303 Phase A dual-read: prefer the first-class entity_kind
+  // and intent columns when present. Falls back to the legacy field regex
+  // below for rows that haven't been backfilled yet (or realtime payloads
+  // received mid-migration). External contract unchanged — same return values
+  // in the same priority order.
+  if (isAftercare(b)) {
+    // Care wins regardless of curated flag (curated aftercare is care, not
+    // editorial). Mirrors the existing legacy regex branch below.
+    return 'care';
+  }
+  const firstClassKind = readEntityKind(b);
+  if (firstClassKind === 'event' && !isCurated(b)) {
+    // Non-curated events keep the events colour. Curated event-shapes
+    // (district reads dressed as events) still flow through the editorial
+    // check below.
+    return 'events';
+  }
+  if (firstClassKind === 'venue') return 'venues';
+
   const all = `${field(b, 'kind')} ${field(b, 'beacon_category', 'category')} ${field(b, 'type')}`;
   // Curated district editorial — operator-placed atmospheric reads, not real
   // events. Must paint in brand gold so the user can tell editorial voice
