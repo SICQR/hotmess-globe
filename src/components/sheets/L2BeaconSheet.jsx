@@ -1054,11 +1054,26 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
   };
 
   // Time-remaining string for the sheet header chip.
+  //
+  // Persistent / curated / far-future beacons MUST NOT display a countdown.
+  // The seeding doctrine (D14 Slice 2 care anchors) sets ends_at to a far
+  // future timestamp deliberately — the venue's actual operating window
+  // lives in body copy, not in the lifecycle. Without this guard the
+  // header reads "13942h 49m" for a care anchor, which looks broken.
+  //
+  // Rules:
+  //  - is_persistent === true  → no countdown
+  //  - metadata.curated === true → no countdown (operator-placed editorial)
+  //  - ends_at > 7 days out → no countdown (reads as ongoing, not now)
+  //  - else show "h+ Xh Ym" or "Ym" — same as before
   const endsAtMs = beacon.ends_at ? new Date(beacon.ends_at).getTime() : null;
   const remaining = (() => {
     if (!endsAtMs || !Number.isFinite(endsAtMs)) return null;
+    if (beacon.is_persistent === true) return null;
+    if (beacon.metadata && beacon.metadata.curated === true) return null;
     const diff = endsAtMs - Date.now();
     if (diff <= 0) return 'ended';
+    if (diff > 7 * 24 * 3_600_000) return null;
     const h = Math.floor(diff / 3_600_000);
     const m = Math.floor((diff % 3_600_000) / 60_000);
     if (h > 0) return `${h}h ${m}m`;
