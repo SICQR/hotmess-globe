@@ -28,7 +28,7 @@
  * └─────────────────────────────────────────┘
  */
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -285,6 +285,15 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   const [showReceipt, setShowReceipt] = useState(false);
   const [orderTotal, setOrderTotal] = useState<number | null>(null);
   const [isSyncing, setIsSyncing] = useState(true);
+
+  // Market hero carousel — Phil 2026-05-30 design lock. Three engine-mapped
+  // brand campaigns rotate at the top of Market. Tap a slide → switch engine
+  // tab. D16 §2/§7: CENTER zone, content card, no floating elements.
+  // Phil 2026-05-30 lock: static hero only — HNH MESS, no carousel.
+  // Tap → SHOP engine. Plain <img>, no scroll-snap, no touch handlers,
+  // no interference with parent vertical scroll.
+  const HERO_URL = 'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/market/hnh-boys-have-fun.png';
+  const [heroImgFailed, setHeroImgFailed] = useState(false);
 
   // ---- Auto-open receipt on success & Sync Status ----
   useEffect(() => {
@@ -550,6 +559,44 @@ export function MarketMode({ className = '' }: MarketModeProps) {
       </div>
 
       {/* ================================================================== */}
+      {/* STATIC HERO — Phil 2026-05-31: single HNH MESS image, no carousel.  */}
+      {/* Plain <img> tag, no scroll-snap, no touch handlers — guaranteed     */}
+      {/* not to interfere with parent vertical scroll. Tap → SHOP engine.    */}
+      {/* D16 §2/§7: CENTER zone, content card.                               */}
+      {/* ================================================================== */}
+      <div className="flex-shrink-0 px-4 pt-2 pb-2">
+        <button
+          type="button"
+          aria-label="HNH BOYS HAVE FUN. Tap to browse the shop."
+          onClick={() => handleEngineSwitch('shop')}
+          className="block relative w-full overflow-hidden rounded-2xl border border-white/5 active:opacity-90 transition-opacity"
+          style={{ aspectRatio: '16 / 9', background: '#0a0a0a' }}
+        >
+          {!heroImgFailed && (
+            <img
+              src={HERO_URL}
+              alt=""
+              loading="eager"
+              onError={() => setHeroImgFailed(true)}
+              className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
+              draggable={false}
+              style={{ display: 'block' }}
+            />
+          )}
+          {heroImgFailed && (
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ background: 'linear-gradient(180deg, rgba(10,10,10,0.7) 0%, rgba(10,10,10,0.95) 100%)' }}
+            >
+              <p className="text-white font-black uppercase tracking-wider text-xl text-center px-4">
+                HNH BOYS HAVE FUN
+              </p>
+            </div>
+          )}
+        </button>
+      </div>
+
+      {/* ================================================================== */}
       {/* ENGINE CONTENT                                                       */}
       {/* ================================================================== */}
       <AnimatePresence mode="wait">
@@ -612,3 +659,4 @@ export function MarketMode({ className = '' }: MarketModeProps) {
 }
 
 export default MarketMode;
+
