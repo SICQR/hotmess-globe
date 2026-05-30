@@ -1,28 +1,29 @@
 /**
  * CarePage — Hand N Hand wellbeing page
  *
- * Phil 2026-05-30 design lock: full-bleed atmospheric hero as the page
- * opener — image-led, not icon-led. Split-colour headline (cream / pink),
- * subhead, integrated 4-action chip row sitting inside the hero. Existing
- * aftercare tips + resources unchanged below.
+ * Phil 2026-05-30 design lock: hero is a fully-designed PNG comp (CARE label,
+ * split-colour headline, subhead, and 4-chip action row all baked in). Code
+ * adds only:
+ *   1. The minimal back-button header
+ *   2. An invisible interactive grid positioned over the in-image chip row
+ *      so the four actions route correctly
+ *   3. A graceful fallback inside AtmosphericImageCard for the pre-asset state
+ *
+ * Below the hero: existing Aftercare tips + Resources unchanged.
  *
  * Rule (Phil verbatim): "Imagery should make HOTMESS feel INHABITED, not
  * decorated."
- *
- * Hero asset is pending upload to brand-assets/care/. The inline onError
- * fallback covers the pre-upload state with a dark surface so copy + chips
- * remain readable.
  */
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Users, ShieldPlus, Heart } from 'lucide-react';
+import { ArrowLeft, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalPullToRefresh } from '@/hooks/useLocalPullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
+import { AtmosphericImageCard } from '@/components/brand/AtmosphericImageCard';
 
 const GOLD = '#C8962C';
-const PINK = '#FF4F9A';
 
 const HERO_IMAGE =
   'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/care/after-midnight-keep-a-way-back.png';
@@ -41,10 +42,10 @@ const RESOURCES = [
 ];
 
 const ACTIONS = [
-  { icon: CheckCircle2, title: 'CHECK IN',    body: "Let someone know you're out.",              to: '/safety' },
-  { icon: Users,        title: 'YOUR PEOPLE', body: 'Share your status with trusted contacts.',  to: '/safety' },
-  { icon: ShieldPlus,   title: 'GET HELP',    body: 'Find support, fast.',                       to: '/safety' },
-  { icon: Heart,        title: 'AFTERCARE',   body: 'Resources for body, mind and more.',        to: '#aftercare-tips' },
+  { label: 'Check in',    to: '/safety' },
+  { label: 'Your people', to: '/safety' },
+  { label: 'Get help',    to: '/safety' },
+  { label: 'Aftercare',   to: '#aftercare-tips' },
 ];
 
 export default function CarePage() {
@@ -52,7 +53,6 @@ export default function CarePage() {
   const queryClient = useQueryClient();
   const scrollRef = useRef<HTMLDivElement>(null);
   const tipsAnchorRef = useRef<HTMLDivElement>(null);
-  const [heroFailed, setHeroFailed] = useState(false);
 
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries();
@@ -73,7 +73,7 @@ export default function CarePage() {
 
   return (
     <div className="h-full w-full flex flex-col text-white" style={{ background: '#050507' }}>
-      {/* Minimal nav header — back affordance only; CARE label sits in the hero. */}
+      {/* Minimal nav header — back affordance only; the rest is in the hero. */}
       <div
         className="sticky top-0 z-30 px-4"
         style={{ background: 'rgba(5,5,7,0.6)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
@@ -95,105 +95,45 @@ export default function CarePage() {
       <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum pb-24">
         <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
 
-        {/* HERO — full-bleed atmospheric inhabited block */}
+        {/* HERO — Phil's full designed comp. The PNG carries the CARE label,
+            split-colour headline, subhead, and visible chip row. The invisible
+            grid below positions over the in-image chip row and routes the four
+            actions. Aspect 3/2 matches the comp's source proportions. */}
         <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4 }}
-          className="relative w-full overflow-hidden"
-          style={{ aspectRatio: '3 / 4', maxHeight: '88vh', background: '#0a0a0a' }}
-          aria-label="After midnight, keep a way back."
+          className="px-3 pt-3"
         >
-          {!heroFailed && (
-            <img
-              src={HERO_IMAGE}
-              alt=""
-              onError={() => setHeroFailed(true)}
-              className="absolute inset-0 w-full h-full object-cover"
-              style={{ display: 'block' }}
-            />
-          )}
-
-          {/* Atmospheric overlay — left-shaded so headline reads against any
-              photographic content; bottom-shaded so the chip row sits on a
-              graded dark band. */}
-          <div
-            aria-hidden
-            className="absolute inset-0"
-            style={{
-              background: heroFailed
-                ? 'linear-gradient(180deg, rgba(10,10,10,0.6) 0%, rgba(10,10,10,0.95) 100%)'
-                : 'linear-gradient(90deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 45%, rgba(0,0,0,0) 75%), linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,0.85) 100%)',
-            }}
-          />
-
-          {/* CARE overline */}
-          <div className="absolute left-5 sm:left-7 top-5 sm:top-7 text-[11px] tracking-[0.32em] font-bold text-white/90 select-none">
-            CARE
-          </div>
-
-          {/* Split-colour headline */}
-          <h1
-            className="absolute left-5 sm:left-7 right-5 font-black uppercase leading-[0.92]"
-            style={{
-              top: '22%',
-              fontSize: 'clamp(40px, 11vw, 76px)',
-              letterSpacing: '-0.02em',
-              textShadow: '0 2px 18px rgba(0,0,0,0.55)',
-            }}
+          <AtmosphericImageCard
+            imageUrl={HERO_IMAGE}
+            copy="After midnight, keep a way back."
+            aspect="3/2"
+            ariaLabel="Care — After midnight, keep a way back. Check in, your people, get help, aftercare."
           >
-            <span style={{ color: '#FAEFE2' }}>AFTER<br />MIDNIGHT,<br /></span>
-            <span style={{ color: PINK }}>KEEP A WAY<br />BACK.</span>
-          </h1>
-
-          {/* Subhead */}
-          <p
-            className="absolute left-5 sm:left-7 right-5 text-white/85 text-sm sm:text-base font-medium leading-snug max-w-xs"
-            style={{ top: 'calc(22% + clamp(190px, 48vw, 340px))' }}
-          >
-            For the nights that get good. Or go sideways.
-          </p>
-
-          {/* Action chip row */}
-          <div
-            className="absolute left-3 right-3 bottom-3 rounded-2xl px-3 py-3 sm:px-4 sm:py-4 grid grid-cols-2 sm:grid-cols-4 gap-3"
-            style={{
-              background: 'rgba(8,8,10,0.62)',
-              backdropFilter: 'blur(18px)',
-              WebkitBackdropFilter: 'blur(18px)',
-              border: '1px solid rgba(255,255,255,0.06)',
-            }}
-          >
-            {ACTIONS.map((a) => {
-              const Icon = a.icon;
-              return (
+            {/* Invisible interactive grid — positioned over the chip row
+                area at the bottom ~28% of Phil's comp. Each cell is a
+                button with an aria-label for screen readers; visually
+                transparent so the rendered comp stays clean. */}
+            <div
+              className="absolute left-0 right-0 grid grid-cols-4"
+              style={{ top: '72%', bottom: 0 }}
+            >
+              {ACTIONS.map((a) => (
                 <button
-                  key={a.title}
+                  key={a.label}
                   onClick={() => handleAction(a.to)}
-                  className="flex items-start gap-2 text-left active:opacity-75 transition-opacity"
-                >
-                  <span
-                    className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center"
-                    style={{ background: 'rgba(255,79,154,0.12)' }}
-                  >
-                    <Icon className="w-4 h-4" style={{ color: PINK }} />
-                  </span>
-                  <span className="flex flex-col leading-tight min-w-0">
-                    <span className="text-[11px] sm:text-[12px] font-black tracking-[0.06em]" style={{ color: PINK }}>
-                      {a.title}
-                    </span>
-                    <span className="text-[11px] sm:text-[12px] text-white/75 leading-snug">
-                      {a.body}
-                    </span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                  aria-label={a.label}
+                  className="w-full h-full active:bg-white/10 transition-colors"
+                  style={{ background: 'transparent' }}
+                />
+              ))}
+            </div>
+          </AtmosphericImageCard>
         </motion.section>
 
         {/* Aftercare tips */}
-        <div ref={tipsAnchorRef} className="px-4 pt-8 space-y-8">
+        <div ref={tipsAnchorRef} id="aftercare-tips" className="px-4 pt-8 space-y-8">
           <div>
             <h3 className="text-xs uppercase tracking-widest text-white/40 mb-3 font-semibold">Aftercare tips</h3>
             <div className="grid grid-cols-2 gap-3">
