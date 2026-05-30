@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
 import { Heart, X } from 'lucide-react';
 
-// Care-first emotional rendering (docs/GLOBE_EMOTIONAL_RENDERING_AND_NIGHTLIFE_PSYCHOLOGY.md):
-// "care dressed as kink" — a calm, low-stimulation cue in local mode that keeps care
-// quietly present and shifts toward decompression as the night gets late. No pulse,
-// no pressure, dismissible. Pure presentational; copy adapts to the hour.
+// Care-first emotional rendering — D15 voice (docs/doctrine/15-care-language-doctrine.md).
+// Calm, low-stimulation cue that keeps care quietly present and shifts tone as the
+// night moves. No pulse, no pressure, dismissible. Copy adapts to the hour.
+//
+// D15 §0: care shouldn't sound sanitised — should sound like nightlife people
+// taking care of each other in nightlife language. Every line below passes the
+// smoking-area test. No "sober rooms", no "sober support", no "quiet spaces",
+// no "soft landing" — those failed the test (D15 §5 forbidden vocabulary).
 export function careCopy(hour) {
   const h = Number.isFinite(hour) ? hour : 22;
-  if (h >= 0 && h < 6) return 'The night is winding down — sober rooms and aftercare are close by.';
-  if (h >= 6 && h < 17) return 'Care is never far — sober support and quiet spaces sit beside the scene.';
-  return 'However the night goes — aftercare, sober rooms and a soft landing are nearby.';
+  // Late / wind-down hours: people coming down, going home, holding on.
+  if (h >= 0 && h < 6) return 'Coming down. Aftercare close by. Stay near.';
+  // Daytime: aftercare and walk-ins are reachable, no fuss.
+  if (h >= 6 && h < 17) return "Aftercare's open. Walk-in. Step inside if you need it.";
+  // Evening into night: the lift, but care stays in reach for whatever the night becomes.
+  return "Care close by. Whatever tonight becomes — still open.";
 }
 
 export default function CareDecompressionCue() {
