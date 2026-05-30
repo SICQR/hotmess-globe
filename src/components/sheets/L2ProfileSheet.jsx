@@ -1268,15 +1268,9 @@ export default function L2ProfileSheet({ email, uid, id }) {
           />
         )}
 
-        {/* Bio section (if no content cards) */}
-        {!rightNowStatus && listings.length === 0 && !isCreator && profileUser.bio && (
-          <div
-            className="rounded-2xl p-4"
-            style={{ background: '#1C1C1E', border: '1px solid rgba(255,255,255,0.08)' }}
-          >
-            <p className="text-white/70 text-sm leading-relaxed">{profileUser.bio}</p>
-          </div>
-        )}
+        {/* Bio fallback block removed — duplicate of the inline bio render
+            ~170 lines above. D262 dignity-floor invariant: render each
+            piece of identity once. (#378) */}
       </div>
 
       {/* ── Logistics block — descent into operational (bible Part 7 +
