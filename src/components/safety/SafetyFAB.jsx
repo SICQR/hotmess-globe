@@ -25,7 +25,6 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Phone, Clock, X, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -35,6 +34,7 @@ import CheckInTimerModal from '@/components/safety/CheckInTimerModal';
 import SOSHoldButton from '@/components/safety/SOSHoldButton';
 import { useCheckinTimer } from '@/contexts/CheckinTimerContext';
 import { useSOSContext } from '@/contexts/SOSContext';
+import { useSurfaceVisibility } from '@/lib/surfaceLayers';
 
 const TOKENS = {
   ink: '#050507',
@@ -375,10 +375,19 @@ function SafetyFABInner() {
  * /safety, where the page has its own dedicated SOS surface and a second
  * floating control would create two competing SOS interactions.
  */
+/**
+ * SafetyFAB wrapper — visibility delegated to D16 §3 (Surface Layer Doctrine).
+ * The `useSurfaceVisibility('safety-fab')` hook reads the canonical hide-rules
+ * matrix from `src/lib/surfaceLayers.ts`. To change when this FAB hides,
+ * update D16 §3 and the hook — do not patch route checks here.
+ *
+ * Current rules (D16 §3):
+ *   - Hidden on /safety (page owns its own SOS surface)
+ *   - Hidden when any L2 sheet is open (covering people's faces — fixed in #395)
+ */
 export default function SafetyFAB() {
-  const { pathname } = useLocation();
-  if (pathname === '/safety' || pathname.startsWith('/safety/')) {
-    return null;
-  }
+  const { visible } = useSurfaceVisibility('safety-fab');
+  if (!visible) return null;
   return <SafetyFABInner />;
 }
+

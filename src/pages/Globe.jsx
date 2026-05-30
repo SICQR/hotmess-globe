@@ -626,6 +626,31 @@ export default function GlobePage({ embedded = false }) {
                   { enableHighAccuracy: true, timeout: 8000 },
                 );
               }} />
+
+              {/* Drop Beacon — primary WRITE action for the person-axis (D12).
+                  D16 §7: lives at the bottom of the right rail. Previously
+                  absolute-positioned BOTTOM-RIGHT — collided with both
+                  SafetyFAB and the rail's Me button (Phil 2026-05-30 screenshot).
+                  D16 ends that pattern: Drop FAB is a rail item with mt-3 to
+                  set it apart as the primary write action.
+                  Hidden when L2 sheet open via D16 §3 — handled at parent. */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  if (localModeEnabled && pulseApiRef.current && pulseApiRef.current.getCenter) {
+                    const c = pulseApiRef.current.getCenter();
+                    if (c) setBeaconDropLocation(c);
+                  }
+                  setShowBeaconModal(true);
+                }}
+                aria-label="Drop Beacon"
+                data-pull-refresh-ignore
+                className="pointer-events-auto mt-3 w-14 h-14 bg-[#C8962C] rounded-2xl flex items-center justify-center shadow-[0_15px_35px_-12px_rgba(200,150,44,0.6)] border border-white/30 overflow-hidden group backdrop-blur-md relative"
+              >
+                <div className="absolute inset-0 bg-gradient-to-tr from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <MapPin className="w-6 h-6 text-black" />
+              </motion.button>
             </>
           )}
         </div>
@@ -657,25 +682,11 @@ export default function GlobePage({ embedded = false }) {
           />
         )}
 
-        {/* HOTFIX 2026-05-30 (Phil mobile screenshots): FAB at bottom=76px was visually colliding
-            with CareDecompressionCue (bottom=84px, w=92vw). At narrow viewports (390px iPhone)
-            the care card's right edge extended past the FAB's left edge — the FAB rendered
-            half-clipped behind the care card. Push FAB above the care card band (~52px tall)
-            with breathing room. Now: 150px+SAI keeps the FAB clear of the care card AND
-            the bottom nav. Z-index unchanged. */}
-        <div key="beacon-fab" className="absolute bottom-[calc(150px+env(safe-area-inset-bottom,0px))] right-6 z-[70]" data-pull-refresh-ignore>
-          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => {
-            // Single-engine: drop where the user is looking (map centre); else GPS.
-            if (localModeEnabled && pulseApiRef.current && pulseApiRef.current.getCenter) {
-              const c = pulseApiRef.current.getCenter();
-              if (c) setBeaconDropLocation(c);
-            }
-            setShowBeaconModal(true);
-          }} className="w-16 h-16 bg-[#C8962C] rounded-2xl flex items-center justify-center shadow-[0_15px_35px_-12px_rgba(200,150,44,0.6)] border border-white/30 overflow-hidden group backdrop-blur-md">
-            <div className="absolute inset-0 bg-gradient-to-tr from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <MapPin className="w-7 h-7 text-black" />
-          </motion.button>
-        </div>
+        {/* Drop Beacon FAB moved INTO the right rail (D16 §2 / §7) — Phil
+            2026-05-30. Previous absolute-positioned BOTTOM-RIGHT FAB
+            collided with both the SafetyFAB and the rail's Me button on
+            mobile (see screenshots). The rail item version lives above
+            the `Me` RailButton block earlier in this render. */}
 
         <BeaconDropModal
           key="beacon-modal"
@@ -725,6 +736,7 @@ export default function GlobePage({ embedded = false }) {
     </ErrorBoundary>
   );
 }
+
 
 
 
