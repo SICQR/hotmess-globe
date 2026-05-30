@@ -1,7 +1,11 @@
 /**
- * L2DirectionsSheet — Meetpoint / Directions
- * Uses InAppDirections component for in-app map routing.
- * Also supports Uber deep link and sharing.
+ * L2DirectionsSheet — wraps InAppDirections inside the L2 peek-sheet system.
+ *
+ * Style note (Phil locked 2026-05-30): InAppDirections is now chromeless to
+ * match the L2ClusterPreviewSheet aesthetic — no inner border, no X button,
+ * no maximize/minimize. Dismiss is the L2SheetContainer's pull-down. This
+ * wrapper renders the chromeless component flat into the sheet body, plus
+ * a Share Location action in the same pill style as cluster's "Zoom closer".
  */
 
 import { Share2 } from 'lucide-react';
@@ -9,6 +13,9 @@ import { useSheet } from '@/contexts/SheetContext';
 import InAppDirections from '@/components/directions/InAppDirections';
 
 export default function L2DirectionsSheet({ lat, lng, label, address }) {
+  // closeSheet kept available for future explicit-dismiss callers; current
+  // pull-down dismiss is provided by L2SheetContainer's drag controls.
+  // eslint-disable-next-line no-unused-vars
   const { closeSheet } = useSheet();
 
   const destLat = parseFloat(lat) || 51.5074;
@@ -25,27 +32,23 @@ export default function L2DirectionsSheet({ lat, lng, label, address }) {
   };
 
   return (
-    <div className="flex flex-col gap-4 px-4 pt-4 pb-4">
-      {/* In-app directions map */}
-      <div className="rounded-2xl overflow-hidden">
-        <InAppDirections
-          destination={{ lat: destLat, lng: destLng }}
-          destinationName={destLabel}
-          destinationAddress={address}
-          compact={false}
-          expandable={true}
-          onClose={closeSheet}
-        />
-      </div>
+    <div className="relative flex flex-col h-full overflow-y-auto">
+      <InAppDirections
+        destination={{ lat: destLat, lng: destLng }}
+        destinationName={destLabel}
+        destinationAddress={address}
+      />
 
-      {/* Share button */}
-      <button
-        onClick={handleShare}
-        className="w-full bg-white/8 text-white font-bold text-sm rounded-2xl py-3.5 border border-white/15 flex items-center justify-center gap-2 active:scale-95 transition-transform"
-      >
-        <Share2 className="w-4 h-4 text-white/60" />
-        Share Location
-      </button>
+      {/* Share action — matches cluster preview's "Zoom closer" button style. */}
+      <div className="px-4 pt-1 pb-6">
+        <button
+          onClick={handleShare}
+          className="w-full bg-[#1C1C1E] text-white font-bold text-sm rounded-2xl py-3 flex items-center justify-center gap-2 border border-white/10 active:scale-95 transition-transform"
+        >
+          <Share2 className="w-4 h-4 text-white/50" />
+          Share Location
+        </button>
+      </div>
     </div>
   );
 }
