@@ -104,6 +104,7 @@ D14 is parked. Do not ship routing-as-signal before D14 is written.
 - `docs/doctrine/07-visual-hierarchy.md` — monetisation never overrides relational truth; spatial continuity is the underlying chassis the visual hierarchy rests on.
 - `docs/doctrine/11-arrival-state-doctrine.md` — Pulse Doctrine. The globe should breathe. Probability + momentum, not occupancy. Spatial continuity is how breathing translates to gesture.
 - `docs/doctrine/12-drop-beacon-doctrine.md` — Drop Beacon entity separation. The intent picker is itself a spatial gesture: signal-before-commit at the create step.
+- `docs/doctrine/15-care-language-doctrine.md` — primitives carry the voice through the thread. Spatial continuity without voice continuity reads as broken — care language is part of how the user knows they haven't been ejected from the night.
 - Sacred Invariant #6 — system never pretends activity. Continuity must not be faked. If the user crosses a true discontinuity (logout, hard error, deep-link cold-start) the system tells them honestly. False seamlessness is a violation.
 - Sacred Invariant #7 — no exact tracking, ≤200m fuzz. Spatial continuity preserves the privacy snap throughout the route, the preview, and the commit.
 
