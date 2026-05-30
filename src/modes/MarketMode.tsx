@@ -28,7 +28,7 @@
  * └─────────────────────────────────────────┘
  */
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -289,20 +289,21 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   // Market hero carousel — Phil 2026-05-30 design lock. Three engine-mapped
   // brand campaigns rotate at the top of Market. Tap a slide → switch engine
   // tab. D16 §2/§7: CENTER zone, content card, no floating elements.
+  // Phil 2026-05-30 ordering lock: DROPS first, HNH MESS middle, PRELOVED last.
   const HERO_SLIDES = useMemo(() => ([
+    {
+      key: 'drops',
+      engine: 'drops' as const,
+      url: 'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/market/drops.png',
+      ariaLabel: 'DROPS. Tap to see the latest drops.',
+      fallbackTitle: 'DROPS',
+    },
     {
       key: 'hnh',
       engine: 'shop' as const,
       url: 'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/market/hnh-boys-have-fun.png',
       ariaLabel: 'HNH BOYS HAVE FUN. Tap to browse the shop.',
       fallbackTitle: 'HNH BOYS HAVE FUN',
-    },
-    {
-      key: 'superhung',
-      engine: 'drops' as const,
-      url: 'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/market/superhung.jpg',
-      ariaLabel: 'SUPERHUNG. Tap to see the latest drops.',
-      fallbackTitle: 'SUPERHUNG',
     },
     {
       key: 'preloved',
@@ -314,13 +315,44 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   ]), []);
   const [carouselIdx, setCarouselIdx] = useState(0);
   const [heroImgFailed, setHeroImgFailed] = useState<Record<string, boolean>>({});
+  const heroTrackRef = useRef<HTMLDivElement | null>(null);
+  const heroPausedUntilRef = useRef<number>(0);
+
+  // Auto-advance: every 5.5s, scroll to the next slide. Skips if user
+  // touched the track in the last 2.5s (resume-after-release feel).
   useEffect(() => {
     const id = setInterval(() => {
-      setCarouselIdx((i) => (i + 1) % HERO_SLIDES.length);
+      if (Date.now() < heroPausedUntilRef.current) return;
+      const track = heroTrackRef.current;
+      if (!track) return;
+      const slideWidth = track.clientWidth;
+      const next = (Math.round(track.scrollLeft / slideWidth) + 1) % HERO_SLIDES.length;
+      track.scrollTo({ left: next * slideWidth, behavior: 'smooth' });
     }, 5500);
     return () => clearInterval(id);
   }, [HERO_SLIDES.length]);
-  const activeSlide = HERO_SLIDES[carouselIdx];
+
+  // Track which slide is centered while user is swiping. Updates the
+  // pagination dots in real time and keeps carouselIdx in sync.
+  const onHeroScroll = useCallback(() => {
+    const track = heroTrackRef.current;
+    if (!track) return;
+    const slideWidth = track.clientWidth;
+    if (slideWidth <= 0) return;
+    const i = Math.max(0, Math.min(HERO_SLIDES.length - 1, Math.round(track.scrollLeft / slideWidth)));
+    setCarouselIdx(i);
+  }, [HERO_SLIDES.length]);
+
+  // Pause auto-advance while user is interacting; resume 2.5s after they let go.
+  const onHeroTouchStart = useCallback(() => { heroPausedUntilRef.current = Number.POSITIVE_INFINITY; }, []);
+  const onHeroTouchEnd = useCallback(() => { heroPausedUntilRef.current = Date.now() + 2500; }, []);
+
+  const scrollHeroTo = useCallback((i: number) => {
+    const track = heroTrackRef.current;
+    if (!track) return;
+    track.scrollTo({ left: i * track.clientWidth, behavior: 'smooth' });
+    heroPausedUntilRef.current = Date.now() + 2500;
+  }, []);
 
   // ---- Auto-open receipt on success & Sync Status ----
   useEffect(() => {
@@ -587,66 +619,85 @@ export function MarketMode({ className = '' }: MarketModeProps) {
 
       {/* ================================================================== */}
       {/* HERO CAROUSEL — Phil 2026-05-30: 3 brand campaigns map to engines.  */}
-      {/* Auto-rotates every 5.5s. Tap a slide → switch engine. D16 §2/§7:    */}
-      {/* CENTER zone, content card, no floating elements.                    */}
+      {/* Native horizontal scroll-snap with iOS momentum (Phil verbatim:     */}
+      {/* "user can flick and move them back or swipe forward and when they   */}
+      {/* release it keeps going"). Auto-advance resumes 2.5s after the user  */}
+      {/* lets go. Tap a slide → switch to its engine. Order locked:          */}
+      {/* DROPS → HNH BOYS → PRELOVED. D16 §2/§7: CENTER zone, content card.  */}
       {/* ================================================================== */}
-      <div className="flex-shrink-0 px-4 pt-3 pb-2">
-        <div
-          className="relative w-full overflow-hidden rounded-2xl border border-white/5"
-          style={{ aspectRatio: '16 / 9', background: '#0a0a0a' }}
-        >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeSlide.key}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.45 }}
-              className="absolute inset-0"
-            >
-              {!heroImgFailed[activeSlide.key] && (
-                <img
-                  src={activeSlide.url}
-                  alt=""
-                  loading="eager"
-                  onError={() => setHeroImgFailed((m) => ({ ...m, [activeSlide.key]: true }))}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  style={{ display: 'block' }}
-                />
-              )}
-              {heroImgFailed[activeSlide.key] && (
-                <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'linear-gradient(180deg, rgba(10,10,10,0.7) 0%, rgba(10,10,10,0.95) 100%)' }}>
-                  <p className="text-white font-black uppercase tracking-wider text-2xl text-center px-4">
-                    {activeSlide.fallbackTitle}
-                  </p>
+      <div className="flex-shrink-0 px-4 pt-2 pb-2">
+        <div className="relative w-full">
+          <div
+            ref={heroTrackRef}
+            onScroll={onHeroScroll}
+            onTouchStart={onHeroTouchStart}
+            onTouchEnd={onHeroTouchEnd}
+            onMouseDown={onHeroTouchStart}
+            onMouseUp={onHeroTouchEnd}
+            className="flex overflow-x-auto rounded-2xl border border-white/5 scrollbar-hide"
+            style={{
+              aspectRatio: '2 / 1',
+              background: '#0a0a0a',
+              scrollSnapType: 'x mandatory',
+              WebkitOverflowScrolling: 'touch',
+              overscrollBehaviorX: 'contain',
+            }}
+          >
+            {HERO_SLIDES.map((s) => {
+              const failed = !!heroImgFailed[s.key];
+              return (
+                <div
+                  key={s.key}
+                  className="relative shrink-0 w-full h-full"
+                  style={{ scrollSnapAlign: 'center', scrollSnapStop: 'always' }}
+                >
+                  {!failed && (
+                    <img
+                      src={s.url}
+                      alt=""
+                      loading="eager"
+                      onError={() => setHeroImgFailed((m) => ({ ...m, [s.key]: true }))}
+                      className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
+                      draggable={false}
+                      style={{ display: 'block' }}
+                    />
+                  )}
+                  {failed && (
+                    <div
+                      className="absolute inset-0 flex items-center justify-center"
+                      style={{ background: 'linear-gradient(180deg, rgba(10,10,10,0.7) 0%, rgba(10,10,10,0.95) 100%)' }}
+                    >
+                      <p className="text-white font-black uppercase tracking-wider text-xl text-center px-4">
+                        {s.fallbackTitle}
+                      </p>
+                    </div>
+                  )}
+                  {/* Tap = switch engine; native scroll handles the swipe. */}
+                  <button
+                    type="button"
+                    aria-label={s.ariaLabel}
+                    onClick={() => handleEngineSwitch(s.engine)}
+                    className="absolute inset-0 active:bg-white/5 transition-colors"
+                    style={{ background: 'transparent' }}
+                  />
                 </div>
-              )}
-              {/* Full-card tap → switch engine. Stops carousel autoplay
-                  implicitly via interaction (idx reset to that engine's slot). */}
-              <button
-                type="button"
-                aria-label={activeSlide.ariaLabel}
-                onClick={() => {
-                  handleEngineSwitch(activeSlide.engine);
-                }}
-                className="absolute inset-0 active:bg-white/5 transition-colors"
-                style={{ background: 'transparent' }}
-              />
-            </motion.div>
-          </AnimatePresence>
+              );
+            })}
+          </div>
 
-          {/* Pagination dots — clickable, lets user jump between slides. */}
+          {/* Pagination dots — clickable to jump. Sits inside the rounded
+              card area, overlaid at the bottom. */}
           <div className="absolute left-0 right-0 bottom-2 flex items-center justify-center gap-1.5 pointer-events-none">
             {HERO_SLIDES.map((s, i) => (
               <button
                 key={s.key}
                 type="button"
                 aria-label={`Go to slide ${i + 1}: ${s.fallbackTitle}`}
-                onClick={(e) => { e.stopPropagation(); setCarouselIdx(i); }}
+                onClick={() => scrollHeroTo(i)}
                 className="pointer-events-auto h-1.5 rounded-full transition-all"
                 style={{
-                  width: i === carouselIdx ? 20 : 6,
-                  background: i === carouselIdx ? '#ffffff' : 'rgba(255,255,255,0.4)',
+                  width: i === carouselIdx ? 18 : 6,
+                  background: i === carouselIdx ? '#ffffff' : 'rgba(255,255,255,0.45)',
                 }}
               />
             ))}
