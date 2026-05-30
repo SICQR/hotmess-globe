@@ -8,9 +8,6 @@ import {
   Bike,
   Car,
   Moon,
-  X,
-  Maximize2,
-  Minimize2,
   Clock,
   MapPin,
   Loader2,
@@ -163,13 +160,19 @@ export default function InAppDirections({
   destination,
   destinationName,
   destinationAddress,
+  // onClose / compact / expandable kept in signature for back-compat but no
+  // longer rendered — L2SheetContainer handles dismiss via pull-down (#301
+  // strip X; #277 pull-down). The standalone modal in DirectionsButton
+  // dismisses via backdrop tap. Either way no inner X / no max/min controls.
+  // eslint-disable-next-line no-unused-vars
   onClose,
+  // eslint-disable-next-line no-unused-vars
   compact = false,
+  // eslint-disable-next-line no-unused-vars
   expandable = true,
   className,
 }) {
   const [mode, setMode] = useState('foot');
-  const [isExpanded, setIsExpanded] = useState(false);
   const [origin, setOrigin] = useState(null);
   const [locationError, setLocationError] = useState(null);
   const [mapReady, setMapReady] = useState(false);
@@ -467,136 +470,80 @@ export default function InAppDirections({
   const duration = formatDuration(directions?.duration_seconds);
   const distance = formatDistance(directions?.distance_meters);
 
-  // Compact view — ETA chips only.
-  if (compact && !isExpanded) {
-    return (
-      <div className={cn('bg-black border-2 border-white/10', className)}>
-        <div className="p-3 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-xs text-white/60">
-            <MapPin className="w-4 h-4 text-[#C8962C]" />
-            <span className="truncate max-w-[120px]">{destinationName || 'Destination'}</span>
-          </div>
-
-          <div className="flex items-center gap-1">
-            {TRAVEL_MODES.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => setMode(m.id)}
-                className={cn(
-                  'flex items-center gap-1 px-2 py-1.5 text-xs font-bold border transition-all',
-                  mode === m.id
-                    ? 'bg-white/10 border-white/30 text-white'
-                    : 'bg-transparent border-white/10 text-white/50 hover:text-white hover:border-white/20'
-                )}
-              >
-                <m.icon className="w-3 h-3" />
-                {mode === m.id && duration && <span>{duration}</span>}
-              </button>
-            ))}
-
-            {expandable && (
-              <button
-                onClick={() => setIsExpanded(true)}
-                className="p-1.5 text-white/40 hover:text-white transition-colors"
-              >
-                <Maximize2 className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Expanded view — full map.
+  // Chromeless render. The wrapping surface (L2SheetContainer for the L2
+  // path, DirectionsButton's modal for the standalone path) provides bg,
+  // border, dismiss. We just lay out the content.
+  //
+  // Visual language matches L2ClusterPreviewSheet (the canonical HOTMESS
+  // peek aesthetic): tiny gold pill chip → large heading → soft subtitle
+  // → tab row → quiet body. No X, no max/min, no inner border.
   return (
-    <motion.div
-      initial={compact ? { opacity: 0, scale: 0.95 } : false}
-      animate={{ opacity: 1, scale: 1 }}
-      className={cn(
-        'bg-black border-2 border-[#C8962C]',
-        isExpanded ? 'fixed inset-4 z-[80]' : '',
-        className
-      )}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b border-white/10">
-        <div className="flex items-center gap-2">
-          <Navigation className="w-5 h-5 text-[#C8962C]" />
-          <div>
-            <h3 className="font-black text-sm uppercase text-white">
-              {destinationName || 'Directions'}
-            </h3>
-            {destinationAddress && (
-              <p className="text-xs text-white/50 truncate max-w-[200px]">{destinationAddress}</p>
-            )}
-          </div>
+    <div className={cn('flex flex-col', className)}>
+      {/* Header — chip + heading + address. Matches cluster preview. */}
+      <div className="px-4 pt-4 pb-2">
+        <div className="flex items-center gap-2 mb-2">
+          <span
+            className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border tracking-[0.14em]"
+            style={{ color: '#C8962C', borderColor: 'rgba(200,150,44,0.25)', backgroundColor: 'rgba(200,150,44,0.08)' }}
+          >
+            <Navigation className="w-2.5 h-2.5" />
+            route
+          </span>
         </div>
-
-        <div className="flex items-center gap-2">
-          {isExpanded && (
-            <button
-              onClick={() => setIsExpanded(false)}
-              className="p-1.5 text-white/40 hover:text-white transition-colors"
-            >
-              <Minimize2 className="w-5 h-5" />
-            </button>
-          )}
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="p-1.5 text-white/40 hover:text-white transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
-        </div>
+        <h2 className="text-white font-black text-xl leading-tight">
+          {destinationName || 'Directions'}
+        </h2>
+        {destinationAddress && (
+          <p className="text-white/55 text-sm mt-1 leading-snug truncate">
+            {destinationAddress}
+          </p>
+        )}
       </div>
 
-      {/* Travel Mode Tabs — D14 §3 reframe. Subtitle line under active mode. */}
-      <div className="flex flex-col gap-1 p-2 border-b border-white/10">
-        <div className="flex gap-1">
+      {/* Mode chips — same border-weight + radius as cluster's primary button.
+          Subtitle under active mode carries the D14 §3 emotional cue. */}
+      <div className="px-4 pt-2 pb-2 flex flex-col gap-1.5">
+        <div className="flex gap-1.5">
           {TRAVEL_MODES.map((m) => (
             <button
               key={m.id}
               onClick={() => setMode(m.id)}
               className={cn(
-                'flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold border-2 transition-all',
+                'flex-1 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl text-xs font-bold border active:scale-95 transition-transform',
                 mode === m.id
-                  ? 'bg-white/10 border-white/30 text-white'
-                  : 'bg-transparent border-white/10 text-white/50 hover:text-white hover:border-white/20'
+                  ? 'bg-white/10 border-white/25 text-white'
+                  : 'bg-white/[0.03] border-white/10 text-white/55'
               )}
             >
-              <m.icon className="w-4 h-4" style={{ color: mode === m.id ? m.color : undefined }} />
+              <m.icon className="w-3.5 h-3.5" style={{ color: mode === m.id ? m.color : undefined }} />
               <span>{m.label}</span>
             </button>
           ))}
-
-          {/* Uber chip — external eject, intentionally separate from HOTMESS modes. */}
+          {/* Uber chip — external eject, outline-only to signal "leaves the app". */}
           <button
             onClick={() => uberUrl && window.open(uberUrl, '_blank')}
             disabled={!uberUrl}
-            className="flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold border-2 border-white/10 bg-transparent text-white/50 hover:text-white hover:border-white/20 transition-all"
+            className="flex items-center justify-center gap-1 px-2.5 py-2.5 rounded-xl text-xs font-bold border border-white/10 bg-transparent text-white/45 active:scale-95 transition-transform"
           >
-            <Car className="w-4 h-4" />
+            <Car className="w-3.5 h-3.5" />
             <span>Uber</span>
-            <ExternalLink className="w-3 h-3 opacity-50" />
+            <ExternalLink className="w-2.5 h-2.5 opacity-50" />
           </button>
         </div>
         {modeConfig?.subtitle && (
-          <p className="text-[10px] text-white/40 text-center tracking-wide pt-0.5">
+          <p className="text-[10px] text-white/40 text-center tracking-[0.08em]">
             {modeConfig.subtitle}
           </p>
         )}
       </div>
 
-      {/* Map */}
-      <div className={cn('relative', isExpanded ? 'h-[calc(100%-180px)]' : 'h-[250px]')}>
+      {/* Map — fixed-height. No internal chrome. */}
+      <div className="relative h-[260px] mx-4 mt-1 rounded-xl overflow-hidden">
         {locationError ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/5">
+          <div className="absolute inset-0 flex items-center justify-center bg-white/[0.03] border border-white/5 rounded-xl">
             <div className="text-center p-4">
-              <MapPin className="w-12 h-12 text-white/20 mx-auto mb-3" />
-              <p className="text-white/60 text-sm">{locationError}</p>
+              <MapPin className="w-10 h-10 text-white/15 mx-auto mb-2" />
+              <p className="text-white/55 text-sm">{locationError}</p>
             </div>
           </div>
         ) : (
@@ -608,41 +555,36 @@ export default function InAppDirections({
         )}
 
         {isLoading && !locationError && (
-          <div className="absolute top-2 left-2 flex items-center gap-2 bg-black/80 px-3 py-1.5 text-xs text-white/60">
+          <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-black/75 px-2.5 py-1 rounded-full text-[10px] text-white/55">
             <Loader2 className="w-3 h-3 animate-spin" />
             <span>Loading route…</span>
           </div>
         )}
       </div>
 
-      {/* Route Info */}
-      <div className="p-3 border-t border-white/10">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {duration && (
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-white/40" />
-                <span className="text-lg font-black text-white">{duration}</span>
-              </div>
-            )}
-            {distance && (
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-white/40" />
-                <span className="text-sm text-white/60">{distance}</span>
-              </div>
-            )}
+      {/* ETA row — terse, cluster-style. No density label, no ranking copy
+          (D14 §4.5). The constellation does the talking. */}
+      <div className="px-4 pt-3 pb-4 flex items-center gap-3">
+        {duration && (
+          <div className="flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-white/40" />
+            <span className="text-sm font-bold text-white">{duration}</span>
           </div>
-          {/* No density label, no "popular route" copy, no numeric beacon count.
-              D14 §4.5 — density is texture not score. */}
-        </div>
+        )}
+        {distance && (
+          <span className="text-white/40 text-xs tabular-nums">{distance}</span>
+        )}
       </div>
-    </motion.div>
+    </div>
   );
 }
 
 /**
- * DirectionsButton — compact button that opens the directions sheet.
- * Unchanged from Slice 1.
+ * DirectionsButton — compact button that opens the directions in a standalone
+ * modal. Used outside the L2 sheet system. The modal supplies its own chrome
+ * (bg + soft gold hairline + rounded-2xl) so the chromeless InAppDirections
+ * has a visual surface to sit on. Dismiss is backdrop-tap; matches the L2
+ * sheet pull-down dismiss semantically (no X button).
  */
 export function DirectionsButton({
   destination,
@@ -673,20 +615,25 @@ export function DirectionsButton({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[80] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[80] bg-black/90 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
             onClick={() => setShowDirections(false)}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 40, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg"
+              className="w-full max-w-lg bg-black border-t border-[#C8962C]/40 sm:border sm:rounded-2xl overflow-hidden"
             >
+              {/* Drag handle — visual cue that backdrop tap dismisses; matches
+                  L2SheetContainer's top handle so the standalone modal feels
+                  like the same sheet system. */}
+              <div className="flex justify-center pt-2 pb-1">
+                <span className="block w-10 h-1 rounded-full bg-white/15" />
+              </div>
               <InAppDirections
                 destination={destination}
                 destinationName={destinationName}
-                onClose={() => setShowDirections(false)}
               />
             </motion.div>
           </motion.div>
