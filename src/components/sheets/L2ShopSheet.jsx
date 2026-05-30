@@ -29,28 +29,13 @@ const getProductPrice = (p) => {
   return parseFloat(p.price || 0);
 };
 
-// Brand-asset campaign photos shipped from Supabase. Used to override
-// stock/mismatched Shopify images on HNH MESS lube product pages so the
-// real campaign photography appears in the shop. Keyed by Shopify handle.
-// Phil 2026-05-30 — see task #282 / #290.
-const BRAND_ASSET_BASE =
-  'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/hnh-mess';
-const HNH_NO_SHAME = `${BRAND_ASSET_BASE}/campaign-no-shame.png`;
-const HNH_OUTDOOR_MOMENTS = `${BRAND_ASSET_BASE}/campaign-outdoor-moments.png`;
-
-const PRODUCT_IMAGE_OVERRIDES = {
-  'hnh-mess-lube-50ml': [HNH_NO_SHAME, HNH_OUTDOOR_MOMENTS],
-  'hnh-mess-lube-250ml': [HNH_OUTDOOR_MOMENTS, HNH_NO_SHAME],
-};
-
+// Product image resolver — Phil 2026-05-30: REVERTED brand-asset overrides.
+// Shopify bottle photography is the correct "what am I buying" image for
+// HNH MESS lube SKUs. Campaign photography belongs on brand surfaces
+// (banners, hero blocks, landing strips) — NOT replacing the product
+// shot a customer needs to recognise the item. See tasks #282 / #290 / #394.
 const getProductImages = (p) => {
   if (!p) return [];
-  // Priority 0: brand-asset overrides by Shopify handle (HNH MESS lube
-  // campaign photos replace stock/mismatched Shopify images).
-  const overrideKey = p.handle || p.metadata?.handle;
-  if (overrideKey && PRODUCT_IMAGE_OVERRIDES[overrideKey]) {
-    return PRODUCT_IMAGE_OVERRIDES[overrideKey];
-  }
   // Priority 1: cover_image_url (Preloved schema)
   if (p.cover_image_url) return [p.cover_image_url];
   // Priority 2: images array (Legacy/Internal schema)
@@ -492,3 +477,4 @@ export default function L2ShopSheet({ handle, product: initialPropProduct, selle
     </div>
   );
 }
+
