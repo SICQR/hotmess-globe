@@ -62,6 +62,26 @@ const ORIGIN_COLOR   = '#00C2E0'; // teal  — viewer "YOU" pin
 
 const MAPBOX_TOKEN = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_MAPBOX_TOKEN) || '';
 
+// D14 §0 product rule (Phil locked 2026-05-30):
+//   "Directions are for moving through the night, not flying across the world."
+// When the user's current location is absurdly far from the destination, we
+// suppress the route draw entirely. Drawing a route across continents wastes
+// API calls, produces a planet-spanning line that obscures the destination,
+// and reads as a travel app — exactly the drift D14 §1 forbids.
+const FAR_THRESHOLD_KM = 500;
+
+// Haversine great-circle distance in km. No deps.
+const greatCircleKm = (a, b) => {
+  if (!a || !b || !Number.isFinite(a.lat) || !Number.isFinite(a.lng) || !Number.isFinite(b.lat) || !Number.isFinite(b.lng)) return null;
+  const R = 6371;
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+  const la1 = a.lat * Math.PI / 180;
+  const la2 = b.lat * Math.PI / 180;
+  const h = Math.sin(dLat/2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng/2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+};
+
 const formatDuration = (seconds) => {
   if (!Number.isFinite(seconds)) return null;
   const mins = Math.round(seconds / 60);
@@ -204,19 +224,35 @@ export default function InAppDirections({
     });
   }, [destination]);
 
-  // Fetch constellation candidates within the origin↔destination bbox.
-  // Includes care (intent=aftercare, beacon_category in aftercare/recovery/clinic)
-  // AND curated editorial (metadata.curated=true, kind=district|hotmess). One
-  // single read against base `beacons` so we preserve the kind/curated
-  // distinction the pulse_signals view strips.
+  // D14 §0 far-origin gate. Compute once here so every downstream effect /
+  // fetch / render branch can short-circuit consistently. When origin is
+  // absurdly far, we don't have a route — we have a destination view.
+  const distanceKm = useMemo(
+    () => greatCircleKm(origin, destination),
+    [origin?.lat, origin?.lng, destination?.lat, destination?.lng]
+  );
+  const originIsFar = Number.isFinite(distanceKm) && distanceKm > FAR_THRESHOLD_KM;
+
+  // Fetch constellation candidates. Reads from base `beacons` so curated/care
+  // metadata stays intact (pulse_signals view strips it).
+  // - Near origin: bbox spans origin↔destination + 600m pad (route corridor).
+  // - Far origin (D14 §0): bbox is destination ±~5km only (district scale).
   useEffect(() => {
-    if (!origin || !destination) { setConstellationBeacons([]); return; }
+    if (!destination) { setConstellationBeacons([]); return; }
     let alive = true;
-    const PAD = 0.006; // ~600m
-    const minLat = Math.min(origin.lat, destination.lat) - PAD;
-    const maxLat = Math.max(origin.lat, destination.lat) + PAD;
-    const minLng = Math.min(origin.lng, destination.lng) - PAD;
-    const maxLng = Math.max(origin.lng, destination.lng) + PAD;
+    let minLat, maxLat, minLng, maxLng;
+    if (originIsFar || !origin) {
+      // Destination-only district bbox — care anchors visible around the pin.
+      const PAD = 0.05; // ~5km at London latitudes
+      minLat = destination.lat - PAD; maxLat = destination.lat + PAD;
+      minLng = destination.lng - PAD; maxLng = destination.lng + PAD;
+    } else {
+      const PAD = 0.006; // ~600m
+      minLat = Math.min(origin.lat, destination.lat) - PAD;
+      maxLat = Math.max(origin.lat, destination.lat) + PAD;
+      minLng = Math.min(origin.lng, destination.lng) - PAD;
+      maxLng = Math.max(origin.lng, destination.lng) + PAD;
+    }
 
     supabase
       .from('beacons')
@@ -246,11 +282,15 @@ export default function InAppDirections({
         setConstellationBeacons(pins);
       });
     return () => { alive = false; };
-  }, [origin?.lat, origin?.lng, destination?.lat, destination?.lng]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [origin?.lat, origin?.lng, destination?.lat, destination?.lng, originIsFar]);
 
-  // Routing fetch — unchanged from Slice 1.
+  // Routing fetch — gated on having both endpoints AND origin being near enough
+  // that a route is meaningful. D14 §0: never compute or draw a route that
+  // spans the planet. Saves API calls + prevents the route polyline from
+  // obscuring the destination view.
   const modeConfig = TRAVEL_MODES.find(m => m.id === mode);
-  const canFetch = !!origin && !!destination;
+  const canFetch = !!origin && !!destination && !originIsFar;
 
   const { data: directions, isLoading } = useQuery({
     queryKey: ['directions', mode, origin?.lat, origin?.lng, destination?.lat, destination?.lng],
@@ -265,7 +305,10 @@ export default function InAppDirections({
   });
 
   // Decode polyline → array of [lng, lat] for Mapbox (note the flip vs Leaflet).
+  // D14 §0: when origin is far, route is empty — no straight-line fallback,
+  // no polyline at all. The destination view is the whole rendering.
   const routeLngLat = useMemo(() => {
+    if (originIsFar) return [];
     const encoded = directions?.polyline?.encoded;
     if (typeof encoded === 'string' && encoded.trim()) {
       return decodeGooglePolyline(encoded).map((p) => [p.lng, p.lat]);
@@ -280,7 +323,7 @@ export default function InAppDirections({
       return [[origin.lng, origin.lat], [destination.lng, destination.lat]];
     }
     return [];
-  }, [directions?.polyline, origin, destination]);
+  }, [directions?.polyline, origin, destination, originIsFar]);
 
   // Uber deep link — unchanged.
   const uberUrl = useMemo(() => {
@@ -386,22 +429,32 @@ export default function InAppDirections({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Create exactly once.
 
-  // Fit bounds whenever endpoints change. fitBounds accepts a plain
-  // [[swLng, swLat], [neLng, neLat]] tuple — no LngLatBounds import needed,
-  // which keeps the dynamic-import boundary clean.
+  // Fit bounds whenever endpoints change.
+  // - Near origin: fit to origin↔destination box (route corridor).
+  // - Far origin (D14 §0): fit to destination only at district scale —
+  //   "Directions are for moving through the night, not flying across
+  //   the world." Avoids the planet-spanning view when origin is on the
+  //   other side of the globe.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !mapReady || !origin || !destination) return;
+    if (!map || !mapReady || !destination) return;
     try {
+      if (originIsFar || !origin) {
+        // Fly to destination at district scale; constellation pins read clean.
+        map.flyTo({ center: [destination.lng, destination.lat], zoom: 13, duration: 600 });
+        return;
+      }
       const swLng = Math.min(origin.lng, destination.lng);
       const swLat = Math.min(origin.lat, destination.lat);
       const neLng = Math.max(origin.lng, destination.lng);
       const neLat = Math.max(origin.lat, destination.lat);
       map.fitBounds([[swLng, swLat], [neLng, neLat]], { padding: 50, duration: 600 });
     } catch (e) { /* non-fatal */ }
-  }, [mapReady, origin?.lat, origin?.lng, destination?.lat, destination?.lng]);
+  }, [mapReady, origin?.lat, origin?.lng, destination?.lat, destination?.lng, originIsFar]);
 
   // YOU + GO markers — recreate on endpoint change.
+  // Far origin: YOU pin suppressed (where the user actually is is irrelevant
+  // to a destination view). GO pin always shows.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
@@ -412,7 +465,7 @@ export default function InAppDirections({
       if (youMarkerRef.current) { youMarkerRef.current.remove(); youMarkerRef.current = null; }
       if (goMarkerRef.current)  { goMarkerRef.current.remove();  goMarkerRef.current  = null; }
 
-      if (origin) {
+      if (origin && !originIsFar) {
         const el = buildLabelPinEl({ label: 'YOU', color: ORIGIN_COLOR, glow: 'rgba(0,217,255,0.6)' });
         youMarkerRef.current = new mapboxgl.Marker({ element: el, anchor: 'center' })
           .setLngLat([origin.lng, origin.lat])
@@ -425,7 +478,7 @@ export default function InAppDirections({
           .addTo(map);
       }
     })();
-  }, [mapReady, origin?.lat, origin?.lng, destination?.lat, destination?.lng]);
+  }, [mapReady, origin?.lat, origin?.lng, destination?.lat, destination?.lng, originIsFar]);
 
   // Route polyline data — update via setData (don't recreate the source/layer).
   useEffect(() => {
@@ -554,27 +607,47 @@ export default function InAppDirections({
           />
         )}
 
-        {isLoading && !locationError && (
+        {isLoading && !locationError && !originIsFar && (
           <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-black/75 px-2.5 py-1 rounded-full text-[10px] text-white/55">
             <Loader2 className="w-3 h-3 animate-spin" />
             <span>Loading route…</span>
           </div>
         )}
+
+        {/* D14 §0 far-origin contextual overlay. Replaces the route corridor
+            with a destination-only district view + a quiet message. HOTMESS
+            register (D15) — no travel-app phrasing, no "directions disabled". */}
+        {originIsFar && !locationError && (
+          <div className="absolute top-2 left-2 right-2 bg-black/75 backdrop-blur-md px-3 py-2 rounded-xl border border-white/8">
+            <p className="text-white text-xs font-bold leading-snug">
+              You're not near this signal.
+            </p>
+            <p className="text-white/50 text-[11px] mt-0.5 leading-snug">
+              Map's around the destination. Plan when nearby.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* ETA row — terse, cluster-style. No density label, no ranking copy
-          (D14 §4.5). The constellation does the talking. */}
-      <div className="px-4 pt-3 pb-4 flex items-center gap-3">
-        {duration && (
-          <div className="flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-white/40" />
-            <span className="text-sm font-bold text-white">{duration}</span>
-          </div>
-        )}
-        {distance && (
-          <span className="text-white/40 text-xs tabular-nums">{distance}</span>
-        )}
-      </div>
+          (D14 §4.5). The constellation does the talking. Suppressed when
+          origin is far — distance / duration aren't meaningful information
+          when the user isn't moving toward the destination tonight. */}
+      {!originIsFar && (
+        <div className="px-4 pt-3 pb-4 flex items-center gap-3">
+          {duration && (
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-white/40" />
+              <span className="text-sm font-bold text-white">{duration}</span>
+            </div>
+          )}
+          {distance && (
+            <span className="text-white/40 text-xs tabular-nums">{distance}</span>
+          )}
+        </div>
+      )}
+      {/* Far-origin spacer so the sheet doesn't slam into the map's bottom edge. */}
+      {originIsFar && <div className="h-4" />}
     </div>
   );
 }
