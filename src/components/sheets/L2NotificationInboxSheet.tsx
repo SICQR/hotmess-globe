@@ -1,171 +1,72 @@
 /**
- * L2NotificationInboxSheet — In-app notification feed
+ * L2NotificationInboxSheet — D266 Slice 4.3 rewrite.
  *
- * Slice 4.2 (D266): client now reads from the unified
- * get_inbox_for_viewer() RPC via useInbox() hook. Six-category rows are
- * mapped back to the existing Notif shape so the UI rendering stays
- * unchanged. Slice 4.3 will rewrite the cells per-category (I-3).
+ * Per-category cells replace the legacy Notif bridge. Invariants:
+ *   I-1 — category recognised structurally before linguistically
+ *   I-2 — no parallel author paths
+ *   I-3 — no fallback renderer; the category→component dispatch below is
+ *         a router, not a generic. If a future category is added, it ships
+ *         with its own dedicated cell or it does not ship.
  *
- * Type → action mapping (preserved from pre-4.2):
- *   boo                    → /ghosted (no separate sheet)
- *   message                → openSheet('chat', { threadId })   metadata.thread_id
- *   event / event_reminder → openSheet('event', { id })        metadata.event_id
- *   location_share_started → openSheet('location-watcher', …)
- *   request                → no tap action yet (Slice 4.3 wires L2RequestSheet)
- *   default                → no action
+ * Q15 — filter resets to All every open
+ * Q19 — system_event hidden in All; Account chip explicitly opts in
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, MessageCircle, Ghost, MapPin, Radio, Calendar, CheckCheck, Loader2, Inbox, Settings, Mail } from 'lucide-react';
+import { Bell, CheckCheck, Loader2, Inbox, Settings } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
-import { useNavigate } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
-import { useInbox, type InboxItem, type InboxCategory } from '@/hooks/useInbox';
+import { useInbox, type InboxItem } from '@/hooks/useInbox';
+import { useInboxCounterparts } from '@/hooks/useInboxCounterparts';
+import InboxFilterChips, { type InboxFilterValue } from '@/components/inbox/InboxFilterChips';
+import InboxCellConversation  from '@/components/inbox/cells/InboxCellConversation';
+import InboxCellSignal        from '@/components/inbox/cells/InboxCellSignal';
+import InboxCellNotification  from '@/components/inbox/cells/InboxCellNotification';
+import InboxCellRequest       from '@/components/inbox/cells/InboxCellRequest';
+import InboxCellLocationShare from '@/components/inbox/cells/InboxCellLocationShare';
+import InboxCellSystemEvent   from '@/components/inbox/cells/InboxCellSystemEvent';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-// Local view-model shape — kept to minimise diff against pre-4.2 render code.
-// Slice 4.3 will replace this with per-category cell components (I-3).
-interface Notif {
-  id: string;
-  type: string;
-  title: string;
-  body: string;
-  link: string | null;
-  metadata: any;
-  read: boolean;
-  created_at: string;
-  category: InboxCategory;
-}
-
-// ── Icon + colour per legacy type (kept for 4.2; rewritten 4.3) ──────────────
-function typeConfig(type: string): { Icon: React.ElementType; color: string; bg: string } {
-  switch (type) {
-    case 'boo':
-      return { Icon: Ghost,          color: '#C8962C', bg: 'rgba(200,150,44,0.15)' };
-    case 'message':
-      return { Icon: MessageCircle,  color: '#00C2E0', bg: 'rgba(0,194,224,0.12)' };
-    case 'event':
-    case 'event_reminder':
-      return { Icon: Calendar,       color: '#C8962C', bg: 'rgba(200,150,44,0.15)' };
-    case 'location_share_started':
-      return { Icon: Radio,          color: '#39FF14', bg: 'rgba(57,255,20,0.12)' };
-    case 'location_share_ended':
-      return { Icon: MapPin,         color: '#8E8E93', bg: 'rgba(142,142,147,0.12)' };
-    case 'request':
-      // D266 §1.4 — requests are consequential; pulse-able gold border
-      // arrives in Slice 4.3 with the dedicated cell component.
-      return { Icon: Mail,           color: '#C8962C', bg: 'rgba(200,150,44,0.20)' };
-    default:
-      return { Icon: Bell,           color: '#C8962C', bg: 'rgba(200,150,44,0.15)' };
-  }
-}
-
-// ── Map InboxItem → legacy Notif shape (4.2 bridge) ──────────────────────────
-function inboxItemToNotif(item: InboxItem): Notif {
-  const payload = (item.payload || {}) as Record<string, any>;
-
-  // Derive a legacy `type` from the new `category` so the existing
-  // typeConfig() switch keeps working. Slice 4.3 deletes this mapping.
-  let type = 'default';
-  switch (item.category) {
-    case 'conversation':
-      type = 'message';
-      break;
-    case 'signal':
-      // payload.tap_type holds 'boo' | 'save' | …
-      type = (payload.tap_type as string) || 'boo';
-      break;
-    case 'notification': {
-      // Fall through to existing metadata.notification_type where present
-      // (legacy `notifications` table rows carry it in metadata).
-      const inner = (payload.notification_type || payload.type) as string | undefined;
-      type = inner || 'default';
-      break;
-    }
-    case 'request':
-      type = 'request';
-      break;
-    case 'location-share':
-      type = 'location_share_started';
-      break;
-    case 'system_event':
-      type = 'default';
-      break;
-    case 'continuity':
-      // Never returned in Slice 4.x — defensive default.
-      type = 'default';
-      break;
-  }
-
-  // Body fallback — signal sub-line ("3 times") becomes the body when present
-  // so the user sees the count without us redesigning the cell.
-  let body = item.sub_line || '';
-  if (item.category === 'signal') {
-    const tapType = (payload.tap_type as string) || 'boo';
-    const count = (payload.count as number) || 1;
-    const verb = tapType === 'boo' ? "BOO'd" : tapType === 'save' ? 'saved' : tapType;
-    body = count > 1
-      ? `${verb} you · ${count} times`
-      : `${verb} you`;
-  } else if (item.category === 'request') {
-    body = `${payload.request_type || 'request'} · ${payload.status || 'pending'}`;
-  }
-
-  // Title fallback — conversation rows have no `title` from the RPC;
-  // surface the counterpart hint until 4.3 resolves names properly.
-  let title = item.title || '';
-  if (item.category === 'conversation') {
-    title = 'Message';
-  } else if (item.category === 'request') {
-    title = `${payload.request_type || 'Request'}`;
-  } else if (item.category === 'signal') {
-    title = (payload.tap_type as string) === 'save' ? 'New save' : 'New BOO';
-  } else if (item.category === 'system_event' && !title) {
-    title = 'Account update';
-  } else if (!title) {
-    title = 'Update';
-  }
-
-  return {
-    id: item.item_id,
-    type,
-    title,
-    body,
-    link: null,
-    metadata: payload,
-    read: !item.is_unread,
-    created_at: item.created_at,
-    category: item.category,
-  };
-}
-
-// ── Main component ────────────────────────────────────────────────────────────
 export default function L2NotificationInboxSheet() {
-  const { openSheet, closeSheet } = useSheet();
-  const navigate = useNavigate();
+  const { openSheet } = useSheet();
   const { items, loading, error, reload } = useInbox();
+  const counterparts = useInboxCounterparts(items);
+  const [filter, setFilter] = useState<InboxFilterValue>('all');
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [legacyReadMarked, setLegacyReadMarked] = useState(false);
 
-  // Map RPC rows into legacy Notif shape for the existing cell renderer.
-  const notifs: Notif[] = items.map(inboxItemToNotif);
+  // ── Counts per category — drives filter chips + empty-state logic ─────
+  const countsByCategory = useMemo(() => {
+    const counts: Record<string, number> = {
+      conversation: 0, signal: 0, notification: 0,
+      request: 0, 'location-share': 0, system_event: 0, continuity: 0,
+    };
+    for (const item of items) counts[item.category] = (counts[item.category] || 0) + 1;
+    return counts as Record<import('@/hooks/useInbox').InboxCategory, number>;
+  }, [items]);
 
-  // ── Resolve viewer email + mark legacy `notifications` rows read ────────
-  // Mark-as-read still writes to the legacy table so any other reader of it
-  // stays in sync. Slice 4.5 rationalises unread semantics across categories.
+  // ── Filter view — Q19 hide system_event from All ──────────────────────
+  const visibleItems = useMemo(() => {
+    if (filter === 'all') {
+      return items.filter(i => i.category !== 'system_event' && i.category !== 'continuity');
+    }
+    return items.filter(i => i.category === filter);
+  }, [items, filter]);
+
+  // ── Resolve viewer email ──────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
     supabase.auth.getUser().then(({ data }) => {
       if (cancelled) return;
-      const email = data.user?.email ?? null;
-      setUserEmail(email);
+      setUserEmail(data.user?.email ?? null);
     });
     return () => { cancelled = true; };
   }, []);
 
+  // ── Mark-as-read: legacy `notifications` table for 4.3 (signals
+  //    auto-read on render per D266; mark-as-read affects rows still
+  //    written by the legacy dispatcher until Slice 4.4 routes through
+  //    notification_outbox.category) ─────────────────────────────────────
   const markLegacyRead = useCallback(async (email: string) => {
     try {
       await supabase
@@ -184,9 +85,7 @@ export default function L2NotificationInboxSheet() {
     markLegacyRead(userEmail);
   }, [loading, legacyReadMarked, userEmail, markLegacyRead]);
 
-  // ── Realtime: any insert into `notifications` or `notification_outbox`
-  // triggers a soft RPC reload. Keeps live-updates working through the
-  // 4.2 wiring without us managing optimistic state per category. ─────────
+  // ── Realtime: soft RPC reload on any source insert/update ─────────────
   useEffect(() => {
     const channel = supabase
       .channel('d266-inbox-live')
@@ -204,57 +103,7 @@ export default function L2NotificationInboxSheet() {
     return () => { supabase.removeChannel(channel); };
   }, [reload]);
 
-  // ── Handle tap on a notification row ────────────────────────────────────
-  const handleTap = useCallback((n: Notif) => {
-    const meta = n.metadata ?? {};
-
-    switch (n.type) {
-      case 'boo':
-        // Phil 2026-05-28 (#263): unified inbox — boos no longer pop a separate
-        // 'taps' sheet; tapping the boo row sends the user to /ghosted where
-        // they can boo back.
-        closeSheet();
-        navigate('/ghosted');
-        break;
-
-      case 'message':
-        if (meta.thread_id) {
-          openSheet('chat', { threadId: meta.thread_id });
-        }
-        break;
-
-      case 'event':
-      case 'event_reminder':
-        if (meta.event_id) {
-          openSheet('event', { id: meta.event_id });
-        }
-        break;
-
-      case 'location_share_started': {
-        const shareId    = meta.share_id as string | undefined;
-        const sharerName = (n.title.split(' is sharing')[0]) || 'Someone';
-        if (shareId) {
-          openSheet('location-watcher', { shareId, sharerName });
-        }
-        break;
-      }
-
-      case 'request':
-        // L2RequestSheet lands in Slice 4.3. Until then, requests are
-        // visible but tap is a no-op (intentional — no half-built path).
-        break;
-
-      // location_share_ended, welcome, default — no action
-      default:
-        break;
-    }
-  }, [openSheet, closeSheet, navigate]);
-
-  // ── Whether a row is tappable ───────────────────────────────────────────
-  const isTappable = (type: string) =>
-    ['boo', 'message', 'event', 'event_reminder', 'location_share_started'].includes(type);
-
-  // ── Render ──────────────────────────────────────────────────────────────
+  // ── Loading ───────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center h-48">
@@ -263,26 +112,49 @@ export default function L2NotificationInboxSheet() {
     );
   }
 
-  const unreadCount = notifs.filter(n => !n.read).length;
+  // ── Unread for header pill (excludes hidden categories) ───────────────
+  const headerUnread = items
+    .filter(i => i.category !== 'system_event' && i.category !== 'continuity')
+    .filter(i => i.is_unread).length;
+
+  // ── Per-category dispatch — NOT a fallback renderer (I-3).
+  //     Every branch returns a dedicated cell. continuity logs and
+  //     renders nothing (defensive; never written in Slice 4.x). ──────────
+  const renderItem = (item: InboxItem) => {
+    const props = { item, counterparts };
+    switch (item.category) {
+      case 'conversation':   return <InboxCellConversation  {...props} />;
+      case 'signal':         return <InboxCellSignal        {...props} />;
+      case 'notification':   return <InboxCellNotification  {...props} />;
+      case 'request':        return <InboxCellRequest       {...props} />;
+      case 'location-share': return <InboxCellLocationShare {...props} />;
+      case 'system_event':   return <InboxCellSystemEvent   {...props} />;
+      case 'continuity':
+        // Reserved but never returned in Slice 4.x. If it appears, log
+        // once and render nothing — surfacing it without a doctrine is
+        // worse than hiding it.
+        console.warn('[Inbox] continuity row encountered before doctrine locked');
+        return null;
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-0">
-
-      {/* Header row */}
+      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.07]">
         <div className="flex items-center gap-2">
           <Bell className="w-4 h-4 text-[#C8962C]" />
           <span className="text-sm font-semibold text-white">
-            Notifications
-            {unreadCount > 0 && (
+            Inbox
+            {headerUnread > 0 && (
               <span className="ml-2 text-xs bg-[#C8962C] text-black font-bold px-1.5 py-0.5 rounded-full">
-                {unreadCount}
+                {headerUnread}
               </span>
             )}
           </span>
         </div>
         <div className="flex items-center gap-3">
-          {notifs.length > 0 && (
+          {items.length > 0 && (
             <button
               onClick={() => userEmail && markLegacyRead(userEmail).then(() => reload())}
               className="flex items-center gap-1.5 text-xs text-white/40 hover:text-[#C8962C] transition-colors"
@@ -303,91 +175,55 @@ export default function L2NotificationInboxSheet() {
         </div>
       </div>
 
-      {/* Empty state — D266 dignity floor: "the empty state is the answer". */}
-      {notifs.length === 0 && !error && (
+      {/* Filter chips */}
+      <InboxFilterChips
+        active={filter}
+        counts={countsByCategory}
+        onChange={setFilter}
+      />
+
+      {/* Empty state — D266 "the empty state is the answer" */}
+      {visibleItems.length === 0 && !error && (
         <div className="flex flex-col items-center justify-center py-20 gap-3 px-6 text-center">
           <Inbox className="w-10 h-10 text-white/15" />
-          <p className="text-sm font-semibold text-white/30">All clear</p>
-          <p className="text-xs text-white/20">New boos, messages and alerts will appear here.</p>
+          <p className="text-sm font-semibold text-white/30">
+            {filter === 'all' ? 'All clear' :
+             filter === 'conversation' ? 'Quiet inbox. Go BOO someone.' :
+             filter === 'signal' ? "No one's left a mark yet. Yet." :
+             filter === 'notification' ? 'Nothing the system needs to tell you. Restful.' :
+             filter === 'request' ? 'Nothing needs a decision from you.' :
+             filter === 'location-share' ? "No one's sharing with you right now." :
+             filter === 'system_event' ? 'Your account is quiet.' :
+             'All clear'}
+          </p>
         </div>
       )}
 
-      {/* Error state — soft, honest, retry-able. */}
-      {notifs.length === 0 && error && (
+      {/* Error state */}
+      {visibleItems.length === 0 && error && (
         <div className="flex flex-col items-center justify-center py-16 gap-3 px-6 text-center">
           <Inbox className="w-9 h-9 text-white/15" />
           <p className="text-sm font-semibold text-white/40">Couldn't load your inbox</p>
-          <button
-            onClick={reload}
-            className="text-xs text-[#C8962C] hover:underline"
-          >
+          <button onClick={reload} className="text-xs text-[#C8962C] hover:underline">
             Try again
           </button>
         </div>
       )}
 
-      {/* Notification list */}
+      {/* Per-category rendered list */}
       <div className="flex flex-col divide-y divide-white/[0.05]">
         <AnimatePresence initial={false}>
-          {notifs.map((n) => {
-            const { Icon, color, bg } = typeConfig(n.type);
-            const tappable = isTappable(n.type);
-            const timeAgo  = n.created_at
-              ? formatDistanceToNow(new Date(n.created_at), { addSuffix: true })
-              : '';
-
-            return (
-              <motion.div
-                key={n.id}
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.18 }}
-                onClick={() => tappable && handleTap(n)}
-                className={cn(
-                  'flex items-start gap-3 px-4 py-3.5 transition-colors',
-                  tappable && 'active:bg-white/[0.04] cursor-pointer',
-                  !n.read && 'bg-white/[0.025]'
-                )}
-              >
-                {/* Icon */}
-                <div
-                  className="mt-0.5 flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center"
-                  style={{ background: bg }}
-                >
-                  <Icon className="w-4.5 h-4.5" style={{ color }} />
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <p className={cn(
-                      'text-sm leading-tight truncate',
-                      n.read ? 'text-white/70 font-normal' : 'text-white font-semibold'
-                    )}>
-                      {n.title}
-                    </p>
-                    <span className="text-[10px] text-white/25 flex-shrink-0">{timeAgo}</span>
-                  </div>
-                  {n.body && (
-                    <p className="text-xs text-white/45 mt-0.5 leading-snug line-clamp-2">
-                      {n.body}
-                    </p>
-                  )}
-                  {tappable && (
-                    <p className="text-[10px] mt-1" style={{ color: `${color}99` }}>
-                      Tap to view →
-                    </p>
-                  )}
-                </div>
-
-                {/* Unread dot */}
-                {!n.read && (
-                  <div className="mt-2 flex-shrink-0 w-2 h-2 rounded-full bg-[#C8962C]" />
-                )}
-              </motion.div>
-            );
-          })}
+          {visibleItems.map((item) => (
+            <motion.div
+              key={item.item_id}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.18 }}
+            >
+              {renderItem(item)}
+            </motion.div>
+          ))}
         </AnimatePresence>
       </div>
 
