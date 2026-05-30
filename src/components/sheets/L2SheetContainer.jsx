@@ -262,7 +262,11 @@ export default function L2SheetContainer({
             onDragEnd={handleDragEnd}
             style={{ height, overflowX: 'hidden', overscrollBehavior: 'contain', touchAction: 'pan-y' }}
             className={cn(
-              'fixed bottom-0 left-0 right-0 z-[80]',
+              // 2026-05-30 — desktop max-width cap. L2 sheets are mobile UX.
+              // On wide viewports they were rendering full-width which made
+              // photo carousels and content cards stretch grotesquely. Cap
+              // at 430px (slightly above iPhone Pro Max 428px) and center.
+              'fixed bottom-0 left-0 right-0 z-[80] mx-auto sm:max-w-[460px]',
               'bg-black border-t border-[#C8962C]/40',
               // Phil 2026-05-29 — unified rounded-top across all L2 sheets.
               // The previous `rounded-none` + brutalist scanner-corner pseudo
