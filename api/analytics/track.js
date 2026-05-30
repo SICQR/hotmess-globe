@@ -5,7 +5,13 @@
  * Accepts anonymous events (user_id resolved from JWT if present).
  *
  * POST /api/analytics/track
- * Body: { event_name, category?, label?, value?, properties? }
+ * Body: { event_name, category?, label?, value?, properties?, session_id? }
+ *
+ * 2026-05-30 — #343 fix. Now reads session_id from body (client started
+ * sending it from src/lib/analytics.ts). Previously every row had session_id
+ * NULL because the client never sent it. Combined with the client now
+ * attaching Authorization, every auth-aware event from this date forward
+ * carries user_id + session_id.
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -39,7 +45,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, sink: 'disabled' });
   }
 
-  const { event_name, category, label, value, properties } = req.body ?? {};
+  const { event_name, category, label, value, properties, session_id: bodySessionId } = req.body ?? {};
 
   if (!event_name || typeof event_name !== 'string') {
     return res.status(400).json({ error: 'event_name required' });
@@ -54,6 +60,12 @@ export default async function handler(req, res) {
     userId = user?.id ?? null;
   }
 
+  // session_id — prefer body, fall back to header. Both come from the client.
+  const headerSessionId = req.headers['x-hm-session-id'];
+  const sessionId = (typeof bodySessionId === 'string' && bodySessionId)
+    ? bodySessionId
+    : (typeof headerSessionId === 'string' && headerSessionId ? headerSessionId : null);
+
   const row = {
     event_name,
     category:   category ?? null,
@@ -61,6 +73,7 @@ export default async function handler(req, res) {
     value:      typeof value === 'number' ? value : null,
     properties: properties ?? {},
     user_id:    userId,
+    session_id: sessionId,
     path:       req.headers['referer'] ?? null,
     user_agent: req.headers['user-agent'] ?? null,
     created_at: new Date().toISOString(),
