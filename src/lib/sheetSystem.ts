@@ -93,6 +93,18 @@ export interface SheetDefinition {
   id: string;
   title: string;
   height: keyof typeof SHEET_HEIGHTS;
+  /**
+   * Peek floor as a fraction of viewport (0..1). Default 0.50.
+   * Phil 2026-05-30 (#362): list-type sheets (inbox, marketplace) benefit
+   * from a higher peek floor so users see primary content immediately
+   * instead of scrim. Preview cards keep the default 0.50.
+   * Common values:
+   *   0.50 — preview / picker (default)
+   *   0.70 — short list / medium content
+   *   0.85 — long list / inbox (near-full at peek)
+   *   0.92 — editor / photo-led (effectively full)
+   */
+  peekFraction?: number;
   auth: boolean;
   deepLinkParams: string[];
 }
@@ -105,6 +117,9 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     id: 'profile',
     title: 'Profile',
     height: 'medium',
+    // #365 (Slice 2 — Phil 2026-05-30): photo-led tier. Opens near-full so
+    // hero photo + name + actions are above the fold. bareTop handles chrome.
+    peekFraction: 0.92,
     auth: false,
     deepLinkParams: ['id', 'email', 'handle'],
   },
@@ -133,6 +148,9 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     id: 'chat',
     title: 'Messages',
     height: 'large',
+    // #362 (Phil 2026-05-30): inbox FAB opens ?sheet=chat. Bump peek floor
+    // so MESSAGES title + thread list show above the fold immediately.
+    peekFraction: 0.85,
     auth: true,
     deepLinkParams: ['thread', 'recipientId'],
   },
@@ -218,6 +236,8 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     id: 'edit-profile',
     title: 'Edit Profile',
     height: 'medium',
+    // #365: editor tier. First field below the fold at 0.50.
+    peekFraction: 0.92,
     auth: true,
     deepLinkParams: [],
   },
@@ -239,6 +259,8 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     id: 'album-photos',
     title: 'Album',
     height: 'large',
+    // #365: photo-led tier. Album grid scannable at a glance.
+    peekFraction: 0.92,
     auth: true,
     deepLinkParams: ['albumId'],
   },
@@ -282,6 +304,9 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     id: 'notification-inbox',
     title: 'Notifications',
     height: 'full',
+    // #362: belt-and-braces if a bell-icon entry point gets wired to this
+    // sheet type. Same rationale as chat: list content, not a teaser.
+    peekFraction: 0.85,
     auth: true,
     deepLinkParams: [],
   },
@@ -815,6 +840,16 @@ export function getSheetHeight(type: string): string {
   const config = SHEET_REGISTRY[type];
   if (!config) return SHEET_HEIGHTS.medium;
   return SHEET_HEIGHTS[config.height];
+}
+
+/**
+ * Per-type peek floor lookup (#362). Returns the registry's peekFraction
+ * if set, otherwise undefined so L2SheetContainer uses its default (0.50).
+ * Phil 2026-05-30 — completes the per-type ruling.
+ */
+export function getSheetPeekFraction(type: string): number | undefined {
+  const config = SHEET_REGISTRY[type];
+  return config?.peekFraction;
 }
 
 export function requiresAuth(type: string): boolean {
