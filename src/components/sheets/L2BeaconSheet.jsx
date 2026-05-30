@@ -19,6 +19,8 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { humanizeError } from '@/lib/errorUtils';
 import { usePowerups } from '@/hooks/usePowerups';
+// D12 Slice 2 / #303 Phase A — first-class entity_kind + intent reader.
+import { readIntent } from '@/lib/beacons/beaconKind';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BEACON ID NORMALISATION + KIND DETECTION
@@ -61,12 +63,16 @@ function detectBeaconKind(beacon) {
     // (handled below, after intent check)
   }
 
-  // First-class user intent (Slice 1). Map intent → card-rendering kind.
-  // Looking/Arriving/Cruising/Quiet hold → user (Boo/Message branch).
-  // Hosting → event (party invite, "I'm going" CTA).
-  // Aftercare offered → care (no Boo, "What this offers" CTA).
-  // Selling/swap → user for now; Slice 2 may split to a market kind.
-  const intent = String(meta.intent || '').toLowerCase();
+  // D12 Slice 2 / #303 Phase A dual-read: prefer first-class beacon.intent
+  // (live in DB from this migration onward), fall back to metadata.intent
+  // for unbackfilled rows. Same mapping table as Slice 1.
+  //
+  // Map intent → card-rendering kind:
+  //   Looking/Arriving/Cruising/Quiet hold → user (Boo/Message branch).
+  //   Hosting → event (party invite, "I'm going" CTA).
+  //   Aftercare offered → care (no Boo, "What this offers" CTA).
+  //   Selling/swap → user for now; Slice 3 may split to a market kind.
+  const intent = String(readIntent(beacon) || meta.intent || '').toLowerCase();
   if (intent) {
     if (intent === 'aftercare') return 'care';
     if (intent === 'hosting') return 'event';
