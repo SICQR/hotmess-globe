@@ -74,10 +74,6 @@
     {
       "path": "/api/cron/morning-observation-digest",
       "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/cron/phase-a-monitor",
-      "schedule": "17 * * * *"
     }
   ],
   "routes": [
