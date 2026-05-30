@@ -81,7 +81,7 @@ export function ProximityRow({
           aria-expanded={expanded}
           aria-label={type === 'venue' ? 'How to get there' : 'Travel time'}
         >
-          {type === 'venue' ? 'How to get there →' : 'Travel time'}
+          {type === 'venue' ? 'How to get there →' : 'Travel time ›'}
         </button>
       </div>
 
