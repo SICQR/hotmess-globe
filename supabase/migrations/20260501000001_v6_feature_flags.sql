@@ -1,0 +1,5 @@
+-- Chunk 00: v6 Feature Flag Infrastructure
+-- Tables: feature_flags, feature_flag_audit_log
+-- Seeded: 14 v6 flags + v6_all_off kill switch, all phil_only
+-- Phil role set to admin
+-- See docs/v6/cowork-brief-v6-final-plan-v2.md chunks 00 / 00A / 00B

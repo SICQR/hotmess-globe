@@ -1,0 +1,407 @@
+/**
+ * HOTMESS Service Worker
+ * Handles: Push notifications, caching, offline support, background sync
+ */
+
+// v5 → v6 (2026-05-17): forces deletion of all v5-prefixed caches on activate,
+// fixing the iPhone PWA "stale auth screen" trap where networkFirst would
+// fall back to cached HTML on momentary network hiccup and the v5 STATIC_CACHE
+// still held the pre-"Get into HOTMESS" index.html. Bump every time a fully
+// fresh boot is required for safety.
+const CACHE_VERSION = 'v7-__SW_BUILD_ID__'; // stamped per-build by scripts/stamp-sw.mjs (durable cache-bust); 'v7-...' alone still purges v6
+const STATIC_CACHE = `hotmess-static-${CACHE_VERSION}`;
+const DYNAMIC_CACHE = `hotmess-dynamic-${CACHE_VERSION}`;
+const API_CACHE = `hotmess-api-${CACHE_VERSION}`;
+const IMAGE_CACHE = `hotmess-images-${CACHE_VERSION}`;
+
+// Static assets to cache immediately
+const STATIC_ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/favicon.svg',
+];
+
+// API endpoints to cache
+const CACHEABLE_API_PATTERNS = [
+  '/api/events',
+  '/api/beacons',
+  '/api/products',
+  '/api/user/profile',
+];
+
+// Cache size limits
+const MAX_DYNAMIC_CACHE_ITEMS = 50;
+const MAX_API_CACHE_ITEMS = 100;
+const MAX_IMAGE_CACHE_ITEMS = 200;
+const API_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Install event - cache static assets
+self.addEventListener('install', (event) => {
+  console.log('[SW] Installing service worker...');
+  
+  event.waitUntil(
+    caches.open(STATIC_CACHE)
+      .then((cache) => {
+        console.log('[SW] Caching static assets');
+        return cache.addAll(STATIC_ASSETS);
+      })
+      .catch((error) => {
+        console.error('[SW] Cache install failed:', error);
+      })
+  );
+  
+  // Activate immediately
+  self.skipWaiting();
+});
+
+// Activate event - clean up old caches
+self.addEventListener('activate', (event) => {
+  console.log('[SW] Activating service worker...');
+  
+  const currentCaches = [STATIC_CACHE, DYNAMIC_CACHE, API_CACHE, IMAGE_CACHE];
+  
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((name) => name.startsWith('hotmess-') && !currentCaches.includes(name))
+          .map((name) => {
+            console.log('[SW] Deleting old cache:', name);
+            return caches.delete(name);
+          })
+      );
+    })
+  );
+  
+  // Take control immediately
+  self.clients.claim();
+});
+
+// Determine caching strategy based on request
+function getCachingStrategy(request) {
+  const url = new URL(request.url);
+  
+  // Images - cache first, network fallback
+  if (
+    request.destination === 'image' ||
+    url.pathname.match(/\.(png|jpg|jpeg|gif|webp|svg|ico)$/i)
+  ) {
+    return { strategy: 'cache-first', cacheName: IMAGE_CACHE, maxItems: MAX_IMAGE_CACHE_ITEMS };
+  }
+  
+  // API requests - network first, cache fallback with stale-while-revalidate
+  if (url.pathname.startsWith('/api/') || url.hostname.includes('supabase')) {
+    const isCacheable = CACHEABLE_API_PATTERNS.some(pattern => 
+      url.pathname.includes(pattern)
+    );
+    
+    if (isCacheable && request.method === 'GET') {
+      return { strategy: 'stale-while-revalidate', cacheName: API_CACHE, maxItems: MAX_API_CACHE_ITEMS };
+    }
+    
+    return { strategy: 'network-only' };
+  }
+  
+  // Navigation requests (HTML pages) — ALWAYS network-first so new deploys
+  // serve the latest index.html with correct JS/CSS hashes.
+  // Cache-first for HTML causes black-screen after deploys.
+  if (request.mode === 'navigate') {
+    return { strategy: 'network-first', cacheName: STATIC_CACHE };
+  }
+
+  // Hashed static assets (JS/CSS with content hashes) — cache first is safe
+  if (url.pathname.startsWith('/assets/')) {
+    return { strategy: 'cache-first', cacheName: STATIC_CACHE };
+  }
+  
+  // Everything else - network first, cache fallback
+  return { strategy: 'network-first', cacheName: DYNAMIC_CACHE, maxItems: MAX_DYNAMIC_CACHE_ITEMS };
+}
+
+// Trim cache to max items (debounced to avoid excessive trimming)
+const trimPending = new Set();
+async function trimCache(cacheName, maxItems) {
+  // Skip if already pending trim for this cache
+  if (trimPending.has(cacheName)) return;
+  trimPending.add(cacheName);
+  
+  // Debounce - wait 5 seconds before actually trimming
+  setTimeout(async () => {
+    try {
+      const cache = await caches.open(cacheName);
+      const keys = await cache.keys();
+      
+      if (keys.length > maxItems) {
+        const deleteCount = keys.length - maxItems;
+        const keysToDelete = keys.slice(0, deleteCount);
+        
+        await Promise.all(keysToDelete.map(key => cache.delete(key)));
+        // Only log significant trims (10+ items)
+        if (deleteCount >= 10) {
+          console.log(`[SW] Trimmed ${deleteCount} items from ${cacheName}`);
+        }
+      }
+    } finally {
+      trimPending.delete(cacheName);
+    }
+  }, 5000);
+}
+
+// Cache-first strategy
+async function cacheFirst(request, cacheName, maxItems) {
+  const cachedResponse = await caches.match(request);
+  
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+  
+  try {
+    const networkResponse = await fetch(request);
+    
+    if (networkResponse.ok) {
+      const cache = await caches.open(cacheName);
+      cache.put(request, networkResponse.clone());
+      
+      if (maxItems) {
+        trimCache(cacheName, maxItems);
+      }
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    console.error('[SW] Cache-first network error:', error);
+    throw error;
+  }
+}
+
+// Network-first strategy
+async function networkFirst(request, cacheName, maxItems) {
+  // For navigation (HTML) requests bypass the browser's own HTTP cache so the
+  // SW's cache is the only source of stale HTML. Without this, a momentary
+  // 304-from-browser-cache can re-cement an old index.html into STATIC_CACHE
+  // — the trap that kept Phil's iPhone on the pre-"Get into HOTMESS" auth
+  // screen after deploys. `cache: 'reload'` forces a fresh trip to origin.
+  const fetchOpts = request.mode === 'navigate' ? { cache: 'reload' } : undefined;
+  try {
+    const networkResponse = await fetch(request, fetchOpts);
+    
+    if (networkResponse.ok) {
+      const cache = await caches.open(cacheName);
+      cache.put(request, networkResponse.clone());
+      
+      if (maxItems) {
+        trimCache(cacheName, maxItems);
+      }
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    const cachedResponse = await caches.match(request);
+    
+    if (cachedResponse) {
+      console.log('[SW] Serving from cache (offline):', request.url);
+      return cachedResponse;
+    }
+    
+    // Return offline page for navigation requests
+    if (request.mode === 'navigate') {
+      return caches.match('/index.html');
+    }
+    
+    throw error;
+  }
+}
+
+// Stale-while-revalidate strategy
+async function staleWhileRevalidate(request, cacheName, maxItems) {
+  const cachedResponse = await caches.match(request);
+  
+  // Start network request in background
+  const networkPromise = fetch(request)
+    .then(async (networkResponse) => {
+      if (networkResponse.ok) {
+        const cache = await caches.open(cacheName);
+        await cache.put(request, networkResponse.clone());
+        
+        if (maxItems) {
+          trimCache(cacheName, maxItems);
+        }
+      }
+      return networkResponse;
+    })
+    .catch((error) => {
+      console.log('[SW] Background revalidation failed:', error);
+      return null;
+    });
+  
+  // Return cached response immediately if available
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+  
+  // Wait for network if no cache
+  const networkResponse = await networkPromise;
+  if (networkResponse) {
+    return networkResponse;
+  }
+  
+  throw new Error('No cached response and network unavailable');
+}
+
+// Fetch event handler
+self.addEventListener('fetch', (event) => {
+  // Skip non-GET requests (they can't be cached)
+  if (event.request.method !== 'GET') return;
+  
+  // Skip chrome-extension and other non-http requests
+  if (!event.request.url.startsWith('http')) return;
+  
+  const url = new URL(event.request.url);
+
+  // Bypass SW entirely for Google Maps APIs — referrer-restricted keys need
+  // direct page-context fetches; SW-context fetch strips/modifies Referer,
+  // which makes the API reject the request even with a valid key.
+  if (url.hostname.includes('googleapis')) {
+    return;
+  }
+
+  // Skip cross-origin requests that we don't want to cache
+  if (
+    url.origin !== self.location.origin &&
+    !url.hostname.includes('supabase') &&
+    !url.hostname.includes('cloudinary')
+  ) {
+    return;
+  }
+  
+  const { strategy, cacheName, maxItems } = getCachingStrategy(event.request);
+  
+  switch (strategy) {
+    case 'cache-first':
+      event.respondWith(cacheFirst(event.request, cacheName, maxItems));
+      break;
+    case 'network-first':
+      event.respondWith(networkFirst(event.request, cacheName, maxItems));
+      break;
+    case 'stale-while-revalidate':
+      event.respondWith(staleWhileRevalidate(event.request, cacheName, maxItems));
+      break;
+    case 'network-only':
+    default:
+      // Let the browser handle it normally
+      break;
+  }
+});
+
+// Push notification event — suppress if user is in that chat thread
+self.addEventListener('push', (event) => {
+  const data = event.data?.json() ?? {};
+  event.waitUntil(
+    (async () => {
+      // Suppress if user is focused on the relevant screen
+      try {
+        const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: false });
+        const focusedClient = windowClients.find((c) => c.focused && c.url);
+
+        if (focusedClient) {
+          const url = focusedClient.url;
+
+          // Chat thread: suppress if user is viewing that exact thread
+          if (data.tag && data.tag.startsWith('chat-')) {
+            const threadId = data.tag.replace('chat-', '');
+            if (url.includes(`thread=${threadId}`)) return;
+          }
+
+          // Boo/match: suppress if user is on /ghosted
+          if ((data.tag === 'boo' || data.tag === 'match') && url.includes('/ghosted')) {
+            return;
+          }
+        }
+      } catch { /* fall through to show notification */ }
+
+      await self.registration.showNotification(data.title || 'HOTMESS', {
+        body: data.body || '',
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+        data: data.url ? { url: data.url } : {},
+        tag: data.tag || 'hotmess-notif',
+        renotify: true,
+      });
+    })()
+  );
+});
+
+// Notification click handler — focus existing window if possible
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Try to focus an existing HOTMESS window and navigate it
+      for (const client of windowClients) {
+        if (client.url && new URL(client.url).origin === self.location.origin) {
+          client.postMessage({ type: 'NOTIFICATION_CLICK', url: targetUrl });
+          return client.focus();
+        }
+      }
+      // No existing window — open new
+      return self.clients.openWindow(targetUrl);
+    })
+  );
+});
+
+// Notification close handler
+self.addEventListener('notificationclose', (event) => {
+  console.log('[SW] Notification dismissed:', event.notification.tag);
+});
+
+// Message handler — SW lifecycle hooks the page can drive
+self.addEventListener('message', (event) => {
+  console.log('[SW] Message received:', event.data?.type);
+
+  // Page tells the waiting SW to take over immediately. Used by the
+  // SWUpdateBanner "Refresh" action after an updatefound -> installed
+  // transition.
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+
+  // Explicit cache nuke for emergency invalidation. Drives the optional
+  // "Reset app cache" settings button + any future force-recovery path.
+  // Replies via the MessageChannel port the page sent (if any) so the
+  // caller can await completion before unregistering / reloading.
+  if (event.data?.type === 'CLEAR_ALL_CACHES') {
+    event.waitUntil(
+      caches.keys()
+        .then((names) => Promise.all(names.map((n) => caches.delete(n))))
+        .then(() => {
+          event.ports?.[0]?.postMessage({ ok: true });
+        })
+        .catch((err) => {
+          console.error('[SW] CLEAR_ALL_CACHES failed:', err);
+          event.ports?.[0]?.postMessage({ ok: false, error: String(err) });
+        })
+    );
+  }
+});
+
+// Background sync for offline actions (when supported)
+self.addEventListener('sync', (event) => {
+  console.log('[SW] Background sync:', event.tag);
+  
+  if (event.tag === 'sync-notifications') {
+    event.waitUntil(syncNotifications());
+  }
+});
+
+async function syncNotifications() {
+  // Sync any queued notifications when back online
+  try {
+    const cache = await caches.open(DYNAMIC_CACHE);
+    // Implementation for syncing queued actions
+    console.log('[SW] Notifications synced');
+  } catch (error) {
+    console.error('[SW] Sync failed:', error);
+  }
+}

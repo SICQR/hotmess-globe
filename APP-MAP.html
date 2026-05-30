@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOTMESS App Map — Complete Architecture</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #050507;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  /* ── Controls ─────────────────────────────────────────────────── */
+  #controls {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+    background: rgba(5,5,7,0.92); backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(200,150,44,0.15);
+    padding: 12px 20px; display: flex; align-items: center; gap: 16px;
+    height: 52px;
+  }
+  #controls h1 {
+    font-size: 14px; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase;
+  }
+  #controls h1 span { color: #C8962C; }
+  #controls .legend { display: flex; gap: 14px; margin-left: auto; font-size: 11px; }
+  #controls .legend .dot {
+    width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; vertical-align: middle;
+  }
+  #controls button {
+    background: rgba(200,150,44,0.15); border: 1px solid rgba(200,150,44,0.3);
+    color: #C8962C; font-size: 11px; font-weight: 700; padding: 5px 12px;
+    border-radius: 6px; cursor: pointer; letter-spacing: 0.05em;
+  }
+  #controls button:hover { background: rgba(200,150,44,0.25); }
+
+  /* ── Canvas ───────────────────────────────────────────────────── */
+  #canvas {
+    position: absolute; top: 52px; left: 0; right: 0; bottom: 0;
+    overflow: hidden; cursor: grab;
+  }
+  #canvas:active { cursor: grabbing; }
+  #world {
+    position: absolute; transform-origin: 0 0;
+    /* Will be translated/scaled via JS */
+  }
+
+  /* ── Nodes ────────────────────────────────────────────────────── */
+  .node {
+    position: absolute; border-radius: 10px; padding: 10px 14px;
+    font-size: 11px; font-weight: 600; cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: box-shadow 0.2s, border-color 0.2s, transform 0.15s;
+    user-select: none; min-width: 120px; text-align: center;
+  }
+  .node:hover { transform: scale(1.04); z-index: 50; }
+  .node.highlighted {
+    box-shadow: 0 0 20px rgba(200,150,44,0.4);
+    border-color: #C8962C !important;
+    z-index: 100;
+  }
+  .node .label { font-weight: 800; font-size: 12px; margin-bottom: 2px; }
+  .node .sub { font-size: 9px; opacity: 0.5; font-weight: 500; }
+  .node .route { font-size: 8px; opacity: 0.35; font-family: monospace; margin-top: 3px; }
+  .node .badge {
+    position: absolute; top: -6px; right: -6px; font-size: 8px; font-weight: 900;
+    padding: 2px 5px; border-radius: 8px; letter-spacing: 0.05em;
+  }
+
+  /* Status colors */
+  .status-ok { background: rgba(48,209,88,0.08); border-color: rgba(48,209,88,0.25); }
+  .status-ok .label { color: #30D158; }
+  .status-broken { background: rgba(255,59,48,0.08); border-color: rgba(255,59,48,0.3); }
+  .status-broken .label { color: #FF3B30; }
+  .status-stub { background: rgba(255,204,0,0.06); border-color: rgba(255,204,0,0.2); }
+  .status-stub .label { color: #FFCC00; }
+  .status-gold { background: rgba(200,150,44,0.1); border-color: rgba(200,150,44,0.3); }
+  .status-gold .label { color: #C8962C; }
+
+  /* Special node types */
+  .node.tab-node {
+    background: rgba(200,150,44,0.12); border: 2px solid rgba(200,150,44,0.4);
+    min-width: 100px;
+  }
+  .node.tab-node .label { color: #C8962C; font-size: 14px; }
+  .node.boot-node { min-width: 110px; }
+  .node.sheet-node { min-width: 105px; font-size: 10px; }
+  .node.api-node {
+    background: rgba(0,194,224,0.06); border-color: rgba(0,194,224,0.2);
+    font-family: monospace; font-size: 9px; min-width: 90px;
+  }
+  .node.api-node .label { color: #00C2E0; font-size: 10px; }
+
+  /* ── Section headers ──────────────────────────────────────────── */
+  .section-label {
+    position: absolute; font-size: 9px; font-weight: 900;
+    letter-spacing: 0.3em; text-transform: uppercase; opacity: 0.2;
+    user-select: none; pointer-events: none;
+  }
+
+  /* ── Arrows (SVG lines) ──────────────────────────────────────── */
+  svg.arrows {
+    position: absolute; top: 0; left: 0; pointer-events: none;
+    overflow: visible;
+  }
+  svg.arrows line, svg.arrows path {
+    stroke-width: 1.2; fill: none;
+  }
+  svg.arrows .arrow-ok { stroke: rgba(48,209,88,0.3); }
+  svg.arrows .arrow-gold { stroke: rgba(200,150,44,0.25); }
+  svg.arrows .arrow-broken { stroke: rgba(255,59,48,0.25); stroke-dasharray: 4 3; }
+  svg.arrows .arrow-stub { stroke: rgba(255,204,0,0.2); stroke-dasharray: 4 3; }
+  svg.arrows .arrow-dim { stroke: rgba(255,255,255,0.06); }
+  svg.arrows .highlighted-arrow { stroke-width: 2.5; opacity: 1 !important; }
+  svg.arrows marker path { fill: rgba(200,150,44,0.4); }
+
+  /* ── Tooltip ──────────────────────────────────────────────────── */
+  #tooltip {
+    position: fixed; z-index: 9999; display: none;
+    background: #1C1C1E; border: 1px solid rgba(200,150,44,0.3);
+    border-radius: 8px; padding: 10px 14px; max-width: 280px;
+    font-size: 11px; line-height: 1.5; pointer-events: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+  #tooltip .tt-title { font-weight: 800; color: #C8962C; margin-bottom: 4px; }
+  #tooltip .tt-body { color: rgba(255,255,255,0.6); }
+  #tooltip .tt-connections { margin-top: 6px; font-size: 10px; color: rgba(255,255,255,0.35); }
+
+  /* ── Minimap ──────────────────────────────────────────────────── */
+  #minimap {
+    position: fixed; bottom: 16px; right: 16px; z-index: 998;
+    width: 180px; height: 120px; background: rgba(28,28,30,0.9);
+    border: 1px solid rgba(200,150,44,0.2); border-radius: 8px;
+    overflow: hidden;
+  }
+  #minimap canvas { width: 100%; height: 100%; }
+  #minimap-viewport {
+    position: absolute; border: 1px solid #C8962C; pointer-events: none;
+    border-radius: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div id="controls">
+  <h1>HOT<span>MESS</span> App Map</h1>
+  <button onclick="resetView()">Reset View</button>
+  <button onclick="toggleAllConnections()">Show All Arrows</button>
+  <div class="legend">
+    <span><span class="dot" style="background:#30D158"></span> Working</span>
+    <span><span class="dot" style="background:#FF3B30"></span> Broken</span>
+    <span><span class="dot" style="background:#FFCC00"></span> Stub</span>
+    <span><span class="dot" style="background:#C8962C"></span> Brand / Tab</span>
+    <span><span class="dot" style="background:#00C2E0"></span> API</span>
+  </div>
+</div>
+
+<div id="canvas">
+  <div id="world"></div>
+</div>
+
+<div id="tooltip">
+  <div class="tt-title"></div>
+  <div class="tt-body"></div>
+  <div class="tt-connections"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATA MODEL — Every screen, sheet, API in the app
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const NODES = [
+  // ── BOOT FLOW (row 0, y=40) ────────────────────────────────────────────
+  { id: 'splash', x: 60,   y: 40, label: 'Splash',       sub: 'SplashScreen',                route: '/',            status: 'ok',   type: 'boot', info: 'Gold wordmark, CTA reveal after 900ms, fast-path skip' },
+  { id: 'age',    x: 220,  y: 40, label: 'Age Gate',      sub: 'AgeGateScreen',               route: '/age',         status: 'ok',   type: 'boot', info: 'Confirms 18+, writes hm_age_confirmed_v1 to localStorage' },
+  { id: 'signup', x: 380,  y: 40, label: 'Sign Up',       sub: 'SignUpScreen',                 route: '/auth',        status: 'ok',   type: 'boot', info: 'Email magic link + Apple (disabled in WebView). Supabase auth.' },
+  { id: 'quick',  x: 540,  y: 40, label: 'Quick Setup',   sub: 'QuickSetupScreen',             route: '/onboarding',  status: 'ok',   type: 'boot', info: 'Display name + avatar upload. Minimum to unlock OS.' },
+  { id: 'profile_screen', x: 700, y: 40, label: 'Profile',sub: 'ProfileScreen',                route: '/onboarding',  status: 'ok',   type: 'boot', info: 'Bio, age, position, looking_for' },
+  { id: 'pin',    x: 860,  y: 40, label: 'PIN Setup',     sub: 'PinSetupScreen',               route: '/onboarding',  status: 'ok',   type: 'boot', info: 'SHA-256 hashed 4-digit PIN, stored in profiles.pin_hash' },
+  { id: 'ready',  x: 1020, y: 40, label: 'READY',         sub: 'Boot state machine',           route: '',             status: 'gold', type: 'boot', info: 'onboarding_completed=true. OS mounts. 6 tabs accessible.' },
+
+  // ── BOOT STATES (row 0.5, y=130) ──────────────────────────────────────
+  { id: 'loading',       x: 60,  y: 130, label: 'LOADING',       sub: 'BootGuardContext', route: '', status: 'ok',   type: 'boot', info: 'Initial state. Reads localStorage session synchronously for zero-flash.' },
+  { id: 'unauth',        x: 260, y: 130, label: 'UNAUTH',        sub: 'No session',      route: '', status: 'ok',   type: 'boot', info: 'No Supabase session. Routes to OnboardingRouter.' },
+  { id: 'needs_age',     x: 460, y: 130, label: 'NEEDS_AGE',     sub: 'age_verified=false', route: '', status: 'ok', type: 'boot', info: 'Authenticated but age not verified. Rare edge case.' },
+  { id: 'needs_onboard', x: 660, y: 130, label: 'NEEDS_ONBOARD', sub: 'onboarding=false', route: '', status: 'ok',  type: 'boot', info: 'Authenticated, age verified, but onboarding_completed=false.' },
+  { id: 'needs_community', x: 880, y: 130, label: 'COMMUNITY GATE', sub: 'community_attested_at=null', route: '', status: 'ok', type: 'boot', info: 'Pre-onboarding community attestation gate.' },
+
+  // ── 6 MAIN TABS (row 1, y=260) ────────────────────────────────────────
+  { id: 'tab_home',    x: 80,   y: 260, label: 'Home',     sub: 'HomeMode.tsx',     route: '/',        status: 'ok', type: 'tab', info: '12-section dashboard feed. Intention bar, events, beacons, nearby, market picks.' },
+  { id: 'tab_pulse',   x: 280,  y: 260, label: 'Pulse',    sub: 'PulseMode.tsx',    route: '/pulse',   status: 'ok', type: 'tab', info: 'Three.js globe (only renders here), event pins, beacon FAB, city picker HUD.' },
+  { id: 'tab_ghosted', x: 480,  y: 260, label: 'Ghosted',  sub: 'GhostedMode.tsx',  route: '/ghosted', status: 'ok', type: 'tab', info: '3-col proximity grid, ghost-filtered. Tap→profile sheet. Boo system.' },
+  { id: 'tab_market',  x: 680,  y: 260, label: 'Market',   sub: 'MarketMode.tsx',   route: '/market',  status: 'ok', type: 'tab', info: 'Shopify headless + preloved listings + creator drops. 3 commerce streams.' },
+  { id: 'tab_music',   x: 880,  y: 260, label: 'Music',    sub: 'MusicTab.jsx',     route: '/music',   status: 'ok', type: 'tab', info: 'Raw Convict Records releases, artist pages, inline audio player.' },
+  { id: 'tab_more',    x: 1080, y: 260, label: 'More',     sub: 'MorePage.tsx',     route: '/more',    status: 'ok', type: 'tab', info: 'Hub: Safety, Care, Profile, Personas, Vault, Settings, Help.' },
+
+  // ── MORE HUB DESTINATIONS (row 2, y=380) ──────────────────────────────
+  { id: 'safety_page',  x: 920,  y: 380, label: 'Safety',   sub: 'Safety.jsx',      route: '/safety',   status: 'ok',    type: 'page', info: 'SOS, check-ins, trusted contacts, live location, aftercare nudge.' },
+  { id: 'care_page',    x: 1040, y: 380, label: 'Care',     sub: 'CarePage.tsx',     route: '/care',     status: 'ok',    type: 'page', info: 'Hand N Hand wellbeing. Hydrate, rest, talk, shower reset. Crisis helplines.' },
+  { id: 'profile_page', x: 1160, y: 380, label: 'Profile',  sub: 'ProfileMode.tsx',  route: '/profile',  status: 'ok',    type: 'page', info: 'Persona switcher, edit profile, photos, all settings links.' },
+  { id: 'personas',     x: 1280, y: 380, label: 'Personas', sub: 'PersonaSwitcherSheet', route: '/profile?action=manage-personas', status: 'ok', type: 'page', info: 'Up to 5 personas per user (MAIN, TRAVEL, WEEKEND, custom). switch_persona() RPC.' },
+  { id: 'vault_page',   x: 1080, y: 460, label: 'Vault',    sub: 'VaultMode.tsx',    route: '/more/vault', status: 'ok',  type: 'page', info: 'Tickets, orders, listings. Scope TBD by Phil.' },
+  { id: 'radio_page',   x: 920,  y: 460, label: 'Radio',    sub: 'RadioMode.tsx',    route: '/radio',    status: 'ok',    type: 'page', info: 'Full-screen player. Shows: Wake The Mess, Dial A Daddy, Hand N Hand.' },
+
+  // ── HOME MODE SHEETS (row 3, y=400) ───────────────────────────────────
+  { id: 'sh_notifications', x: 0,   y: 400, label: 'Notifications', sub: 'L2NotificationsSheet', route: '?sheet=notifications', status: 'ok', type: 'sheet', info: 'Notification preferences' },
+  { id: 'sh_community',     x: 130, y: 400, label: 'Community',     sub: 'L2CommunityPostSheet', route: '?sheet=community',     status: 'ok', type: 'sheet', info: 'Community posts feed. DB: community_posts (8 rows)' },
+  { id: 'sh_event_home',    x: 0,   y: 470, label: 'Event',         sub: 'L2EventSheet',        route: '?sheet=event&id=X',    status: 'ok', type: 'sheet', info: 'Event detail. RSVP, directions, creator profile link.' },
+  { id: 'sh_beacon_home',   x: 130, y: 470, label: 'Beacon',        sub: 'L2BeaconSheet',       route: '?sheet=beacon&id=X',   status: 'ok', type: 'sheet', info: 'Beacon detail. Directions link, uber sheet link.' },
+  { id: 'sh_product_home',  x: 0,   y: 540, label: 'Product',       sub: 'L2ShopSheet',         route: '?sheet=product&id=X',  status: 'ok', type: 'sheet', info: 'Product detail. Add to cart. Preloved chat-to-buy flow.' },
+  { id: 'sh_profile_home',  x: 130, y: 540, label: 'Profile',       sub: 'L2ProfileSheet',      route: '?sheet=profile&email=X', status: 'ok', type: 'sheet', info: 'User profile card. 3:4 aspect. Chat/video/boo actions.' },
+
+  // ── PULSE MODE SHEETS (row 3, y=400) ──────────────────────────────────
+  { id: 'sh_city_picker', x: 220, y: 400, label: 'City Picker',  sub: 'L2CityPickerSheet',  route: '?sheet=city-picker',     status: 'ok', type: 'sheet', info: 'Globe flyTo city. 13 cities in DB.' },
+  { id: 'sh_event_pulse', x: 350, y: 400, label: 'Event',        sub: 'L2EventSheet',       route: '?sheet=event&id=X',      status: 'ok', type: 'sheet', info: 'Event detail from globe pin tap.' },
+  { id: 'sh_beacon_pulse',x: 220, y: 470, label: 'Beacon',       sub: 'L2BeaconSheet',      route: '?sheet=beacon&id=X',     status: 'ok', type: 'sheet', info: 'Beacon detail from globe marker.' },
+  { id: 'sh_create_beacon',x:350, y: 470, label: 'Create Beacon', sub: 'FAB action',        route: '?sheet=beacon&mode=create', status: 'ok', type: 'sheet', info: 'Create new beacon via Pulse FAB button.' },
+  { id: 'sh_amplify',     x: 220, y: 540, label: 'Amplify',      sub: 'L2AmplifySheet',     route: '?sheet=amplify',         status: 'ok', type: 'sheet', info: 'B2B city amplification tool for venues.' },
+  { id: 'sh_events_list', x: 350, y: 540, label: 'Events List',  sub: 'L2EventsSheet',      route: '?sheet=events',          status: 'ok', type: 'sheet', info: 'All events list view.' },
+
+  // ── GHOSTED MODE SHEETS (row 3, y=400) ────────────────────────────────
+  { id: 'sh_profile_ghost', x: 420, y: 400, label: 'Profile',    sub: 'L2ProfileSheet',     route: '?sheet=profile',          status: 'ok', type: 'sheet', info: 'Ghosted grid tap → profile card. 3:4 Grindr-style.' },
+  { id: 'sh_chat',          x: 550, y: 400, label: 'Chat',       sub: 'L2ChatSheet',        route: '?sheet=chat',             status: 'ok', type: 'sheet', info: 'GATED: only from /ghosted or profile-in-stack. Real-time Supabase messages.' },
+  { id: 'sh_video',         x: 420, y: 470, label: 'Video Call',  sub: 'L2VideoCallSheet',   route: '?sheet=video-call',       status: 'stub', type: 'sheet', info: 'GATED: only from /ghosted context. WebRTC stub.' },
+  { id: 'sh_filters',       x: 550, y: 470, label: 'Filters',    sub: 'L2FiltersSheet',     route: '?sheet=filters',          status: 'ok', type: 'sheet', info: 'Age/position/looking_for/distance filters for Ghosted grid.' },
+  { id: 'sh_social',        x: 420, y: 540, label: 'Social',     sub: 'L2SocialSheet',      route: '?sheet=social',           status: 'ok', type: 'sheet', info: 'Social feed: taps, views, activity.' },
+  { id: 'sh_taps',          x: 550, y: 540, label: 'Boos',       sub: 'L2TapsSheet',        route: '?sheet=taps',             status: 'ok', type: 'sheet', info: 'Boo/tap inbox. Red badge on nav. Tap → profile sheet.' },
+
+  // ── MARKET MODE SHEETS (row 3, y=400) ─────────────────────────────────
+  { id: 'sh_product_mkt',  x: 620, y: 400, label: 'Product',     sub: 'L2ShopSheet',        route: '?sheet=product',          status: 'ok', type: 'sheet', info: 'Product detail. Shopify or preloved. Add to cart.' },
+  { id: 'sh_cart',          x: 750, y: 400, label: 'Cart',       sub: 'L2CartSheet',        route: '?sheet=cart',             status: 'ok', type: 'sheet', info: 'Shopping cart. Proceeds to checkout sheet.' },
+  { id: 'sh_checkout',     x: 620, y: 470, label: 'Checkout',    sub: 'L2CheckoutSheet',    route: '?sheet=checkout',         status: 'ok', type: 'sheet', info: 'Checkout flow. Creates order record. Chat with seller for preloved.' },
+  { id: 'sh_sell',          x: 750, y: 470, label: 'List Item',  sub: 'L2SellSheet',        route: '?sheet=sell',             status: 'ok', type: 'sheet', info: 'List preloved item for sale. Tier-gated (membership sheet upsell).' },
+  { id: 'sh_brand',         x: 620, y: 540, label: 'Brand',     sub: 'L2BrandSheet',       route: '?sheet=brand&brand=X',    status: 'ok', type: 'sheet', info: 'Brand landing pages: RAW, HUNG, HIGH, HUNGMESS.' },
+  { id: 'sh_filters_mkt',  x: 750, y: 540, label: 'Filters',    sub: 'L2FiltersSheet',     route: '?sheet=filters&mode=market', status: 'ok', type: 'sheet', info: 'Market filters: price, brand, category.' },
+
+  // ── PROFILE MODE SHEETS (row 4, y=620) ────────────────────────────────
+  { id: 'sh_edit_profile', x: 1100, y: 550, label: 'Edit Profile', sub: 'L2EditProfileSheet', route: '?sheet=edit-profile', status: 'ok', type: 'sheet', info: 'Full profile editor.' },
+  { id: 'sh_photos',      x: 1220, y: 550, label: 'Photos',       sub: 'L2PhotosSheet',      route: '?sheet=photos',       status: 'ok', type: 'sheet', info: 'Photo gallery manager.' },
+  { id: 'sh_location',    x: 1340, y: 550, label: 'Location',     sub: 'L2LocationSheet',    route: '?sheet=location',     status: 'ok', type: 'sheet', info: 'Location settings.' },
+  { id: 'sh_community_p', x: 1100, y: 620, label: 'Community',    sub: 'L2CommunityPostSheet',route:'?sheet=community',    status: 'ok', type: 'sheet', info: 'Community from profile menu.' },
+  { id: 'sh_achievements',x: 1220, y: 620, label: 'Achievements', sub: 'L2AchievementsSheet', route:'?sheet=achievements', status: 'ok', type: 'sheet', info: 'Gamification achievements.' },
+  { id: 'sh_squads',      x: 1340, y: 620, label: 'Squads',       sub: 'L2SquadsSheet',      route:'?sheet=squads',        status: 'ok', type: 'sheet', info: 'Squad groups.' },
+  { id: 'sh_sweatcoins',  x: 1100, y: 690, label: 'Sweat Coins',  sub: 'L2SweatCoinsSheet',  route:'?sheet=sweat-coins',   status: 'ok', type: 'sheet', info: 'Virtual currency.' },
+  { id: 'sh_creator_sub', x: 1220, y: 690, label: 'Creator Sub',  sub: 'L2CreatorSubscriptionSheet', route:'?sheet=creator-subscription', status: 'ok', type: 'sheet', info: 'Subscribe to creator content.' },
+  { id: 'sh_boost',       x: 1340, y: 690, label: 'Power-Ups',    sub: 'L2BoostShopSheet',   route:'?sheet=boost-shop',    status: 'ok', type: 'sheet', info: 'Globe glow, profile bump, vibe blast, incognito, etc.' },
+  { id: 'sh_referral',    x: 1100, y: 760, label: 'Invite',       sub: 'L2ReferralSheet',    route:'?sheet=referral',      status: 'ok', type: 'sheet', info: 'Referral program. ?invite=CODE deep link.' },
+  { id: 'sh_my_listings', x: 1220, y: 760, label: 'My Listings',  sub: 'L2MyOrdersSheet',    route:'?sheet=my-listings',   status: 'ok', type: 'sheet', info: 'User preloved listings.' },
+  { id: 'sh_my_orders',   x: 1340, y: 760, label: 'My Orders',    sub: 'L2MyOrdersSheet',    route:'?sheet=my-orders',     status: 'ok', type: 'sheet', info: 'Order history. Tap → order detail sheet.' },
+  { id: 'sh_payouts',     x: 1100, y: 830, label: 'Earnings',     sub: 'L2PayoutsSheet',     route:'?sheet=payouts',       status: 'ok', type: 'sheet', info: 'Seller earnings. Stripe Connect (blocked on Phil onboarding).' },
+  { id: 'sh_vault_sheet', x: 1220, y: 830, label: 'Vault',        sub: 'L2VaultSheet',       route:'?sheet=vault',         status: 'ok', type: 'sheet', info: 'Tickets + passes.' },
+  { id: 'sh_favorites',   x: 1340, y: 830, label: 'Favourites',   sub: 'L2FavoritesSheet',   route:'?sheet=favorites',     status: 'ok', type: 'sheet', info: 'Saved profiles.' },
+  { id: 'sh_profile_views',x:1100, y: 900, label: 'Profile Views', sub:'L2ProfileViewsSheet', route:'?sheet=profile-views', status: 'ok', type: 'sheet', info: 'Who viewed your profile. Tap → profile sheet.' },
+  { id: 'sh_safety_sheet', x:1220, y: 900, label: 'Safety',       sub: 'L2SafetySheet',      route:'?sheet=safety',        status: 'ok', type: 'sheet', info: 'Safety center sheet.' },
+  { id: 'sh_emergency',    x:1340, y: 900, label: 'Emergency',    sub: 'L2EmergencyContactSheet', route:'?sheet=emergency-contact', status: 'ok', type: 'sheet', info: 'Emergency contacts manager.' },
+  { id: 'sh_privacy',      x:1100, y: 970, label: 'Privacy',      sub: 'L2PrivacySheet',     route:'?sheet=privacy',       status: 'ok', type: 'sheet', info: 'Privacy settings.' },
+  { id: 'sh_blocked',      x:1220, y: 970, label: 'Blocked',      sub: 'L2BlockedSheet',     route:'?sheet=blocked',       status: 'ok', type: 'sheet', info: 'Blocked users list.' },
+  { id: 'sh_notif_inbox',  x:1340, y: 970, label: 'Notif Inbox',  sub: 'L2NotificationInboxSheet', route:'?sheet=notification-inbox', status: 'ok', type: 'sheet', info: 'Full notification inbox. Routes to taps/chat/event/location sheets.' },
+  { id: 'sh_membership',   x:1100, y: 1040, label: 'Membership',  sub: 'L2MembershipSheet',  route:'?sheet=membership',    status: 'ok', type: 'sheet', info: 'Membership tiers and upgrade.' },
+  { id: 'sh_help',         x:1220, y: 1040, label: 'Help',        sub: 'L2HelpSheet',        route:'?sheet=help',          status: 'ok', type: 'sheet', info: 'FAQs + support.' },
+  { id: 'sh_settings',     x:1340, y: 1040, label: 'Settings',    sub: 'L2SettingsSheet',    route:'?sheet=settings',      status: 'ok', type: 'sheet', info: 'Account settings. Links to edit-profile, privacy, notifications, blocked.' },
+
+  // ── CROSS-CUTTING SHEETS ──────────────────────────────────────────────
+  { id: 'sh_search',       x: 820, y: 620, label: 'Search',       sub: 'L2SearchSheet',      route:'?sheet=search',        status: 'ok', type: 'sheet', info: 'Global search: profiles, events, products.' },
+  { id: 'sh_directions',   x: 820, y: 690, label: 'Directions',   sub: 'L2DirectionsSheet',  route:'?sheet=directions',    status: 'ok', type: 'sheet', info: 'Map directions to a location.' },
+  { id: 'sh_uber',         x: 820, y: 760, label: 'Get There',    sub: 'L2UberSheet',        route:'?sheet=uber',          status: 'ok', type: 'sheet', info: 'Uber/Bolt deep link for venue.' },
+  { id: 'sh_qr',           x: 820, y: 830, label: 'QR Code',      sub: 'L2QRSheet',          route:'?sheet=qr',            status: 'ok', type: 'sheet', info: 'Ticket/order QR code display.' },
+  { id: 'sh_order',        x: 820, y: 900, label: 'Order',        sub: 'L2OrderSheet',       route:'?sheet=order',         status: 'ok', type: 'sheet', info: 'Order detail. Chat with counterparty. QR code.' },
+  { id: 'sh_create_event', x: 820, y: 970, label: 'Create Event', sub: 'L2CreateEventSheet', route:'?sheet=create-event',  status: 'ok', type: 'sheet', info: 'Create new event form.' },
+  { id: 'sh_schedule',     x: 820, y: 1040, label: 'Schedule',    sub: 'L2ScheduleSheet',    route:'?sheet=schedule',      status: 'ok', type: 'sheet', info: 'Radio show schedule.' },
+  { id: 'sh_ticket_mkt',   x: 960, y: 620, label: 'Tickets',     sub: 'L2TicketSheet',      route:'?sheet=ticket-market', status: 'ok', type: 'sheet', info: 'Ticket resale marketplace.' },
+  { id: 'sh_admin',        x: 960, y: 690, label: 'Admin',        sub: 'L2AdminSheet',       route:'?sheet=admin',         status: 'ok', type: 'sheet', info: 'City Ops admin panel.' },
+  { id: 'sh_create_persona',x:960, y: 760, label: 'New Persona',  sub: 'L2CreatePersonaSheet',route:'?sheet=create-persona',status: 'ok', type: 'sheet', info: 'Create a new persona identity.' },
+  { id: 'sh_location_watcher',x:960,y:830, label: 'Live Location',sub:'L2LiveLocationWatcherSheet',route:'?sheet=location-watcher', status:'ok', type:'sheet', info:'Trusted contact map view. Real-time location sharing.' },
+  { id: 'sh_ghosted_sheet', x:960, y: 900, label: 'Right Now',    sub: 'L2GhostedSheet',     route:'?sheet=ghosted',       status: 'ok', type: 'sheet', info: 'Right Now status view.' },
+
+  // ── INTERRUPTS (row, y=1100) ──────────────────────────────────────────
+  { id: 'int_sos_btn',     x: 60,  y: 1100, label: 'SOS Button',       sub: 'z-190 long-press', route: '', status: 'ok', type: 'interrupt', info: 'Gold floating button. Long-press 3s triggers SOS.' },
+  { id: 'int_sos_overlay', x: 200, y: 1100, label: 'SOS Overlay',      sub: 'z-200 fullscreen', route: '', status: 'stub', type: 'interrupt', info: 'Full SOS activation. Contacts notified. Live location shared. DELIVERY IS STUB.' },
+  { id: 'int_call_banner', x: 340, y: 1100, label: 'Incoming Call',    sub: 'z-180 banner',     route: '', status: 'ok', type: 'interrupt', info: 'WebRTC incoming call notification banner.' },
+  { id: 'int_shake_sos',   x: 480, y: 1100, label: 'Shake SOS',        sub: 'DeviceMotion',     route: '', status: 'stub', type: 'interrupt', info: 'Shake phone to trigger SOS. DeviceMotion API.' },
+  { id: 'int_pin_lock',    x: 620, y: 1100, label: 'PIN Lock',         sub: 'z-200+ overlay',   route: '', status: 'stub', type: 'interrupt', info: 'App lock. SHA-256 PIN verification overlay.' },
+  { id: 'int_aftercare',   x: 760, y: 1100, label: 'Aftercare Nudge',  sub: 'Check-in expiry',  route: '', status: 'ok', type: 'interrupt', info: 'Shown when safety check-in timer expires.' },
+  { id: 'int_cookie',      x: 900, y: 1100, label: 'Cookie Banner',    sub: 'CookieBanner',     route: '', status: 'ok', type: 'interrupt', info: 'GDPR cookie consent banner.' },
+
+  // ── PERSISTENT UI LAYERS ──────────────────────────────────────────────
+  { id: 'ui_globe',       x: 60,  y: 1180, label: 'Globe (L0)',        sub: 'Three.js /pulse only', route: '/pulse', status: 'ok', type: 'layer', info: 'UnifiedGlobe. Returns null on non-/pulse routes. bottom:83px constraint.' },
+  { id: 'ui_nav',         x: 200, y: 1180, label: 'Bottom Nav (L1)',   sub: 'OSBottomNav z-50',     route: '',       status: 'ok', type: 'layer', info: '6 tabs: Home|Pulse|Ghosted|Market|Music|More. 83px height, immutable.' },
+  { id: 'ui_radio_mini',  x: 340, y: 1180, label: 'Radio Mini',       sub: 'RadioMiniPlayer z-50', route: '',       status: 'ok', type: 'layer', info: '56px above nav. Persistent when stream is playing. Hidden on /radio.' },
+  { id: 'ui_music_mini',  x: 480, y: 1180, label: 'Music Mini',       sub: 'MusicMiniPlayer',      route: '',       status: 'ok', type: 'layer', info: 'Persistent mini player for music tracks.' },
+  { id: 'ui_ticker',      x: 620, y: 1180, label: 'Global Ticker',    sub: '36px fixed',           route: '',       status: 'ok', type: 'layer', info: 'Fixed 36px ticker strip at top. App banners from DB.' },
+
+  // ── API ENDPOINTS (row, y=1300) ───────────────────────────────────────
+  { id: 'api_profiles',     x: 60,  y: 1300, label: '/api/profiles',          sub: 'GET',   route: '', status: 'ok',     type: 'api', info: 'Ghost-filtered profile list. Excludes @hotmess.app/test/demo/admin accounts.' },
+  { id: 'api_profile',      x: 190, y: 1300, label: '/api/profile',           sub: 'GET',   route: '', status: 'broken', type: 'api', info: 'BROKEN: References User table instead of profiles.' },
+  { id: 'api_nearby',       x: 320, y: 1300, label: '/api/nearby',            sub: 'GET',   route: '', status: 'ok',     type: 'api', info: 'Nearby users by geolocation.' },
+  { id: 'api_shopify',      x: 450, y: 1300, label: '/api/shopify/*',         sub: '8 endpoints', route: '', status: 'ok', type: 'api', info: 'cart, collection, collections, featured, product, products, sync, webhooks' },
+  { id: 'api_safety',       x: 580, y: 1300, label: '/api/safety/*',          sub: '3 endpoints', route: '', status: 'ok', type: 'api', info: 'alert, check-ins, respond' },
+  { id: 'api_ai',           x: 710, y: 1300, label: '/api/ai/*',              sub: '5 endpoints', route: '', status: 'stub', type: 'api', info: 'chat, profile-analysis, scene-scout, wingman. 13 TODO stubs in components.' },
+  { id: 'api_stripe',       x: 840, y: 1300, label: '/api/stripe/*',          sub: '4 endpoints', route: '', status: 'ok', type: 'api', info: 'create-checkout, create-boost-checkout, cancel-subscription, webhook' },
+  { id: 'api_notifications',x: 970, y: 1300, label: '/api/notifications/*',   sub: '4 endpoints', route: '', status: 'ok', type: 'api', info: 'preferences, process, push, settings' },
+  { id: 'api_payments',     x: 1100,y: 1300, label: '/api/payments/*',        sub: 'create',      route: '', status: 'ok', type: 'api', info: 'Create payment intent.' },
+  { id: 'api_globe',        x: 1230,y: 1300, label: '/api/globe/*',           sub: 'index, pulse', route: '', status: 'ok', type: 'api', info: 'Globe data: beacon positions, pulse animations.' },
+  { id: 'api_email',        x: 60,  y: 1370, label: '/api/email/*',           sub: '3 endpoints', route: '', status: 'ok', type: 'api', info: 'notify, send, templates' },
+  { id: 'api_telegram',     x: 190, y: 1370, label: '/api/telegram/*',        sub: 'bot, send',   route: '', status: 'ok', type: 'api', info: 'Telegram bot integration.' },
+  { id: 'api_routing',      x: 320, y: 1370, label: '/api/routing/*',         sub: 'directions, etas', route: '', status: 'ok', type: 'api', info: 'Google Maps routing.' },
+  { id: 'api_soundcloud',   x: 450, y: 1370, label: '/api/soundcloud/*',      sub: '8 endpoints', route: '', status: 'ok', type: 'api', info: 'SoundCloud OAuth + upload + public tracks.' },
+  { id: 'api_tickets',      x: 580, y: 1370, label: '/api/tickets/*',         sub: 'qr',          route: '', status: 'ok', type: 'api', info: 'QR code generation for tickets.' },
+  { id: 'api_match',        x: 710, y: 1370, label: '/api/match-probability', sub: '3 endpoints', route: '', status: 'stub', type: 'api', info: 'AI match scoring. Embeddings + scoring. STUB.' },
+  { id: 'api_admin',        x: 840, y: 1370, label: '/api/admin/*',           sub: '5 endpoints', route: '', status: 'ok', type: 'api', info: 'cleanup, dispatch, cadence, safety-switch, verify' },
+  { id: 'api_gdpr',         x: 970, y: 1370, label: '/api/gdpr/request',      sub: 'POST',        route: '', status: 'ok', type: 'api', info: 'GDPR data request endpoint.' },
+  { id: 'api_premium',      x: 1100,y: 1370, label: '/api/premium/*',         sub: 'subscribe, unlock', route: '', status: 'ok', type: 'api', info: 'Premium membership management.' },
+  { id: 'api_health',       x: 1230,y: 1370, label: '/api/health',            sub: 'GET',         route: '', status: 'ok', type: 'api', info: 'Health check endpoint.' },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONNECTIONS — Every arrow in the app
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const CONNECTIONS = [
+  // Boot flow (horizontal chain)
+  { from: 'splash', to: 'age',    style: 'gold', label: 'CTA tap' },
+  { from: 'age',    to: 'signup', style: 'gold', label: 'age confirmed' },
+  { from: 'signup', to: 'quick',  style: 'gold', label: 'auth success' },
+  { from: 'quick',  to: 'profile_screen', style: 'gold', label: 'name+avatar' },
+  { from: 'profile_screen', to: 'pin', style: 'gold', label: 'profile saved' },
+  { from: 'pin',    to: 'ready',  style: 'gold', label: 'PIN set' },
+
+  // Boot states
+  { from: 'loading', to: 'unauth',        style: 'dim', label: 'no session' },
+  { from: 'loading', to: 'ready',         style: 'gold', label: 'local session' },
+  { from: 'unauth',  to: 'splash',        style: 'dim', label: 'OnboardingRouter' },
+  { from: 'needs_age', to: 'age',         style: 'dim', label: '' },
+  { from: 'needs_onboard', to: 'quick',   style: 'dim', label: '' },
+  { from: 'needs_community', to: 'quick', style: 'dim', label: '' },
+
+  // READY → all tabs
+  { from: 'ready', to: 'tab_home',    style: 'gold', label: '' },
+  { from: 'ready', to: 'tab_pulse',   style: 'gold', label: '' },
+  { from: 'ready', to: 'tab_ghosted', style: 'gold', label: '' },
+  { from: 'ready', to: 'tab_market',  style: 'gold', label: '' },
+  { from: 'ready', to: 'tab_music',   style: 'gold', label: '' },
+  { from: 'ready', to: 'tab_more',    style: 'gold', label: '' },
+
+  // Tab ↔ tab (bottom nav)
+  { from: 'tab_home',    to: 'tab_pulse',   style: 'dim', label: '' },
+  { from: 'tab_pulse',   to: 'tab_ghosted', style: 'dim', label: '' },
+  { from: 'tab_ghosted', to: 'tab_market',  style: 'dim', label: '' },
+  { from: 'tab_market',  to: 'tab_music',   style: 'dim', label: '' },
+  { from: 'tab_music',   to: 'tab_more',    style: 'dim', label: '' },
+
+  // More hub → pages
+  { from: 'tab_more', to: 'safety_page',  style: 'ok', label: 'Safety' },
+  { from: 'tab_more', to: 'care_page',    style: 'ok', label: 'Care' },
+  { from: 'tab_more', to: 'profile_page', style: 'ok', label: 'Profile' },
+  { from: 'tab_more', to: 'personas',     style: 'ok', label: 'Personas' },
+  { from: 'tab_more', to: 'vault_page',   style: 'ok', label: 'Vault' },
+
+  // Home → sheets
+  { from: 'tab_home', to: 'sh_notifications', style: 'ok', label: 'bell icon' },
+  { from: 'tab_home', to: 'sh_community',     style: 'ok', label: 'community section' },
+  { from: 'tab_home', to: 'sh_event_home',    style: 'ok', label: 'event card' },
+  { from: 'tab_home', to: 'sh_beacon_home',   style: 'ok', label: 'beacon card' },
+  { from: 'tab_home', to: 'sh_product_home',  style: 'ok', label: 'product card' },
+  { from: 'tab_home', to: 'sh_profile_home',  style: 'ok', label: "Who's Out avatar" },
+
+  // Pulse → sheets
+  { from: 'tab_pulse', to: 'sh_city_picker',   style: 'ok', label: 'HUD city btn' },
+  { from: 'tab_pulse', to: 'sh_event_pulse',   style: 'ok', label: 'globe pin' },
+  { from: 'tab_pulse', to: 'sh_beacon_pulse',  style: 'ok', label: 'globe marker' },
+  { from: 'tab_pulse', to: 'sh_create_beacon', style: 'ok', label: 'FAB button' },
+  { from: 'tab_pulse', to: 'sh_amplify',       style: 'ok', label: 'amplify btn' },
+  { from: 'tab_pulse', to: 'sh_events_list',   style: 'ok', label: 'events list' },
+
+  // Ghosted → sheets
+  { from: 'tab_ghosted', to: 'sh_profile_ghost', style: 'ok', label: 'grid tap' },
+  { from: 'tab_ghosted', to: 'sh_filters',       style: 'ok', label: 'filter btn' },
+  { from: 'tab_ghosted', to: 'sh_social',        style: 'ok', label: 'social btn' },
+
+  // Profile sheet → chat/video (GATED)
+  { from: 'sh_profile_ghost', to: 'sh_chat',  style: 'ok', label: 'message btn (gated)' },
+  { from: 'sh_profile_ghost', to: 'sh_video', style: 'stub', label: 'video btn (gated)' },
+  { from: 'sh_taps', to: 'sh_profile_ghost',  style: 'ok', label: 'tap row' },
+
+  // Market → sheets
+  { from: 'tab_market', to: 'sh_product_mkt',  style: 'ok', label: 'product card' },
+  { from: 'tab_market', to: 'sh_cart',         style: 'ok', label: 'cart icon' },
+  { from: 'tab_market', to: 'sh_sell',         style: 'ok', label: 'sell FAB' },
+  { from: 'tab_market', to: 'sh_brand',        style: 'ok', label: 'brand row' },
+  { from: 'tab_market', to: 'sh_filters_mkt',  style: 'ok', label: 'filter btn' },
+
+  // Cart → checkout flow
+  { from: 'sh_cart', to: 'sh_checkout',   style: 'ok', label: 'checkout btn' },
+  { from: 'sh_checkout', to: 'sh_order',  style: 'ok', label: 'order placed' },
+  { from: 'sh_checkout', to: 'sh_chat',   style: 'ok', label: 'chat seller' },
+  { from: 'sh_product_mkt', to: 'sh_cart', style: 'ok', label: 'add to cart' },
+  { from: 'sh_product_mkt', to: 'sh_chat', style: 'ok', label: 'preloved chat' },
+
+  // Order → QR, chat
+  { from: 'sh_order', to: 'sh_qr',   style: 'ok', label: 'show QR' },
+  { from: 'sh_order', to: 'sh_chat', style: 'ok', label: 'chat counterparty' },
+
+  // Sell → membership upsell
+  { from: 'sh_sell', to: 'sh_membership', style: 'ok', label: 'tier gate' },
+
+  // Brand → shop, product
+  { from: 'sh_brand', to: 'sh_product_mkt', style: 'ok', label: 'product tap' },
+  { from: 'sh_brand', to: 'sh_schedule',    style: 'ok', label: 'radio schedule' },
+
+  // Profile mode → all settings sheets
+  { from: 'profile_page', to: 'sh_edit_profile',  style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_photos',        style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_location',      style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_community_p',   style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_achievements',  style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_squads',        style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_sweatcoins',    style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_creator_sub',   style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_boost',         style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_referral',      style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_my_listings',   style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_my_orders',     style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_payouts',       style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_vault_sheet',   style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_favorites',     style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_profile_views', style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_safety_sheet',  style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_emergency',     style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_privacy',       style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_blocked',       style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_notif_inbox',   style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_membership',    style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_help',          style: 'ok', label: '' },
+  { from: 'profile_page', to: 'sh_settings',      style: 'ok', label: '' },
+
+  // Settings sheet → sub-sheets
+  { from: 'sh_settings', to: 'sh_edit_profile', style: 'ok', label: '' },
+  { from: 'sh_settings', to: 'sh_privacy',      style: 'ok', label: '' },
+  { from: 'sh_settings', to: 'sh_blocked',      style: 'ok', label: '' },
+
+  // Safety sheet → emergency
+  { from: 'sh_safety_sheet', to: 'sh_emergency', style: 'ok', label: '' },
+  { from: 'sh_safety_sheet', to: 'sh_blocked',   style: 'ok', label: '' },
+
+  // Notification inbox → various sheets
+  { from: 'sh_notif_inbox', to: 'sh_taps',          style: 'ok', label: 'boo notif' },
+  { from: 'sh_notif_inbox', to: 'sh_chat',          style: 'ok', label: 'msg notif' },
+  { from: 'sh_notif_inbox', to: 'sh_event_home',    style: 'ok', label: 'event notif' },
+  { from: 'sh_notif_inbox', to: 'sh_location_watcher', style: 'ok', label: 'location share' },
+
+  // My orders → order detail
+  { from: 'sh_my_orders', to: 'sh_order', style: 'ok', label: 'tap order' },
+
+  // Search → profiles, events, products
+  { from: 'sh_search', to: 'sh_profile_ghost', style: 'ok', label: 'profile result' },
+  { from: 'sh_search', to: 'sh_event_home',    style: 'ok', label: 'event result' },
+  { from: 'sh_search', to: 'sh_product_mkt',   style: 'ok', label: 'product result' },
+
+  // Beacon → directions, uber
+  { from: 'sh_beacon_home',  to: 'sh_directions', style: 'ok', label: '' },
+  { from: 'sh_beacon_pulse', to: 'sh_directions', style: 'ok', label: '' },
+
+  // Event → profile (creator)
+  { from: 'sh_event_home',  to: 'sh_profile_home', style: 'ok', label: 'creator profile' },
+  { from: 'sh_event_pulse', to: 'sh_profile_home', style: 'ok', label: 'creator profile' },
+  { from: 'sh_event_home',  to: 'sh_create_event', style: 'ok', label: 'edit event' },
+
+  // Profile views → profile
+  { from: 'sh_profile_views', to: 'sh_profile_ghost', style: 'ok', label: 'viewer tap' },
+
+  // Favourites → profile
+  { from: 'sh_favorites', to: 'sh_profile_ghost', style: 'ok', label: 'fav tap' },
+
+  // Chat (from profile) → profile back
+  { from: 'sh_chat', to: 'sh_profile_ghost', style: 'ok', label: 'avatar tap' },
+
+  // Radio → schedule
+  { from: 'radio_page', to: 'sh_schedule', style: 'ok', label: 'schedule btn' },
+
+  // Vault → events, shop, QR
+  { from: 'vault_page', to: 'sh_events_list', style: 'ok', label: 'browse events' },
+  { from: 'vault_page', to: 'sh_qr',         style: 'ok', label: 'show QR' },
+
+  // Ticket market → chat
+  { from: 'sh_ticket_mkt', to: 'sh_chat', style: 'ok', label: 'chat seller' },
+
+  // Persona switcher → create persona
+  { from: 'personas', to: 'sh_create_persona', style: 'ok', label: 'add persona btn' },
+  { from: 'personas', to: 'sh_membership',     style: 'ok', label: 'upgrade for more' },
+
+  // Nav badges
+  { from: 'tab_ghosted', to: 'sh_taps',       style: 'ok', label: 'red badge tap' },
+  { from: 'tab_more',    to: 'sh_notif_inbox', style: 'ok', label: 'gold badge tap' },
+];
+
+// Section labels
+const SECTIONS = [
+  { x: 40,   y: 15,   text: 'BOOT FLOW' },
+  { x: 40,   y: 110,  text: 'BOOT STATE MACHINE' },
+  { x: 40,   y: 240,  text: '6 MAIN TABS (BOTTOM NAV)' },
+  { x: 900,  y: 356,  text: 'MORE HUB' },
+  { x: 0,    y: 380,  text: 'HOME SHEETS' },
+  { x: 210,  y: 380,  text: 'PULSE SHEETS' },
+  { x: 410,  y: 380,  text: 'GHOSTED SHEETS' },
+  { x: 610,  y: 380,  text: 'MARKET SHEETS' },
+  { x: 810,  y: 600,  text: 'CROSS-CUTTING SHEETS' },
+  { x: 1090, y: 530,  text: 'PROFILE MODE SHEETS' },
+  { x: 40,   y: 1080, text: 'INTERRUPT LAYER (Z-180+)' },
+  { x: 40,   y: 1160, text: 'PERSISTENT UI LAYERS' },
+  { x: 40,   y: 1278, text: 'API ENDPOINTS (VERCEL SERVERLESS)' },
+];
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RENDER ENGINE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const world = document.getElementById('world');
+const canvas = document.getElementById('canvas');
+const tooltip = document.getElementById('tooltip');
+
+let scale = 0.85;
+let panX = 20, panY = 20;
+let dragging = false, dragStartX = 0, dragStartY = 0;
+let selectedNode = null;
+let showAllArrows = false;
+
+// Build node lookup
+const nodeMap = {};
+NODES.forEach(n => { nodeMap[n.id] = n; });
+
+// Build adjacency lists
+const connectionsFrom = {};
+const connectionsTo = {};
+CONNECTIONS.forEach(c => {
+  if (!connectionsFrom[c.from]) connectionsFrom[c.from] = [];
+  if (!connectionsTo[c.to]) connectionsTo[c.to] = [];
+  connectionsFrom[c.from].push(c);
+  connectionsTo[c.to].push(c);
+});
+
+function getStatusClass(status) {
+  const map = { ok: 'status-ok', broken: 'status-broken', stub: 'status-stub', gold: 'status-gold' };
+  return map[status] || 'status-ok';
+}
+
+function getTypeClass(type) {
+  const map = { tab: 'tab-node', boot: 'boot-node', sheet: 'sheet-node', api: 'api-node' };
+  return map[type] || '';
+}
+
+function getBadge(status) {
+  if (status === 'broken') return '<span class="badge" style="background:#FF3B30;color:#fff">BROKEN</span>';
+  if (status === 'stub')   return '<span class="badge" style="background:#FFCC00;color:#000">STUB</span>';
+  return '';
+}
+
+// Render all nodes
+function renderNodes() {
+  NODES.forEach(n => {
+    const div = document.createElement('div');
+    div.className = `node ${getStatusClass(n.status)} ${getTypeClass(n.type)}`;
+    div.id = `node-${n.id}`;
+    div.style.left = n.x + 'px';
+    div.style.top = n.y + 'px';
+    div.innerHTML = `
+      <div class="label">${n.label}</div>
+      <div class="sub">${n.sub}</div>
+      ${n.route ? `<div class="route">${n.route}</div>` : ''}
+      ${getBadge(n.status)}
+    `;
+    div.addEventListener('click', (e) => { e.stopPropagation(); selectNode(n.id); });
+    div.addEventListener('mouseenter', (e) => showTooltip(e, n));
+    div.addEventListener('mouseleave', hideTooltip);
+    world.appendChild(div);
+  });
+}
+
+// Render section labels
+function renderSections() {
+  SECTIONS.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'section-label';
+    div.style.left = s.x + 'px';
+    div.style.top = s.y + 'px';
+    div.textContent = s.text;
+    world.appendChild(div);
+  });
+}
+
+// Get center of a node
+function nodeCenter(id) {
+  const el = document.getElementById(`node-${id}`);
+  if (!el) return { x: 0, y: 0 };
+  const n = nodeMap[id];
+  return { x: n.x + el.offsetWidth / 2, y: n.y + el.offsetHeight / 2 };
+}
+
+// Render SVG arrows
+let svgEl = null;
+function renderArrows(filterIds = null) {
+  if (svgEl) svgEl.remove();
+  svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svgEl.classList.add('arrows');
+  svgEl.setAttribute('width', '2000');
+  svgEl.setAttribute('height', '1600');
+
+  // Arrowhead marker
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+  marker.setAttribute('id', 'arrowhead');
+  marker.setAttribute('markerWidth', '8');
+  marker.setAttribute('markerHeight', '6');
+  marker.setAttribute('refX', '8');
+  marker.setAttribute('refY', '3');
+  marker.setAttribute('orient', 'auto');
+  const mp = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  mp.setAttribute('d', 'M0,0 L8,3 L0,6');
+  marker.appendChild(mp);
+  defs.appendChild(marker);
+  svgEl.appendChild(defs);
+
+  // Force layout recalc
+  requestAnimationFrame(() => {
+    CONNECTIONS.forEach(c => {
+      if (filterIds && !filterIds.has(c.from) && !filterIds.has(c.to)) return;
+      const from = nodeCenter(c.from);
+      const to = nodeCenter(c.to);
+      if (!from.x && !from.y) return;
+
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', from.x);
+      line.setAttribute('y1', from.y);
+      line.setAttribute('x2', to.x);
+      line.setAttribute('y2', to.y);
+      line.setAttribute('marker-end', 'url(#arrowhead)');
+
+      const styleMap = { ok: 'arrow-ok', gold: 'arrow-gold', broken: 'arrow-broken', stub: 'arrow-stub', dim: 'arrow-dim' };
+      line.classList.add(styleMap[c.style] || 'arrow-dim');
+
+      if (filterIds && (filterIds.has(c.from) || filterIds.has(c.to))) {
+        line.classList.add('highlighted-arrow');
+      }
+
+      svgEl.appendChild(line);
+    });
+  });
+
+  world.insertBefore(svgEl, world.firstChild);
+}
+
+function selectNode(id) {
+  // Clear previous
+  document.querySelectorAll('.node.highlighted').forEach(el => el.classList.remove('highlighted'));
+
+  if (selectedNode === id) {
+    selectedNode = null;
+    if (showAllArrows) renderArrows();
+    else renderArrows(new Set());
+    return;
+  }
+
+  selectedNode = id;
+  const el = document.getElementById(`node-${id}`);
+  if (el) el.classList.add('highlighted');
+
+  // Find all connected nodes
+  const connected = new Set([id]);
+  (connectionsFrom[id] || []).forEach(c => {
+    connected.add(c.to);
+    const target = document.getElementById(`node-${c.to}`);
+    if (target) target.classList.add('highlighted');
+  });
+  (connectionsTo[id] || []).forEach(c => {
+    connected.add(c.from);
+    const target = document.getElementById(`node-${c.from}`);
+    if (target) target.classList.add('highlighted');
+  });
+
+  renderArrows(connected);
+}
+
+function showTooltip(e, n) {
+  const tt = tooltip;
+  tt.querySelector('.tt-title').textContent = n.label;
+  tt.querySelector('.tt-body').textContent = n.info;
+
+  const outgoing = (connectionsFrom[n.id] || []).map(c => `-> ${nodeMap[c.to]?.label || c.to}`);
+  const incoming = (connectionsTo[n.id] || []).map(c => `<- ${nodeMap[c.from]?.label || c.from}`);
+  const all = [...outgoing, ...incoming];
+  tt.querySelector('.tt-connections').textContent = all.length ? `Connections: ${all.join(', ')}` : 'No connections';
+
+  tt.style.display = 'block';
+  tt.style.left = Math.min(e.clientX + 12, window.innerWidth - 300) + 'px';
+  tt.style.top = Math.min(e.clientY + 12, window.innerHeight - 150) + 'px';
+}
+
+function hideTooltip() {
+  tooltip.style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PAN & ZOOM
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function updateTransform() {
+  world.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+}
+
+canvas.addEventListener('mousedown', (e) => {
+  if (e.target.closest('.node')) return;
+  dragging = true;
+  dragStartX = e.clientX - panX;
+  dragStartY = e.clientY - panY;
+  // Deselect on background click
+  if (selectedNode) {
+    selectedNode = null;
+    document.querySelectorAll('.node.highlighted').forEach(el => el.classList.remove('highlighted'));
+    if (showAllArrows) renderArrows();
+    else renderArrows(new Set());
+  }
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  if (!dragging) return;
+  panX = e.clientX - dragStartX;
+  panY = e.clientY - dragStartY;
+  updateTransform();
+});
+
+canvas.addEventListener('mouseup', () => { dragging = false; });
+canvas.addEventListener('mouseleave', () => { dragging = false; });
+
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const zoomFactor = e.deltaY > 0 ? 0.93 : 1.07;
+  const newScale = Math.min(3, Math.max(0.2, scale * zoomFactor));
+
+  // Zoom toward cursor
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  panX = mx - (mx - panX) * (newScale / scale);
+  panY = my - (my - panY) * (newScale / scale);
+  scale = newScale;
+  updateTransform();
+}, { passive: false });
+
+// Touch support
+let touchStart = null;
+let touchDist = null;
+canvas.addEventListener('touchstart', (e) => {
+  if (e.touches.length === 1) {
+    touchStart = { x: e.touches[0].clientX - panX, y: e.touches[0].clientY - panY };
+  } else if (e.touches.length === 2) {
+    touchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+  }
+}, { passive: true });
+
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  if (e.touches.length === 1 && touchStart) {
+    panX = e.touches[0].clientX - touchStart.x;
+    panY = e.touches[0].clientY - touchStart.y;
+    updateTransform();
+  } else if (e.touches.length === 2 && touchDist) {
+    const newDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    const zoomFactor = newDist / touchDist;
+    scale = Math.min(3, Math.max(0.2, scale * zoomFactor));
+    touchDist = newDist;
+    updateTransform();
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', () => { touchStart = null; touchDist = null; });
+
+function resetView() {
+  scale = 0.85; panX = 20; panY = 20;
+  updateTransform();
+  selectedNode = null;
+  document.querySelectorAll('.node.highlighted').forEach(el => el.classList.remove('highlighted'));
+  if (showAllArrows) renderArrows();
+  else renderArrows(new Set());
+}
+
+function toggleAllConnections() {
+  showAllArrows = !showAllArrows;
+  if (showAllArrows) {
+    renderArrows();
+  } else {
+    renderArrows(new Set());
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+renderNodes();
+renderSections();
+// Start with arrows hidden — click a node to see its connections
+renderArrows(new Set());
+updateTransform();
+</script>
+</body>
+</html>

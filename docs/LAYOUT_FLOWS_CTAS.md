@@ -1,0 +1,471 @@
+# HOTMESS OS — Layout Flows & CTAs
+**Generated:** 2026-02-26
+
+---
+
+## MASTER CTA MAP
+
+### Primary CTAs (Revenue / Core Actions)
+
+| CTA | Location | Action | Conversion |
+|-----|----------|--------|------------|
+| **"Subscribe"** | Creator profile, CreatorSubSheet | Stripe subscription | 💰 Revenue |
+| **"Checkout"** | CartSheet | Stripe payment | 💰 Revenue |
+| **"Boost"** | BeaconSheet, AmplifySheet | Amplification payment | 💰 Revenue |
+| **"Upgrade"** | MembershipSheet | Premium tier | 💰 Revenue |
+| **"List Item"** | SellSheet | P2P listing fee | 💰 Revenue |
+| **"RSVP"** | EventSheet | Event attendance | 📊 Engagement |
+| **"Boo"** | ProfileSheet | Ghost interest | 📊 Engagement |
+
+### Secondary CTAs (Engagement)
+
+| CTA | Location | Action |
+|-----|----------|--------|
+| "Tap" | ProfileSheet | Like a profile |
+| "Message" | ProfileSheet, MatchView | Open chat |
+| "Post" | CommunitySheet | Create community post |
+| "Join Squad" | SquadsSheet | Join group |
+| "Create Squad" | SquadsSheet | Start new group |
+| "Add to Cart" | ProductCard | Cart addition |
+| "Filter" | GhostedMode, MarketMode | Refine results |
+| "Right Now" | HomeMode | Toggle availability |
+
+### Tertiary CTAs (Navigation)
+
+| CTA | Location | Action |
+|-----|----------|--------|
+| "See all" | HomeMode sections | Open full sheet |
+| "Edit Profile" | ProfileMode | Edit sheet |
+| "Settings" | ProfileMode | Settings sheet |
+| "View" | Any card | Open detail sheet |
+
+---
+
+## USER JOURNEY FLOWS
+
+### Flow A: New User → First Match
+
+```
+┌─────────────┐
+│  App Open   │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│  Age Gate   │──── Under 18 → Exit
+│   (18+)     │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Onboarding  │
+│  (6 steps)  │
+│ 1. Welcome  │
+│ 2. Profile  │
+│ 3. Photos   │
+│ 4. Prefs    │
+│ 5. Location │
+│ 6. Attest   │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│  HomeMode   │
+│ (Logged in) │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ GhostedMode │
+│ (Browse)    │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐     ┌─────────────┐
+│ProfileSheet │────►│   Boo  │
+│ (View user) │     │   Action    │
+└──────┬──────┘     └──────┬──────┘
+       │                   │
+       │                   ▼
+       │           ┌─────────────┐
+       │           │   Match!    │
+       │           │ (Mutual tap)│
+       │           └──────┬──────┘
+       │                  │
+       ▼                  ▼
+┌─────────────┐     ┌─────────────┐
+│  ChatSheet  │◄────│  Open Chat  │
+│ (Message)   │     └─────────────┘
+└─────────────┘
+```
+
+### Flow B: Event Discovery → Attendance
+
+```
+┌─────────────┐
+│  HomeMode   │
+│ Event Card  │
+└──────┬──────┘
+       │ tap
+       ▼
+┌─────────────┐
+│ EventSheet  │
+│ (Details)   │
+├─────────────┤
+│ [RSVP] CTA  │
+└──────┬──────┘
+       │ tap
+       ▼
+┌─────────────┐
+│   RSVP'd    │
+│ Ticket added│
+│  to Vault   │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ VaultSheet  │
+│ (My tickets)│
+└──────┬──────┘
+       │ tap ticket
+       ▼
+┌─────────────┐
+│  QRSheet    │
+│ (Show code) │
+└─────────────┘
+       │
+       ▼ (at venue)
+┌─────────────┐
+│   Scan &    │
+│  Check-in   │
+└─────────────┘
+```
+
+### Flow C: Shopping → Purchase
+
+```
+┌─────────────┐
+│ MarketMode  │
+│ Browse grid │
+└──────┬──────┘
+       │ tap product
+       ▼
+┌─────────────┐
+│ProductSheet │
+│ (Details)   │
+├─────────────┤
+│[Add to Cart]│
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│  CartSheet  │
+│ Review items│
+├─────────────┤
+│ [Checkout]  │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│CheckoutSheet│
+│ Shipping    │
+│ Payment     │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│   Stripe    │
+│  Payment    │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│Order confirm│
+│ → My Orders │
+└─────────────┘
+```
+
+### Flow D: Creator Subscription
+
+```
+┌─────────────┐
+│ProfileSheet │
+│ (Creator)   │
+├─────────────┤
+│ [Subscribe] │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│CreatorSub   │
+│   Sheet     │
+├─────────────┤
+│ Tier Select │
+│ $5 | $10    │
+│ $25 | $50   │
+└──────┬──────┘
+       │ select
+       ▼
+┌─────────────┐
+│   Stripe    │
+│ Subscription│
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ Subscribed! │
+│ Access now  │
+└─────────────┘
+```
+
+### Flow E: Community Engagement
+
+```
+┌─────────────┐
+│  HomeMode   │
+│ Community   │
+│  Section    │
+└──────┬──────┘
+       │
+       ├──────────────┐
+       │              │
+       ▼              ▼
+┌─────────────┐ ┌─────────────┐
+│  "See all"  │ │   Post +    │
+│   button    │ │   button    │
+└──────┬──────┘ └──────┬──────┘
+       │              │
+       ▼              ▼
+┌─────────────┐ ┌─────────────┐
+│Community    │ │ Create Post │
+│ PostSheet   │ │   Modal     │
+│ (Full feed) │ │             │
+└──────┬──────┘ └──────┬──────┘
+       │              │
+       ├──────────────┘
+       ▼
+┌─────────────┐
+│   Like /    │
+│  Comment    │
+└─────────────┘
+```
+
+### Flow F: Emergency (SOS)
+
+```
+┌─────────────┐
+│   Any Mode  │
+└──────┬──────┘
+       │ long-press SOS (600ms)
+       ▼
+┌─────────────┐
+│ SOS Overlay │
+│   (z-200)   │
+├─────────────┤
+│ Red theme   │
+│ Live loc    │
+│ sharing ON  │
+│             │
+│ [Cancel]    │
+└──────┬──────┘
+       │
+       ├──► Emergency contacts notified
+       │
+       ├──► Location shared in real-time
+       │
+       ▼
+┌─────────────┐
+│ User cancels│
+│ or timeout  │
+└─────────────┘
+```
+
+---
+
+## LAYOUT SPECIFICATIONS
+
+### Mode Layouts
+
+```
+┌────────────────────────────────────────┐
+│              HEADER (64px)              │
+│  [Logo]         [Notif] [Avatar]       │
+├────────────────────────────────────────┤
+│                                        │
+│           SCROLLABLE CONTENT           │
+│                                        │
+│          (mode-specific)               │
+│                                        │
+│                                        │
+│                                        │
+│                                        │
+│                                        │
+│                                        │
+├────────────────────────────────────────┤
+│          RADIO MINI-PLAYER (60px)      │
+│  [▶] Now Playing: Track Name    [↑]    │
+├────────────────────────────────────────┤
+│             BOTTOM NAV (60px)          │
+│  [🏠] [👻] [🌍] [🛒] [📻] [👤]         │
+└────────────────────────────────────────┘
+```
+
+### Sheet Layouts
+
+```
+┌────────────────────────────────────────┐
+│                                        │
+│         (Backdrop - dimmed)            │
+│                                        │
+├────────────────────────────────────────┤
+│              ─────────                 │  ← Drag handle
+│          SHEET HEADER (48px)           │
+│  Sheet Title               [X]        │
+├────────────────────────────────────────┤
+│                                        │
+│           SHEET CONTENT                │
+│         (scrollable, max 85dvh)        │
+│                                        │
+│                                        │
+├────────────────────────────────────────┤
+│           SHEET FOOTER                 │
+│          [Primary CTA]                 │
+└────────────────────────────────────────┘
+│                                        │
+│    (Radio Mini-Player still visible)   │
+│         (Bottom Nav visible)           │
+└────────────────────────────────────────┘
+```
+
+### Grid Layouts
+
+**GhostedMode Grid (3-column)**
+```
+┌──────┬──────┬──────┐
+│      │      │      │
+│  👤  │  👤  │  👤  │
+│      │      │      │
+├──────┼──────┼──────┤
+│      │      │      │
+│  👤  │  👤  │  👤  │
+│      │      │      │
+├──────┼──────┼──────┤
+│      │      │      │
+│  👤  │  👤  │  👤  │
+│      │      │      │
+└──────┴──────┴──────┘
+```
+
+**MarketMode Grid (2-column)**
+```
+┌───────────┬───────────┐
+│   📦      │   📦      │
+│  Product  │  Product  │
+│  $25.00   │  $19.99   │
+├───────────┼───────────┤
+│   📦      │   📦      │
+│  Product  │  Product  │
+│  $35.00   │  $12.50   │
+└───────────┴───────────┘
+```
+
+**Achievement Grid (3-column)**
+```
+┌──────┬──────┬──────┐
+│  🏆  │  🔒  │  🔒  │
+│ Gold │Locked│Locked│
+├──────┼──────┼──────┤
+│  🥈  │  🏅  │  🔒  │
+│Silver│Bronze│Locked│
+└──────┴──────┴──────┘
+```
+
+---
+
+## BUTTON HIERARCHY
+
+### Primary Buttons (Hot pink, full-width)
+- Checkout
+- Subscribe
+- RSVP
+- Submit
+- Save
+
+### Secondary Buttons (Outline, gold)
+- Cancel
+- Edit
+- View More
+
+### Tertiary Buttons (Text only)
+- Close
+- Skip
+- Later
+
+### Danger Buttons (Red)
+- Delete
+- Block
+- Report
+- Cancel Subscription
+
+### Icon Buttons
+- ❤️ Like/Tap
+- 👻 Boo
+- 💬 Message
+- 🔔 Notify
+- ⚙️ Settings
+- ✖️ Close
+
+---
+
+## ANIMATION SPECS
+
+| Element | Animation | Duration | Easing |
+|---------|-----------|----------|--------|
+| Sheet open | slide up | 320ms | ease-out |
+| Sheet close | slide down | 280ms | ease-in |
+| Mode transition | fade | 250ms | ease |
+| Button tap | scale(0.95) | 80ms | ease |
+| Card appear | fade + translateY | 150ms | ease-out |
+| Toast | slide in + fade | 280ms | ease-out |
+| Globe rotation | continuous | - | linear |
+| Waveform | pulse | 800ms | ease-in-out |
+
+---
+
+## RESPONSIVE BREAKPOINTS
+
+```css
+/* Mobile first */
+@media (min-width: 375px) { /* Base */ }
+@media (min-width: 640px) { /* sm: Larger phone */ }
+@media (min-width: 768px) { /* md: Tablet */ }
+@media (min-width: 1024px) { /* lg: Desktop - not targeted */ }
+```
+
+HOTMESS is **mobile-first, mobile-only** — no desktop layout.
+
+---
+
+## TOUCH TARGETS
+
+- Minimum: 44x44px (Apple HIG)
+- Recommended: 48x48px
+- Bottom nav buttons: 60x60px
+- Profile cards: Full card tappable
+- List items: Full row tappable
+
+---
+
+## COLOR USAGE
+
+| Color | Usage | Hex |
+|-------|-------|-----|
+| Hot Pink | Primary CTA, active states | #FF1493 |
+| Gold | Accent, premium features | #FFD700 |
+| Dark BG | App background | #0E0E12 |
+| Card BG | Card surfaces | #1A1A1E |
+| White | Text primary | #FFFFFF |
+| Gray | Text secondary | #A1A1AA |
+| Lime | Right Now indicator | #84CC16 |
+| Red | Danger, SOS | #EF4444 |
+| Green | Online, success | #22C55E |

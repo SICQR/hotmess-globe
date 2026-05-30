@@ -1,0 +1,1 @@
+{"city":"tokyo","zones":[{"id":"shinjuku_ni_chome","category":"historic_core","energy":"nightlife_dense"},{"id":"shibuya","category":"youth","energy":"fast_social"}],"behaviour":{"peak_windows":{"shinjuku_ni_chome":["20:00-02:00"]}}}

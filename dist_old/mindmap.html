@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>HOTMESS OS — Mega Mind Map v2</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #050507; overflow: hidden; font-family: 'SF Mono','Fira Code','Menlo',monospace; color: #e8e8e8; user-select: none; }
+    svg { width: 100vw; height: 100vh; cursor: grab; }
+    svg:active { cursor: grabbing; }
+    .link { fill: none; stroke-width: 1.5px; opacity: 0.5; }
+    .node circle { stroke-width: 2px; cursor: pointer; }
+    .node text { font-size: 10.5px; font-weight: 500; paint-order: stroke; stroke-width: 3px; stroke: #050507; pointer-events: none; }
+    .node.root text { font-size: 16px; font-weight: 800; fill: #C8962C; }
+    .node.leaf text { font-size: 9px; opacity: 0.8; }
+    #tooltip { position: absolute; background: #0d0d12; border: 1px solid #333; padding: 10px 14px; border-radius: 6px; font-size: 11px; max-width: 300px; pointer-events: none; display: none; z-index: 9999; line-height: 1.6; color: #ccc; border-left: 3px solid var(--tc, #C8962C); }
+    #tooltip h4 { color: var(--tc, #C8962C); font-size: 12px; margin-bottom: 5px; }
+    #tooltip p { color: #888; font-size: 10px; margin-top: 3px; }
+    #controls { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 100; flex-wrap: wrap; justify-content: center; }
+    .cb { background: #0f0f18; border: 1px solid #333; color: #999; padding: 6px 12px; border-radius: 5px; font-size: 10px; font-family: inherit; cursor: pointer; }
+    .cb:hover { border-color: #C8962C; color: #C8962C; }
+    #legend { position: fixed; top: 14px; right: 14px; background: rgba(8,8,14,0.95); border: 1px solid #222; border-radius: 8px; padding: 12px 14px; font-size: 10px; z-index: 100; max-height: 90vh; overflow-y: auto; }
+    #legend h3 { color: #C8962C; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+    .li { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; color: #888; }
+    .ld { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    #title { position: fixed; top: 14px; left: 14px; z-index: 100; }
+    #title h1 { font-size: 15px; color: #C8962C; letter-spacing: 0.1em; text-transform: uppercase; }
+    #title p { font-size: 9.5px; color: #444; margin-top: 2px; }
+    #search-wrap { position: fixed; top: 66px; left: 14px; z-index: 100; }
+    #search { background: #0f0f18; border: 1px solid #2a2a35; color: #ccc; padding: 6px 10px; border-radius: 5px; font-family: inherit; font-size: 10.5px; width: 190px; outline: none; }
+    #search:focus { border-color: #C8962C; }
+    #stats { position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%); font-size: 9.5px; color: #333; z-index: 100; }
+  </style>
+</head>
+<body>
+<svg id="map"></svg>
+<div id="tooltip"></div>
+
+<div id="title">
+  <h1>HOTMESS OS</h1>
+  <p>Mega Mind Map v2 — click nodes · scroll zoom · drag pan</p>
+</div>
+<div id="search-wrap"><input id="search" type="text" placeholder="Search all 400+ nodes..." /></div>
+<div id="legend"><h3>Domains</h3></div>
+<div id="controls">
+  <button class="cb" id="btn-fit">Fit All</button>
+  <button class="cb" id="btn-expand">Expand All</button>
+  <button class="cb" id="btn-col2">Collapse L3+</button>
+  <button class="cb" id="btn-col1">Collapse L2+</button>
+  <button class="cb" id="btn-reset">Reset</button>
+</div>
+<div id="stats"></div>
+
+<script>
+const C = {
+  root:      '#C8962C',
+  vision:    '#C8962C',
+  pillars:   '#F4A261',
+  brands:    '#E07B54',
+  users:     '#4FC3F7',
+  arch:      '#CE93D8',
+  modes:     '#81C784',
+  boot:      '#FFD54F',
+  sheets:    '#4DB6AC',
+  data:      '#90CAF9',
+  micro:     '#F48FB1',
+  safety:    '#EF5350',
+  ai:        '#FF80AB',
+  commerce:  '#66BB6A',
+  telegram:  '#29B6F6',
+  mono:      '#AB47BC',
+  tonight:   '#FF8F00',
+  globe:     '#26C6DA',
+  parts:     '#AED581',
+};
+
+const data = {
+  name:'HOTMESS OS',color:C.root,
+  info:'Spatial OS for gay men in London. Globe = desktop. Radio = background task. Apps = L2 sheets. Built on React + Vite + Supabase + Three.js.',
+  children:[
+
+  // ══════════════════════════════════════════════════
+  // THE VISION
+  // ══════════════════════════════════════════════════
+  {name:'THE VISION',color:C.vision,info:'Move from "website with pages" to a Spatial OS. Globe is the desktop. Every action pulses the Globe.',children:[
+    {name:'Globe = Desktop',color:C.vision,info:'Three.js/R3F persistent 3D canvas. Never unmounts. L0 — always on background.'},
+    {name:'Radio = Background Task',color:C.vision,info:'ConvictPlayer persists like a background audio process. L1 HUD always visible.'},
+    {name:'Apps = L2 Sheets',color:C.vision,info:'Ghosted, Market, Events, Social all open as sheets over the Globe — no full page reload.'},
+    {name:'Every Action → Globe Pulse',color:C.vision,info:'Right Now, RSVP, Match, Sale, Panic → emitPulse({type, coordinates, intensity}) → GlobeContext.'},
+    {name:'Max 3 Levels Rule',color:C.vision,info:'From Globe, user is never more than 2 taps from: play, RSVP, message, or safety.'},
+    {name:'London OS Loop',color:C.vision,info:'Globe L0 → HUD L1-L3 → all features as overlays/sheets. Single "London OS" experience.'},
+    {name:'"Tonight" Mode',color:C.tonight,info:'20:00-06:00 local. Stronger beacon emphasis. Safety FAB more prominent. Wetter Watch ticker default on. useTonightMode hook.',children:[
+      {name:'Time window 20:00-06:00',color:C.tonight},
+      {name:'Stronger beacon emphasis',color:C.tonight},
+      {name:'Safety FAB prominent',color:C.tonight},
+      {name:'Wetter Watch ticker on',color:C.tonight},
+      {name:'useTonightMode hook',color:C.tonight},
+    ]},
+    {name:'Verified Glow System',color:C.globe,info:'AI-verified users get Cyan #00D9FF glow on their beacon on the Globe.',children:[
+      {name:'Liveness selfie → edge fn',color:C.globe},
+      {name:'→ profiles.is_verified',color:C.globe},
+      {name:'→ Cyan #00D9FF glow',color:C.globe},
+      {name:'→ identity_hash (Part 19)',color:C.globe},
+    ]},
+  ]},
+
+  // ══════════════════════════════════════════════════
+  // GLOBE PULSE SYSTEM
+  // ══════════════════════════════════════════════════
+  {name:'GLOBE PULSE',color:C.globe,info:'GlobeContext.emitPulse(). Every real-world event triggers a visual pulse on the 3D globe.',children:[
+    {name:'GlobeContext.emitPulse()',color:C.globe,info:'Single entry point. { type, coordinates, intensity }. All triggers use this.'},
+    {name:'WorldPulseContext',color:C.globe,info:'Realtime layer feeding GlobeContext.emitPulse via Supabase Realtime on beacons.'},
+    {name:'Beacon Colors',color:C.globe,children:[
+      {name:'Lime #39FF14',color:'#39FF14',info:'Social / Right Now active beacon.'},
+      {name:'Cyan #00D9FF',color:'#00D9FF',info:'Events beacon. Also Verified user glow.'},
+      {name:'Gold #FFD700',color:'#FFD700',info:'P2P marketplace beacon. Seller location.'},
+      {name:'Purple #B026FF',color:'#B026FF',info:'RAW CONVICT Records / music releases.'},
+      {name:'Red #FF0000',color:'#FF0000',info:'Safety/panic alert beacon.'},
+    ]},
+    {name:'Globe Pulse Events',color:C.globe,children:[
+      {name:'TRACK_CHANGE',color:C.globe,info:'Radio track changes → BPM metadata → shader uniforms.'},
+      {name:'RIGHT_NOW',color:C.globe,info:'User goes Right Now → Lime beacon at GPS.'},
+      {name:'RSVP',color:C.globe,info:'Event RSVP → Cyan beacon size grows.'},
+      {name:'MATCH',color:C.globe,info:'Match found → connection line on Globe.'},
+      {name:'SALE',color:C.globe,info:'P2P sale → Gold beacon at seller location.'},
+      {name:'PANIC',color:C.globe,info:'SOS/panic → Red beacon + admin alert.'},
+      {name:'VERIFIED',color:C.globe,info:'User verified → Cyan glow on their beacon.'},
+    ]},
+    {name:'Supabase Realtime',color:C.globe,info:'Subscriptions on beacons table → useGlobePulse hook → BeaconMesh updates.'},
+    {name:'BeaconMesh',color:C.globe,info:'3D rendered beacons on the Globe surface.'},
+    {name:'Wetter Watch',color:C.globe,info:'CityPulseBar ticker. Real-time city pulse bar. Part 6/11.'},
+  ]},
+
+  // ══════════════════════════════════════════════════
+  // 4 NAV PILLARS → 19 PARTS
+  // ══════════════════════════════════════════════════
+  {name:'4 PILLARS + 19 PARTS',color:C.pillars,info:'The navigation architecture. 4 Pillars map to 19 Parts of the OS.',children:[
+    {name:'THE PULSE',color:C.pillars,info:'Parts 6, 11, 13, 17, 18. Listen live, Wetter Watch, schedule, Pulse Calendar.',children:[
+      {name:'Part 6: Events/Wetter Watch',color:C.pillars,info:'Built (Wetter Watch partial). wireframes/PART6-EVENTS.html'},
+      {name:'Part 11: Extras/Countdown',color:C.pillars,info:'Built. Pre-launch countdown. wireframes/PART11-EXTRAS.html'},
+      {name:'Part 13: Music Deep Dive',color:C.pillars,info:'Built. Live Radio, Shows, Schedule, Releases, Artists, Playlists. wireframes/PART13.html'},
+      {name:'Part 17: (Radio+Pulse)',color:C.pillars,info:'Radio/pulse integration.'},
+      {name:'Part 18: Pulse Calendar',color:C.pillars,info:'Partial. Time dimension — scrub timeline → Globe beacons filter by time. wireframes/PART18.html'},
+    ]},
+    {name:'THE VAULT',color:C.pillars,info:'Parts 13, 14, 15. Artists, releases, archive, community, submit release.',children:[
+      {name:'Part 13: Music Archive',color:C.pillars,info:'Artists, releases, playlists vault.'},
+      {name:'Part 14: Community',color:C.pillars,info:'Built. Social community features. wireframes/PART14-COMMUNITY.html'},
+      {name:'Part 15: Business Tools',color:C.pillars,info:'Partial. Submit Release, Creator/Business dashboards. wireframes/PART15-BUSINESS.html'},
+    ]},
+    {name:'THE CELL',color:C.pillars,info:'Parts 1-3, 5, 8, 9. Profile, onboarding, rewards, gamification, membership.',children:[
+      {name:'Part 1: Auth/Age Gate',color:C.parts,info:'Built. Age gate + Telegram primary auth + email fallback.'},
+      {name:'Part 2: Onboarding (pre)',color:C.parts,info:'Partial. wireframes/PART3-ONBOARDING.html'},
+      {name:'Part 3: Onboarding (post)',color:C.parts,info:'Partial. 6-step flow + community attestation.'},
+      {name:'Part 5: Profile/Personas',color:C.parts,info:'Built. Up to 5 personas. BentoProfile / Convict ID.'},
+      {name:'Part 8: Rewards/XP',color:C.parts,info:'DB intact, UI removed. XP columns kept.'},
+      {name:'Part 9: Membership',color:C.parts,info:'Partial. BASIC/PLUS/CHROME tiers. Stripe incomplete.'},
+    ]},
+    {name:'THE MARKET',color:C.pillars,info:'Parts 7, 10, 15. Shop (Shopify + P2P), countdowns, tickets, safety.',children:[
+      {name:'Part 7: Commerce',color:C.commerce,info:'Partial. Shopify headless + P2P Supabase. wireframes/PART7-COMMERCE.html'},
+      {name:'Part 10: Safety',color:C.safety,info:'Built. Panic FAB, emergency mode, location share. wireframes/PART10-SAFETY.html'},
+      {name:'Part 15: Creator Economy',color:C.commerce,info:'Creator drops, radio merch, subscriptions.'},
+    ]},
+    {name:'Part 4: Social/Ghosted',color:C.parts,info:'Built. Profiles grid, matching, messaging. wireframes/PART4-SOCIAL.html'},
+    {name:'Part 12: Home/Dashboard',color:C.parts,info:'Built. Globe hero, feed, CityPulseBar, LiveFeed, release beacons.'},
+    {name:'Part 16: Admin/City Ops',color:C.parts,info:'Built. Admin dashboard, AI verification dashboard, moderation.'},
+    {name:'Part 19: AI Verification',color:C.ai,info:'Planned. Liveness selfie → edge fn → is_verified → Cyan glow on Globe.'},
+  ]},
+
+  // ══════════════════════════════════════════════════
+  // BRANDS & CHANNELS
+  // ══════════════════════════════════════════════════
+  {name:'BRANDS & CHANNELS',color:C.brands,info:'Sovereign brand ecosystem. NEVER auto-merged by AI. Each has own Shopify tags, beacon types, content category.',children:[
+    {name:'HOTMESS',color:C.brands,info:'The social OS & platform itself. Core brand. Voice: Bold, provocative, care-first, cheeky, community.'},
+    {name:'FASHION LABELS',color:C.brands,children:[
+      {name:'RAW',color:C.brands,info:'Bold basics. Tag: raw. L2BrandSheet opens brand landing.'},
+      {name:'HUNG',color:C.brands,info:'Statement pieces. Tag: hung.'},
+      {name:'HIGH',color:C.brands,info:'Elevated essentials. Tag: high.'},
+      {name:'SUPERHUNG',color:C.brands,info:'Ultra-limited drops.'},
+      {name:'SUPERRAW',color:C.brands,info:'Ultra-limited drops.'},
+      {name:'HUNGMESS',color:C.brands,info:'Editorial fashion line.'},
+    ]},
+    {name:'MUSIC & RADIO',color:C.mono,children:[
+      {name:'RAW CONVICT RECORDS',color:C.mono,info:'The record label. Purple #B026FF. NEVER merged into social feed algorithmically.'},
+      {name:'HOTMESS RADIO',color:C.mono,info:'Broadcast. Three shows. ConvictPlayer persistent.'},
+      {name:'Wake The Mess',color:C.mono,info:'Morning show.'},
+      {name:'Dial A Daddy',color:C.mono,info:'Talk show.'},
+      {name:'Hand N Hand',color:C.mono,info:'Music show.'},
+      {name:'SMASH DADDYS',color:C.mono,info:'In-house music production.'},
+    ]},
+    {name:'HNH MESS',color:C.brands,info:'Lube brand. Warm amber photography. Shopify headless.'},
+    {name:'Brand Voice',color:C.brands,children:[
+      {name:'"Don\'t make same mistake twice unless he\'s hot"',color:C.brands},
+      {name:'"LIVE LIFE LEFT"',color:C.brands},
+      {name:'"School of HOTMESS;LONDON"',color:C.brands},
+      {name:'Consent cue: "Ask first. Confirm yes. Respect no."',color:C.brands},
+      {name:'Footer: "18+ · Consent-first · Care always."',color:C.brands},
+      {name:'Safety: "You good?"',color:C.brands},
+    ]},
+    {name:'B2B Dashboards',color:C.brands,children:[
+      {name:'PromoterDashboard',color:C.brands},
+      {name:'BusinessDashboard /biz',color:C.brands},
+      {name:'BusinessAnalytics',color:C.brands},
+      {name:'CreatorDashboard',color:C.brands},
+      {name:'SellerDashboard',color:C.brands},
+      {name:'OrganizerDashboard',color:C.brands},
+      {name:'ReferralProgram',color:C.brands},
+    ]},
+  ]},
+
+  // ══════════════════════════════════════════════════
+  // USERS & PERSONAS
+  // ══════════════════════════════════════════════════
+  {name:'USERS & PERSONAS',color:C.users,info:'User types, the 5-persona system, and match probability.',children:[
+    {name:'User Roles',color:C.users,children:[
+      {name:'Guest (unauthenticated)',color:C.users,info:'Can view public routes only.'},
+      {name:'Member / Free',color:C.users,info:'Age-verified + onboarded. Telegram handle or @hotmess_handle.'},
+      {name:'PLUS',color:C.users,info:'Paid tier. Enhanced features.'},
+      {name:'CHROME',color:C.users,info:'Premium tier. All features.'},
+      {name:'Creator',color:C.users,info:'Radio host / content creator. Creator drops + subscriptions.'},
+      {name:'Seller',color:C.users,info:'P2P marketplace. Stripe Connect.'},
+      {name:'Business',color:C.users,info:'Venue / promoter. /biz dashboard.'},
+      {name:'Admin / City Ops',color:C.users,info:'/admin + L2AdminSheet. Moderation, AI verification override.'},
+    ]},
+    {name:'Persona System',color:C.users,info:'Up to 5 personas per user. Each is a full independent profile.',children:[
+      {name:'MAIN Persona',color:C.users},
+      {name:'TRAVEL Persona',color:C.users},
+      {name:'WEEKEND Persona',color:C.users},
+      {name:'Custom × 2',color:C.users},
+      {name:'switch_persona() RPC',color:C.users,info:'Entry: long-press avatar or Profile tab.'},
+      {name:'PersonaContext (global)',color:C.users},
+      {name:'PersonaSwitcherSheet',color:C.users},
+    ]},
+    {name:'Telegram Identity',color:C.telegram,info:'Telegram = primary auth. tg_username = HOTMESS handle. If null → require unique @hotmess_handle.',children:[
+      {name:'tg_id + tg_username',color:C.telegram},
+      {name:'@hotmess_handle fallback',color:C.telegram,info:'Required if no tg_username.'},
+      {name:'Telegram Bot notifications',color:C.telegram,info:'Match, sale, safety alerts. "Open HOTMESS OS" deep link.'},
+    ]},
+    {name:'Profile Data',color:C.users,children:[
+      {name:'profiles table',color:C.users,info:'id, username, tg_id, tg_username, is_verified, xp_level, persona_type, identity_hash.'},
+      {name:'personas table',color:C.users,info:'Up to 5 per user.'},
+      {name:'right_now_status TABLE',color:C.users,info:'Write here NOT profiles.right_now_status JSONB.'},
+      {name:'user_private_profile',color:C.users,info:'Private profile data for match scoring.'},
+      {name:'profile_embeddings',color:C.users,info:'pgvector. OpenAI embeddings for semantic match.'},
+    ]},
+  ]},
+
+  // ══════════════════════════════════════════════════
+  // AI SYSTEMS
+  // ══════════════════════════════════════════════════
+  {name:'AI SYSTEMS',color:C.ai,info:'Omniscient AI assistant, match probability, safety AI, Wingman, Scene Scout, Profile Optimizer.',children:[
+    {name:'Match Probability',color:C.ai,info:'Computed server-side. OpenAI embeddings + pgvector. Score 0-100%.',children:[
+      {name:'StructuredFieldScorer',color:C.ai,info:'Role compat, kink overlap, intent, lifestyle.'},
+      {name:'SemanticTextScorer',color:C.ai,info:'OpenAI text embeddings → pgvector cosine similarity.'},
+      {name:'TravelTimeScorer',color:C.ai,info:'/api/routing/etas + routing_cache table.'},
+      {name:'ScoreAggregator',color:C.ai,info:'Combines all scorers → single 0-100% score.'},
+      {name:'/api/match-probability',color:C.ai,info:'API endpoint. RLS for private data.'},
+      {name:'profile_embeddings table',color:C.ai,info:'pgvector support. Generated on profile save.'},
+      {name:'Match % badge on ProfileCard',color:C.ai},
+      {name:'Best Match sorting',color:C.ai},
+    ]},
+    {name:'Omniscient AI',color:C.ai,info:'GlobalAssistant. Gay world knowledge (50+ venues, 100+ terms, health resources). Crisis detection.',children:[
+      {name:'/api/ai/chat.js',color:C.ai,info:'Main AI endpoint with crisis detection.'},
+      {name:'8 Function Calling tools',color:C.ai,info:'/api/ai/_tools.js'},
+      {name:'Gay world knowledge seed',color:C.ai,info:'50+ venues, 100+ terms, health resources.'},
+      {name:'Crisis detection',color:C.ai,info:'Proactive safety triggers.'},
+      {name:'Proactive safety check-in',color:C.ai,info:'AI asks "You good?" based on context.'},
+    ]},
+    {name:'Wingman AI',color:C.ai,info:'3 opener types. WingmanPanel.jsx.',children:[
+      {name:'Opener type 1: Cheeky',color:C.ai},
+      {name:'Opener type 2: Direct',color:C.ai},
+      {name:'Opener type 3: Thoughtful',color:C.ai},
+    ]},
+    {name:'Scene Scout',color:C.ai,info:'Venue scoring + AI narrative. Tells you where the scene is tonight.'},
+    {name:'Profile Optimizer',color:C.ai,info:'7 optimization rules. Improves match probability.'},
+    {name:'Part 19: AI Verification',color:C.ai,info:'Liveness selfie → is_verified → Cyan glow on Globe.',children:[
+      {name:'Client captures selfie',color:C.ai},
+      {name:'→ server/edge function',color:C.ai},
+      {name:'→ liveness result',color:C.ai},
+      {name:'→ profiles.is_verified + identity_hash',color:C.ai},
+      {name:'→ Cyan #00D9FF glow on Globe',color:C.ai},
+    ]},
+  ]},
+
+  // ══════════════════════════════════════════════════
+  // TELEGRAM
+  // ══════════════════════════════════════════════════
+  {name:'TELEGRAM',color:C.telegram,info:'Primary auth + bot notifications. Telegram ID = HOTMESS identity.',children:[
+    {name:'Telegram Primary Auth',color:C.telegram,info:'Login with Telegram. tg_username = HOTMESS handle.'},
+    {name:'Email/Magic Link fallback',color:C.telegram},
+    {name:'Username resolution',color:C.telegram,info:'tg_username present → use it. Null → require unique @hotmess_handle.'},
+    {name:'Telegram Bot',color:C.telegram,info:'Webhook-based. Globe-triggered notifications.',children:[
+      {name:'Match notification',color:C.telegram},
+      {name:'Marketplace sale alert',color:C.telegram},
+      {name:'Safety alert',color:C.telegram},
+      {name:'"Open HOTMESS OS" deep link',color:C.telegram},
+    ]},
+    {name:'VITE_TELEGRAM_BOT env var',color:C.telegram},
+  ]},
+
+  // ══════════════════════════════════════════════════
+  // MONETIZATION
+  // ══════════════════════════════════════════════════
+  {name:'MONETIZATION',color:C.commerce,info:'Membership tiers, dual marketplace, creator economy, Stripe.',children:[
+    {name:'Membership Tiers',color:C.commerce,children:[
+      {name:'BASIC (Free)',color:C.commerce,info:'Core social features.'},
+      {name:'PLUS',color:C.commerce,info:'Enhanced features. Stripe subscription.'},
+      {name:'CHROME',color:C.commerce,info:'All features. Premium tier.'},
+      {name:'Stripe Checkout sessions',color:C.commerce,info:'Webhooks for subscription management. Incomplete.'},
+    ]},
+    {name:'Dual Marketplace',color:C.commerce,children:[
+      {name:'OFFICIAL (Shopify)',color:C.commerce,info:'/market, /api/shopify/* Storefront API. Headless checkout. Drop beacons at brand coords.'},
+      {name:'P2P (Supabase)',color:C.commerce,info:'/market/creators. Stripe Connect escrow. preloved_listings → Gold beacon at seller.'},
+      {name:'Unified Vault',color:C.commerce,info:'Profile Vault aggregates Shopify orders + P2P purchases. Single component, two fetches.'},
+    ]},
+    {name:'Creator Economy',color:C.commerce,children:[
+      {name:'Creator subscriptions',color:C.commerce,info:'L2CreatorSubscriptionSheet.'},
+      {name:'Radio host merch',color:C.commerce,info:'Tagged listings — creator drops.'},
+      {name:'Submit Release',color:C.commerce,info:'Part 15. Artists submit to RAW CONVICT.'},
+      {name:'CreatorDashboard',color:C.commerce},
+    ]},
+    {name:'Adult Content',color:C.commerce,info:'Gated adult content layer. Age-verified + consented users only.'},
+    {name:'Ticket Resale',color:C.commerce,info:'L2TicketSheet. ticket-market sheet type.'},
+    {name:'Revenue Sources',color:C.commerce,children:[
+      {name:'Membership subscriptions (Stripe)',color:C.commerce},
+      {name:'Marketplace commission',color:C.commerce},
+      {name:'Creator subscription split',color:C.commerce},
+      {name:'Shopify brand sales',color:C.commerce},
+      {name:'Event ticket sales',color:C.commerce},
+      {name:'Business dashboard (B2B SaaS)',color:C.commerce},
+    ]},
+  ]},
+
+  // ══════════════════════════════════════════════════
+  // ARCHITECTURE
+  // ══════════════════════════════════════════════════
+  {name:'ARCHITECTURE',color:C.arch,info:'React 18 + Vite PWA. Spatial OS layered model. 326 components, ~105 routes.',children:[
+    {name:'Provider Hierarchy',color:C.arch,info:'Mount order is sacred — approval required to change.',children:[
+      {name:'1. Sentry.ErrorBoundary',color:C.arch},
+      {name:'2. ErrorBoundary',color:C.arch},
+      {name:'3. OSProvider',color:C.arch},
+      {name:'4. I18nProvider',color:C.arch},
+      {name:'5. AuthProvider (Supabase)',color:C.arch},
+      {name:'6. PinLockProvider',color:C.arch},
+      {name:'7. BootGuardProvider',color:C.arch},
+      {name:'8. QueryClientProvider',color:C.arch},
+      {name:'9. WorldPulseProvider',color:C.arch},
+      {name:'10. ShopCartProvider',color:C.arch},
+      {name:'11. BrowserRouter',color:C.arch},
+      {name:'12. SOSProvider',color:C.arch},
+      {name:'13. SheetProvider',color:C.arch},
+      {name:'14. BootRouter',color:C.arch},
+      {name:'15. RadioProvider',color:C.arch},
+      {name:'16. OSArchitecture',color:C.arch},
+    ]},
+    {name:'OS Layer Model',color:C.arch,children:[
+      {name:'L0: Globe z-0',color:C.arch,info:'Three.js Globe. Only renders on /pulse. Null elsewhere.'},
+      {name:'L1: HUD z-50',color:C.arch,info:'ConvictPlayer (Radio), SafetyFAB, NavigationOrb, CityPulseBar, OSBottomNav.'},
+      {name:'L2: Sheets z-100',color:C.arch,info:'Content sheets. Never unmounts on route change.'},
+      {name:'L3: Higher z-150',color:C.arch,info:'PersonaSwitcher, Filters. Toasts/alerts.'},
+      {name:'L4: Calls z-180',color:C.arch,info:'IncomingCallBanner.'},
+      {name:'L5: SOS z-190/200',color:C.arch,info:'SOSButton z-190. SOSOverlay z-200. Safety critical.'},
+      {name:'L6: PIN z-max',color:C.arch,info:'PinLockOverlay. Above everything.'},
+    ]},
+    {name:'Tech Stack',color:C.arch,children:[
+      {name:'React 18 + Vite + TypeScript',color:C.arch},
+      {name:'Three.js / R3F',color:C.arch,info:'Globe WebGL.'},
+      {name:'Mapbox GL',color:C.arch,info:'Map layer (spatial).'},
+      {name:'TanStack Query',color:C.arch},
+      {name:'Framer Motion',color:C.arch,info:'Sheet spring physics.'},
+      {name:'Tailwind + shadcn/ui',color:C.arch},
+      {name:'Supabase (Auth+DB+RT+Storage)',color:C.arch},
+      {name:'Shopify Storefront API',color:C.arch},
+      {name:'Stripe (Subs + Connect)',color:C.arch},
+      {name:'OpenAI API',color:C.arch,info:'Embeddings (pgvector) + chat.'},
+      {name:'Telegram Bot API',color:C.arch},
+      {name:'SoundCloud API',color:C.arch,info:'Radio streaming integration.'},
+      {name:'Vercel (50+ fns, 6 cron jobs)',color:C.arch},
+      {name:'pgvector (PostgreSQL ext)',color:C.arch,info:'Vector similarity search for match.'},
+    ]},
+    {name:'Key Colors',color:C.arch,children:[
+      {name:'#C8962C Gold — CTAs (OS)',color:'#C8962C'},
+      {name:'#FF1493 Hot Pink — brand voice',color:'#FF1493'},
+      {name:'#00D9FF Cyan — events/verified',color:'#00D9FF'},
+      {name:'#39FF14 Lime — Right Now/online',color:'#39FF14'},
+      {name:'#FFD700 Gold — P2P marketplace',color:'#FFD700'},
+      {name:'#B026FF Purple — RAW CONVICT',color:'#B026FF'},
+      {name:'#0047AB Royal Blue — School of HM',color:'#0047AB'},
+      {name:'#FF8F00 Orange — Tonight mode',color:'#FF8F00'},
+      {name:'#1C1C1E Card bg / #0D0D0D Nav',color:C.arch},
+    ]},
+  ]},
+
+  // ══════════════════════════════════════════════════
+  // 5 OS MODES
+  // ══════════════════════════════════════════════════
+  {name:'5 OS MODES',color:C.modes,info:'5 lazy-loaded mode components mapped to routes. OSBottomNav 5-tab navigation.',children:[
+    {name:'HOME /',color:C.modes,info:'Globe hero + feed + CityPulseBar + LiveFeed + release beacons.',children:[
+      {name:'GlobeHero',color:C.modes},
+      {name:'CityPulseBar',color:C.modes},
+      {name:'LiveFeed',color:C.modes},
+      {name:'Release beacons',color:C.modes},
+    ]},
+    {name:'PULSE /pulse',color:C.globe,info:'ONLY route with Three.js Globe (L0). Beacons + WorldPulse + Beacon FAB.',children:[
+      {name:'UnifiedGlobe (Three.js)',color:C.globe,info:'WebGL canvas. Renders ONLY here.'},
+      {name:'WorldPulseContext',color:C.globe},
+      {name:'PulseContext',color:C.globe},
+      {name:'GlobeContext + emitPulse()',color:C.globe},
+      {name:'Beacon FAB (create)',color:C.globe,info:'beacons is a VIEW. owner_id + starts_at/ends_at. metadata JSONB.'},
+      {name:'intensityToShaders',color:C.globe,info:'Radio BPM → globe shader uniforms.'},
+    ]},
+    {name:'GHOSTED /ghosted',color:C.modes,info:'3-col proximity grid. Gated sheets. Match system.',children:[
+      {name:'BentoGrid 3-col',color:C.modes},
+      {name:'ProfileCard / SmartProfileCard',color:C.modes},
+      {name:'GPSSmartCard',color:C.modes},
+      {name:'useMatchProfiles hook',color:C.modes},
+      {name:'matchInsights',color:C.modes},
+      {name:'MatchBar + MatchFilter',color:C.modes},
+      {name:'SocialProofBadges',color:C.modes},
+      {name:'TelegramPanel',color:C.telegram},
+      {name:'useInfiniteProfiles',color:C.modes},
+      {name:'🔒 chat/video/travel gated',color:C.modes,info:'canOpenSheet(). Only from /ghosted or profile sheet in stack.'},
+    ]},
+    {name:'MARKET /market',color:C.commerce,info:'Three commerce streams: Shopify, P2P, Creator drops.',children:[
+      {name:'Shop (Shopify Headless)',color:C.commerce,info:'/api/shopify/* Vercel fns.'},
+      {name:'Preloved P2P',color:C.commerce,info:'preloved_listings table.'},
+      {name:'Creator Drops',color:C.commerce,info:'Radio host merch. Tagged listings.'},
+      {name:'ShopCartContext',color:C.commerce},
+    ]},
+    {name:'PROFILE /profile',color:C.modes,info:'Persona switcher + settings + vault.',children:[
+      {name:'PersonaSwitcherSheet',color:C.users},
+      {name:'L2EditProfileSheet',color:C.modes},
+      {name:'VaultMode /vault',color:C.modes},
+    ]},
+    {name:'RADIO /radio',color:C.mono,info:'No nav tab. RadioMiniPlayer persists on ALL routes above nav.',children:[
+      {name:'RadioContext (playback state)',color:C.mono},
+      {name:'RadioMiniPlayer (persistent L1)',color:C.mono,info:'Hidden only on /radio.'},
+      {name:'ConvictPlayer',color:C.mono},
+      {name:'SoundCloud integration',color:C.mono},
+      {name:'/radio/schedule',color:C.mono},
+    ]},
+  ]},
+
+  // ══════════════════════════════════════════════════
+  // BOOT STATE MACHINE
+  // ══════════════════════════════════════════════════
+  {name:'BOOT STATE MACHINE',color:C.boot,info:'BootGuardContext. Controls all gating before READY state.',children:[
+    {name:'LOADING',color:C.boot,info:'Check supabase.auth.getSession()'},
+    {name:'UNAUTHENTICATED → /auth',color:C.boot,info:'Telegram primary OR email/magic link.',children:[
+      {name:'WelcomeScreen',color:C.boot},
+      {name:'LoginScreen',color:C.boot},
+      {name:'SignUpScreen + Join Code',color:C.boot},
+      {name:'ForgotPasswordScreen',color:C.boot},
+      {name:'/auth/callback (OAuth)',color:C.boot},
+    ]},
+    {name:'NEEDS_AGE → AgeGate',color:C.boot,info:'localStorage: hm_age_confirmed_v1'},
+    {name:'NEEDS_ONBOARDING (6 steps)',color:C.boot,children:[
+      {name:'Step 1: Basic info',color:C.boot},
+      {name:'Step 2: Photos',color:C.boot},
+      {name:'Step 3: Interests',color:C.boot},
+      {name:'Step 4: Location',color:C.boot},
+      {name:'Step 5: Privacy prefs',color:C.boot},
+      {name:'Step 6: Community attestation',color:C.boot},
+    ]},
+    {name:'NEEDS_COMMUNITY_GATE',color:C.boot,info:'localStorage: hm_community_attested_v1'},
+    {name:'READY → OSArchitecture',color:C.boot,info:'Full Globe OS mounts.'},
+    {name:'Auth Listeners (6 files)',color:C.boot,info:'DO NOT add more — listener multiplication risk.',children:[
+      {name:'BootGuardContext.jsx',color:C.boot},
+      {name:'NowSignalContext.jsx',color:C.boot},
+      {name:'viewerState.ts',color:C.boot},
+      {name:'bootGuard.ts',color:C.boot},
+      {name:'Auth.jsx',color:C.boot},
+      {name:'supabaseClient.jsx',color:C.boot},
+    ]},
+  ]},
+
+  // ══════════════════════════════════════════════════
+  // SHEET SYSTEM
+  // ══════════════════════════════════════════════════
+  {name:'SHEET SYSTEM',color:C.sheets,info:'50+ sheets. LIFO stack. URL ?sheet=type sync. SheetContext is sole authority.',children:[
+    {name:'5 Sheet Laws',color:C.sheets,children:[
+      {name:'LAW 1: Single Authority',color:C.sheets},
+      {name:'LAW 2: LIFO Stack',color:C.sheets},
+      {name:'LAW 3: URL Sync',color:C.sheets,info:'?sheet=<type> bidirectional.'},
+      {name:'LAW 4: No Remount',color:C.sheets},
+      {name:'LAW 5: Deterministic Close',color:C.sheets,info:'Swipe 100px | velocity 500px/s | backdrop | Escape | back.'},
+    ]},
+    {name:'Operations',color:C.sheets,children:[
+      {name:'openSheet(type, props)',color:C.sheets},
+      {name:'pushSheet(type, props)',color:C.sheets},
+      {name:'popSheet()',color:C.sheets},
+      {name:'closeSheet()',color:C.sheets},
+      {name:'dismissAll()',color:C.sheets},
+    ]},
+    {name:'Core Sheets',color:C.sheets,children:[
+      {name:'profile',color:C.sheets},
+      {name:'event',color:C.sheets},
+      {name:'chat 🔒',color:C.sheets,info:'Gated. Ghosted only.'},
+      {name:'vault',color:C.sheets},
+      {name:'social',color:C.sheets},
+      {name:'events',color:C.sheets},
+      {name:'marketplace',color:C.sheets},
+      {name:'search',color:C.sheets},
+      {name:'ghosted (Right Now)',color:C.sheets},
+    ]},
+    {name:'Commerce Sheets',color:C.sheets,children:[
+      {name:'shop / product / cart',color:C.sheets},
+      {name:'filters',color:C.sheets},
+      {name:'sell / seller-onboarding',color:C.sheets},
+      {name:'payouts / order / my-orders',color:C.sheets},
+      {name:'checkout',color:C.sheets},
+      {name:'ticket-market',color:C.sheets},
+    ]},
+    {name:'Profile Sheets',color:C.sheets,children:[
+      {name:'edit-profile / photos / location',color:C.sheets},
+      {name:'privacy / blocked / favorites',color:C.sheets},
+      {name:'membership / notifications / settings',color:C.sheets},
+      {name:'help / my-listings',color:C.sheets},
+    ]},
+    {name:'Special Sheets',color:C.sheets,children:[
+      {name:'beacon / create-event',color:C.sheets},
+      {name:'schedule / show (Radio)',color:C.sheets},
+      {name:'video-call 🔒 (full)',color:C.sheets},
+      {name:'emergency-contact / safety',color:C.sheets},
+      {name:'qr / directions / checkout',color:C.sheets},
+      {name:'admin (City Ops)',color:C.sheets},
+      {name:'amplify (B2B)',color:C.sheets},
+      {name:'brand (RAW/HUNG/HIGH)',color:C.sheets},
+      {name:'community / achievements / squads',color:C.sheets},
+      {name:'sweat-coins / creator-subscription',color:C.sheets},
+    ]},
+  ]},
+
+  // ══════════════════════════════════════════════════
+  // DATA LAYER
+  // ══════════════════════════════════════════════════
+  {name:'DATA LAYER',color:C.data,info:'Supabase Postgres + Realtime + Storage. 50+ tables. Singleton client.',children:[
+    {name:'Key Supabase Tables',color:C.data,children:[
+      {name:'profiles',color:C.data,info:'id, username, tg_id, tg_username, is_verified, xp_level, persona_type, identity_hash.'},
+      {name:'personas (up to 5)',color:C.data},
+      {name:'beacons (VIEW!)',color:C.data,info:'DO NOT ALTER TABLE. metadata JSONB for title/desc/addr/img. owner_id, starts_at, ends_at.'},
+      {name:'right_now_status TABLE',color:C.data,info:'Write here. NOT profiles JSONB.'},
+      {name:'preloved_listings',color:C.data},
+      {name:'profile_embeddings (pgvector)',color:C.data},
+      {name:'scoring_config',color:C.data},
+      {name:'routing_cache',color:C.data},
+      {name:'user_private_profile',color:C.data},
+      {name:'radio_shows / episodes',color:C.data},
+      {name:'support_tickets',color:C.data},
+      {name:'squads',color:C.data},
+    ]},
+    {name:'Contexts',color:C.data,children:[
+      {name:'AuthContext',color:C.data},
+      {name:'BootGuardContext',color:C.data},
+      {name:'SheetContext',color:C.data},
+      {name:'PersonaContext',color:C.data},
+      {name:'WorldPulseContext',color:C.data},
+      {name:'GlobeContext',color:C.data},
+      {name:'PulseContext',color:C.data},
+      {name:'RadioContext',color:C.data},
+      {name:'SOSContext',color:C.data},
+      {name:'PinLockContext',color:C.data},
+      {name:'ShopCartContext',color:C.data},
+      {name:'NowSignalContext',color:C.data},
+      {name:'I18nContext',color:C.data},
+      {name:'SafetyGateContext',color:C.data},
+    ]},
+    {name:'API Routes',color:C.data,children:[
+      {name:'/api/shopify/*',color:C.data},
+      {name:'/api/match-probability',color:C.data},
+      {name:'/api/routing/etas',color:C.data},
+      {name:'/api/ai/chat',color:C.data},
+      {name:'/api/ai/_tools',color:C.data},
+      {name:'/api/push/*',color:C.data},
+    ]},
+    {name:'Known Issues / Gotchas',color:C.data,children:[
+      {name:'right_now_status split-brain',color:C.data,info:'Old code writes to profiles.right_now_status JSONB — fix by writing to TABLE.'},
+      {name:'profile_overrides RLS wrong FK',color:C.data,info:'Medium severity. Not yet fixed.'},
+      {name:'beacons is VIEW not TABLE',color:C.data,info:'ALTER TABLE will fail.'},
+      {name:'Realtime subscriptions multiply (dev only)',color:C.data},
+      {name:'20260214010000 migration syntax error',color:C.data,info:'IF EXISTS IF EXISTS — low priority cosmetic.'},
+    ]},
+  ]},
+
+  // ══════════════════════════════════════════════════
+  // SAFETY SYSTEM
+  // ══════════════════════════════════════════════════
+  {name:'SAFETY SYSTEM',color:C.safety,info:'Safety-critical. src/components/safety/ + src/components/sos/. Must NEVER regress.',children:[
+    {name:'SOSButton z-190',color:C.safety,info:'Long-press trigger. Fixed bottom-right.'},
+    {name:'SOSOverlay z-200',color:C.safety,info:'Blocks entire OS. Red theme. Stops content sharing.'},
+    {name:'IncomingCallBanner z-180',color:C.safety},
+    {name:'PinLockOverlay z-max',color:C.safety},
+    {name:'SOSContext.triggerSOS()',color:C.safety,info:'ONLY way to activate SOS. Never bypass.'},
+    {name:'Emergency Mode',color:C.safety,info:'Red theme overlay. Does NOT navigate away. User returns to same view.'},
+    {name:'Location Share',color:C.safety,info:'Trusted contacts + admin beacon on panic.'},
+    {name:'Proactive Safety AI',color:C.ai,info:'"You good?" check-in system based on context.'},
+    {name:'Care Page /more/care',color:C.safety},
+    {name:'L2SafetySheet',color:C.safety},
+    {name:'L2EmergencyContactSheet',color:C.safety},
+    {name:'src/core/emergency.ts',color:C.safety},
+    {name:'Consent cues in UI',color:C.safety,info:'"Ask first. Confirm yes. Respect no."'},
+    {name:'18+ Age Verification',color:C.safety},
+  ]},
+
+  // ══════════════════════════════════════════════════
+  // MICROFLOWS
+  // ══════════════════════════════════════════════════
+  {name:'MICROFLOWS',color:C.micro,info:'Key user journeys through the OS.',children:[
+    {name:'Entry Flow (Convict Entry)',color:C.micro,children:[
+      {name:'① App open → LOADING',color:C.micro},
+      {name:'② Check Supabase session',color:C.micro},
+      {name:'③ No session → /auth',color:C.micro},
+      {name:'④ Telegram OR email',color:C.micro},
+      {name:'⑤ /auth/callback',color:C.micro},
+      {name:'⑥ BootGuard checks flags',color:C.micro},
+      {name:'⑦ AgeGate → Onboarding → READY',color:C.micro},
+      {name:'⑧ Globe mounts → London OS',color:C.micro},
+    ]},
+    {name:'SOS Emergency',color:C.safety,children:[
+      {name:'① Long-press SOSButton',color:C.safety},
+      {name:'② Confirm dialog',color:C.safety},
+      {name:'③ Red emergency mode overlay z-200',color:C.safety},
+      {name:'④ Alert trusted contacts + admin beacon',color:C.safety},
+      {name:'⑤ clearSOS() to dismiss',color:C.safety},
+    ]},
+    {name:'Right Now → Globe',color:C.globe,children:[
+      {name:'① Toggle Right Now',color:C.globe},
+      {name:'② Write to right_now_status TABLE',color:C.globe},
+      {name:'③ Insert beacon (type: social)',color:C.globe},
+      {name:'④ Supabase Realtime fires',color:C.globe},
+      {name:'⑤ Globe: Lime beacon at GPS',color:C.globe},
+      {name:'⑥ Telegram Bot: notify matches',color:C.telegram},
+    ]},
+    {name:'Ghosted Match → Chat',color:C.micro,children:[
+      {name:'① /ghosted → BentoGrid loads',color:C.micro},
+      {name:'② Match % scores calculated',color:C.ai},
+      {name:'③ Tap card → L2ProfileSheet',color:C.micro},
+      {name:'④ Profile sheet → chat button',color:C.micro},
+      {name:'⑤ canOpenSheet() check',color:C.micro},
+      {name:'⑥ pushSheet("chat") → L2ChatSheet',color:C.micro},
+      {name:'⑦ Globe: connection line MATCH pulse',color:C.globe},
+    ]},
+    {name:'Commerce (Shopify)',color:C.commerce,children:[
+      {name:'① /market → L2MarketplaceSheet',color:C.commerce},
+      {name:'② Tap product → L2ProductSheet',color:C.commerce},
+      {name:'③ Add to cart → ShopCartContext',color:C.commerce},
+      {name:'④ L2CartSheet → Shopify checkout',color:C.commerce},
+    ]},
+    {name:'P2P Listing → Gold Beacon',color:C.commerce,children:[
+      {name:'① L2SellSheet → create listing',color:C.commerce},
+      {name:'② preloved_listings insert',color:C.commerce},
+      {name:'③ Beacon insert (type: marketplace)',color:C.commerce},
+      {name:'④ Globe: Gold beacon at seller GPS',color:C.globe},
+    ]},
+    {name:'Radio → Globe Shaders',color:C.mono,children:[
+      {name:'① Track changes in RadioContext',color:C.mono},
+      {name:'② BPM + metadata extracted',color:C.mono},
+      {name:'③ emitPulse(TRACK_CHANGE)',color:C.globe},
+      {name:'④ Globe shader uniforms update',color:C.globe},
+      {name:'⑤ Visual: Globe pulses to music',color:C.globe},
+    ]},
+    {name:'Persona Switch',color:C.users,children:[
+      {name:'① Long-press avatar or Profile tab',color:C.users},
+      {name:'② PersonaSwitcherSheet opens',color:C.users},
+      {name:'③ Select persona',color:C.users},
+      {name:'④ switch_persona() RPC',color:C.users},
+      {name:'⑤ PersonaContext updates globally',color:C.users},
+    ]},
+  ]},
+
+  ]// end children
+};
+
+// ════════════════════════════════════════════════════════════════
+// D3 RENDERING
+// ════════════════════════════════════════════════════════════════
+const W = window.innerWidth, H = window.innerHeight;
+const svg = d3.select('#map');
+const g   = svg.append('g').attr('id','canvas');
+
+const zoom = d3.zoom().scaleExtent([0.05,4]).on('zoom', e => g.attr('transform', e.transform));
+svg.call(zoom);
+
+svg.append('circle').attr('cx',W/2).attr('cy',H/2).attr('r',Math.min(W,H)*0.45)
+  .attr('fill','none').attr('stroke','#C8962C').attr('stroke-width',1).attr('stroke-dasharray','4,8').attr('opacity',0.12);
+
+const root = d3.hierarchy(data);
+let nid = 0;
+
+function collapse(d,depth){
+  if(d.children){
+    if(d.depth>=depth){ d._children=d.children; d.children=null; }
+    if(d._children) d._children.forEach(c=>collapse(c,depth));
+    if(d.children)  d.children.forEach(c=>collapse(c,depth));
+  }
+}
+root.children&&root.children.forEach(c=>collapse(c,2));
+
+const layout = d3.tree().size([2*Math.PI,Math.min(W,H)*0.44])
+  .separation((a,b)=>(a.parent===b.parent?1:1.8)/a.depth);
+
+function nr(d){
+  if(d.depth===0) return 24;
+  if(d.depth===1) return 13;
+  if(d.depth===2) return 8;
+  return 4.5;
+}
+
+function update(src){
+  layout(root);
+  const nodes=root.descendants(), links=root.links();
+  const tDur=350;
+
+  // links
+  const ls=g.selectAll('.link').data(links,d=>d.target.data.id);
+  ls.enter().append('path').attr('class','link')
+    .attr('stroke',d=>d.target.data.color||'#555')
+    .attr('d',()=>d3.linkRadial().angle(d=>src._x0||0).radius(d=>src._y0||0)({source:src,target:src}))
+    .merge(ls).transition().duration(tDur)
+    .attr('d',d3.linkRadial().angle(d=>d.x).radius(d=>d.y));
+  ls.exit().transition().duration(200).remove();
+
+  // nodes
+  const ns=g.selectAll('.node').data(nodes,d=>d.data.id||(d.data.id=++nid));
+  const ne=ns.enter().append('g')
+    .attr('class',d=>'node'+(d.depth===0?' root':'')+((!d.children&&!d._children)?' leaf':'')+(d._children?' collapsed':''))
+    .attr('transform',()=>`rotate(${(src._x0||0)*180/Math.PI-90})translate(${src._y0||0},0)`)
+    .on('click',(e,d)=>{e.stopPropagation();toggle(d);update(d);})
+    .on('mouseenter',(e,d)=>tip(e,d))
+    .on('mousemove',(e)=>moveTip(e))
+    .on('mouseleave',()=>hideTip());
+
+  ne.append('circle').attr('r',0).attr('fill',d=>d.data.color||'#666').attr('stroke',d=>darker(d.data.color||'#666'));
+  ne.append('text').attr('dy','0.32em').attr('fill',d=>d.depth===0?'#C8962C':'#ddd').text(d=>d.data.name);
+
+  const nu=ne.merge(ns);
+  nu.transition().duration(tDur)
+    .attr('class',d=>'node'+(d.depth===0?' root':'')+((!d.children&&!d._children)?' leaf':'')+(d._children?' collapsed':''))
+    .attr('transform',d=>`rotate(${d.x*180/Math.PI-90})translate(${d.y},0)`);
+
+  nu.select('circle').transition().duration(tDur)
+    .attr('r',nr)
+    .attr('fill',d=>d._children?darker(d.data.color||'#666'):(d.data.color||'#666'))
+    .attr('stroke',d=>darker(d.data.color||'#666'));
+
+  nu.select('text')
+    .attr('text-anchor',d=>(d.x<Math.PI)===(d.depth!==0)?'start':'end')
+    .attr('x',d=>((d.x<Math.PI)===(d.depth!==0)?1:-1)*(nr(d)+5))
+    .attr('transform',d=>d.depth===0?null:(d.x>=Math.PI?'rotate(180)':null));
+
+  ns.exit().transition().duration(200)
+    .attr('transform',`rotate(${(src.x||0)*180/Math.PI-90})translate(${src.y||0},0)`).remove();
+
+  nodes.forEach(d=>{d._x0=d.x;d._y0=d.y;});
+  document.getElementById('stats').textContent=`${nodes.length} nodes visible of ${root.descendants().length} total`;
+}
+
+function darker(hex){
+  try{ return d3.color(hex).darker(0.6).formatHex(); } catch(e){ return '#333'; }
+}
+
+function toggle(d){
+  if(d.children){d._children=d.children;d.children=null;}
+  else{d.children=d._children;d._children=null;}
+}
+
+svg.call(zoom.transform,d3.zoomIdentity.translate(W/2,H/2).scale(0.85));
+update(root);
+
+// ── Tooltip ──
+const tt=document.getElementById('tooltip');
+function tip(e,d){
+  if(!d.data.name)return;
+  tt.style.setProperty('--tc',d.data.color||'#C8962C');
+  tt.innerHTML=`<h4>${d.data.name}</h4>${d.data.info?`<p>${d.data.info}</p>`:''}${d._children?`<p style="color:#555;font-size:9px">▶ ${d._children.length} hidden children</p>`:''}${d.children?`<p style="color:#555;font-size:9px">▼ ${d.children.length} visible children</p>`:''}`;
+  tt.style.display='block';
+  moveTip(e);
+}
+function moveTip(e){ tt.style.left=(e.clientX+14)+'px'; tt.style.top=(e.clientY-10)+'px'; }
+function hideTip(){ tt.style.display='none'; }
+
+// ── Controls ──
+document.getElementById('btn-fit').onclick=()=>{
+  svg.transition().duration(600).call(zoom.transform,d3.zoomIdentity.translate(W/2,H/2).scale(0.4));
+};
+document.getElementById('btn-reset').onclick=()=>{
+  svg.transition().duration(600).call(zoom.transform,d3.zoomIdentity.translate(W/2,H/2).scale(0.85));
+};
+document.getElementById('btn-expand').onclick=()=>{
+  function ex(d){if(d._children){d.children=d._children;d._children=null;}if(d.children)d.children.forEach(ex);}
+  ex(root);update(root);
+};
+document.getElementById('btn-col2').onclick=()=>{
+  root.children&&root.children.forEach(c=>collapse(c,2));update(root);
+};
+document.getElementById('btn-col1').onclick=()=>{
+  root.children&&root.children.forEach(c=>collapse(c,1));update(root);
+};
+
+// ── Search ──
+document.getElementById('search').addEventListener('input',e=>{
+  const q=e.target.value.toLowerCase();
+  g.selectAll('.node circle').attr('opacity',d=>!q||(d.data.name||'').toLowerCase().includes(q)||(d.data.info||'').toLowerCase().includes(q)?1:0.1);
+  g.selectAll('.node text').attr('opacity',d=>!q||(d.data.name||'').toLowerCase().includes(q)?1:0.05);
+  g.selectAll('.link').attr('opacity',q?0.08:0.5);
+});
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){document.getElementById('search').value='';document.getElementById('search').dispatchEvent(new Event('input'));}
+  if(e.key==='f'&&!e.ctrlKey&&!e.metaKey)document.getElementById('btn-fit').click();
+});
+
+// ── Legend ──
+const leg=[
+  {l:'Vision & Concepts',c:C.vision},
+  {l:'Globe Pulse System',c:C.globe},
+  {l:'4 Pillars + 19 Parts',c:C.pillars},
+  {l:'Brands & Channels',c:C.brands},
+  {l:'Users & Personas',c:C.users},
+  {l:'AI Systems',c:C.ai},
+  {l:'Telegram',c:C.telegram},
+  {l:'Monetization',c:C.commerce},
+  {l:'Architecture',c:C.arch},
+  {l:'5 OS Modes',c:C.modes},
+  {l:'Boot State Machine',c:C.boot},
+  {l:'Sheet System',c:C.sheets},
+  {l:'Data Layer',c:C.data},
+  {l:'Safety System',c:C.safety},
+  {l:'Microflows',c:C.micro},
+  {l:'Music/Radio',c:C.mono},
+  {l:'Tonight Mode',c:C.tonight},
+];
+const ldom=document.getElementById('legend');
+leg.forEach(x=>{
+  const d=document.createElement('div');d.className='li';
+  d.innerHTML=`<span class="ld" style="background:${x.c}"></span>${x.l}`;
+  ldom.appendChild(d);
+});
+</script>
+</body>
+</html>

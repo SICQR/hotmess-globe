@@ -9,7 +9,7 @@
 
 import React, { Suspense, lazy, useEffect, useRef, Component } from 'react';
 import { useSheet } from '@/contexts/SheetContext';
-import { SHEET_REGISTRY, getSheetHeight, getSheetPeekFraction } from '@/lib/sheetSystem';
+import { SHEET_REGISTRY, getSheetHeight } from '@/lib/sheetSystem';
 import L2SheetContainer from './L2SheetContainer';
 import { Loader2, Construction } from 'lucide-react';
 import { useRadio } from '@/contexts/RadioContext';
@@ -322,11 +322,6 @@ export default function SheetRouter() {
   const dynamicTitle = sheetProps?.title || config.title;
   const subtitle = sheetProps?.subtitle;
   const height = getSheetHeight(activeSheet);
-  // #362: peek floor — per-type override from SHEET_REGISTRY. Falls back to
-  // L2SheetContainer's 0.50 default (unchanged for sheets without an explicit
-  // peekFraction). notification-inbox bumps to 0.85 so the inbox opens at a
-  // usable height instead of half-screen.
-  const peekFraction = getSheetPeekFraction(activeSheet);
 
   // Photo-led sheets (profile, edit-profile, album-photos) bring their own
   // header chrome (back button + more menu, overlaid on the hero photo).
@@ -340,7 +335,6 @@ export default function SheetRouter() {
       title={dynamicTitle}
       subtitle={subtitle}
       height={height}
-      peekFraction={peekFraction}
       bareTop={bareTop}
     >
       <SheetErrorBoundary key={activeSheet}>
@@ -382,5 +376,4 @@ export function SheetLink({
     </button>
   );
 }
-
 

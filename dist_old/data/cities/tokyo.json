@@ -1,0 +1,18 @@
+{
+  "city": "tokyo",
+  "timezone": "Asia/Tokyo",
+  "zones": [
+    { "id": "shinjuku", "name": "Shinjuku", "category": "nightlife", "energy": 0.92 },
+    { "id": "shibuya", "name": "Shibuya", "category": "nightlife", "energy": 0.9 },
+    { "id": "roppongi", "name": "Roppongi", "category": "nightlife", "energy": 0.88 },
+    { "id": "harajuku", "name": "Harajuku", "category": "culture", "energy": 0.75 },
+    { "id": "ginza", "name": "Ginza", "category": "dining", "energy": 0.7 },
+    { "id": "nakameguro", "name": "Nakameguro", "category": "dining", "energy": 0.65 }
+  ],
+  "behaviour": {
+    "peak_windows": {
+      "shinjuku": ["friday 21:00–05:00", "saturday 21:00–05:00"],
+      "shibuya": ["friday 22:00–04:00", "saturday 22:00–05:00"]
+    }
+  }
+}

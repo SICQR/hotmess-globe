@@ -1,0 +1,1 @@
+{"city":"nyc","zones":[{"id":"hells_kitchen","category":"historic_core","energy":"social_nightlife"},{"id":"chelsea","category":"after_dark","energy":"club_intensity"},{"id":"brooklyn_williamsburg","category":"emerging","energy":"underground_queer"}],"behaviour":{"peak_windows":{"hells_kitchen":["20:00-02:00"],"chelsea":["22:00-04:00"]}}}

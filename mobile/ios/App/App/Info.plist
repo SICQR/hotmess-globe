@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- App metadata -->
+  <key>CFBundleDisplayName</key>
+  <string>HOTMESS</string>
+  <key>CFBundleIdentifier</key>
+  <string>com.hotmess.app</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0.0</string>
+
+  <!-- URL scheme for OAuth / deep links -->
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleURLName</key>
+      <string>com.hotmess.app</string>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <string>hotmess</string>
+        <string>com.hotmess.app</string>
+      </array>
+    </dict>
+  </array>
+
+  <!-- Privacy usage descriptions (required for App Store) -->
+  <key>NSCameraUsageDescription</key>
+  <string>HOTMESS uses your camera to set a profile photo and share moments.</string>
+  <key>NSPhotoLibraryUsageDescription</key>
+  <string>HOTMESS accesses your photos to let you choose a profile picture.</string>
+  <key>NSPhotoLibraryAddUsageDescription</key>
+  <string>HOTMESS saves photos you share to your photo library.</string>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>HOTMESS uses the microphone for voice messages and video calls.</string>
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>HOTMESS uses your location to show nearby events and people in your area.</string>
+  <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+  <string>HOTMESS uses your location in the background to power proximity matching and real-time beacons.</string>
+  <key>NSContactsUsageDescription</key>
+  <string>HOTMESS can suggest friends from your contacts to invite to HOTMESS.</string>
+  <key>NSFaceIDUsageDescription</key>
+  <string>Use Face ID to quickly and securely sign in to HOTMESS.</string>
+  <key>NSUserNotificationsUsageDescription</key>
+  <string>HOTMESS sends you notifications for messages, nearby activity, and safety alerts.</string>
+
+  <!-- Background modes -->
+  <key>UIBackgroundModes</key>
+  <array>
+    <string>fetch</string>
+    <string>remote-notification</string>
+  </array>
+
+  <!-- App Transport Security -->
+  <key>NSAppTransportSecurity</key>
+  <dict>
+    <key>NSAllowsArbitraryLoads</key>
+    <false/>
+    <key>NSExceptionDomains</key>
+    <dict>
+      <key>rfoftonnlwudilafhfkl.supabase.co</key>
+      <dict>
+        <key>NSExceptionAllowsInsecureHTTPLoads</key>
+        <false/>
+        <key>NSIncludesSubdomains</key>
+        <true/>
+      </dict>
+    </dict>
+  </dict>
+
+  <!-- Suppress Capacitor default splash -->
+  <key>UILaunchStoryboardName</key>
+  <string>LaunchScreen</string>
+
+  <!-- Status bar -->
+  <key>UIStatusBarStyle</key>
+  <string>UIStatusBarStyleLightContent</string>
+  <key>UIViewControllerBasedStatusBarAppearance</key>
+  <true/>
+
+  <!-- Orientation — portrait only for mobile app -->
+  <key>UISupportedInterfaceOrientations</key>
+  <array>
+    <string>UIInterfaceOrientationPortrait</string>
+  </array>
+  <key>UISupportedInterfaceOrientations~ipad</key>
+  <array>
+    <string>UIInterfaceOrientationPortrait</string>
+    <string>UIInterfaceOrientationPortraitUpsideDown</string>
+    <string>UIInterfaceOrientationLandscapeLeft</string>
+    <string>UIInterfaceOrientationLandscapeRight</string>
+  </array>
+</dict>
+</plist>
+
