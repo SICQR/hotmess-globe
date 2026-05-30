@@ -11,6 +11,7 @@ import { useBoostedUserIds } from '@/hooks/useBoostedUserIds';
 import { useUserBenefits } from '@/hooks/useUserBenefits';
 import { GhostedCard } from '@/components/ghosted/GhostedCard';
 import { GhostedRecentStories } from '@/components/ghosted/GhostedRecentStories';
+import { AtmosphericImageCard } from '@/components/brand/AtmosphericImageCard';
 import { supabase } from '@/components/utils/supabaseClient';
 
 
@@ -296,11 +297,21 @@ export default function GhostedMode() {
         )}
 
         {/* Inline empty hint — never replaces the grid scaffold (Phil 2026-05-26:
-            'the grid should always be there'). Just a soft note when zero cards. */}
+            'the grid should always be there'). Now also surfaces an
+            atmospheric inhabited card so the empty state reads as discovery
+            atmosphere, not a void. Phil 2026-05-30: "Imagery should make
+            HOTMESS feel INHABITED, not decorated." */}
         {!isLoading && cards.length === 0 && (
-          <p className="text-center text-white/25 text-[11px] tracking-wider uppercase py-3">
-            Field quiet · pull to refresh
-          </p>
+          <div className="px-3 pt-3 pb-1 space-y-3">
+            <AtmosphericImageCard
+              imageUrl="https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/ghosted/no-signal-yet.png"
+              copy="No signal yet. Go make one."
+              aspect="16/9"
+            />
+            <p className="text-center text-white/25 text-[11px] tracking-wider uppercase pt-1">
+              Field quiet · pull to refresh
+            </p>
+          </div>
         )}
       </div>
 
