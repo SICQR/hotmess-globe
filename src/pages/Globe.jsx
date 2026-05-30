@@ -657,7 +657,13 @@ export default function GlobePage({ embedded = false }) {
           />
         )}
 
-        <div key="beacon-fab" className="absolute bottom-[calc(76px+env(safe-area-inset-bottom,0px))] right-6 z-[70]" data-pull-refresh-ignore>
+        {/* HOTFIX 2026-05-30 (Phil mobile screenshots): FAB at bottom=76px was visually colliding
+            with CareDecompressionCue (bottom=84px, w=92vw). At narrow viewports (390px iPhone)
+            the care card's right edge extended past the FAB's left edge — the FAB rendered
+            half-clipped behind the care card. Push FAB above the care card band (~52px tall)
+            with breathing room. Now: 150px+SAI keeps the FAB clear of the care card AND
+            the bottom nav. Z-index unchanged. */}
+        <div key="beacon-fab" className="absolute bottom-[calc(150px+env(safe-area-inset-bottom,0px))] right-6 z-[70]" data-pull-refresh-ignore>
           <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => {
             // Single-engine: drop where the user is looking (map centre); else GPS.
             if (localModeEnabled && pulseApiRef.current && pulseApiRef.current.getCenter) {
@@ -719,5 +725,6 @@ export default function GlobePage({ embedded = false }) {
     </ErrorBoundary>
   );
 }
+
 
 
