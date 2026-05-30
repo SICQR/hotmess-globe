@@ -158,8 +158,62 @@ export default async function handler(req, res) {
           }
         }
 
-        // ── Daily push cap (spec §3) ───────────────────────────────────────
+        // ── isSafety check used by both the off-grid filter and the daily push cap ─
         const isSafety = SAFETY_TYPES.some(t => sigType.toLowerCase().includes(t));
+
+        // ── D08 step 3 PR-3C (2026-05-30) — actor visibility fan-out filter ──
+        // Hard invariant: server filters. If the notification's ACTOR is off_grid
+        // or trusted_only, the recipient must pass should_show_profile_for_viewer.
+        //
+        // SAFETY BYPASS: SOS / get_out / land_time_miss types fall through this
+        // gate untouched. Off-grid is a public-discovery setting; it must NEVER
+        // suppress emergency reach. The safety dispatcher (api/notifications/
+        // dispatcher.js) is a separate code path entirely — it loads
+        // trusted_contacts and fans out via its own mechanism. This gate
+        // applies only to the queue-based outbox path used by everything else.
+        //
+        // Bypass conditions (any one short-circuits the filter):
+        //   1. notification is a safety type (SOS reach untouchable)
+        //   2. no actor in metadata (system event — no person to filter on)
+        //   3. actor == recipient (self-notification)
+        //   4. actor's visibility_state is 'visible' (default — fast path)
+        if (!isSafety) {
+          const actorId = notification.metadata?.actor_user_id
+            || notification.metadata?.from_user_id
+            || notification.metadata?.actor_id;
+          const recipientId = notification.user_id;
+
+          if (actorId && recipientId && actorId !== recipientId) {
+            const { data: actor } = await supabase
+              .from('profiles')
+              .select('visibility_state')
+              .eq('id', actorId)
+              .maybeSingle();
+
+            const actorState = actor?.visibility_state;
+            if (actorState === 'off_grid' || actorState === 'trusted_only') {
+              const { data: shouldShow } = await supabase.rpc(
+                'should_show_profile_for_viewer',
+                { p_viewer: recipientId, p_owner: actorId }
+              );
+
+              if (shouldShow !== true) {
+                await supabase
+                  .from('notification_outbox')
+                  .update({
+                    status: 'dropped',
+                    updated_at: new Date().toISOString(),
+                    error_message: 'd08_visibility_filter:off_grid_or_trusted_only',
+                  })
+                  .eq('id', notification.id);
+                dropped++;
+                continue;
+              }
+            }
+          }
+        }
+
+        // ── Daily push cap (spec §3) ───────────────────────────────────────
         if (!isSafety && notification.channel === 'push') {
           const todayStart = new Date();
           todayStart.setHours(0, 0, 0, 0);
@@ -547,5 +601,6 @@ async function sendWhatsAppAlert(notification) {
 export const config = {
   maxDuration: 30, // 30 second timeout
 };
+
 
 
