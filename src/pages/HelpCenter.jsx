@@ -64,7 +64,7 @@ const FAQ_CATEGORIES = [
       },
       {
         q: 'How do I create an account?',
-        a: 'Sign up with email, Google, or Apple. You must be 18+ — age is verified at signup and again as part of identity verification. Splash → Bridge → Age gate → Sign up → Onboarding (profile, vibe, safety, location). Returning users sign in with the same provider.',
+        a: 'Sign up with email, Google, or Apple. You must be 18+ — age is verified at signup and again as part of identity verification. Splash → Bridge → Age gate → Sign up → Onboarding (profile, vibe, safety, location). If you already have an account, sign in with the same provider.',
       },
       {
         q: 'How do I complete my profile?',
@@ -87,11 +87,11 @@ const FAQ_CATEGORIES = [
     faqs: [
       {
         q: 'What is Pulse?',
-        a: "Pulse is the live globe. Macro view shows the world breathing — where it's nightlife, where it's daytime, where the queer signal is loud. Zoom in and it becomes a local map: venues, events, care spots, and beacons dropped by real users in real time. It's the spatial heart of HOTMESS.",
+        a: "Pulse is the live globe. Macro view shows the world breathing — where it's nightlife, where it's daytime, where the queer signal is loud. Zoom in and it becomes a local map: venues, events, care spots, and beacons dropped by real boys in real time. It's the spatial heart of HOTMESS.",
       },
       {
         q: 'What are Beacons?',
-        a: 'Beacons are signals you drop on the globe — "I\'m here, I\'m up for X, until Y." They can be a hookup intent, a venue check-in, an event flag, a route, or a care/aftercare drop. Other users see them in real time. Beacons decay automatically (D14: routing as continuity, beacons as living signals — not pins forever).',
+        a: 'Beacons are signals you drop on the globe — "I\'m here, I\'m up for X, until Y." They can be a hookup intent, a venue check-in, an event flag, a route, or a care/aftercare drop. Other boys see them in real time. Beacons decay automatically (D14: routing as continuity, beacons as living signals — not pins forever).',
       },
       {
         q: 'How many beacons can I drop?',
@@ -122,11 +122,11 @@ const FAQ_CATEGORIES = [
       },
       {
         q: 'How do I connect with someone? What\'s a boo?',
-        a: 'You boo (the HOTMESS handshake — a mutual interest signal). When two users have boo\'d each other, that\'s a mutual boo and chat unlocks. No cold-messaging strangers — the boo gate keeps Ghosted clean and intentional (D24 trust + D25 messaging doctrine).',
+        a: 'You boo (the HOTMESS handshake — a mutual interest signal). When two of you have boo\'d each other, that\'s a mutual boo and chat unlocks. No cold-messaging strangers — the boo gate keeps Ghosted clean and intentional (D24 trust + D25 messaging doctrine).',
       },
       {
         q: 'Why can\'t I message someone directly?',
-        a: 'Messaging requires (1) HOTMESS tier or higher (has_messaging entitlement) AND (2) a mutual boo. The boo-first rule is structural, not a paywall — even paid users can\'t cold-message without a mutual boo. This is the structural protection against unwanted DMs.',
+        a: 'Messaging requires (1) HOTMESS tier or higher (has_messaging entitlement) AND (2) a mutual boo. The boo-first rule is structural, not a paywall — even on paid tiers you can\'t cold-message without a mutual boo. This is the structural protection against unwanted DMs.',
       },
       {
         q: 'What\'s in my inbox?',
@@ -161,11 +161,11 @@ const FAQ_CATEGORIES = [
       },
       {
         q: 'Who can see my location?',
-        a: 'Your location is fuzzy by default — others see approximate distance/area, not your exact spot. Settings → Privacy lets you choose precise / fuzzy (recommended) / hidden. Your raw lat/lng is never exposed to other users.',
+        a: 'Your location is fuzzy by default — others see approximate distance/area, not your exact spot. Settings → Privacy lets you choose precise / fuzzy (recommended) / hidden. Your raw lat/lng is never exposed to anyone else.',
       },
       {
         q: 'Does HOTMESS share HIV status, PrEP, or recovery status?',
-        a: "Never automatically. What you put in your profile, you put there. Outing another user's status (HIV, PrEP, U=U, recovery, sobriety) without consent violates the Community Guidelines and is a hard-line breach.",
+        a: "Never automatically. What you put in your profile, you put there. Outing someone else's status (HIV, PrEP, U=U, recovery, sobriety) without consent violates the Community Guidelines and is a hard-line breach.",
       },
       {
         q: 'What is harm reduction on HOTMESS?',
@@ -207,7 +207,7 @@ const FAQ_CATEGORIES = [
     faqs: [
       {
         q: 'Is HOTMESS Radio free?',
-        a: 'Always. Radio streams for every user, every tier, including MESS (free). The radio icon is in the page rail.',
+        a: 'Always. Radio streams on every tier, including MESS (free). The radio icon is in the page rail.',
       },
       {
         q: "What's the Music library?",
