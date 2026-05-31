@@ -244,7 +244,15 @@ function MapPinCard({ msg, isMe, otherName }) {
  * @param {string} [props.title] - Fallback title used when the other participant's name is unavailable.
  * @returns {JSX.Element} The chat sheet React element.
  */
-export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmail, userId: initialUserId, toUid, title, meetMode, suggestStop, otherIsMoving, otherIsListening, otherRadioShow }) {
+export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmail, userId: initialUserId, toUid, title, meetMode, suggestStop, otherIsMoving, otherIsListening, otherRadioShow,
+  // Convergence Slice v1 PR 2 — when the chat opens from L2HybridExchangeSheet,
+  // this prop carries the beacon + seller + opener context (D34 §3.2 context
+  // survives surface changes). Absent in normal chat flows; the existing
+  // composer renders unchanged when undefined.
+  convergenceContext = null,
+  recipientId = null,
+  context: convergenceTitle = null,
+}) {
   // Accept both prop names — callers may pass userId or legacy toUid
   const resolvedUserId = initialUserId || toUid;
   const { openSheet, updateSheetProps } = useSheet();
@@ -1487,6 +1495,73 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Convergence Slice v1 PR 2 — when this sheet opens from
+          L2HybridExchangeSheet's QuietContactPanel, the convergenceContext
+          prop carries beacon + seller + openers + a primary affordance.
+          The banner renders ABOVE the composer (D34 §3.5 — chat is not
+          a destination; resolves back into movement; convergence
+          affordance is more prominent than chat input).
+          Acceptance §5.7 (structured openers above input, never blank
+          "hey") + §5.8 (route/convergence affordance is the primary
+          touchable surface) bind to this block.
+          When convergenceContext is absent, this block renders nothing
+          and existing chat flows are unchanged. */}
+      {convergenceContext && (
+        <div className="border-t border-[#C8962C]/20 px-4 py-3" style={{ background: 'rgba(200,150,44,0.04)' }}>
+          {/* Trajectory continuation line — D34 §3.2 context survives surface
+              changes. The "why these two crossed paths" persists into chat. */}
+          {convergenceContext.beacon?.trajectoryContext && (
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[#C8962C]/70 font-semibold mb-2">
+              {convergenceContext.beacon.trajectoryContext}
+              {convergenceContext.beacon?.title ? ` · ${convergenceContext.beacon.title}` : ''}
+            </div>
+          )}
+
+          {/* Primary affordance — D34 §3.6 routes are social, not navigational.
+              Bigger than the chat input. Tapping it pre-seeds the composer
+              with the convergence opener so the user CAN send a message —
+              but the primary expected action is convergence, not chat. */}
+          {convergenceContext.primaryAffordance?.text && (
+            <button
+              type="button"
+              onClick={() => {
+                const t = convergenceContext.primaryAffordance.text;
+                // Reuse the existing wingman flow to seed the composer.
+                try { handleWingmanSelect && handleWingmanSelect(t); } catch { /* noop */ }
+              }}
+              className="w-full rounded-2xl border border-[#C8962C]/40 bg-[#C8962C]/[0.10] px-4 py-3 text-left active:scale-[0.98] transition-transform"
+              aria-label={`Convergence opener: ${convergenceContext.primaryAffordance.text}`}
+            >
+              <div className="text-[15px] text-white font-medium leading-snug">
+                {convergenceContext.primaryAffordance.text}
+              </div>
+            </button>
+          )}
+
+          {/* Secondary openers — D34 §4.1 structured first-contact, never
+              "hey" as default. Always render at least one structured row
+              above the input so the composer isn't a blank invitation to
+              cold DM. */}
+          {Array.isArray(convergenceContext.openers) && convergenceContext.openers.length > 0 && (
+            <div className="mt-2 grid grid-cols-1 gap-1.5">
+              {convergenceContext.openers.slice(0, 3).map((o, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => {
+                    try { handleWingmanSelect && handleWingmanSelect(o.text); } catch { /* noop */ }
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-lg border border-white/[0.06] bg-white/[0.02] text-[12px] text-white/65 active:bg-white/[0.05] transition-colors"
+                  aria-label={`Opener: ${o.text}`}
+                >
+                  {o.text}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Defense-in-depth gate (Phil 2026-05-29) — composer renders ONLY when
           mutual boo exists. Pre-mutual entry shouldn't happen because openers

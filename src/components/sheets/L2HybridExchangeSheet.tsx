@@ -41,6 +41,7 @@
  */
 
 import React from 'react';
+import { useSheet } from '@/contexts/SheetContext';
 
 // PR 1 props are minimal by design. The shape will expand surgically in
 // PR 2 (contact paths) and PR 3 (handoff). Do not preemptively add fields.
@@ -178,23 +179,115 @@ function ListingContext({ beacon }: { beacon: HybridExchangeBeacon }) {
 }
 
 /**
- * Deferred-affordance placeholder — explicitly signals to future readers
- * (and to Phil during review) that the contact paths land in PR 2. PR 1
- * does not surface BOO / chat / request — that wiring is intentionally
- * absent so the slice doesn't bloat.
+ * QuietContactPanel — PR 2.
  *
- * The copy register is D15-aligned (care language). It does not pressure
- * the user. It does not market.
+ * Three D34-ladder contact paths. Priority order is doctrinal, not visual
+ * convenience. Per D34 §3.5 (chat is not a destination) the convergence
+ * affordance is more prominent than chat itself. Per D34 §3.6 (routes
+ * are social, not navigational) "Heading there too?" reads as human
+ * gravity, not navigation. Per D34 §4.1 first-contact openers are
+ * context-aware — never "hey" — so each affordance carries an opener
+ * string that seeds the chat composer downstream.
+ *
+ * Off-grid sellers receive contact privately (D08 + D19 §1). The panel
+ * renders identically regardless of seller.visibilityState because
+ * presence is never reconstructed through commerce surfaces.
  */
-function ContactPlaceholder() {
+function QuietContactPanel({
+  beacon,
+  seller,
+}: {
+  beacon: HybridExchangeBeacon;
+  seller: HybridExchangeSeller;
+}) {
+  const { openSheet } = useSheet();
+
+  // Derive opener text from beacon kind + venue when present. Static for
+  // PR 2 (D34 §4.1 binding); intelligent context inference is a later
+  // optimisation, not slice scope.
+  const venueLabel = beacon.venueLabel || 'there';
+  const headedThereCopy = beacon.kind === 'ticket'
+    ? `Heading to ${venueLabel} too?`
+    : `Picking up near ${venueLabel}?`;
+  const quietHelloCopy = 'Still available?';
+  const askAfterCopy = beacon.kind === 'ticket' ? 'Need one?' : 'Passing this on?';
+
+  // openChatWithContext — every path inherits trajectory context (D34 §3.2
+  // context survives surface changes). The chat sheet receives the full
+  // convergenceContext and renders the opener row + convergence banner
+  // above the composer.
+  const openChatWithContext = (opener: string) => {
+    openSheet('chat', {
+      // recipientId field is the existing chat sheet's expected handle
+      // for opening a conversation. For PR 2 the hybrid sheet does not
+      // yet have a real seller id (mock data); the chat will surface
+      // the convergence context regardless. PR 3 wires real recipients.
+      recipientId: seller.handle || seller.displayName,
+      context: beacon.title,
+      // New prop — chat sheet's PR 2 banner reads from this.
+      convergenceContext: {
+        beacon: {
+          id: beacon.id,
+          title: beacon.title,
+          kind: beacon.kind,
+          venueLabel: beacon.venueLabel,
+          trajectoryContext: beacon.trajectoryContext,
+        },
+        seller: {
+          displayName: seller.displayName,
+          handle: seller.handle,
+        },
+        // openers shape matches L2ChatSheet's existing wingmanSuggestions
+        // expectation so the same render path renders them as tappable.
+        openers: [
+          { text: opener, type: 'convergence' },
+          { text: quietHelloCopy, type: 'soft' },
+          { text: askAfterCopy, type: 'request' },
+        ],
+        // Primary affordance the chat surface renders above the composer
+        // (D34 §3.5 — chat resolves back into movement).
+        primaryAffordance: { text: headedThereCopy, kind: 'convergence' },
+      },
+    });
+  };
+
   return (
-    <div className="mx-5 mb-6 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-      <div className="text-[12px] uppercase tracking-[0.18em] text-white/35 font-semibold">
-        Contact
-      </div>
-      <div className="mt-1 text-[13px] text-white/55 leading-relaxed">
-        Contact paths land in a follow-up. Read-only view for now.
-      </div>
+    <div className="mx-5 mb-6 space-y-2">
+      {/* Primary — D34 convergence-first. The biggest, quietest affordance.
+          Doctrinal weight = social resolution > commercial resolution
+          (D34 §4.2 mutual-first routing). */}
+      <button
+        type="button"
+        onClick={() => openChatWithContext(headedThereCopy)}
+        className="w-full rounded-2xl border border-[#C8962C]/35 bg-[#C8962C]/[0.04] px-4 py-3 text-left active:scale-[0.98] transition-transform"
+      >
+        <div className="text-[11px] uppercase tracking-[0.18em] text-[#C8962C]/70 font-semibold mb-1">
+          Convergence
+        </div>
+        <div className="text-[15px] text-white font-medium leading-snug">
+          {headedThereCopy}
+        </div>
+      </button>
+
+      {/* Secondary — soft contact. Quiet hello, no pressure. */}
+      <button
+        type="button"
+        onClick={() => openChatWithContext(quietHelloCopy)}
+        className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-left active:scale-[0.98] transition-transform"
+      >
+        <div className="text-[13px] text-white/75 leading-snug">
+          {quietHelloCopy}
+        </div>
+      </button>
+
+      {/* Tertiary — minimal text-link affordance. Lowest weight. */}
+      <button
+        type="button"
+        onClick={() => openChatWithContext(askAfterCopy)}
+        className="w-full px-4 py-2 text-left text-[12px] text-white/45 hover:text-white/65 transition-colors"
+      >
+        {askAfterCopy}
+      </button>
     </div>
   );
 }
@@ -216,8 +309,11 @@ export default function L2HybridExchangeSheet({ beacon, seller }: L2HybridExchan
         <div className="mx-5 h-px bg-white/[0.06]" />
         {/* Zone C — listing context (D19, read-only in PR 1) */}
         <ListingContext beacon={beacon} />
-        {/* Zone D placeholder — contact paths land in PR 2 */}
-        <ContactPlaceholder />
+        {/* Zone D — D34 escalation ladder. Convergence-first by visual
+            weight. Contact-paths panel hands off to L2ChatSheet with
+            convergenceContext so the chat composer surfaces the same
+            opener row above its input (D34 §3.5 + §4.1). */}
+        <QuietContactPanel beacon={beacon} seller={seller} />
       </div>
     </div>
   );
