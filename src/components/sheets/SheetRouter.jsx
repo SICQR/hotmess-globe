@@ -188,13 +188,12 @@ const SHEET_COMPONENTS = {
   'events': L2EventsSheet,
   'marketplace': L2MarketplaceSheet,
   'product': L2ShopSheet, // Reuses shop sheet
-  // Convergence Slice v1, PR 1 — feature-flagged. Only mounted when
-  // VITE_CONVERGENCE_HYBRID_SHEET === 'true'. When the flag is off, the
-  // 'hybrid_exchange' key resolves to undefined and the existing
-  // "Coming Soon" fallback in this router handles it gracefully.
-  ...(import.meta.env.VITE_CONVERGENCE_HYBRID_SHEET === 'true'
-    ? { 'hybrid_exchange': L2HybridExchangeSheet }
-    : {}),
+  // Convergence Slice v1 — Phil flipped 2026-05-31. Hybrid sheet mounts
+  // unconditionally on production. Rollback: revert this line to the
+  // env-var gate. The slice is still surfaceless by default (no
+  // entry point wires beacons to openSheet('hybrid_exchange') yet);
+  // PR 3 / PR 4 add the real wire-up.
+  'hybrid_exchange': L2HybridExchangeSheet,
   // Seller flows
   'sell': L2SellSheet,
   'seller-onboarding': L2SellSheet,
