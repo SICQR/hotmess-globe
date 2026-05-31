@@ -263,3 +263,207 @@ The substrate-incapability pattern applies at the operator layer too: operators 
 Operators will press against §6 (mass communication) hardest, because every venue's commercial instinct is to reach attendees in bulk. The constitutional answer is that HOTMESS is not a venue's CRM, and the substrate does not produce a CRM-shaped dataset. Users discover venues; venues do not retain users.
 
 D31 is the boundary the platform inherits before its first commercial partner negotiation, so that negotiation is constitutional rather than improvised.
+
+---
+
+## §17 Scoped continuity vs portable extraction (amendment, 2026-05-31)
+
+### §17.0 Why this amendment exists
+
+D31 as originally written §1–§16 was correct about what venues must not become — extractive identity owners with platform-wide audience portability — but the wording risked over-rotating into "venues must be stateless." Specifically §4.5's "no per-operator user attribution table" reads as forbidding venues from knowing their own community, and §6's mass-communication ban combined with §2's incapability commitments could be interpreted as forbidding any venue-scoped continuity at all.
+
+That interpretation would break the reality of nightlife operations and make the venue economy commercially unviable. Queer nightlife is **relational infrastructure**. Saunas have regulars. Promoters have communities. Recovery spaces remember returning attendees. Trusted door staff recognise familiar faces. A doctrine that erased that erased the texture HOTMESS exists to protect.
+
+The real constitutional commitment was always anti-portability, not anti-memory. This amendment makes the distinction explicit so the substrate engineering follows the right line.
+
+The single sentence: **operator continuity is allowed; operator ownership is not.**
+
+### §17.1 The constitutional line
+
+**Allowed (scoped continuity):**
+
+- Recurring members of a venue's community
+- Known regulars inside a venue's relationship boundary
+- Venue-scoped member tiers (guestlist, founding members, host roster, recurring crew)
+- Continuity of atmosphere across nights, seasons, scene cycles
+- Ongoing operational relationships between venue staff and members
+- Local event history at the venue
+- Per-venue attendance aggregates (within venue scope)
+- Atmosphere telemetry for the venue's own surface
+- Local moderation tooling at the venue's surface
+- Venue-only messaging surfaces (Operator-mode chat per D25 §20.6)
+- Venue-scoped badges and roles (member, host, regular crew, founding patron)
+- Staff coordination and check-in systems
+- Ticket state and event-day logistics
+- Care and safety tooling at the venue
+- Returning-crowd patterns inside venue analytics
+- Community memory: "this person has been with us since opening night"
+
+**Forbidden (portable extraction):**
+
+- Exportable user graphs (no CSV, no API export of member list)
+- Cross-property behavioural portability (no synthesising HOTMESS member status with operator-side data outside the platform)
+- Off-platform CRM extraction (no Mailchimp sync, no HubSpot integration, no Salesforce export)
+- Persistent audience ownership outside the platform substrate
+- Identity resale or data licensing
+- Surveillance continuity (no behavioural replay over time used for ad targeting or trait inference)
+- Hidden partner dossiers (no "what we know about this user" surface beyond what the user has consented to within the venue boundary)
+- Cross-venue user stitching ("people who attend Venue A also attend Venue B" platform-side recommendation surface)
+- Hidden behavioural dossiers beyond venue-scoped operational data
+- Venue-owned trust scoring (per D24 §11.4 inheritance — trust is per-pair, never per-venue-attribution)
+- Meta/Google ad audience export
+- Off-platform user-graph sale or licensing
+
+The line is not "venues can know nothing." The line is **what venues know cannot leave the venue's constitutional boundary, and cannot synthesise into platform-wide user identity.**
+
+### §17.2 The substrate shape
+
+§4.5 stated "no per-operator user attribution table." The corrected reading: **per-venue membership substrate is permitted; cross-venue aggregation and off-platform export are forbidden.**
+
+The substrate shape:
+
+- **§17.2.1 — Per-venue membership table is allowed.** Lives in the `partner` schema (per D31 §4.1) under the specific venue's namespace. Schema is owned by the venue's operator entity. Records who is a member, their member tier, their join date, their last visit, their recurring status.
+
+- **§17.2.2 — Cross-venue isolation is enforced at the schema layer.** A query that joins `partner.venue_A.members` with `partner.venue_B.members` is refused at the substrate level. The schema design makes the join physically impossible without an `ALTER` that crosses two operator entities' grants. That ALTER is a doctrinal review per D33 §1.2 + D33 §4.2.
+
+- **§17.2.3 — Read paths are venue-scoped.** The operator dashboard reads from its own venue's namespace through the operator audit-logged path (D31 §4.4). The substrate refuses cross-venue queries.
+
+- **§17.2.4 — No platform-wide "operator-known users" view.** No surface, function, or report aggregates membership across operators. The atmospheric residue (D33) continues to hold only aggregate counts; per-user attribution lives only inside each venue's namespace, never platform-wide.
+
+- **§17.2.5 — Export is forbidden at the API layer.** No endpoint returns a CSV, JSON list, or paged result of member identifiers outside the platform's surface. The operator views their members through the operator dashboard; they do not download them.
+
+- **§17.2.6 — Off-platform sync is forbidden.** No integration with Mailchimp, HubSpot, Klaviyo, Meta Business Manager, Google Ads, or any other off-platform CRM/ad system reads from the per-venue membership substrate. Adding such an integration is a constitutional change requiring a new doctrine.
+
+- **§17.2.7 — User consent constitutes membership.** A user becomes a member of a venue's community through an explicit opt-in action ("this is one of my places" / "save this venue" / "follow the line-up here"). Attendance alone does not create membership; the consent is the constituting event.
+
+- **§17.2.8 — User can leave at any time.** The membership record is user-retractable per D24 §3.6 retraction semantics. Walking back consent removes the record from the venue's substrate immediately.
+
+### §17.3 The "this is one of my places" framing
+
+The user-facing language for membership is **"this is one of my places"** or equivalent D15-tone language. Not "follow this venue," not "subscribe," not "loyalty program member." The semantic is belonging, not subscription.
+
+A user's profile may surface "my places" as a private surface visible to the user. It is not surfaced publicly to other users — per D24 §7.3 cross-user reputation surfaces are forbidden. The user can see their own places; the venue can see its own members; no surface joins those two views into a platform-wide map.
+
+### §17.4 What venue dashboards may render
+
+The venue dashboard is **Venue OS**, not CRM software. The framing matters because it determines what features the operator surface invites and what it refuses.
+
+**Allowed dashboard categories:**
+
+- **Live operational intelligence.** Tonight's energy, current capacity, atmospheric reads for the next hour, weather/transit impact on the venue's catchment.
+- **Atmosphere telemetry.** Aggregate signal density at the venue's surface, returning-crowd patterns, time-of-week patterns, season patterns. All aggregate per D33.
+- **Community continuity.** Member count, member tier breakdown, recurring-attendance aggregates, founding-member cohort recognition.
+- **Scoped relationship management.** A list of the venue's members (per §17.2.1), member tiers, last-visit timestamps, recurring status. No cross-venue join, no off-platform sync.
+- **Event operations.** Ticket state, guestlist state, check-in tooling, staff coordination, capacity management.
+- **Care and safety tooling.** Sober space coordination, aftercare resource availability, safety partner pairing per D24 §3.4, incident logging through the audit-log path.
+- **Editorial control.** Venue surface copy, hours, photos, accessibility info per D31 §3.5.
+
+**Forbidden dashboard categories:**
+
+- **Audience export tools.** No "download CSV of attendees," no API export, no third-party integration.
+- **Ad-targeting systems.** No "build a Meta audience from your members," no segmentation tool that produces a portable list.
+- **Cross-venue analytics.** No "users who attend your venue also attend X" surface; that requires cross-venue data joining which §17.2.2 forbids.
+- **Hidden user dossiers.** No surface showing "what we know about this member" beyond the venue-scoped operational data the user has consented to.
+- **Venue-owned trust scoring.** Per D24 §11.4 — trust is per-pair, not per-venue.
+- **Predictive churn / re-engagement automations.** Per D32 §4.2 + §4.7 — no model-derived "users likely to lapse" surface, no automated re-engagement push.
+
+### §17.5 Operator-mode messaging extension
+
+D25 §20.6 Operator mode is "purpose-scoped; no CRM continuity; no portable per-user thread access." The amendment refines this:
+
+- **§17.5.1 — Operator-mode messaging is scoped to specific handoffs (existing).** Per the original D31 §3.4. A chat exists for the handoff and resolves with the handoff.
+- **§17.5.2 — Venue-scoped community messaging is allowed at the venue's surface.** A venue may publish to its own community-feed surface (per D31 §3.5 editorial control) — a curated, slow, low-frequency stream that members of the venue can choose to subscribe to. The substrate is the venue's editorial surface, not the per-pair chat substrate.
+- **§17.5.3 — Members opt into the community feed explicitly.** Default-off. The opt-in is co-located with the "this is one of my places" affordance from §17.3.
+- **§17.5.4 — Venue community feed is not chat.** No reply threads, no per-user response, no DM injection. It is publish-only from the venue side, read-only on the user side. Per D31 §6.3 reframing: users pull from the venue surface; the venue does not push to user DMs.
+- **§17.5.5 — Rate-limited.** Per D34 anti-density-trap. The venue community feed has hard rate limits (e.g., maximum 2 posts per week) enforced at the substrate layer.
+
+### §17.6 Care-partner inheritance (§13 expanded)
+
+D31 §13 introduced care partners with an additional non-extraction commitment. The amendment specifies:
+
+- **§17.6.1 — Care-partner operators may steward continuity for active care relationships.** A recovery space remembering its returning members is the same shape as a club remembering its regulars — scoped, consented, non-portable.
+- **§17.6.2 — Care-partner-side data has stricter export and visibility constraints.** No analytics surface, no member-list view beyond active care-role-paired members per D24 §3.3. Aggregate counts only for non-pair-bound members of the care partner's community.
+- **§17.6.3 — Care-partner roles cannot pivot to commercial recommendation.** A care partner cannot publish "members of our community also visit X" or surface paid recommendations. The constitutional non-extraction commitment from §13 stacks on top of §17 for care contexts.
+
+### §17.7 Reconciliation with §4.5
+
+§4.5 as originally written read: "No per-operator user attribution table. This is the absence that makes §2.1 + §2.5 structural."
+
+**Corrected reading:** "No platform-wide per-operator user attribution surface. Per-venue membership tables are allowed within the operator's constitutional boundary per §17. The structural pin is cross-venue isolation (§17.2.2), platform-wide aggregation absence (§17.2.4), and export/sync prohibition (§17.2.5–§17.2.6), not the absence of all venue-side knowledge."
+
+§4.5 stays in the doctrine as written for historical fidelity; the corrected reading lives in §17.7. A future revision may inline §17.7 into §4.5 directly; for now the amendment pattern preserves the audit trail.
+
+### §17.8 Acceptance test extension
+
+D31 §9 + §17-specific:
+
+§17.8.1 — Show the per-venue membership table schema. Confirm it lives in the venue's operator namespace within `partner`.
+
+§17.8.2 — Show the cross-venue isolation. Confirm grants are scoped per operator entity; demonstrate a join across two venues' member tables fails at the substrate.
+
+§17.8.3 — Show the export path absence. Confirm no API endpoint returns a portable member list.
+
+§17.8.4 — Show the off-platform sync absence. Confirm no integration with Mailchimp, HubSpot, Meta, Google, or equivalent reads from the membership substrate.
+
+§17.8.5 — Show the user consent flow that constitutes membership. Confirm attendance alone does not create a member record.
+
+§17.8.6 — Show the user retraction surface. Confirm members can leave at any time and the record is removed.
+
+§17.8.7 — Show the venue community feed (if implemented). Confirm publish-only, rate-limited, opt-in default-off.
+
+§17.8.8 — Show the dashboard surfaces. Confirm allowed categories (§17.4 allow-list) are present; confirm forbidden categories (§17.4 forbid-list) are absent.
+
+A PR introducing venue-side continuity features without all eight answers does not ship.
+
+### §17.9 Drift indicators specific to §17
+
+In addition to §10 and the inherited drift indicators:
+
+- A "download members CSV" button on a venue dashboard.
+- A Mailchimp / HubSpot / Klaviyo / Meta Business Manager / Google Ads integration touching membership data.
+- A cross-venue aggregation surface ("members who also belong to X").
+- A "predict churn" or "re-engagement automation" model invocation on membership data.
+- A platform-wide "operator-known users" report or admin surface.
+- A "venue trust score" assigned to individual members.
+- A community feed that becomes reply-able, DM-injectable, or rate-limit-bypassed.
+- A per-venue API key that returns member identifiers.
+- A "venue-side ad targeting" surface, however small.
+- A foreign key joining `partner.venue_A.members` to `partner.venue_B.members`.
+- A consent-bypass admin tool that adds members without their opt-in.
+
+Each is an audit moment. Revert and refactor.
+
+### §17.10 Boardroom test framing (updated)
+
+The §11 boardroom test framings stand. Adding the §17 territory:
+
+- "Can a venue see its regulars?" — Yes. §17.1 + §17.4 allowed-list bind.
+- "Can a venue export its member list?" — No. §17.2.5 binds.
+- "Can a venue sync members to Mailchimp?" — No. §17.2.6 binds.
+- "Can a venue see which other venues its members attend?" — No. §17.2.2 cross-venue isolation binds.
+- "Can a venue offer a 'founding member' tier with perks?" — Yes, venue-scoped. §17.1 allowed-list. The perks must be venue-internal; they cannot be cross-venue or platform-wide.
+- "Can a venue publish a weekly community update to its members?" — Yes, through the community feed (§17.5), opt-in, rate-limited, publish-only.
+- "Can a venue DM all its members about a special night?" — No. §17.5.4 + D31 §6 mass-communication ban bind.
+- "Can a venue do 'people who attend your venue also like X' recommendations?" — No. §17.4 forbidden-list binds.
+- "Can a recovery space remember who its returning members are?" — Yes. §17.6.1.
+- "Can a recovery space publish recommendations to its members for paid services?" — No. §17.6.3 binds.
+
+### §17.11 The strategic framing
+
+The corrected commitment is HOTMESS's strongest commercial differentiator against traditional nightlife SaaS:
+
+**Community continuity without extractive ownership.**
+
+That is a position no traditional CRM-based nightlife platform can occupy. The traditional model (Eventbrite, RA, Resident Advisor, Dice, Posh) builds the venue's value by becoming the export layer — the venue gets access to its audience by extracting it through the platform. HOTMESS inverts this: the venue's value comes from the platform's commitment that its community lives inside the venue's constitutional boundary and cannot be extracted by anyone, including the venue itself, including HOTMESS, including future acquirers.
+
+A queer venue choosing HOTMESS over Eventbrite is not choosing fewer features. It is choosing **the only platform where its community continuity cannot become someone else's audience asset.** That is the moat at the operator layer.
+
+### §17.12 Closing
+
+The original D31 was right about what venues must not become and risked being wrong about what they must remain capable of. The amendment corrects the over-rotation without touching the constitutional commitment.
+
+Venues may steward continuity inside their constitutional boundary. They may remember their regulars, host their members, recognise returning attendees, run their nights, publish to their community feed, coordinate their staff, and operate their care infrastructure. They may not export that continuity, may not sync it off-platform, may not synthesise it across venues, may not weaponise it for ad targeting, may not sell it, and may not lose it to an acquirer.
+
+The constitutional line is **scoped continuity vs portable extraction.** Inside the venue's constitutional boundary, continuity is the texture queer nightlife requires. Outside that boundary, extraction is the harm the platform refuses to enable.
+
+Queer nightlife is relational infrastructure. The platform supports "this is one of my places." It does not support "this venue owns my behavioural identity." That is the corrected commitment.
