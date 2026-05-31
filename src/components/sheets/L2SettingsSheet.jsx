@@ -42,7 +42,7 @@ export default function L2SettingsSheet() {
       rows: [
         { icon: Eye, label: 'Privacy', onTap: () => openSheet('privacy') },
         { icon: Bell, label: 'Notifications', onTap: () => openSheet('notifications') },
-        { icon: Lock, label: 'Blocked Users', onTap: () => openSheet('blocked') },
+        { icon: Lock, label: 'Blocked', onTap: () => openSheet('blocked') },
         // M7 (Phil 2026-05-28): "Go Incognito" promised invisibility the backend doesn't enforce.
         // incognito_week is HIDDEN_UNTIL_WIRED in boost-shop. Showing this menu item created a
         // dangerous false-safety expectation per Sacred Invariant #4. Restore when doctrine 08
@@ -177,7 +177,7 @@ export default function L2SettingsSheet() {
                       window.location.replace('/');
                     } catch (err) {
                       console.error('Account deletion error:', err);
-                      toast.error('Deletion failed. Contact support@hotmess.app');
+                      toast.error('Deletion failed. Contact support@hotmess.london');
                     }
                     setShowDeleteConfirm(false);
                   }}

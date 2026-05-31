@@ -576,7 +576,7 @@ export default function L2EditProfileSheet() {
               </button>
             </div>
             <p className="mt-3 text-[10px] text-white/30 leading-relaxed">
-              When ON, your distance and general area are shown to nearby members. Your exact house number is never shared.
+              When ON, your distance and general area are shown to boys nearby. Your exact address is never shared.
             </p>
           </div>
 

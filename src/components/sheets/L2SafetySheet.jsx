@@ -29,11 +29,14 @@ const CRISIS_LINES = [
 ];
 
 // ── Safety tips ─────────────────────────────────────────────────────────────
+// Phil 2026-05-31 doctrine sweep: copy retuned per substrate (Wrapper
+// Defence) — direct, no theatrics, names the act not the feeling.
+// "trusted friend" → "Trusted Contact" per D08 canonical naming.
 const TIPS = [
-  { icon: '📍', title: 'Meet in public first',     body: 'Choose a well-lit public place for first meets.' },
-  { icon: '💬', title: 'Tell a trusted friend',    body: 'Share your plans before meeting someone new.' },
-  { icon: '🔒', title: 'Keep details private',     body: "Don't share your home address until you're comfortable." },
-  { icon: '🚨', title: 'Trust your instincts',     body: 'If something feels off, leave. Your safety comes first.' },
+  { icon: '📍', title: 'Meet in public first',  body: 'A well-lit public place for the first meet.' },
+  { icon: '💬', title: 'Tell a Trusted Contact', body: 'Share your plans before meeting someone new.' },
+  { icon: '🔒', title: 'Keep details private',  body: "Your address can wait until you're ready." },
+  { icon: '🚨', title: 'Trust your instincts',  body: 'If something feels off, leave. You don\'t owe anyone an explanation.' },
 ];
 
 // ── Check-in durations ──────────────────────────────────────────────────────

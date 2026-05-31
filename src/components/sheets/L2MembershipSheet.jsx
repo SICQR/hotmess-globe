@@ -183,7 +183,7 @@ export default function L2MembershipSheet() {
         console.log('[Membership] ✅ Upgrade recorded for user:', user.id);
       }
       setStep('success');
-      toast.success('Welcome to Premium! 👑');
+      toast.success(`You're on ${selectedTier?.name || 'your new tier'}. Access is open.`);
     } catch (e) {
       console.error('[Membership] Post-payment update failed:', e);
       setStep('success'); // Still show success as payment went through, fallback to webhook
@@ -229,8 +229,8 @@ export default function L2MembershipSheet() {
         </div>
         <h2 className="text-white font-black text-2xl mb-2">You're In!</h2>
         <p className="text-white/50 text-sm mb-6">
-          Your account has been upgraded to <strong>{selectedTier?.name || 'Premium'}</strong>.
-          Close this window to see your new badges and features.
+          You're on <strong>{selectedTier?.name || 'your new tier'}</strong>.
+          Close this window to see what just opened up.
         </p>
         <button
           onClick={() => {
@@ -285,7 +285,7 @@ export default function L2MembershipSheet() {
             </div>
           ) : tiers.length === 0 ? (
             <div className="col-span-full border-2 border-dashed border-white/10 rounded-2xl py-12 text-center">
-              <p className="text-white/20 text-xs italic">Awaiting elite tiers from the mainframe…</p>
+              <p className="text-white/20 text-xs italic">No tiers loaded yet. Try again in a moment.</p>
             </div>
           ) : (
             tiers.map((tier) => {
@@ -332,7 +332,7 @@ export default function L2MembershipSheet() {
           <div className="flex px-4 py-2 border-b border-white/5">
             <div className="flex-1" />
             <div className="w-16 text-center text-white/30 text-[10px] font-black uppercase">Free</div>
-            <div className="w-16 text-center text-[#C8962C] text-[10px] font-black uppercase">Premium</div>
+            <div className="w-16 text-center text-[#C8962C] text-[10px] font-black uppercase">Paid</div>
           </div>
           {FEATURE_ROWS.map(({ icon: Icon, label, free, paid }) => (
             <div key={label} className="flex items-center px-4 py-3 border-b border-white/5 last:border-0">
