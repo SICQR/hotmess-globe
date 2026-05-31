@@ -213,16 +213,10 @@ export function DropsEngine({ search, className = '' }: DropsEngineProps) {
 
   return (
     <div ref={scrollRef} className={`flex-1 overflow-y-auto scroll-momentum pb-32 ${className}`}>
-      {/* Drops hero banner */}
-      {!search && (
-        <div className="mx-4 mt-4 mb-3 p-4 rounded-2xl border border-[#CF3A10]/30" style={{ background: 'linear-gradient(135deg, rgba(207,58,16,0.15), rgba(200,150,44,0.08))' }}>
-          <div className="flex items-center gap-2 mb-1">
-            <Flame className="w-5 h-5" style={{ color: DROP_ORANGE }} />
-            <h2 className="text-white font-black text-base uppercase tracking-wider">Drops</h2>
-          </div>
-          <p className="text-white/50 text-xs">Limited runs. When they're gone, they're gone.</p>
-        </div>
-      )}
+      {/* DROPS hero — Phil 2026-05-31: designed comp at full 16:9 inside the
+          scroll container as the first child, matching ShopMarketHero and
+          PrelovedMarketHero pattern. Replaces the prior text-only banner. */}
+      <DropsMarketHero />
 
       {isLoading && (
         <div className="grid grid-cols-2 gap-3 px-4 pt-2">
@@ -285,3 +279,38 @@ export function DropsEngine({ search, className = '' }: DropsEngineProps) {
 }
 
 export default DropsEngine;
+
+// DROPS hero comp — Phil 2026-05-31. Same pattern as ShopMarketHero
+// (ShopEngine.tsx) and PrelovedMarketHero (PrelovedEngine.tsx). Image lives
+// inside the scroll container as the first child, full 16:9, scrolls with
+// the products. Asset: brand-assets/market/drops.png (1672x941, 16:9).
+function DropsMarketHero() {
+  const [failed, setFailed] = useState(false);
+  const HERO_URL = 'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/market/drops.png';
+  return (
+    <div className="px-4 pt-3 pb-2">
+      <div
+        className="relative w-full overflow-hidden rounded-2xl border border-white/5"
+        style={{ aspectRatio: '16 / 9', background: '#0a0a0a' }}
+      >
+        {!failed && (
+          <img
+            src={HERO_URL}
+            alt="HOTMESS Drops campaign"
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="eager"
+            onError={() => setFailed(true)}
+          />
+        )}
+        {failed && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-white/40 text-[10px] font-black uppercase tracking-[0.3em] mb-1">Limited runs</div>
+              <div className="text-white font-black text-2xl uppercase tracking-tight">DROPS</div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
