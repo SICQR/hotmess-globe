@@ -185,6 +185,29 @@ When reviewing any new surface, doctrine, copy, or feature, the test is:
 
 The reviewer's job is to feel whether the surface carries the substrate. If it does not, the surface is rejected regardless of its other merits.
 
+### The wrapper is not cosmetic
+
+A specific decay vector this section exists to prevent: **"care" drifting into sanitisation, softness, HR language, therapy voice, or institutional wellness aesthetics over time as contributors come and go.**
+
+The wrapper — heat, humour, confidence, masculinity, filth, nightlife texture, scene language — is not cosmetic. **The wrapper is operational.** Without the wrapper, many users never enter the system deeply enough to encounter the care. That is the paradox the substrate exists to resolve: the audience that most needs the care is the same audience that will never reach it through soft, clinical, or institutional language.
+
+If a future contributor proposes softening the wrapper because *"we should be kinder to our users,"* or *"the language is too rough,"* or *"we need to be more inclusive of vulnerable users,"* the answer is: **the wrapper is the inclusion.** The users the soft language is meant to protect are the same users who will never enter the platform if it speaks in soft language. The protection lives in the architecture (consent gates, structural forbiddances, exposure registers, off-grid visibility, atmospheric restraint, aftercare defaults). The wrapper is what makes the architecture reachable.
+
+Specifically forbidden softenings:
+
+- Replacing nightlife-coded copy with HR-style language (*"user," "team member,"* generic platform-speak)
+- Replacing brand voice with therapy-voice (*"hey, just checking in 💛"* / *"how are you feeling today?"*)
+- Adding clinical protection framing to surfaces that already protect structurally (banners declaring *"your safety matters to us"* on top of safety systems that already protect)
+- Replacing the swagger register with institutional wellness positioning
+- Replacing scene-specific language (*"boys," "Daddy," "Brat," "Pup,"* etc.) with platform-neutral substitutes (*"members," "users," "people you might like"*)
+- Adding wellness-tech aesthetic — soft gradients, rounded-everything, mint greens, breathing animations, calming pastels — to surfaces where the existing aesthetic IS the protection
+- Inserting trigger warnings, content warnings, or pre-emptive cushioning around copy that the audience does not need cushioning around
+- Reframing erotic register as *"intimate"* or *"connection"* in places where the bluntness IS the consent (a vague register can hide what people are agreeing to; a direct register cannot)
+
+The wrapper is not the optional layer. The substrate is unreachable without it. **The wrapper makes the care survivable; the wrapper also makes the care reachable.** Both functions are operational. Removing the wrapper does not produce safer software — it produces software the audience cannot enter, in which case the care it carries reaches nobody.
+
+The seam between wrapper and substrate is therefore where the doctrine's binding force concentrates. Doctrine reviewers must defend both sides — the substrate against external performance (protective ban above), the wrapper against internal softening (this subsection). Either failure ends the platform.
+
 ### Why this lives in Sacred Invariants and not as a separate doctrine
 
 Three reasons. First: the substrate is not a rule, it is the constitutional shape the rules above already form. Promoting it to a numbered doctrine would imply it is one consideration among many; it is in fact the consideration the others all serve. Second: the protective ban is structurally identical to the bans in D35 §11 — but the substrate is bigger than a single doctrine could carry, and locating it in Sacred Invariants signals its constitutional weight. Third: future contributors will reach this document when they need to understand why a rule cannot be relaxed; the substrate is the answer to "but why?" for almost every rule above, and it belongs in the same place as the rules it explains.
