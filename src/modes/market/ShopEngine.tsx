@@ -170,7 +170,11 @@ export function ShopEngine({ search, className = '' }: { search: string; classNa
         overscrollBehaviorY: 'contain',
       }}
     >
-
+      {/* HNH MESS hero — Phil 2026-05-31: lives INSIDE the scroll container
+          so it scrolls with the products. Natural 16:9 ratio. Image is the
+          designed comp (headline + wordmark baked in); object-cover at
+          16:9 keeps the design intact. */}
+      <ShopMarketHero />
 
       {isLoading && (
         <div className="grid grid-cols-2 gap-3 px-4 pt-4">
@@ -235,4 +239,53 @@ export function ShopEngine({ search, className = '' }: { search: string; classNa
   );
 }
 
+/**
+ * ShopMarketHero — inline HNH MESS hero shipped Phil 2026-05-31.
+ *
+ * Renders the designed HNH BOYS HAVE FUN comp at full 16:9 aspect inside
+ * ShopEngine's scroll container. Scrolls with the products. Image is the
+ * baked designed comp (headline + wordmark inline), so object-cover at
+ * 16:9 keeps the entire design visible.
+ *
+ * `aspectRatio: '16 / 9'` is the natural ratio of the source image
+ * (2600x1451 ≈ 1.79). Lives inside an `overflow-y-auto` scroll container
+ * so the parent-width aspect-ratio bug from the prior fix can't recur —
+ * the scroll container governs the layout, not a flex column.
+ */
+function ShopMarketHero() {
+  const [failed, setFailed] = React.useState(false);
+  const HERO_URL = 'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/market/hnh-boys-have-fun.png';
+  return (
+    <div className="px-4 pt-3 pb-2">
+      <div
+        className="relative w-full overflow-hidden rounded-2xl border border-white/5"
+        style={{ aspectRatio: '16 / 9', background: '#0a0a0a' }}
+      >
+        {!failed && (
+          <img
+            src={HERO_URL}
+            alt=""
+            loading="eager"
+            onError={() => setFailed(true)}
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
+            draggable={false}
+            style={{ display: 'block' }}
+          />
+        )}
+        {failed && (
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ background: 'linear-gradient(180deg, rgba(10,10,10,0.7) 0%, rgba(10,10,10,0.95) 100%)' }}
+          >
+            <p className="text-white font-black uppercase tracking-wider text-xl text-center px-4">
+              HNH BOYS HAVE FUN
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default ShopEngine;
+

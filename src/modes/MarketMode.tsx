@@ -286,14 +286,8 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   const [orderTotal, setOrderTotal] = useState<number | null>(null);
   const [isSyncing, setIsSyncing] = useState(true);
 
-  // Market hero carousel — Phil 2026-05-30 design lock. Three engine-mapped
-  // brand campaigns rotate at the top of Market. Tap a slide → switch engine
-  // tab. D16 §2/§7: CENTER zone, content card, no floating elements.
-  // Phil 2026-05-30 lock: static hero only — HNH MESS, no carousel.
-  // Tap → SHOP engine. Plain <img>, no scroll-snap, no touch handlers,
-  // no interference with parent vertical scroll.
-  const HERO_URL = 'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/market/hnh-boys-have-fun.png';
-  const [heroImgFailed, setHeroImgFailed] = useState(false);
+  // Hero moved into ShopEngine (Phil 2026-05-31) — see comment above the
+  // <AnimatePresence> block below. Hero now scrolls with products.
 
   // ---- Auto-open receipt on success & Sync Status ----
   useEffect(() => {
@@ -558,53 +552,10 @@ export function MarketMode({ className = '' }: MarketModeProps) {
         </div>
       </div>
 
-      {/* ================================================================== */}
-      {/* STATIC HERO — Phil 2026-05-31 P0 real fix.                          */}
-      {/*                                                                     */}
-      {/* ROOT CAUSE (verified via Chrome MCP DOM inspection on production):  */}
-      {/* `padding-top: 56.25%` resolves against the PARENT'S width. On wide  */}
-      {/* viewports the hero became 541px tall, blowing out the 607px-tall   */}
-      {/* MarketMode flex column and pushing the engine scroll container to   */}
-      {/* top=738 (BELOW the visible viewport). Engine got height: 0.        */}
-      {/*                                                                     */}
-      {/* FIX: explicit fixed pixel height. Hero is always 140px regardless  */}
-      {/* of viewport. Engine always gets the remaining flex space. Image    */}
-      {/* gets object-cover'd — the headline + wordmark may crop slightly    */}
-      {/* but scroll WORKS, which is the actual job here.                    */}
-      {/* ================================================================== */}
-      <div className="flex-shrink-0 px-4 pt-2 pb-2">
-        <div
-          role="button"
-          tabIndex={0}
-          aria-label="HNH BOYS HAVE FUN. Tap to browse the shop."
-          onClick={() => handleEngineSwitch('shop')}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleEngineSwitch('shop'); } }}
-          className="relative w-full overflow-hidden rounded-2xl border border-white/5 active:opacity-90 transition-opacity cursor-pointer"
-          style={{ height: 140, background: '#0a0a0a', touchAction: 'pan-y' }}
-        >
-          {!heroImgFailed && (
-            <img
-              src={HERO_URL}
-              alt=""
-              loading="eager"
-              onError={() => setHeroImgFailed(true)}
-              className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
-              draggable={false}
-              style={{ display: 'block' }}
-            />
-          )}
-          {heroImgFailed && (
-            <div
-              className="absolute inset-0 flex items-center justify-center"
-              style={{ background: 'linear-gradient(180deg, rgba(10,10,10,0.7) 0%, rgba(10,10,10,0.95) 100%)' }}
-            >
-              <p className="text-white font-black uppercase tracking-wider text-xl text-center px-4">
-                HNH BOYS HAVE FUN
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Hero moved INSIDE the engine scroll container (Phil 2026-05-31).
+          The hero now scrolls WITH the products instead of sitting fixed
+          above. Renders inside ShopEngine as the first scroll child at
+          natural 16:9 ratio. See src/modes/market/ShopEngine.tsx. */}
 
       {/* ================================================================== */}
       {/* ENGINE CONTENT                                                       */}
@@ -669,6 +620,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
 }
 
 export default MarketMode;
+
 
 
 
