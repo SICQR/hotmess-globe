@@ -237,14 +237,24 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
   'cart': {
     id: 'cart',
     title: 'Cart',
-    height: 'small',
+    // Phil 2026-05-31 hotfix: cart was opening at 70vh with peek floor
+    // 0.50 — items were cramped at the bottom of viewport with empty
+    // space above. Match product-detail sheet (PR #719): open fully
+    // expanded so cart contents are immediately visible.
+    height: 'large',
+    peekFraction: 0.92,
     auth: false,
     deepLinkParams: [],
   },
   'filters': {
     id: 'filters',
     title: 'Filters',
-    height: 'mini',
+    // Phil 2026-05-31 hotfix: filters was opening at 50vh with peek
+    // floor 0.50 — only the title bar visible, filter controls hidden
+    // below fold. Match cart/product-detail: open fully expanded so
+    // every filter chip is immediately visible without scroll.
+    height: 'large',
+    peekFraction: 0.92,
     auth: false,
     deepLinkParams: [],
   },
