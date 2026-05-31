@@ -32,6 +32,10 @@ import { PageTransition } from '@/components/lux/PageTransition';
 import { PageLoadingSkeleton } from '@/components/skeletons/PageSkeletons';
 import UnifiedGlobe from '@/components/globe/UnifiedGlobe';
 import { SheetProvider, useSheet } from '@/contexts/SheetContext';
+// PREVIEW BRANCH ONLY — Convergence Slice v1 PR 1 eye-test opener.
+// Listens for ?_hp=1|2|offgrid and opens the hybrid sheet with mock data.
+// Removed before any merge to main.
+import PreviewHybridOpener from '@/dev/PreviewHybridOpener';
 import SheetRouter from '@/components/sheets/SheetRouter';
 import { SOSProvider, useSOSContext } from '@/contexts/SOSContext';
 import { CheckinTimerProvider } from '@/contexts/CheckinTimerContext';
@@ -582,6 +586,9 @@ function App() {
                                   </BootRouter>
                                   {/* L2 Sheet System - Renders over everything, outside route remount boundary */}
                                   <SheetRouter />
+                                  {/* PREVIEW BRANCH ONLY: convergence-v1 eye-test opener.
+                                      Listens for ?_hp= URL param. Removed before main merge. */}
+                                  <PreviewHybridOpener />
                                 </GlobeProvider>
                               </PersonaProvider>
                             </MusicPlayerProvider>
