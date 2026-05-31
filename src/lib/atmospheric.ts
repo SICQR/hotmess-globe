@@ -1,30 +1,47 @@
 /**
- * src/lib/atmospheric.ts — Convergence Slice v1, PR 3.
+ * src/lib/atmospheric.ts — Convergence Slice v1 + Infra PR 1.
  *
- * D22 §3 Atmospheric memory layer (stub).
+ * D22 §3 + §4 Atmospheric memory layer — real write path.
  *
- * recordHandoffAtmosphere — emits an aggregate atmospheric signal when a
- * handoff resolves. D22 §4 Irreversibility Rule binds: the call MUST destroy
- * the input identity before persisting. PR 3 ships a no-op stub that proves
- * the call site exists and the input shape is right; PR 4 wires the real
- * irreversible aggregation pipeline into Supabase.
+ * Infra PR 1 (this revision):
+ *   - recordHandoffAtmosphere now calls public.record_handoff_atmosphere()
+ *     in Supabase. That RPC is a thin wrapper around atmosphere.record_handoff(),
+ *     which is the only legal write path into atmosphere.handoff_residue.
+ *   - The substrate destroys the raw venue_label inside the function body
+ *     (calls atmosphere._classify_venue once, never persists the input).
+ *   - The substrate quantises time to the current hour before write.
+ *   - The substrate has no actor_id, target_id, or beacon_id column —
+ *     those columns physically do not exist. Reconstruction is impossible
+ *     from this table alone; reversing the forgetting would require an
+ *     ALTER TABLE, which is a visible, reviewable, doctrinal act.
  *
- * What the stub guarantees:
- *   - No individual user id is stored anywhere by this function.
- *   - No precise timestamp persists (we bucket to the hour at most).
- *   - No raw beacon id or seller id propagates past this boundary.
- *   - When PR 4 wires the persistence layer, the function signature does
- *     not change — only the body. Call sites are stable.
+ * This is forward secrecy for social presence: once the handoff has been
+ * recorded, no future query — by us, by a future engineer, by an acquirer,
+ * by a court — can reconstruct the source primitives from this table.
+ * That guarantee lives in the substrate, not in this file.
  *
- * D22 §4.1 Anti-Creep Rule binds: this signal MAY influence ambience
- * (city-mood, district density, atmospheric overlays). It MAY NOT be used
- * for enforcement, ranking, moderation escalation, or any individual
- * decision. Future contributors: do not add an `actorId` or a `targetId`
- * parameter here.
+ * What this file is responsible for:
+ *   - Shape the call site so the RPC cannot be invoked with anything other
+ *     than the three pre-bucketed primitives.
+ *   - Swallow errors (D22 §4 — atmospheric signals never throw to user
+ *     surface).
+ *   - Stay shape-stable. The exported signature is the contract every
+ *     caller depends on. Adding parameters here is a constitutional drift
+ *     and must be reviewed as such.
+ *
+ * What this file is NOT responsible for:
+ *   - Bucketing the venue. The substrate does that. Sending the raw
+ *     label is correct; the substrate is where it gets destroyed.
+ *   - Time quantisation. The substrate does that too.
+ *   - Identity scrubbing. There is no identity to scrub — by design we
+ *     never reached for it.
  */
 
+import { supabase } from '@/components/utils/supabaseClient';
+
 export interface HandoffAtmosphereInput {
-  /** Bucketed venue label. NEVER a precise coordinate. */
+  /** Bucketed venue label. NEVER a precise coordinate. The substrate
+   *  classifies this into a coarse venue_class and discards the input. */
   venueLabel?: string;
   /** Coarse beacon kind. 'ticket' | 'preloved' | 'other'. */
   beaconKind: 'ticket' | 'preloved' | 'other';
@@ -50,6 +67,11 @@ export type ResolutionState =
  * 'completed_purchase', 'paid'. These are prohibited by D19 §6.10 and
  * §11.1 (No Marketplace SEO Tone) and would fail CI's text-scan in
  * scripts/check-resolution-vocab.mjs.
+ *
+ * The substrate (atmosphere.record_handoff) ALSO validates against this
+ * vocabulary. If the values here drift out of sync with the substrate,
+ * the substrate silently no-ops the write rather than corrupting the
+ * residue table. That is intentional belt-and-braces.
  */
 export const RESOLUTION_COPY: Record<ResolutionState, string> = {
   passed_on: 'Passed on',
@@ -63,26 +85,43 @@ export const RESOLUTION_COPY: Record<ResolutionState, string> = {
 };
 
 /**
- * Emit an atmospheric handoff signal. Stub for PR 3 — logs to console only.
- * PR 4 replaces the body with an irreversible aggregate write per D22 §4.
+ * Emit an atmospheric handoff signal.
  *
- * Sacred contract preserved across PR 3 → PR 4:
- *   - Only the three input fields above ever cross this boundary.
- *   - The return value is `void` and will remain `void`.
- *   - Errors are swallowed (handoff should never fail the user surface).
+ * Crosses the substrate boundary via supabase.rpc(). The substrate
+ * function:
+ *   1. Quantises time to the current hour.
+ *   2. Bucket-classifies venueLabel into a coarse venue_class.
+ *   3. Validates beaconKind + resolutionState against locked enums.
+ *   4. Upserts into atmosphere.handoff_residue (aggregate counter).
+ *
+ * No per-event row exists after this call. Only a delta on a counter.
+ *
+ * Errors are swallowed: D22 §4 binds that atmospheric signals never throw
+ * to user surface. A failed write means the residue counter doesn't tick;
+ * the user-facing handoff resolution still completes.
  */
-export function recordHandoffAtmosphere(input: HandoffAtmosphereInput): void {
+export async function recordHandoffAtmosphere(
+  input: HandoffAtmosphereInput,
+): Promise<void> {
   try {
-    // PR 3 stub — observable in dev, no persistence. PR 4 will replace
-    // this body with a call to a stored procedure that buckets time and
-    // location, destroys the inputs, and increments an atmospheric counter.
     if (typeof window !== 'undefined' && (window as { __HM_DEBUG?: boolean }).__HM_DEBUG) {
       // eslint-disable-next-line no-console
-      console.debug('[atmospheric] handoff', {
+      console.debug('[atmospheric] handoff →', {
         venueLabel: input.venueLabel || null,
         beaconKind: input.beaconKind,
         resolutionState: input.resolutionState,
       });
+    }
+
+    const { error } = await supabase.rpc('record_handoff_atmosphere', {
+      p_venue_label: input.venueLabel ?? null,
+      p_beacon_kind: input.beaconKind,
+      p_resolution_state: input.resolutionState,
+    });
+
+    if (error && typeof window !== 'undefined' && (window as { __HM_DEBUG?: boolean }).__HM_DEBUG) {
+      // eslint-disable-next-line no-console
+      console.debug('[atmospheric] handoff rpc error (swallowed)', error.message);
     }
   } catch {
     /* D22 §4 noop — atmospheric signals never throw to user surface */
