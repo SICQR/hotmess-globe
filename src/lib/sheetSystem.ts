@@ -167,6 +167,10 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     height: 'large',
     auth: false,
     deepLinkParams: [],
+    // Phil 2026-05-31: product detail opens fully expanded, not at peek.
+    // The image card needs to be visible without the user having to
+    // drag up first. Drag-down to dismiss + backdrop tap still work.
+    peekFraction: 0.92,
   },
   'ghosted': {
     id: 'ghosted',
@@ -898,4 +902,5 @@ export function parseSheetFromUrl(searchParams: URLSearchParams): { type: string
   
   return { type, props };
 }
+
 

@@ -486,7 +486,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
 
             {/* Filter */}
             <button
-              onClick={() => openSheet('filters', { mode: 'market' })}
+              onClick={() => openSheet('filters', { context: 'market' })}
               className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.06] active:scale-90 transition-transform"
               aria-label="Open filters"
             >
@@ -620,6 +620,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
 }
 
 export default MarketMode;
+
 
 
 
