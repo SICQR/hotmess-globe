@@ -187,7 +187,7 @@ export default function Settings() {
           <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-2">
             Settings
           </h1>
-          <p className="text-white/60">Manage your account and preferences</p>
+          <p className="text-white/60">Account preferences and controls. Profile editing lives at the top-right avatar.</p>
         </motion.div>
 
         {/*
@@ -215,7 +215,7 @@ export default function Settings() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-semibold">Push Notifications</p>
-                <p className="text-sm text-white/60">Receive push notifications for events</p>
+                <p className="text-sm text-white/60">Boos, messages, beacon expiries, check-ins, payment receipts, SOS.</p>
               </div>
               <Switch checked={notifications} onCheckedChange={setNotifications} />
             </div>
@@ -244,27 +244,27 @@ export default function Settings() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="precise">Precise - Show exact location</SelectItem>
-                  <SelectItem value="fuzzy">Fuzzy - Show approximate area (recommended)</SelectItem>
-                  <SelectItem value="hidden">Hidden - Don't show location</SelectItem>
+                  <SelectItem value="precise">Precise — exact coordinates</SelectItem>
+                  <SelectItem value="fuzzy">Fuzzy — approximate area (recommended)</SelectItem>
+                  <SelectItem value="hidden">Off-grid — invisible to non-mutuals</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-white/40 mt-2">
-                Controls how your location is displayed on beacons and check-ins
+                Applies to your Pulse beacons, Ghosted card distance, and check-ins.
               </p>
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-semibold">Public Profile</p>
-                <p className="text-sm text-white/60">Show your profile to other users</p>
+                <p className="font-semibold">Visible in Ghosted</p>
+                <p className="text-sm text-white/60">Be discoverable in the grid and on Pulse.</p>
               </div>
               <Switch checked={publicProfile} onCheckedChange={setPublicProfile} />
             </div>
 
             <div className="bg-[#00C2E0]/10 border border-[#00C2E0]/40 rounded-lg p-4">
               <p className="text-xs text-white/80 leading-relaxed">
-                🔒 <span className="font-bold">Social Links Privacy:</span> Your social media links are only visible to mutual follows. Edit them in your full profile.
+                <span className="font-bold">Social links:</span> only visible after a mutual boo. Edit them via the top-right avatar.
               </p>
             </div>
           </div>
@@ -352,8 +352,8 @@ export default function Settings() {
                 <div className="flex items-center gap-3">
                   <MessageSquare className="w-5 h-5 text-[#C8962C]" />
                   <div>
-                    <p className="font-semibold">Contact Support</p>
-                    <p className="text-sm text-white/60">Submit a support ticket</p>
+                    <p className="font-semibold">Contact</p>
+                    <p className="text-sm text-white/60">Tell us what's going on.</p>
                   </div>
                 </div>
                 <span className="text-white/40">→</span>
@@ -366,7 +366,7 @@ export default function Settings() {
                   <FileText className="w-5 h-5 text-[#39FF14]" />
                   <div>
                     <p className="font-semibold">Community Guidelines</p>
-                    <p className="text-sm text-white/60">Rules and expectations</p>
+                    <p className="text-sm text-white/60">How we hold the space.</p>
                   </div>
                 </div>
                 <span className="text-white/40">→</span>
