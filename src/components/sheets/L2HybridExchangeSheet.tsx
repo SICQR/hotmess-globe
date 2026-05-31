@@ -42,6 +42,11 @@
 
 import React from 'react';
 import { useSheet } from '@/contexts/SheetContext';
+import {
+  recordHandoffAtmosphere,
+  RESOLUTION_COPY,
+  type ResolutionState,
+} from '@/lib/atmospheric';
 
 // PR 1 props are minimal by design. The shape will expand surgically in
 // PR 2 (contact paths) and PR 3 (handoff). Do not preemptively add fields.
@@ -297,7 +302,93 @@ function QuietContactPanel({
  * shape of PR 1 is the contract every later PR will extend without
  * rewriting.
  */
+/**
+ * HandoffResolutionPanel — PR 3.
+ *
+ * D19 §6.10 + D34 §4.7 binding: locked resolution vocabulary. After a
+ * convergence, either party can mark the beacon as resolved. Tapping a
+ * resolution state emits an aggregate atmospheric signal (D22 §3) that
+ * by D22 §4 Irreversibility Rule cannot be reconstructed into individual
+ * trajectory memory.
+ *
+ * Visual weight: deliberately lower than QuietContactPanel. Resolution is
+ * a quiet closure, not a sale-conversion CTA (D19 §4.5 No Hustler Economy).
+ *
+ * The panel never uses "Sold", "Buyer", "Seller", "Transaction", or "Order".
+ * scripts/check-resolution-vocab.mjs grep-fails the build if those leak in.
+ */
+function HandoffResolutionPanel({
+  beacon,
+  resolved,
+  onResolve,
+}: {
+  beacon: HybridExchangeBeacon;
+  resolved: ResolutionState | null;
+  onResolve: (state: ResolutionState) => void;
+}) {
+  // Show the three most contextually-natural resolutions for the beacon kind.
+  // This avoids a wall of options — closure should be soft.
+  const states: ResolutionState[] = beacon.kind === 'ticket'
+    ? ['passed_on', 'going_together', 'sorted']
+    : beacon.kind === 'preloved'
+      ? ['passed_on', 'handed_over', 'sorted']
+      : ['sorted', 'covered', 'claimed'];
+
+  if (resolved) {
+    return (
+      <div className="mx-5 mb-6 rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-3">
+        <div className="text-[11px] uppercase tracking-[0.18em] text-white/35 font-semibold mb-1">
+          Resolved
+        </div>
+        <div className="text-[14px] text-white/70 leading-snug">
+          {RESOLUTION_COPY[resolved]}.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-5 mb-6">
+      <div className="text-[11px] uppercase tracking-[0.18em] text-white/30 font-semibold mb-2">
+        When it's done
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {states.map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => onResolve(s)}
+            className="px-3 py-2 rounded-xl border border-white/[0.06] bg-white/[0.02] text-[12px] text-white/65 active:bg-white/[0.05] transition-colors"
+            aria-label={`Mark as ${RESOLUTION_COPY[s]}`}
+          >
+            {RESOLUTION_COPY[s]}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function L2HybridExchangeSheet({ beacon, seller }: L2HybridExchangeSheetProps) {
+  // PR 3 — local resolution state. PR 4 will persist into D22's
+  // continuity layer (per-party asymmetric view). For PR 3 we keep it
+  // in-memory so the surface proves the contract without coupling to
+  // backend retention yet.
+  const [resolved, setResolved] = React.useState<ResolutionState | null>(null);
+
+  const handleResolve = React.useCallback(
+    (state: ResolutionState) => {
+      setResolved(state);
+      // D22 §3 atmospheric write. Stub in PR 3; real pipeline in PR 4.
+      recordHandoffAtmosphere({
+        venueLabel: beacon.venueLabel,
+        beaconKind: beacon.kind,
+        resolutionState: state,
+      });
+    },
+    [beacon.venueLabel, beacon.kind],
+  );
+
   return (
     <div className="h-full flex flex-col bg-[#050507]">
       <div className="flex-1 overflow-y-auto pb-8">
@@ -314,6 +405,13 @@ export default function L2HybridExchangeSheet({ beacon, seller }: L2HybridExchan
             convergenceContext so the chat composer surfaces the same
             opener row above its input (D34 §3.5 + §4.1). */}
         <QuietContactPanel beacon={beacon} seller={seller} />
+        {/* Zone E (PR 3) — Resolution. Locked vocabulary per D19 §6.10
+            + D34 §4.7. Atmospheric write on tap, no individual trace. */}
+        <HandoffResolutionPanel
+          beacon={beacon}
+          resolved={resolved}
+          onResolve={handleResolve}
+        />
       </div>
     </div>
   );
