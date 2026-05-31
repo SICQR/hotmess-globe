@@ -214,6 +214,21 @@ const PageRoute = ({ pageKey }) => {
   );
 };
 
+// Phil 2026-05-31 hotfix-2: legacy /:PageName catch-all consults the
+// LEGACY_PAGE_ROUTE_ALLOWLIST and renders the matching page through PageRoute.
+// Without this, Settings-linked pages (CommunityGuidelines, HelpCenter,
+// Contact, AccountConsents, AccountDeletion) fell through to the '*' catch-all
+// and rendered PageNotFound, which the gate chain treated as a bounce.
+// This is what makes the LEGACY_PAGE_ROUTE_ALLOWLIST defined above actually
+// matter — without this route, the allowlist was unreachable.
+const LegacyPageCatchAll = () => {
+  const { pageKey } = useParams();
+  if (pageKey && LEGACY_PAGE_ROUTE_ALLOWLIST.has(pageKey)) {
+    return <PageRoute pageKey={pageKey} />;
+  }
+  return <PageNotFound />;
+};
+
 const EventDetailRedirect = () => {
   const { id } = useParams();
   const target = `${createPageUrl('BeaconDetail')}?id=${encodeURIComponent(id ?? '')}`;
@@ -559,6 +574,11 @@ const AuthenticatedApp = () => {
       <Route path="/admin/revenue" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><RevenueDashboard /></Suspense>} />
       {/* ADMIN — selfie verification queue (MEGA-3 §3.4) */}
       <Route path="/admin/verification" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><VerificationQueue /></Suspense>} />
+      {/* Phil 2026-05-31 hotfix-2: legacy /PageName URLs (CommunityGuidelines,
+          HelpCenter, Contact, AccountConsents, AccountDeletion etc.) — must
+          come BEFORE the '*' catch-all so they reach LegacyPageCatchAll
+          which consults LEGACY_PAGE_ROUTE_ALLOWLIST. */}
+      <Route path="/:pageKey" element={<LegacyPageCatchAll />} />
       <Route path="*" element={<PageNotFound />} />
       </Routes>
     </PageTransition>
