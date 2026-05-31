@@ -140,6 +140,140 @@ export function categoryOf(b) {
   return 'other';
 }
 
+// ───────────────────────────────────────────────────────────────────────────
+// D48 — Spatial Identity Exposure Doctrine (Slice 1 — exposure-register pipeline)
+// ───────────────────────────────────────────────────────────────────────────
+//
+// Pure data plumbing. Adds two per-feature properties to the public-safe
+// FeatureCollection so future slices (2/3/5) can wire them into the symbol
+// layer, the cluster preview, and the hover chip respectively. No rendering
+// currently consumes them — they default to the most-protective register
+// and ride alongside the existing properties without behavioural change.
+//
+// D48 §1 — three identity modes:
+//   Infrastructure  "something exists here"   informational  glyph/signal
+//   Atmosphere      "something is happening"  emotional      field/pulse
+//   Human Presence  "someone is here"         social         face/persona
+//
+// D48 §2 — only Human Presence carries an exposure spectrum:
+//   anonymous → persona_shape → face_avatar → full_reveal (sheet-world only)
+//
+// D48 §3.1 — per-intent default exposure register matrix is the source of
+// truth for what the DATA layer emits. Render-time gates (viewer trust,
+// proximity, zoom) will further restrict in future slices but never permit
+// a less-protective register than declared here.
+//
+// See docs/doctrine/48-spatial-identity-exposure-doctrine.md.
+
+export const IDENTITY_MODE = Object.freeze({
+  INFRASTRUCTURE: 'infrastructure',
+  ATMOSPHERE:     'atmosphere',
+  HUMAN_PRESENCE: 'human_presence',
+});
+
+export const EXPOSURE_REGISTER = Object.freeze({
+  ANONYMOUS:     'anonymous',
+  PERSONA_SHAPE: 'persona_shape',
+  FACE_AVATAR:   'face_avatar',
+  FULL_REVEAL:   'full_reveal',
+});
+
+// D48 §1 — classify identity mode for a beacon.
+//
+// Aftercare-offered routes to Infrastructure mode per §3.2 structural
+// forbiddance: the offering is the thing that exists, the offerer's
+// identity is not the social act. This is enforced at the data layer
+// so no downstream surface can promote aftercare-offered to Human Presence
+// regardless of viewer trust, owner consent, or render gates.
+//
+// Editorial / radio / events are atmospheric — happenings, not entities.
+// Venues are infrastructure (per D31 operator-structural consent).
+// People + market beacons are human presence (someone is offering
+// themselves or selling something they own). Unknown defaults to
+// infrastructure — most-protective: no face surface.
+export function identityModeOf(beacon, cat) {
+  const intent = String(
+    (beacon && beacon.metadata && beacon.metadata.intent) ||
+    (beacon && beacon.intent) ||
+    ''
+  ).toLowerCase();
+
+  // §3.2 structural forbiddance: aftercare offerings render as
+  // infrastructure regardless of any other signal. The face exists; the
+  // doctrine forbids it from existing in spatial context tied to the care
+  // offer.
+  if (intent === 'aftercare' || cat === 'care') {
+    return IDENTITY_MODE.INFRASTRUCTURE;
+  }
+
+  if (cat === 'editorial' || cat === 'atmosphere' || cat === 'radio') {
+    return IDENTITY_MODE.ATMOSPHERE;
+  }
+
+  if (cat === 'events') {
+    return IDENTITY_MODE.ATMOSPHERE;
+  }
+
+  if (cat === 'venues') {
+    return IDENTITY_MODE.INFRASTRUCTURE;
+  }
+
+  if (cat === 'people' || cat === 'market') {
+    return IDENTITY_MODE.HUMAN_PRESENCE;
+  }
+
+  // Default: most-protective. No face surface for unclassifiable beacons.
+  return IDENTITY_MODE.INFRASTRUCTURE;
+}
+
+// D48 §2 + §3.1 — default exposure register for a Human Presence beacon.
+// Returns null for non-Human-Presence modes; Infrastructure and Atmosphere
+// have their own register taxonomy and do not traverse the spectrum.
+//
+// Per §3.1 locked matrix:
+//   cruising   → persona_shape  (face_avatar promotable by render-time
+//                                viewer-trust + proximity + zoom gates)
+//   looking    → persona_shape  (cruising-like intent from D12)
+//   hosting    → persona_shape  (same gating as cruising)
+//   arriving   → persona_shape  (transient; user can opt in to face)
+//   quiet_hold → anonymous      (low-key register; user can opt in)
+//   selling /  → anonymous      (the listing is the offering, not the
+//   market /                     seller's face; user can opt in)
+//   swap
+//
+// Unknown intent → anonymous (most-protective default per §6 cluster rule:
+// "the default is always the most-protective render that any constituent's
+// intent + consent permits").
+//
+// IMPORTANT: this is the DATA-LAYER default. Render-time slices may step
+// the register DOWN the spectrum (more protective) based on viewer trust,
+// proximity, zoom, and per-surface consent — never UP. The data layer
+// emits the ceiling; render gates lower it.
+export function exposureRegisterOf(beacon, identityMode) {
+  if (identityMode !== IDENTITY_MODE.HUMAN_PRESENCE) return null;
+
+  const intent = String(
+    (beacon && beacon.metadata && beacon.metadata.intent) ||
+    (beacon && beacon.intent) ||
+    ''
+  ).toLowerCase();
+
+  switch (intent) {
+    case 'cruising':
+    case 'looking':
+    case 'hosting':
+    case 'arriving':
+      return EXPOSURE_REGISTER.PERSONA_SHAPE;
+    case 'quiet_hold':
+    case 'market':
+    case 'selling':
+    case 'swap':
+      return EXPOSURE_REGISTER.ANONYMOUS;
+    default:
+      return EXPOSURE_REGISTER.ANONYMOUS;
+  }
+}
+
 // ~1.1km grid — coarsen approximate categories so exact location is never exposed.
 const snap = (n) => Math.round(n * 100) / 100;
 
@@ -169,6 +303,17 @@ export function toPublicSafeFeatureCollection(beacons, glowUserIds) {
     // starved the fallback markers layer. Resulted in an empty globe even
     // though beacons were loaded (Phil 2026-05-27).
     const resolvedBeaconCategory = resolveBeaconCategory(b.beacon_category || b.category || b.type || b.kind || '');
+
+    // D48 Slice 1 — exposure-register pipeline.
+    // Pure data plumbing; no rendering currently consumes these fields.
+    // Slices 2/3/5 will wire identity_mode + exposure_register into the
+    // symbol layer, the cluster preview, and the hover chip respectively.
+    // Aftercare-offered routes to Infrastructure mode per D48 §3.2 — the
+    // structural forbiddance enforced at the data layer so no downstream
+    // surface can promote it.
+    const identityMode = identityModeOf(b, cat);
+    const exposureRegister = exposureRegisterOf(b, identityMode);
+
     features.push({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [lng, lat] },
@@ -209,6 +354,14 @@ export function toPublicSafeFeatureCollection(beacons, glowUserIds) {
         // otherwise so the L8 glow layer's ['has', 'glow'] filter stays
         // a precise lookup, not a value check.
         ...(glowSet && (b.owner_id || b.user_id) && glowSet.has(String(b.owner_id || b.user_id)) ? { glow: 1 } : {}),
+        // D48 Slice 1 — exposure-register pipeline (Phil 2026-05-31).
+        // identity_mode is always present (one of three values per D48 §1).
+        // exposure_register is omitted for Infrastructure / Atmosphere modes
+        // and only emitted for Human Presence — Mapbox's ['has', 'exposure_register']
+        // filter pattern lets future symbol-layer expressions branch on
+        // mode without value lookups.
+        identity_mode: identityMode,
+        ...(exposureRegister ? { exposure_register: exposureRegister } : {}),
       },
     });
   }
