@@ -9,7 +9,6 @@ import { createPageUrl } from '../utils';
 
 import {
   HERO_MOVE_DEEPER,
-  HERO_MOVE_DEEPER_SUB,
   TIER_ROWS,
   CONFIRMATION_LANDED,
   CANCELLATION_CONFIRMED,
@@ -295,18 +294,21 @@ export default function MembershipUpgrade() {
 
         {/* Hero — Layer B, energy 5, invitation_to_participate.
             No urgency, no theatre, no pricing in the hero, no
-            "UPGRADE YOUR NIGHT" caps-into-italics noise. */}
+            "UPGRADE YOUR NIGHT" caps-into-italics noise.
+
+            Phil swagger pass (2026-05-31): no subtitle. The hero stands
+            alone above the tier grid by design. "A strong HOTMESS line
+            should sometimes be allowed to sit in silence. That silence
+            creates authority." The grid below is the answer; another
+            sentence dilutes the energy. */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-3">
+          <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">
             {HERO_MOVE_DEEPER}
           </h1>
-          <p className="text-white/60 text-base max-w-xl mx-auto">
-            {HERO_MOVE_DEEPER_SUB}
-          </p>
         </motion.div>
 
         {/*

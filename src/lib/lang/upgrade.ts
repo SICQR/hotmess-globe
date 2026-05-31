@@ -40,14 +40,21 @@
  * Energy 5 (Pulse band). Layer B. The user is being invited to a
  * deeper relationship with the network. No urgency, no theatre, no
  * pricing in the hero line itself — price lives in the tier rows below.
+ *
+ * Phil swagger pass (2026-05-31 follow-up to PR #761): the hero string
+ * is "Go further in." — three words, masculine gravity, sounds like a
+ * door opening, sounds slightly dangerous, doesn't over-explain. The
+ * constant name preserves the D35 §1.3 canonical "Move deeper" verb
+ * (which remains the registry's identifier for this slot); the
+ * rendered string is the Phil-approved swagger variant. D35 §1.3
+ * permits Layer B paywall-hero variants and "Go further in." is one.
+ *
+ * No subtitle. The hero stands alone above the tier grid by design —
+ * Phil 2026-05-31: "a strong HOTMESS line should sometimes be allowed
+ * to sit in silence. That silence creates authority." The grid is the
+ * answer; another sentence dilutes the energy.
  */
-export const HERO_MOVE_DEEPER = 'Move deeper into the network.';
-
-/**
- * The hero subtitle. Names what "deeper" means without selling it.
- */
-export const HERO_MOVE_DEEPER_SUB =
-  'Pick the tier that matches how you want to participate.';
+export const HERO_MOVE_DEEPER = 'Go further in.';
 
 // ───────────────────────────────────────────────────────────────────────────
 // Per-tier hero lines — distinct emotional contracts per tier
@@ -67,8 +74,15 @@ export const STEP_INTO_MESS = 'You are in. Welcome to the mess.';
  * HOTMESS — invitation_to_participate — Layer B, energy 5.
  * Seductive, in-motion, participatory per Phil's emotional shape table.
  * "Deeper participation" not "premium upgrade."
+ *
+ * Phil swagger pass (2026-05-31 follow-up to PR #761): "Built for boys
+ * who stay out longer. Run hotter." Reads "like a quiet warning label
+ * on a nightclub door" (Phil's framing). "Built for" feels
+ * infrastructural not performative; "boys who stay out longer" is
+ * emotionally precise; "Run hotter" is pure HOTMESS. Stays short
+ * enough to feel punchy without collapsing into ad copy.
  */
-export const STEP_INTO_HOTMESS = 'Move deeper. Full scene, full mess.';
+export const STEP_INTO_HOTMESS = 'Built for boys who stay out longer. Run hotter.';
 
 /**
  * CONNECTED — operational_access — Layer A, energy 3.
