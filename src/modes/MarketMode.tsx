@@ -559,15 +559,18 @@ export function MarketMode({ className = '' }: MarketModeProps) {
       </div>
 
       {/* ================================================================== */}
-      {/* STATIC HERO — Phil 2026-05-31: single HNH MESS image, no carousel.  */}
+      {/* STATIC HERO — Phil 2026-05-31 P0 real fix.                          */}
       {/*                                                                     */}
-      {/* SCROLL FIX (Phil 2026-05-31): use the padding-bottom aspect trick   */}
-      {/* instead of `aspectRatio` CSS — iOS Safari has known layout bugs     */}
-      {/* with aspectRatio inside a flex column with flex-1 siblings, which   */}
-      {/* was eating the engine's scroll budget. div role="button" instead    */}
-      {/* of <button> so iOS doesn't apply tap-target touch handling that     */}
-      {/* swallows vertical scroll. touch-action: pan-y lets vertical pan     */}
-      {/* gestures pass through to the engine's scroll container below.       */}
+      {/* ROOT CAUSE (verified via Chrome MCP DOM inspection on production):  */}
+      {/* `padding-top: 56.25%` resolves against the PARENT'S width. On wide  */}
+      {/* viewports the hero became 541px tall, blowing out the 607px-tall   */}
+      {/* MarketMode flex column and pushing the engine scroll container to   */}
+      {/* top=738 (BELOW the visible viewport). Engine got height: 0.        */}
+      {/*                                                                     */}
+      {/* FIX: explicit fixed pixel height. Hero is always 140px regardless  */}
+      {/* of viewport. Engine always gets the remaining flex space. Image    */}
+      {/* gets object-cover'd — the headline + wordmark may crop slightly    */}
+      {/* but scroll WORKS, which is the actual job here.                    */}
       {/* ================================================================== */}
       <div className="flex-shrink-0 px-4 pt-2 pb-2">
         <div
@@ -577,7 +580,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
           onClick={() => handleEngineSwitch('shop')}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleEngineSwitch('shop'); } }}
           className="relative w-full overflow-hidden rounded-2xl border border-white/5 active:opacity-90 transition-opacity cursor-pointer"
-          style={{ paddingTop: '56.25%', background: '#0a0a0a', touchAction: 'pan-y' }}
+          style={{ height: 140, background: '#0a0a0a', touchAction: 'pan-y' }}
         >
           {!heroImgFailed && (
             <img
@@ -666,5 +669,6 @@ export function MarketMode({ className = '' }: MarketModeProps) {
 }
 
 export default MarketMode;
+
 
 
