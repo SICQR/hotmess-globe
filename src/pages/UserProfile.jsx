@@ -103,7 +103,7 @@ function ProfileHero({ profile }) {
     profile.display_name ||
     profile.username ||
     profile.full_name ||
-    'HOTMESS member';
+    'Anonymous';
   const verified = Boolean(profile.is_verified);
   // SACRED INVARIANT: profile.city can hold raw PostGIS WKB-hex (geography
   // bytes) — never render that to other users. Strip when it's not a
