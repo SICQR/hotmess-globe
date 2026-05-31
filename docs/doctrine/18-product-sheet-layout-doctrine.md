@@ -43,11 +43,11 @@ Every product sheet renders in four stacked zones, top to bottom:
 - No "PRODUCT" header. The sheet's own title bar carries the product name. A second "PRODUCT" word is redundant chrome and steals vertical budget from the image.
 - Height: ~32px.
 
-### Zone B — Hero image (bounded, scrolls with content)
+### Zone B — Hero image (lux-dominant, bounded, scrolls with content)
 - Primary product image. Aspect ratio: square (`1/1`) for physical SKUs (lube, apparel), portrait (`4/5`) for editorial / lifestyle. Never full-bleed.
-- **Max height: `45dvh`** so the image always leaves room for at least Zone D and a glimpse of Zone C.
+- **Max height: `70dvh`** — lux-dominant. The image is the hero of the surface. The 70dvh cap leaves ~22dvh for the buy dock + a glimpse of the price/title strip; together with the sheet's own header pip that's the entire visible budget at peek (`0.92dvh`). Anything less than 70dvh felt "small product card", which is not the HOTMESS feel.
 - `object-contain` for SKU photography (don't crop the bottle / hem). `object-cover` for editorial.
-- Gallery thumbnails live underneath the hero as a 3-up grid. They scroll with the content, they do not pin.
+- **Thumbnails are tappable** — tap any thumbnail to swap it into the primary slot. The previously-primary image takes the vacated thumbnail position. No swiping (Phil's standing call: simpler than carousel; tap-to-swap is the explicit gesture).
 
 ### Zone C — Decision content (scrolls)
 - Title, price, variant selectors, story, accordions. Same density as today.
