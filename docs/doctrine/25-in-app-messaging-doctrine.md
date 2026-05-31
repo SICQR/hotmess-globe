@@ -318,3 +318,173 @@ The bounded-conversation framing of §2 is the structural commitment. Per-pair p
 The temptation will be group chats. Then broadcast. Then smart replies. Then archived search. Each one would deliver near-term engagement at the cost of D24 + D33 + D32. The doctrine binds them all at once.
 
 D25 completes the messaging surface contract. With it, the user-facing communication layer of HOTMESS is fully under constitutional substrate discipline. The remaining unwritten doctrines — D28 (refund), D23/D26/D27/D29/D30 — inherit this layer rather than extend it.
+
+---
+
+## §20 Constitutional messaging modes (amendment, 2026-05-31)
+
+### §20.0 Why this amendment exists
+
+§2 named chat as a bounded conversation. That framing is correct as a *default mode* but is insufficient as the complete contract. HOTMESS is not a chat app. It is an operating system whose surfaces overlap simultaneously: trajectory, care, settlement, safety, radio, commerce, presence, operators, atmosphere, events, and disappearance. A single message in HOTMESS can simultaneously be a flirtation, a coordination, a settlement step, a safety escalation, a care continuity beat, an operator logistics note, an event routing signal, and trajectory residue. Each of those carries different constitutional weight.
+
+The naive resolution — one global messaging philosophy — fails because the constitutional weights conflict. A handoff needs confirmation; an SOS needs certainty; a care escalation may need acknowledgement; a venue transfer may need temporal validity; but a flirtation must not create pressure, and disappearance must remain possible. No single global philosophy can satisfy all of these.
+
+The architectural correction: **messaging is not a feature. It is a transport layer between constitutional systems.** The ontology of a thread determines its persistence, expectation, visibility, interruption rights, escalation rights, acknowledgement semantics, decay semantics, and routing behaviour. The same communication primitive behaves differently depending on the constitutional context the thread is operating under.
+
+This amendment establishes the **mode taxonomy** that adapts §2 across HOTMESS's substrate. The previous sections §3–§19 describe the default mode (Trajectory). The amendment names four additional modes — Settlement, Safety, Care, Operator — each with its own constitutional overrides.
+
+### §20.1 The mode is a property of the thread, not the message
+
+A thread enters a mode when its anchoring substrate event is one of the substrate-recognised classes (a beacon-anchored handoff, an SOS dispatch, a care-role pairing, an operator-mediated handoff). A thread can carry multiple modes simultaneously when its anchoring events are multi-class — for example, a settlement thread can also be a safety thread if SOS pairing is active between the same pair. When modes overlap, the **strictest constraint wins** for any given property (e.g., SOS interruption override beats Trajectory no-pressure semantics).
+
+Mode is computed at query time from the substrate events that constitute the thread's history (per D24 §2.2 position-function discipline). It is not a denormalised column on the thread, and it is not user-selectable.
+
+### §20.2 Mode: Trajectory (default)
+
+The mode that §3–§19 describe. Active when the anchoring event is a §3.1 mutual boo or a §3.2 completed handoff with no settlement involvement.
+
+- **Persistence:** D22 §5 default decay (fresh / recent / archived-to-pair → 180-day irreversible deletion).
+- **Expectations:** no forced acknowledgement; silence is acceptable; read state is not user-visible.
+- **Visibility:** D08 default; presence indicators forbidden.
+- **Interruption rights:** none — neither party may demand a response.
+- **Escalation rights:** none beyond the standard convergence affordance.
+- **Acknowledgement semantics:** none required.
+- **Decay semantics:** atmospheric decay; messages soften visually then disappear.
+- **Routing behaviour:** standard notification dispatcher; rate-limited; user-throttleable.
+- **Disappearance compatibility:** full — D08 off-grid is honoured throughout.
+
+The Trajectory mode is the default because it is the lowest-pressure mode. Modes that need to override its constraints must do so explicitly.
+
+### §20.3 Mode: Settlement
+
+Active when the anchoring beacon has entered the D21 state machine at `initiated` or beyond.
+
+- **Persistence:** the message thread inherits Trajectory decay, BUT settlement-relevant content (amount agreement, confirmation markers, dispute initiation) is duplicated to the regulated settlement schema (D21 §3.1) for the regulated retention window. The chat-side content decays normally; the regulated record persists per D21.
+- **Expectations:** confirmation is meaningful. When the chat surfaces an agree-to-amount affordance (D21 §8.2), the response is a substrate-recognised event, not just text.
+- **Visibility:** chat is per-pair as always; the underlying settlement state is reachable per D21 §3.4 only through the operator-audit-logged path.
+- **Interruption rights:** none beyond Trajectory.
+- **Escalation rights:** either party can escalate to D28 reversal flow (templated composer opener, §4.2 of D28).
+- **Acknowledgement semantics:** the confirmation markers (D25 §6.4) are substrate-recognised, not optional. A "Sorted — Passed on" marker is a real event, not a chat label.
+- **Decay semantics:** chat content decays per Trajectory; regulated-substrate persistence is independent.
+- **Routing behaviour:** notification dispatch includes the D21 state-transition events (e.g., "agreement reached," "reversal requested") through the standard dispatcher with no special priority.
+- **Disappearance compatibility:** partial — the chat content may decay and the user may go off-grid, but the regulated record persists. D08 visibility does not extend to regulatory minimum retention.
+
+Settlement mode is the spec D28 retroactively becomes the implementation specification for.
+
+### §20.4 Mode: Safety
+
+Active when the anchoring substrate event is a D24 §3.4 safety contact pairing AND an SOS dispatch is currently active OR being prepared.
+
+- **Persistence:** safety-relevant exchanges persist longer than Trajectory — minimum 90 days for any message during an active SOS window, retained in the safety event substrate (D24 §10.3 separate substrate) rather than the chat substrate. Outside an active SOS window, the thread behaves as Trajectory mode.
+- **Expectations:** acknowledgement matters. When the dispatch is in flight, the receiving contact is expected to confirm receipt. The substrate models the acknowledgement as a discrete event, not a read receipt.
+- **Visibility:** during an active SOS window, the standard off-grid presence guard (D08 + convergence) is overridden by user explicit consent at SOS-initiation time per D31 §6.4. After the window closes, off-grid resumes.
+- **Interruption rights:** **override.** SOS routing bypasses notification throttling, do-not-disturb settings, and the convergence chat's normal rate-limit per the existing SOS architecture.
+- **Escalation rights:** the dispatched contact has the right to invoke external emergency services or further chain dispatch per the existing SOS doctrine; the originating user has the right to terminate the dispatch.
+- **Acknowledgement semantics:** binary, substrate-recognised. The receiving contact either acknowledges or does not; the dispatcher routes accordingly.
+- **Decay semantics:** longer retention (90+ days for SOS-window content; archive per safety substrate). The atmospheric residue D33 pattern still applies to operator-level aggregates; per-user SOS records are governed by safety substrate retention rules, not D22 default.
+- **Routing behaviour:** Telegram routing per existing SOS architecture; bypasses standard dispatcher.
+- **Disappearance compatibility:** **suspended** during active SOS window per explicit consent (D31 §6.4). Resumed when window closes.
+
+Safety mode is the only mode that explicitly overrides Trajectory's no-pressure framing. The override is constitutional — safety dignity supersedes flirtation dignity when both are live in the same thread.
+
+### §20.5 Mode: Care
+
+Active when the anchoring substrate event is a D24 §3.3 consented care-role pairing.
+
+- **Persistence:** care thread content persists for the duration of the active pairing — does not decay on Trajectory timelines. When the pairing is terminated by either party through the care surface, the thread enters Trajectory decay from the termination event.
+- **Expectations:** silence is **not** punished. Days or weeks between messages are part of the design. The thread does not produce "you haven't messaged in a while" surfaces, does not display "last active" labels, does not emit re-engagement notifications.
+- **Visibility:** D08 default; off-grid is honoured throughout. Care does not override visibility the way Safety does.
+- **Interruption rights:** soft. The care surface offers a "quiet check-in" affordance (one templated message, rate-limited to once per N days) that may surface when the dispatcher's atmospheric reads suggest the pair has been quiet for a long stretch — but this never displays to either party as "the other one might need you," only as a self-initiated affordance.
+- **Escalation rights:** if the pair has also paired as safety contacts (D24 §3.4), Safety mode constraints stack over Care mode. Care alone does not grant SOS-style override.
+- **Acknowledgement semantics:** none required. Care holds without confirmation.
+- **Decay semantics:** none during active pairing. Slow atmospheric decay after termination.
+- **Routing behaviour:** dispatcher uses lower-priority routing; messages do not push aggressively.
+- **Disappearance compatibility:** full. Care explicitly does not violate D08; a user going off-grid does not break a care pairing, only suspends visible activity.
+
+Care mode is the mode where **continuity outranks engagement**. The optimisation target for any feature touching Care is dignity, not response rate.
+
+### §20.6 Mode: Operator
+
+Active when one party to the thread is an operator entity (D31 §4.1) and the anchoring event is a handoff at the operator's venue/event/service.
+
+- **Persistence:** operator-side chat content decays per Trajectory plus the operator audit log captures the resolution events per D31 §4.4. The operator does not retain a CRM-shaped record of the user; the audit log records that an operator-side action occurred, not the conversation content.
+- **Expectations:** purpose-scoped. The thread exists for the handoff and resolves with the handoff. Operators do not initiate Trajectory-style follow-up chat after resolution.
+- **Visibility:** D20 identity symmetry preserved; operator does not see richer user identity than a peer would. Off-grid presence guard applies normally.
+- **Interruption rights:** none beyond Trajectory.
+- **Escalation rights:** operator may initiate D28 reversal per D31 §3.6 refusal-of-service. The reversal flows through the audit-logged operator path.
+- **Acknowledgement semantics:** for handoff confirmation, substrate-recognised per Settlement mode if the handoff involves money flow. For non-settlement handoffs, none required.
+- **Decay semantics:** chat decays per Trajectory; the audit-log entry persists per D31 §4.4 retention.
+- **Routing behaviour:** standard dispatcher; no operator-broadcast capability (D31 §6).
+- **Disappearance compatibility:** full for the user side. Operator side is governed by operator role configuration.
+
+The operator mode binds: **no portability, no CRM continuity, no persistent operator access** to a per-user thread beyond the per-handoff scope.
+
+### §20.7 Mode interaction matrix
+
+When a thread carries multiple modes simultaneously, the strictest constraint wins for each property:
+
+- **Persistence:** longest required by any active mode (Safety > Settlement-regulated > Care-active > Trajectory).
+- **Expectations / acknowledgement:** strictest required by any active mode (Safety substrate-required > Settlement substrate-required > others none).
+- **Interruption rights:** strongest granted by any active mode (Safety override > others none).
+- **Decay:** slowest demanded by any active mode (Care-active no-decay > Safety 90-day > Settlement chat-decay-plus-regulated > Trajectory default).
+- **Disappearance compatibility:** weakest preserved by any active mode (Safety suspended-during-SOS > Settlement partial > Care full > Trajectory full).
+
+The matrix is computed per (thread, current-time, active-modes) and consumed by the surface as a per-property constraint, not as a single "mode" value.
+
+### §20.8 The mode taxonomy is closed
+
+The five modes (Trajectory, Settlement, Safety, Care, Operator) are the canonical set. Adding a mode requires a doctrinal amendment naming the new mode's substrate anchor and its property values across the seven dimensions in §20.0. New modes are not configuration. They are constitutional surface changes.
+
+Behavioural variants within an existing mode (e.g., a venue-specific operator subtype with different decay) are configuration within Operator mode, not new modes.
+
+### §20.9 What this amendment forbids
+
+In addition to the existing §11 prohibitions:
+
+- A mode-selector UI that allows a user to switch a thread's mode arbitrarily. Mode is determined by substrate anchor, not by user election.
+- A "mode override" admin tool that re-categorises a thread bypassing its anchor events.
+- A model invocation that infers mode from message content (per D32 §3.1 substrate inheritance — modes come from substrate events, not from synthesis).
+- Cross-mode content reuse — copy templated for Trajectory ("Heading there too?") used inside Safety. Mode-specific templates are mandatory.
+- A "unified inbox sort by mode" surface that ranks Safety above Care above Settlement etc. Per §8.2 recency ordering only; mode is a per-row property, not a sort key.
+- A "mode history" surface showing how a thread's mode has changed over time. Mode is reconstructed at query time per §20.1; it is not a logged sequence.
+
+### §20.10 Acceptance test extension
+
+D25 §13 + §20-specific:
+
+§20.10.1 — Show how the surface determines the active modes for a given thread. Confirm it derives from substrate events per §20.1, not from a denormalised column.
+
+§20.10.2 — Show the mode-interaction matrix implementation. Confirm the strictest-wins rule for each of the seven property dimensions in §20.0.
+
+§20.10.3 — Show that templates are mode-specific (e.g., Safety acknowledgement affordance is not Trajectory's "Heading there too?").
+
+§20.10.4 — Show the per-mode persistence path. Confirm Safety content persists 90+d; Care content persists during active pairing; Settlement-relevant content is duplicated to the regulated substrate; Trajectory content decays per D22.
+
+§20.10.5 — Confirm no mode-selector UI exists; mode is substrate-derived.
+
+§20.10.6 — Confirm no model invocation infers mode from message content.
+
+A PR introducing mode-aware messaging behaviour without all six answers does not ship.
+
+### §20.11 Forward inheritance update
+
+The forward inheritance of D25 was previously named at the doctrine level (§16). The amendment is more specific:
+
+- **D28** is the implementation specification for **Settlement mode** within D25. The settlement-mode property values in §20.3 are D28's contract surface.
+- **The existing SOS doctrine** is the implementation specification for **Safety mode**. SOS routing's interruption-override is constitutional under §20.4.
+- **The care suite** is the implementation specification for **Care mode**. Care's "continuity outranks engagement" framing is constitutional under §20.5.
+- **D31 §3.4 + §3.6** is the implementation specification for **Operator mode**.
+
+These are not new doctrines; they are existing doctrines re-framed as mode-specific contracts under D25's transport layer.
+
+### §20.12 Closing
+
+The architectural correction here is that messaging in HOTMESS was never a single primitive. It was always a transport layer between constitutional systems. The amendment names the modes that were implicitly there and binds their property values explicitly so future surfaces inherit by reference rather than re-derivation.
+
+The most important sentence for the contributor reading the amendment under feature pressure: **the same message can carry multiple constitutional weights simultaneously, and the strictest constraint wins.** A safety-pairing-active chat between two converged users with an active care role and an in-flight settlement is all four modes at once, and the surface must honour all four — Safety's interruption rights, Care's silence-not-punished framing, Settlement's confirmation semantics, Trajectory's disappearance compatibility — by computing the per-property matrix per §20.7.
+
+That is what makes HOTMESS messaging an OS-level transport rather than a feature. The chat substrate is one shape; the constitutional weight it carries is multiple. The mode taxonomy is how the two reconcile.
+
+D25 as originally written (§1–§19) is now correctly read as **the Trajectory mode specification**. §20 promotes D25 to the doctrine that governs all modes, with the other modes inheriting through the §20 amendment plus their respective implementation doctrines.
+
+The remaining doctrines (D23, D26, D27, D29, D30) inherit the mode taxonomy; specifically, any future doctrine that introduces a new communication context inherits D25 §20 by either picking an existing mode or proposing a new one with full property-dimension specification.
