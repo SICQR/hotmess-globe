@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronRight, ChevronLeft, Check, Zap, Users, Globe as GlobeIcon, ShoppingBag, MessageCircle } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, Check, Zap, Users, Globe as GlobeIcon, ShoppingBag, MessageCircle, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createPageUrl } from '../../utils';
 
@@ -8,49 +8,48 @@ const TOUR_STEPS = [
   {
     id: 'welcome',
     title: 'Welcome to HOTMESS',
-    description: 'Your social operating system for London nightlife, events, and connections.',
+    description: "Queer men's OS — nightlife, care, connection. Built for gay men, by gay men. Trans men and bi men connecting with men are part of the room.",
     icon: Zap,
     color: '#C8962C'
   },
   {
-    id: 'connect',
-    title: 'Discover People',
-    description: 'Use Connect to find your tribe. Filter by interests, tags, and activity. Go "Right Now" when you\'re available.',
-    icon: Users,
-    color: '#00C2E0',
-    link: 'Connect'
-  },
-  {
-    id: 'globe',
-    title: 'Explore the Globe',
-    description: 'See real-time events, beacons, and activity happening around the world. Click to explore.',
+    id: 'pulse',
+    title: 'Pulse',
+    description: "The live globe. Zoom in to your city and see who's around, what's open, where the night is. Drop a beacon when you're up for something.",
     icon: GlobeIcon,
+    color: '#00C2E0',
+    link: '/pulse'
+  },
+  {
+    id: 'ghosted',
+    title: 'Ghosted',
+    description: "The grid. Tap a card for the full profile. Boo a boy you're into — when they boo you back, chat unlocks. No cold-messaging strangers.",
+    icon: Users,
     color: '#C8962C',
-    link: 'Globe'
+    link: '/ghosted'
   },
   {
-    id: 'events',
-    title: 'Events & Beacons',
-    description: 'RSVP to events, check in at venues, create your own beacons. Earn XP and unlock achievements.',
-    icon: Zap,
-    color: '#FFEB3B',
-    link: 'Events'
+    id: 'care',
+    title: 'Care',
+    description: "Silent SOS, Trusted Contacts, aftercare beacons. Set up safety check-ins before you head out. Built for the comedown, not just the night.",
+    icon: Shield,
+    color: '#C8962C',
+    link: '/care'
   },
   {
-    id: 'marketplace',
-    title: 'Shop the Market',
-    description: 'Browse merch, drops, and essentials—fast checkout, no clutter.',
+    id: 'market',
+    title: 'Market',
+    description: "HOTMESS apparel, HNH MESS care products, limited Drops, and Preloved (peer-to-peer resale). Checkout runs through Stripe.",
     icon: ShoppingBag,
     color: '#39FF14',
     link: '/market'
   },
   {
-    id: 'messages',
-    title: 'Stay Connected',
-    description: 'Message your connections, join squads, and stay in the loop.',
+    id: 'inbox',
+    title: 'Inbox',
+    description: "Tap the inbox icon on Ghosted. Boos, mutuals, messages, system pings — one feed, filterable. Notification badges live here, not on the nav.",
     icon: MessageCircle,
-    color: '#C8962C',
-    link: 'Messages'
+    color: '#C8962C'
   }
 ];
 
