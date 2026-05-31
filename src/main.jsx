@@ -12,9 +12,16 @@ import { clearBadSupabaseSessions } from '@/lib/clearBadSessions'
 import { setupGlobalErrorHandlers } from '@/utils/errorHandler'
 import { OSProvider } from '@/os'
 import { injectLayerCSSVars } from '@/lib/layerSystem'
+import { killNativePullToRefresh } from '@/lib/killNativePullToRefresh'
 
 // Inject z-index CSS custom properties ASAP so animations never compete
 injectLayerCSSVars();
+
+// Kill native pull-to-refresh on every page (Phil 2026-05-31 P0). Custom
+// in-page PTR (useLocalPullToRefresh) still works because that hook calls
+// e.stopPropagation() inside its own touchmove listener — the document
+// level kill below never receives the gesture for those containers.
+killNativePullToRefresh();
 
 // Vite chunk-load resilience (Phil audit 2026-05-26 found a real production
 // failure: after a deploy, an open client kept a reference to the previous
@@ -134,3 +141,4 @@ try {
 } catch (err) {
   showFatalOverlay(err);
 }
+
