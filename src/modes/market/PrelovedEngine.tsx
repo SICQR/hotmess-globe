@@ -315,6 +315,10 @@ export function PrelovedEngine({ search, className = '' }: PrelovedEngineProps) 
         overscrollBehaviorY: 'contain',
       }}
     >
+      {/* PRELOVED hero — Phil 2026-05-31: same pattern as the HNH MESS
+          hero on ShopEngine. Designed comp at full 16:9, lives INSIDE
+          the scroll container so it scrolls with the listings. */}
+      <PrelovedMarketHero />
 
       {/* Header — Phil 2026-05-27: removed duplicate Sell button.
           Sell affordance is now ONLY the FAB (always visible) + empty-state
@@ -468,4 +472,47 @@ export function PrelovedEngine({ search, className = '' }: PrelovedEngineProps) 
   );
 }
 
+/**
+ * PrelovedMarketHero — Phil 2026-05-31. Same pattern as ShopMarketHero
+ * over in ShopEngine.tsx. Renders the designed PRELOVED comp at 16:9
+ * inside the scroll container so it scrolls with the listings. Image
+ * is the baked designed comp (PRELOVED label, models, wordmark), so
+ * object-cover at 16:9 keeps the design intact.
+ */
+function PrelovedMarketHero() {
+  const [failed, setFailed] = useState(false);
+  const HERO_URL = 'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/market/preloved.png';
+  return (
+    <div className="px-4 pt-3 pb-2">
+      <div
+        className="relative w-full overflow-hidden rounded-2xl border border-white/5"
+        style={{ aspectRatio: '16 / 9', background: '#0a0a0a' }}
+      >
+        {!failed && (
+          <img
+            src={HERO_URL}
+            alt=""
+            loading="eager"
+            onError={() => setFailed(true)}
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
+            draggable={false}
+            style={{ display: 'block' }}
+          />
+        )}
+        {failed && (
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ background: 'linear-gradient(180deg, rgba(10,10,10,0.7) 0%, rgba(10,10,10,0.95) 100%)' }}
+          >
+            <p className="text-white font-black uppercase tracking-wider text-xl text-center px-4">
+              PRELOVED
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default PrelovedEngine;
+
