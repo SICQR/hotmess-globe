@@ -99,23 +99,28 @@ export const STEP_INTO_VENUE = 'Your space on the Globe. Forever-anchored.';
 // ───────────────────────────────────────────────────────────────────────────
 // Per-tier role chips — the single-phrase relationship each tier names.
 //
-// Phil's rule (D35 amendment 2026-05-31): the hierarchy of an upgrade
-// card is (1) identity, (2) WHY this tier exists, (3) ROLE in the
-// ecosystem, (4) what tools open, (5) price + action. The role chip is
-// step (3). Each tier gets ONE phrase that names the relationship —
-// not a feature, not a status, a role.
+// Phil's rule (D35 amendment 2026-05-31, follow-up): the role chip
+// behaves like a label on a switchboard — extremely plain, no
+// cleverness, no atmosphere. The step-into line carries the
+// emotional/atmospheric register; the role chip is the wiring diagram
+// label that tells you which circuit this tier is.
 //
-// These chips are deliberately short and infra-flavoured. They sit
-// between the step-into line and the capability prose so the visual
-// centre of each card is "why this exists and what role it gives you"
-// rather than "look how many features."
+// Lowercase in source on purpose — the CSS uppercases for the visible
+// render. The source string reads as a plain switchboard label so a
+// reviewer or contributor opening this file sees the register the
+// chip is meant to operate in, not a stylised brand-mark.
+//
+// These five constants are the canonical role vocabulary. Future
+// surfaces that reference tiers (e.g. an inline tier-name reference in
+// Care or in Settings) inherit these phrases so the role naming stays
+// coherent across the OS.
 // ───────────────────────────────────────────────────────────────────────────
 
-export const ROLE_MESS = 'Open entry';
-export const ROLE_HOTMESS = 'Full participation';
-export const ROLE_CONNECTED = 'Commerce access';
-export const ROLE_PROMOTER = 'Event orchestration';
-export const ROLE_VENUE = 'Infrastructure presence';
+export const ROLE_MESS = 'community entry';
+export const ROLE_HOTMESS = 'deeper participation';
+export const ROLE_CONNECTED = 'commerce access';
+export const ROLE_PROMOTER = 'night orchestration';
+export const ROLE_VENUE = 'infrastructure presence';
 
 // ───────────────────────────────────────────────────────────────────────────
 // Per-tier capability lines — what the tier UNLOCKS in terms of CAPABILITY,
