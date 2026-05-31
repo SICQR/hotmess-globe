@@ -85,11 +85,38 @@ const handleImgError = (e) => {
 };
 
 /**
+ * D18 §7 + #415 — Hero aspect mode resolver.
+ *
+ * SKU products (lube, apparel, gear) → 'square' (1/1) with object-contain so
+ * the bottle / hem isn't cropped.
+ * Editorial / poster-led products (beacon promotions, After Midnight, the
+ * SUPERHUNG editorial) → 'editorial' (4/5 portrait) with object-cover so the
+ * composition fills the slot — that IS the lux feel.
+ *
+ * Detection priority:
+ *   1. Explicit product.metadata.editorial === true wins.
+ *   2. Category / productType match: EDITORIAL / POSTER / BEACON / CAMPAIGN.
+ *   3. Default 'square' (safe — letterbox-via-contain over wrong-crop).
+ *
+ * Do NOT introduce a campaign-vs-utility image classifier here — D18 §7
+ * rule: media sequencing lives upstream (Shopify product image order).
+ */
+function getHeroAspectMode(product) {
+  if (!product) return 'square';
+  if (product?.metadata?.editorial === true) return 'editorial';
+  const t = String(product?.category || product?.productType || '').toUpperCase();
+  if (/EDITORIAL|POSTER|BEACON|CAMPAIGN/.test(t)) return 'editorial';
+  return 'square';
+}
+
+/**
  * Image Gallery — D18 Product Sheet Layout Doctrine.
  * Primary image lux-dominant (~70dvh cap), tappable thumbnails swap into
  * primary. No swiping (Phil's standing call: simpler than carousel).
+ * Aspect mode ('square' | 'editorial') drives 1/1 vs 4/5 with the
+ * appropriate object-fit. Mode comes from getHeroAspectMode(activeProduct).
  */
-function ImageGallery({ images = [], alt = 'Product' }) {
+function ImageGallery({ images = [], alt = 'Product', mode = 'square' }) {
   // Active-index lets thumbnails swap into the primary slot.
   // Phil 2026-05-31: thumbnails were decorative-only; now tappable.
   const [activeIdx, setActiveIdx] = useState(0);
@@ -113,17 +140,25 @@ function ImageGallery({ images = [], alt = 'Product' }) {
   return (
     <div className="space-y-4 max-w-[600px] mx-auto px-4 mt-4">
       {/* Primary Image — D18 Zone B. Lux-dominant.
-          Image capped at 70dvh so buy dock (Zone D) is ALWAYS visible
-          but the image gets the full luxury feel Phil asked for. */}
+          Mode drives the aspect: 'square' (1/1) for SKU, 'editorial' (4/5)
+          for poster-led products. 70dvh cap holds in both — buy dock stays
+          on screen. aspect-ratio transition gives a smooth snap when a
+          mixed-aspect thumbnail swaps in. object-cover on editorial because
+          the composition is already framed; object-contain on square so a
+          bottle / hem isn't cropped. */}
       <div
         className="rounded-2xl overflow-hidden bg-black border border-white/5"
-        style={{ aspectRatio: '1 / 1', maxHeight: '70dvh' }}
+        style={{
+          aspectRatio: mode === 'editorial' ? '4 / 5' : '1 / 1',
+          maxHeight: '70dvh',
+          transition: 'aspect-ratio 250ms cubic-bezier(.4,0,.2,1)',
+        }}
       >
         <img
           key={`primary-${safeIdx}`}
           src={primaryUrl}
           alt={alt}
-          className="w-full h-full object-contain"
+          className={`w-full h-full ${mode === 'editorial' ? 'object-cover' : 'object-contain'}`}
           onError={handleImgError}
         />
       </div>
@@ -350,7 +385,11 @@ export default function L2ShopSheet({ handle, product: initialPropProduct, selle
         </div>
 
         <div className="pb-32">
-            <ImageGallery images={images} alt={activeProduct.title} />
+            <ImageGallery
+              images={images}
+              alt={activeProduct.title}
+              mode={getHeroAspectMode(activeProduct)}
+            />
             
             <div className="max-w-[600px] mx-auto px-6 pt-10 pb-4 text-center">
                 <div className="flex items-center justify-center gap-2 mb-4">
