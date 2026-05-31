@@ -177,7 +177,7 @@ export default function PrivacySettingsPanel() {
       />
       <Toggle
         label="Show me nearby"
-        description="Appear in nearby people on Ghosted"
+        description="Appear in the nearby grid on Ghosted"
         value={settings.show_nearby}
         onChange={(v) => handleUpdate({ show_nearby: v })}
         disabled={isInvisible}

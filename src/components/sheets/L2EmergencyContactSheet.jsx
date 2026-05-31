@@ -151,7 +151,7 @@ export default function L2EmergencyContactSheet() {
             <AlertTriangle className="w-5 h-5 text-[#C8962C]" />
           </div>
           <div>
-            <p className="text-[#C8962C] font-black text-sm">Emergency Contact</p>
+            <p className="text-[#C8962C] font-black text-sm">Trusted Contact</p>
             <p className="text-white/60 text-xs mt-0.5 leading-relaxed">
               They'll receive a text the second you trigger SOS. Tap the gold send icon to fire a test message — verify the number works before you ever need it.
             </p>

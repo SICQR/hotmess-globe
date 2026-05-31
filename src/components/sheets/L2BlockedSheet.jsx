@@ -72,9 +72,9 @@ export default function L2BlockedSheet() {
       }
 
       setBlocked(prev => prev.filter(b => b.id !== blockRow.id));
-      toast.success('User unblocked');
+      toast.success('Unblocked');
     } catch {
-      toast.error('Failed to unblock user');
+      toast.error("Couldn't unblock. Try again.");
     } finally {
       setUnblocking(null);
     }
@@ -94,8 +94,8 @@ export default function L2BlockedSheet() {
         <div className="w-16 h-16 rounded-2xl bg-[#1C1C1E] flex items-center justify-center mb-4">
           <Lock className="w-8 h-8 text-white/10" />
         </div>
-        <p className="text-white/60 font-bold text-sm">No blocked users</p>
-        <p className="text-white/30 text-xs mt-1">Anyone you block will appear here</p>
+        <p className="text-white/60 font-bold text-sm">Nothing blocked</p>
+        <p className="text-white/30 text-xs mt-1">Anyone you block shows up here.</p>
       </div>
     );
   }
@@ -103,7 +103,7 @@ export default function L2BlockedSheet() {
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 pt-3 pb-2">
-        <p className="text-white/30 text-xs">{blocked.length} user{blocked.length !== 1 ? 's' : ''} blocked</p>
+        <p className="text-white/30 text-xs">{blocked.length} blocked</p>
       </div>
 
       <div className="flex-1 overflow-y-auto divide-y divide-white/5">
@@ -120,7 +120,7 @@ export default function L2BlockedSheet() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white/50 font-bold text-sm truncate">
-                  {profile?.username || profile?.display_name || 'Unknown User'}
+                  {profile?.username || profile?.display_name || 'Unknown'}
                 </p>
               </div>
               <button
