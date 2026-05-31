@@ -79,11 +79,17 @@ function ImageGallery({ images = [], alt = 'Product' }) {
 
   return (
     <div className="space-y-4 max-w-[600px] mx-auto px-4 mt-6">
-      {/* Primary Image */}
-      <div className="aspect-[1/1] rounded-2xl overflow-hidden bg-black border border-white/5">
+      {/* Primary Image — D18 Product Sheet Layout Doctrine:
+          Zone B is bounded at 45dvh so the buy dock (Zone D) is ALWAYS
+          visible. No full-bleed product images — the user must be able
+          to decide to buy without scrolling. Phil 2026-05-31. */}
+      <div
+        className="rounded-2xl overflow-hidden bg-black border border-white/5"
+        style={{ aspectRatio: '1 / 1', maxHeight: '45dvh' }}
+      >
         <img src={images[0]} alt={alt} className="w-full h-full object-contain" onError={handleImgError} />
       </div>
-      
+
       {/* Secondary Grid */}
       {images.length > 1 && (
         <div className="grid grid-cols-3 gap-3">
@@ -392,8 +398,12 @@ export default function L2ShopSheet({ handle, product: initialPropProduct, selle
             </div>
         </div>
 
-        {/* Action Bar */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 pb-12 bg-gradient-to-t from-black via-black/98 to-transparent border-t border-white/5">
+        {/* Action Bar — D18 Zone D. ALWAYS visible. Safe-area aware.
+            Gradient backdrop keeps the dock readable over any image. */}
+        <div
+          className="absolute bottom-0 left-0 right-0 px-6 pt-6 bg-gradient-to-t from-black via-black/95 to-transparent border-t border-white/5"
+          style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}
+        >
           <div className="max-w-[500px] mx-auto flex gap-3">
             {isPreloved ? (
               <>
