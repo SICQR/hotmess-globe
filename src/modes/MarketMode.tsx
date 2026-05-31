@@ -560,17 +560,24 @@ export function MarketMode({ className = '' }: MarketModeProps) {
 
       {/* ================================================================== */}
       {/* STATIC HERO — Phil 2026-05-31: single HNH MESS image, no carousel.  */}
-      {/* Plain <img> tag, no scroll-snap, no touch handlers — guaranteed     */}
-      {/* not to interfere with parent vertical scroll. Tap → SHOP engine.    */}
-      {/* D16 §2/§7: CENTER zone, content card.                               */}
+      {/*                                                                     */}
+      {/* SCROLL FIX (Phil 2026-05-31): use the padding-bottom aspect trick   */}
+      {/* instead of `aspectRatio` CSS — iOS Safari has known layout bugs     */}
+      {/* with aspectRatio inside a flex column with flex-1 siblings, which   */}
+      {/* was eating the engine's scroll budget. div role="button" instead    */}
+      {/* of <button> so iOS doesn't apply tap-target touch handling that     */}
+      {/* swallows vertical scroll. touch-action: pan-y lets vertical pan     */}
+      {/* gestures pass through to the engine's scroll container below.       */}
       {/* ================================================================== */}
       <div className="flex-shrink-0 px-4 pt-2 pb-2">
-        <button
-          type="button"
+        <div
+          role="button"
+          tabIndex={0}
           aria-label="HNH BOYS HAVE FUN. Tap to browse the shop."
           onClick={() => handleEngineSwitch('shop')}
-          className="block relative w-full overflow-hidden rounded-2xl border border-white/5 active:opacity-90 transition-opacity"
-          style={{ aspectRatio: '16 / 9', background: '#0a0a0a' }}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleEngineSwitch('shop'); } }}
+          className="relative w-full overflow-hidden rounded-2xl border border-white/5 active:opacity-90 transition-opacity cursor-pointer"
+          style={{ paddingTop: '56.25%', background: '#0a0a0a', touchAction: 'pan-y' }}
         >
           {!heroImgFailed && (
             <img
@@ -593,7 +600,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
               </p>
             </div>
           )}
-        </button>
+        </div>
       </div>
 
       {/* ================================================================== */}
@@ -659,4 +666,5 @@ export function MarketMode({ className = '' }: MarketModeProps) {
 }
 
 export default MarketMode;
+
 
