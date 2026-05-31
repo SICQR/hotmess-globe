@@ -163,8 +163,18 @@ const LEGACY_PAGE_ROUTE_ALLOWLIST = new Set([
   'Calendar',
   'Scan',
   'Community',
+  'CommunityGuidelines',
   'Leaderboard',
   'AdminDashboard',
+  // Phil 2026-05-31 hotfix: Settings page (and others) link to these via
+  // createPageUrl('PageName') -> /PageName. Without entry here the legacy
+  // route handler 404s and the gate chain bounces the user to '/'.
+  'HelpCenter',
+  'Contact',
+  'PrivacyPolicy',
+  'TermsOfService',
+  'AccountConsents',
+  'AccountDeletion',
   // Business pages
   'PromoterDashboard',
   'BusinessDashboard',
