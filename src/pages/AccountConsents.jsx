@@ -88,7 +88,7 @@ export default function AccountConsents() {
             <h1 className="text-4xl font-medium uppercase tracking-tighter mb-2">
               WELCOME TO <span style={{ color: '#FFFFFF' }}>HOT</span><span style={{ color: '#C8962C' }}>MESS</span>
             </h1>
-            <p className="text-white/60 uppercase text-sm tracking-wider">LONDON NIGHTLIFE OS</p>
+            <p className="text-white/60 uppercase text-sm tracking-wider">A QUEER MEN&apos;S OS</p>
           </div>
 
           <div className="space-y-6 mb-8">
@@ -98,7 +98,7 @@ export default function AccountConsents() {
                 <div className="flex-1">
                   <h3 className="font-black uppercase text-lg mb-2">AGE VERIFICATION</h3>
                   <p className="text-white/60 text-sm mb-4">
-                    HOTMESS is an 18+ platform for queer nightlife. By continuing, you confirm you are at least 18 years old.
+                    HOTMESS is an 18+ platform built for gay men. By continuing, you confirm you are at least 18 years old.
                   </p>
                   <label className="flex items-center gap-3 cursor-pointer">
                     <Checkbox

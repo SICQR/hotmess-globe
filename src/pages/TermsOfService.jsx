@@ -57,23 +57,21 @@ These Terms constitute a legally binding agreement between you and HOTMESS Londo
       id: 'payments',
       title: '5. Payments & Subscriptions',
       icon: CreditCard,
-      content: `**Membership Tiers**: HOTMESS offers various membership tiers with different features and pricing. Current tiers include BASIC (free), PLUS, and CHROME.
+      content: `**Membership Tiers**: HOTMESS offers a five-tier ladder: MESS (free), HOTMESS (£7.99/month), CONNECTED (£19.99/month), PROMOTER (£44.99/month), and VENUE (£99.99/month). Each tier unlocks a specific entitlement set (Ghosted grid access, messaging, music library, beacon-drop quota, selling and event tools, venue dashboard). The current tier list and entitlements are shown on the upgrade screen and in the Help Center.
 
-**Billing**: Subscription fees are billed in advance on a recurring basis. By subscribing, you authorize us to charge your payment method automatically.
+**Billing**: Subscription fees are billed in advance on a recurring basis through Stripe. By subscribing, you authorize us to charge your payment method automatically. HOTMESS holds no funds — Stripe is the source of truth for all transactions.
 
-**Cancellation**: You may cancel your subscription at any time through your account settings. Cancellation takes effect at the end of your current billing period.
+**Cancellation**: You may cancel your subscription at any time via More → Membership. Cancellation takes effect at the end of your current billing period; you drop back to MESS automatically.
 
-**Refunds**: Subscription fees are generally non-refundable. However, we may provide refunds at our discretion in exceptional circumstances.
+**Refunds**: A full refund is available within 14 days of first purchase if you have not used the paid features. After that, subscription fees are non-refundable for partial periods. Power-ups (one-off purchases) are non-refundable once activated. See our Refund & Cancellation policy for case-by-case exceptions.
 
-**Marketplace Transactions**: Transactions through our marketplace are subject to additional terms. Sellers are responsible for fulfilling orders and complying with applicable laws.
-
-**XP & Virtual Currency**: XP and other virtual items have no real-world value and cannot be exchanged for cash. We may modify or discontinue virtual currency programs at any time.`
+**Marketplace Transactions**: Transactions through the Market (Shop, HNH MESS, Drops, Preloved) are subject to additional terms. Sellers on Preloved must hold a CONNECTED tier or higher and are responsible for fulfilling orders and complying with applicable laws.`
     },
     {
       id: 'safety',
       title: '6. Safety & Privacy',
       icon: Shield,
-      content: `**Your Safety**: Your safety is our priority. We provide tools including panic buttons, safety check-ins, and emergency contacts. However, we cannot guarantee your safety when meeting people offline.
+      content: `**Your Safety**: Your safety matters. We provide tools including Silent SOS, Trusted Contacts, safety check-ins, and the Care suite. These are best-effort and are NOT a substitute for emergency services. In a real emergency, call 999 (UK) or your local equivalent. We cannot guarantee your safety when meeting people offline.
 
 **Privacy**: Our collection and use of personal information is governed by our Privacy Policy. By using the Platform, you consent to our data practices as described in that policy.
 
@@ -163,8 +161,8 @@ These Terms constitute a legally binding agreement between you and HOTMESS Londo
 
         <div className="bg-gradient-to-r from-[#C8962C]/20 to-transparent border-l-4 border-[#C8962C] p-6 mb-8">
           <p className="text-white/80">
-            Welcome to HOTMESS. These Terms of Service govern your use of our platform. 
-            Please read them carefully. By using HOTMESS, you agree to these terms.
+            Welcome to HOTMESS — a queer men&apos;s OS built for gay men. These Terms of Service govern your use of the platform.
+            By using HOTMESS, you agree to these terms. The short, plain-text version of our terms also lives at <a href="/terms" className="text-[#C8962C] hover:text-white">/terms</a>.
           </p>
         </div>
 
