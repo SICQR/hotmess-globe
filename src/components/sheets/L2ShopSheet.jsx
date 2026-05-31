@@ -4,7 +4,7 @@
  * Refined UI: Stacked Image Gallery (no swiping), Multi-Variant Selection.
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -68,35 +68,68 @@ const handleImgError = (e) => {
 };
 
 /**
- * Image Gallery — Stacked for clarity (User request: simpler, no swiping)
+ * Image Gallery — D18 Product Sheet Layout Doctrine.
+ * Primary image lux-dominant (~70dvh cap), tappable thumbnails swap into
+ * primary. No swiping (Phil's standing call: simpler than carousel).
  */
 function ImageGallery({ images = [], alt = 'Product' }) {
+  // Active-index lets thumbnails swap into the primary slot.
+  // Phil 2026-05-31: thumbnails were decorative-only; now tappable.
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  // Reset to first image whenever the product changes.
+  useEffect(() => { setActiveIdx(0); }, [images?.[0]]);
+
   if (!images?.length) return (
     <div className="aspect-square max-h-[300px] w-full bg-[#0A0A0B] flex items-center justify-center mx-auto rounded-2xl border border-white/5">
       <ShoppingBag className="w-12 h-12 text-white/5" />
     </div>
   );
 
+  const safeIdx = Math.min(activeIdx, images.length - 1);
+  const primaryUrl = images[safeIdx];
+  // Show every OTHER image as a thumbnail (full set, minus the one in primary).
+  const thumbs = images
+    .map((url, i) => ({ url, i }))
+    .filter(x => x.i !== safeIdx);
+
   return (
-    <div className="space-y-4 max-w-[600px] mx-auto px-4 mt-6">
-      {/* Primary Image — D18 Product Sheet Layout Doctrine:
-          Zone B is bounded at 45dvh so the buy dock (Zone D) is ALWAYS
-          visible. No full-bleed product images — the user must be able
-          to decide to buy without scrolling. Phil 2026-05-31. */}
+    <div className="space-y-4 max-w-[600px] mx-auto px-4 mt-4">
+      {/* Primary Image — D18 Zone B. Lux-dominant.
+          Image capped at 70dvh so buy dock (Zone D) is ALWAYS visible
+          but the image gets the full luxury feel Phil asked for. */}
       <div
         className="rounded-2xl overflow-hidden bg-black border border-white/5"
-        style={{ aspectRatio: '1 / 1', maxHeight: '45dvh' }}
+        style={{ aspectRatio: '1 / 1', maxHeight: '70dvh' }}
       >
-        <img src={images[0]} alt={alt} className="w-full h-full object-contain" onError={handleImgError} />
+        <img
+          key={`primary-${safeIdx}`}
+          src={primaryUrl}
+          alt={alt}
+          className="w-full h-full object-contain"
+          onError={handleImgError}
+        />
       </div>
 
-      {/* Secondary Grid */}
-      {images.length > 1 && (
+      {/* Tappable thumbnails — tap to swap into primary slot. */}
+      {thumbs.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
-          {images.slice(1).map((url, i) => (
-            <div key={i} className="aspect-square rounded-xl overflow-hidden bg-black border border-white/5">
-              <img src={url} alt={`${alt} ${i+2}`} className="w-full h-full object-cover" loading="lazy" onError={handleImgError} />
-            </div>
+          {thumbs.map(({ url, i }) => (
+            <button
+              key={i}
+              type="button"
+              aria-label={`Show image ${i + 1}`}
+              onClick={() => setActiveIdx(i)}
+              className="aspect-square rounded-xl overflow-hidden bg-black border border-white/10 hover:border-white/30 active:scale-95 transition-all"
+            >
+              <img
+                src={url}
+                alt={`${alt} ${i + 1}`}
+                className="w-full h-full object-cover"
+                loading="lazy"
+                onError={handleImgError}
+              />
+            </button>
           ))}
         </div>
       )}
@@ -172,6 +205,14 @@ export default function L2ShopSheet({ handle, product: initialPropProduct, selle
   }, [handleProd, handle, products]);
 
   const activeProduct = selectedProduct || initialPropProduct || handleMatch;
+
+  // Phil 2026-05-31 D18 follow-up: kill the "PRODUCT" header in the title bar.
+  // When the sheet is opened directly with a product (ShopEngine taps a card),
+  // the title bar should carry the product NAME, not the literal word "PRODUCT".
+  // updateSheetProps drives L2SheetContainer's <h2 id="sheet-title">.
+  useEffect(() => {
+    if (activeProduct?.title) updateSheetProps({ title: activeProduct.title });
+  }, [activeProduct?.title, updateSheetProps]);
 
   const handleBack = useCallback(() => {
     setSelectedProduct(null);
