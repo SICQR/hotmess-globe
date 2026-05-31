@@ -188,12 +188,39 @@ function LayoutInner({ children, currentPageName }) {
           }
         }
 
+        // Phil 2026-05-31 hotfix-4: the bouncer Phil pointed at from the
+        // start. The Layout chrome wraps these Settings-linked legacy pages
+        // (CommunityGuidelines, HelpCenter, Contact, PrivacyPolicy,
+        // TermsOfService, AccountDeletion) and previously ran the
+        // consent + onboarding + profile-completeness gates on mount. If
+        // ANY of those gates fired (e.g. user without has_consented_data
+        // navigates to /Contact from Settings), Layout pushed to
+        // OnboardingGate/AccountConsents/Profile, swallowing the
+        // navigation. These pages are HELP / LEGAL surfaces and must
+        // remain accessible regardless of consent state — they are how
+        // users find policy info, get help, or request account deletion.
+        const LAYOUT_GATE_BYPASS = new Set([
+          'AccountConsents',
+          'AgeGate',
+          'Auth',
+          'OnboardingGate',
+          'Settings',
+          'Profile',
+          // Help + legal pages — accessible regardless of consent state.
+          'CommunityGuidelines',
+          'HelpCenter',
+          'Contact',
+          'PrivacyPolicy',
+          'TermsOfService',
+          'AccountDeletion',
+        ]);
+
         // GATEKEEPER: Block all access until consent_accepted is true.
         // /auth (currentPageName='Auth') is exempt — it's a public sign-in surface
         // and the consent check happens AFTER successful login. Without this
         // exemption, /auth bounces to AccountConsents which cascades into the
         // splash + navigate('/') chain (Phil bug report 2026-05-27).
-        if (currentPageName !== 'AccountConsents' && currentPageName !== 'AgeGate' && currentPageName !== 'Auth' && !currentUser?.consent_accepted) {
+        if (!LAYOUT_GATE_BYPASS.has(currentPageName) && !currentUser?.consent_accepted) {
           navigate(createPageUrl('AccountConsents'));
           return;
         }
@@ -201,11 +228,7 @@ function LayoutInner({ children, currentPageName }) {
         // Onboarding gate: require terms + data consent.
         // GPS consent is optional and should only gate location-based features.
         if (
-          currentPageName !== 'OnboardingGate' &&
-          currentPageName !== 'AccountConsents' &&
-          currentPageName !== 'AgeGate' &&
-          currentPageName !== 'Settings' &&
-          currentPageName !== 'Auth' &&
+          !LAYOUT_GATE_BYPASS.has(currentPageName) &&
           (!currentUser?.has_agreed_terms || !currentUser?.has_consented_data)
         ) {
           navigate(createPageUrl('OnboardingGate'));
@@ -214,12 +237,7 @@ function LayoutInner({ children, currentPageName }) {
 
         // Check if profile setup is incomplete
         if (
-          currentPageName !== 'Profile' &&
-          currentPageName !== 'Settings' &&
-          currentPageName !== 'OnboardingGate' &&
-          currentPageName !== 'AccountConsents' &&
-          currentPageName !== 'AgeGate' &&
-          currentPageName !== 'Auth' &&
+          !LAYOUT_GATE_BYPASS.has(currentPageName) &&
           (!currentUser?.full_name || !currentUser?.avatar_url)
         ) {
           const next = encodeURIComponent(`${window.location.pathname}${window.location.search || ''}`);
