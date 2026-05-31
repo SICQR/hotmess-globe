@@ -363,9 +363,16 @@ function LayoutInner({ children, currentPageName }) {
   // The full Layout chrome JSX below is preserved as dead code in case a
   // standalone-shell render is ever needed (legacy /auth surfaces, etc.)
   // but is unreachable via the production route table.
+  // Phil 2026-05-31 hotfix-6: long pages (CommunityGuidelines, HelpCenter,
+  // PrivacyPolicy, TermsOfService) need to scroll. OSArchitecture wraps
+  // AuthenticatedApp in an absolute-positioned div with bounded top/bottom
+  // and no overflow — so the scroll container has to live HERE.
+  // h-full + overflow-y-auto matches the chromed-render path's wrapper
+  // (which was `<div className="h-full overflow-y-auto bg-black text-white">`)
+  // so any page that expected to scroll inside Layout still scrolls.
   return (
-    <div className="flex flex-col min-h-full bg-black text-white overflow-x-hidden">
-      <main className="flex-1 w-full">
+    <div className="h-full overflow-y-auto overflow-x-hidden bg-black text-white">
+      <main className="min-h-full w-full">
         {children}
       </main>
     </div>
