@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/components/utils/supabaseClient';
-import { uploadToStorage } from '@/lib/uploadToStorage';
+// Phil 2026-05-31 hotfix-7: Profile-section removed from Settings.
+// uploadToStorage / Input / Camera / Save / User were only used by the
+// Profile section. Avatar + display-name editing now lives ONLY behind
+// the top-right TopHUD avatar tap.
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Bell, Shield, LogOut, Save, Camera, Download, Trash2, Database, HelpCircle, MessageSquare, FileText, Lock, Fingerprint } from 'lucide-react';
+import { Bell, Shield, LogOut, Download, Trash2, Database, HelpCircle, MessageSquare, FileText, Lock, Fingerprint } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+// import { Input } removed — only used by stripped Profile section.
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { createPageUrl, createUserProfileUrl } from '../utils';
+// createUserProfileUrl removed — only used by stripped View Profile button.
+import { createPageUrl } from '../utils';
 import { usePinLock } from '@/contexts/PinLockContext';
 
 // PIN Lock Settings Component
@@ -124,13 +128,13 @@ function PinLockSettings() {
 }
 
 export default function Settings() {
+  // Phil 2026-05-31 hotfix-7: fullName/avatarUrl/uploading state removed —
+  // profile-section is now stripped, those fields are edited via the
+  // top-right TopHUD avatar tap.
   const [user, setUser] = useState(null);
-  const [fullName, setFullName] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
   const [locationPrivacy, setLocationPrivacy] = useState('fuzzy');
   const [notifications, setNotifications] = useState(true);
   const [publicProfile, setPublicProfile] = useState(true);
-  const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -145,8 +149,6 @@ export default function Settings() {
         }
 
         setUser(currentUser);
-        setFullName(currentUser?.full_name || '');
-        setAvatarUrl(currentUser?.avatar_url || '');
         setLocationPrivacy(currentUser?.location_privacy_mode || 'fuzzy');
       } catch (error) {
         console.error('Failed to fetch user:', error);
@@ -155,37 +157,11 @@ export default function Settings() {
     fetchUser();
   }, []);
 
-  const handleAvatarUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      let { data: { user } } = await supabase.auth.getUser();
-      const publicUrl = await uploadToStorage(file, 'avatars', user.id);
-      setAvatarUrl(publicUrl);
-      const updatePayload = { avatar_url: publicUrl }; await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
-      toast.success('Avatar updated!');
-    } catch (error) {
-      console.error('Upload failed:', error);
-      toast.error('Couldn\'t upload avatar. Try again or pick another photo.');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleSave = async () => {
-    try {
-      const updatePayload = { 
-        full_name: fullName,
-        location_privacy_mode: locationPrivacy
-      }; let { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
-      toast.success('Settings saved successfully');
-    } catch (error) {
-      console.error('Failed to save:', error);
-      toast.error('Couldn\'t save settings. Try again.');
-    }
-  };
+  // Phil 2026-05-31 hotfix-7: handleAvatarUpload + handleSave removed.
+  // Avatar upload is now exclusively on the top-right TopHUD avatar tap.
+  // Settings page's surviving toggles (location privacy, notifications,
+  // public profile, etc.) persist themselves via their own onChange
+  // handlers below — no top-level Save Changes button.
 
   const handleLogout = () => {
     supabase.auth.signOut();
@@ -214,92 +190,14 @@ export default function Settings() {
           <p className="text-white/60">Manage your account and preferences</p>
         </motion.div>
 
-        {/* Profile Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <User className="w-5 h-5 text-[#C8962C]" />
-            <h2 className="text-xl font-bold uppercase tracking-wider">Profile</h2>
-          </div>
-
-          <div className="space-y-6">
-            {/* Avatar Upload */}
-            <div>
-              <label className="text-sm text-white/60 uppercase tracking-wider mb-3 block">
-                Profile Picture
-              </label>
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center overflow-hidden">
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-2xl font-bold">{user.full_name?.[0] || 'U'}</span>
-                  )}
-                </div>
-                <div>
-                  <Button
-                    onClick={() => document.getElementById('avatar-upload').click()}
-                    disabled={uploading}
-                    variant="outline"
-                    className="border-white/20 text-white"
-                  >
-                    <Camera className="w-4 h-4 mr-2" />
-                    {uploading ? 'Uploading...' : 'Change Avatar'}
-                  </Button>
-                  <input
-                    id="avatar-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    className="hidden"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block">
-                Full Name
-              </label>
-              <Input
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="bg-black border-white/20 text-white"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block">
-                Email
-              </label>
-              <Input
-                value={user.email}
-                disabled
-                className="bg-black/50 border-white/10 text-white/40"
-              />
-            </div>
-
-            <div className="pt-4 flex gap-3">
-              <Button onClick={handleSave} className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black">
-                <Save className="w-4 h-4 mr-2" />
-                Save Changes
-              </Button>
-              <Button
-                onClick={() => {
-                  navigate(createUserProfileUrl(user, createPageUrl('Profile')));
-                }}
-                variant="outline"
-                className="border-white/20 text-white"
-              >
-                View Profile
-              </Button>
-            </div>
-          </div>
-        </motion.div>
+        {/*
+          Phil 2026-05-31 hotfix-7: PROFILE SECTION REMOVED.
+          Profile avatar + name + email view/edit is now exclusively on
+          the top-right avatar tap (single source of truth). Settings
+          page is account preferences only — notifications, privacy,
+          membership, danger zone. Anyone reaching for profile fields
+          here taps the top-right HOTMESS-OS avatar instead.
+        */}
 
         {/* Notifications */}
         <motion.div
