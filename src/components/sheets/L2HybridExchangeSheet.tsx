@@ -13,10 +13,14 @@
  *   - D34 trajectory language: "Right here at Eagle" / "Heading to Fold"
  *     surfaces above identity. Static for PR 1 — decay logic ships in PR 4.
  *
- * NOT in PR 1 (deferred):
- *   - Contact paths (BOO / mutual / request / chat) — PR 2
- *   - Handoff completion + resolution language — PR 3
- *   - Trajectory decay + thread expiry + retention enforcement — PR 4
+ * Slice PR history:
+ *   - PR 1 — base contract (this file, original shape).
+ *   - PR 2 — Contact paths (QuietContactPanel + structured opener wiring).
+ *   - PR 3 — HandoffResolutionPanel + locked resolution vocabulary +
+ *           recordHandoffAtmosphere stub + CI vocabulary scan.
+ *   - PR 4 (THIS PR) — Trajectory decay state machine + explicit off-grid
+ *           identity guard. Persistence + backend retention enforcement
+ *           remain deferred to a follow-up infrastructure PR.
  *
  * Doctrine inheritance:
  *   - D08 Visibility: off-grid sellers' beacons surface here without
@@ -32,12 +36,16 @@
  *   - D34 Trajectory: trajectory context above identity. Beacon is the
  *     "shared trajectory" anchor, not a product.
  *
- * Acceptance tests in scope for PR 1:
- *   §5.1 — pseudonymous and disclosed sellers render identically
- *   §5.6 — off-grid seller's beacon discoverable here, no presence emitted
+ * Acceptance tests in scope (cumulative):
+ *   §5.1 — pseudonymous and disclosed sellers render identically (PR 1)
+ *   §5.2 — context survives the surface change to chat (PR 2)
+ *   §5.3 — handoff resolution uses locked vocabulary (PR 3)
+ *   §5.4 — trajectory line decays through 'fresh' → 'recent' → 'gone' (PR 4)
+ *   §5.5 — CI text-scan blocks marketplace verbs in surface copy (PR 3)
+ *   §5.6 — off-grid seller's beacon discoverable here, no presence emitted (PR 4)
  *
- * Feature flag (PR 1): VITE_CONVERGENCE_HYBRID_SHEET. Default off. The
- * 'hybrid_exchange' sheet route is mounted only when the flag is true.
+ * Feature flag is unconditionally on as of PR 3 (#735). Convergence is now
+ * a default surface; the flag remains in source as a kill-switch only.
  */
 
 import React from 'react';
@@ -47,6 +55,10 @@ import {
   RESOLUTION_COPY,
   type ResolutionState,
 } from '@/lib/atmospheric';
+import {
+  getTrajectoryDecayState,
+  getSoftenedTrajectoryLine,
+} from '@/lib/trajectoryDecay';
 
 // PR 1 props are minimal by design. The shape will expand surgically in
 // PR 2 (contact paths) and PR 3 (handoff). Do not preemptively add fields.
@@ -63,6 +75,10 @@ interface HybridExchangeBeacon {
   trajectoryContext?: string;
   // Coarse-grained venue / district label, optional.
   venueLabel?: string;
+  // PR 4: beacon creation timestamp drives trajectory decay (D22 §3, D34
+  // §4.5). Accepts Date | ISO string | epoch ms. Optional — when absent
+  // the line renders 'fresh' (no decay information available).
+  createdAt?: string | number | Date;
 }
 
 interface HybridExchangeSeller {
@@ -88,23 +104,38 @@ interface L2HybridExchangeSheetProps {
 }
 
 /**
- * The trajectory line is the emotional differentiator. PR 1 renders it
- * static, derived from beacon.trajectoryContext or beacon.venueLabel.
+ * The trajectory line is the emotional differentiator. PR 4 wires decay:
+ *   - fresh  (<24h) — render verbatim ("Heading to Fold")
+ *   - recent (<7d)  — render softened phrase ("Crossed recently")
+ *   - gone   (≥7d)  — render nothing (the line disappears)
  *
- * D34 §4.5 binding: the line softens over time (PR 4 decay). For PR 1,
- * the line either renders verbatim or doesn't render at all. No mid-state
- * yet — PR 1 proves the slot exists.
+ * Decay state is computed from beacon.createdAt by getTrajectoryDecayState
+ * (D22 §3, D34 §4.5). The 'recent' state intentionally strips the venue
+ * specifics — D22 §4 atmospheric memory is allowed to remember "Vauxhall
+ * was alive" in aggregate, but individual trajectory must blur.
  */
 function TrajectoryContextLine({ beacon }: { beacon: HybridExchangeBeacon }) {
-  const text = beacon.trajectoryContext
-    || (beacon.venueLabel ? `Near ${beacon.venueLabel}` : null);
+  const decay = getTrajectoryDecayState(beacon.createdAt ?? null);
+  if (decay === 'gone') return null;
+
+  const text = decay === 'recent'
+    ? getSoftenedTrajectoryLine()
+    : (beacon.trajectoryContext
+        || (beacon.venueLabel ? `Near ${beacon.venueLabel}` : null));
+
   if (!text) return null;
+
+  // Visual register softens in the 'recent' state — same DOM, lower
+  // contrast. The user perceives memory fading, not a switch.
+  const toneClass = decay === 'recent' ? 'text-white/30' : 'text-white/60';
+
   return (
     <div className="px-5 pt-4 pb-2">
       <div
-        className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60"
+        className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${toneClass}`}
         // The trajectory line carries human gravity, not navigation gravity
         // (D34 §3.6). Render quietly — no icon, no chrome, no animation.
+        data-decay={decay}
       >
         {text}
       </div>
@@ -119,14 +150,59 @@ function TrajectoryContextLine({ beacon }: { beacon: HybridExchangeBeacon }) {
  * "Philip Gizzie" must render identically. Same font, same weight, same
  * spacing. No badge, no tier, no pip, no "verified" chrome of any kind.
  *
- * Off-grid suppression: visibilityState !== 'public' renders no presence
- * indicators. PR 1 already renders none — this is a forward-compatibility
- * note for PR 4 hardening.
+ * OFF-GRID PRESENCE GUARD (PR 4, §5.6):
+ *
+ * D08 + D19 §1 bind: an off-grid seller's beacon is discoverable on the
+ * hybrid sheet, but the seller emits no presence signal. The list of
+ * affordances forbidden by this rule — even when the seller is public —
+ * is captured below as a structural reminder. The render path is
+ * presence-blind by construction; this list exists so that any future
+ * contributor adding affordances has to explicitly violate the doctrine.
+ *
+ * In dev mode a runtime assertion checks the seller object never carries
+ * a banned field. If it does, we console.error rather than crash — the
+ * hybrid sheet must always reach the user — but the noise is loud enough
+ * to surface in code review and the doctrine test sweep.
  */
+const BANNED_PRESENCE_FIELDS = [
+  'isOnline',
+  'online',
+  'lastActive',
+  'last_seen',
+  'lastSeen',
+  'isTyping',
+  'typing',
+  'presenceStatus',
+] as const;
+
+function assertNoPresenceLeakage(seller: HybridExchangeSeller) {
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production') return;
+  const leaks = BANNED_PRESENCE_FIELDS.filter(
+    (k) => Object.prototype.hasOwnProperty.call(seller, k),
+  );
+  if (leaks.length === 0) return;
+  // eslint-disable-next-line no-console
+  console.error(
+    '[L2HybridExchangeSheet] D08 + D19 §1 violation: presence field(s) ' +
+      leaks.join(', ') +
+      ' reached IdentityStrip. Hybrid sheet must not surface presence. ' +
+      'See docs/doctrine/slices/convergence-v1.md §5.6.',
+  );
+}
+
 function IdentityStrip({ seller }: { seller: HybridExchangeSeller }) {
+  assertNoPresenceLeakage(seller);
+
   const initials = seller.displayName.slice(0, 2).toUpperCase();
+  const isOffGrid = seller.visibilityState && seller.visibilityState !== 'public';
+
   return (
-    <div className="px-5 pt-1 pb-4 flex items-center gap-3">
+    <div
+      className="px-5 pt-1 pb-4 flex items-center gap-3"
+      // QA hook: assert this attribute renders true for off-grid sellers.
+      // It is NOT a styling hook (no visible difference between states).
+      data-presence-suppressed={isOffGrid ? 'true' : 'false'}
+    >
       <div
         className="w-12 h-12 rounded-full bg-white/[0.06] border border-white/10 overflow-hidden flex items-center justify-center"
         aria-hidden={true}
@@ -141,6 +217,8 @@ function IdentityStrip({ seller }: { seller: HybridExchangeSeller }) {
         ) : (
           <span className="text-[12px] font-bold text-white/40">{initials}</span>
         )}
+        {/* INTENTIONAL ABSENCE — no online dot, no presence ring, no
+            last_active label. D08 + D19 §1 + D20 §5.3. Do not add. */}
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-[15px] font-semibold text-white leading-tight truncate">
@@ -154,7 +232,10 @@ function IdentityStrip({ seller }: { seller: HybridExchangeSeller }) {
         {/* D20 §5.3 — no verification chrome rendered, even conditionally.
             Future contributors: do NOT add a "verified seller" affordance here.
             The visual symmetry between pseudonymous and disclosed sellers is
-            the acceptance test for this PR. */}
+            the acceptance test for this PR.
+
+            D08 §5.6 — no "Active 2h ago", no "Typing…", no "Last seen".
+            The strip ends at handle. Anything further is a presence leak. */}
       </div>
     </div>
   );
