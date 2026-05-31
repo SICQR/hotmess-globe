@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { requestGeoPermissionOnce } from '@/lib/geo/sharedGeolocation';
 
 const haversineMeters = (a, b) => {
   if (!a || !b) return Infinity;
@@ -124,41 +125,77 @@ export default function useLiveViewerLocation({
       if (code === 'denied') setLocation(null);
     };
 
-    if (shouldUseWatchPosition) {
-      watchId = navigator.geolocation.watchPosition(onPosition, onError, {
-        enableHighAccuracy,
-        timeout: timeoutMs,
-        maximumAge: maximumAgeMs,
-      });
-    } else {
-      // Apple desktop (CoreLocation) can spam the console with kCLErrorLocationUnknown
-      // when using watchPosition. Use low-frequency polling instead.
-      const poll = () => {
-        try {
-          navigator.geolocation.getCurrentPosition(onPosition, (err) => {
-            // Stop polling if permission is explicitly denied.
-            if (err?.code === 1 && intervalId != null) {
-              try {
-                clearInterval(intervalId);
-              } catch {
-                // ignore
-              }
-              intervalId = null;
-            }
-            onError(err);
-          }, {
-            enableHighAccuracy,
-            timeout: timeoutMs,
-            maximumAge: maximumAgeMs,
-          });
-        } catch {
-          // ignore
-        }
-      };
+    const geoOpts = {
+      enableHighAccuracy,
+      timeout: timeoutMs,
+      maximumAge: maximumAgeMs,
+    };
 
-      poll();
-      intervalId = setInterval(poll, Math.max(2_500, minUpdateMs));
-    }
+    // Phil 2026-05-31 hotfix — duplicate GPS prompt on /pulse first-entry.
+    //
+    // Pre-warm via sharedGeolocation.requestGeoPermissionOnce so the OS
+    // permission prompt rides the same in-flight promise as any concurrent
+    // caller (safeGetViewerLatLng on Globe.jsx mount, beacon-drop GPS
+    // shortcut, presence heartbeat, etc.). Once permission resolves we
+    // start watchPosition/polling — at that point the browser has the
+    // permission cached and watchPosition does not re-prompt.
+    //
+    // Net effect: a single OS prompt on first-entry instead of two,
+    // and the prewarm fix surfaces immediately to the consumer state
+    // so the map / self-marker don't wait for the first watch tick.
+    requestGeoPermissionOnce(geoOpts).then((pos) => {
+      if (cancelled) return;
+
+      // Surface the prewarm fix immediately if we got one. This lets the
+      // Globe self-marker render at the right coordinate on first paint
+      // instead of waiting for the watchPosition / poll to settle.
+      const prewarmLat = pos?.coords?.latitude;
+      const prewarmLng = pos?.coords?.longitude;
+      if (Number.isFinite(prewarmLat) && Number.isFinite(prewarmLng)) {
+        acceptIfAllowed({ lat: prewarmLat, lng: prewarmLng });
+      } else if (pos === null) {
+        // sharedGeolocation returned null — denial / unavailable. Surface
+        // the error state for callers that care; watch/poll below will
+        // also surface its own onError, but this short-circuits the
+        // common case so we don't sit in 'watching' status forever.
+        setStatus('denied');
+        setError({ code: 'denied' });
+        setLocation(null);
+        // Do NOT start watch/poll — they would just spin against a denied
+        // permission. The user re-enabling location will re-mount the hook.
+        return;
+      }
+
+      if (cancelled) return;
+
+      if (shouldUseWatchPosition) {
+        watchId = navigator.geolocation.watchPosition(onPosition, onError, geoOpts);
+      } else {
+        // Apple desktop (CoreLocation) can spam the console with kCLErrorLocationUnknown
+        // when using watchPosition. Use low-frequency polling instead.
+        const poll = () => {
+          try {
+            navigator.geolocation.getCurrentPosition(onPosition, (err) => {
+              // Stop polling if permission is explicitly denied.
+              if (err?.code === 1 && intervalId != null) {
+                try {
+                  clearInterval(intervalId);
+                } catch {
+                  // ignore
+                }
+                intervalId = null;
+              }
+              onError(err);
+            }, geoOpts);
+          } catch {
+            // ignore
+          }
+        };
+
+        poll();
+        intervalId = setInterval(poll, Math.max(2_500, minUpdateMs));
+      }
+    });
 
     return () => {
       cancelled = true;
