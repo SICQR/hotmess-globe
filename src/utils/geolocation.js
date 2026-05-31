@@ -1,4 +1,5 @@
 import logger from '@/utils/logger';
+import { requestGeoPermissionOnce, geoPermissionState } from '@/lib/geo/sharedGeolocation';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -19,10 +20,40 @@ const shouldRetryError = (norm) => {
   return norm.reason === 'unavailable' || norm.reason === 'timeout';
 };
 
-const getCurrentPositionOnce = (options) => {
-  return new Promise((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(resolve, reject, options);
-  });
+// Phil 2026-05-31 hotfix — duplicate GPS prompt on /pulse first-entry.
+//
+// Was: direct navigator.geolocation.getCurrentPosition. When this util and
+// useLiveViewerLocation (or any other geolocation hook) both fired on the
+// same first-mount, iOS Safari queued separate OS prompts — the user saw
+// the same permission request twice and the map race during the second
+// prompt produced a visual glitch.
+//
+// Now: route through sharedGeolocation.requestGeoPermissionOnce so all
+// callers coalesce into a single in-flight promise. Cached positions (≤60s
+// old) skip the prompt entirely. On denial / unavailability we synthesise
+// a PositionError-shaped object so the retry/backoff loop above can
+// distinguish denial (no retry) from transient errors (retry).
+//
+// sharedGeolocation.ts already documented this pattern: "useRealtimeLocations
+// were double-prompting on iOS" — the fix existed at the shared layer but
+// safeGetViewerLatLng was still bypassing it. This hotfix routes the legacy
+// path through the dedup mechanism without changing safeGetViewerLatLng's
+// public contract.
+const getCurrentPositionOnce = async (options) => {
+  const pos = await requestGeoPermissionOnce(options);
+  if (pos) return pos;
+
+  // Null = denied / unavailable / timeout. Differentiate via Permissions API
+  // so we throw the right code for the retry decision. Without this, every
+  // null would be treated as retryable and the loop would spin on denial.
+  let state = 'unknown';
+  try {
+    state = await geoPermissionState();
+  } catch {
+    // permissions API unavailable; assume transient
+  }
+  const code = state === 'denied' ? 1 : 2; // 1 = denied (no retry), 2 = unavailable (retry)
+  throw Object.assign(new Error(`Geolocation ${state}`), { code });
 };
 
 export const getLatLngFromPosition = (pos) => {
