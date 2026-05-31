@@ -186,7 +186,7 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
         metadata: { title: title.trim(), intent: intentSpec.id, intent_label: intentSpec.label }
       });
       if (error) throw error;
-      toast.success('Beacon dropped on the globe!');
+      toast.success('Beacon dropped on Pulse.');
       // Optimistic decrement so the chip reflects the new state immediately.
       setQuota((prev) => prev && !prev.unlimited ? { ...prev, used: prev.used + 1, remaining: Math.max((prev.remaining ?? 0) - 1, 0) } : prev);
       trackEvent('beacon_dropped', {
@@ -358,8 +358,7 @@ export default function BeaconDropModal({ isOpen, onClose, onComplete, location 
             <div className="bg-white/5 border border-white/5 rounded-2xl p-4 mb-8 flex gap-3">
               <Info className="w-5 h-5 text-[#C8962C] flex-shrink-0 mt-0.5" />
               <p className="text-white/60 text-xs leading-relaxed">
-                Dropping a beacon alerts other members to your location for the next <span className="text-white">4 hours</span>. 
-                Use this to find friends or coordinate meetups.
+                Your beacon shows on Pulse for the next <span className="text-white">4 hours</span>, then decays. Boys nearby see the intent you pick — looking, hosting, cruising, aftercare, quiet hold.
               </p>
             </div>
 
