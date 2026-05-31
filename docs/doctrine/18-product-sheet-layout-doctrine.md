@@ -113,7 +113,27 @@ Editorial drives the emotion. The dock converts it.
 
 ---
 
-## 7. Cross-references
+## 7. Media hierarchy (locked 2026-05-31)
+
+This section overrides the earlier "bottle is the correct 'what am I buying' image" stance from PR #394. That call was solving a different problem ("people don't understand what they're buying") on a product surface that was less mature. The surface evolved: PR #722 added tappable thumbnails, the carousel behaves like an editorial rail, the campaign work itself got materially stronger, and HOTMESS identity sharpened through D15 / D262 / Slice A. The hierarchy is now sequenced, not flattened.
+
+**Hard rule.** Product imagery *validates* the purchase. Campaign imagery *creates the desire*. Lead with desire, validate with utility, never the reverse.
+
+**Media order — every product sheet:**
+
+1. **Campaign / editorial hero** — emotion, identity, world-building, aspiration. The "I want to be inside this universe" image. ("HNH BOYS HAVE FUN", sweaty locker room, post-club tension.) Lives in Zone B as the primary image.
+2. **Clean product shot** — bottle, garment, packaging. First thumbnail. The "what is it / what does it look like" reassurance — one tap from primary.
+3. **Product detail / macro** — texture, label, ingredients, stitching. Second thumbnail. Premium signals, trust signals.
+4. **Lifestyle or texture** — application, hand-on-product, environmental crop. Third thumbnail.
+5. **Secondary campaign crop** (optional) — another moment from the same world.
+
+**Why this is the right hierarchy for HOTMESS.** Bottle-first reads as "here is a lubricant" — a utility. Campaign-first reads as "this is a world, and the product belongs to it." For queer men's products the emotional buy is identity + atmosphere first, utility second. This is how lux fashion, nightlife, and drop culture actually behave.
+
+**What this is NOT.** It is not "5 editorial shots, no packaging clarity." That becomes fashion cosplay instead of commerce. The bottle stays. It's sequenced behind the campaign, one tap away in the thumb rail, but it stays. If a product sheet ships with no clear product shot in the thumbs, that fails D18 §7.
+
+**Implementation contract.** The media order is enforced by the source ordering — `featuredImage` / first item in `images` array is the campaign; subsequent items are the utility set. Sequencing happens in the data layer (Shopify product admin / cover_image_url field on Preloved), not in the resolver. The resolver respects what the data says. Future contributors: do NOT add a "campaign vs bottle" classifier in code; the truth lives upstream.
+
+## 8. Cross-references
 
 - **D07 Visual Hierarchy** — buy CTAs are the high-priority surface; they must read at glance.
 - **D16 Surface Layer Doctrine** — Zone D dock lives in the sheet's own absolute layer; it does not conflict with the global shield/FAB stack.
@@ -122,7 +142,7 @@ Editorial drives the emotion. The dock converts it.
 
 ---
 
-## 8. Acceptance test
+## 9. Acceptance test
 
 A product sheet passes D18 if, and only if, at every moment from the first frame after open through any scroll position to the last frame before dismiss, the ADD TO BAG and BUY NOW buttons are both visible on the user's screen with readable contrast.
 

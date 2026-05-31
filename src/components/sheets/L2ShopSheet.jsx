@@ -29,11 +29,28 @@ const getProductPrice = (p) => {
   return parseFloat(p.price || 0);
 };
 
-// Product image resolver — Phil 2026-05-30: REVERTED brand-asset overrides.
-// Shopify bottle photography is the correct "what am I buying" image for
-// HNH MESS lube SKUs. Campaign photography belongs on brand surfaces
-// (banners, hero blocks, landing strips) — NOT replacing the product
-// shot a customer needs to recognise the item. See tasks #282 / #290 / #394.
+// Product image resolver — Phil 2026-05-31, D18 §7 Media Hierarchy.
+//
+// REVERSAL of PR #394's bottle-first call. That decision solved an earlier
+// problem ("people don't understand what they're buying") on a less mature
+// product surface. The surface has since evolved (tappable thumbs from #722,
+// editorial-rail carousel behaviour, sharpened HOTMESS identity through D15
+// and D262, stronger campaign work). The hierarchy is now SEQUENCED:
+//
+//   1. Campaign / editorial hero  (Zone B primary — desire)
+//   2. Clean product shot          (first thumb — validation)
+//   3. Detail / macro              (second thumb — premium signals)
+//   4. Lifestyle / texture         (third thumb)
+//   5. Secondary campaign crop     (optional, fourth thumb)
+//
+// D18 §7 hard rule: product imagery VALIDATES the purchase; campaign imagery
+// CREATES the desire. Lead with desire, validate with utility.
+//
+// IMPORTANT: the resolver respects whatever order the data gives. Sequencing
+// happens upstream — Shopify product admin / cover_image_url. Do NOT add a
+// "campaign vs bottle" classifier in code. The truth lives in the data.
+// If a HOTMESS-branded product surfaces a utility-first hero, fix it in
+// Shopify by reordering images (campaign first), not in this resolver.
 const getProductImages = (p) => {
   if (!p) return [];
   // Priority 1: cover_image_url (Preloved schema)
