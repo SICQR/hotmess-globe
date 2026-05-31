@@ -645,7 +645,18 @@ function OSArchitecture() {
   const ptrLocation = useLocation();
   const ptrAllowlist = ['/ghosted'];
   const ptrAllowed = ptrAllowlist.some(p => ptrLocation.pathname === p || ptrLocation.pathname.startsWith(p + '/'));
-  const { pullProgress, isRefreshing } = usePullToRefresh({ disabled: !ptrAllowed });
+  // Phil 2026-05-31: do NOT default to window.location.reload(). A full reload
+  // (a) drops the cached geo position, which makes some browsers re-surface
+  // the consent UI, and (b) flips useGPS from null → resolved which switches
+  // useGhostedGrid from `recent` (many users) to `nearby` (location-filtered)
+  // mid-render — Phil's grid "collapsed to TELEGRAM TEST". Dispatch an event
+  // instead; GhostedMode listens and calls useGhostedGrid.refetch() in place.
+  const { pullProgress, isRefreshing } = usePullToRefresh({
+    disabled: !ptrAllowed,
+    onRefresh: () => {
+      try { window.dispatchEvent(new CustomEvent('hm:ptr-refresh', { detail: { path: ptrLocation.pathname } })); } catch { /* noop */ }
+    },
+  });
 
 
   // Part B: Sync location on app open (once per mount)

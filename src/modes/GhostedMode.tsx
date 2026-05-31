@@ -46,13 +46,26 @@ export default function GhostedMode() {
   // to recent if no GPS yet.
   const tab = position?.lat != null && position?.lng != null ? 'nearby' : 'recent';
   const [activeFilter, setActiveFilter] = React.useState<string | null>(null);
-  const { cards, isLoading } = useGhostedGrid(
+  const { cards, isLoading, refetch } = useGhostedGrid(
     tab,
     position?.lat ?? null,
     position?.lng ?? null,
     activeFilter,
   );
-  
+
+  // Phil 2026-05-31: Global PTR used to fall through to window.location.reload()
+  // which (a) wiped the cached geo position and re-surfaced the consent UI on
+  // some browsers, and (b) flipped useGPS from null → resolved which switched
+  // useGhostedGrid from `recent` (many users) to `nearby` (location-filtered)
+  // mid-render — Phil's grid "collapsed to TELEGRAM TEST". App.jsx now
+  // dispatches `hm:ptr-refresh` instead; we refetch in place, preserving the
+  // current tab, position, and cached geo.
+  React.useEffect(() => {
+    const handler = () => { try { refetch(); } catch { /* noop */ } };
+    window.addEventListener('hm:ptr-refresh', handler as EventListener);
+    return () => window.removeEventListener('hm:ptr-refresh', handler as EventListener);
+  }, [refetch]);
+
   const [myUserId, setMyUserId] = React.useState<string | null>(null);
   const [myEmail, setMyEmail] = React.useState<string | null>(null);
 
