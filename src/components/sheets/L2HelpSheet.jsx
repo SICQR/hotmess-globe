@@ -10,7 +10,7 @@ import { useSheet } from '@/contexts/SheetContext';
 const FAQ = [
   {
     q: 'How does Ghosted work?',
-    a: 'Ghosted shows you people who are online and nearby right now. Set your Right Now status to let others know what you\'re up to — then swipe, chat, and meet up.',
+    a: 'Ghosted shows you boys who are online and nearby right now. Set your Right Now status to let others know what you\'re up to — then tap, boo, chat, and meet up.',
   },
   {
     q: 'How do I set my Right Now status?',
@@ -30,7 +30,7 @@ const FAQ = [
   },
   {
     q: 'How do I block or report someone?',
-    a: 'Tap their profile → tap ··· in the top right → Block or Report. Blocked users can\'t see your profile or message you. Reports go to our moderation team.',
+    a: 'Tap their profile → tap ··· in the top right → Block or Report. Blocked accounts can\'t see your profile or message you. Reports go to the HOTMESS moderation team.',
   },
   {
     q: 'How do I delete my account?',
@@ -76,13 +76,13 @@ export default function L2HelpSheet() {
             <Send className="w-4 h-4 text-[#C8962C]" />
           </div>
           <div className="flex-1">
-            <p className="text-white font-bold text-sm">Contact Support</p>
-            <p className="text-white/40 text-xs">Submit a ticket for bugs, questions, or safety</p>
+            <p className="text-white font-bold text-sm">Contact</p>
+            <p className="text-white/40 text-xs">Tell us what's going on — bugs, questions, safety.</p>
           </div>
           <ExternalLink className="w-4 h-4 text-white/20" />
         </button>
         <a
-          href="mailto:support@hotmess.app"
+          href="mailto:support@hotmess.london"
           className="w-full bg-[#1C1C1E] rounded-2xl p-4 flex items-center gap-3 hover:bg-white/5 transition-colors"
         >
           <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
@@ -90,7 +90,7 @@ export default function L2HelpSheet() {
           </div>
           <div className="flex-1">
             <p className="text-white font-bold text-sm">Email Support</p>
-            <p className="text-white/40 text-xs">support@hotmess.app</p>
+            <p className="text-white/40 text-xs">support@hotmess.london</p>
           </div>
           <ExternalLink className="w-4 h-4 text-white/20" />
         </a>
@@ -123,7 +123,7 @@ export default function L2HelpSheet() {
 
       <div className="px-4 pb-6 text-center">
         <p className="text-white/20 text-[10px]">
-          HOTMESS · support@hotmess.app · Made with chaos in London
+          HOTMESS · support@hotmess.london · Made with chaos in London
         </p>
       </div>
     </div>
