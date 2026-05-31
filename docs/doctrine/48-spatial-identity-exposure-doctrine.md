@@ -31,7 +31,7 @@ This is the entire doctrine in one sentence. Every other section is the conseque
 The sentence reframes three things at once:
 1. **Avatar rendering** is not visual decoration; it is a social act.
 2. **Consent** is not a checkbox; it is participation in a specific social register.
-3. **The globe** is not a map carrying decoration; it is a space where social acts happen.
+3. **The globe** is not a map-carrying decoration; it is a space where social acts happen.
 
 When the principle holds, every surface that places identity in spatial context can be evaluated against a single question: *what social act is the user being asked to perform here, and have they consented to perform it?* When the principle is honoured the globe stays trustworthy. When it breaks, the globe becomes a venue where users were exposed without choosing to be.
 
@@ -70,7 +70,7 @@ For Human Presence, four exposure registers exist in increasing order of identit
 3. **Face avatar** — single photo, identity present. The recognisable register. Used when intent + viewer trust + per-surface consent all permit.
 4. **Full reveal** — multi-photo, profile in sheet-world only. Never in-world. The user has chosen to engage with this person via the profile sheet; the full identity surface unlocks there.
 
-Movement up the spectrum requires earning each step. Movement down the spectrum is always permissible — a more-protective render is never a violation; a less-protective render without the consent ladder having been climbed always is.
+Movement up the spectrum requires earning each step. Movement down the spectrum is always permissible — a more-protective render is never a violation; a less-protective render without first climbing the consent ladder always is.
 
 ---
 
@@ -82,11 +82,13 @@ The semantic test case: *an aftercare cluster showing recognisable faces by defa
 
 ### §3.1 The per-intent matrix (locked)
 
+For every intent except aftercare, the "opt-in available?" column names the **per-surface consent gate** — one of the four gates defined in §3.3. The default exposure register is what the system renders when the user has *not* opted in for the surface; the higher register the user can climb to (when they do opt in) is bounded by all four gates passing together. Aftercare is the singular exception: the gate cannot be opened at any combination of conditions (see §3.2).
+
 | Intent | Default exposure register | Opt-in available? | Rationale |
 |---|---|---|---|
 | **Aftercare offered** | Anonymous | **No — structurally forbidden** | Aftercare is care infrastructure, not social signalling. Faces transform care into performance. See §3.2. |
-| **Cruising** | Intent-routed (per §3.3) | N/A — exposure is gated by viewer trust + zoom, not toggled | The "who's there?" tension IS the social act. Aggregating to count erases the act; defaulting to face exposes too far. The register surfaces *to mutuals and at proximity*, aggregates at distance. |
-| **Hosting** | Intent-routed (per §3.3) | N/A — same gating as cruising | Identity is part of the offering, but the offering is to a specific audience; faces surface to mutuals and at proximity, aggregate to strangers and at distance. |
+| **Cruising** | Intent-routed (per §3.3) | Yes — per surface, gated alongside viewer trust + proximity + zoom (§3.3) | The "who's there?" tension IS the social act. Aggregating to count erases the act; defaulting to face exposes too far. With opt-in given, the register surfaces *to mutuals and at proximity*, aggregates at distance — but never without consent. Dropping a cruising beacon is not the same act as consenting to face exposure; those acts must remain separable. |
+| **Hosting** | Intent-routed (per §3.3) | Yes — per surface, same four-gate model as cruising (§3.3) | Identity is part of the offering, but the offering is to a specific audience; with opt-in given, faces surface to mutuals and at proximity, aggregate to strangers and at distance. Without opt-in, the offering renders at the default register and no face surfaces regardless of viewer trust or proximity. |
 | **Quiet hold** | Anonymous | Yes — user can opt in per-surface | A low-key, around-if-needed register. The default mirrors the intent's register; the user owns the choice to surface. |
 | **Arriving** | Persona shape | Yes — user can opt in per-surface | Transient signal. Persona shape (not face) is the honest default; the user can climb the spectrum if they want. |
 | **Selling/swap** | Anonymous | Yes — user can opt in per-surface | Semi-commercial; the listing is the offering, not the seller's face. Opt-in available for sellers who want to add a face to the listing. |
@@ -144,6 +146,18 @@ The opt-in language must name the *social act*, not the *technical action*. Exam
 The user's consent is to the social register, not to the data flow. The doctrine forbids consent language that frames the choice as a settings toggle abstracted from social meaning.
 
 Consents are revocable in real time. A user revoking face-avatar consent on cruising means their face stops appearing in cruising-mode cluster previews and hover chips on the next render. No retroactive privacy debt; revocation is forward-secret per D22 (Temporal Doctrine).
+
+### §5.1 The Canonical Evaluation Question
+
+Every surface that places identity in spatial context — cluster preview, hover chip, selectedHalo, photo marker, BeaconA11yList row, future surfaces not yet built — must be evaluable against a single question:
+
+> **Did the user opt into face exposure for this surface, at this intent, under these conditions?**
+
+The four conditions are the §3.3 gates (viewer trust, proximity, zoom, per-surface consent). The intent is the §3.1 matrix row. The surface is the named locus where identity will render. The user's opt-in is the §5 contract.
+
+If any of those four returns "no", the render steps down the spectrum (§2) until it returns "yes" at a lower register. The default direction of the system under uncertainty is *down*, not *up* — because under D48 a more-protective render is never a violation and a less-protective render without consent always is (§2 close).
+
+This is the question to ask before any new globe surface ships. If a surface cannot answer it cleanly, the surface is not D48-compliant and must not ship.
 
 ---
 
