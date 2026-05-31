@@ -218,6 +218,22 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: false,
     deepLinkParams: ['productId'],
   },
+  // Convergence Slice v1 — beacon-contextualised exchange surface. Sits
+  // between profile and shop in surface taxonomy. Per D34 §4 + D19 §6.10.
+  // Routed only when VITE_CONVERGENCE_HYBRID_SHEET is enabled (gating
+  // lives in SheetRouter). peekFraction 0.92 matches profile/shop — opens
+  // near-expanded so the trajectory context line, identity, and listing
+  // all sit above the fold. Title is empty: the sheet derives its title
+  // from beacon context at runtime (D34 §3.2 "Context survives surface
+  // changes"). See docs/doctrine/slices/convergence-v1.md.
+  'hybrid_exchange': {
+    id: 'hybrid_exchange',
+    title: '',
+    height: 'large',
+    auth: false,
+    deepLinkParams: ['beaconId'],
+    peekFraction: 0.92,
+  },
   'cart': {
     id: 'cart',
     title: 'Cart',
