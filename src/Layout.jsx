@@ -344,14 +344,39 @@ function LayoutInner({ children, currentPageName }) {
     };
   }, [user?.has_consented_gps]);
 
-  // On OS mode routes, render children only — no old header/nav/chrome
-  // (placed after all hooks to satisfy Rules of Hooks)
-  // On OS mode routes, render children with proper safety padding so they aren't hidden by bars
+  // Phil 2026-05-31 hotfix-5: ALWAYS pass-through. OSArchitecture is the
+  // canonical chrome provider (TopHUD + OSBottomNav + SafetyFAB live inside
+  // OSArchitecture, OUTSIDE this Layout's positioning). When Layout ALSO
+  // renders its full chrome (mobile header + sidebar + bottom nav), Phil
+  // sees DOUBLE everything — duplicate HOTMESS bar, duplicate Settings link
+  // in the Layout sidebar (which already exists in OS chrome), duplicate
+  // Profile section card, duplicate bottom nav. That's "the other nav bar
+  // at the top" Phil flagged on the very first message.
+  //
+  // Auth / AgeGate / OnboardingGate / AccountConsents render via
+  // OnboardingRouter — which is rendered by BootRouter INSTEAD of
+  // OSArchitecture, so this Layout never wraps them in that mode. If a
+  // user somehow lands on /onboarding while authenticated, OSArchitecture
+  // chrome wraps it; that's acceptable since OnboardingGate has its own
+  // page chrome.
+  //
+  // The full Layout chrome JSX below is preserved as dead code in case a
+  // standalone-shell render is ever needed (legacy /auth surfaces, etc.)
+  // but is unreachable via the production route table.
+  return (
+    <div className="flex flex-col min-h-full bg-black text-white overflow-x-hidden">
+      <main className="flex-1 w-full">
+        {children}
+      </main>
+    </div>
+  );
+
+  // eslint-disable-next-line no-unreachable
   if (isOSModePath(pathname)) {
     return (
       <div className="flex flex-col min-h-screen bg-black overflow-x-hidden transition-all duration-300">
         {/* Top spacer for the marquee/banner - Balanced with App.jsx offset */}
-        <div className="h-10 flex-shrink-0" /> 
+        <div className="h-10 flex-shrink-0" />
 
         <main className="flex-1 w-full max-w-lg mx-auto md:ml-64 relative px-4 md:px-0">
           {children}
