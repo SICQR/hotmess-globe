@@ -104,14 +104,16 @@ export default function AccountDeletion() {
         .or(`follower_email.eq.${user.email},following_email.eq.${user.email}`);
       if (followErr) console.warn('Follows cleanup:', followErr.message);
 
-      // Step 6: Delete handshakes
-      setDeletionStep('Removing handshakes...');
+      // Step 6: Delete boos (DB table is `handshake` historically — UX
+      // surface uses HOTMESS language per D24/D25: the relational
+      // primitive is a "boo", a mutual boo unlocks chat).
+      setDeletionStep('Removing boos...');
       setDeletionProgress(60);
       const { error: handshakeErr } = await supabase
         .from('handshake')
         .delete()
         .or(`initiator_email.eq.${user.email},recipient_email.eq.${user.email}`);
-      if (handshakeErr) console.warn('Handshakes cleanup:', handshakeErr.message);
+      if (handshakeErr) console.warn('Boos cleanup:', handshakeErr.message);
 
       // Step 7: Delete notifications
       setDeletionStep('Removing notifications...');
