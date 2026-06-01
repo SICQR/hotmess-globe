@@ -153,15 +153,41 @@ export default function GhostedMode() {
   return (
     <div className="relative h-full w-full bg-[#050507] flex flex-col overflow-hidden">
 
+      {/*
+        Phil 2026-06-01 Task #517 — mobile horizontal-stability fix.
+
+        Both the page scroll container AND the chip rail previously embedded
+        a <style> element as a *flex child*. React mounts/unmounts these on
+        every render and they took layout slots in the flex children list,
+        which produced the "unstable" feel Phil reported on iPhone.
+
+        On top of that the chip rail was missing:
+          - `gh-filters` className (so the .gh-filters::-webkit-scrollbar
+            rule was dead code — scrollbars still flashed on iOS Safari)
+          - `overscroll-behavior-x: contain` — without it iOS edge-swipe-back
+            collides with chip-rail horizontal scroll
+          - `touch-action: pan-x` — without it any vertical drift during a
+            chip-rail swipe hijacks the gesture between the rail and the
+            parent vertical scroll, producing the "wobble"
+
+        Fix: hoist the scoped scrollbar-hide CSS to a single component-level
+        <style> rendered OUTSIDE the flex containers, then apply the missing
+        classes + mobile-safe gesture properties on each rail.
+      */}
+      <style dangerouslySetInnerHTML={{__html:
+        '.gh-no-sb::-webkit-scrollbar{display:none}' +
+        '.gh-filters::-webkit-scrollbar{display:none}'
+      }} />
+
       {/* Scrollable Container */}
       <div
-        className="flex-1 overflow-y-auto pb-24"
+        className="gh-no-sb flex-1 overflow-y-auto pb-24"
         style={{
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
+          overscrollBehaviorX: 'contain',
         }}
       >
-        <style dangerouslySetInnerHTML={{__html: `::-webkit-scrollbar { display: none; }`}} />
 
 
         {/* ── RECENT — IG/Grindr-style avatar row of recent chats + active
@@ -175,10 +201,14 @@ export default function GhostedMode() {
             Filter logic lives in useGhostedGrid (server-side row filter).
             Doctrine: no popularity counts on chips (no "ALL · 247"). */}
         <div
-          className="px-3 pt-2 pb-1 flex gap-2 overflow-x-auto"
-          style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
+          className="gh-filters px-3 pt-2 pb-1 flex gap-2 overflow-x-auto"
+          style={{
+            scrollbarWidth: 'none',
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehaviorX: 'contain',
+            touchAction: 'pan-x',
+          }}
         >
-          <style dangerouslySetInnerHTML={{ __html: `.gh-filters::-webkit-scrollbar{display:none}` }} />
           {[
             { key: null, label: 'ALL' },
             { key: 'online', label: 'ONLINE' },
