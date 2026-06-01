@@ -379,7 +379,12 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   const loadProfilesByEmail = async (emails) => {
     const { data } = await supabase
       .from('profiles')
-      .select('id, email, display_name, avatar_url')
+      // Phil 2026-06-01 Task #520 — also fetch username so safeName()'s
+      // updated ladder (display_name -> username -> 'Anonymous') has
+      // data to fall through to when a user hasn't picked a display
+      // name yet. Without this column the inbox rendered "Member"
+      // (then "Anonymous") for every account that only had a username.
+      .select('id, email, display_name, username, avatar_url')
       .in('email', emails);
 
     if (data) {

@@ -23,24 +23,41 @@ type UserLike = {
   display_name?: string | null;
   displayName?: string | null;
   name?: string | null;
+  // Phil 2026-06-01 Task #520 — username is part of the public identity
+  // ladder per D10 + D485. safeName drops through to it when display_name
+  // is missing rather than collapsing straight to a generic fallback.
+  username?: string | null;
   // The fields below MUST NOT be used as display fallbacks. Listed for type
   // completeness only.
   email?: string | null;
   id?: string | null;
 } | null | undefined;
 
-const ANONYMOUS_LABEL = 'Member';
+// Phil 2026-06-01 Task #520 — was 'Member', which is also a tier word in
+// this product. Every conversation row whose counterpart hadn't resolved
+// rendered "Member" and visually labelled the person as a tier instead of
+// a person. Matches D485 (UserProfile fallback "HOTMESS member" → Anonymous)
+// and the inbox RPC fix shipped earlier today.
+const ANONYMOUS_LABEL = 'Anonymous';
 
 /**
  * Safe display name for ANY other user. Never returns an email.
+ *
+ * Ladder (Phil 2026-06-01 Task #520):
+ *   display_name -> username -> fallback ('Anonymous' by default)
+ *
+ * Both display_name and username are rejected if they contain '@' to guard
+ * against bad data being rendered as identity. This preserves the Sacred
+ * Invariant that a real user email NEVER appears to another user.
  */
 export function safeName(user: UserLike, fallback: string = ANONYMOUS_LABEL): string {
   if (!user) return fallback;
-  const name = user.display_name || user.displayName || user.name;
-  if (typeof name === 'string') {
-    const trimmed = name.trim();
-    // Defensive: reject anything containing an @ in case bad data sneaks in.
-    if (trimmed && !trimmed.includes('@')) return trimmed;
+  const candidates: Array<unknown> = [user.display_name, user.displayName, user.name, user.username];
+  for (const c of candidates) {
+    if (typeof c === 'string') {
+      const trimmed = c.trim();
+      if (trimmed && !trimmed.includes('@')) return trimmed;
+    }
   }
   return fallback;
 }
