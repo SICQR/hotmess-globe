@@ -11,6 +11,20 @@ import {
 import { registerBeaconIcons } from './beaconIconFactory';
 import { useGlowUserIds } from '@/hooks/useGlowUserIds';
 import { BEACON_GLYPHS } from './beaconGlyphs';
+// D43 Slice A · PR 3 — in-world cluster preview wiring.
+// Composer + chip + leaf-shaper land here as the kind-router branch for
+// cluster hover/long-press. Replaces the mapbox-native popup that was
+// hand-rendering "N SIGNALS HERE" + strongest title.
+// Doctrine refs: D43, D48 §3.1/§3.2/§3.3/§5.1, D17, sacred-invariants.
+import { composeClusterPreview } from '@/lib/clusters/composeClusterPreview';
+import { mapboxLeavesToBeacons } from '@/lib/clusters/mapboxLeafToBeacon';
+import ClusterPreviewChip from './ClusterPreviewChip';
+import { supabase } from '@/components/utils/supabaseClient';
+
+/** D43 Slice A — chip dismiss timeout. Ratified §9.4. */
+const CLUSTER_PREVIEW_TIMEOUT_MS = 1500;
+/** D43 Slice A — long-press threshold for mobile chip activation. D17 muscle memory (#9.5). */
+const CLUSTER_LONG_PRESS_MS = 350;
 
 // Single-engine Pulse map. Mapbox GL v3 in GLOBE PROJECTION from load: cinematic
 // planetary curvature + atmosphere + stars at macro zoom, real street detail at
@@ -87,6 +101,42 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
   onReadyRef.current = onReady;
   const onLocalFocusRef = useRef(onLocalFocus);
   onLocalFocusRef.current = onLocalFocus;
+
+  // ─── D43 Slice A · PR 3 — in-world cluster preview state ──────────────────
+  // The React-state-driven chip replaces the previous Mapbox-native popup.
+  // Per scope §3.6 the composer is constitutional infrastructure; here we
+  // own the chip's mount/dismount + position projection + continuity cache.
+  //
+  // clusterPreview shape: null | {
+  //   state: ClusterPreviewState (from composeClusterPreview),
+  //   anchor: { lng, lat },     // re-projected on every map.move while visible
+  //   screen: { x, y },         // current screen pixels for absolute position
+  // }
+  const [clusterPreview, setClusterPreview] = useState(null);
+  // The map.on('move') callback closes over its initial render's state, so
+  // we mirror the current preview into a ref to read inside the Mapbox
+  // callback without re-binding the handler on every state change.
+  const clusterPreviewRef = useRef(null);
+  clusterPreviewRef.current = clusterPreview;
+  // continuity cache — §3.5 invariant. cluster_id → ClusterPreviewState.
+  // Held in a ref because it's keyed by Mapbox cluster ids, which are stable
+  // across re-renders but change on data source replacement.
+  const clusterCacheRef = useRef(new Map());
+  // dismiss timeout (1.5s per §9.4)
+  const clusterTimeoutRef = useRef(null);
+  // viewer id from Supabase auth — fed to ViewerContext for the composer's
+  // §3.4 "viewer's own beacon never represents the cluster" rule
+  const viewerIdRef = useRef(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!cancelled) viewerIdRef.current = data?.session?.user?.id ?? null;
+      } catch { /* anonymous viewer is fine — composer handles null */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
   // M-self (Phil 2026-05-28 #259): persistent self-marker. Camera flyTo was
   // the only proof a user was on the map — they couldn't actually see themselves.
   // Now: a pulsing gold dot painted at userLocation, always visible, no presence
@@ -524,7 +574,9 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
                 const feat = feats && feats[0];
                 if (feat) {
                   if (feat.layer && feat.layer.id === LAYER_IDS.clusterCircles) {
-                    __showClusterHoverPopup(feat);
+                    // D43 Slice A · PR 3 — long-press cluster activation
+                    // routes to the new React chip composer path.
+                    __showClusterChip(feat);
                   } else {
                     __showHoverPopup(feat);
                   }
@@ -543,62 +595,112 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
               __dismissHoverPopup();
             }
           });
-          map.on('touchend', () => { __hmTouchClear(); window.setTimeout(__dismissHoverPopup, 600); });
-          map.on('touchcancel', () => { __hmTouchClear(); __dismissHoverPopup(); });
+          map.on('touchend', () => {
+            __hmTouchClear();
+            window.setTimeout(__dismissHoverPopup, 600);
+            // D43 Slice A · PR 3 — cluster chip honors its own 1.5s timer
+            // (§9.4) so we don't dismiss it on touchend. The 1.5s window
+            // is the "passing headlights" cadence Phil ratified.
+          });
+          map.on('touchcancel', () => {
+            __hmTouchClear();
+            __dismissHoverPopup();
+            // Touch cancellation is a real interrupt (gesture aborted by
+            // the system) — dismiss the chip too. Distinct from touchend.
+            __dismissClusterChip();
+          });
 
-          // ── Cluster hover preview (Phil 2026-05-29) ──
-          // Show "N signals here · {strongest title}" before the user commits
-          // to opening the cluster sheet. Uses getClusterLeaves to grab the
-          // strongest constituent's title for the chip. Falls back to plain
-          // count if leaves haven't loaded yet.
-          const __showClusterHoverPopup = (feat) => {
-            if (!feat || !feat.properties) return;
-            const count = Number(feat.properties.point_count) || 0;
-            const fid = 'cluster:' + feat.properties.cluster_id;
-            if (__hmHoverFid === fid && __hmHoverPopup) return;
-            __hmHoverFid = fid;
-            if (__hmHoverPopup) { try { __hmHoverPopup.remove(); } catch (er) { /* non-fatal */ } __hmHoverPopup = null; }
-            const renderChip = (strongestTitle) => {
-              const titleHtml = strongestTitle
-                ? `<div style="margin-top:4px;font-weight:500;letter-spacing:0.04em;text-transform:none;color:rgba(255,255,255,0.78);font-size:11px;">${escapeHtml(strongestTitle)}</div>`
-                : '';
-              const html = '<div style="font:500 10px/1.2 ui-monospace,monospace;letter-spacing:0.28em;text-transform:uppercase;color:#EAE6DD;background:rgba(8,8,12,0.92);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.10);border-radius:4px;padding:6px 10px;max-width:240px;">'
-                + '<span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#E6BE5A;margin-right:8px;vertical-align:middle;box-shadow:0 0 6px rgba(230,190,90,0.45);"></span>'
-                + escapeHtml(String(count)) + ' SIGNAL' + (count === 1 ? '' : 'S') + ' HERE'
-                + titleHtml
-                + '</div>';
-              try {
-                __hmHoverPopup = new mapboxgl.Popup({ offset: 18, closeButton: false, closeOnClick: false, className: 'hm-beacon-hover' })
-                  .setLngLat(feat.geometry.coordinates)
-                  .setHTML(html)
-                  .addTo(map);
-              } catch (er) { /* non-fatal */ }
-            };
-            const src = map.getSource(SOURCE_IDS.public);
-            if (src && src.getClusterLeaves) {
-              src.getClusterLeaves(feat.properties.cluster_id, Math.min(count, 30), 0, (err, leaves) => {
-                if (err || cancelled) return renderChip(null);
-                const items = (leaves || []).map((l) => ({
-                  title: l.properties?.title || '',
-                  priority: Number(l.properties?.priority) || 0,
-                  ends_at_ms: Number(l.properties?.ends_at_ms) || 0,
-                }));
-                items.sort((a, b) => (b.priority - a.priority) || (b.ends_at_ms - a.ends_at_ms));
-                renderChip(items[0]?.title || null);
-              });
-            } else {
-              renderChip(null);
+          // ── Cluster hover/long-press preview · D43 Slice A · PR 3 ──
+          // REPLACES the legacy mapbox-native popup ("N SIGNALS HERE" + title)
+          // with the React-state-driven ClusterPreviewChip. The composer
+          // (composeClusterPreview) is the doctrine enforcement layer — see
+          // src/lib/clusters/composeClusterPreview.ts + the locked scope
+          // doc at docs/slices/d43-slice-a-cluster-preview.md.
+          //
+          // Per the locked scope: hover (desktop) + long-press (mobile, via the
+          // existing 350ms touchstart-with-no-move handler) → fetch cluster
+          // leaves → shape to ViewerVisibleBeacon → compose with §3.5 prior
+          // from clusterCacheRef → set React state. The chip mounts, the
+          // 1.5s dismiss is owned here, position re-projects on map.move.
+          //
+          // Doctrine: D43 §3 (in-world, no chip tap target), D48 §5.1
+          // (canonical question evaluated per-beacon in gate_trace),
+          // D17 §4 (unified preview pattern).
+          const __dismissClusterChip = () => {
+            if (clusterTimeoutRef.current) {
+              window.clearTimeout(clusterTimeoutRef.current);
+              clusterTimeoutRef.current = null;
             }
+            setClusterPreview(null);
+          };
+          const __projectAnchor = (lng, lat) => {
+            try {
+              const p = map.project([lng, lat]);
+              return { x: p.x, y: p.y };
+            } catch (er) {
+              return null;
+            }
+          };
+          const __showClusterChip = (feat) => {
+            if (!feat || !feat.properties || !feat.geometry) return;
+            const count = Number(feat.properties.point_count) || 0;
+            const clusterId = feat.properties.cluster_id;
+            const [lng, lat] = feat.geometry.coordinates;
+            const src = map.getSource(SOURCE_IDS.public);
+            if (!src || !src.getClusterLeaves) return;
+
+            src.getClusterLeaves(clusterId, Math.min(count, 30), 0, (err, leaves) => {
+              if (err || cancelled) return;
+              // Shape Mapbox leaves → ViewerVisibleBeacon, then compose.
+              const beacons = mapboxLeavesToBeacons(leaves || []);
+              const viewer = { viewer_id: viewerIdRef.current };
+              const prior = clusterCacheRef.current.get(String(clusterId)) || null;
+              const state = composeClusterPreview(beacons, viewer, prior, {
+                onUncertaintyFallback: (event) => {
+                  // PR 5 will wire this to a Supabase telemetry table + the
+                  // morning observation digest. For now: dev-only console
+                  // visibility so the §11 fallback rate is observable
+                  // locally during build.
+                  if (import.meta?.env?.DEV) {
+                    // eslint-disable-next-line no-console
+                    console.debug('[cluster-preview fallback]', event);
+                  }
+                },
+              });
+              clusterCacheRef.current.set(String(clusterId), state);
+              const screen = __projectAnchor(lng, lat);
+              if (!screen) return;
+              setClusterPreview({ state, anchor: { lng, lat }, screen });
+              // §9.4 — 1.5s atmospheric dismiss. Glance first, depth second.
+              if (clusterTimeoutRef.current) window.clearTimeout(clusterTimeoutRef.current);
+              clusterTimeoutRef.current = window.setTimeout(__dismissClusterChip, CLUSTER_PREVIEW_TIMEOUT_MS);
+            });
           };
           map.on('mouseenter', LAYER_IDS.clusterCircles, (e) => {
             try { map.getCanvas().style.cursor = 'pointer'; } catch (er) {}
             const feat = e.features && e.features[0];
-            if (feat) __showClusterHoverPopup(feat);
+            if (feat) __showClusterChip(feat);
           });
           map.on('mouseleave', LAYER_IDS.clusterCircles, () => {
             try { map.getCanvas().style.cursor = ''; } catch (er) {}
-            __dismissHoverPopup();
+            __dismissClusterChip();
           });
+          // Re-project the chip's screen position on every map move so the
+          // chip stays anchored to the cluster's geographic point during
+          // pan/zoom. Lightweight: only fires while clusterPreview is set
+          // (the inside-callback guard avoids work when the chip is hidden).
+          map.on('move', () => {
+            const cp = clusterPreviewRef.current;
+            if (!cp) return;
+            const screen = __projectAnchor(cp.anchor.lng, cp.anchor.lat);
+            if (!screen) return;
+            setClusterPreview((prev) => (prev ? { ...prev, screen } : prev));
+          });
+          // Mobile long-press cluster activation — the existing touchstart
+          // 350ms hold logic (see __hmTouchStart handler above) already
+          // detects when the long-pressed feature is a cluster and calls
+          // __showClusterHoverPopup. The block below at line ~572 (now
+          // updated to __showClusterChip) hands control here automatically.
 
           // Hand the imperative camera api to the parent (right-side toggle, drop-at-centre).
           try {
@@ -694,6 +796,13 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
     return () => {
       cancelled = true;
       if (resizeTimer) clearTimeout(resizeTimer);
+      // D43 Slice A · PR 3 — clean up the cluster chip timer so a re-mount
+      // doesn't fire a stale dismiss onto fresh state.
+      if (clusterTimeoutRef.current) {
+        clearTimeout(clusterTimeoutRef.current);
+        clusterTimeoutRef.current = null;
+      }
+      clusterCacheRef.current.clear();
       try { if (mapRef.current) mapRef.current.remove(); } catch (e) {}
       mapRef.current = null;
     };
@@ -765,6 +874,37 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
   return (
     <div className="absolute inset-0">
       <div ref={containerRef} className="absolute inset-0" style={{ width: '100%', height: '100%' }} />
+      {/* D43 Slice A · PR 3 — In-world cluster preview chip.
+          Rendered absolutely-positioned over the map at the cluster's
+          projected screen coordinates. Phil ratified positioning
+          (2026-06-01): upper-right offset from the cluster point, never
+          covering the marker. The chip itself owns pointer-events:none —
+          it's information given, not a tap target (D43 §3).
+
+          When `clusterPreview` is null the chip is not mounted at all,
+          so there's zero cost when no cluster is being previewed. */}
+      {clusterPreview && (
+        <div
+          aria-live="polite"
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            // Offset upper-right per Phil's ratification: shift up by chip
+            // height (~36px) + 14px gap, and 14px to the right of the
+            // cluster marker centre. Never centers, never covers the pin.
+            transform: `translate3d(${clusterPreview.screen.x + 14}px, ${clusterPreview.screen.y - 50}px, 0)`,
+            pointerEvents: 'none',
+            zIndex: 5, // above map canvas, below any sheet chrome
+          }}
+        >
+          <ClusterPreviewChip
+            state={clusterPreview.state}
+            visible={true}
+            dense={clusterPreview.state.count >= 6}
+          />
+        </div>
+      )}
       {status !== 'ready' && (
         <div className="absolute inset-0 flex items-center justify-center text-white/60 text-sm pointer-events-none">
           {status === 'error' ? 'Map unavailable' : 'Loading the signal…'}

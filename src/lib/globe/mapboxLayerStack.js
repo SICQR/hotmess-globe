@@ -362,6 +362,22 @@ export function toPublicSafeFeatureCollection(beacons, glowUserIds) {
         // mode without value lookups.
         identity_mode: identityMode,
         ...(exposureRegister ? { exposure_register: exposureRegister } : {}),
+        // D43 Slice A · PR 3 — emit the per-beacon intent string so the
+        // cluster preview composer (composeClusterPreview) can read it from
+        // Mapbox cluster leaves. Same extraction pattern as identityModeOf /
+        // exposureRegisterOf so the three doctrines (D12, D48, D43) stay in
+        // lockstep on intent semantics. Omitted when empty/unknown so the
+        // composer's normaliseIntent fallback ('looking') can fire — keeps
+        // Mapbox's ['has', 'intent'] filter predicate clean for future symbol
+        // layer branching.
+        ...(function () {
+          const intentVal = String(
+            (b && b.metadata && b.metadata.intent) ||
+            (b && b.intent) ||
+            ''
+          ).toLowerCase().trim();
+          return intentVal ? { intent: intentVal } : {};
+        })(),
       },
     });
   }
