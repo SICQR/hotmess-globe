@@ -377,15 +377,36 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   };
 
   const loadProfilesByEmail = async (emails) => {
-    const { data } = await supabase
-      .from('profiles')
-      // Phil 2026-06-01 Task #520 — also fetch username so safeName()'s
-      // updated ladder (display_name -> username -> 'Anonymous') has
-      // data to fall through to when a user hasn't picked a display
-      // name yet. Without this column the inbox rendered "Member"
-      // (then "Anonymous") for every account that only had a username.
-      .select('id, email, display_name, username, avatar_url')
-      .in('email', emails);
+    // Phil 2026-06-01 Task #521 — direct profile select is filtered by
+    // `profiles_read_visible_authed` RLS (requires is_visible=true),
+    // which silently filtered every counterpart whose visibility was off,
+    // making the inbox render "Anonymous" for every row.
+    //
+    // Switched to the security-definer RPC get_chat_thread_counterparts_for_viewer
+    // which returns identity for any user the viewer shares an active
+    // chat thread with — doctrine: if you're already in a thread, contact
+    // is established, identity is not "hidden" from you.
+    //
+    // RPC is parameterless (uses auth.uid()); it returns ALL of the
+    // viewer's counterparts at once, so we ignore the `emails` arg here.
+    // The local profiles dict is keyed by email so the existing code path
+    // works unchanged.
+    let data = null;
+    try {
+      const { data: rpcData, error: rpcErr } = await supabase
+        .rpc('get_chat_thread_counterparts_for_viewer');
+      if (rpcErr) throw rpcErr;
+      data = rpcData;
+    } catch (rpcCallErr) {
+      // Defensive fallback to direct query if the RPC isn't deployed yet
+      // (preview environments, rollback safety). Still includes username.
+      console.warn('[Chat] counterparts RPC failed, falling back to direct profiles select:', rpcCallErr?.message);
+      const fb = await supabase
+        .from('profiles')
+        .select('id, email, display_name, username, avatar_url')
+        .in('email', emails);
+      data = fb.data;
+    }
 
     if (data) {
       setProfiles(prev => {
