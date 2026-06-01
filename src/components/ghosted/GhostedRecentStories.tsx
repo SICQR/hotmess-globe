@@ -83,10 +83,13 @@ export function GhostedRecentStories({
         const threadList: any[] = threads || [];
         const beaconList: any[] = beacons || [];
 
-        // Most-recent active beacon per owner (excluding self).
+        // Most-recent active beacon per owner. Phil 2026-06-01 — INCLUDE
+        // self so the user can see confirmation that their own beacon is
+        // live. Instagram-pattern: own story leads the carousel. Without
+        // this the user gets no in-row feedback that their drop landed.
         const beaconByOwner = new Map<string, string>(); // owner_id -> beacon_id
         for (const b of beaconList) {
-          if (!b.owner_id || b.owner_id === currentUserId) continue;
+          if (!b.owner_id) continue;
           if (!beaconByOwner.has(b.owner_id)) beaconByOwner.set(b.owner_id, b.id);
         }
 
@@ -150,8 +153,15 @@ export function GhostedRecentStories({
           });
         }
 
-        // Beacon-havers float to the front so live signals lead the row.
-        out.sort((a, b) => Number(b.hasBeacon) - Number(a.hasBeacon));
+        // Phil 2026-06-01 — self-first ordering. The user's own avatar
+        // leads the row when they have an active beacon (Instagram pattern:
+        // own story comes first). Otherwise beacon-havers float to the
+        // front so live signals lead the row.
+        out.sort((a, b) => {
+          if (a.userId === currentUserId && a.hasBeacon) return -1;
+          if (b.userId === currentUserId && b.hasBeacon) return 1;
+          return Number(b.hasBeacon) - Number(a.hasBeacon);
+        });
 
         if (!cancelled) setPeople(out);
       } catch (err) {
