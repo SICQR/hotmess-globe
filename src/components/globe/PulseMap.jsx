@@ -18,6 +18,7 @@ import { BEACON_GLYPHS } from './beaconGlyphs';
 // Doctrine refs: D43, D48 §3.1/§3.2/§3.3/§5.1, D17, sacred-invariants.
 import { composeClusterPreview } from '@/lib/clusters/composeClusterPreview';
 import { mapboxLeavesToBeacons } from '@/lib/clusters/mapboxLeafToBeacon';
+import { recordClusterUncertainty } from '@/lib/clusters/clusterUncertaintyDispatcher';
 import ClusterPreviewChip from './ClusterPreviewChip';
 import { supabase } from '@/components/utils/supabaseClient';
 
@@ -657,14 +658,14 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
               const prior = clusterCacheRef.current.get(String(clusterId)) || null;
               const state = composeClusterPreview(beacons, viewer, prior, {
                 onUncertaintyFallback: (event) => {
-                  // PR 5 will wire this to a Supabase telemetry table + the
-                  // morning observation digest. For now: dev-only console
-                  // visibility so the §11 fallback rate is observable
-                  // locally during build.
-                  if (import.meta?.env?.DEV) {
-                    // eslint-disable-next-line no-console
-                    console.debug('[cluster-preview fallback]', event);
-                  }
+                  // D43 Slice A · PR 5 — record uncertainty events so
+                  // when a face_avatar path steps down due to an uncertain
+                  // §3.3 gate, the system records WHY. Fire-and-forget;
+                  // the chip MUST NOT block on or fail because of a
+                  // telemetry write. See §11 + sacred-invariants substrate.
+                  // Hashed viewer_id, no per-user surface, no public read.
+                  // Read back via morning observation digest only.
+                  void recordClusterUncertainty(event, viewerIdRef.current, clusterId);
                 },
               });
               clusterCacheRef.current.set(String(clusterId), state);
