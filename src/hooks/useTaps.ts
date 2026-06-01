@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { pushNotify } from '@/lib/pushNotify';
+import { trackError, trackEvent } from '@/components/utils/analytics';
 
 export type TapType = 'boo';
 
@@ -53,10 +54,12 @@ export function useTaps(myUserId: string | null, myEmail?: string | null) {
         if (cancelled) return;
 
         if (sentRes.error) {
-          console.warn('[useTaps] sent query failed:', sentRes.error.message);
+          console.error('[useTaps] sent query failed:', sentRes.error.message, sentRes.error);
+          trackError(sentRes.error as unknown as Error, { surface: 'taps_select_sent', user_id: myUserId });
         }
         if (receivedRes.error) {
-          console.warn('[useTaps] received query failed:', receivedRes.error.message);
+          console.error('[useTaps] received query failed:', receivedRes.error.message, receivedRes.error);
+          trackError(receivedRes.error as unknown as Error, { surface: 'taps_select_received', user_id: myUserId });
         }
 
         const todayStr = new Date().toISOString().split('T')[0];
@@ -122,17 +125,21 @@ export function useTaps(myUserId: string | null, myEmail?: string | null) {
 
   /**
    * Toggle a boo.
-   * Returns { sent: boolean, mutual: boolean }
-   *   sent = true means boo was placed, false means it was removed
-   *   mutual = true means both users have now boo'd each other
+   * Returns { sent: boolean, mutual: boolean, error?: string }
+   *   sent = true  → boo was placed (or, on delete-failure, the existing boo was preserved)
+   *   sent = false → boo was successfully removed
+   *   mutual = true → both users have now boo'd each other (only valid when sent=true)
+   *   error  = present when the underlying DB write failed; callers should
+   *            surface this to the user with a toast or inline error instead
+   *            of treating the toggle as if it succeeded.
    */
   const sendTap = useCallback(
     async (
       targetUserId: string,
       targetName: string,
       _tapType?: TapType
-    ): Promise<{ sent: boolean; mutual: boolean }> => {
-      if (!myUserId) return { sent: false, mutual: false };
+    ): Promise<{ sent: boolean; mutual: boolean; error?: string }> => {
+      if (!myUserId) return { sent: false, mutual: false, error: 'not_authenticated' };
 
       const key = makeKey(myUserId, targetUserId);
       const alreadyDone = sentTaps.has(key);
@@ -151,7 +158,23 @@ export function useTaps(myUserId: string | null, myEmail?: string | null) {
           .eq('to_user_id', targetUserId)
           .eq('tap_type', 'boo');
 
-        if (delErr) console.warn('[useTaps] delete failed:', delErr.message);
+        if (delErr) {
+          console.error('[useTaps] boo DELETE failed:', delErr.message, delErr);
+          trackError(delErr as unknown as Error, {
+            surface: 'taps_delete',
+            user_id: myUserId,
+            target_user_id: targetUserId,
+            code: (delErr as { code?: string }).code,
+          });
+          trackEvent('boo_remove_failed', {
+            target_user_id: targetUserId,
+            error_code: (delErr as { code?: string }).code,
+            error_message: delErr.message,
+          });
+          // Re-add the optimistic state so the UI doesn't lie about removal.
+          setSentTaps((prev) => new Set(prev).add(key));
+          return { sent: true, mutual: false, error: delErr.message };
+        }
         return { sent: false, mutual: false };
       }
 
@@ -169,22 +192,58 @@ export function useTaps(myUserId: string | null, myEmail?: string | null) {
         targetEmail = target?.email || '';
       } catch { /* best-effort */ }
 
-      const { error } = await supabase.from('taps').insert({
-        from_user_id: myUserId,
-        to_user_id: targetUserId,
-        tapper_email: myEmailVal,
-        tapped_email: targetEmail,
-        tap_type: 'boo',
-      });
+      // Phil 2026-06-01 — boo INSERT is load-bearing for the entire social
+      // gate. Paul + Dean both reported "I booed" with no row landing in DB
+      // (silent failure on the previous version of this code). We now:
+      //   1. Use .select().single() so a missing row surfaces as an error
+      //      instead of a soundless no-op
+      //   2. Log + capture every failure to Sentry + analytics with the
+      //      Postgres error code (RLS=42501, check=23514, FK=23503, unique=23505)
+      //   3. Surface error to callers via the return value so the UI can
+      //      toast instead of pretending the boo went through
+      //
+      // This is the "trust the tap before tightening the gate" fix — every
+      // future failure becomes visible, debuggable, and not silently shrugged.
+      const { data: insertedRow, error } = await supabase
+        .from('taps')
+        .insert({
+          from_user_id: myUserId,
+          to_user_id: targetUserId,
+          tapper_email: myEmailVal,
+          tapped_email: targetEmail,
+          tap_type: 'boo',
+        })
+        .select('id')
+        .single();
 
-      if (error) {
+      if (error || !insertedRow) {
+        const errMsg = error?.message || 'insert returned no row';
+        const errCode = (error as { code?: string } | null)?.code;
+        console.error('[useTaps] boo INSERT failed:', errMsg, { code: errCode, error });
+        trackError((error || new Error(errMsg)) as Error, {
+          surface: 'taps_insert',
+          user_id: myUserId,
+          target_user_id: targetUserId,
+          tapper_email: myEmailVal,
+          tapped_email: targetEmail,
+          code: errCode,
+        });
+        trackEvent('boo_send_failed', {
+          target_user_id: targetUserId,
+          error_code: errCode,
+          error_message: errMsg,
+          had_email: !!myEmailVal,
+          target_had_email: !!targetEmail,
+        });
         setSentTaps((prev) => {
           const next = new Set(prev);
           next.delete(key);
           return next;
         });
-        return { sent: false, mutual: false };
+        return { sent: false, mutual: false, error: errMsg };
       }
+
+      trackEvent('boo_send_succeeded', { target_user_id: targetUserId });
 
       // Check for mutual boo
       const theyBoodMe = receivedFrom.has(targetUserId);
