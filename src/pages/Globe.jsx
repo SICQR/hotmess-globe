@@ -431,19 +431,12 @@ export default function GlobePage({ embedded = false }) {
   const handleBeaconClick = useCallback((beacon) => {
     if (!beacon) return;
 
-    // Cluster tap → cluster preview sheet (Phil locked 2026-05-29).
-    // PulseMap pre-resolves the cluster leaves and hands them through with
-    // isCluster=true. We open the cluster preview sheet at peek so the user
-    // sees "N signals here" + the constituent list before committing to a
-    // zoom-in or picking a specific signal to open.
+    // D49 §9 — cluster tap is now handled inside PulseMap (zoom-in only).
+    // The "beacon-cluster" L2 sheet (#307) is deprecated by D49 because it
+    // listed passive venues as signals, violating the §7 passive venue rule.
+    // The atmospheric chip on hover/long-press is the preview surface.
+    // Defensive no-op for any legacy callsite that still emits isCluster.
     if (beacon.isCluster) {
-      openSheet('beacon-cluster', {
-        count: beacon.count,
-        lat: beacon.lat,
-        lng: beacon.lng,
-        leaves: beacon.leaves || [],
-        expansion_resolver: beacon.expansion_resolver,
-      });
       return;
     }
 
