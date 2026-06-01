@@ -19,6 +19,7 @@ import SkipToContent from '@/components/accessibility/SkipToContent';
 import { useKeyboardNav } from '@/components/accessibility/KeyboardNav';
 import { A11yAnnouncer } from '@/components/accessibility/KeyboardNav';
 import WelcomeTour from '@/components/onboarding/WelcomeTour';
+import UsernameClaimSheet from '@/components/onboarding/UsernameClaimSheet';
 import RightNowNotifications from '@/components/discovery/RightNowNotifications';
 import { useRadio } from '@/contexts/RadioContext';
 import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
@@ -409,6 +410,11 @@ function LayoutInner({ children, currentPageName }) {
   return (
     <ErrorBoundary>
         <TaxonomyProvider>
+          {/* Phil 2026-06-01 Task #510 — Forced username gate. Mounts inside the
+              providers but above page chrome so it covers every route including
+              /pulse. Component is null-safe: returns null when user has a
+              username, when unauthenticated, or while bootState is LOADING. */}
+          <UsernameClaimSheet />
           <SkipToContent />
           <A11yAnnouncer />
           <OfflineIndicator />
