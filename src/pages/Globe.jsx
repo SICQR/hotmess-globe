@@ -6,6 +6,7 @@ import { useSheet } from '@/contexts/SheetContext';
 import { useGlobe } from '@/contexts/GlobeContext';
 import { activityTracker } from '../components/globe/ActivityTracker';
 import BeaconPreviewPanel from '../components/globe/BeaconPreviewPanel';
+import EventClusterPeek from '../components/globe/EventClusterPeek';
 import CityDataOverlay from '../components/globe/CityDataOverlay';
 import { Layers, Globe2, Bell, Map, Building2, Crosshair } from 'lucide-react';
 import { useNotifCount } from '@/hooks/useNotifCount';
@@ -224,6 +225,11 @@ export default function GlobePage({ embedded = false }) {
   const [userLocation, setUserLocation] = useState(null);
   const [previewBeacon, setPreviewBeacon] = useState(null);
   const [locationShopBeacon, setLocationShopBeacon] = useState(null);
+  // D49 §15 step 3 — editorial peek state, fed by the pulse:event_cluster_tap
+  // window event PulseMap.jsx dispatches when a cluster with
+  // dominant_intent='event_tonight' is tapped. Additive surface; map tap
+  // still zooms. See EventClusterPeek.jsx for the variant routing.
+  const [eventClusterPeek, setEventClusterPeek] = useState(null);
   const autoZoomedRef = React.useRef(false);
   const pulseApiRef = React.useRef(null); // imperative camera api from PulseMap (single-engine)
 
@@ -344,6 +350,27 @@ export default function GlobePage({ embedded = false }) {
     };
     window.addEventListener('pulse:flyto', onFlyTo);
     return () => window.removeEventListener('pulse:flyto', onFlyTo);
+  }, []);
+
+  // D49 §15 step 3 — listen for event_tonight cluster taps dispatched by
+  // PulseMap.jsx. The peek surface explains why the cluster matters BEFORE
+  // asking the user to open it (Phil's locked rule). Additive: the map's
+  // zoom-in response already fired before this dispatch.
+  useEffect(() => {
+    const onEventClusterTap = (e) => {
+      const detail = e && e.detail;
+      if (!detail) return;
+      // Variant gate is inside EventClusterPeek (renders nothing for venue /
+      // ambient / care). We still set state so the peek can decide.
+      setEventClusterPeek({
+        cluster_id: detail.cluster_id,
+        center: detail.center,
+        event_summary: detail.event_summary,
+        cluster_state: detail.cluster_state,
+      });
+    };
+    window.addEventListener('pulse:event_cluster_tap', onEventClusterTap);
+    return () => window.removeEventListener('pulse:event_cluster_tap', onEventClusterTap);
   }, []);
 
   useEffect(() => {
@@ -688,6 +715,39 @@ export default function GlobePage({ embedded = false }) {
               if (!userId) return;
               setPreviewBeacon(null);
               openProfile({ userId, source: 'globe', email: b.email, preferSheet: true });
+            }}
+          />
+        )}
+
+        {/* D49 §15 step 3 — editorial peek for event_tonight clusters.
+            Renders nothing unless dominant_intent==='event_tonight'. The
+            "Open tonight" CTA opens the L2 beacon sheet via the existing
+            beacon sheet surface (no new dashboard, no doctrine, no tap-
+            contract change). Phil's locked rule: peek explains why this
+            cluster matters BEFORE asking the user to open it. */}
+        {eventClusterPeek && (
+          <EventClusterPeek
+            peek={eventClusterPeek}
+            onClose={() => setEventClusterPeek(null)}
+            onOpen={(peek) => {
+              setEventClusterPeek(null);
+              // Bridge into the existing L2 surface — same sheet type used
+              // by signal taps, with a synthetic beacon payload carrying the
+              // cluster summary so the sheet can render the event list.
+              try {
+                openSheet('beacon', {
+                  beaconId: `event-cluster:${peek.cluster_id}`,
+                  beacon: {
+                    id: `event-cluster:${peek.cluster_id}`,
+                    entity_kind: 'event_cluster',
+                    title: 'Tonight',
+                    cluster_id: peek.cluster_id,
+                    center: peek.center,
+                    event_summary: peek.event_summary,
+                    cluster_state: peek.cluster_state,
+                  },
+                });
+              } catch (er) { /* non-fatal */ }
             }}
           />
         )}
