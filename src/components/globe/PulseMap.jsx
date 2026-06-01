@@ -735,7 +735,15 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
             const cb = onClustersChangeRef.current;
             if (typeof cb !== 'function') return; // no consumer wired
             try {
-              const src = map.getSource(SOURCE_IDS.beacons);
+              // HOTFIX 2026-06-01 — was `SOURCE_IDS.beacons` (undefined). The
+              // cluster-enabled GeoJSON source is `SOURCE_IDS.public` ('hm-public'),
+              // matching every other getSource call in this file and the source
+              // declared with cluster:true inside addLayerStack. The wrong key
+              // returned undefined → getSource(undefined) → null → silent early
+              // return → onClustersChange never fired → BeaconA11yList rendered
+              // empty cluster prop → no cluster rows for screen-reader users
+              // even when a cluster is visually present on the map.
+              const src = map.getSource(SOURCE_IDS.public);
               if (!src || typeof src.getClusterLeaves !== 'function') return;
               const feats = map.queryRenderedFeatures(undefined, {
                 layers: [LAYER_IDS.clusterCircles],
