@@ -29,6 +29,7 @@
  * per call to avoid n+1 lookups for thread lists.
  */
 import { supabase } from '@/components/utils/supabaseClient';
+import { trackError, trackEvent } from '@/components/utils/analytics';
 
 // ── Shapes returned to legacy callers ─────────────────────────────────────
 
@@ -285,7 +286,17 @@ export async function sendMessage(args: {
   metadata?: Record<string, unknown>;
 }): Promise<{ ok: boolean; data: LegacyMessage | null; error: string | null }> {
   const { userId, email: myEmail } = await getMyAuth();
-  if (!userId) return { ok: false, data: null, error: 'not_authenticated' };
+  if (!userId) {
+    // Phil #516 — even auth failures need a signal so the UI can react
+    // (re-prompt sign-in) instead of leaving the user staring at an
+    // empty composer.
+    trackEvent('chat_send_failed', {
+      error_code: 'not_authenticated',
+      thread_id: args.threadId,
+      content_length: args.content?.length || 0,
+    });
+    return { ok: false, data: null, error: 'not_authenticated' };
+  }
 
   const meta = {
     message_type: args.messageType ?? 'text',
@@ -293,6 +304,12 @@ export async function sendMessage(args: {
     ...(args.metadata ?? {}),
   };
 
+  // Phil 2026-06-01 #516/#519 — make chat send observable. Glen reported
+  // a fully unresponsive composer earlier; without telemetry on the send
+  // path we are blind to whether the write failed (RLS, missing thread,
+  // empty content rejected), whether it succeeded but the row vanished,
+  // or whether the issue is purely UI (input never reached this function).
+  // Matches the diagnostic pattern from PR #796 (useTaps).
   const { data, error } = await supabase
     .from('messages')
     .insert({
@@ -304,7 +321,30 @@ export async function sendMessage(args: {
     .select('*')
     .single();
 
-  if (error) return { ok: false, data: null, error: error.message };
+  if (error || !data) {
+    const errMsg = error?.message || 'insert returned no row';
+    const errCode = (error as { code?: string } | null)?.code;
+    console.error('[sendMessage] failed:', errMsg, { code: errCode, error });
+    trackError((error || new Error(errMsg)) as Error, {
+      surface: 'chat_send',
+      user_id: userId,
+      thread_id: args.threadId,
+      content_length: args.content?.length || 0,
+      code: errCode,
+    });
+    trackEvent('chat_send_failed', {
+      thread_id: args.threadId,
+      error_code: errCode,
+      error_message: errMsg,
+      content_length: args.content?.length || 0,
+    });
+    return { ok: false, data: null, error: errMsg };
+  }
+
+  trackEvent('chat_send_succeeded', {
+    thread_id: args.threadId,
+    content_length: args.content?.length || 0,
+  });
 
   // Bump the conversation's last_message snapshot (RLS allows the sender to
   // update conversations they are a member of)
