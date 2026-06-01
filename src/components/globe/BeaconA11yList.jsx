@@ -1,13 +1,30 @@
 import React from 'react';
+import { composeClusterAriaLabel } from '@/lib/clusters/clusterA11y';
+// Re-export so existing call sites that imported it from BeaconA11yList continue
+// to work; canonical source lives at @/lib/clusters/clusterA11y for cleaner
+// test boundary (no React in the test runner).
+export { composeClusterAriaLabel } from '@/lib/clusters/clusterA11y';
 
-// Parallel DOM accessibility tree for the WebGL bloom sprites.
+// Parallel DOM accessibility tree for the WebGL bloom sprites + Mapbox clusters.
 //
 // A three.js Sprite has no role, no focus, no name — a screen reader and a keyboard
-// user can't reach it. This sr-only list mirrors the same beacons as real <button>s,
-// so Tab cycles them, Enter/Space opens one (same handler as a sprite click), and a
-// screen reader announces "category: name, distance". It's visually hidden (sr-only)
-// but stays in the tab + a11y trees, which is exactly the keyboard/SR parity the
-// sprite layer can't provide natively.
+// user can't reach it. Mapbox cluster circles have the same problem. This sr-only list
+// mirrors both as real <button>s, so Tab cycles them, Enter/Space activates one, and a
+// screen reader announces them. Visually hidden (sr-only) but kept in the tab + a11y
+// trees, which is exactly the keyboard/SR parity those layers can't provide natively.
+//
+// D43 Slice A · PR 4 — cluster row consumer.
+//
+// Per D17 §4 unified-preview pattern, the cluster row MUST emit the same composed
+// reality the sighted chip emits. Both consume ClusterPreviewState from
+// composeClusterPreview; the only difference is the medium (aria-label vs. JSX).
+// Phil's ratified copy strings flow through `formatChipCopy` so the answer to
+// D48 §5.1's canonical question ("did the user opt in to face exposure for
+// this surface, at this intent, under these conditions?") is the same in both
+// registers — the AT layer never exposes face data because §3.4 default-down
+// already stepped representatives down upstream by the time state reaches here.
+//
+// Doctrine refs: D43, D48 §3.4 / §5.1, D17 §4, D35, sacred-invariants substrate.
 
 function distanceKm(a, b) {
   if (!a || !b) return null;
@@ -44,16 +61,52 @@ function categoryLabel(kind) {
   return 'Signal';
 }
 
-export default function BeaconA11yList({ beacons = [], viewerLocation = null, onSelect }) {
-  const list = Array.isArray(beacons) ? beacons : [];
+export default function BeaconA11yList({
+  beacons = [],
+  clusters = [],
+  viewerLocation = null,
+  onSelect,
+  onClusterSelect,
+}) {
+  const beaconList = Array.isArray(beacons) ? beacons : [];
+  const clusterList = Array.isArray(clusters) ? clusters : [];
   return (
     <div
       className="sr-only"
       role="region"
-      aria-label="Beacons on the map. Tab to move between beacons, Enter to open one."
+      aria-label="Beacons and clusters on the map. Tab to move between them, Enter to activate."
     >
       <ul>
-        {list.map((b, i) => {
+        {/* Cluster rows render first — broader scope before individual beacons.
+            This matches the visual hierarchy (clusters dominate at lower zoom)
+            and gives screen-reader users the same orientation a sighted user
+            gets when scanning the map. */}
+        {clusterList.map((cluster, i) => {
+          if (!cluster || !cluster.state) return null;
+          const label = composeClusterAriaLabel(cluster.state);
+          const key = cluster.cluster_id != null
+            ? `cluster-${cluster.cluster_id}`
+            : `cluster-idx-${i}`;
+          return (
+            <li key={key}>
+              <button
+                type="button"
+                aria-label={label}
+                data-cluster-id={cluster.cluster_id ?? ''}
+                onClick={() => onClusterSelect && onClusterSelect(cluster)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    if (onClusterSelect) onClusterSelect(cluster);
+                  }
+                }}
+              >
+                {label}
+              </button>
+            </li>
+          );
+        })}
+        {beaconList.map((b, i) => {
           const lat = Number(b.lat ?? b.location_lat);
           const lng = Number(b.lng ?? b.location_lng);
           if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
