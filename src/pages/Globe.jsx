@@ -132,6 +132,12 @@ export default function GlobePage({ embedded = false }) {
   const { notifCount, clearNotifBadge } = useNotifCount();
   const [showLayersSheet, setShowLayersSheet] = useState(false);
   const [localFocus, setLocalFocus] = useState(null);
+  // D43 Slice A · PR 4 — composed cluster states lifted from PulseMap on every
+  // map settle. Feeds BeaconA11yList so screen-reader users get the same
+  // composed reality the sighted chip emits (D17 §4 unified-preview pattern).
+  // Default-down is already enforced upstream (§3.4 in the leaf shaper);
+  // by the time state reaches here there is no face/avatar data on it.
+  const [clusterStates, setClusterStates] = useState([]);
   const [pulseTier, setPulseTier] = useState('globe');
   const [tierToast, setTierToast] = useState('');
   // Tier auto-detect listener — PulseMap emits 'pulse:tier' on every moveend
@@ -561,6 +567,7 @@ export default function GlobePage({ embedded = false }) {
               }
             }}
             onLocalFocus={(focus) => setLocalFocus(focus)}
+            onClustersChange={setClusterStates}
           />
         </div>
 
@@ -729,7 +736,27 @@ export default function GlobePage({ embedded = false }) {
             EXACT beacon set the globe blooms from — incl. founding anchors — so keyboard
             users can reach every bloom a mouse user can. */}
         {localModeEnabled && (
-          <BeaconA11yList beacons={mapSignals} viewerLocation={userLocation} onSelect={handleBeaconClick} />
+          <BeaconA11yList
+            beacons={mapSignals}
+            clusters={clusterStates}
+            viewerLocation={userLocation}
+            onSelect={handleBeaconClick}
+            onClusterSelect={(cluster) => {
+              // D43 Slice A · PR 4 — Enter on a cluster row flies the camera
+              // into the cluster's anchor at city zoom. No L2 sheet by design
+              // (D43: clusters are in-world atmosphere). The composer cache +
+              // §3.5 continuity invariant means revisiting the same cluster
+              // gives the same representative decision.
+              if (!cluster || !cluster.anchor) return;
+              const { lat, lng } = cluster.anchor;
+              if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+              try {
+                window.dispatchEvent(new CustomEvent('pulse:flyto', {
+                  detail: { lat, lng, zoom: 14 },
+                }));
+              } catch (_e) { /* non-fatal */ }
+            }}
+          />
         )}
         <LayersSheet key="layers-sheet" open={showLayersSheet} onClose={() => setShowLayersSheet(false)} activeLayer={activeLayer} setActiveLayer={setActiveLayer} />
       </div>
