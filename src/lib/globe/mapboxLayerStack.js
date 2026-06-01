@@ -6,6 +6,15 @@
 import { resolveBeaconCategory } from '@/components/globe/beaconGlyphs';
 
 // Stable layer IDs (naming convention from the spec, §"Mapbox layer naming").
+//
+// D49 Slice 1 (2026-06-01) — venue/signal source split.
+// Geography layer (hm-venues): quiet, persistent place markers. No atmosphere.
+// Atmosphere layer (hm-signals → still id `hm-public` for backward-compat with
+// every existing cluster handler / chip / test that references SOURCE_IDS.public).
+// The semantic rename happens in §12.2 of D49; the physical source id stays
+// `hm-public` to avoid touching the entire cluster handler graph in one PR.
+// Visible-to-user surface is "signals". Future PR (D49 Slice 2 cleanup) may
+// rename the id.
 export const LAYER_IDS = {
   clusterCircles: 'hm-cluster-circles',
   clusterCount: 'hm-cluster-symbols',
@@ -13,8 +22,16 @@ export const LAYER_IDS = {
   beaconMarkers: 'hm-beacon-markers',
   beaconIcons: 'hm-beacon-icons',
   selectedHalo: 'hm-selected-halo',
+  // D49 venue layer ids — geography only, no atmospheric vocabulary.
+  venueClusterCircles: 'hm-venue-cluster-circles',
+  venueClusterCount: 'hm-venue-cluster-symbols',
+  venueMarkers: 'hm-venue-markers',
 };
-export const SOURCE_IDS = { public: 'hm-public', selected: 'hm-selected' };
+export const SOURCE_IDS = {
+  public: 'hm-public',     // semantically: signals (active broadcasts only)
+  selected: 'hm-selected',
+  venues: 'hm-venues',     // D49 — persistent geography
+};
 
 // Declutter constants surfaced so callers can introspect the readability
 // contract (see addLayerStack header for doctrine references).
@@ -277,15 +294,38 @@ export function exposureRegisterOf(beacon, identityMode) {
 // ~1.1km grid — coarsen approximate categories so exact location is never exposed.
 const snap = (n) => Math.round(n * 100) / 100;
 
-// Build the privacy-checked PUBLIC FeatureCollection. Private safety signals are
-// dropped entirely; people/preloved/etc. are snapped to a coarse grid.
+// Build the privacy-checked PUBLIC FeatureCollection.
+//
+// D49 Slice 1 (2026-06-01) — venue/signal source split.
+// Phil's locked acceptance line: "The globe can show where things are
+// without pretending they are happening."
+//
+// Records are now bucketed by `entity_kind` (D12 reader) into two distinct
+// FeatureCollections:
+//   - venues: passive geography — saunas, gyms, bars, clubs. Persistent.
+//   - signals: active broadcasts — person state, venue-presence, venue-event,
+//     route movement. Temporal.
+//
+// A passive venue MUST NOT enter the signal source (D49 §7 load-bearing rule).
+// A venue-event record (entity_kind=event) goes to signals, because the venue
+// is broadcasting that event right now. A venue with no active broadcast goes
+// to venues only.
+//
+// Backward compatibility: the function still returns the signal FeatureCollection
+// as the .signals field; existing callers that pass it to `hm-public.setData`
+// keep working. The venues FC is new; new callers (PulseMap) wire it to
+// `hm-venues.setData`.
+//
+// Private safety signals are dropped entirely; people/preloved/etc. are
+// snapped to a coarse grid.
 export function toPublicSafeFeatureCollection(beacons, glowUserIds) {
   const list = Array.isArray(beacons) ? beacons : [];
   // Phil 2026-05-27 globe_glow: amplify aura ONLY for owners with an active
   // boost. We accept a Set<string> (or null) — keeping the API tolerant means
   // no caller has to special-case the empty-state.
   const glowSet = (glowUserIds && typeof glowUserIds.has === 'function') ? glowUserIds : null;
-  const features = [];
+  const signalFeatures = [];
+  const venueFeatures = [];
   for (const b of list) {
     if (!b || isPrivate(b)) continue;
     let lat = Number(b.lat != null ? b.lat : b.location_lat);
@@ -314,10 +354,20 @@ export function toPublicSafeFeatureCollection(beacons, glowUserIds) {
     const identityMode = identityModeOf(b, cat);
     const exposureRegister = exposureRegisterOf(b, identityMode);
 
-    features.push({
+    // D49 Slice 1 — entity_kind routing.
+    // readEntityKind returns 'beacon' | 'venue' | 'event'. The doctrine name
+    // for 'beacon' in this context is 'signal' (D49 §2 — beacon is a verb,
+    // signal is the noun). The reader keeps the legacy column name.
+    const entityKind = readEntityKind(b);
+    const isVenue = entityKind === 'venue';
+
+    const feature = {
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [lng, lat] },
       properties: {
+        // D49 — emit entity_kind on every feature so downstream click handlers
+        // can route taps to the right card without re-looking-up the source row.
+        entity_kind: entityKind,
         id: b.id != null ? String(b.id) : '',
         // owner_id added 2026-05-26: belt-and-braces for the entity-aware
         // beacon-tap-to-profile flow. PulseMap's click handler usually
@@ -379,9 +429,39 @@ export function toPublicSafeFeatureCollection(beacons, glowUserIds) {
           return intentVal ? { intent: intentVal } : {};
         })(),
       },
-    });
+    };
+
+    // D49 §7 (load-bearing passive venue rule):
+    // - Passive venues → venues FC only. They exist; they are not broadcasting.
+    // - Active venue-event broadcasts (entity_kind=event with a venue origin)
+    //   → signals FC. The venue is broadcasting that event right now.
+    //   AND → venues FC (so the venue marker still anchors the geography).
+    // - Person/route/event signals → signals FC only.
+    if (isVenue) {
+      venueFeatures.push(feature);
+      // venue records do NOT enter the signal source. Phil's hard kill #1.
+    } else {
+      signalFeatures.push(feature);
+      // If the signal has a venue origin (event broadcasted by a venue), the
+      // venue itself should still be visible as geography. The venue record
+      // is expected to exist as its own row with entity_kind='venue' in the
+      // incoming list — no duplication done here. The venue source picks it
+      // up on its own.
+    }
   }
-  return { type: 'FeatureCollection', features };
+  // Return shape:
+  //   .signals — the FC for SOURCE_IDS.public (active broadcasts only)
+  //   .venues  — the FC for SOURCE_IDS.venues  (persistent geography)
+  // Also expose .features as an alias for .signals to soft-land any callsite
+  // we missed; will be removed in a follow-up cleanup PR once the audit
+  // confirms no consumer reaches in for the old shape.
+  return {
+    signals: { type: 'FeatureCollection', features: signalFeatures },
+    venues:  { type: 'FeatureCollection', features: venueFeatures },
+    // legacy alias — deprecated by D49 §12 step 2
+    type: 'FeatureCollection',
+    features: signalFeatures,
+  };
 }
 
 // Time-of-day environmental atmosphere (docs/GLOBE_WEATHER_TIME_AND_ENVIRONMENTAL_RENDERING.md):
@@ -443,6 +523,81 @@ export function addLayerStack(map, opts) {
   }
   if (!map.getSource(SOURCE_IDS.selected)) {
     map.addSource(SOURCE_IDS.selected, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  }
+
+  // D49 Slice 1 — hm-venues source.
+  // Persistent geography. Same cluster mechanics as signals BUT distinct
+  // visual register: dim/quiet, no atmospheric vocabulary, no glow, no chip.
+  // Tap behaviour: cluster → zoom; individual → venue card (handled in PulseMap).
+  // Per D49 §5.1, this layer answers "what exists here" not "what is happening here."
+  if (!map.getSource(SOURCE_IDS.venues)) {
+    map.addSource(SOURCE_IDS.venues, {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+      cluster: true,
+      clusterRadius: CLUSTER_RADIUS,
+      clusterMaxZoom: (opts && Number.isFinite(opts.clusterMaxZoom)) ? opts.clusterMaxZoom : 16,
+    });
+  }
+
+  // ─── D49 Slice 1 — venue (geography) layers ─────────────────────────────
+  // Quiet, persistent, low atmospheric weight. NO atmospheric chip on hover.
+  // Cluster tap = zoom in. Individual tap = venue card.
+  //
+  // Visual treatment per D49 §5.1: "What exists here." Dim grey-cyan, no
+  // gold (gold is the active-signal vocabulary). No pulse, no glow. The map
+  // legibly distinguishes geography (these venue markers) from atmosphere
+  // (the gold signal cluster layers below).
+
+  // Venue cluster circles — smaller, dimmer, neutral colour.
+  if (!map.getLayer(LAYER_IDS.venueClusterCircles)) {
+    map.addLayer({
+      id: LAYER_IDS.venueClusterCircles,
+      type: 'circle',
+      source: SOURCE_IDS.venues,
+      filter: ['has', 'point_count'],
+      paint: {
+        // Cool grey-blue: reads as geography aggregate, not atmospheric heat.
+        'circle-color': '#3a4555',
+        'circle-opacity': 0.7,
+        // ~70% the radius of signal clusters so signals always dominate
+        // visual hierarchy when both are present.
+        'circle-radius': ['step', ['get', 'point_count'], 12, 10, 16, 50, 22],
+        'circle-stroke-width': 1,
+        'circle-stroke-color': 'rgba(0,0,0,0.4)',
+      },
+    });
+  }
+  // Venue cluster counts — small, low-weight white.
+  if (!map.getLayer(LAYER_IDS.venueClusterCount)) {
+    map.addLayer({
+      id: LAYER_IDS.venueClusterCount,
+      type: 'symbol',
+      source: SOURCE_IDS.venues,
+      filter: ['has', 'point_count'],
+      layout: {
+        'text-field': ['get', 'point_count_abbreviated'],
+        'text-size': 11,
+        'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+      },
+      paint: { 'text-color': '#cfd6e0', 'text-opacity': 0.85 },
+    });
+  }
+  // Individual venue markers — small neutral dots.
+  if (!map.getLayer(LAYER_IDS.venueMarkers)) {
+    map.addLayer({
+      id: LAYER_IDS.venueMarkers,
+      type: 'circle',
+      source: SOURCE_IDS.venues,
+      filter: ['!', ['has', 'point_count']],
+      paint: {
+        'circle-color': '#5c6878',     // neutral place dot
+        'circle-radius': 4,
+        'circle-stroke-width': 1,
+        'circle-stroke-color': 'rgba(0,0,0,0.5)',
+        'circle-opacity': 0.9,
+      },
+    });
   }
 
   // L6 — cluster circles (count-scaled, gold)

@@ -322,11 +322,21 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
                 console.warn('[PulseMap] beacon icon registration failed (will fall back to gold dots):', err && err.message || err);
               });
               addLayerStack(map, { reducedMotion, clusterMaxZoom: 13 });
-              const src = map.getSource(SOURCE_IDS.public);
-              if (src && src.setData) {
-                src.setData(toPublicSafeFeatureCollection(beaconsRef.current, glowUserIdsRef.current));
+              // D49 Slice 1 — feed both sources from the split FC.
+              // .signals → hm-public (atmospheric layer, active broadcasts only)
+              // .venues  → hm-venues (geography layer, persistent places)
+              const fc = toPublicSafeFeatureCollection(beaconsRef.current, glowUserIdsRef.current);
+              const sigSrc = map.getSource(SOURCE_IDS.public);
+              if (sigSrc && sigSrc.setData) {
+                sigSrc.setData(fc.signals);
               } else {
                 console.error('[PulseMap] hm-public source missing after addLayerStack (' + origin + ')');
+              }
+              const venSrc = map.getSource(SOURCE_IDS.venues);
+              if (venSrc && venSrc.setData) {
+                venSrc.setData(fc.venues);
+              } else {
+                console.error('[PulseMap] hm-venues source missing after addLayerStack (' + origin + ')');
               }
             } catch (e) {
               console.error('[PulseMap] addLayerStack threw (' + origin + '):', e && e.message || e, e && e.stack);
@@ -334,58 +344,66 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
           };
           installBeaconStack('style.load');
 
-          // Cluster tap → open cluster preview sheet (Phil locked 2026-05-29).
-          // Was: blind zoom into the cluster. Replaced with a peek-sheet that
-          // surfaces "N signals here" with the strongest title and a list of
-          // the constituent signals. The Zoom-in action stays available as a
-          // secondary CTA inside the sheet.
-          //
-          // We pre-resolve the leaves here so the sheet doesn't need to know
-          // about Mapbox — it just receives a static snapshot of the cluster.
+          // D49 §9 (cascading from D43) — signal cluster tap = zoom in.
+          // The atmospheric chip on hover/long-press is the preview surface;
+          // the click no longer opens an L2 "SIGNALS HERE" sheet (deprecated
+          // by D49 because the sheet listed passive venues as signals).
+          // Phil's acceptance line: "The globe can show where things are
+          // without pretending they are happening."
+          const __zoomIntoCluster = (sourceId, feat) => {
+            const src = map.getSource(sourceId);
+            if (!src || !src.getClusterExpansionZoom) return;
+            const clusterId = feat.properties && feat.properties.cluster_id;
+            if (clusterId == null) return;
+            const coords = feat.geometry && feat.geometry.coordinates;
+            src.getClusterExpansionZoom(clusterId, (err, zoom) => {
+              if (err) return;
+              try {
+                map.flyTo({
+                  center: coords,
+                  zoom: zoom != null ? zoom : Math.min(map.getZoom() + 2, 16),
+                  duration: reducedMotion ? 0 : 600,
+                  essential: true,
+                });
+              } catch (e) { /* non-fatal */ }
+            });
+          };
           map.on('click', LAYER_IDS.clusterCircles, (e) => {
             const feat = e.features && e.features[0];
+            if (!feat) return;
+            __zoomIntoCluster(SOURCE_IDS.public, feat);
+          });
+          // D49 — venue cluster tap = zoom in (same UX as signal cluster).
+          map.on('click', LAYER_IDS.venueClusterCircles, (e) => {
+            const feat = e.features && e.features[0];
+            if (!feat) return;
+            __zoomIntoCluster(SOURCE_IDS.venues, feat);
+          });
+          // D49 — individual venue tap = surface as venue (entity_kind: 'venue').
+          // Globe.jsx routes to the venue branch of L2BeaconSheet rather than
+          // the person profile sheet. This is the hard kill for "venue tap
+          // opens profile sheet" (Phil's locked scope guard #3).
+          map.on('click', LAYER_IDS.venueMarkers, (e) => {
+            const feat = e.features && e.features[0];
             if (!feat || !onBeaconClickRef.current) return;
-            const src = map.getSource(SOURCE_IDS.public);
-            if (!src || !src.getClusterLeaves) return;
-            const clusterId = feat.properties.cluster_id;
-            const count = Number(feat.properties.point_count) || 0;
-            const coords = feat.geometry.coordinates;
-            // getClusterLeaves can return up to `limit` features. Cap at 30 —
-            // beyond that the preview list isn't readable and Zoom-in is
-            // the right move anyway.
-            const limit = Math.min(count, 30);
-            src.getClusterLeaves(clusterId, limit, 0, (err, leaves) => {
-              if (err || cancelled || !onBeaconClickRef.current) return;
-              const leafItems = (leaves || []).map((leaf) => {
-                const p = leaf.properties || {};
-                return {
-                  id: p.id,
-                  title: p.title || (p.cat ? p.cat[0].toUpperCase() + p.cat.slice(1) : 'Signal'),
-                  beacon_category: p.beacon_category || p.cat,
-                  color: p.color,
-                  priority: Number(p.priority) || 0,
-                  ends_at_ms: Number(p.ends_at_ms) || 0,
-                };
-              });
-              // Strongest = highest priority, ties broken by latest ends_at.
-              leafItems.sort((a, b) => (b.priority - a.priority) || (b.ends_at_ms - a.ends_at_ms));
-              onBeaconClickRef.current({
-                isCluster: true,
-                cluster_id: clusterId,
-                count,
-                lat: coords[1],
-                lng: coords[0],
-                leaves: leafItems,
-                // Used by Globe.jsx when the user picks "Zoom in" — falls back
-                // to a sensible level if the source doesn't expose expansion.
-                expansion_resolver: () => new Promise((resolve) => {
-                  try {
-                    src.getClusterExpansionZoom(clusterId, (zErr, zoom) => {
-                      resolve(zErr ? null : zoom);
-                    });
-                  } catch (_) { resolve(null); }
-                }),
-              });
+            try {
+              const sel = map.getSource(SOURCE_IDS.selected);
+              if (sel && sel.setData) {
+                sel.setData({
+                  type: 'FeatureCollection',
+                  features: [{ type: 'Feature', geometry: feat.geometry, properties: feat.properties }],
+                });
+              }
+            } catch (e) { /* non-fatal */ }
+            const p = feat.properties || {};
+            onBeaconClickRef.current({
+              id: p.id,
+              entity_kind: 'venue',
+              title: p.title,
+              beacon_category: p.beacon_category,
+              owner_id: p.owner_id,
+              lat: feat.geometry.coordinates[1],
+              lng: feat.geometry.coordinates[0],
             });
           });
 
@@ -820,8 +838,12 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
     const map = mapRef.current;
     if (!map) return;
     try {
-      const src = map.getSource(SOURCE_IDS.public);
-      if (src && src.setData) src.setData(toPublicSafeFeatureCollection(beacons, glowUserIds));
+      // D49 Slice 1 — split the FC and feed both sources.
+      const fc = toPublicSafeFeatureCollection(beacons, glowUserIds);
+      const sigSrc = map.getSource(SOURCE_IDS.public);
+      if (sigSrc && sigSrc.setData) sigSrc.setData(fc.signals);
+      const venSrc = map.getSource(SOURCE_IDS.venues);
+      if (venSrc && venSrc.setData) venSrc.setData(fc.venues);
     } catch (e) { /* source not ready; initial data set on load */ }
   }, [beacons, glowUserIds]);
 
