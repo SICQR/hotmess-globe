@@ -465,12 +465,36 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       .channel(`messages:thread:${thread.id}`)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `thread_id=eq.${thread.id}` },
-        (payload) => {
-          setMessages(prev => {
-            if (prev.find(m => m.id === payload.new.id)) return prev;
-            return [...prev, payload.new];
-          });
+        // Phil 2026-06-01 #530 — chat_messages is a VIEW; postgres_changes
+        // only fires on real tables. Subscribe to `messages` (the underlying
+        // table) and re-fetch the view so the renderer gets the mapped shape
+        // (sender_email, created_date, thread_id) it expects.
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${thread.id}` },
+        async (payload) => {
+          try {
+            const { data: row, error } = await supabase
+              .from('chat_messages')
+              .select('*')
+              .eq('id', payload.new.id)
+              .maybeSingle();
+            if (error || !row) {
+              // Best-effort fallback: append payload shape so the user at
+              // least sees something land. Better than a silent gap.
+              setMessages(prev => prev.find(m => m.id === payload.new.id) ? prev : [...prev, {
+                id: payload.new.id,
+                thread_id: payload.new.conversation_id,
+                content: payload.new.content,
+                created_date: payload.new.created_at,
+                sender_email: null,
+                message_type: 'text',
+                metadata: payload.new.metadata || {},
+              }]);
+              return;
+            }
+            setMessages(prev => prev.find(m => m.id === row.id) ? prev : [...prev, row]);
+          } catch (err) {
+            console.error('[Chat] realtime INSERT re-fetch failed:', err);
+          }
           markRead(thread.id, currentUser?.email);
         }
       )
@@ -790,7 +814,11 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   // signal still has to land first — doctrine 07.
   const { isMutualBoo } = useTaps(currentUser?.id || null, currentUser?.email || null);
   // P0 2026-05-28: NEVER fall back to email. safeName guarantees no '@'-containing string ever surfaces here.
-  const otherName = safeName(otherProfile, title || 'Member');
+  // Phil 2026-06-01 #532 — was passing 'Member' as the safeName fallback,
+  // which overrode the PR #801 default 'Anonymous'. 'Member' collides with
+  // tier copy and visually labels a person as a paid tier rather than a
+  // pre-resolved identity. Pass undefined so safeName's own default applies.
+  const otherName = safeName(otherProfile, title || undefined);
 
   // #364 (Phil 2026-05-30 P0): Dynamic sheet title.
   // When we have a real persona name for the counterpart, push it into
@@ -1720,9 +1748,12 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
             placeholder={canMessage ? "Message..." : "Messaging unlocks with HOTMESS"}
             rows={1}
             className="flex-1 bg-[#1C1C1E] border border-white/[0.06] rounded-2xl text-sm text-white placeholder-white/30 focus:border-[#C8962C]/40 focus:ring-1 focus:ring-[#C8962C]/20 transition-all resize-none py-2.5 px-4 min-h-[40px] max-h-[120px] overflow-y-auto"
-            disabled={sending || !canMessage}
-            readOnly={!canMessage}
-            onClick={() => { if (!canMessage) _navigateToUpgrade('/upgrade'); }}
+            // Phil 2026-06-01 #529 — never lock the textarea via readOnly.
+            // canMessage being false (or _benefits still loading) was making
+            // the keyboard refuse to appear on iOS/Mac. Doctrine 07: gate at
+            // the action, not at the input. handleSend already checks
+            // canMessage and routes to /upgrade if needed.
+            disabled={sending}
             style={{ height: '40px' }}
           />
           <Button
