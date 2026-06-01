@@ -273,26 +273,57 @@ export function useRealtimeBeacons() {
 }
 
 /**
- * Hook to get "Right Now" count from user_presence table
+ * Hook to get "Right Now" count of members online.
+ *
+ * D49 §3 honesty rule (Phil 2026-06-01): the count MUST match what the user
+ * can actually reach. Phil's audit caught the pill saying "3 members online"
+ * while Ghosted showed zero discoverable profiles. Three doctrinal lies:
+ *   1. Counting the viewer themselves (you can't "discover" yourself).
+ *   2. Counting incomplete profiles (no display_name → not on Ghosted →
+ *      not socially reachable → not honest to count as "online").
+ *   3. Stale count: the postgres_changes UPDATE subscription doesn't fire
+ *      when a row simply ages past the 5-min window. Count needs a poll
+ *      so it decrements when nobody updates anything.
+ *
+ * Acceptance: pill count == Ghosted grid count from the same viewer's
+ * perspective. "you're the first one here tonight" when alone.
  */
 export function useRightNowCount() {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
+    let viewerId = null;
+
     const fetchCount = async () => {
-      // 5 minutes ago
+      // 5 minutes ago — matches the "right now" social window.
       const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      const { count } = await supabase
+      // Resolve the viewer's auth uid lazily so we don't block first paint
+      // if the session is still warming up.
+      if (viewerId == null) {
+        try {
+          const { data } = await supabase.auth.getSession();
+          viewerId = data?.session?.user?.id || '';
+        } catch {
+          viewerId = '';
+        }
+      }
+      let q = supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
-        .gt('last_seen_at', cutoff);
-      
-      setCount(count || 0);
+        .gt('last_seen_at', cutoff)
+        // D49 honesty fix #2 — incomplete profiles aren't discoverable
+        // on Ghosted, so they aren't honestly "online" in the social sense.
+        .not('display_name', 'is', null);
+      // D49 honesty fix #1 — exclude the viewer themselves.
+      if (viewerId) q = q.neq('id', viewerId);
+      const { count: c } = await q;
+      if (!cancelled) setCount(c || 0);
     };
 
     fetchCount();
 
-    // Subscribe to profile changes for real-time member count
+    // Subscribe to profile updates — fires when someone heartbeat-ups.
     const channel = supabase
       .channel('online-members-count')
       .on(
@@ -302,11 +333,18 @@ export function useRightNowCount() {
       )
       .subscribe();
 
+    // D49 honesty fix #3 — poll every 30s so the count decrements when
+    // a viewer's last_seen_at falls out of the window without a fresh
+    // UPDATE event. Without this the pill stays stale at the high-water
+    // mark of the session.
+    const pollId = setInterval(fetchCount, 30_000);
+
     return () => {
+      cancelled = true;
+      clearInterval(pollId);
       supabase.removeChannel(channel);
     };
   }, []);
-
 
   return count;
 }

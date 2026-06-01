@@ -1,5 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Heart, X } from 'lucide-react';
+
+// P0 2026-06-01 — beta users were getting blocked by stacked persistent cards.
+// Once dismissed, this cue should stay dismissed for the session AND auto-
+// dismiss after a few seconds if the user just wants to use the map.
+const SESSION_KEY = 'hm_care_cue_dismissed';
+const AUTO_DISMISS_MS = 6000;
 
 // Care-first emotional rendering — D15 voice (docs/doctrine/15-care-language-doctrine.md).
 // Calm, low-stimulation cue that keeps care quietly present and shifts tone as the
@@ -20,7 +26,25 @@ export function careCopy(hour) {
 }
 
 export default function CareDecompressionCue() {
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => {
+    // Honor previous-session dismissal so the cue doesn't reappear on every
+    // pulse:flyto / localFocus remount within the same browsing session.
+    try { return sessionStorage.getItem(SESSION_KEY) === '1'; } catch { return false; }
+  });
+
+  const dismiss = () => {
+    setDismissed(true);
+    try { sessionStorage.setItem(SESSION_KEY, '1'); } catch { /* incognito ok */ }
+  };
+
+  // Auto-dismiss after AUTO_DISMISS_MS so the map becomes unobstructed for
+  // beta users who just want to start exploring.
+  useEffect(() => {
+    if (dismissed) return undefined;
+    const id = setTimeout(dismiss, AUTO_DISMISS_MS);
+    return () => clearTimeout(id);
+  }, [dismissed]);
+
   if (dismissed) return null;
   const copy = careCopy(new Date().getHours());
   return (
@@ -31,7 +55,7 @@ export default function CareDecompressionCue() {
       <Heart className="w-4 h-4 flex-shrink-0 text-[#7fb0d8]" />
       <p className="text-white/70 text-[11px] leading-snug flex-1">{copy}</p>
       <button
-        onClick={() => setDismissed(true)}
+        onClick={dismiss}
         className="flex-shrink-0 p-1.5 bg-white/5 rounded-full text-white/40 hover:bg-white/15 hover:text-white transition-colors"
         aria-label="Dismiss"
       >

@@ -7,14 +7,39 @@ import { X } from 'lucide-react';
 // docs/GLOBE_EVENT_ARCHIVE_AND_CULTURAL_MEMORY_SYSTEM.md (archive).
 // All content is public-read; renders nothing if there's nothing to show or a fetch
 // fails, so it can never break the map. Sits above the map overlay; dismissible.
+//
+// P0 2026-06-01 — beta users reported the card was blocking the map every time
+// the camera entered a new editorial city. Two changes:
+//   1. Once dismissed in this session, the card stays dismissed for the rest
+//      of the session (per-city sessionStorage flag). No reappearance on
+//      pulse:flyto / localFocus remount.
+//   2. Auto-dismiss after AUTO_DISMISS_MS so the user can keep exploring
+//      without having to find the X every time.
+const SESSION_KEY_PREFIX = 'hm_district_editorial_dismissed:';
+const AUTO_DISMISS_MS = 4500;
+
 export default function DistrictEditorialCard({ citySlug }) {
   const [data, setData] = useState(null);
   const [archive, setArchive] = useState([]);
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => {
+    if (!citySlug) return false;
+    try { return sessionStorage.getItem(SESSION_KEY_PREFIX + citySlug) === '1'; } catch { return false; }
+  });
+
+  const dismiss = () => {
+    setDismissed(true);
+    if (citySlug) {
+      try { sessionStorage.setItem(SESSION_KEY_PREFIX + citySlug, '1'); } catch { /* incognito ok */ }
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
-    setDismissed(false);
+    // Re-evaluate dismissal flag for the new city (so a fresh city CAN show
+    // the card even if a previous city was dismissed).
+    try {
+      setDismissed(citySlug ? sessionStorage.getItem(SESSION_KEY_PREFIX + citySlug) === '1' : false);
+    } catch { setDismissed(false); }
     setData(null);
     setArchive([]);
     if (!citySlug) return undefined;
@@ -40,6 +65,16 @@ export default function DistrictEditorialCard({ citySlug }) {
     })();
     return () => { cancelled = true; };
   }, [citySlug]);
+
+  // Auto-dismiss after AUTO_DISMISS_MS so the map becomes unobstructed for
+  // beta users. P0 fix — once content has loaded, start the timer.
+  useEffect(() => {
+    if (dismissed) return undefined;
+    if (!data && archive.length === 0) return undefined;
+    const id = setTimeout(dismiss, AUTO_DISMISS_MS);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dismissed, data, archive.length, citySlug]);
 
   if (dismissed || (!data && archive.length === 0)) return null;
   const accent = (data && data.accent_color) || '#C8962C';
@@ -80,7 +115,7 @@ export default function DistrictEditorialCard({ citySlug }) {
           )}
         </div>
         <button
-          onClick={() => setDismissed(true)}
+          onClick={dismiss}
           className="flex-shrink-0 p-1.5 bg-white/5 rounded-full text-white/50 hover:bg-white/15 hover:text-white transition-colors"
           aria-label="Dismiss"
         >
