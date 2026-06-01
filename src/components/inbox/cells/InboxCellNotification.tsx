@@ -39,9 +39,21 @@ export default function InboxCellNotification({ item }: CellProps) {
     : '';
 
   const innerType = payload?.notification_type || payload?.type;
-  const tappable = ['event', 'event_reminder'].includes(innerType);
+  // Phil 2026-06-01 — chat message bell rows were rendering here with no
+  // handler, so tapping did nothing ("the other way still crashes"). The
+  // notify_recipients_on_message trigger writes metadata.kind = 'chat_message'
+  // and metadata.thread_id, so we route to the same place
+  // InboxCellConversation does — openSheet('chat', { thread }) — same prop
+  // contract as L2ChatSheet (see PR #805).
+  const isChatMessage = payload?.kind === 'chat_message' || innerType === 'message';
+  const tappable = ['event', 'event_reminder'].includes(innerType) || isChatMessage;
 
   const handleTap = () => {
+    if (isChatMessage) {
+      const threadId = payload?.thread_id;
+      if (threadId) openSheet('chat', { thread: threadId });
+      return;
+    }
     if (innerType === 'event' || innerType === 'event_reminder') {
       const eventId = payload.event_id;
       if (eventId) openSheet('event', { id: eventId });
