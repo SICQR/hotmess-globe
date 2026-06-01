@@ -118,8 +118,11 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
   const profileIncomplete = profile?.onboarding_completed &&
     (!profile?.avatar_url || !profile?.bio || !profile?.display_name);
 
-  type CardVariant = 'go-live' | 'live' | 'complete-profile';
-  let cardVariant: CardVariant = 'go-live';
+  // Phil 2026-06-01 — Go Live band removed from Home (D17 dead-end).
+  // The "off-grid → Go Live" affordance now lives only in the Drop A Beacon
+  // hero below. State card surfaces only when there is real state to show.
+  type CardVariant = 'live' | 'complete-profile' | 'hidden';
+  let cardVariant: CardVariant = 'hidden';
   if (userRnStatus) cardVariant = 'live';
   else if (profileIncomplete) cardVariant = 'complete-profile';
 
@@ -239,7 +242,11 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
 
         {/* ================================================================ */}
         {/* 2. STATE CARD — single contextual action                       */}
+        {/*    Only renders when there's real state (live / incomplete).    */}
+        {/*    Default 'hidden' kills the legacy "off the grid / Go Live"  */}
+        {/*    dead-end band (Phil 2026-06-01).                            */}
         {/* ================================================================ */}
+        {cardVariant !== 'hidden' && (
         <section className="px-5 pb-5">
           <motion.div
             className="rounded-2xl p-4"
@@ -270,24 +277,6 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
                 </motion.button>
               </div>
             )}
-            {cardVariant === 'go-live' && (
-              <div className="flex items-center justify-between">
-                <div className="min-w-0">
-                  <p className="text-white text-sm font-medium leading-tight">You&rsquo;re off the grid</p>
-                  <p className="text-[11px]" style={{ color: MUTED }}>Go Live so people nearby can find you</p>
-                </div>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleGoLive}
-                  className="h-9 px-4 rounded-full text-xs font-medium flex items-center gap-1.5 flex-shrink-0 ml-3"
-                  style={{ background: AMBER, color: '#000' }}
-                  aria-label="Go Live"
-                >
-                  <Zap className="w-3.5 h-3.5" />
-                  Go Live
-                </motion.button>
-              </div>
-            )}
             {cardVariant === 'complete-profile' && (
               <div className="flex items-center justify-between">
                 <div className="min-w-0">
@@ -308,6 +297,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
             )}
           </motion.div>
         </section>
+        )}
 
         {/* ================================================================ */}
         {/* 2b. CARE SUITE — doctrine 11: care outranks commerce            */}
