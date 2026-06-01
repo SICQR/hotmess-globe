@@ -138,19 +138,33 @@ function ImageGallery({ images = [], alt = 'Product', mode = 'square' }) {
     .filter(x => x.i !== safeIdx);
 
   return (
-    <div className="space-y-4 max-w-[600px] mx-auto px-4 mt-4">
-      {/* Primary Image — D18 Zone B. Lux-dominant.
-          Mode drives the aspect: 'square' (1/1) for SKU, 'editorial' (4/5)
-          for poster-led products. 70dvh cap holds in both — buy dock stays
-          on screen. aspect-ratio transition gives a smooth snap when a
-          mixed-aspect thumbnail swaps in. object-cover on editorial because
-          the composition is already framed; object-contain on square so a
-          bottle / hem isn't cropped. */}
+    <div>
+      {/* Primary Image — D18 Zone B. Lux-dominant, full-bleed hero.
+          Phil 2026-06-01: image must "fit the card or screen". Was
+          constrained by max-w-[600px] mx-auto px-4 mt-4 — produced a
+          card-within-card look with 16px gutters and a 16px gap below
+          the sheet header on mobile, leaving visible black void between
+          the sheet title bar and the image. Going edge-to-edge across
+          the full sheet width.
+
+          Sizing strategy:
+            - aspectRatio drives the natural ratio (4/5 editorial, 1/1 SKU)
+            - minHeight 50dvh ensures the image is genuinely dominant on
+              tall phones — was rendering at ~447px on iPhone 13 due to
+              the 4:5 cap being smaller than what the card could afford
+            - maxHeight 75dvh (was 70) lets the image breathe a touch
+              taller while leaving room for title + buy dock
+
+          object-cover on editorial because the composition is already
+          framed; object-contain on square so a bottle / hem isn't
+          cropped. Border + rounded corners dropped — full-bleed image
+          uses the sheet's own rounded top edge instead. */}
       <div
-        className="rounded-2xl overflow-hidden bg-black border border-white/5"
+        className="overflow-hidden bg-black"
         style={{
           aspectRatio: mode === 'editorial' ? '4 / 5' : '1 / 1',
-          maxHeight: '70dvh',
+          minHeight: '50dvh',
+          maxHeight: '75dvh',
           transition: 'aspect-ratio 250ms cubic-bezier(.4,0,.2,1)',
         }}
       >
@@ -163,9 +177,11 @@ function ImageGallery({ images = [], alt = 'Product', mode = 'square' }) {
         />
       </div>
 
-      {/* Tappable thumbnails — tap to swap into primary slot. */}
+      {/* Tappable thumbnails — tap to swap into primary slot.
+          Constrained + padded (the image above is full-bleed, the
+          thumbnail row sits inside the standard content gutter). */}
       {thumbs.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-3 max-w-[600px] mx-auto px-4 mt-4">
           {thumbs.map(({ url, i }) => (
             <button
               key={i}
