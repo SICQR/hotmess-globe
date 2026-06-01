@@ -368,12 +368,64 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
               } catch (e) { /* non-fatal */ }
             });
           };
+          // D49 §15.5 — event_tonight cluster tap dispatches an additional
+          // window event ('pulse:event_cluster_tap') carrying the cluster's
+          // center + event_summary so downstream surfaces (peek panel,
+          // editorial card) can render the event-aware view. The map's
+          // spatial response (zoom-in) stays consistent across all cluster
+          // classes; the dispatch is the routing differentiation.
+          //
+          // We reuse the cached composition when present (clusterCacheRef);
+          // otherwise compose on click. Composer continuity short-circuits
+          // for unchanged topology, so this is cheap.
+          const __maybeDispatchEventClusterTap = (feat) => {
+            try {
+              const clusterId = feat.properties && feat.properties.cluster_id;
+              const coords = feat.geometry && feat.geometry.coordinates;
+              if (clusterId == null || !Array.isArray(coords)) return;
+              const cached = clusterCacheRef.current.get(String(clusterId));
+              const dispatchIfEvent = (state) => {
+                if (!state || state.dominant_intent !== 'event_tonight') return;
+                try {
+                  window.dispatchEvent(new CustomEvent('pulse:event_cluster_tap', {
+                    detail: {
+                      cluster_id: clusterId,
+                      center: { lng: coords[0], lat: coords[1] },
+                      event_summary: state.event_summary,
+                      cluster_state: state,
+                    },
+                  }));
+                } catch (er) { /* non-fatal */ }
+              };
+              if (cached) {
+                dispatchIfEvent(cached);
+                return;
+              }
+              // Cache miss (mobile path with no hover). Compose on demand.
+              const src = map.getSource(SOURCE_IDS.public);
+              if (!src || !src.getClusterLeaves) return;
+              const count = Number(feat.properties.point_count) || 0;
+              src.getClusterLeaves(clusterId, Math.min(count, 30), 0, (err, leaves) => {
+                if (err) return;
+                try {
+                  const beacons = mapboxLeavesToBeacons(leaves || []);
+                  const viewer = { viewer_id: viewerIdRef.current };
+                  const state = composeClusterPreview(beacons, viewer, null, {});
+                  clusterCacheRef.current.set(String(clusterId), state);
+                  dispatchIfEvent(state);
+                } catch (er) { /* non-fatal */ }
+              });
+            } catch (er) { /* non-fatal */ }
+          };
+
           map.on('click', LAYER_IDS.clusterCircles, (e) => {
             const feat = e.features && e.features[0];
             if (!feat) return;
+            __maybeDispatchEventClusterTap(feat);
             __zoomIntoCluster(SOURCE_IDS.public, feat);
           });
           // D49 — venue cluster tap = zoom in (same UX as signal cluster).
+          // No event dispatch — venues are passive geography, not time-bound.
           map.on('click', LAYER_IDS.venueClusterCircles, (e) => {
             const feat = e.features && e.features[0];
             if (!feat) return;

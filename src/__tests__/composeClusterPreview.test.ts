@@ -396,3 +396,194 @@ describe('topologyHash', () => {
     expect(topologyHash([a])).toBe(topologyHash([b]));
   });
 });
+
+// ─── D49 §15 — event_tonight intent class ────────────────────────────────────
+
+describe('D49 §15 event_tonight intent class', () => {
+  // Anchor times around FIXED_NOW so tests are deterministic.
+  const PRE = FIXED_NOW + 60 * 60 * 1000; // 1h from now
+  const LIVE_START = FIXED_NOW - 30 * 60 * 1000; // started 30m ago
+  const LIVE_END = FIXED_NOW + 60 * 60 * 1000; // ends in 1h
+  const EXPIRED_START = FIXED_NOW - 4 * 60 * 60 * 1000; // started 4h ago
+  const EXPIRED_END = FIXED_NOW - 60 * 60 * 1000; // ended 1h ago
+
+  it('non-event clusters return dominant_intent=null and event_summary=null', () => {
+    const state = composeClusterPreview(
+      [
+        makeBeacon({ id: 'b1', owner_id: 'o-1', intent: 'looking' }),
+        makeBeacon({ id: 'b2', owner_id: 'o-2', intent: 'cruising' }),
+      ],
+      STRANGER_VIEWER,
+      null,
+      { now },
+    );
+    expect(state.dominant_intent).toBeNull();
+    expect(state.event_summary).toBeNull();
+  });
+
+  it('a single upcoming event makes the cluster event-dominant (asymmetric rule)', () => {
+    const state = composeClusterPreview(
+      [
+        makeBeacon({ id: 'b1', owner_id: 'o-1', intent: 'looking' }),
+        makeBeacon({ id: 'b2', owner_id: 'o-2', intent: 'looking' }),
+        makeBeacon({ id: 'b3', owner_id: 'o-3', intent: 'looking' }),
+        makeBeacon({ id: 'b4', owner_id: 'o-4', intent: 'looking' }),
+        makeBeacon({
+          id: 'evt',
+          owner_id: 'o-venue',
+          intent: 'event_tonight',
+          signal_starts_at: PRE,
+          signal_expires_at: PRE + 3 * 60 * 60 * 1000,
+        }),
+      ],
+      STRANGER_VIEWER,
+      null,
+      { now },
+    );
+    expect(state.dominant_intent).toBe('event_tonight');
+    expect(state.event_summary).toEqual({ count: 1, soonest_starts_at: PRE });
+  });
+
+  it('expired events are filtered out — no inflation, no dominance', () => {
+    const state = composeClusterPreview(
+      [
+        makeBeacon({ id: 'b1', owner_id: 'o-1', intent: 'looking' }),
+        makeBeacon({
+          id: 'evt-old',
+          owner_id: 'o-venue',
+          intent: 'event_tonight',
+          signal_starts_at: EXPIRED_START,
+          signal_expires_at: EXPIRED_END,
+        }),
+      ],
+      STRANGER_VIEWER,
+      null,
+      { now },
+    );
+    expect(state.dominant_intent).toBeNull();
+    expect(state.event_summary).toBeNull();
+    expect(state.intent_mix).toEqual([{ intent: 'looking', count: 1 }]);
+  });
+
+  it('event_tonight without signal_starts_at is rejected as substrate violation', () => {
+    const state = composeClusterPreview(
+      [
+        makeBeacon({ id: 'b1', owner_id: 'o-1', intent: 'looking' }),
+        makeBeacon({
+          id: 'evt-bad',
+          owner_id: 'o-venue',
+          intent: 'event_tonight',
+          // signal_starts_at intentionally omitted
+        }),
+      ],
+      STRANGER_VIEWER,
+      null,
+      { now },
+    );
+    expect(state.dominant_intent).toBeNull();
+    expect(state.event_summary).toBeNull();
+    expect(state.intent_mix).toEqual([{ intent: 'looking', count: 1 }]);
+  });
+
+  it('live (already-started, not-expired) event counts but does not contribute to soonest_starts_at', () => {
+    const state = composeClusterPreview(
+      [
+        makeBeacon({
+          id: 'live',
+          owner_id: 'o-venue-1',
+          intent: 'event_tonight',
+          signal_starts_at: LIVE_START,
+          signal_expires_at: LIVE_END,
+        }),
+        makeBeacon({
+          id: 'upcoming',
+          owner_id: 'o-venue-2',
+          intent: 'event_tonight',
+          signal_starts_at: PRE,
+          signal_expires_at: PRE + 60 * 60 * 1000,
+        }),
+      ],
+      STRANGER_VIEWER,
+      null,
+      { now },
+    );
+    expect(state.dominant_intent).toBe('event_tonight');
+    expect(state.event_summary).toEqual({ count: 2, soonest_starts_at: PRE });
+  });
+
+  it('aftercare-only cluster takes precedence over event_tonight — care wins', () => {
+    // All aftercare. Mixing aftercare + event_tonight is tested separately;
+    // this seed locks the "all-aftercare overrides everything" rule from §5.
+    const state = composeClusterPreview(
+      [
+        makeBeacon({ id: 'a1', owner_id: 'o-1', intent: 'aftercare' }),
+        makeBeacon({ id: 'a2', owner_id: 'o-2', intent: 'aftercare' }),
+      ],
+      STRANGER_VIEWER,
+      null,
+      { now },
+    );
+    expect(state.special_copy).toBe(AFTERCARE_HELD_HERE);
+    expect(state.dominant_intent).toBeNull();
+    expect(state.event_summary).toBeNull();
+  });
+
+  it('mixed aftercare + event_tonight is event-dominant (cluster is not aftercare-only)', () => {
+    const state = composeClusterPreview(
+      [
+        makeBeacon({ id: 'a1', owner_id: 'o-1', intent: 'aftercare' }),
+        makeBeacon({
+          id: 'evt',
+          owner_id: 'o-venue',
+          intent: 'event_tonight',
+          signal_starts_at: PRE,
+          signal_expires_at: PRE + 60 * 60 * 1000,
+        }),
+      ],
+      STRANGER_VIEWER,
+      null,
+      { now },
+    );
+    expect(state.special_copy).toBeNull();
+    expect(state.dominant_intent).toBe('event_tonight');
+    expect(state.event_summary).toEqual({ count: 1, soonest_starts_at: PRE });
+  });
+
+  it('topology hash changes when an event_tonight crosses from upcoming to live', () => {
+    const upcoming = makeBeacon({
+      id: 'evt',
+      owner_id: 'o-venue',
+      intent: 'event_tonight',
+      signal_starts_at: FIXED_NOW + 1000, // 1s from now → pre
+      signal_expires_at: FIXED_NOW + 60_000,
+    });
+    const live = { ...upcoming, signal_starts_at: FIXED_NOW - 1000 }; // 1s ago → live
+    expect(topologyHash([upcoming], FIXED_NOW)).not.toBe(topologyHash([live], FIXED_NOW));
+  });
+
+  it('topology hash unchanged for ambient (non-event) beacons regardless of now', () => {
+    const a = makeBeacon({ id: 'b', owner_id: 'o', intent: 'looking' });
+    expect(topologyHash([a], 1)).toBe(topologyHash([a], 999_999_999));
+  });
+
+  it('continuity cache busts when an event crosses its expiry', () => {
+    const pre = makeBeacon({
+      id: 'evt',
+      owner_id: 'o-venue',
+      intent: 'event_tonight',
+      signal_starts_at: FIXED_NOW + 1000,
+      signal_expires_at: FIXED_NOW + 2000,
+    });
+    const first = composeClusterPreview([pre], STRANGER_VIEWER, null, { now });
+    expect(first.dominant_intent).toBe('event_tonight');
+
+    // Jump time forward past expiry. Same beacon array, but the temporal phase
+    // for the event has flipped pre → post, so topologyHash differs and the
+    // continuity short-circuit must NOT return the cached state.
+    const future = () => FIXED_NOW + 60_000;
+    const second = composeClusterPreview([pre], STRANGER_VIEWER, first, { now: future });
+    expect(second.topology_hash).not.toBe(first.topology_hash);
+    expect(second.dominant_intent).toBeNull();
+    expect(second.event_summary).toBeNull();
+  });
+});

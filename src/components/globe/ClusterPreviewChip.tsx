@@ -57,7 +57,39 @@ const INTENT_LABEL: Record<Intent, string> = {
   quiet_hold: 'quiet',
   arriving: 'arriving',
   market: 'market',
+  // D49 §15.6 — event_tonight folds into the intent mix as 'tonight' for the
+  // dense breakdown line. The chip ALSO promotes a dedicated TONIGHT pill +
+  // event lead when dominant_intent='event_tonight' (see component below).
+  event_tonight: 'tonight',
 };
+
+/**
+ * D49 §15.6 — format the soonest event start time for the chip.
+ *
+ * Three cases:
+ *   - within ≤90 minutes: "in 47m"
+ *   - within ≤24 hours: "9:30 PM" (locale-aware short time)
+ *   - >24h or null: omitted (caller decides whether to render anything)
+ */
+function formatSoonestStart(
+  soonestStartsAt: number | null,
+  nowMs: number,
+): string | null {
+  if (soonestStartsAt == null) return null;
+  const deltaMs = soonestStartsAt - nowMs;
+  if (deltaMs < 0) return null;
+  const deltaMin = Math.round(deltaMs / 60_000);
+  if (deltaMin <= 90) return `in ${deltaMin}m`;
+  if (deltaMs > 24 * 60 * 60 * 1000) return null;
+  try {
+    return new Date(soonestStartsAt).toLocaleTimeString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  } catch {
+    return null;
+  }
+}
 
 // ─── copy formatter ──────────────────────────────────────────────────────────
 
@@ -84,13 +116,31 @@ const INTENT_LABEL: Record<Intent, string> = {
 export function formatChipCopy(
   state: ClusterPreviewState,
   dense: boolean,
+  nowMs: number = Date.now(),
 ): { lead: string; tail: string | null } {
+  // §5 / §9.2 — aftercare-only special_copy still dominates. Care wins.
   if (state.special_copy) {
-    // Aftercare-only cluster — "Care held here   3 nearby"
     return {
       lead: state.special_copy,
       tail: `${state.count} nearby`,
     };
+  }
+  // D49 §15.6 — event_tonight variant. When the cluster carries an event,
+  // the lead promotes "Tonight" + count and the tail shows the soonest
+  // upcoming start time when within 24h. The atmospheric intent mix moves
+  // down to the dense form only (otherwise we'd lose the time cue).
+  if (state.dominant_intent === 'event_tonight' && state.event_summary) {
+    const evCount = state.event_summary.count;
+    const lead = evCount === 1 ? 'Tonight' : `${evCount} events tonight`;
+    const when = formatSoonestStart(state.event_summary.soonest_starts_at, nowMs);
+    if (dense) {
+      const mixed = state.intent_mix
+        .map((entry) => `${entry.count} ${INTENT_LABEL[entry.intent]}`)
+        .join(' · ');
+      const tail = [when, mixed].filter(Boolean).join(' · ');
+      return { lead, tail: tail || null };
+    }
+    return { lead, tail: when };
   }
   const lead = `${state.count} nearby`;
   const tail = state.intent_mix
@@ -134,12 +184,27 @@ export function ClusterPreviewChip({
 }: ClusterPreviewChipProps) {
   const { lead, tail } = formatChipCopy(state, dense);
   const isAftercareOnly = !!state.special_copy;
+  // D49 §15.6 — event_tonight clusters get a distinct visual signature:
+  // warmer rim, brighter glow, "TONIGHT" pill. Aftercare-only still wins
+  // visually (care is structural; events are content).
+  const isEventTonight =
+    !isAftercareOnly && state.dominant_intent === 'event_tonight';
   const avatar = state.representative?.avatar_url ?? null;
 
   // Slightly softer rim for aftercare-only chip — Phil ratified: "same dark
   // glass, softer care tone". Avoids any emergency-services register.
-  const rimGold = isAftercareOnly ? 'rgba(200, 150, 44, 0.18)' : 'rgba(200, 150, 44, 0.32)';
-  const glowGold = isAftercareOnly ? 'rgba(200, 150, 44, 0.08)' : 'rgba(200, 150, 44, 0.14)';
+  // event_tonight rim is warmer and brighter than ambient — the city has
+  // something tonight worth moving toward.
+  const rimGold = isAftercareOnly
+    ? 'rgba(200, 150, 44, 0.18)'
+    : isEventTonight
+      ? 'rgba(255, 188, 70, 0.46)'
+      : 'rgba(200, 150, 44, 0.32)';
+  const glowGold = isAftercareOnly
+    ? 'rgba(200, 150, 44, 0.08)'
+    : isEventTonight
+      ? 'rgba(255, 188, 70, 0.22)'
+      : 'rgba(200, 150, 44, 0.14)';
 
   return (
     <AnimatePresence>
@@ -226,6 +291,28 @@ export function ClusterPreviewChip({
             className="flex items-baseline gap-2 min-w-0"
             style={{ paddingRight: 2 }}
           >
+            {/* D49 §15.6 — TONIGHT pill. Promotes time-bound action class
+                visually so the user reads the cluster as "go" not "be". */}
+            {isEventTonight && (
+              <span
+                aria-hidden
+                className="font-black uppercase"
+                style={{
+                  color: 'rgba(255, 220, 140, 0.96)',
+                  fontSize: 9.5,
+                  letterSpacing: 1.4,
+                  lineHeight: 1.1,
+                  padding: '2px 6px',
+                  borderRadius: 999,
+                  border: '1px solid rgba(255, 188, 70, 0.46)',
+                  background: 'rgba(255, 188, 70, 0.10)',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+              >
+                TONIGHT
+              </span>
+            )}
             <span
               className="font-semibold"
               style={{
