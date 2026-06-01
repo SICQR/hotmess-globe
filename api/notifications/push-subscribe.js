@@ -54,18 +54,35 @@ export default async function handler(req, res) {
   const db = serviceClient || anonClient;
   const nowIso = new Date().toISOString();
 
+  // Phil 2026-06-01 — push-subscribe was writing columns that don't exist
+  // on this table (p256dh, auth, user_agent, last_used_at). The actual
+  // schema is (id, user_id, user_email, endpoint, keys jsonb, subscription
+  // jsonb, created_at, updated_at). Every subscribe attempt was 500-ing
+  // silently — that's why Glen has zero rows and why Phil's iPhone PWA
+  // subscription got blown away by his desktop. Also the onConflict
+  // target 'user_id,endpoint' didn't match any actual unique constraint.
+  //
+  // Fixed:
+  //   - write the real columns (keys + subscription jsonb)
+  //   - onConflict on `endpoint` (now the table's natural unique key
+  //     after dropping UNIQUE(user_id) — see migration
+  //     push_subscriptions_dedup_then_per_device)
+  //   - this also gives us multi-device support: a user can have many
+  //     subscriptions, one per device, and each device's endpoint is
+  //     the upsert key.
+  const subscriptionJson = { endpoint, keys: { p256dh, auth } };
   const { data, error } = await db
     .from('push_subscriptions')
     .upsert(
       {
         user_id: user.id,
+        user_email: user.email || null,
         endpoint,
-        p256dh,
-        auth,
-        user_agent: userAgent,
-        last_used_at: nowIso,
+        keys: { p256dh, auth },
+        subscription: subscriptionJson,
+        updated_at: nowIso,
       },
-      { onConflict: 'user_id,endpoint' }
+      { onConflict: 'endpoint' }
     )
     .select('id')
     .single();
