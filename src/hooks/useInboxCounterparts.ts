@@ -18,6 +18,7 @@ import type { InboxItem } from '@/hooks/useInbox';
 export interface InboxCounterpart {
   id: string;
   display_name: string | null;
+  username: string | null;
   avatar_url: string | null;
 }
 
@@ -48,9 +49,12 @@ export function useInboxCounterparts(items: InboxItem[]): Map<string, InboxCount
       (e instanceof Error && e.name === 'AbortError') ||
       (typeof (e as any)?.message === 'string' && (e as any).message.includes('Lock broken'));
 
+    // Phil 2026-06-01 Task #520 — added `username` so counterpartName()
+    // can fall through to it when display_name is empty. Previously
+    // every empty-display-name counterpart rendered as "Member".
     const tryOnce = async () => supabase
       .from('profiles')
-      .select('id, display_name, avatar_url')
+      .select('id, display_name, username, avatar_url')
       .in('id', ids);
 
     // Stagger the fetch a tick to let useInbox's lock release first.

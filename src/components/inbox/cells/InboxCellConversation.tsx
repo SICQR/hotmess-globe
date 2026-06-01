@@ -19,8 +19,16 @@ import { counterpartName } from './InboxCellShared';
 
 export default function InboxCellConversation({ item, counterparts }: CellProps) {
   const { openSheet } = useSheet();
+  // Phil 2026-06-01 Task #520 — RPC get_inbox_for_viewer now hydrates
+  // `title` with the counterpart's name (display_name -> username ->
+  // 'Anonymous'). Prefer that over the separately-fetched counterparts
+  // map because the RPC is the single source of truth and the map can
+  // race-lose against the supabase-js auth-refresh lock. Counterparts
+  // map is still used for avatar_url. Falls through to counterpartName
+  // if the RPC title is somehow empty.
   const counterpart = item.counterpart_id ? counterparts.get(item.counterpart_id) : undefined;
-  const name = counterpartName(counterpart);
+  const titleFromRpc = (item.title || '').trim();
+  const name = titleFromRpc || counterpartName(counterpart);
   const avatar = counterpart?.avatar_url;
   const lastMessage = (item.sub_line || '').trim();
   const timeAgo = item.created_at
