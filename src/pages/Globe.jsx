@@ -442,6 +442,22 @@ export default function GlobePage({ embedded = false }) {
 
     setFocusedBeaconId(beacon.id);
 
+    // D49 §6 (Phil 2026-06-01) — venue tap = atmospheric peek, not L2 sheet.
+    //
+    // The locked 2026-05-29 tap-contract below applies to BEACONS (signals).
+    // Per D49 ontology venues are passive geography — they exist on the map
+    // but are not broadcasting. Surfacing them with the heavy L2 sheet
+    // misrepresents them as signals and crowds the map for beta users.
+    //
+    // Venues now route to the existing BeaconPreviewPanel peek (already
+    // venue-aware: hours / website / phone / proximity rows render natively).
+    // The peek's "Open" CTA escalates to the L2 venue branch when the user
+    // wants the full surface.
+    if (beacon.entity_kind === 'venue') {
+      setPreviewBeacon(beacon);
+      return;
+    }
+
     // Phil 2026-05-29 — locked interaction contract.
     //
     // Every beacon tap opens the L2 beacon sheet. The sheet's own kind-router
@@ -485,9 +501,19 @@ export default function GlobePage({ embedded = false }) {
       setPreviewBeacon(null);
       return;
     }
+    // D49 §6 — venue "Open" CTA escalates to the L2 beacon sheet's venue
+    // branch. The sheet's kind-router consumes entity_kind and renders the
+    // venue surface (not the signal surface). This is the user's escape hatch
+    // from the peek tier to the full venue card.
+    if (previewBeacon?.entity_kind === 'venue') {
+      const cleanId = typeof previewBeacon.id === 'string' ? previewBeacon.id.replace(/^venue[:_]/, '') : previewBeacon.id;
+      openSheet('beacon', { beaconId: cleanId, beacon: previewBeacon });
+      setPreviewBeacon(null);
+      return;
+    }
     navigate(`${createPageUrl('BeaconDetail')}?id=${encodeURIComponent(previewBeacon.id ?? '')}`);
     setPreviewBeacon(null);
-  }, [navigate, previewBeacon, openProfile]);
+  }, [navigate, previewBeacon, openProfile, openSheet]);
 
   const [selectedCity, setSelectedCity] = useState(null);
   const [showCityOverlay, setShowCityOverlay] = useState(true);

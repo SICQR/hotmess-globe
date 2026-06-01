@@ -14,10 +14,17 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull, onView
 
   const isPerson = beacon.kind === 'person';
   const isRecovery = beacon.kind === 'recovery' || beacon.beacon_category === 'recovery';
+  // D49 §6 — venue is passive geography, not a signal or a person. Suppress
+  // person-routing CTAs (View Profile) even if owner_id is present (a venue
+  // can be claimed by an operator account without the peek becoming a profile
+  // surface). Header label reflects ontology, not stored kind.
+  const isVenue = beacon.entity_kind === 'venue';
   const isUserBeacon =
-    isPerson ||
-    beacon.beacon_category === 'user' ||
-    Boolean(beacon.user_id || beacon.owner_id);
+    !isVenue && (
+      isPerson ||
+      beacon.beacon_category === 'user' ||
+      Boolean(beacon.user_id || beacon.owner_id)
+    );
   const detailsUrl = isPerson && beacon.email
     ? createPageUrl(`Profile?email=${encodeURIComponent(beacon.email)}`)
     : createPageUrl('BeaconDetail') + '?id=' + encodeURIComponent(beacon.id);
@@ -65,7 +72,7 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull, onView
             >
               {isRecovery
                 ? <HeartHandshake className="w-5 h-5 text-white" />
-                : <MapPin className={`w-5 h-5 ${isPerson ? 'text-[#00C2E0]' : 'text-[#C8962C]'}`} />}
+                : <MapPin className={`w-5 h-5 ${isPerson ? 'text-[#00C2E0]' : isVenue ? 'text-white/70' : 'text-[#C8962C]'}`} />}
             </div>
             <div>
               <h3 className="text-xl font-black italic tracking-tight text-white uppercase leading-none">
@@ -74,7 +81,7 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull, onView
               <p className="text-[10px] font-black uppercase tracking-widest mt-1"
                  style={{ color: isRecovery ? '#FFFFFF99' : '#FFFFFF4D' }}
               >
-                {isRecovery ? 'recovery support' : isPerson ? 'person' : beacon.kind || 'SIGNAL'}
+                {isRecovery ? 'recovery support' : isVenue ? 'venue' : isPerson ? 'person' : beacon.kind || 'SIGNAL'}
               </p>
             </div>
           </div>
@@ -211,6 +218,20 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull, onView
               >
                 <UserCircle2 className="w-4 h-4" />
                 View Profile
+              </button>
+            )}
+
+            {/* D49 §6 (Phil 2026-06-01) — venue escape hatch from peek tier.
+                Tapping "Open" escalates from the peek panel to the L2 beacon
+                sheet's venue branch (full venue card with directions, hours,
+                etc.). Without this the venue peek is a dead-end. */}
+            {isVenue && onViewFull && (
+              <button
+                onClick={onViewFull}
+                className="w-full mt-2 py-3.5 bg-white text-black rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+              >
+                <MapPin className="w-4 h-4" />
+                Open
               </button>
             )}
           </div>
