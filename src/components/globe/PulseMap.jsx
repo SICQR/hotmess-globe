@@ -79,7 +79,7 @@ function resolveEditorialCity(lat, lng, zoom) {
   return best && bestD <= LOCAL_FOCUS_MAX_DEG ? best : null;
 }
 
-export default function PulseMap({ beacons = [], userLocation, onBeaconClick, onMapApi, onReady, onLocalFocus, onClustersChange }) {
+export default function PulseMap({ beacons = [], userLocation, onBeaconClick, onMapApi, onReady, onLocalFocus }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   // Latest props via refs so the create-once effect never needs to re-run.
@@ -101,14 +101,6 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
   onReadyRef.current = onReady;
   const onLocalFocusRef = useRef(onLocalFocus);
   onLocalFocusRef.current = onLocalFocus;
-  // D43 Slice A · PR 4 — a11y cluster row consumer.
-  // Optional callback that receives the array of currently-visible composed
-  // cluster states whenever the camera settles. Lets a parent (Globe.jsx) feed
-  // BeaconA11yList so screen-reader users get the same composed reality the
-  // sighted chip emits. Default-down (§3.4) is enforced upstream by the leaf
-  // shaper — by the time state reaches the parent there's no face data on it.
-  const onClustersChangeRef = useRef(onClustersChange);
-  onClustersChangeRef.current = onClustersChange;
 
   // ─── D43 Slice A · PR 3 — in-world cluster preview state ──────────────────
   // The React-state-driven chip replaces the previous Mapbox-native popup.
@@ -132,11 +124,6 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
   const clusterCacheRef = useRef(new Map());
   // dismiss timeout (1.5s per §9.4)
   const clusterTimeoutRef = useRef(null);
-  // D43 Slice A · PR 4 — a11y cluster sweep debounce. Idle fires multiple
-  // times during settle on some platforms (notably mobile WebKit); we
-  // coalesce to one sweep per ~250ms quiet window so we don't thrash
-  // getClusterLeaves on the worker.
-  const clusterSweepTimeoutRef = useRef(null);
   // viewer id from Supabase auth — fed to ViewerContext for the composer's
   // §3.4 "viewer's own beacon never represents the cluster" rule
   const viewerIdRef = useRef(null);
@@ -715,92 +702,10 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
           // __showClusterHoverPopup. The block below at line ~572 (now
           // updated to __showClusterChip) hands control here automatically.
 
-          // D43 Slice A · PR 4 — a11y cluster sweep on settle.
-          // Per D17 §4 unified-preview pattern, the BeaconA11yList cluster
-          // rows must consume the SAME ClusterPreviewState the visual chip
-          // consumes. We can't compute it lazily inside the a11y component
-          // (getClusterLeaves is async; aria-label needs to be ready at
-          // tab-focus time), so we sweep on map idle: query rendered cluster
-          // features, resolve each leaf set through the composer, lift the
-          // result to the parent via `onClustersChange`.
-          //
-          // Continuity (§3.5) is honoured because we pass `prior` from
-          // clusterCacheRef → the composer short-circuits on topology-hash
-          // match. The cache is shared with the chip path so the AT register
-          // and the visual register both see the same stable representative
-          // decision for as long as the cluster's topology holds.
-          //
-          // Debounced ~250ms so a single settle produces one sweep, not five.
-          const __recomputeAllClusterStates = () => {
-            const cb = onClustersChangeRef.current;
-            if (typeof cb !== 'function') return; // no consumer wired
-            try {
-              // HOTFIX 2026-06-01 — was `SOURCE_IDS.beacons` (undefined). The
-              // cluster-enabled GeoJSON source is `SOURCE_IDS.public` ('hm-public'),
-              // matching every other getSource call in this file and the source
-              // declared with cluster:true inside addLayerStack. The wrong key
-              // returned undefined → getSource(undefined) → null → silent early
-              // return → onClustersChange never fired → BeaconA11yList rendered
-              // empty cluster prop → no cluster rows for screen-reader users
-              // even when a cluster is visually present on the map.
-              const src = map.getSource(SOURCE_IDS.public);
-              if (!src || typeof src.getClusterLeaves !== 'function') return;
-              const feats = map.queryRenderedFeatures(undefined, {
-                layers: [LAYER_IDS.clusterCircles],
-              });
-              if (!feats || feats.length === 0) {
-                cb([]);
-                return;
-              }
-              // Deduplicate by cluster_id — Mapbox can emit the same cluster
-              // feature twice if it straddles a tile boundary.
-              const unique = new Map();
-              for (const f of feats) {
-                const cid = f && f.properties && f.properties.cluster_id;
-                if (cid != null && !unique.has(cid)) unique.set(cid, f);
-              }
-              const pending = Array.from(unique.values()).map((f) => new Promise((resolve) => {
-                const cid = f.properties.cluster_id;
-                const count = Number(f.properties.point_count) || 0;
-                const limit = Math.min(count || 30, 30);
-                src.getClusterLeaves(cid, limit, 0, (err, leaves) => {
-                  if (err || !Array.isArray(leaves)) return resolve(null);
-                  try {
-                    const beacons = mapboxLeavesToBeacons(leaves);
-                    const prior = clusterCacheRef.current.get(String(cid)) || null;
-                    const state = composeClusterPreview(
-                      beacons,
-                      { viewer_id: viewerIdRef.current },
-                      prior,
-                    );
-                    clusterCacheRef.current.set(String(cid), state);
-                    const coords = f.geometry && f.geometry.coordinates;
-                    const anchor = Array.isArray(coords)
-                      ? { lng: coords[0], lat: coords[1] }
-                      : null;
-                    resolve({ cluster_id: cid, state, anchor });
-                  } catch (e) {
-                    resolve(null);
-                  }
-                });
-              }));
-              Promise.all(pending).then((results) => {
-                try { cb(results.filter(Boolean)); } catch (e) { /* parent crash isolation */ }
-              });
-            } catch (e) { /* non-fatal — the chip path is independent */ }
-          };
-          const __scheduleClusterSweep = () => {
-            if (clusterSweepTimeoutRef.current) {
-              window.clearTimeout(clusterSweepTimeoutRef.current);
-            }
-            clusterSweepTimeoutRef.current = window.setTimeout(() => {
-              clusterSweepTimeoutRef.current = null;
-              __recomputeAllClusterStates();
-            }, 250);
-          };
-          map.on('idle', __scheduleClusterSweep);
-          // First sweep after layer stack is fully painted.
-          __scheduleClusterSweep();
+          // D43 Slice A · PR 4 a11y cluster sweep was reverted (see #786).
+          // The chip path above is the live cluster surface; a11y cluster
+          // row consumer will be re-attempted once we can reproduce the
+          // queryRenderedFeatures gap locally with the real Mapbox source.
 
           // Hand the imperative camera api to the parent (right-side toggle, drop-at-centre).
           try {
@@ -901,11 +806,6 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
       if (clusterTimeoutRef.current) {
         clearTimeout(clusterTimeoutRef.current);
         clusterTimeoutRef.current = null;
-      }
-      // PR 4 — also clear the a11y sweep debounce so it can't fire post-unmount.
-      if (clusterSweepTimeoutRef.current) {
-        clearTimeout(clusterSweepTimeoutRef.current);
-        clusterSweepTimeoutRef.current = null;
       }
       clusterCacheRef.current.clear();
       try { if (mapRef.current) mapRef.current.remove(); } catch (e) {}
