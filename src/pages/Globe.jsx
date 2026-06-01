@@ -7,7 +7,7 @@ import { useGlobe } from '@/contexts/GlobeContext';
 import { activityTracker } from '../components/globe/ActivityTracker';
 import BeaconPreviewPanel from '../components/globe/BeaconPreviewPanel';
 import CityDataOverlay from '../components/globe/CityDataOverlay';
-import { Layers, Globe2, Bell, Map, Building2, Crosshair, Navigation } from 'lucide-react';
+import { Layers, Globe2, Bell, Map, Building2, Crosshair } from 'lucide-react';
 import { useNotifCount } from '@/hooks/useNotifCount';
 import { useNavigate, useLocation} from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -596,12 +596,24 @@ export default function GlobePage({ embedded = false }) {
           </div>
         </div>
 
-        {/* Right control rail — grouped vertical, icons-only with hover-expand labels,
-            below the pinned SOS shield. Legacy globe gets Layers only; the single-
-            engine map adds My-area (dive in) + Globe (pull out). */}
+        {/* Right control rail — D49 §12 step 6 (Phil 2026-06-01 rail flatten).
+            BEFORE: Shield + Bell + Layers + Globe + Region + City + Local + Me + Drop = 9 icons.
+            AFTER:  Shield + 4-tier rail + Drop FAB = 6.
+            Removed:
+              - Bell (Alerts) — accessible via More tab → Notifications. Phil's rule
+                from earlier audit: nav = pure navigation; badges live on tabs not rails.
+              - Layers — moves to More tab. Rarely needed in local-mode.
+              - Me — redundant with Local tier (both fly to viewer location at z=14).
+            Stays: 4-tier (Globe/Region/City/Local) as the visible primary, Drop FAB
+            as the primary write action. Shield SOS is pinned elsewhere. */}
         <div className="absolute top-[calc(88px+env(safe-area-inset-top,0px))] right-4 z-30 flex flex-col items-end gap-2 pointer-events-none">
-          <RailButton icon={Bell} label="Alerts" badge={notifCount} onClick={() => { clearNotifBadge(); openSheet('notification-inbox'); }} />
-          <RailButton icon={Layers} label="Layers" onClick={() => setShowLayersSheet(true)} />
+          {!localModeEnabled && (
+            // Legacy globe fallback (no tier rail) — keep Alerts/Layers reachable.
+            <>
+              <RailButton icon={Bell} label="Alerts" badge={notifCount} onClick={() => { clearNotifBadge(); openSheet('notification-inbox'); }} />
+              <RailButton icon={Layers} label="Layers" onClick={() => setShowLayersSheet(true)} />
+            </>
+          )}
           {localModeEnabled && (
             <>
               {/* 4-tier spatial rail — Phil 2026-05-27 (replaces binary GLOBE/LOCAL toggle).
@@ -611,14 +623,6 @@ export default function GlobePage({ embedded = false }) {
               <RailButton icon={Map}       label="Region" onClick={() => pulseApiRef.current?.setTier?.('region')} active={pulseTier === 'region'} />
               <RailButton icon={Building2} label="City"   onClick={() => pulseApiRef.current?.setTier?.('city')}   active={pulseTier === 'city'} />
               <RailButton icon={Crosshair} label="Local"  onClick={() => pulseApiRef.current?.setTier?.('local')}  active={pulseTier === 'local'} />
-              <RailButton icon={Navigation} label="Me"    onClick={() => {
-                if (!navigator.geolocation || !pulseApiRef.current?.flyTo) return;
-                navigator.geolocation.getCurrentPosition(
-                  (pos) => pulseApiRef.current.flyTo({ lat: pos.coords.latitude, lng: pos.coords.longitude, zoom: 14 }),
-                  () => {},
-                  { enableHighAccuracy: true, timeout: 8000 },
-                );
-              }} />
 
               {/* Drop Beacon — primary WRITE action for the person-axis (D12).
                   D16 §7: lives at the bottom of the right rail. Previously
