@@ -36,8 +36,14 @@ export default function InboxCellConversation({ item, counterparts }: CellProps)
     : '';
 
   const handleTap = () => {
+    // Phil 2026-06-01 #527 — L2ChatSheet's prop contract is `thread`
+    // (see L2ChatSheet.jsx: `function L2ChatSheet({ thread: initialThreadId, ... })`).
+    // Previously this passed `{ threadId }`, which L2ChatSheet ignored —
+    // initialThreadId was undefined, so the sheet opened on the thread-list
+    // view without selecting the tapped conversation. The flyout stayed on
+    // top, so the user saw nothing happen and reported it as a freeze.
     const threadId = (item.payload as any)?.thread_id;
-    if (threadId) openSheet('chat', { threadId });
+    if (threadId) openSheet('chat', { thread: threadId });
   };
 
   return (
