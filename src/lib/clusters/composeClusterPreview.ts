@@ -66,14 +66,28 @@ import {
  * only the parts that depend on viewer state, while preserving the
  * representative selection from `prior` when the cluster itself hasn't changed.
  */
-export function topologyHash(beacons: readonly ViewerVisibleBeacon[]): string {
+export function topologyHash(
+  beacons: readonly ViewerVisibleBeacon[],
+  now: number = Date.now(),
+): string {
   const parts = beacons
-    .map(
-      (b) =>
-        `${b.owner_id}::${b.intent}::${b.safety_eligibility ? '1' : '0'}::${
-          b.priority_class
-        }`,
-    )
+    .map((b) => {
+      // D49 §15.3 — event_tonight beacons carry a temporal validity bit in
+      // the hash so the continuity cache busts when an event crosses its
+      // start or expiry. Other intents are temporally stable; no extra bit.
+      let eventBit = '';
+      if (b.intent === 'event_tonight') {
+        const hasStart = b.signal_starts_at != null;
+        const started = hasStart && (b.signal_starts_at as number) <= now;
+        const expired =
+          b.signal_expires_at != null && (b.signal_expires_at as number) < now;
+        // 3 phases: pre (upcoming), live (underway), post (expired / invalid)
+        // missing_starts_at maps to 'post' (filtered out by composer)
+        const phase = !hasStart || expired ? 'post' : started ? 'live' : 'pre';
+        eventBit = `::ev=${phase}`;
+      }
+      return `${b.owner_id}::${b.intent}::${b.safety_eligibility ? '1' : '0'}::${b.priority_class}${eventBit}`;
+    })
     .sort();
   return `n=${beacons.length}|${parts.join('|')}`;
 }
@@ -259,7 +273,11 @@ export function composeClusterPreview(
     now?: () => number;
   } = {},
 ): ClusterPreviewState {
-  const hash = topologyHash(beacons);
+  // Single call to now() — used for topology hash temporal phase, temporal
+  // filter, event_summary "soonest upcoming" computation, and composed_at.
+  // Pure: same inputs (incl. options.now) → same output.
+  const nowMs = (options.now ?? Date.now)();
+  const hash = topologyHash(beacons, nowMs);
 
   // §3.5 Cluster Continuity Invariant: if topology hash matches the prior
   // composition, return the prior state unchanged. The cluster hasn't
@@ -302,9 +320,23 @@ export function composeClusterPreview(
     }
   }
 
+  // D49 §15.3 — temporal filter. event_tonight signals MUST have
+  // signal_starts_at (substrate violation rejected at compose time); expired
+  // events MUST be filtered (stale events break "reason to move"). All other
+  // intents pass through unchanged.
+  const validForCount = (b: ViewerVisibleBeacon): boolean => {
+    if (b.intent !== 'event_tonight') return true;
+    if (b.signal_starts_at == null) return false;
+    if (b.signal_expires_at != null && b.signal_expires_at < nowMs) return false;
+    return true;
+  };
+
   // §3.3 intent mix breakdown — stable ALL_INTENTS ordering, zero counts omitted.
+  // event_tonight beacons that fail the temporal filter contribute zero to the
+  // mix (and to dominant_intent / event_summary below).
   const counts: Partial<Record<Intent, number>> = {};
   for (const b of beacons) {
+    if (!validForCount(b)) continue;
     counts[b.intent] = (counts[b.intent] ?? 0) + 1;
   }
   const intent_mix: IntentCount[] = ALL_INTENTS.filter(
@@ -312,8 +344,38 @@ export function composeClusterPreview(
   ).map((i) => ({ intent: i, count: counts[i] as number }));
 
   // §5 edge case — aftercare-only cluster gets "Care held here" copy, no avatar.
+  // Computed against the full beacons list (temporal filter doesn't apply to
+  // aftercare — care lifecycle is governed elsewhere).
   const onlyAftercare =
     beacons.length > 0 && beacons.every((b) => b.intent === 'aftercare');
+
+  // D49 §15.4 — cluster-level event_tonight detection.
+  //
+  // Aftercare-only special_copy takes precedence (care is structural; events
+  // are content). For all other clusters, ANY non-expired event_tonight signal
+  // makes the cluster event-dominant — asymmetric action-worthiness rule.
+  const validEvents = onlyAftercare
+    ? []
+    : beacons.filter((b) => b.intent === 'event_tonight' && validForCount(b));
+
+  const dominant_intent: Intent | null = validEvents.length > 0 ? 'event_tonight' : null;
+
+  const event_summary =
+    validEvents.length > 0
+      ? {
+          count: validEvents.length,
+          // Soonest upcoming start. Events already started (start < now) are
+          // included in count but excluded from soonest_starts_at — the field
+          // describes "next thing to move toward", not "underway".
+          soonest_starts_at: validEvents
+            .map((b) => b.signal_starts_at as number)
+            .filter((t) => t >= nowMs)
+            .reduce<number | null>(
+              (acc, t) => (acc == null || t < acc ? t : acc),
+              null,
+            ),
+        }
+      : null;
 
   // Build face-eligible set (after all gates + substrate protections).
   // Note: beacon must also have an avatar_url to be selected as representative —
@@ -342,6 +404,8 @@ export function composeClusterPreview(
     special_copy: onlyAftercare ? AFTERCARE_HELD_HERE : null,
     gate_trace: evaluations,
     topology_hash: hash,
-    composed_at: (options.now ?? Date.now)(),
+    composed_at: nowMs,
+    dominant_intent,
+    event_summary,
   };
 }

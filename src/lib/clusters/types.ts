@@ -19,7 +19,10 @@
 
 // ─── enums ───────────────────────────────────────────────────────────────────
 
-/** D12 + Drop Beacon Doctrine — the seven first-class signal intents. */
+/** D12 + Drop Beacon Doctrine — first-class signal intents.
+ *  `event_tonight` added by D49 §15 (Phil 2026-06-01): time-bound reason to
+ *  move. Distinct from ambient signals — requires signal_starts_at and is
+ *  filtered for expiry at compose time. */
 export type Intent =
   | 'looking'
   | 'hosting'
@@ -27,7 +30,8 @@ export type Intent =
   | 'aftercare'
   | 'quiet_hold'
   | 'arriving'
-  | 'market';
+  | 'market'
+  | 'event_tonight';
 
 /** D48 §2 — exposure spectrum. `full_reveal` is sheet-world only; never appears
  *  in cluster-preview output. */
@@ -90,6 +94,18 @@ export interface ViewerVisibleBeacon {
 
   /** Only consulted if this beacon is selected as representative. */
   avatar_url?: string | null;
+
+  /**
+   * D49 §15.2 — temporal grounding for `event_tonight` signals (epoch ms).
+   * Optional for all other intents. The composer ignores these fields for
+   * non-event_tonight intents, so existing call sites are unaffected.
+   *
+   * For intent='event_tonight':
+   *   - `signal_starts_at` MUST be present (composer treats missing as filtered out)
+   *   - `signal_expires_at` MAY be null (treated as "ongoing — surface until next composition")
+   */
+  signal_starts_at?: number | null;
+  signal_expires_at?: number | null;
 }
 
 /** Viewer context passed alongside the beacon list. */
@@ -188,6 +204,31 @@ export interface ClusterPreviewState {
 
   /** Epoch milliseconds when this state was composed. */
   composed_at: number;
+
+  /**
+   * D49 §15.4 — cluster-level intent class.
+   *
+   * Set to `'event_tonight'` when ANY non-expired event_tonight signal is
+   * present in the cluster (asymmetric action-worthiness rule). Otherwise
+   * `null`. Aftercare-only clusters take precedence — their `special_copy`
+   * dominates and `dominant_intent` stays `null`.
+   *
+   * Consumers:
+   *   - `ClusterPreviewChip` renders the event variant when this is set
+   *   - `PulseMap` cluster click handler dispatches `pulse:event_cluster_tap`
+   *     when this is set
+   */
+  dominant_intent: Intent | null;
+
+  /**
+   * D49 §15.4 — event summary for event_tonight clusters.
+   *
+   * Set when `dominant_intent === 'event_tonight'`. Carries the count of
+   * non-expired event signals in the cluster and the soonest upcoming
+   * `signal_starts_at` (epoch ms, may be null if all events are already
+   * underway). Otherwise `null`.
+   */
+  event_summary: { count: number; soonest_starts_at: number | null } | null;
 }
 
 // ─── telemetry ───────────────────────────────────────────────────────────────
@@ -212,7 +253,9 @@ export interface UncertaintyFallbackEvent {
 
 // ─── constants ───────────────────────────────────────────────────────────────
 
-/** Canonical intent ordering for the intent-mix breakdown. Stable. */
+/** Canonical intent ordering for the intent-mix breakdown. Stable.
+ *  `event_tonight` placed LAST so existing snapshots for non-event clusters
+ *  remain bytewise stable. */
 export const ALL_INTENTS: readonly Intent[] = [
   'looking',
   'hosting',
@@ -221,6 +264,7 @@ export const ALL_INTENTS: readonly Intent[] = [
   'quiet_hold',
   'arriving',
   'market',
+  'event_tonight',
 ] as const;
 
 /** Ratified §9.2 — the canonical aftercare-only-cluster line. */

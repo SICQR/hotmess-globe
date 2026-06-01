@@ -246,3 +246,83 @@ The product is both a map and a living atmospheric system. Most apps collapse th
 - the user always knows which one they're seeing
 
 Locked. Build proceeds per §12.
+
+---
+
+## §15 — Cluster semantic class: `event_tonight` (Phil 2026-06-01)
+
+Implements step 5 of §12 ("Cluster semantics — chip composer adds `event` intent class"). Locked rule:
+
+> **venue = place. beacon = signal. event_tonight = time-bound reason to move.**
+
+### §15.1 What it is
+
+`event_tonight` is a value of the signal `intent` enum, alongside `looking`, `hosting`, `cruising`, `aftercare`, `quiet_hold`, `arriving`, `market`. It is NOT a new entity class — it is a signal that some entity (venue OR person) is broadcasting an event with a near-term start time.
+
+### §15.2 Origin
+
+A `event_tonight` signal MUST have an origin entity:
+- a **venue** dropping an event broadcast (the canonical case, drives §13 revenue model)
+- a **person** dropping an event broadcast (user-created listing)
+
+A `event_tonight` signal MUST carry temporal grounding via the `signals` table fields:
+- `signal_starts_at` — when the event begins (epoch ms)
+- `signal_expires_at` — when the event ends or the listing should no longer surface (epoch ms)
+
+A signal with `intent='event_tonight'` but no `signal_starts_at` violates the load-bearing rule of this section and MUST be rejected at the read layer.
+
+### §15.3 Time-bound expiry filter
+
+Composers and renderers MUST filter event_tonight signals where `signal_expires_at < now()`. An expired event is not a reason to move; it's noise. The filter is doctrinal, not optional.
+
+This is the only intent in the enum with mandatory temporal filtering. All other intents follow ambient lifecycle decay (D49 §3.3).
+
+### §15.4 Cluster perception
+
+A cluster where ANY non-expired `event_tonight` signal is present takes `dominant_intent = 'event_tonight'`. Action-worthiness is asymmetric: a single event in a cluster of five is enough to reframe the cluster as "something to move toward". This is the doctrinal answer to "what would matter most to a user looking at this cluster right now?".
+
+The composer output adds two fields:
+- `dominant_intent: Intent | null` — set to `'event_tonight'` if any non-expired event is present in the cluster; otherwise `null`
+- `event_summary: { count: number; soonest_starts_at: number | null } | null` — count of non-expired events in the cluster + soonest upcoming start time; `null` for non-event clusters
+
+Aftercare-only clusters (§9.2) take precedence over event_tonight: an all-aftercare cluster surfaces "Care held here" and does NOT compute event_summary. Care is structural; events are content. Care wins.
+
+### §15.5 Routing differentiation
+
+Per the locked rule, `event_tonight` clusters route differently from venue geography and from ambient signal clusters:
+
+| Cluster | Click route |
+|---|---|
+| Venue cluster (entity_kind='venue') | zoom in (D49 §9) |
+| Ambient signal cluster (no event_tonight) | zoom in (D49 §9) |
+| Event signal cluster (dominant_intent='event_tonight') | **dispatch `pulse:event_cluster_tap` with event_summary + center, then zoom in** |
+
+The map click action stays consistent (zoom in is the spatial response); the difference is the additional event-aware dispatch that downstream surfaces (peek panel, editorial card) can consume to render an event-specific view. Different chip + different downstream affordance = different route.
+
+### §15.6 Chip visual
+
+`ClusterPreviewChip` renders event_tonight clusters with a distinct visual signature:
+- a `"TONIGHT"` time pill (warm gold rim, brighter than ambient chips)
+- copy override: `lead` becomes `"Tonight"` or `"N events tonight"`; `tail` shows the soonest start time when within the next 24h
+- avatar treatment unchanged (still gated by D48 §3.3)
+
+Aftercare-only special_copy still overrides everything. Care wins.
+
+### §15.7 Doctrine cross-refs
+
+- D12 §4 (4-axis taxonomy: Person, Venue, Event, Route — Event is the entity axis this signal points at)
+- D43 §3 (in-world vs sheet-world — chip stays in-world)
+- D48 §3.3 gates 1–4 (face avatar gating unchanged for event clusters)
+- Drop Beacon Doctrine (intent picker — `event_tonight` is the eighth picker entry; user-facing label "Event tonight")
+
+### §15.8 Anti-drift
+
+| Rule | Why |
+|---|---|
+| `event_tonight` requires `signal_starts_at` | Without temporal grounding it's not an event, it's a tag. |
+| Expired events MUST be filtered at compose time | Stale events are emotionally noisy and break "reason to move". |
+| `dominant_intent` triggered by ANY event, not majority | Action-worthiness is asymmetric. One event reframes the cluster. |
+| Aftercare-only special_copy overrides dominant_intent | Care is structural; events are content. |
+| Chip click does NOT replace zoom-in | Map spatial response stays consistent across cluster classes. |
+
+Locked. Implementation: src/lib/clusters/types.ts (Intent enum + ALL_INTENTS + ClusterPreviewState fields), src/lib/clusters/composeClusterPreview.ts (filter + dominant_intent + event_summary), src/components/globe/ClusterPreviewChip.tsx (event variant), src/components/globe/PulseMap.jsx (event_cluster_tap dispatch).
