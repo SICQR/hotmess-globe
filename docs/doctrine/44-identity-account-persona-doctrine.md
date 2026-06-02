@@ -51,12 +51,13 @@ Account linking is **user-initiated only**.
 
 - Fuzzy matching across auth methods
 - Probabilistic "same human" detection (active or passive)
-- Email matching across providers, except as narrowly permitted by §11.4
-- Phone matching across providers, except as narrowly permitted by §11.4
+- Email matching across providers
+- Phone matching across providers
 - IP / device / behaviour correlation for linkage purposes
 - Admin reports that surface "potential duplicates"
+- Any system surface that informs the user a second account might exist
 
-If the user wants to link, they sign in with the second method while authenticated. That is the only protocol. The §11.4 exception is self-only, one-time, dismissable, ephemeral — see §11.4 for the strict constraints.
+If the user wants to link, they sign in with the second method while authenticated. That is the only protocol. The system never notices anything else. If the user accidentally creates a second account, the system permits it to exist; recovery is the user's own decision, made later from inside an authenticated session via the linking ceremony.
 
 ---
 
@@ -193,37 +194,21 @@ Linking is conceptually: adding a new key to a private space. Not rewriting the 
 
 **Step 3 — Provider auth.** Standard provider OAuth/auth flow. No special handling.
 
-**Step 4 — Post-link confirmation.** Brief and reassuring. Example: *"Telegram connected. This connection is not shown to other users. You can now sign in to this HOTMESS account using either Email or Telegram."*
+**Step 4 — Post-link confirmation.** Minimal. Example: *"Telegram connected. You can now use Telegram to sign in to this HOTMESS account."* A subtle secondary action — *"View connected logins →"* — surfaces the full inventory only if the user asks. The default confirmation does not enumerate the user's connected methods. Inventory is opt-in viewing, never default exposure. Linking is presented as additive — adding a key — not as fusion or aggregation.
 
 ### §11.3 The auth-state distinguisher (LOCK)
 
-The user's session state at the moment of provider sign-in determines the intent. There is no third option.
+The user's session state at the moment of provider sign-in determines the intent. There is no other branch.
 
 | User state | Provider sign-in action | What happens |
 | --- | --- | --- |
-| Authenticated as account A | Sign in with new provider B | **§11.2 Linking Ceremony.** Add `auth_identities` row to account A. No new account, no new persona. |
-| Unauthenticated | Sign in with provider B (no prior `auth_identities` for that provider+id) | **New account creation.** New account, new `auth_identities` row, new default persona. |
+| Authenticated as account A | Sign in with new provider B (not currently linked anywhere) | **§11.2 Linking Ceremony.** Add `auth_identities` row to account A. No new account, no new persona. |
+| Authenticated as account A | Sign in with provider B that is already in `auth_identities` for any account | **Refuse.** Generic message: *"This login method can't be connected right now. Please sign out and try again."* No mention of another account. No "already linked." No "switch accounts." No acknowledgement that account existence is the reason. The user recovers naturally by signing out and signing back in with that provider, which lands them in the rightful account context. |
+| Unauthenticated | Sign in with provider B (no prior `auth_identities` for that provider+id) | **New account creation.** New account, new `auth_identities` row, new default persona. No collision check. No "you may already have an account" surface. The system does not notice and does not look. |
 
-There is no fuzzy fallback. There is no "wait, are you maybe…" mid-flow.
+Ambiguity protects privacy here. Refusal language that implies account existence — "another account," "already connected," "belongs to," "switch accounts" — is forbidden and leaks the topology this doctrine exists to protect.
 
-### §11.4 The unauth-collision protocol (narrow §3 exception)
-
-After a new account is created via the unauthenticated path, the system MAY, **once, self-only**, surface to the user themselves:
-
-> *"Your [provider] account returned an email/phone that matches another HOTMESS account. HOTMESS never automatically merges identities. If you want to connect accounts, you can do that later from Settings → Connected Logins."*
-
-This is the ONLY exception to §3's prohibition on cross-method correlation. The exception is permitted because, and only because, **all** of the following hold:
-
-- The signal is data the provider returned in the auth payload, not data the system derived.
-- The prompt is shown only to the user themselves. Never to other users. Never to staff. Never in admin tooling.
-- It is shown at most once, immediately post-signup. Never re-surfaced.
-- It is fully dismissable. Dismissal carries no consequence.
-- **No state is persisted that records this comparison occurred.** The match is computed ephemerally at signup, the prompt is shown or not, and the comparison leaves no row, no flag, no audit trail. The system's "knowledge" of the potential duplicate dies with the request.
-- Acting on the prompt requires the user to re-authenticate into both accounts (via §11.2 ceremony from the existing account). The prompt itself cannot cause a link.
-
-If any one of these constraints cannot be met, the prompt is not shown.
-
-### §11.5 Provider data import (LOCK)
+### §11.4 Provider data import (LOCK)
 
 The provider returns data. The system never automatically applies that data to the persona. The user explicitly chooses, field by field.
 
@@ -238,13 +223,13 @@ For Telegram specifically:
 
 For Apple / Google / email / phone providers, the equivalent matrix is declared per-provider in a slice spec inheriting from D44. Default for any field is *not imported, not auto-public*.
 
-### §11.6 Unlink discipline (LOCK)
+### §11.5 Unlink discipline (LOCK)
 
 Users may unlink any auth method at any time, with one constraint: **at least one auth method must remain.** Unlinking the last auth method requires the user to first add a replacement. No account is permitted to become unreachable.
 
 When an auth method is unlinked, the `auth_identities` row is hard-deleted. The provider-side relationship may persist (Telegram still has its own record of the OAuth grant), but the system retains nothing about the linkage after unlink. Re-linking the same provider is a fresh §11.2 ceremony.
 
-### §11.7 Language rules (LOCK)
+### §11.6 Language rules (LOCK)
 
 The following terms are **forbidden** in any user-facing surface describing auth linking:
 
@@ -263,6 +248,12 @@ The following terms are **permitted**:
 
 ---
 
+## §12 Non-human actors
+
+Bots, service integrations, automation actors, and operator agents are out of scope for this doctrine. They do not inherit Account or Persona status by default and they are not subject to the Privacy Invariant on their own behalf. Their access patterns, identity boundaries, and lifecycle are resolved separately when each is built.
+
+---
+
 ## §10 Ratification trail
 
 - Today's surfacing: Phil 2026-06-02, identity fragmentation analysis following Glen duplicate discovery during field test
@@ -270,7 +261,8 @@ The following terms are **permitted**:
 - §3 linking discipline locked: 2026-06-02 — system-initiated linking explicitly forbidden, no fuzzy match
 - §4 scope matrix locked: initial defaults; ambiguous entries to be slice-resolved
 - §5 multiplicity ships only after slice spec inherited from this doctrine
-- §11 Linking Ceremony locked: 2026-06-02 — 4-step ceremony, auth-state distinguisher, unauth-collision protocol with strict ephemeral constraints, provider data import discipline, unlink rule, language rules. §3 narrowly amended to permit §11.4 as the single self-only ephemeral exception.
+- §11 Linking Ceremony locked: 2026-06-02 — 4-step ceremony, auth-state distinguisher, provider data import discipline, unlink rule, language rules.
+- §11 amendments locked: 2026-06-02 — §11.3 third-row "provider already linked" hardened to refuse-only (no account-existence semantics); §11.4 unauth-collision protocol **removed entirely** (the system never operationalises noticing); §3 cross-method exception removed; §11.2 Step 4 simplified to minimal confirmation with subtle "View connected logins →" secondary action (no default inventory exposure); §12 added as non-human-actor placeholder.
 
 ---
 
