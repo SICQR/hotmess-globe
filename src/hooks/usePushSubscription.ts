@@ -97,8 +97,31 @@ export function usePushSubscription(): PushSubscriptionHookResult {
         return { ok: false, error: 'incomplete_subscription' };
       }
 
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
+      // Phil 2026-06-02 #536/#537 — supabase.auth.getSession() races against
+      // other concurrent callers via the Web Lock 'steal' option, throwing
+      // AbortError that this catch block swallows. Result: subscribe runs,
+      // pushManager.subscribe() succeeds, but the POST never fires because
+      // getSession threw silently. Bypass: read the access_token straight
+      // from localStorage. Same JWT, no Lock contention.
+      let accessToken: string | null = null;
+      try {
+        for (const k of Object.keys(localStorage)) {
+          if (!k.startsWith('sb-') && !k.includes('supabase')) continue;
+          try {
+            const v = JSON.parse(localStorage.getItem(k) || 'null');
+            if (v?.access_token) { accessToken = v.access_token; break; }
+            if (v?.currentSession?.access_token) { accessToken = v.currentSession.access_token; break; }
+          } catch { /* not JSON; skip */ }
+        }
+      } catch { /* localStorage unavailable */ }
+      if (!accessToken) {
+        // Last-resort fallback to the supabase client (will probably also fail
+        // under Lock contention but at least we tried localStorage first).
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          accessToken = sessionData.session?.access_token ?? null;
+        } catch { /* swallow */ }
+      }
       if (!accessToken) return { ok: false, error: 'not_authenticated' };
 
       const res = await fetch('/api/notifications/push-subscribe', {
