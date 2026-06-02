@@ -1,0 +1,33 @@
+name: Surface Audit (D53 Slice 0)
+
+on:
+  pull_request:
+    branches: [main, production]
+  push:
+    branches: [main]
+  schedule:
+    # Nightly run against main to catch drift even when no PRs land
+    - cron: '0 4 * * *'
+
+jobs:
+  audit:
+    name: D53 substrate compliance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run surface audit (D53 §6 walker)
+        run: node tools/surface-audit/walker.mjs --report=surface-audit-report.md
+
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surface-audit-report
+          path: surface-audit-report.md
+          retention-days: 30
