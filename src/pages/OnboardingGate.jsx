@@ -11,6 +11,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/components/utils/supabaseClient';
+import { usePushSubscription } from '@/hooks/usePushSubscription';
 import { uploadToStorage } from '@/lib/uploadToStorage';
 import { useBootGuard } from '@/contexts/BootGuardContext';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -216,6 +217,7 @@ export default function OnboardingGate() {
   const [dataConsent, setDataConsent] = useState(false);
   const [gpsConsent, setGpsConsent] = useState(false);
   const [pushConsent, setPushConsent] = useState(false);
+  const push = usePushSubscription();
 
   // Step 4 — profile
   const [displayName, setDisplayName] = useState('');
@@ -309,8 +311,32 @@ export default function OnboardingGate() {
           toast.error('Could not save your consent settings. Please try again.');
           return;
         }
-        if (pushConsent && 'Notification' in window && Notification.permission === 'default') {
-          await Notification.requestPermission().catch(() => {});
+        // Phil 2026-06-02 #548 — onboarding push opt-in must actually subscribe.
+        // The bare Notification.requestPermission() above only asked the OS;
+        // it never registered a SW subscription or wrote a push_subscriptions
+        // row. Users ticked the box, granted OS permission, and still got no
+        // pushes. Now routes through the canonical usePushSubscription hook
+        // — same path Settings uses, single source of truth.
+        if (pushConsent && push.isSupported) {
+          const r = await push.subscribe();
+          if (!r.ok) {
+            // Don't block onboarding on push failure. User can re-enable from
+            // Settings -> Push & Preferences. Most common 'failure' is the
+            // OS permission denial dialog which is the user's call.
+            console.warn('[Onboarding] push subscribe failed:', r.error);
+          }
+        } else if (pushConsent && !push.isSupported) {
+          // iOS regular Safari path - no PushManager. The user said yes but
+          // we cannot subscribe yet. The IOSInstallPrompt component (mounted
+          // in Layout) will surface the A2HS path and the master toggle in
+          // Settings -> Push & Preferences will subscribe once the PWA opens.
+          // Record consent intent so onboarding doesn't re-ask.
+          try {
+            await supabase
+              .from('profiles')
+              .update({ consent_push_intent: true })
+              .eq('id', session.user.id);
+          } catch { /* non-fatal */ }
         }
 
         // Doctrine (Phil 2026-05-26): consent without coordinates is no good.
@@ -716,6 +742,11 @@ export default function OnboardingGate() {
                   <p className="text-xs text-white/35 mt-1 leading-relaxed">
                     Get notified about boos, messages, and safety alerts.
                   </p>
+                  {!push.isSupported && (
+                    <p className="text-[10px] text-[#C8962C]/70 mt-2 leading-relaxed">
+                      On iPhone you'll need to add HOTMESS to your home screen first. We'll guide you after sign-up.
+                    </p>
+                  )}
                 </div>
                 <Checkbox
                   checked={pushConsent}
