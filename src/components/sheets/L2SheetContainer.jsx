@@ -266,7 +266,11 @@ export default function L2SheetContainer({
             //   before the dismiss handler picks up beyond it.
             drag="y"
             dragControls={dragControls}
-            dragListener={false}
+            // Phil 2026-06-02 #555 — was false (drag only via pip pointerDown).
+            // Chat sheet's internal header is below the pip; users dragging
+            // there got no response. true → drag fires from anywhere; inner
+            // scroll's touch-pan-y arbitrates (scroll at non-top, drag at top).
+            dragListener={true}
             dragConstraints={{ top: 0, bottom: viewportH }}
             dragElastic={{ top: 0.04, bottom: 0.35 }}
             onDragEnd={handleDragEnd}
@@ -302,11 +306,13 @@ export default function L2SheetContainer({
                 )}
                 aria-hidden="true"
                 onPointerDown={(e) => dragControls.start(e)}
-                style={{ minHeight: bareTop ? 36 : 48, touchAction: 'none' }}
+                style={{ minHeight: bareTop ? 36 : 72, touchAction: 'none' }}
               >
                 <div className={cn(
                   'rounded-full',
-                  bareTop ? 'w-10 h-[3px] bg-white/22' : 'w-16 h-1.5 bg-white/30'
+                  // Phil 2026-06-02 #555 — bumped non-bareTop pip from w-16 h-1.5
+                  // to w-20 h-2 so the drag affordance is unambiguous.
+                  bareTop ? 'w-10 h-[3px] bg-white/22' : 'w-20 h-2 bg-white/40'
                 )} />
               </motion.div>
             )}
