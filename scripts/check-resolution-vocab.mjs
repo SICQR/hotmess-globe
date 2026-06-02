@@ -1,5 +1,5 @@
-/* eslint-disable */
 #!/usr/bin/env node
+/* eslint-disable */
 /**
  * scripts/check-resolution-vocab.mjs
  *
@@ -103,4 +103,5 @@ if (failed) {
 }
 
 console.log('✅ Convergence resolution vocabulary clean.');
+
 
