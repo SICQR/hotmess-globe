@@ -85,6 +85,14 @@ export default function L2SheetContainer({
   const controls = useAnimation();
   const dragControls = useDragControls();
   const sheetScrollRef = useRef(null);
+  // Phil 2026-06-02 #556 — handoff context for nested-scrollable → sheet-drag.
+  // When the inner content has its own overflow-y scroll (chat messages list,
+  // inbox cells, etc.), browser claims the touch for vertical pan and the
+  // framer-motion drag never fires from inside that scrollable. This ref
+  // records the touch origin + the discovered scrollable so the onTouchMove
+  // handler below can hand off to dragControls.start once the scrollable is
+  // at scrollTop=0 and the user keeps pulling down.
+  const scrollHandoffRef = useRef(null);
 
   // Resting snap targets in pixels. Computed once per open from the live
   // viewport height; recomputed on resize to keep the geometry honest when
@@ -344,10 +352,61 @@ export default function L2SheetContainer({
               </div>
             )}
 
-            {/* Content */}
+            {/* Content
+                Phil 2026-06-02 #556 — touch handoff. The chat sheet (and any
+                sheet with an internal overflow-y-auto scrollable) nests scroll
+                inside this wrapper. With touchAction:'pan-y' on the motion.div
+                the browser claims vertical pan for the nested scroll and the
+                framer-motion drag never fires. The onTouch* handlers below
+                walk up from the touch target to find the nearest scrollable
+                ancestor (within this wrapper), record its scrollTop at touch
+                start, and when the gesture is "pull-down while at scrollTop=0"
+                they explicitly hand off to dragControls.start so the sheet's
+                normal drag-to-dismiss/snap machinery takes over the rest of
+                the gesture. Threshold of 10px tolerates jitter without
+                stealing legitimate scroll attempts. */}
             <div
               ref={sheetScrollRef}
               className="flex-1 overflow-y-auto overflow-x-hidden scroll-momentum touch-pan-y"
+              onTouchStart={(e) => {
+                let el = e.target;
+                const root = sheetScrollRef.current?.parentElement || null;
+                let scrollable = null;
+                while (el && el !== root) {
+                  if (el instanceof HTMLElement) {
+                    const style = window.getComputedStyle(el);
+                    const oy = style.overflowY;
+                    if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight) {
+                      scrollable = el;
+                      break;
+                    }
+                  }
+                  el = el.parentElement;
+                }
+                scrollHandoffRef.current = {
+                  y: e.touches[0].clientY,
+                  x: e.touches[0].clientX,
+                  scrollable,
+                  scrollTop: scrollable?.scrollTop ?? 0,
+                  handed: false,
+                };
+              }}
+              onTouchMove={(e) => {
+                const ctx = scrollHandoffRef.current;
+                if (!ctx || ctx.handed) return;
+                const dy = e.touches[0].clientY - ctx.y;
+                const dx = Math.abs(e.touches[0].clientX - ctx.x);
+                // Ignore primarily-horizontal gestures (carousels, etc.)
+                if (dx > Math.abs(dy)) return;
+                const currentTop = ctx.scrollable?.scrollTop ?? 0;
+                const atTop = !ctx.scrollable || (ctx.scrollTop <= 0 && currentTop <= 0);
+                if (atTop && dy > 10) {
+                  ctx.handed = true;
+                  try { dragControls.start(e.nativeEvent); } catch (_) {}
+                }
+              }}
+              onTouchEnd={() => { scrollHandoffRef.current = null; }}
+              onTouchCancel={() => { scrollHandoffRef.current = null; }}
             >
               {children}
             </div>
