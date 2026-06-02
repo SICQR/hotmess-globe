@@ -127,18 +127,81 @@ export function SheetProvider({ children }) {
   const location = useLocation();
   // Prevent State→URL from clearing deep-link params before URL→State hydrates
   const hasHydrated = useRef(false);
+  // Phil 2026-06-02 — set true by closeSheet, consumed by Effect 2 to skip
+  // re-opening from a still-stale URL. See closeSheet comment.
+  const justClosedRef = useRef(false);
+  // Phil 2026-06-02 D53 #566 — same pattern as justClosedRef but for sheet→sheet
+  // open transitions. Effect 2 (URL→state) would otherwise see stale URL during
+  // the open dispatch and snap state back. This is the substrate-level fix for
+  // every previously-silent sheet→sheet dead end (PHOTOS, ALBUMS, MEMBERSHIP,
+  // CREATE-PERSONA, MESSAGE-from-profile without the close-then-defer hack).
+  const justOpenedRef = useRef(false);
 
   // Open a sheet — enforces UI policy (chat/video/travel gated to Ghosted context)
+  // D53 substrate fix — mirrors closeSheet's contract:
+  //   (a) flip justOpenedRef so Effect 2 (URL→state) treats the next searchParams
+  //       update as the echo of our own transition, not as a deep-link to honor.
+  //   (b) synchronously pushState the new sheet param so the URL is correct
+  //       NOW, before React Router's async setSearchParams loses the race with
+  //       Effect 2's closure capture of stale searchParams. Effect 1's
+  //       setSearchParams still runs (idempotent) so router internal state
+  //       catches up via the normal path.
+  //   Without this, sheet→sheet transitions (edit-profile→photos etc.) silently
+  //   no-op as Effect 2 snaps state back to the stale URL value.
   const openSheet = useCallback((type, props = {}) => {
     if (!canOpenSheet(type, location.pathname, state.sheetStack, state.activeSheet, props)) {
       toast('Go to Ghosted to start a conversation', { duration: 2500 });
       return;
     }
+    justOpenedRef.current = true;
+    if (typeof window !== 'undefined') {
+      try {
+        const u = new URL(window.location.href);
+        u.searchParams.set('sheet', type);
+        // Mirror Effect 1's deep-link param set (id/email/thread/handle).
+        // Set when provided; delete when not — prevents stale params bleeding
+        // from the previous sheet (e.g. profile id leaking into photos).
+        ['id', 'email', 'thread', 'handle'].forEach((k) => {
+          if (props && props[k] != null) u.searchParams.set(k, String(props[k]));
+          else u.searchParams.delete(k);
+        });
+        // pushState (not replaceState) so back button still pops the prior sheet
+        // — preserves LAW 2 (LIFO close discipline).
+        window.history.pushState(null, '', u.toString());
+      } catch (_) { /* non-fatal */ }
+    }
     dispatch({ type: 'OPEN_SHEET', payload: { type, props } });
   }, [location.pathname, state.sheetStack, state.activeSheet]);
 
   // Close the active sheet
+  //
+  // Phil 2026-06-02 P0 fix — backdrop tap + Escape were firing handleClose
+  // and calling closeSheet, but the sheet stayed open. Root cause: the
+  // URL→state effect (deps:[searchParams]) reads state.activeSheet from a
+  // stale closure. Between CLOSE_SHEET dispatch and Effect 1's
+  // setSearchParams completing, the URL still had sheet+id params. Effect 2
+  // would fire on the subsequent searchParams change, see sheetFromUrl='profile'
+  // and (stale) state.activeSheet=null → call openSheet → re-open the sheet.
+  //
+  // Two-belt fix:
+  // (a) justClosed ref — suppresses Effect 2's open branch for one tick after
+  //     a user-initiated close. Effect 2 sees the flag, resets it, returns.
+  // (b) synchronous history.replaceState — clears URL params NOW, before
+  //     React Router's async setSearchParams has a chance to lose the race.
+  //     React Router's internal state catches up via the normal effect path.
   const closeSheet = useCallback(() => {
+    justClosedRef.current = true;
+    if (typeof window !== 'undefined') {
+      try {
+        const u = new URL(window.location.href);
+        u.searchParams.delete('sheet');
+        u.searchParams.delete('id');
+        u.searchParams.delete('email');
+        u.searchParams.delete('thread');
+        u.searchParams.delete('handle');
+        window.history.replaceState(null, '', u.toString());
+      } catch (_) { /* non-fatal */ }
+    }
     dispatch({ type: 'CLOSE_SHEET' });
   }, []);
 
@@ -200,6 +263,17 @@ export function SheetProvider({ children }) {
   // Sync URL → state (for deep links / back button)
   useEffect(() => {
     hasHydrated.current = true;
+    // Phil 2026-06-02 — if closeSheet just fired, suppress re-open from
+    // stale URL. The flag is set in closeSheet and consumed exactly once.
+    if (justClosedRef.current) {
+      justClosedRef.current = false;
+      return;
+    }
+    // D53 #566 — same guard but for open transitions. See justOpenedRef declaration.
+    if (justOpenedRef.current) {
+      justOpenedRef.current = false;
+      return;
+    }
     const sheetFromUrl = searchParams.get('sheet');
     
     if (sheetFromUrl && sheetFromUrl !== state.activeSheet) {
@@ -358,3 +432,4 @@ export function useMarketplaceSheet() {
 }
 
 export default SheetContext;
+
