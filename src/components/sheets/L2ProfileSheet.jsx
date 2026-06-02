@@ -162,7 +162,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
     });
   }, []);
 
-  const { isTapped, sendTap, isMutualBoo } = useTaps(myUserId, myEmail);
+  const { isTapped, sendTap, isMutualBoo, hasReceivedBoo } = useTaps(myUserId, myEmail);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
@@ -1076,97 +1076,147 @@ export default function L2ProfileSheet({ email, uid, id }) {
         </div>
       </div>
 
-      {/* ── ACTION BAR — Boo / Mutual? Message + Video : BOO first / Save ── */}
-      {!isOwnProfile && (
-        <div className="px-4 pt-4 pb-2 flex items-stretch gap-2">
-          {/* Boo */}
-          <button
-            onClick={handleBoo}
-            className="flex flex-col items-center justify-center gap-0.5 px-3 rounded-2xl flex-shrink-0"
-            style={{
-              minWidth: 56,
-              height: 52,
-              background: booActive ? 'rgba(200,150,44,0.2)' : 'rgba(255,255,255,0.05)',
-              border: `1px solid ${booActive ? '#C8962C' : 'rgba(255,255,255,0.1)'}`,
-              cursor: 'pointer',
-            }}
-            aria-label={booActive ? "Boo'd" : 'Boo'}
-          >
-            <Ghost className="w-4 h-4" style={{ color: booActive ? '#C8962C' : 'white' }} />
-            <span className="text-[9px] font-mono uppercase tracking-wider" style={{ color: booActive ? '#C8962C' : 'white' }}>
-              {booActive ? "BOO'd" : 'BOO'}
-            </span>
-          </button>
+      {/* ── RELATIONSHIP ACTION BAR — Phil 2026-06-02 locked state machine
+            Neutral → BOO
+            Outgoing (you boo'd them) → BOO'D · WAITING (status, no second action)
+            Incoming (they boo'd you) → BOO BACK
+            Mutual → MESSAGE (+ Video secondary)
+            Save is independent of relationship state and stays present.
+            One primary relationship action per state. Never two competing CTAs. */}
+      {!isOwnProfile && (() => {
+        const iBooed_ = !!targetIdForMutual && isTapped(targetIdForMutual, 'boo');
+        const theyBooed_ = !!targetIdForMutual && typeof hasReceivedBoo === 'function' && hasReceivedBoo(targetIdForMutual);
+        const relState =
+          iBooed_ && theyBooed_ ? 'mutual' :
+          theyBooed_ ? 'incoming' :
+          iBooed_ ? 'outgoing' :
+          'neutral';
 
-          {/* Save */}
-          <button
-            onClick={handleSaveToggle}
-            disabled={isSaving}
-            className="flex flex-col items-center justify-center gap-0.5 px-3 rounded-2xl flex-shrink-0"
-            style={{
-              minWidth: 56,
-              height: 52,
-              background: isSaved ? 'rgba(200,150,44,0.2)' : 'rgba(255,255,255,0.05)',
-              border: `1px solid ${isSaved ? '#C8962C' : 'rgba(255,255,255,0.1)'}`,
-              cursor: 'pointer',
-            }}
-            aria-label={isSaved ? 'Saved' : 'Save'}
-          >
-            <Heart className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} style={{ color: isSaved ? '#C8962C' : 'white' }} />
-            <span className="text-[9px] font-mono uppercase tracking-wider" style={{ color: isSaved ? '#C8962C' : 'white' }}>
-              {isSaved ? 'SAVED' : 'SAVE'}
-            </span>
-          </button>
+        const stateHeader =
+          relState === 'incoming' ? 'They reached for you' :
+          relState === 'outgoing' ? 'Waiting on them' :
+          null;
 
-          {/* Message (mutual-only gold-filled) OR BOO first (pre-mutual outline) */}
-          {isMutual ? (
-            <>
+        return (
+          <div className="px-4 pt-4 pb-2">
+            {stateHeader && (
+              <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-white/45 mb-2 text-center">
+                {stateHeader}
+              </p>
+            )}
+            <div className="flex items-stretch gap-2">
+              {/* Save — independent of relationship state */}
               <button
-                onClick={handleMessage}
-                className="flex-1 rounded-2xl font-black text-sm uppercase text-black"
+                onClick={handleSaveToggle}
+                disabled={isSaving}
+                className="flex flex-col items-center justify-center gap-0.5 px-3 rounded-2xl flex-shrink-0"
                 style={{
+                  minWidth: 56,
                   height: 52,
-                  background: '#C8962C',
-                  border: 'none',
-                  letterSpacing: '0.14em',
+                  background: isSaved ? 'rgba(200,150,44,0.2)' : 'rgba(255,255,255,0.05)',
+                  border: `1px solid ${isSaved ? '#C8962C' : 'rgba(255,255,255,0.1)'}`,
                   cursor: 'pointer',
                 }}
+                aria-label={isSaved ? 'Saved' : 'Save'}
               >
-                Message
+                <Heart className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} style={{ color: isSaved ? '#C8962C' : 'white' }} />
+                <span className="text-[9px] font-mono uppercase tracking-wider" style={{ color: isSaved ? '#C8962C' : 'white' }}>
+                  {isSaved ? 'SAVED' : 'SAVE'}
+                </span>
               </button>
-              <button
-                onClick={handleVideoCall}
-                className="rounded-2xl flex items-center justify-center flex-shrink-0"
-                style={{
-                  width: 52,
-                  height: 52,
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  cursor: 'pointer',
-                }}
-                aria-label="Video call"
-              >
-                <Video className="w-4 h-4 text-white" />
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={handleMessage}
-              className="flex-1 rounded-2xl font-black text-sm uppercase"
-              style={{
-                height: 52,
-                background: 'rgba(200,150,44,0.15)',
-                color: '#C8962C',
-                border: '1px solid #C8962C',
-                letterSpacing: '0.14em',
-                cursor: 'pointer',
-              }}
-            >
-              BOO first
-            </button>
-          )}
-        </div>
-      )}
+
+              {/* Primary relationship CTA — one per state */}
+              {relState === 'neutral' && (
+                <button
+                  onClick={handleBoo}
+                  className="flex-1 rounded-2xl font-black text-sm uppercase flex items-center justify-center gap-2"
+                  style={{
+                    height: 52,
+                    background: 'rgba(200,150,44,0.12)',
+                    color: '#C8962C',
+                    border: '1px solid #C8962C',
+                    letterSpacing: '0.14em',
+                    cursor: 'pointer',
+                  }}
+                  aria-label="Boo"
+                >
+                  <Ghost className="w-4 h-4" />
+                  BOO
+                </button>
+              )}
+
+              {relState === 'outgoing' && (
+                <div
+                  className="flex-1 rounded-2xl font-black text-sm uppercase flex items-center justify-center gap-2 select-none"
+                  style={{
+                    height: 52,
+                    background: 'rgba(200,150,44,0.10)',
+                    color: 'rgba(200,150,44,0.65)',
+                    border: '1px solid rgba(200,150,44,0.35)',
+                    letterSpacing: '0.14em',
+                  }}
+                  aria-label="Booed, waiting for them"
+                  role="status"
+                >
+                  <Ghost className="w-4 h-4" />
+                  BOO'D
+                </div>
+              )}
+
+              {relState === 'incoming' && (
+                <button
+                  onClick={handleBoo}
+                  className="flex-1 rounded-2xl font-black text-sm uppercase flex items-center justify-center gap-2 text-black"
+                  style={{
+                    height: 52,
+                    background: '#C8962C',
+                    border: 'none',
+                    letterSpacing: '0.14em',
+                    cursor: 'pointer',
+                    boxShadow: '0 0 24px rgba(200,150,44,0.32)',
+                  }}
+                  aria-label="Boo back"
+                >
+                  <Ghost className="w-4 h-4" />
+                  BOO BACK
+                </button>
+              )}
+
+              {relState === 'mutual' && (
+                <>
+                  <button
+                    onClick={handleMessage}
+                    className="flex-1 rounded-2xl font-black text-sm uppercase text-black"
+                    style={{
+                      height: 52,
+                      background: '#C8962C',
+                      border: 'none',
+                      letterSpacing: '0.14em',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Message
+                  </button>
+                  <button
+                    onClick={handleVideoCall}
+                    className="rounded-2xl flex items-center justify-center flex-shrink-0"
+                    style={{
+                      width: 52,
+                      height: 52,
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      cursor: 'pointer',
+                    }}
+                    aria-label="Video call"
+                  >
+                    <Video className="w-4 h-4 text-white" />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* VaultAccessRequest (non-self) */}
       {!isOwnProfile && (profileUser.auth_user_id || profileUser.id) && (
