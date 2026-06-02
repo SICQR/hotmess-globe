@@ -6,6 +6,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { User, Bell } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useNotifCount } from '@/hooks/useNotifCount';
+import PulseSearch from '@/components/globe/PulseSearch';
 
 interface TopHUDProps {
   safetyStatus?: 'safe' | 'active' | 'resolved';
@@ -47,11 +48,18 @@ export function TopHUD({ safetyStatus = 'safe' }: TopHUDProps) {
         HOT<span className="text-[#C8962C]">MESS</span>
       </span>
 
-      {/* Centre: empty spacer. Phil 2026-06-02 P0.3 — PulseSearch removed from
-          the top bar and relocated to the rail (SearchRailIcon) per D35 §13.4.
-          Search is `world_traversal`, opened via the rail tier, not a
-          permanent topbar input field. */}
-      <div className="flex-1" />
+      {/* Centre: Pulse search (city / area / postcode) → window event drives the map */}
+      <div className="flex-1 flex justify-center min-w-0">
+        {isPulse && (
+          <div className="w-full max-w-[360px]">
+            <PulseSearch
+              onSelect={(loc: { lat: number; lng: number; zoom?: number }) => {
+                try { window.dispatchEvent(new CustomEvent('pulse:flyto', { detail: loc })); } catch (e) { /* non-fatal */ }
+              }}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Right: Profile Avatar.
           Phil 2026-06-02 #552 — notification bell removed from TopHUD per
