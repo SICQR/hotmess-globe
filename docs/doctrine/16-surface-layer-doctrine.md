@@ -202,3 +202,90 @@ verifies no new file hardcodes `z-[…]` or `bottom-[…]` outside of
 **Effective date:** 2026-05-30 on merge.
 **Reviewed:** Phil Gizzie.
 **Enforcement:** PR template gate (§6) added in the same merge.
+
+---
+
+## §10 Right Rail Hierarchy and Collapse Discipline
+
+**Status:** Constitutional amendment to D16, locked
+**Ratified:** Phil 2026-06-02
+**Supersedes:** opportunistic rail-icon accumulation
+
+### §10.0 Why this amendment exists
+
+The right rail has been accumulating icons opportunistically — Safety FAB, music, radio, drop beacon, viewer toggles, contextual mode icons. Without a constitutional rule, every new icon was a per-page decision. This produced inconsistent placement (notification bell on some pages and not others), duplicated controls (search input in the Pulse top bar instead of a single surface), subjective collapse behaviour under viewport constraint, and rail clutter.
+
+This amendment locks the rail as a single constitutional surface with one matrix that governs both placement and collapse priority. Capacity is not entitlement.
+
+### §10.1 The 4-tier rail matrix (LOCK)
+
+Every rail icon declares its tier exactly once. The tier determines placement (top-to-bottom from Emergency down) AND collapse priority (lower tiers collapse first under environmental pressure). Hierarchy and collapse are the same information seen from two angles, captured in one table to prevent drift.
+
+| Tier | Name | Examples | Action when tapped | State broadcast at rest | Collapse rank |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Emergency | Safety FAB, SOS | Open safety surface | Active-alert pulse | Never collapses |
+| 2 | System | Bell, search-on-Pulse | Open system / global surface | Unread count, ambient state badge | Rarely collapses (extreme cases only) |
+| 3 | Page-primary | Drop Beacon (Pulse), Inbox FAB (Ghosted) | Primary page action | Quota indicator, queue badge | Conditional collapse |
+| 4 | Page-secondary | Music, Radio, Viewer toggles | Local tools | Now-playing dot, mode indicator | First to collapse |
+
+### §10.2 The action-and-state contract (LOCK)
+
+Every rail icon MUST answer both questions before it ships:
+
+1. **What action does it perform when tapped?**
+2. **What persistent state does it broadcast when at rest?**
+
+An icon with no state to broadcast — no badge, no halo, no indicator, no rest-state meaning — does not belong in the rail. It belongs in a menu, a contextual surface, or a settings sub-page. The rail's power is glanceability plus state-at-rest. Pure-action icons without state are decoration; decoration lives outside the rail.
+
+### §10.3 Capacity is not entitlement (LOCK)
+
+The rail holds at most **5 visible icons including the Emergency FAB**. This is a maximum, not a target. The rail's strength comes from scarcity, not density.
+
+If a sixth qualified icon is proposed, the answer is never "expand the rail." The answer is "which existing icon has degraded into low-traffic territory and should move to a contextual surface?" New icons displace; they do not spawn.
+
+A rail with three well-chosen icons is stronger than a rail with five average ones. Capacity is not entitlement.
+
+### §10.4 Collapse triggers (LOCK)
+
+The rail collapses under named environmental conditions, not subjective judgement. Triggers are enforceable, machine-detectable, and constitutional.
+
+| Condition | Detection | Collapse action |
+| --- | --- | --- |
+| Narrow viewport | `window.innerWidth < 360px` | Collapse Tier 4 into `…` overflow |
+| Software keyboard open | `window.visualViewport.height < window.innerHeight * 0.75` | Collapse Tier 4 |
+| Landscape mobile | `matchMedia('(orientation: landscape)').matches` AND viewport short-edge < 500px | Collapse Tier 3 + Tier 4 |
+| Accessibility text scaling | text-size factor > 1.5x baseline | Collapse Tier 3 + Tier 4 |
+| Multiple triggers simultaneous | Stack the most aggressive | Cumulative collapse |
+
+**Tier 1 (Emergency) never collapses.** Tier 2 (System) collapses only as a last resort under multiple-simultaneous extreme triggers.
+
+**Collapse means "moved to `…` overflow," never "disappeared."** The overflow trigger itself is always visible whenever any tier is collapsed. Users always have a recovery affordance. An icon that cannot be reached at all is a regression; an icon that requires one tap to reach is collapsed.
+
+### §10.5 The rail is constitutional substrate, not chrome
+
+The right rail is part of the constitutional substrate of HOTMESS, not page decoration. Every primary action that needs persistence across surfaces lives here, and every action that lives here meets §10.2.
+
+This locks future product behaviour: a new feature that proposes a floating action button or persistent control anywhere else must first answer *"why is this not in the rail?"* If the answer is "because the rail is full," see §10.3 — the rail does not expand; an existing tenant moves out.
+
+### §10.6 Internal framing vs external framing
+
+The rail being a constitutional substrate is **internal aspiration language**. Externally, HOTMESS is "an immersive platform," "a live city layer," "a nightlife substrate." HOTMESS is **not** publicly framed as an operating system. OS framing creates user expectations (OS-level persistence, OS-level cross-context memory, OS-level reliability) that the platform aspires to but does not yet fully meet. Frame becomes promise the moment users hear it. Internal direction, external honesty.
+
+### §10.7 What this amendment forbids
+
+Until a doctrine slice inherits from §10.1–§10.5, the following may not ship:
+
+- Adding any rail icon that has not declared its tier and answered §10.2
+- Expanding the rail's visible-icon count beyond 5 (including FAB)
+- Floating action surfaces outside the rail that should be in the rail under §10.1
+- Subjective collapse rules ("looks crowded," "feels cluttered") in place of §10.4 triggers
+- Any icon that can become totally unreachable under collapse (no `…` overflow path)
+
+### §10.8 Ratification trail
+
+- 2026-06-02: §10 ratified. Triggered by Phil's proposal to relocate the notification bell to the rail and move the Pulse search from top-bar input to a rail icon opening an overlay. Surfaced the absence of constitutional rail rules. The §10 matrix, action-and-state contract, capacity rule, enforceable collapse triggers, and the substrate-vs-chrome framing all locked in one pass.
+- §10.6 captures the OS-framing caution: internal aspiration only, external language uses "immersive platform" / "live city layer" / "nightlife substrate."
+
+---
+
+*End of §10 amendment.*
