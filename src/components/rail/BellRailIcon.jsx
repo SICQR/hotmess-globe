@@ -48,7 +48,7 @@ export default function BellRailIcon() {
         position: 'fixed',
         top: 'calc(env(safe-area-inset-top, 0px) + 64px)',
         right: 12,
-        zIndex: 70, // above page content (z-40), below SOSOverlay (z-99+) and IOSInstallPrompt (z-60)
+        zIndex: 160, // Phil 2026-06-02 P0.2: was 70, sat below existing Pulse rail icons at z:150 and was visually obscured. 160 puts bell above the page-level rail; SOSOverlay z:200+ and SafetyFAB own higher tiers still.
         width: 44,
         height: 44,
         borderRadius: '50%',
