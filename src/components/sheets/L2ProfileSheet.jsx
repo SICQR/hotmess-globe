@@ -647,13 +647,13 @@ export default function L2ProfileSheet({ email, uid, id }) {
     // at y:100% offscreen, backdrop visible at z:79, user trapped behind
     // blur. Fix: closeSheet first, then setTimeout 300ms (matches spring
     // settle for damping 26 stiffness 320) before openSheet for chat.
-    if (!profileUser?.email) {
-      toast.error("Couldn\u2019t reach this profile right now.");
-      return;
-    }
+    // Phil 2026-06-02 - profile.email is RLS-hidden for non-self viewers.
+    // Pass whatever's available (userId always present, email when visible).
+    // L2ChatSheet falls back to inbox view if email is missing; the user
+    // can pick the existing thread from the list rather than being stuck.
     const chatProps = {
       userId: targetId,
-      to: profileUser.email,
+      to: profileUser?.email || undefined,
       title: `Chat with ${safeName(profileUser)}`,
     };
     closeSheet();
