@@ -634,17 +634,33 @@ export default function L2ProfileSheet({ email, uid, id }) {
       toast('Boo first. They have to want it back.');
       return;
     }
+    if (!profileUser?.email) {
+      toast.error('Couldn\u2019t reach this profile right now.');
+      return;
+    }
     // Phil 2026-06-02 #551 - tapping MESSAGE opened to a blurred void because
     // L2ChatSheet's primary contract is { thread, to, title }. Passing only
     // userId triggered an async email-lookup before the thread could be
     // auto-selected, leaving the sheet rendering an empty threads-list view
     // with no visible content. Now passes BOTH userId AND to so the
     // synchronous auto-select-or-create logic fires immediately.
-    openSheet(SHEET_TYPES.CHAT, {
+    //
+    // Phil 2026-06-02 P0 hotfix — MESSAGE void. AnimatePresence with
+    // mode='wait' on the sheet container needs the current sheet (profile) to
+    // finish its exit before the next sheet (chat) mounts. Calling openSheet
+    // directly while profile is still activeSheet causes the chat motion.div
+    // to spawn at initial={y:'100%'} but the spring controller never settles
+    // — sheet ends up offscreen, backdrop stays, user is stuck behind a blur
+    // with no dismiss path. Close profile first, defer openSheet to the
+    // exit-animation completion via setTimeout matching the spring settle
+    // (~280ms damping 26 stiffness 320).
+    const chatProps = {
       userId: targetId,
-      to: profileUser?.email,
+      to: profileUser.email,
       title: `Chat with ${safeName(profileUser)}`,
-    });
+    };
+    closeSheet();
+    setTimeout(() => openSheet(SHEET_TYPES.CHAT, chatProps), 280);
   };
 
   const handleBlock = async () => {
