@@ -197,7 +197,7 @@ export function GhostedRecentStories({
       <style dangerouslySetInnerHTML={{ __html: `.gh-stories::-webkit-scrollbar{display:none}` }} />
       <div
         className="gh-stories flex gap-3 overflow-x-auto pb-1"
-        style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
+        style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', overscrollBehaviorX: 'contain', touchAction: 'pan-x' }}
       >
         {people.map((p) => {
           const initial = (p.name || '?').charAt(0).toUpperCase();
