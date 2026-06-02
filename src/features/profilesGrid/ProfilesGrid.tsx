@@ -275,8 +275,31 @@ export default function ProfilesGrid({
       });
     }
 
-    if (typeof maxItems === 'number') return result.slice(0, Math.max(0, maxItems));
-    return result;
+    // Phil 2026-06-02 #547 — final composite-key dedupe pass. id alone misses
+    // cases where the same person has two profile rows (different ids, same
+    // email or same auth_user_id). Keys are normalized for case/whitespace.
+    const seenKeys = new Set<string>();
+    const finalResult: Profile[] = [];
+    for (const p of result) {
+      if (!p) continue;
+      const idKey = String(p.id || '').trim().toLowerCase();
+      const emailKey = String((p as any)?.email || '').trim().toLowerCase();
+      const authKey = String((p as any)?.authUserId || (p as any)?.auth_user_id || (p as any)?.userId || '').trim().toLowerCase();
+      const composite = `id:${idKey}|email:${emailKey}|auth:${authKey}`;
+      if (seenKeys.has(composite)) continue;
+      // Also reject if any individual non-empty key has already been seen
+      if (idKey && seenKeys.has(`solo:id:${idKey}`)) continue;
+      if (emailKey && seenKeys.has(`solo:email:${emailKey}`)) continue;
+      if (authKey && seenKeys.has(`solo:auth:${authKey}`)) continue;
+      seenKeys.add(composite);
+      if (idKey) seenKeys.add(`solo:id:${idKey}`);
+      if (emailKey) seenKeys.add(`solo:email:${emailKey}`);
+      if (authKey) seenKeys.add(`solo:auth:${authKey}`);
+      finalResult.push(p);
+    }
+
+    if (typeof maxItems === 'number') return finalResult.slice(0, Math.max(0, maxItems));
+    return finalResult;
   }, [filterProfiles, sortProfiles, items, maxItems, viewerEmail, boostUserIds]);
 
   const totalFilteredCount = useMemo(() => {
