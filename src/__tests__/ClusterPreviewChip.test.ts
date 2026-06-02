@@ -16,6 +16,8 @@ const baseState: Omit<ClusterPreviewState, 'count' | 'intent_mix' | 'special_cop
   gate_trace: [],
   topology_hash: 'test-cluster',
   composed_at: 0,
+  dominant_intent: null,
+  event_summary: null,
 };
 
 describe('formatChipCopy — normal mixed (dense=false)', () => {
@@ -106,4 +108,5 @@ describe('formatChipCopy — empty intent mix (theoretical edge)', () => {
     });
   });
 });
+
 
