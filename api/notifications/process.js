@@ -53,6 +53,44 @@ function send(res, status, body) {
   json(res, status, body);
 }
 
+/**
+ * D53 §1.1 substrate fix — derive the URL a push notification should open.
+ * Reads `metadata.link` first (explicit override), then falls back to
+ * deriving the URL from `metadata.kind` and the relevant id field. Last
+ * resort '/' only when we genuinely have no idea what surface to open.
+ *
+ * Phil 2026-06-02 — Bob/Paul live: chat-message notification rows have
+ * metadata.thread_id but never metadata.link, so the dispatcher's
+ * `metadata.link || '/'` always hit '/'. This function closes that dead end.
+ */
+function urlFromMetadata(metadata) {
+  if (!metadata) return '/';
+  if (metadata.link) return metadata.link;
+  switch (metadata.kind) {
+    case 'chat_message':
+      return metadata.thread_id
+        ? `/ghosted?sheet=chat&thread=${metadata.thread_id}`
+        : '/ghosted';
+    case 'boo':
+    case 'match':
+      return metadata.from_user_id
+        ? `/ghosted?sheet=profile&id=${metadata.from_user_id}`
+        : '/ghosted';
+    case 'beacon_view':
+    case 'beacon_engagement':
+      return metadata.beacon_id ? `/pulse?beacon=${metadata.beacon_id}` : '/pulse';
+    case 'safety_alert':
+    case 'safety_checkin':
+      return '/safety';
+    case 'event_reminder':
+      return metadata.event_id ? `/pulse?event=${metadata.event_id}` : '/pulse';
+    default:
+      return '/';
+  }
+}
+
+
+
 export default async function handler(req, res) {
   if (req.method !== 'POST' && req.method !== 'GET') {
     send(res, 405, { error: 'Method not allowed' });
@@ -410,7 +448,11 @@ async function sendPushNotifications(supabase, notification) {
       body: notification.message || 'You have a new notification',
       icon: '/favicon.svg',
       tag: `n-${notification.id}`,
-      data: { url: notification.metadata?.link || '/', id: notification.id },
+      // D53 §1.1 — no silent affordance. Previously `metadata.link || '/'`
+      // landed every chat-message push on the app homepage because the
+      // trigger writes thread_id but never link. urlFromMetadata derives
+      // the right surface from metadata.kind. Bob/Paul live 2026-06-02.
+      data: { url: urlFromMetadata(notification.metadata), id: notification.id },
     });
 
     for (const row of allSubs) {
@@ -601,6 +643,7 @@ async function sendWhatsAppAlert(notification) {
 export const config = {
   maxDuration: 30, // 30 second timeout
 };
+
 
 
 
