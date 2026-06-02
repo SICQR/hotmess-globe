@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
@@ -964,39 +965,67 @@ export default function L2ProfileSheet({ email, uid, id }) {
       <div className="relative w-full" style={{ aspectRatio: '4/5', background: 'black' }}>
         {photoUrls.length > 0 ? (
           <>
-            <img
-              src={photoUrls[activePhotoIdx] || photoUrls[0]}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover"
-            />
+            {/* D10 §103-112 swipe carousel. Heavy damping (≥22), low stiffness
+                (≤400), snap-precise, no bounce, no autoplay. Haptic on snap. */}
+            {photoUrls.length === 1 ? (
+              <img
+                src={photoUrls[0]}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <motion.div
+                className="absolute inset-0 flex"
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.18}
+                onDragEnd={(_, info) => {
+                  // §104 snap-precise — threshold of viewport/4 or velocity >400
+                  const threshold = (typeof window !== 'undefined' ? window.innerWidth : 400) / 4;
+                  let next = activePhotoIdx;
+                  if (info.offset.x < -threshold || info.velocity.x < -400) {
+                    next = Math.min(photoUrls.length - 1, activePhotoIdx + 1);
+                  } else if (info.offset.x > threshold || info.velocity.x > 400) {
+                    next = Math.max(0, activePhotoIdx - 1);
+                  }
+                  if (next !== activePhotoIdx) {
+                    // §106 haptic on every successful gesture
+                    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                      try { navigator.vibrate(8); } catch (_) { /* non-fatal */ }
+                    }
+                    setActivePhotoIdx(next);
+                  }
+                }}
+                animate={{ x: `-${activePhotoIdx * 100}%` }}
+                transition={{ type: 'spring', stiffness: 280, damping: 26 }}
+                style={{ touchAction: 'pan-y' }}
+              >
+                {photoUrls.map((url, i) => (
+                  <img
+                    key={i}
+                    src={url}
+                    alt=""
+                    className="w-full h-full object-cover flex-shrink-0"
+                    style={{ minWidth: '100%' }}
+                    draggable={false}
+                    loading={i === 0 ? 'eager' : 'lazy'}
+                  />
+                ))}
+              </motion.div>
+            )}
             {photoUrls.length > 1 && (
-              <>
-                {/* tap zones for prev / next photo */}
-                <button
-                  className="absolute left-0 top-0 bottom-0 w-1/3 z-10 bg-transparent"
-                  style={{ border: 'none' }}
-                  onClick={(e) => { e.stopPropagation(); setActivePhotoIdx(Math.max(0, activePhotoIdx - 1)); }}
-                  aria-label="Previous photo"
-                />
-                <button
-                  className="absolute right-0 top-0 bottom-0 w-1/3 z-10 bg-transparent"
-                  style={{ border: 'none' }}
-                  onClick={(e) => { e.stopPropagation(); setActivePhotoIdx(Math.min(photoUrls.length - 1, activePhotoIdx + 1)); }}
-                  aria-label="Next photo"
-                />
-                {/* dot paginator */}
-                <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-20 pointer-events-none">
-                  {photoUrls.map((_, i) => (
-                    <span
-                      key={i}
-                      aria-hidden="true"
-                      style={i === activePhotoIdx
-                        ? { width: 18, height: 4, background: 'white', borderRadius: 99 }
-                        : { width: 6, height: 4, background: 'rgba(255,255,255,0.4)', borderRadius: 99 }}
-                    />
-                  ))}
-                </div>
-              </>
+              /* dot paginator */
+              <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-20 pointer-events-none">
+                {photoUrls.map((_, i) => (
+                  <span
+                    key={i}
+                    aria-hidden="true"
+                    style={i === activePhotoIdx
+                      ? { width: 18, height: 4, background: 'white', borderRadius: 99 }
+                      : { width: 6, height: 4, background: 'rgba(255,255,255,0.4)', borderRadius: 99 }}
+                  />
+                ))}
+              </div>
             )}
           </>
         ) : (
@@ -1575,4 +1604,5 @@ export default function L2ProfileSheet({ email, uid, id }) {
     </div>
   );
 }
+
 
