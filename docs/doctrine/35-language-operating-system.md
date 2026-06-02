@@ -856,3 +856,94 @@ Initial implementation slices that will feed D35 evolution:
 - **P8** Legacy dedup — will test §9.1 token registry under real consolidation pressure.
 
 D35 v2 lands when all eight slices have been observed for at least one cycle. Until then, this version (v1) is the doctrine-of-record.
+
+---
+
+## §13 — Tonal Register by Surface Class
+
+**Status:** Constitutional amendment to D35, locked
+**Ratified:** Phil 2026-06-02
+**Surfaces from:** the bell/search distinction during D16 §10 ratification — system surfaces must remain operationally trustworthy while traversal surfaces become atmospheric. Without this lock, every system surface drifts toward atmosphere and ambiguity fatigue builds.
+
+### §13.0 Why this amendment exists
+
+D35 already governs tonal contracts via §0 layers and §2 state-based tone. But it does not yet declare which **classes of surface** inherit which register. Without that rule, implementations choose by feel. The result: notification surfaces become atmospheric (clarity dies, users stop trusting them), or traversal surfaces become utilitarian (atmosphere dies, the platform feels like an admin tool). Both failures destroy product credibility from opposite directions.
+
+This amendment locks the surface-class → register mapping so the right register is inherited, not improvised.
+
+### §13.1 The two registers (LOCK)
+
+| Register | Applies to | Behaviour | Examples |
+| --- | --- | --- | --- |
+| **Clarity-first** | System, state, interruption, safety, payment, error, confirmation | Operationally trustworthy. Direct. Legible. No metaphor when the user needs information. Minimal language ornament. Energy 1–3. | Bell (state broadcast). Safety FAB. SOS. Payment confirm. Error toasts. Tier gates. Account settings. |
+| **Ambient (atmospheric)** | Traversal, discovery, presence, atmosphere, exploration, identity expression | Cinematic. Suggestive. Metaphor-permitted. Texture and voice. Energy 4–6. | Pulse globe. Search overlay. Beacon ambient layer. Care suite ambient copy. Editorial layer. |
+
+The registers are not aesthetic preferences. They are operational rules. A surface in the wrong register fails — clarity-first surfaces in ambient register lose trust; ambient surfaces in clarity-first register lose magic.
+
+### §13.2 Tie-breaker when a surface spans both (LOCK)
+
+When a surface contains both registers (e.g. a chat sheet has clarity-first action affordances AND atmospheric thread context), the register hierarchy is:
+
+1. **Anything operational** (send, confirm, pay, dismiss, decline, opt out, report) → clarity-first
+2. **Anything atmospheric** (idle state, content texture, ambient framing, transition copy) → ambient
+
+The two registers may coexist within one surface, but each individual string belongs to exactly one. No string is "between." Strings without a declared register default to clarity-first (safer failure mode).
+
+### §13.3 Surface declarations — initial registry (LOCK)
+
+Per D35's §3.4 SurfaceMeta declaration pattern, the following surface classes are locked at this amendment:
+
+| Surface | Intent | Layer | Energy | Register |
+| --- | --- | --- | --- | --- |
+| Bell rail icon | `system_state_broadcast` | A | 2 | clarity-first |
+| Safety FAB / SOS | `emergency_action` | A | 1 | clarity-first |
+| Notification inbox | `system_recall` | A | 2 | clarity-first |
+| Tier gate / paywall | `operational_access` | A | 1–2 | clarity-first |
+| Pulse search | `world_traversal` | B | 4 | ambient |
+| Beacon drop | `invitation_to_signal` | B | 4 | ambient |
+| Pulse globe | `live_city_layer` | B | 5 | ambient |
+| Editorial card | `nightlife_curation` | B | 4–5 | ambient |
+| Care suite (idle) | `care_atmosphere` | B | 3 | ambient |
+| Care suite (active alert) | `safety_action` | A | 1 | clarity-first |
+
+Any new surface ships with a declared row.
+
+### §13.4 Search overlay — explicit lock (LOCK)
+
+Search is **`world_traversal`**, not utility lookup. This determines everything downstream.
+
+**Search overlay must open with living context, not a blank enterprise field.** Recent crossings, active neighbourhoods, tonight's hotspots, saved places, live pulses, "continue exploring." The first frame the user sees on opening the overlay is the city alive at this moment. The empty-input state is not a default; it is an explicit choice the user makes (clearing recent results) and rarely seen.
+
+Forbidden in the search overlay:
+
+- "Search HOTMESS…" placeholder
+- "No results found" empty-state copy in the absence of any input (use ambient framing — "the night is quiet here yet" or city-aware silence)
+- Enterprise list rendering (tabular results, sterile cards, generic icons)
+- Database-style sort/filter chrome unless explicitly invoked by user
+- Loading spinners as default state (use ambient pulse / shimmer / texture)
+
+Permitted and encouraged:
+
+- City silhouette / map fragment as ambient background
+- Recent place chips, presented as memory not history
+- Live presence cues ("happening now near here")
+- Atmospheric framing of the input field itself ("tell me where you're heading")
+- Search results rendered as discoveries, not query matches
+
+### §13.5 What this amendment forbids
+
+Until a slice spec inherits from §13:
+
+- Any system / state / interruption surface implemented in ambient register
+- Any traversal / discovery surface implemented in clarity-first register
+- New surfaces shipped without a §13.3 row declaration
+- Search overlay implementations that violate §13.4
+
+### §13.6 Ratification trail
+
+- 2026-06-02: §13 ratified. Triggered by Phil's bell-to-rail relocation and the search-overlay sequencing. Bell must remain operationally trustworthy (clarity-first) while search must become atmospheric (`world_traversal`). The clarity-first vs ambient distinction generalises to all surface classes, captured in §13.1 + §13.3.
+- §13.4 locks the search overlay's first-frame requirement specifically — living context, not empty input — before the implementation slice begins.
+
+---
+
+*End of §13 amendment.*
