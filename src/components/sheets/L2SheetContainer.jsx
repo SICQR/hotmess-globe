@@ -191,14 +191,24 @@ export default function L2SheetContainer({
       controls.start({ y: peekOffset, transition: { type: 'spring', damping: 28, stiffness: 320 } });
     } else {
       // Currently expanded.
-      // Past peek into dismiss territory?
-      if (dy > peekOffset + DISMISS_OFFSET || vy > VELOCITY_FLICK * 1.5) {
+      //
+      // Phil 2026-06-02 #367 fix — previous logic required dy > peekOffset + 120
+      // OR vy > 750 to dismiss from expanded. For sheets where peek and
+      // expanded are nearly identical (chat peekFraction: 0.92, peekOffset ~40),
+      // dismiss needed 160px of drag while collapse-to-peek triggered at 20px.
+      // Every user dismiss attempt got intercepted as collapse-to-peek and the
+      // sheet "slid back up". Now dismiss uses the same threshold as from peek:
+      // DISMISS_OFFSET (120) OR VELOCITY_FLICK (500). Predictable, one rule.
+      if (dy > DISMISS_OFFSET || vy > VELOCITY_FLICK) {
         hapticPattern();
         handleClose();
         return;
       }
-      // Collapsed past halfway?
-      if (dy > peekOffset / 2 || vy > VELOCITY_FLICK) {
+      // Collapse to peek only if there's a meaningful peek state to collapse
+      // INTO. If peekOffset is smaller than EXPAND_OFFSET, peek and expanded
+      // are visually indistinct — collapsing would feel like nothing happened.
+      // Skip this branch and snap back to expanded instead.
+      if (peekOffset >= EXPAND_OFFSET && (dy > peekOffset / 2 || vy > VELOCITY_FLICK / 2)) {
         setSnap('peek');
         hapticSnap();
         controls.start({ y: peekOffset, transition: { type: 'spring', damping: 28, stiffness: 320 } });
