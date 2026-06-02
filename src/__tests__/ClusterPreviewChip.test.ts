@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { formatChipCopy } from '@/components/globe/ClusterPreviewChip';
 import type { ClusterPreviewState } from '@/lib/clusters/types';
 
-const baseState: Omit<ClusterPreviewState, 'count' | 'intent_mix' | 'special_copy' | 'dominant_intent' | 'event_summary'> = {
+const baseState: Omit<ClusterPreviewState, 'count' | 'intent_mix' | 'special_copy'> = {
   cluster_id: 'test-cluster',
   representative: null,
   gate_trace: [],
@@ -108,5 +108,6 @@ describe('formatChipCopy — empty intent mix (theoretical edge)', () => {
     });
   });
 });
+
 
 

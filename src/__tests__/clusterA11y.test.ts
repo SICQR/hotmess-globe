@@ -13,7 +13,7 @@ import { describe, expect, it } from 'vitest';
 import { composeClusterAriaLabel } from '@/lib/clusters/clusterA11y';
 import type { ClusterPreviewState } from '@/lib/clusters/types';
 
-const baseState: Omit<ClusterPreviewState, 'count' | 'intent_mix' | 'special_copy' | 'dominant_intent' | 'event_summary'> = {
+const baseState: Omit<ClusterPreviewState, 'count' | 'intent_mix' | 'special_copy'> = {
   cluster_id: 'test-cluster',
   representative: null,
   gate_trace: [],
@@ -158,5 +158,6 @@ describe('composeClusterAriaLabel — D48 §3.4 default-down compliance', () => 
     expect(out).toBe('4 nearby. looking. Press Enter to zoom in.');
   });
 });
+
 
 
