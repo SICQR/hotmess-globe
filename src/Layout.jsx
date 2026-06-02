@@ -8,6 +8,8 @@ import { updatePresence } from '@/api/presence';
 import SafetyFAB from '@/components/safety/SafetyFAB';
 import IOSInstallPrompt from '@/components/install/IOSInstallPrompt';
 import BellRailIcon from '@/components/rail/BellRailIcon';
+import RadioRailIcon from '@/components/rail/RadioRailIcon';
+import SearchRailIcon from '@/components/rail/SearchRailIcon';
 import NotificationBadge from '@/components/messaging/NotificationBadge';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import GlobalSearch from '@/components/search/GlobalSearch';
@@ -744,6 +746,19 @@ function LayoutInner({ children, currentPageName }) {
       {/* Notification bell — Tier 2 (System) per D16 §10. Lives on every page,
           replaces inconsistent TopHUD bell that was hidden on Pulse via !isPulse. */}
       {user && <BellRailIcon />}
+
+      {/* Search rail icon — Tier 2 (System) per D16 §10, Pulse-only mount.
+          Phil 2026-06-02 P0.3 — relocated from TopHUD centre input to the rail.
+          Overlay it opens is D35 §13.4-compliant (living context first frame). */}
+      {user && currentPageName === 'Pulse' && <SearchRailIcon top={116} />}
+
+      {/* Radio rail icon — Tier 4 (Page-secondary) per D16 §10.
+          Phil 2026-06-02 P0.4 — mounted on Pulse / Ghosted / Music / Shop.
+          Position 116 on non-Pulse pages (no Search above it), 168 on Pulse
+          (below Search). State-at-rest: now-playing dot when broadcasting. */}
+      {user && ['Pulse', 'Ghosted', 'Music', 'Shop'].includes(currentPageName) && (
+        <RadioRailIcon top={currentPageName === 'Pulse' ? 168 : 116} />
+      )}
 
       {/* Global Search */}
       {user && <GlobalSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />}

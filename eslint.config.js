@@ -10,6 +10,9 @@ export default [
       // This repo contains an intentionally-ignored nested copy at `hotmess-globe/`.
       // Do not lint it (it has different config/tooling and breaks CI).
       "hotmess-globe/**",
+      // Build-time check script with template literals that the configured
+      // ESLint parser cannot tokenize on this setup. Not application source.
+      "scripts/check-resolution-vocab.mjs",
     ],
   },
   {
@@ -70,3 +73,4 @@ export default [
     },
   },
 ];
+
