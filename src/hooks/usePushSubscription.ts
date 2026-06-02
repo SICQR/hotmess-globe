@@ -124,7 +124,10 @@ export function usePushSubscription(): PushSubscriptionHookResult {
       }
       if (!accessToken) return { ok: false, error: 'not_authenticated' };
 
-      const res = await fetch('/api/notifications/push-subscribe', {
+      // #537 — retry once on transient failure (5xx / network error). Paul/Bob
+      // 2026-06-02 had to toggle twice before subscribe landed; one auto-retry
+      // catches that class without changing the user's gesture.
+      const postOnce = async () => fetch('/api/notifications/push-subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -136,6 +139,24 @@ export function usePushSubscription(): PushSubscriptionHookResult {
         }),
       });
 
+      let res: Response;
+      try {
+        res = await postOnce();
+        if (!res.ok && res.status >= 500) {
+          await new Promise((r) => setTimeout(r, 500));
+          res = await postOnce();
+        }
+      } catch (networkErr) {
+        // Network blip → wait 500ms, try once more
+        await new Promise((r) => setTimeout(r, 500));
+        try {
+          res = await postOnce();
+        } catch (finalErr) {
+          const msg = finalErr instanceof Error ? finalErr.message : String(finalErr);
+          return { ok: false, error: msg || 'network_failed' };
+        }
+      }
+
       if (!res.ok) {
         let detail = `http_${res.status}`;
         try {
@@ -146,6 +167,22 @@ export function usePushSubscription(): PushSubscriptionHookResult {
       }
 
       setSubscribed(true);
+
+      // #548 — flag consent_push_intent so the morning observation digest
+      // counts this user as having opted in. Previously only the onboarding
+      // path wrote this (#821); Settings-toggle subscribes left the flag at
+      // false even after the subscription landed (Paul live 2026-06-02).
+      // Non-fatal if it fails — the subscription itself already succeeded.
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData?.user?.id) {
+          await supabase
+            .from('profiles')
+            .update({ consent_push_intent: true })
+            .eq('id', userData.user.id);
+        }
+      } catch { /* non-fatal */ }
+
       return { ok: true };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -164,6 +201,18 @@ export function usePushSubscription(): PushSubscriptionHookResult {
       // Per brief: don't bother deleting the DB row — UNIQUE(user_id, endpoint)
       // means the next subscribe() will replace it. Just unsubscribe locally.
       setSubscribed(false);
+
+      // Flip consent flag off — truthful state for the morning digest.
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData?.user?.id) {
+          await supabase
+            .from('profiles')
+            .update({ consent_push_intent: false })
+            .eq('id', userData.user.id);
+        }
+      } catch { /* non-fatal */ }
+
       return { ok: true };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -175,3 +224,4 @@ export function usePushSubscription(): PushSubscriptionHookResult {
 }
 
 export default usePushSubscription;
+
