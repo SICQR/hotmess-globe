@@ -61,22 +61,13 @@ export function TopHUD({ safetyStatus = 'safe' }: TopHUDProps) {
         )}
       </div>
 
-      {/* Right: Notification Bell (off Pulse) + Profile Avatar */}
+      {/* Right: Profile Avatar.
+          Phil 2026-06-02 #552 — notification bell removed from TopHUD per
+          D16 §10.1 (Tier 2 System actions live in the rail, not the top bar).
+          BellRailIcon is now mounted globally in Layout.jsx and renders on
+          every page including Pulse. The previous !isPulse gate was the
+          inconsistency §10 forbids. */}
       <div className="flex items-center gap-3 justify-end shrink-0">
-        {!isPulse && (
-          <button
-            onClick={() => { clearNotifBadge(); openSheet('notification-inbox'); }}
-            className="relative p-1.5 text-white/50 hover:text-white transition-colors active:scale-90"
-            aria-label="Notifications"
-          >
-            <Bell className="w-5 h-5" />
-            {notifCount > 0 && (
-              <span className="absolute top-0 right-0 w-4 h-4 bg-[#C8962C] text-black text-[9px] font-black rounded-full flex items-center justify-center leading-none border-2 border-[#050507]">
-                {notifCount > 9 ? '9+' : notifCount}
-              </span>
-            )}
-          </button>
-        )}
 
         <button
           onClick={() => openSheet('edit-profile')}

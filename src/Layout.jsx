@@ -7,6 +7,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { updatePresence } from '@/api/presence';
 import SafetyFAB from '@/components/safety/SafetyFAB';
 import IOSInstallPrompt from '@/components/install/IOSInstallPrompt';
+import BellRailIcon from '@/components/rail/BellRailIcon';
 import NotificationBadge from '@/components/messaging/NotificationBadge';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import GlobalSearch from '@/components/search/GlobalSearch';
@@ -739,6 +740,10 @@ function LayoutInner({ children, currentPageName }) {
 
       {/* iOS regular-Safari → Add to Home Screen prompt (D17, gated by detection) */}
       {user && <IOSInstallPrompt />}
+
+      {/* Notification bell — Tier 2 (System) per D16 §10. Lives on every page,
+          replaces inconsistent TopHUD bell that was hidden on Pulse via !isPulse. */}
+      {user && <BellRailIcon />}
 
       {/* Global Search */}
       {user && <GlobalSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />}
