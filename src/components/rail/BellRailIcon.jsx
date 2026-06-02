@@ -30,8 +30,16 @@ import { useNotifCount } from '@/hooks/useNotifCount';
 const GOLD = '#C8962C';
 
 export default function BellRailIcon() {
-  const { openSheet } = useSheet();
+  const { openSheet, activeSheet } = useSheet();
+  // Hooks must be called before any conditional return (rules-of-hooks).
+  // D16 §10.4 yield-to-sheet check moves below.
   const { notifCount, clearNotifBadge } = useNotifCount();
+  // D16 §10.4 — rail yields to active sheets. Sheet is focal interaction;
+  // rail is ambient. When any sheet is open, Tier 2/3/4 rail icons render
+  // null so they don't block sheet drag affordances (pip touches were being
+  // captured at z:160 over the sheet pip at z:80 — Phil 2026-06-02 P0
+  // regression caused by adding more rail icons in PR #836).
+  if (activeSheet) return null;
   const hasUnread = notifCount > 0;
 
   const handleTap = () => {
@@ -48,7 +56,7 @@ export default function BellRailIcon() {
         position: 'fixed',
         top: 'calc(env(safe-area-inset-top, 0px) + 64px)',
         right: 12,
-        zIndex: 70, // above page content (z-40), below SOSOverlay (z-99+) and IOSInstallPrompt (z-60)
+        zIndex: 160, // Phil 2026-06-02 P0.2: was 70, sat below existing Pulse rail icons at z:150 and was visually obscured. 160 puts bell above the page-level rail; SOSOverlay z:200+ and SafetyFAB own higher tiers still.
         width: 44,
         height: 44,
         borderRadius: '50%',
@@ -128,3 +136,4 @@ export default function BellRailIcon() {
     </button>
   );
 }
+

@@ -255,9 +255,12 @@ The rail collapses under named environmental conditions, not subjective judgemen
 | Software keyboard open | `window.visualViewport.height < window.innerHeight * 0.75` | Collapse Tier 4 |
 | Landscape mobile | `matchMedia('(orientation: landscape)').matches` AND viewport short-edge < 500px | Collapse Tier 3 + Tier 4 |
 | Accessibility text scaling | text-size factor > 1.5x baseline | Collapse Tier 3 + Tier 4 |
+| **Sheet open** | `useSheet().activeSheet` is non-null | **Collapse Tier 2 + Tier 3 + Tier 4 to invisibility.** Tier 1 (SafetyFAB) remains visible. |
 | Multiple triggers simultaneous | Stack the most aggressive | Cumulative collapse |
 
-**Tier 1 (Emergency) never collapses.** Tier 2 (System) collapses only as a last resort under multiple-simultaneous extreme triggers.
+**Tier 1 (Emergency) never collapses.** Tier 2 (System) collapses only as a last resort under multiple-simultaneous extreme triggers — **and when a sheet is open**, because a sheet is a focal user interaction and the rail is ambient. Ambient yields to focal. Tier 1 (SafetyFAB) does not yield because its coordinate space (bottom-right) does not collide with sheet drag affordances; safety access remains continuous through any focal flow.
+
+**Why sheet-open is constitutional and not implementation detail:** the rail and the sheet are both substrate layers. Two substrate layers occupying the same coordinate space without a yield rule will always collide somewhere. Locking the rule in doctrine prevents the rail from drifting back into pip-collision territory when a new rail icon is added or a sheet's geometry changes.
 
 **Collapse means "moved to `…` overflow," never "disappeared."** The overflow trigger itself is always visible whenever any tier is collapsed. Users always have a recovery affordance. An icon that cannot be reached at all is a regression; an icon that requires one tap to reach is collapsed.
 

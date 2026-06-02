@@ -19,6 +19,8 @@ const baseState: Omit<ClusterPreviewState, 'count' | 'intent_mix' | 'special_cop
   gate_trace: [],
   topology_hash: 'test-cluster',
   composed_at: 0,
+  dominant_intent: null,
+  event_summary: null,
 };
 
 describe('composeClusterAriaLabel — normal mixed', () => {
@@ -156,3 +158,6 @@ describe('composeClusterAriaLabel — D48 §3.4 default-down compliance', () => 
     expect(out).toBe('4 nearby. looking. Press Enter to zoom in.');
   });
 });
+
+
+
