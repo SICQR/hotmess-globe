@@ -13,8 +13,24 @@
   #jsboot{padding:6px 10px;background:#222;border-radius:6px;margin-bottom:8px;font-size:11px;color:#888}
 </style></head>
 <body>
-<h1>HOTMESS — push debug v2</h1>
+<h1>HOTMESS — push debug v3</h1>
 <p class="muted">Tap Subscribe + POST. Page will scroll to show results.</p>
+
+<div id="ios-safari-block" style="display:none;background:#1a1410;border:1px solid #C8962C;border-radius:10px;padding:16px;margin-bottom:16px">
+  <div style="color:#C8962C;font-weight:700;font-size:15px;margin-bottom:8px">iOS PUSH = INSTALLED PWA ONLY</div>
+  <div style="color:#eee;font-size:13px;line-height:1.5">
+    You're in regular Safari on iPhone. <b>Apple does not expose Notification or PushManager APIs to Safari outside an installed home-screen PWA.</b> No code can change this.
+    <br><br>
+    To enable push on this iPhone:<br>
+    1. Tap the <b>Share</b> button (square with arrow up) in the Safari toolbar<br>
+    2. Scroll and tap <b>"Add to Home Screen"</b><br>
+    3. Confirm <b>"Add"</b><br>
+    4. Open HOTMESS from your home screen icon<br>
+    5. Inside the PWA, go to Settings → Push Notifications and flip the toggle
+    <br><br>
+    <span style="color:#888;font-size:11px">Once installed, this debug page also works from inside the PWA — open it via Settings → Push Notifications → "open push debug".</span>
+  </div>
+</div>
 
 <div id="jsboot">script: pending</div>
 
@@ -31,6 +47,18 @@
 (function(){
   var boot = document.getElementById('jsboot');
   if (boot) { boot.textContent = 'script: running'; boot.style.color = '#3f3'; }
+
+  // iOS regular Safari = no Push possible. Surface the only fix: install PWA.
+  try {
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    var isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+      || (typeof navigator.standalone !== 'undefined' && navigator.standalone === true);
+    var pushAvailable = ('PushManager' in window) && (typeof Notification !== 'undefined');
+    if (isIOS && !isStandalone && !pushAvailable) {
+      var block = document.getElementById('ios-safari-block');
+      if (block) block.style.display = 'block';
+    }
+  } catch (_) {}
 
   var out = document.getElementById('out');
   var result = document.getElementById('result');
