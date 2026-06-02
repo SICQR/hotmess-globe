@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable */
 /**
  * scripts/check-resolution-vocab.mjs
  *
@@ -86,7 +87,7 @@ for (const rel of TARGET_FILES) {
       const idx = surface.indexOf(match[0]);
       const lineNum = surface.slice(0, idx).split('\n').length;
       console.error(
-        `❌ ${rel}:${lineNum} — prohibited resolution vocabulary "${match[0]}" found in surface text.`,
+        `[X] ${rel}:${lineNum} — prohibited resolution vocabulary "${match[0]}" found in surface text.`,
       );
       console.error(
         '   D19 §6.10 + D34 §4.7 bind: use Passed on / Sorted / Covered / Claimed / Going together / Heading there / Picked up / Handed over.',
@@ -102,3 +103,5 @@ if (failed) {
 }
 
 console.log('✅ Convergence resolution vocabulary clean.');
+
+

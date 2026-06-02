@@ -4,7 +4,6 @@ import {
   Search,
   ChevronRight,
   ChevronDown,
-  MessageCircle,
   Mail,
   Book,
   Shield,
@@ -455,3 +454,4 @@ export default function HelpCenter() {
     </div>
   );
 }
+
