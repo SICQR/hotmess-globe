@@ -150,7 +150,7 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     height: 'large',
     // #362 (Phil 2026-05-30): inbox FAB opens ?sheet=chat. Bump peek floor
     // so MESSAGES title + thread list show above the fold immediately.
-    peekFraction: 0.85,
+    peekFraction: 0.92,
     auth: true,
     deepLinkParams: ['thread', 'recipientId'],
   },
