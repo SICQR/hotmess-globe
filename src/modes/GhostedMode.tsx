@@ -181,11 +181,12 @@ export default function GhostedMode() {
 
       {/* Scrollable Container */}
       <div
-        className="gh-no-sb flex-1 overflow-y-auto pb-24"
+        className="gh-no-sb flex-1 overflow-y-auto overflow-x-hidden pb-24"
         style={{
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
           overscrollBehaviorX: 'contain',
+          touchAction: 'pan-y',
         }}
       >
 
