@@ -1,3 +1,4 @@
+// build-stamp: 2026-06-02T07:48:32Z — force Vercel build cache bust (rail icons missing from prior bundle)
 import React, { useState, useEffect, useRef } from 'react';
 import { requestGeoPermissionOnce } from '@/lib/geo/sharedGeolocation';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
