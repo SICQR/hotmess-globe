@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/components/utils/supabaseClient';
+import { usePushSubscription } from '@/hooks/usePushSubscription';
+import { toast } from 'sonner';
 
 function Toggle({ enabled, onToggle }) {
   return (
@@ -41,6 +43,30 @@ const NOTIFICATION_ROWS = [
 ];
 
 export default function L2NotificationsSheet() {
+  const push = usePushSubscription();
+  const [pushBusy, setPushBusy] = useState(false);
+
+  const handlePushMaster = async (next) => {
+    if (pushBusy) return;
+    setPushBusy(true);
+    try {
+      const r = next ? await push.subscribe() : await push.unsubscribe();
+      if (!r.ok) {
+        const errMap = {
+          unsupported: 'Push needs the installed PWA. Open HOTMESS from your home screen.',
+          permission_denied: 'Permission denied. Enable in iOS Settings → Notifications → HOTMESS.',
+          vapid_not_configured: 'Push not configured.',
+          not_authenticated: 'Please sign in again and retry.',
+        };
+        toast.error(errMap[r.error] || ('Push failed: ' + r.error));
+      } else {
+        toast.success(next ? 'Push notifications on' : 'Push notifications off');
+      }
+    } finally {
+      setPushBusy(false);
+    }
+  };
+
   const [prefs, setPrefs] = useState({
     notif_taps: true,
     notif_messages: true,
@@ -111,6 +137,40 @@ export default function L2NotificationsSheet() {
         </div>
       )}
       <div className="px-4 pt-4 pb-6 space-y-2">
+        {/* Master push toggle — single source of truth for browser push subscription */}
+        <div className="bg-[#141416] border border-[#C8962C]/40 rounded-2xl p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-[#C8962C]/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Bell className="w-4 h-4 text-[#C8962C]" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-white font-bold text-sm">Push Notifications</p>
+                <p className="text-white/40 text-xs mt-0.5">
+                  {push.subscribed
+                    ? "On — banners land on your lock screen"
+                    : "Off — turn on to receive HOTMESS pings"}
+                </p>
+              </div>
+            </div>
+            <Toggle
+              enabled={push.subscribed}
+              onToggle={() => handlePushMaster(!push.subscribed)}
+            />
+          </div>
+          {!push.isSupported && (
+            <p className="text-xs text-white/40 mt-3 leading-relaxed">
+              Push isn'''t available in this browser. Install HOTMESS to your home screen and open it from there to enable.
+            </p>
+          )}
+          {push.isSupported && push.permission === 'denied' && (
+            <p className="text-xs text-[#f55] mt-3 leading-relaxed">
+              Notifications are blocked at the system level. Enable in iOS Settings → Notifications → HOTMESS, then return here.
+            </p>
+          )}
+        </div>
+
+        {/* Per-type preferences (only meaningful when push is on, but always editable) */}
         {NOTIFICATION_ROWS.map(({ key, icon: Icon, title, desc }) => (
           <div key={key} className="bg-[#1C1C1E] rounded-2xl p-4 flex items-center justify-between gap-3">
             <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -129,4 +189,3 @@ export default function L2NotificationsSheet() {
     </div>
   );
 }
-
