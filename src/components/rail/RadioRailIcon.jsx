@@ -22,12 +22,17 @@ import { motion } from 'framer-motion';
 import { Radio as RadioIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useRadio } from '@/contexts/RadioContext';
+import { useSheet } from '@/contexts/SheetContext';
 
 const GOLD = '#C8962C';
 
 export default function RadioRailIcon({ top = 116 }) {
   const navigate = useNavigate();
   const { isPlaying, currentShowName } = useRadio();
+  const { activeSheet } = useSheet();
+  // D16 §10.4 — rail yields to active sheets. See BellRailIcon for full
+  // explanation. Tier 4 (this) is first to collapse under any pressure.
+  if (activeSheet) return null;
 
   const handleTap = () => {
     navigate('/radio');

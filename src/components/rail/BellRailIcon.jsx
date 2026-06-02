@@ -30,7 +30,13 @@ import { useNotifCount } from '@/hooks/useNotifCount';
 const GOLD = '#C8962C';
 
 export default function BellRailIcon() {
-  const { openSheet } = useSheet();
+  const { openSheet, activeSheet } = useSheet();
+  // D16 §10.4 — rail yields to active sheets. Sheet is focal interaction;
+  // rail is ambient. When any sheet is open, Tier 2/3/4 rail icons render
+  // null so they don't block sheet drag affordances (pip touches were being
+  // captured at z:160 over the sheet pip at z:80 — Phil 2026-06-02 P0
+  // regression caused by adding more rail icons in PR #836).
+  if (activeSheet) return null;
   const { notifCount, clearNotifBadge } = useNotifCount();
   const hasUnread = notifCount > 0;
 

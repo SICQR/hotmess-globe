@@ -25,7 +25,11 @@ import { useSheet } from '@/contexts/SheetContext';
 const GOLD = '#C8962C';
 
 export default function SearchRailIcon({ top = 116 }) {
-  const { openSheet } = useSheet();
+  const { openSheet, activeSheet } = useSheet();
+  // D16 §10.4 — rail yields to active sheets. See BellRailIcon for full
+  // explanation. Search is Tier 2 but still yields because pip collision is
+  // the failure mode being prevented, regardless of tier.
+  if (activeSheet) return null;
 
   const handleTap = () => {
     openSheet('search');
