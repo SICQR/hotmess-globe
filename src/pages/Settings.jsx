@@ -6,6 +6,8 @@ import { supabase } from '@/components/utils/supabaseClient';
 // Profile section. Avatar + display-name editing now lives ONLY behind
 // the top-right TopHUD avatar tap.
 import { Link, useNavigate } from 'react-router-dom';
+import { useSheet } from '@/contexts/SheetContext';
+import { ChevronRight } from 'lucide-react';
 import { Bell, Shield, LogOut, Download, Trash2, Database, HelpCircle, MessageSquare, FileText, Lock, Fingerprint } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 // import { Input } removed — only used by stripped Profile section.
@@ -135,35 +137,12 @@ export default function Settings() {
   const [user, setUser] = useState(null);
   const [locationPrivacy, setLocationPrivacy] = useState('fuzzy');
   const push = usePushSubscription();
-  const [pushBusy, setPushBusy] = useState(false);
+  const { openSheet } = useSheet();
   const [publicProfile, setPublicProfile] = useState(true);
 
-  // Phil 2026-06-02 #542 — Settings page Push Notifications toggle was
-  // bound to dead local state (useState(true)) with no persistence and no
-  // connection to the actual SW subscription. Flipping it did nothing;
-  // remount reset it to true. Now wired to the real usePushSubscription
-  // hook so toggle ON = subscribe() (registers SW + writes push_subscriptions
-  // row), toggle OFF = unsubscribe() (kills SW subscription).
-  const handlePushToggle = async (next) => {
-    if (pushBusy) return;
-    setPushBusy(true);
-    try {
-      const r = next ? await push.subscribe() : await push.unsubscribe();
-      if (!r.ok) {
-        const map = {
-          unsupported: 'Push not available in this browser. Open HOTMESS from your home screen.',
-          permission_denied: 'Permission denied. Enable in iOS Settings → Notifications → HOTMESS.',
-          vapid_not_configured: 'Push not configured.',
-          not_authenticated: 'Please sign in again and retry.',
-        };
-        toast.error(map[r.error] || ('Push toggle failed: ' + r.error));
-      } else {
-        toast.success(next ? 'Push notifications on' : 'Push notifications off');
-      }
-    } finally {
-      setPushBusy(false);
-    }
-  };
+  // Phil 2026-06-02 #543 — Push Notifications row is a tap-target that
+  // opens the canonical L2NotificationsSheet (single source of truth for
+  // both the master push toggle AND per-type preference toggles).
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -240,34 +219,21 @@ export default function Settings() {
             <h2 className="text-xl font-bold uppercase tracking-wider">Notifications</h2>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold">Push Notifications</p>
-                <p className="text-sm text-white/60">Boos, messages, beacon expiries, check-ins, payment receipts, SOS.</p>
-              </div>
-              <Switch
-                checked={push.subscribed}
-                disabled={pushBusy || !push.isSupported || push.permission === 'denied'}
-                onCheckedChange={handlePushToggle}
-              />
+          <button
+            type="button"
+            onClick={() => openSheet('notifications')}
+            className="w-full flex items-center justify-between text-left hover:bg-white/[0.02] -mx-2 px-2 py-1 rounded-lg transition-colors"
+          >
+            <div>
+              <p className="font-semibold">Push & Preferences</p>
+              <p className="text-sm text-white/60">
+                {push.isSupported
+                  ? (push.subscribed ? 'On — boos, messages, SOS land on your lock screen' : 'Off — tap to enable')
+                  : 'Open HOTMESS from your home screen to enable push'}
+              </p>
             </div>
-            {!push.isSupported && (
-              <p className="text-xs text-white/50 mt-2">
-                Push isn't available in this browser. To get HOTMESS banners, install HOTMESS to your home screen and open it from there.
-              </p>
-            )}
-            {push.isSupported && push.permission === 'denied' && (
-              <p className="text-xs text-[#f55] mt-2">
-                Notifications are blocked at the system level. Enable in iOS Settings → Notifications → HOTMESS, then return here.
-              </p>
-            )}
-            {push.isSupported && push.permission !== 'denied' && push.subscribed && (
-              <p className="text-xs text-white/50 mt-2">
-                You'll get HOTMESS banners for boos, messages, and SOS — even when the app is closed.
-              </p>
-            )}
-          </div>
+            <ChevronRight className="w-5 h-5 text-white/40" />
+          </button>
         </motion.div>
 
         {/* Privacy */}
