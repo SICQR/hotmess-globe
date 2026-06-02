@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 // createUserProfileUrl removed — only used by stripped View Profile button.
 import { createPageUrl } from '../utils';
 import { usePinLock } from '@/contexts/PinLockContext';
+import { usePushSubscription } from '@/hooks/usePushSubscription';
 
 // PIN Lock Settings Component
 function PinLockSettings() {
@@ -133,8 +134,36 @@ export default function Settings() {
   // top-right TopHUD avatar tap.
   const [user, setUser] = useState(null);
   const [locationPrivacy, setLocationPrivacy] = useState('fuzzy');
-  const [notifications, setNotifications] = useState(true);
+  const push = usePushSubscription();
+  const [pushBusy, setPushBusy] = useState(false);
   const [publicProfile, setPublicProfile] = useState(true);
+
+  // Phil 2026-06-02 #542 — Settings page Push Notifications toggle was
+  // bound to dead local state (useState(true)) with no persistence and no
+  // connection to the actual SW subscription. Flipping it did nothing;
+  // remount reset it to true. Now wired to the real usePushSubscription
+  // hook so toggle ON = subscribe() (registers SW + writes push_subscriptions
+  // row), toggle OFF = unsubscribe() (kills SW subscription).
+  const handlePushToggle = async (next) => {
+    if (pushBusy) return;
+    setPushBusy(true);
+    try {
+      const r = next ? await push.subscribe() : await push.unsubscribe();
+      if (!r.ok) {
+        const map = {
+          unsupported: 'Push not available in this browser. Open HOTMESS from your home screen.',
+          permission_denied: 'Permission denied. Enable in iOS Settings → Notifications → HOTMESS.',
+          vapid_not_configured: 'Push not configured.',
+          not_authenticated: 'Please sign in again and retry.',
+        };
+        toast.error(map[r.error] || ('Push toggle failed: ' + r.error));
+      } else {
+        toast.success(next ? 'Push notifications on' : 'Push notifications off');
+      }
+    } finally {
+      setPushBusy(false);
+    }
+  };
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -217,8 +246,27 @@ export default function Settings() {
                 <p className="font-semibold">Push Notifications</p>
                 <p className="text-sm text-white/60">Boos, messages, beacon expiries, check-ins, payment receipts, SOS.</p>
               </div>
-              <Switch checked={notifications} onCheckedChange={setNotifications} />
+              <Switch
+                checked={push.subscribed}
+                disabled={pushBusy || !push.isSupported || push.permission === 'denied'}
+                onCheckedChange={handlePushToggle}
+              />
             </div>
+            {!push.isSupported && (
+              <p className="text-xs text-white/50 mt-2">
+                Push isn't available in this browser. To get HOTMESS banners, install HOTMESS to your home screen and open it from there.
+              </p>
+            )}
+            {push.isSupported && push.permission === 'denied' && (
+              <p className="text-xs text-[#f55] mt-2">
+                Notifications are blocked at the system level. Enable in iOS Settings → Notifications → HOTMESS, then return here.
+              </p>
+            )}
+            {push.isSupported && push.permission !== 'denied' && push.subscribed && (
+              <p className="text-xs text-white/50 mt-2">
+                You'll get HOTMESS banners for boos, messages, and SOS — even when the app is closed.
+              </p>
+            )}
           </div>
         </motion.div>
 
@@ -395,4 +443,3 @@ export default function Settings() {
     </div>
   );
 }
-
