@@ -1,6 +1,6 @@
 # D52 — Trajectory Interruption Doctrine
 
-**Status:** Drafted 2026-06-02, awaiting Phil ratification
+**Status:** RATIFIED Phil 2026-06-02
 **Path:** `docs/doctrine/52-trajectory-interruption-doctrine.md`
 **Inherits from:** D14 (Routing as Continuity), D17 (Surface Layer), D22 (Temporal), D34 (Trajectory & Connection Flows), D44 (Identity Privacy Invariant), D48 (Spatial Identity Exposure)
 **Prerequisite for:** Slice 6 Live Meet-Up — Slice 6 cannot open until D52 is ratified
@@ -227,7 +227,11 @@ Each of those will need its own slice doc inheriting from D52, but the failure-m
 
 - 2026-06-02 — D52 drafted. Triggered by Phil's strategic read during cinematic mockup scope ratification: *"Live Meet-Up is the first feature where continuity failure has emotional consequences."*
 - §4 framing rule pre-locked from Phil's scope ratification: *"Do NOT market it initially as live tracking. Bad emotional frame."*
-- Awaiting Phil ratification of the full doctrine before Slice 6 opens.
+- 2026-06-02 — Phil ratified the full doctrine. Specific confirmations:
+  - **§8 15-minute resume window** — *"Long enough for accidental force quit, tunnel signal loss, app crash, battery saver interruption, subway dead zones. Short enough that contextual consent still feels continuous. Past that the social context may have changed completely. Especially in nightlife."*
+  - **§5 SOS sovereignty — stronger privacy posture confirmed** — *"Keep the stronger privacy posture. Meaning: neutral termination only. I would NOT expose 'your meet-up partner may need help' because that can create panic, pressure, pursuit behavior, unwanted escalation, accidental outing/location inference. The moment SOS fires, sovereignty transfers to safety systems. Not social continuity. That's the right doctrine posture. Especially because meet-up partners are not necessarily trusted contacts."*
+  - **§8 no silent resume** — Phil flagged as *"probably the strongest lock in the whole doctrine. Because silent trajectory resumption is exactly the kind of thing that feels technically convenient but becomes emotionally dangerous. Especially if users moved, context changed, venue changed, safety changed, attraction changed, regret happened, third parties entered the environment."*
+- Slice 6 (Live Meet-Up) implementation cleared to inherit from D52 once Slice 2 marker-distinction Z4 acceptance passes and Phase 0 closes.
 
 ---
 
