@@ -6,6 +6,7 @@ import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Search
 import { supabase } from '@/components/utils/supabaseClient';
 import { updatePresence } from '@/api/presence';
 import SafetyFAB from '@/components/safety/SafetyFAB';
+import IOSInstallPrompt from '@/components/install/IOSInstallPrompt';
 import NotificationBadge from '@/components/messaging/NotificationBadge';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import GlobalSearch from '@/components/search/GlobalSearch';
@@ -736,6 +737,9 @@ function LayoutInner({ children, currentPageName }) {
       {/* Safety FAB - replaces old Panic Button */}
       {user && <SafetyFAB />}
 
+      {/* iOS regular-Safari → Add to Home Screen prompt (D17, gated by detection) */}
+      {user && <IOSInstallPrompt />}
+
       {/* Global Search */}
       {user && <GlobalSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />}
 
@@ -766,4 +770,3 @@ export default function Layout(props) {
     </TonightModeProvider>
   );
 }
-
