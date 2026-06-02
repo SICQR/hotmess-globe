@@ -1,6 +1,6 @@
 # SCOPE — Cinematic Mockup Slice Ladder
 
-**Status:** RATIFIED Phil 2026-06-02 (with directional amendments — see §4 and §3.0)
+**Status:** RATIFIED Phil 2026-06-02 (directional amendments §4, §3.0, §5.1 cost framing)
 **Authored:** 2026-06-02
 **Path:** `docs/doctrine/slices/cinematic-mockup-slice-ladder.md`
 **Inherits from:** D14 (Routing as Continuity), D15 (Care Language), D17 (Surface Layer), D25 (In-App Messaging), D43 (Cluster Preview), D48 (Spatial Identity Exposure), D49 (Entity Ontology), D50 (Globe Cinematic Rendering), D51 (Globe Zoom Semantic), **D52 (Trajectory Interruption — new, prerequisite for Slice 6)**
@@ -18,6 +18,7 @@ Phil ratified this scope 2026-06-02 with the following directional amendments:
 4. **D52 Trajectory Interruption required** — must be ratified before Slice 6 (Live Meet-Up) opens. See §3.6.
 5. **Framing rule locked** — trajectory features are never "live tracking." Always "meeting convergence" / "shared arrival" / "live meet-up." Belongs in D52.
 6. **Architectural lock** — "the city light keeps glowing under your fingers, not just on the planet" elevated from observation to design direction. Substrate language carries into interaction surfaces (Slice 7 owns this).
+7. **Cost framing locked** — Mapbox cost risk is compound tile multiplication, not single-feature. The hidden cost vector is **ChatMapCard + Live Meet-Up, NOT the globe** — because cards and trajectories scale with social usage, while globe renders scale with entries. Phase 1 design rule: **cheap illusion / high atmosphere / low live computation.** Anti-pattern forbidden: **"always-on cinematic realtime everything."** See §5.1 and the cost constraints baked into Slice 5 and Slice 6.
 
 ---
 
@@ -121,6 +122,14 @@ Ten slices across three phases. Phase 0 is new (Phil's ratification amendment), 
 - **Auto-attach forbidden** per §4.4 ratification. Explicit "Share location" / "Share place" action only.
 - Schema migration: extend `messages.meta` or add `payload_kind` + `payload_json`.
 
+**Cost constraints — RATIFIED Phil 2026-06-02:**
+- **Aggressive caching, three layers.** Static map image cached server-side (Supabase storage or Vercel edge), CDN cache (max-age=30d, immutable), client cache (image URL is a deterministic hash of place+zoom+style — same key returns from cache forever).
+- **One render per unique (place, zoom, style) tuple.** Same coordinates at same zoom never re-render. Cache key is content-addressed.
+- **No live re-render on chat scroll.** Map cards already in thread render their cached image only; no refetch on viewport entry.
+- **No live updates on cards already sent.** A map card is an artefact of the moment it was sent. Receiver sees the snapshot, not a live tile.
+- **No re-render on text input focus, sheet open, theme switch, or window resize.** Stable across interaction.
+- **Single canonical static image format** — PNG @2x for retina, served as `<img>` not a Mapbox GL instance. No interactive map inside the card.
+
 ### §3.6 D52 Trajectory Interruption (DOCTRINE — Slice 6 prerequisite)
 
 **Status:** Drafted in companion PR. Must be ratified before Slice 6 opens.
@@ -146,6 +155,21 @@ D52 codifies:
 - **Framing — RATIFIED Phil**: "meeting convergence" / "shared arrival" / "live meet-up." Never "live tracking" / "find friends" / "location sharing" / "trace" / "follow." Per §4.6 ratification and D52 framing rule.
 - Privacy under D48: mutual exposure scope. No trajectory log. No moderation log of history. No third-party visibility.
 - SOS sovereignty: SOS interrupt always wins, meet-up auto-ends, SOS takes surface.
+
+**Cost governance — RATIFIED Phil 2026-06-02:**
+
+Live Meet-Up is the platform's real cost surface (per §0.7 framing). Every constraint below is operational policy, not optional.
+
+- **Hard session expiry** — default 2h, max 4h. Past `expires_at`, session auto-ends per D52 §7. No extension UI.
+- **Low-frequency updates when stationary** — velocity threshold detection. If `delta_position < 10m` over a 30s window, drop heartbeat to one sample per 60s. Resume base interval on motion detection.
+- **Aggressive throttling baseline** — 10s base heartbeat interval (not 1s). Dynamic scaling: faster only when both parties are actively moving toward each other.
+- **Route recalculation limits** — max 6 route recalculations per hour per session. Beyond that, last route is used until end of session OR hard reset by user. Prevents per-step recalculation loops.
+- **Movement thresholds** — recalculate route only if either party's position has drifted >50m from the route polyline. Drift detection runs on the heartbeat tick, not on every position update.
+- **GPS polling discipline** — never poll GPS more than once per heartbeat tick. App background = pause polling entirely (D52 §2 backgrounded row), resume on foreground.
+- **No always-live route render** — route polyline rendered ONCE per recalculation event, cached on both clients, animated locally via interpolation. The server does not push route-tile updates continuously.
+- **Static map fallback at low-end** — if device hits CPU/battery threshold, downgrade live map to static map snapshot updated every 30s instead of a live Mapbox GL render.
+
+**Anti-pattern explicitly forbidden:** *always-on cinematic realtime everything.* Render only what the user is looking at; cache everything else. Live-update only what is in motion; everything stationary is throttled.
 
 ### §3.8 Slice 7 — Cinematic chrome continuity (Surface C)
 **Inherits:** D50, D17 · **Architectural lock:** "the city light keeps glowing under your fingers, not just on the planet" (per §0.6)
@@ -203,7 +227,35 @@ Framing rule belongs in D52 §4. Slice 6 inherits.
 
 ## §5 Risks — RATIFIED Phil 2026-06-02
 
-- **Mapbox cost** — mitigated by §4.2 single-PNG approach.
+### §5.1 Mapbox cost — compound, not single-feature
+
+Phil's exact framing 2026-06-02:
+
+> *"The dangerous part is not one feature. It's compounded tile multiplication."*
+> *"Mapbox only becomes financially scary when you combine high DAU + persistent live maps + frequent route updates + lots of static-image generation + aggressive zoom interactions + background activity. HOTMESS is not there yet. So don't prematurely optimize for hyperscale. But DO architect carefully now so you don't accidentally build infinite refresh loops, uncached map cards, constant route recalculations, always-live GPS polling. Those are the killers."*
+
+**The hidden cost vector is ChatMapCard + Live Meet-Up, NOT the globe.** Card requests and route recalcs scale with social usage; globe renders scale with entries. Per-DAU economics of the social surfaces are an order of magnitude more sensitive than the globe.
+
+**Phase 1 design rule — cheap illusion / high atmosphere / low live computation:**
+- Static raster (per §4.2)
+- Atmospheric shaders (locally rendered, not tile-fetched)
+- Smart compositing (one base layer, additive overlays)
+- Sparse updates (no per-frame Mapbox queries)
+- Cached static cards (per Slice 5 cost constraints)
+
+> *"80% of the emotional impact for 20% of the infra cost."* — Phil 2026-06-02
+
+**Anti-pattern explicitly forbidden:** *"always-on cinematic realtime everything."* If a slice proposes any of {per-scroll re-render, per-focus re-render, per-frame route recalc, continuous GPS polling at base interval, uncached repeated static-image requests}, that slice is in doctrine breach against §5.1 and cannot ship.
+
+**Mitigation surfaces by slice:**
+- Slice 1: single PNG raster, no tile multiplication
+- Slice 2: marker rendering is local SVG/canvas, not tile-fetched
+- Slice 3: activity heat layer computed client-side from cluster data, not Mapbox-tile-driven
+- Slice 5: triple-cache discipline (see §3.5 cost constraints)
+- Slice 6: hard governance (see §3.7 cost governance)
+
+### §5.2 Other risks
+
 - **D48 privacy under sustained mutual location exposure** — Live Meet-Up is the platform's first sustained-trajectory feature. D48 + D52 jointly govern. Slice 6 cannot ship until both ratified.
 - **Performance regression** — Slice 4 mobile-perf is gating, not afterthought.
 - **Wrong-door collision at Z4** — Phil elevated this from aesthetic to operational risk. *"Trajectory + ambiguous care/nightlife markers creates real-world safety risk. That is not aesthetic. That is operational."* Slice 2 must hard-resolve before Slice 6 exists.
