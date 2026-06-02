@@ -4,131 +4,206 @@
 <style>
   body{font:14px/1.4 -apple-system,system-ui,sans-serif;background:#0a0a0c;color:#eee;padding:16px;margin:0}
   h1{color:#C8962C;font-size:18px;margin:0 0 12px}
-  pre{background:#1c1c1e;padding:12px;border-radius:8px;overflow-x:auto;font-size:11px;white-space:pre-wrap;word-wrap:break-word;color:#9ce}
-  button{background:#C8962C;color:#000;border:none;padding:14px 24px;border-radius:8px;font-weight:700;font-size:16px;margin:8px 0;width:100%}
+  pre{background:#1c1c1e;padding:12px;border-radius:8px;overflow-x:auto;font-size:11px;white-space:pre-wrap;word-wrap:break-word;color:#9ce;margin:0}
+  button{background:#C8962C;color:#000;border:none;padding:18px 24px;border-radius:8px;font-weight:700;font-size:17px;margin:12px 0;width:100%;-webkit-tap-highlight-color:rgba(200,150,44,0.4);cursor:pointer;touch-action:manipulation}
+  button:active{background:#a87923}
   .ok{color:#3f3}.err{color:#f55}.muted{color:#888;font-size:11px}
   .row{margin:8px 0;padding:8px;background:#141416;border-radius:6px}
-  .lbl{color:#C8962C;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+  .lbl{color:#C8962C;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+  #jsboot{padding:6px 10px;background:#222;border-radius:6px;margin-bottom:8px;font-size:11px;color:#888}
 </style></head>
 <body>
-<h1>HOTMESS — push debug</h1>
-<p class="muted">Open this on iPhone PWA. Read each row. Tap subscribe. Screenshot whole page.</p>
+<h1>HOTMESS — push debug v2</h1>
+<p class="muted">Tap Subscribe + POST. Page will scroll to show results.</p>
+
+<div id="jsboot">script: pending</div>
+
+<button id="go" type="button"
+  onclick="window.__doSubscribe && window.__doSubscribe(); return false;"
+  ontouchend="window.__doSubscribe && window.__doSubscribe(); return false;">
+  Subscribe + POST
+</button>
+
 <div id="out"></div>
-<button id="go">Subscribe + POST</button>
 <div id="result"></div>
+
 <script>
-const out = document.getElementById('out');
-const result = document.getElementById('result');
-function row(label, val, cls){
-  const d = document.createElement('div');
-  d.className = 'row';
-  d.innerHTML = '<div class="lbl">'+label+'</div><pre class="'+(cls||'')+'">'+
-    (typeof val==='object'?JSON.stringify(val,null,2):String(val))+'</pre>';
-  out.appendChild(d);
-}
+(function(){
+  var boot = document.getElementById('jsboot');
+  if (boot) { boot.textContent = 'script: running'; boot.style.color = '#3f3'; }
 
-(async () => {
-  row('user agent', navigator.userAgent);
-  row('display mode standalone', window.matchMedia('(display-mode: standalone)').matches);
-  row('serviceWorker supported', 'serviceWorker' in navigator);
-  row('PushManager supported', 'PushManager' in window);
-  row('Notification permission', typeof Notification!=='undefined' ? Notification.permission : 'n/a');
+  var out = document.getElementById('out');
+  var result = document.getElementById('result');
 
-  // localStorage scan for supabase
-  const lsKeys = [];
-  let foundToken = null;
+  function row(parent, label, val, cls){
+    try {
+      var d = document.createElement('div');
+      d.className = 'row';
+      var v = (val && typeof val === 'object') ? JSON.stringify(val, null, 2) : String(val);
+      d.innerHTML = '<div class="lbl">' + label + '</div><pre class="' + (cls||'') + '">' + v.replace(/</g,'&lt;') + '</pre>';
+      parent.appendChild(d);
+    } catch(e) {
+      try { parent.appendChild(document.createTextNode('row err: ' + e.message)); } catch(_) {}
+    }
+  }
+
+  // Phase A: synchronous environment probe — runs no matter what
   try {
-    for (const k of Object.keys(localStorage)) {
-      if (k.startsWith('sb-') || k.includes('supabase')) {
-        const v = localStorage.getItem(k);
-        let parsed = null;
-        try { parsed = JSON.parse(v); } catch {}
-        const hasToken = !!(parsed?.access_token || parsed?.currentSession?.access_token);
-        lsKeys.push({ key: k, len: v?.length, has_token: hasToken });
-        if (hasToken && !foundToken) {
-          foundToken = parsed.access_token || parsed.currentSession.access_token;
-        }
+    row(out, 'user agent', navigator.userAgent || 'n/a');
+    row(out, 'standalone (display-mode)', window.matchMedia ? window.matchMedia('(display-mode: standalone)').matches : 'no matchMedia');
+    row(out, 'standalone (navigator)', typeof navigator.standalone !== 'undefined' ? navigator.standalone : 'n/a');
+    row(out, 'serviceWorker supported', 'serviceWorker' in navigator);
+    row(out, 'PushManager supported', 'PushManager' in window);
+    row(out, 'Notification API', (typeof Notification !== 'undefined') ? ('present, perm=' + Notification.permission) : 'MISSING', (typeof Notification === 'undefined') ? 'err' : 'ok');
+    row(out, 'origin', location.origin);
+  } catch(e) {
+    row(out, 'phase A error', { name: e.name, message: e.message }, 'err');
+  }
+
+  // Phase B: localStorage token scan
+  var foundToken = null;
+  try {
+    var lsKeys = [];
+    var keys = Object.keys(localStorage);
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (!(k.indexOf('sb-') === 0 || k.indexOf('supabase') !== -1)) continue;
+      var v = localStorage.getItem(k);
+      var parsed = null;
+      try { parsed = JSON.parse(v); } catch(_) {}
+      var hasToken = !!(parsed && (parsed.access_token || (parsed.currentSession && parsed.currentSession.access_token)));
+      lsKeys.push({ key: k, len: v ? v.length : 0, has_token: hasToken });
+      if (hasToken && !foundToken) {
+        foundToken = parsed.access_token || parsed.currentSession.access_token;
       }
     }
-  } catch (e) {
-    row('localStorage error', e.message, 'err');
+    row(out, 'localStorage sb keys (' + lsKeys.length + ')', lsKeys);
+    row(out, 'access_token present', !!foundToken, foundToken ? 'ok' : 'err');
+  } catch(e) {
+    row(out, 'phase B error', { name: e.name, message: e.message }, 'err');
   }
-  row('localStorage sb keys', lsKeys);
-  row('access_token found', !!foundToken, foundToken ? 'ok' : 'err');
 
-  if ('serviceWorker' in navigator) {
+  // Phase C: SW state — async, errors don't block handler
+  (async function(){
+    if (!('serviceWorker' in navigator)) return;
     try {
-      const reg = await navigator.serviceWorker.ready;
-      row('SW scope', reg.scope, 'ok');
-      const existing = await reg.pushManager.getSubscription();
-      row('existing push subscription', existing ? { endpoint_host: existing.endpoint.match(/\\/\\/([^\\/]+)/)?.[1] } : null);
-    } catch (e) {
-      row('SW error', e.message, 'err');
+      var reg = await navigator.serviceWorker.getRegistration();
+      row(out, 'SW registration', reg ? { scope: reg.scope, active: !!reg.active, installing: !!reg.installing, waiting: !!reg.waiting } : 'NONE', reg ? 'ok' : 'err');
+      if (reg && reg.pushManager) {
+        var existing = await reg.pushManager.getSubscription();
+        if (existing) {
+          var host = (existing.endpoint.match(/\/\/([^\/]+)/) || [])[1] || '?';
+          row(out, 'existing push subscription', { endpoint_host: host, endpoint_tail: existing.endpoint.slice(-20) });
+        } else {
+          row(out, 'existing push subscription', 'NONE — need to subscribe', 'err');
+        }
+      }
+    } catch(e) {
+      row(out, 'phase C error', { name: e.name, message: e.message }, 'err');
     }
-  }
-})();
+  })();
 
-document.getElementById('go').addEventListener('click', async () => {
-  result.innerHTML = '<div class="row"><div class="lbl">working...</div></div>';
-  const log = (l,v,cls) => {
-    const d = document.createElement('div');
-    d.className = 'row';
-    d.innerHTML = '<div class="lbl">'+l+'</div><pre class="'+(cls||'')+'">'+
-      (typeof v==='object'?JSON.stringify(v,null,2):String(v))+'</pre>';
-    result.appendChild(d);
+  // Subscribe handler — exposed on window so the inline onclick can call it
+  window.__doSubscribe = async function(){
+    try {
+      result.innerHTML = '';
+      row(result, 'tap received', new Date().toISOString(), 'ok');
+      // scroll to results so Phil can see
+      result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      if (typeof Notification === 'undefined') {
+        row(result, 'fatal', 'Notification API missing on this browser', 'err');
+        return;
+      }
+      if (!('serviceWorker' in navigator)) {
+        row(result, 'fatal', 'serviceWorker not supported', 'err');
+        return;
+      }
+      if (!('PushManager' in window)) {
+        row(result, 'fatal', 'PushManager not supported', 'err');
+        return;
+      }
+
+      var perm = Notification.permission;
+      row(result, 'permission before', perm);
+      if (perm === 'default') {
+        try {
+          perm = await Notification.requestPermission();
+        } catch (e) {
+          // Safari older API style
+          perm = await new Promise(function(res){ Notification.requestPermission(res); });
+        }
+        row(result, 'permission after prompt', perm, perm === 'granted' ? 'ok' : 'err');
+      }
+      if (perm !== 'granted') {
+        row(result, 'aborted', 'permission not granted — enable in iOS Settings → Notifications', 'err');
+        return;
+      }
+
+      var reg = await navigator.serviceWorker.ready;
+      row(result, 'SW ready', { scope: reg.scope }, 'ok');
+
+      var sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        var host = (sub.endpoint.match(/\/\/([^\/]+)/) || [])[1] || '?';
+        row(result, 'existing sub reused', { endpoint_host: host });
+      } else {
+        var VAPID = 'BPuEtZn-WTm6lcM7DBnvK0kepsuBmZTcwm1Ip2gdb_Co60s30HnFCfA6JjmI4UvpyOpZ-uRYrjmpcLAJxTAhBHM';
+        var padding = '='.repeat((4 - (VAPID.length % 4)) % 4);
+        var b64 = (VAPID + padding).replace(/-/g, '+').replace(/_/g, '/');
+        var raw = atob(b64);
+        var bytes = new Uint8Array(raw.length);
+        for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+        sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: bytes });
+        var host2 = (sub.endpoint.match(/\/\/([^\/]+)/) || [])[1] || '?';
+        row(result, 'NEW subscription created', { endpoint_host: host2 }, 'ok');
+      }
+
+      var subJson = sub.toJSON();
+      row(result, 'sub json shape', { has_endpoint: !!subJson.endpoint, has_p256dh: !!(subJson.keys && subJson.keys.p256dh), has_auth: !!(subJson.keys && subJson.keys.auth) });
+
+      // pick freshest token
+      var token = null;
+      var keys2 = Object.keys(localStorage);
+      for (var j = 0; j < keys2.length; j++) {
+        var k2 = keys2[j];
+        if (!(k2.indexOf('sb-') === 0 || k2.indexOf('supabase') !== -1)) continue;
+        try {
+          var p = JSON.parse(localStorage.getItem(k2));
+          if (p && p.access_token) { token = p.access_token; break; }
+          if (p && p.currentSession && p.currentSession.access_token) { token = p.currentSession.access_token; break; }
+        } catch(_) {}
+      }
+      row(result, 'JWT from localStorage', token ? ('FOUND (' + token.length + ' chars, ends ' + token.slice(-8) + ')') : 'MISSING', token ? 'ok' : 'err');
+
+      if (!token) {
+        row(result, 'cannot POST', 'no access_token in localStorage — sign in via PWA first', 'err');
+        return;
+      }
+
+      var res = await fetch('/api/notifications/push-subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ subscription: subJson, user_agent: navigator.userAgent })
+      });
+      var text = await res.text();
+      row(result, 'POST status', res.status, res.ok ? 'ok' : 'err');
+      row(result, 'POST response', text, res.ok ? 'ok' : 'err');
+
+      if (res.ok) {
+        row(result, 'DONE', 'subscription stored. fire a test push now.', 'ok');
+      }
+
+    } catch(e) {
+      try {
+        row(result, 'exception', { name: e.name, message: e.message, stack: (e.stack || '').slice(0, 400) }, 'err');
+      } catch(_) {
+        result.innerHTML += '<pre class="err">FATAL: ' + (e && e.message) + '</pre>';
+      }
+    }
   };
-  result.innerHTML = '';
-  try {
-    if (Notification.permission === 'default') {
-      const p = await Notification.requestPermission();
-      log('permission after prompt', p);
-      if (p !== 'granted') return;
-    }
-    if (Notification.permission !== 'granted') {
-      log('permission denied', Notification.permission, 'err');
-      return;
-    }
-    const reg = await navigator.serviceWorker.ready;
-    let sub = await reg.pushManager.getSubscription();
-    log('existing sub before subscribe', sub ? { endpoint_host: sub.endpoint.match(/\\/\\/([^\\/]+)/)?.[1] } : null);
 
-    if (!sub) {
-      const VAPID = 'BPuEtZn-WTm6lcM7DBnvK0kepsuBmZTcwm1Ip2gdb_Co60s30HnFCfA6JjmI4UvpyOpZ-uRYrjmpcLAJxTAhBHM';
-      const padding = '='.repeat((4 - (VAPID.length % 4)) % 4);
-      const base64 = (VAPID + padding).replace(/-/g, '+').replace(/_/g, '/');
-      const raw = window.atob(base64);
-      const bytes = new Uint8Array(raw.length);
-      for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: bytes });
-      log('new subscription created', { endpoint_host: sub.endpoint.match(/\\/\\/([^\\/]+)/)?.[1] }, 'ok');
-    }
-
-    const subJson = sub.toJSON();
-    log('sub json shape', { has_endpoint: !!subJson.endpoint, has_p256dh: !!subJson.keys?.p256dh, has_auth: !!subJson.keys?.auth });
-
-    let token = null;
-    for (const k of Object.keys(localStorage)) {
-      if (!k.startsWith('sb-') && !k.includes('supabase')) continue;
-      try { const v = JSON.parse(localStorage.getItem(k));
-        if (v?.access_token) { token = v.access_token; break; }
-        if (v?.currentSession?.access_token) { token = v.currentSession.access_token; break; }
-      } catch {}
-    }
-    log('JWT from localStorage', token ? 'FOUND ('+token.length+' chars)' : 'MISSING', token ? 'ok' : 'err');
-
-    if (!token) { log('cannot POST without token', 'sign in via PWA first', 'err'); return; }
-
-    const res = await fetch('/api/notifications/push-subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify({ subscription: subJson, user_agent: navigator.userAgent }),
-    });
-    const text = await res.text();
-    log('POST status', res.status, res.ok ? 'ok' : 'err');
-    log('POST response', text, res.ok ? 'ok' : 'err');
-
-  } catch (e) {
-    log('exception', { name: e.name, message: e.message, stack: (e.stack||'').slice(0,400) }, 'err');
-  }
-});
-</script></body></html>
+  if (boot) { boot.textContent = 'script: ready — tap Subscribe + POST'; boot.style.color = '#3f3'; }
+})();
+</script>
+</body></html>
