@@ -640,11 +640,24 @@ export default function L2ProfileSheet({ email, uid, id }) {
     // auto-selected, leaving the sheet rendering an empty threads-list view
     // with no visible content. Now passes BOTH userId AND to so the
     // synchronous auto-select-or-create logic fires immediately.
-    openSheet(SHEET_TYPES.CHAT, {
+    //
+    // Phil 2026-06-02 #566 P0 — calling openSheet directly while profile
+    // is still activeSheet causes AnimatePresence mode='wait' race: chat
+    // motion.div mounts mid-exit, controls.start never settles, sheet stays
+    // at y:100% offscreen, backdrop visible at z:79, user trapped behind
+    // blur. Fix: closeSheet first, then setTimeout 300ms (matches spring
+    // settle for damping 26 stiffness 320) before openSheet for chat.
+    if (!profileUser?.email) {
+      toast.error("Couldn\u2019t reach this profile right now.");
+      return;
+    }
+    const chatProps = {
       userId: targetId,
-      to: profileUser?.email,
+      to: profileUser.email,
       title: `Chat with ${safeName(profileUser)}`,
-    });
+    };
+    closeSheet();
+    setTimeout(() => openSheet(SHEET_TYPES.CHAT, chatProps), 300);
   };
 
   const handleBlock = async () => {
