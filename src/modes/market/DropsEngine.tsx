@@ -5,7 +5,7 @@
  * Colour: #C8962C (HOTMESS gold) — Phil 2026-06-03 rule, no more retail-urgent orange
  * Data: Shopify products tagged "drop" + internal products with drop metadata
  *
- * Cards show: countdown badge, stock remaining, brand logo, "Buy Now" CTA (not add to cart).
+ * Cards show: countdown badge, stock remaining, brand logo. Tap → product sheet (parity with SHOP).
  */
 
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
@@ -145,14 +145,10 @@ function DropProductCard({ product, index, onTap }: { product: Product; index: n
             </span>
           )}
         </div>
-        {/* Urgency CTA */}
-        <div
-          className="mt-2 h-8 rounded-lg flex items-center justify-center gap-1 text-xs font-bold text-white active:scale-95 transition-transform"
-          style={{ backgroundColor: DROP_ORANGE }}
-        >
-          <Zap className="w-3.5 h-3.5" />
-          Buy now
-        </div>
+        {/* Phil 2026-06-03 — inline Buy now CTA removed. SHOP cards tap-to-open
+            the product sheet; DROPS now does the same. Single interaction
+            primitive across Market tabs. Tap the card → sheet → variant +
+            Buy Now (which is the real, contextual buy). */}
       </button>
     </motion.div>
   );
