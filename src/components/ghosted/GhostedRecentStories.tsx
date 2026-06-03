@@ -2,13 +2,16 @@
  * GhostedRecentStories — Instagram/Grindr-style row of recent signals.
  *
  * A horizontal circle row that sits ABOVE the Ghosted grid (always visible,
- * no label). One row, two ring vocabularies:
+ * no label). One row, three entity classes per D53 §4.1 (Story Rail Class Closure):
  *
- *   Gold ring  → a PERSON with an active beacon (or recent chat partner).
- *                Tap → profile + active beacon module.
- *   Cream ring → a PLACE — curated care beacon on the ground tonight
+ *   HOTMESS gold gradient (anchor) → HOTMESS RADIO operator entity.
+ *                One slot, leftmost, permanent, never dismissable. Pulses when
+ *                live. Tap → /radio.
+ *   Cream ring (max 3) → a PLACE — curated care beacon on the ground tonight
  *                (Vauxhall, 56 Dean Street, Antidote, Royal Free, etc.).
  *                Tap → /pulse flyTo the beacon coord.
+ *   Gold ring  → a PERSON with an active beacon (or recent chat partner).
+ *                Tap → profile + active beacon module.
  *
  * Phil 2026-06-03 Samui — single-primitive rule (D53 §1.4). The previous
  * standalone CareOnTheGroundStrip duplicated this row's shape; both got
@@ -31,6 +34,7 @@ import { MapPin } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { safeName } from '@/lib/identity/safeName';
+import { useRadio } from '@/contexts/RadioContext';
 
 interface RowPerson {
   userId: string | null;
@@ -68,6 +72,8 @@ export function GhostedRecentStories({
   currentUserId?: string | null;
 }) {
   const { openSheet } = useSheet();
+
+  const { isPlaying: radioIsPlaying, currentShowName: radioShowName } = useRadio();
   const navigate = useNavigate();
   const [people, setPeople] = React.useState<RowPerson[]>([]);
   const [careCircles, setCareCircles] = React.useState<RowCare[]>([]);
@@ -252,7 +258,8 @@ export function GhostedRecentStories({
 
   // Phil 2026-06-03 — render the row whenever EITHER list has content.
   // Empty-and-empty stays silent so the grid carries the page.
-  if (loading || (people.length === 0 && careCircles.length === 0)) return null;
+  // Phil 2026-06-03 — D53 §4.1: RADIO is permanent. Row renders even when both other classes are empty.
+  if (loading) return null;
 
   const open = (p: RowPerson) => {
     // Doctrine: globe tap AND carousel tap both resolve to the creator's
@@ -288,6 +295,69 @@ export function GhostedRecentStories({
         className="gh-stories flex gap-3 overflow-x-auto pb-1"
         style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', overscrollBehaviorX: 'contain', touchAction: 'pan-x' }}
       >
+        {/* D53 §4.1 — HOTMESS RADIO operator entity anchor.
+            Permanent, leftmost, never dismissable. Pulses when isPlaying.
+            Tap → /radio. See doctrine docs/doctrine/53-surface-continuity-substrate.md §4.1. */}
+        <button
+          key="hotmess-radio-anchor"
+          type="button"
+          onClick={() => navigate('/radio')}
+          aria-label={radioIsPlaying ? `HOTMESS RADIO — ${radioShowName || 'live'} playing` : 'HOTMESS RADIO'}
+          className="flex flex-col items-center gap-1 flex-shrink-0 w-16 focus:outline-none active:scale-95 transition-transform"
+        >
+          <span
+            className="relative w-[58px] h-[58px] rounded-full p-[2px]"
+            style={{
+              // HOTMESS gold ring — distinct from gold-pink person ring + cream care ring.
+              // Slightly larger than the 56px person/care circles so the operator entity
+              // reads as the room's tone-setter, not a peer.
+              background: 'linear-gradient(135deg, #C8962C 0%, #D4A84B 50%, #B8821A 100%)',
+              boxShadow: radioIsPlaying
+                ? '0 0 14px rgba(200,150,44,0.55), 0 0 28px rgba(200,150,44,0.22)'
+                : '0 0 6px rgba(200,150,44,0.22)',
+              transition: 'box-shadow 280ms ease',
+            }}
+          >
+            <span className="block w-full h-full rounded-full overflow-hidden bg-[#0C0C0E] border border-black flex items-center justify-center relative">
+              {/* Waveform glyph — three bars, animate height only when live broadcasting.
+                  Static when isPlaying=false so we don't lie about live state (D35). */}
+              <svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true">
+                {[3, 8, 13, 18].map((x, i) => (
+                  <rect
+                    key={x}
+                    x={x - 1}
+                    y={radioIsPlaying ? 1 : 5}
+                    width="2"
+                    height={radioIsPlaying ? 12 : 4}
+                    rx="1"
+                    fill="#C8962C"
+                    style={
+                      radioIsPlaying
+                        ? {
+                            animation: `radioBar 900ms ease-in-out ${i * 120}ms infinite alternate`,
+                            transformOrigin: 'center',
+                          }
+                        : undefined
+                    }
+                  />
+                ))}
+              </svg>
+              <style>{`
+                @keyframes radioBar {
+                  0%   { transform: scaleY(0.45); }
+                  100% { transform: scaleY(1); }
+                }
+              `}</style>
+            </span>
+          </span>
+          <span
+            className="text-[10px] uppercase tracking-wider truncate w-full text-center leading-tight"
+            style={{ color: radioIsPlaying ? '#C8962C' : 'rgba(245,238,220,0.78)' }}
+          >
+            Radio
+          </span>
+        </button>
+
         {people.map((p) => {
           const initial = (p.name || '?').charAt(0).toUpperCase();
           return (
@@ -338,7 +408,8 @@ export function GhostedRecentStories({
             Folded into the same row per Phil's single-primitive rule. The
             ringed circles already establish "things on the ground tonight";
             no separate header label needed. */}
-        {careCircles.map((c) => {
+        {/* D53 §4.1 — care class capped at 3, newest-first already ordered upstream */}
+        {careCircles.slice(0, 3).map((c) => {
           const tappable = c.lat != null && c.lng != null;
           return (
             <button

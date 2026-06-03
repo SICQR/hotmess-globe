@@ -76,6 +76,29 @@ When a drift is detected, the substrate owes a deprecation slice. Patches to non
 
 ---
 
+
+### §4.1 Story Rail Class Closure — D53 §4.1 amendment
+
+The horizontal story row above the Ghosted grid (`GhostedRecentStories`) is one primitive carrying exactly three entity classes:
+
+1. **HOTMESS RADIO** — the operator entity. Exactly one slot, anchored leftmost, permanently present, never dismissable, never reorderable, never hidden. State broadcast: when `isPlaying === true` the circle pulses gold; otherwise it sits quiet. Tap → `/radio`. The radio anchor is the room's tone-setter; it is in-world atmosphere, not a CTA.
+
+2. **Care beacons** — the place entity. Maximum **3** at any time, newest-first by `beaconStartsAt`. Cream ring (never gold). Tap → `/pulse` flyTo the beacon coord with `focusBeaconId` pre-set. Capped because past 3 the row reads as a list of care services instead of "what care is nearby right now." 3 is also the number that fits visually before the user has to scroll past everything else to see the rest.
+
+3. **Person stories** — the user entity. Recent chat partners and/or owners of active beacons. Gold ring. Tap → `/profile/:userId` (optionally `?beacon=:id` if surfaced via beacon).
+
+No other entity class may appear in the row. This includes — non-exhaustively — Pulse status indicators, Drop A Beacon CTAs, marketplace promos, founding partner cards, BOO inbox digest, atmospheric mood pills, event-tonight badges, partner takeovers, sponsored content of any kind, or future operator entities not specifically ratified here.
+
+Rationale: the rail is bounded attention. Every additional class halves the legibility of the existing ones, and the threshold past which the row stops reading as "what's alive right now" and starts reading as "another navigation surface" is well below where engineering-driven feature density wants to push it. The closure rule exists to refuse drift before it accumulates.
+
+Adding a fourth class requires a new D53 amendment or a successor doctrine. PRs that introduce a non-permitted entity into the row are doctrine breaches even when the entity is "clearly useful" — the test is structural, not subjective.
+
+Ordering invariant (visual + logical): `[ RADIO_ANCHOR ] → [ careCircles.slice(0, 3) ] → [ peopleRows ]`. The radio anchor MUST be the first child of the scroll container; the care strip MUST precede person stories; person stories fill the rest.
+
+Ratified Phil 2026-06-03 alongside `RadioRailAnchor` implementation in `GhostedRecentStories`.
+
+---
+
 ## §5 The compliance harness — §1.5 in detail — LOCK
 
 Every doctrine in HOTMESS now declares a **runtime hook** alongside its prose. The hook is a programmatic check that runs in CI on every PR and on a nightly schedule against production.
