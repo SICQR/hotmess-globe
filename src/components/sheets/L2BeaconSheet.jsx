@@ -380,7 +380,12 @@ function BeaconCreator({ onSuccess }) {
 
       setSaved(true);
       toast.success('Beacon dropped!');
-      setTimeout(() => onSuccess?.(), 1200);
+      // D13/D14/D17 — Spatial continuity. Hand the coords back to parent so
+      // it can land the user on /pulse with their beacon centered. Without
+      // this the drop closes the sheet and leaves users on Ghosted/Home with
+      // no atmospheric confirmation. Phil 2026-06-03 Samui: "go live, not
+      // post content" — user must SEE their signal hit the world.
+      setTimeout(() => onSuccess?.({ lat: coords.lat, lng: coords.lng }), 1200);
     } catch (err) {
       toast.error(humanizeError(err, 'Failed to drop beacon'));
     } finally {
@@ -1428,17 +1433,36 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
 
 export default function L2BeaconSheet({ beaconId, beacon }) {
   const { closeSheet } = useSheet();
+  const navigate = useNavigate();
 
-  // #599 — beacon-tap with full datum but missing/stripped id was falling through
-  // to BeaconCreator (drop intent picker). Any caller that hands us a beacon object
-  // wants the viewer, not the creator. Phil 2026-06-03 live repro: AFTERCARE/REST
-  // beacon at 56 Dean Street tap opened drop picker. Creator opens only from the
-  // Drop FAB (no props) — opening it from a beacon tap is always wrong.
+  // #599 — beacon-tap with full datum but missing/stripped id falls through to
+  // BeaconCreator (drop intent picker). Any caller that hands us a beacon
+  // object wants the viewer, not the creator.
   if (beaconId || beacon) {
     return <BeaconViewer beaconId={beaconId} beacon={beacon} />;
   }
 
-  return <BeaconCreator onSuccess={closeSheet} />;
+  // Post-drop continuity (D13/D14/D17 + Phil 2026-06-03 Samui).
+  // Every successful drop ends with the user on /pulse, camera flown to their
+  // beacon. Converges every entry surface (Ghosted anchor, Home hero, any
+  // future L2 creator entry) on the same atmospheric landing — the beacon
+  // visibly hits the world.
+  const handleDropSuccess = (savedCoords) => {
+    closeSheet();
+    if (savedCoords && savedCoords.lat != null && savedCoords.lng != null) {
+      const { lat, lng } = savedCoords;
+      // Defer dispatch + nav by a tick so closeSheet's URL/state changes
+      // settle before the route swap. PulseMap reads pulse:flyto on mount
+      // and during render — works whether we're already on /pulse or
+      // arriving from elsewhere.
+      setTimeout(() => {
+        try { window.dispatchEvent(new CustomEvent('pulse:flyto', { detail: { lat, lng, zoom: 15 } })); } catch { /* non-fatal */ }
+        navigate('/pulse');
+      }, 60);
+    }
+  };
+
+  return <BeaconCreator onSuccess={handleDropSuccess} />;
 }
 
 
