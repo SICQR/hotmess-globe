@@ -58,11 +58,23 @@ function getPresenceLabel(u: any): string {
   return '';
 }
 
-/** Map raw profile data to GhostedUser for card rendering */
+/** Map raw profile data to GhostedUser for card rendering
+ *
+ * D48 §3.1 amendment 2026-06-03 (Phil ratified): if a card has a visible
+ * photo, the username surfaces — "Anonymous" next to a face reads as
+ * broken, not private. D44 mandates every user has a username, so the
+ * fallback chain almost always lands there before the silhouette case.
+ *   profileName → display_name → username → (photo ? 'Member' : 'Anonymous')
+ */
 export function mapGhostedUser(u: any): GhostedUser {
+  const hasPhoto = !!(u.photos?.[0]?.url || u.avatar_url);
   return {
     id: u.authUserId || u.userId || u.id,
-    name: u.profileName || u.display_name || 'Anonymous',
+    name:
+      u.profileName ||
+      u.display_name ||
+      u.username ||
+      (hasPhoto ? 'Member' : 'Anonymous'),
     avatar: u.photos?.[0]?.url || u.avatar_url || null,
     distance: u.distance_m ?? u.distance ?? null,
     context: getContext(u),
