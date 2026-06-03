@@ -2,7 +2,7 @@
  * DropsEngine - Limited brand drops (/market/drops)
  *
  * Behavior: Urgency/scarcity. Countdown timers, "X left", brand-focused.
- * Colour: #CF3A10 (creator orange)
+ * Colour: #C8962C (HOTMESS gold) — Phil 2026-06-03 rule, no more retail-urgent orange
  * Data: Shopify products tagged "drop" + internal products with drop metadata
  *
  * Cards show: countdown badge, stock remaining, brand logo, "Buy Now" CTA (not add to cart).
@@ -22,8 +22,10 @@ import {
   type ProductFilters,
 } from '@/lib/data/market';
 
-const DROP_ORANGE = '#CF3A10';
 const AMBER = '#C8962C';
+// Phil 2026-06-03 — DROP_ORANGE retired; everything inherits AMBER.
+// Cultural scarcity (D55) ≠ retail urgency. No more red/orange on the drops surface.
+const DROP_ORANGE = AMBER;
 const PAGE_SIZE = 20;
 
 const gridItemVariants: Variants = {
@@ -77,7 +79,7 @@ function DropProductCard({ product, index, onTap }: { product: Product; index: n
     >
       <button
         onClick={onTap}
-        className="relative block w-full aspect-[3/4] bg-white/[0.03] overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#CF3A10]"
+        className="relative block w-full aspect-[3/4] bg-white/[0.03] overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#C8962C]"
         aria-label={`View ${product.title}`}
       >
         {product.images[0] ? (
@@ -114,7 +116,7 @@ function DropProductCard({ product, index, onTap }: { product: Product; index: n
         />
 
         {product.compareAtPrice != null && product.compareAtPrice > product.price && (
-          <span className="absolute bottom-10 right-2 px-2 py-0.5 bg-[#FF3B30] rounded-full text-[9px] font-bold text-white uppercase tracking-wider">
+          <span className="absolute bottom-10 right-2 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.15em] border" style={{ background: "rgba(200,150,44,0.10)", borderColor: "rgba(200,150,44,0.45)", color: "#C8962C" }}>
             Sale
           </span>
         )}

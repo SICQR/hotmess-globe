@@ -100,7 +100,7 @@ type MarketEngine = 'shop' | 'drops' | 'preloved';
 
 const ENGINE_TABS: { key: MarketEngine; label: string; icon: React.FC<{ className?: string }>; color: string; path: string }[] = [
   { key: 'shop', label: 'Shop', icon: ShoppingBag, color: '#C8962C', path: '/market' },
-  { key: 'drops', label: 'Drops', icon: Flame, color: '#CF3A10', path: '/market/drops' },
+  { key: 'drops', label: 'Drops', icon: Flame, color: '#C8962C', path: '/market/drops' },  // Phil 2026-06-03 — drops gold-only; CF3A10 was pre-D35 retail-urgent register
   { key: 'preloved', label: 'Preloved', icon: MessageCircle, color: '#9E7D47', path: '/market/preloved' },
 ];
 
