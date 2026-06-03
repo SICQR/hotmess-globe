@@ -22,8 +22,8 @@ import React, { createContext, useContext, useReducer, useCallback, useEffect, u
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { canOpenSheet } from '@/lib/sheetPolicy';
 import { toast } from 'sonner';
-import { 
-  SHEET_REGISTRY, 
+import {
+  SHEET_REGISTRY,
   SHEET_SPRING,
   SWIPE,
   getSheetHeight,
@@ -32,6 +32,12 @@ import {
   buildSheetUrl,
   parseSheetFromUrl,
 } from '@/lib/sheetSystem';
+// D57 §10.1 — URL→sheet hydration must wait for BootGuard READY.
+// Before READY: L2SheetContainer isn't mounted yet, supabase session may not
+// have resolved, and canOpenSheet sees a stale pathname. Pre-READY hydration
+// silently no-ops the push intent — the user lands on /ghosted with the
+// URL params present but no sheet opens (CF-2 + CF-7 / S2 / tag N1).
+import { useBootGuard, BOOT_STATES } from '@/contexts/BootGuardContext';
 
 // Re-export sheet types as constants for convenience
 export const SHEET_TYPES = Object.fromEntries(
@@ -125,6 +131,8 @@ export function SheetProvider({ children }) {
   const [state, dispatch] = useReducer(sheetReducer, initialState);
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
+  // D57 §10.1 — gate URL→state hydration on BootGuard READY. See Effect 2.
+  const { bootState } = useBootGuard();
   // Prevent State→URL from clearing deep-link params before URL→State hydrates
   const hasHydrated = useRef(false);
   // Phil 2026-06-02 — set true by closeSheet, consumed by Effect 2 to skip
@@ -136,6 +144,9 @@ export function SheetProvider({ children }) {
   // every previously-silent sheet→sheet dead end (PHOTOS, ALBUMS, MEMBERSHIP,
   // CREATE-PERSONA, MESSAGE-from-profile without the close-then-defer hack).
   const justOpenedRef = useRef(false);
+  // D57 §10.1 — track whether we've already consumed the cold-boot URL intent
+  // so the gate doesn't re-fire on every boot-state transition after READY.
+  const coldBootConsumedRef = useRef(false);
 
   // Open a sheet — enforces UI policy (chat/video/travel gated to Ghosted context)
   // D53 substrate fix — mirrors closeSheet's contract:
@@ -284,7 +295,25 @@ export function SheetProvider({ children }) {
   }, [state.activeSheet, state.sheetProps]);
 
   // Sync URL → state (for deep links / back button)
+  //
+  // D57 §10.1 — BootGuard READY gate. Cold-boot push opens (e.g. tapping a
+  // notification while app is closed) arrive here with searchParams already
+  // populated from /ghosted?sheet=chat&thread=xyz. Before READY:
+  //   - L2SheetContainer is not yet mounted (Layout gates on bootState)
+  //   - supabase session may not have resolved
+  //   - canOpenSheet sees stale pathname / location state
+  // The first effect run silently fires openSheet, the state reducer accepts
+  // it, but by the time L2SheetContainer mounts the sheet may have been
+  // dismissed by the state→URL echo or never rendered. The user lands on
+  // /ghosted with the URL params present and no sheet — N1 / CF-2 + CF-7 / S2.
+  //
+  // Fix: defer until bootState === READY. The effect re-runs when bootState
+  // transitions. Until then, we leave hasHydrated.current = false so the
+  // state→URL Effect 1 also stays parked (it guards on hasHydrated).
   useEffect(() => {
+    // D57 §10.1 gate — wait for app shell to be ready.
+    if (bootState !== BOOT_STATES.READY) return;
+
     hasHydrated.current = true;
     // Phil 2026-06-02 — if closeSheet just fired, suppress re-open from
     // stale URL. The flag is set in closeSheet and consumed exactly once.
@@ -298,21 +327,58 @@ export function SheetProvider({ children }) {
       return;
     }
     const sheetFromUrl = searchParams.get('sheet');
-    
+
     if (sheetFromUrl && sheetFromUrl !== state.activeSheet) {
-      // URL has sheet param but state doesn't match — open it
+      // URL has sheet param but state doesn't match — open it.
+      // Read deepLinkParams from the sheet registry (D57 §10.2) so push
+      // intents that carry sheet-specific params (e.g. beaconId for pulse,
+      // recipientId for chat) hydrate alongside the legacy hardcoded set.
+      const def = SHEET_REGISTRY[sheetFromUrl];
+      const linkParams = (def && Array.isArray(def.deepLinkParams) && def.deepLinkParams.length > 0)
+        ? def.deepLinkParams
+        : ['id', 'email', 'thread', 'handle'];
+      const allKeys = new Set([...linkParams, 'id', 'email', 'thread', 'handle']);
       const props = {};
-      if (searchParams.get('id')) props.id = searchParams.get('id');
-      if (searchParams.get('email')) props.email = searchParams.get('email');
-      if (searchParams.get('thread')) props.thread = searchParams.get('thread');
-      if (searchParams.get('handle')) props.handle = searchParams.get('handle');
-      
-      openSheet(sheetFromUrl, props);
+      for (const k of allKeys) {
+        const v = searchParams.get(k);
+        if (v != null) props[k] = v;
+      }
+
+      // D57 §10.5 — lastHydratedIntent telemetry. Capture before openSheet
+      // so failed opens, auth-race failures, and RLS-denied sheet opens are
+      // debuggable from Sentry / PostHog event context. Session-only —
+      // intentionally not persisted to storage.
+      const isColdBoot = !coldBootConsumedRef.current;
+      if (isColdBoot) coldBootConsumedRef.current = true;
+      try {
+        if (typeof window !== 'undefined') {
+          window.__hotmessLastIntent = {
+            source: isColdBoot ? 'cold-boot' : 'url',
+            target: { type: sheetFromUrl, props },
+            ts: Date.now(),
+            outcome: 'pending',
+          };
+        }
+      } catch (_) { /* non-fatal */ }
+
+      try {
+        openSheet(sheetFromUrl, props);
+        if (typeof window !== 'undefined' && window.__hotmessLastIntent) {
+          window.__hotmessLastIntent.outcome = 'opened';
+        }
+      } catch (err) {
+        if (typeof window !== 'undefined' && window.__hotmessLastIntent) {
+          window.__hotmessLastIntent.outcome = 'failed';
+          window.__hotmessLastIntent.failureReason = String(err?.message || err);
+        }
+        // Re-throw so existing error reporting still catches it.
+        throw err;
+      }
     } else if (!sheetFromUrl && state.activeSheet) {
       // URL cleared (back button) — close sheet
       closeSheet();
     }
-  }, [searchParams]);
+  }, [searchParams, bootState]);
 
   // Handle browser back button
   useEffect(() => {
