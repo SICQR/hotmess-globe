@@ -15,6 +15,10 @@ import {
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { useTaps } from '@/hooks/useTaps';
+// D56 — Unified Signal Emission Surface (Phil Samui ratification).
+// Creator branch is delegated to the canonical drop sheet so Pulse/Ghosted/Home
+// inherit the same primitive. BeaconViewer (read side) is unchanged.
+import UnifiedSignalEmissionSheet from './UnifiedSignalEmissionSheet';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { humanizeError } from '@/lib/errorUtils';
@@ -1466,7 +1470,8 @@ export default function L2BeaconSheet({ beaconId, beacon }) {
     }
   };
 
-  return <BeaconCreator onSuccess={handleDropSuccess} />;
+  // D56 — render the unified primitive instead of legacy BeaconCreator.
+  return <UnifiedSignalEmissionSheet onSuccess={handleDropSuccess} />;
 }
 
 
