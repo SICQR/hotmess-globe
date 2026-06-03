@@ -113,8 +113,13 @@ export default function GlobalRail() {
     } catch (e) { /* non-fatal */ }
   }, []);
 
+  // HOTFIX 2026-06-03 round 5: drop the userEmail gate. Layout already
+  // gates the GlobalRail mount behind `{user && <GlobalRail />}`, so user
+  // is guaranteed when this component renders. The internal userEmail
+  // check was racing supabase.auth.getUser() and never resolving in time,
+  // leaving the rail invisible. The unread-count effect still loads
+  // async — badge just shows 0 until it lands.
   if (isRailHiddenForPath(pathname)) return null;
-  if (!userEmail) return null; // pre-auth — no rail
 
   return (
     <div
