@@ -2,16 +2,19 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { Radio as RadioIcon, Calendar, ExternalLink, Play, Pause, Mic2, Rss } from 'lucide-react';
+import { Radio as RadioIcon, Calendar, Play, Pause, Mic2, Rss } from 'lucide-react';
 import { schedule } from '../components/radio/radioUtils';
 import { useRadio } from '@/contexts/RadioContext';
-import BrandBackground from '@/components/ui/BrandBackground';
 
 
+// Phil 2026-06-03 — palette tightened to HOTMESS gold across all three shows.
+// Differentiation by icon + tagline + schedule, not by color. Pre-D35 cyan/magenta
+// accents removed (off-brand carryover). Shadow alphas differ subtly per show
+// so they don't look identical, but all sit inside the gold-family register.
 const SHOWS = [
-  { ...schedule.shows[0], accent: '#C8962C', shadow: 'rgba(255,20,147,0.4)',  icon: Mic2  },
-  { ...schedule.shows[1], accent: '#00C2E0', shadow: 'rgba(0,217,255,0.4)',   icon: RadioIcon },
-  { ...schedule.shows[2], accent: '#C8962C', shadow: 'rgba(176,38,255,0.4)', icon: Rss   },
+  { ...schedule.shows[0], accent: '#C8962C', shadow: 'rgba(200,150,44,0.45)', icon: Mic2  },
+  { ...schedule.shows[1], accent: '#C8962C', shadow: 'rgba(200,150,44,0.30)', icon: RadioIcon },
+  { ...schedule.shows[2], accent: '#C8962C', shadow: 'rgba(200,150,44,0.40)', icon: Rss   },
 ];
 
 function LiveBadge() {
@@ -35,7 +38,7 @@ function StreamPlayer() {
       <button
         onClick={togglePlay}
         className="w-14 h-14 rounded-full flex items-center justify-center shrink-0 transition-all active:scale-95"
-        style={{ background: '#C8962C', boxShadow: '0 0 24px rgba(255,20,147,0.5)' }}
+        style={{ background: '#C8962C', boxShadow: '0 0 24px rgba(200,150,44,0.55)' }}
       >
         {isPlaying
           ? <Pause className="w-6 h-6 text-black" />
@@ -100,20 +103,20 @@ function ShowCard({ show, index }) {
 }
 
 export default function Radio() {
-  const { togglePlay: openRadio } = useRadio();
+  // Phil 2026-06-03 — useRadio() destructure dropped with Open Player button.
+  // StreamPlayer below pulls its own state from useRadio(). Schedule Link is the only nav.
 
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden">
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden pb-12 pt-16 px-4">
-        <BrandBackground />
         <div className="relative z-10 max-w-2xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
             <div className="flex items-center justify-center gap-3 mb-4">
               <RadioIcon
                 className="w-10 h-10"
-                style={{ color: '#C8962C', filter: 'drop-shadow(0 0 16px rgba(255,20,147,0.6))' }}
+                style={{ color: '#C8962C', filter: 'drop-shadow(0 0 16px rgba(200,150,44,0.6))' }}
               />
               <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tight leading-none">
                 HOT<span className="text-[#C8962C]">MESS</span> RADIO
@@ -128,17 +131,13 @@ export default function Radio() {
               <StreamPlayer />
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <button
-                onClick={openRadio}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-black uppercase text-sm text-black transition-all active:scale-95"
-                style={{ background: '#00C2E0', boxShadow: '0 0 20px rgba(0,217,255,0.4)' }}
-              >
-                <ExternalLink className="w-4 h-4" /> Open Player
-              </button>
+            {/* Phil 2026-06-03 — "Open Player" button removed (redundant with StreamPlayer
+                directly above). Cyan #00C2E0 was the only pre-D35 off-brand color on this
+                page; gone with the button. Schedule remains as the one secondary action. */}
+            <div className="flex items-center justify-center">
               <Link
                 to={createPageUrl('RadioSchedule')}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-black uppercase text-sm text-white border border-white/10 hover:bg-white/5 transition-all"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-black uppercase text-sm text-white/85 border border-white/10 hover:border-[#C8962C]/40 hover:text-white hover:bg-white/5 transition-all"
               >
                 <Calendar className="w-4 h-4" /> Schedule
               </Link>
