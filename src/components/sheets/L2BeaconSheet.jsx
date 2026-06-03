@@ -1429,7 +1429,12 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
 export default function L2BeaconSheet({ beaconId, beacon }) {
   const { closeSheet } = useSheet();
 
-  if (beaconId) {
+  // #599 — beacon-tap with full datum but missing/stripped id was falling through
+  // to BeaconCreator (drop intent picker). Any caller that hands us a beacon object
+  // wants the viewer, not the creator. Phil 2026-06-03 live repro: AFTERCARE/REST
+  // beacon at 56 Dean Street tap opened drop picker. Creator opens only from the
+  // Drop FAB (no props) — opening it from a beacon tap is always wrong.
+  if (beaconId || beacon) {
     return <BeaconViewer beaconId={beaconId} beacon={beacon} />;
   }
 
