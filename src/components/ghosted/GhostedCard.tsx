@@ -28,6 +28,9 @@ import {
 // signalStrengthFromMeters import removed — replaced with travelTime.personDefaultCue
 // per Phil brief 2026-05-26 Phase 2 (bucketed walk-only cue, no signal jargon).
 import { personDefaultCue } from '@/lib/travelTime';
+// Phil 2026-06-03 Samui — Ghosted grid revival. Shared recency + FRESH
+// vocabulary so the inbox row and the grid card speak the same language.
+import { recencyLabel, isFreshProfile } from '@/lib/identity/recencyLabel';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -84,6 +87,23 @@ export interface GhostedCardProps {
    *  glow distinct from the beacon ring. Sort-to-top is handled upstream
    *  in GhostedMode; this prop is purely visual affordance. */
   isBoosted?: boolean;
+  /** Phil 2026-06-03 — counterpart last_seen ISO. Used to render the
+   *  recency fallback line (ACTIVE NOW / EARLIER / TODAY / THIS WEEK) when
+   *  distance is unavailable so quiet hours don't read as dead. Also
+   *  hardens the online dot — pulse only fires for genuine ACTIVE_NOW. */
+  lastSeenISO?: string | null;
+  /** Phil 2026-06-03 — counterpart profile created_at ISO. Drives the
+   *  FRESH corner pill for accounts under 14 days old (beta calibration).
+   *  Adds variation across cards without needing presence data. */
+  createdAtISO?: string | null;
+  /** Phil 2026-06-03 Vitality Slice 1 — beacon halo bleed. When the
+   *  counterpart has no beacon of their own BUT is geo-close (≤200m) to
+   *  one of the live curated beacons (Vauxhall chemsex hub, 56 Dean St,
+   *  Antidote, etc.), this carries the beacon category for ambient ring
+   *  tinting. Reads as "this person is near something happening" — the
+   *  single biggest unlock for environmental atmosphere on the grid. */
+  beaconHaloCategory?: string | null;
+  beaconHaloColor?: string | null;
 }
 
 interface GhostedCardComponentProps extends GhostedCardProps {
@@ -117,6 +137,10 @@ function GhostedCardInner({
   lookingFor,
   beacon,
   isBoosted,
+  lastSeenISO,
+  createdAtISO,
+  beaconHaloCategory,
+  beaconHaloColor,
   index,
   onTap,
 }: GhostedCardComponentProps) {
@@ -145,14 +169,72 @@ function GhostedCardInner({
     : null;
   const ringAlpha = beacon?.lifecycle === 'decaying' ? 0.55 : 0.95;
 
-  // Doctrine v2 (Phil 2026-05-26 Phase 2): bucketed walk-only travel cue.
-  // No signal jargon. No raw metres. "Travel time" expand button lives in
-  // the preview sheet (L2GhostedPreviewSheet), not on grid tiles — tiles
-  // stay quiet. Suppress entirely when distance unavailable OR > 30km
-  // (silence beats a wrong number).
-  const mergedLine = (distanceM != null && Number.isFinite(distanceM) && distanceM <= 30000)
+  // ── State Line — Phil 2026-06-03 Vitality Slice 1 ──────────────────────
+  // PRODUCT RULING (locked same session):
+  //   "State first. Distance last. Distance is the fallback, not the headline."
+  //
+  // Priority ladder (first matching wins the line's STATE; distance, when
+  // available, attaches as a quiet suffix):
+  //   1. ACTIVE NOW         (online green — strongest signal)
+  //   2. NEAR A LIVE BEACON (gold — environmental pressure, halo) [#855 wires]
+  //   3. LOOKING            (gold — intent surface)
+  //   4. FRESH              (cream — new profile)
+  //   5. EARLIER TONIGHT    (cream/72)
+  //   6. TODAY              (cream/55)
+  //   7. THIS WEEK          (cream/40)
+  //   8. distance only      (white/50 — only when nothing else is true)
+  //
+  // Forbidden: rendering the distance "< 5 min away" cue as a headline
+  // when a stronger signal applies. The bucketed walk cue (personDefaultCue)
+  // is now relegated to a suffix or, when alone, the eighth-rank line.
+  const distanceSuffix = (distanceM != null && Number.isFinite(distanceM) && distanceM <= 30000)
     ? personDefaultCue(distanceM)
     : null;
+  const recency = recencyLabel(lastSeenISO);
+  const isFresh = isFreshProfile(createdAtISO);
+  const hasLookingFor = Array.isArray(lookingFor) && lookingFor.length > 0;
+
+  // Compose the state line. {label, color, dot, suffix} — `dot` is the
+  // colour of the prefix pip (null = no dot). The eighth-rank fallback
+  // returns just the distance line with no STATE word, no dot.
+  let stateLabel: string | null = null;
+  let stateColor: string = 'rgba(255,255,255,0.55)';
+  let stateDotColor: string | null = null;
+  let bareLine: string | null = null;
+
+  if (isOnline) {
+    stateLabel = 'ACTIVE NOW';
+    stateColor = '#30D158';
+    stateDotColor = '#30D158';
+  } else if (beaconHaloColor && !beacon) {
+    // Beacon halo — set when a profile is geo-close to a curated/other
+    // beacon (passed in by useGhostedGrid in PR #855). Reads as
+    // environmental pressure.
+    stateLabel = 'NEAR A LIVE BEACON';
+    stateColor = beaconHaloColor;
+    stateDotColor = beaconHaloColor;
+  } else if (hasLookingFor) {
+    stateLabel = 'LOOKING';
+    stateColor = '#C8962C';
+    stateDotColor = '#C8962C';
+  } else if (isFresh) {
+    stateLabel = 'FRESH';
+    stateColor = 'rgba(245,238,220,0.92)';
+    stateDotColor = null; // FRESH reads as label, not a live pulse
+  } else if (recency.band === 'EARLIER') {
+    stateLabel = 'EARLIER TONIGHT';
+    stateColor = 'rgba(245,238,220,0.72)';
+  } else if (recency.band === 'TODAY') {
+    stateLabel = 'TODAY';
+    stateColor = 'rgba(245,238,220,0.55)';
+  } else if (recency.band === 'THIS_WEEK') {
+    stateLabel = 'THIS WEEK';
+    stateColor = 'rgba(245,238,220,0.40)';
+  } else if (distanceSuffix) {
+    // Eighth rank — pure distance, no STATE label, no dot. Sentence case,
+    // softer styling so it reads as fallback not headline.
+    bareLine = distanceSuffix;
+  }
 
   return (
     <motion.button
@@ -247,19 +329,30 @@ function GhostedCardInner({
         }}
       />
 
-      {/* Presence — detected, not announced. 6px, desaturated, inset. */}
+      {/* Presence — louder, pulsing, only when genuinely online.
+          Phil 2026-06-03 Samui — old dot was 6px @ 55% alpha, invisible to
+          the user. Bumped to 9px @ 95%, soft pulse animation, broader glow.
+          Hard requirement Phil set: pulse fires ONLY when truly online —
+          never simulate liveness when the substrate is quiet. */}
       {isOnline && (
-        <span
+        <motion.span
           className="absolute rounded-full"
           style={{
-            top: 10, right: 10,
-            width: 6, height: 6,
-            background: 'rgba(48,209,88,0.55)',
-            boxShadow: '0 0 4px rgba(48,209,88,0.25)',
+            top: 9, right: 9,
+            width: 9, height: 9,
+            background: '#30D158',
+            boxShadow: '0 0 8px rgba(48,209,88,0.65), 0 0 0 1.5px rgba(5,5,7,0.55)',
           }}
+          animate={{ opacity: [0.85, 1, 0.85] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
           aria-label="Online"
         />
       )}
+
+      {/* FRESH corner pill removed Phil 2026-06-03 — FRESH is now rank 4 in
+          the StateLine ladder so it reads as state (under the name), not as
+          a separate corner tag. Avoids double-render and keeps the corner
+          quiet for online dot + mutual/boo glyphs only. */}
 
       {/* Mutual / Boo — tiny corner glyph, no loud labels. Mutual gets the
           inset gold edge (set on the motion.button). */}
@@ -387,8 +480,51 @@ function GhostedCardInner({
           </div>
         )}
 
-        {/* Single human proximity line — distance + place merged. */}
-        {mergedLine && (
+        {/* StateLine — Phil 2026-06-03 Vitality Slice 1. Priority ladder:
+            STATE first (caps), distance suffix only when present. The
+            eighth-rank fallback is bare distance in sentence case (the only
+            place "< 5 min away" survives). Doctrine: D17 no silent
+            affordance, D35 caps for state words, distance never the
+            headline when a stronger signal exists.
+
+            Beacon LIVE has its own dedicated line above this (rendered
+            earlier in the card body) — we don't re-emit it here. */}
+        {!beaconLabel && stateLabel && (
+          <span
+            className="text-[10px] font-black tracking-[0.10em] uppercase leading-tight flex items-center gap-1 truncate"
+            style={{ color: stateColor }}
+            aria-label={`State: ${stateLabel}${distanceSuffix ? ' — ' + distanceSuffix : ''}`}
+          >
+            {stateDotColor && (
+              <span
+                aria-hidden="true"
+                className="inline-block rounded-full flex-shrink-0"
+                style={{
+                  width: 4,
+                  height: 4,
+                  background: stateDotColor,
+                  boxShadow: `0 0 3px ${stateDotColor}`,
+                }}
+              />
+            )}
+            <span className="truncate">
+              {stateLabel}
+              {distanceSuffix && (
+                <span
+                  className="ml-1.5 font-medium normal-case tracking-normal"
+                  style={{ color: 'rgba(255,255,255,0.42)' }}
+                >
+                  {distanceSuffix}
+                </span>
+              )}
+            </span>
+          </span>
+        )}
+
+        {/* Bare distance line — rank 8 fallback. Only renders when no other
+            state applies. Sentence case, soft white. This is the only path
+            "< 5 min away" can headline a card. */}
+        {!beaconLabel && !stateLabel && bareLine && (
           <span className="text-[11px] text-white/50 truncate leading-tight flex items-center gap-1">
             {contextType === 'moving' && (
               <motion.span
@@ -400,7 +536,7 @@ function GhostedCardInner({
                 &rarr;
               </motion.span>
             )}
-            {mergedLine}
+            {bareLine}
           </span>
         )}
       </div>

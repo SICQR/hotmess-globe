@@ -11,6 +11,11 @@ import { useBoostedUserIds } from '@/hooks/useBoostedUserIds';
 import { useUserBenefits } from '@/hooks/useUserBenefits';
 import { GhostedCard } from '@/components/ghosted/GhostedCard';
 import { GhostedRecentStories } from '@/components/ghosted/GhostedRecentStories';
+import { GhostedActivityRibbon } from '@/components/ghosted/GhostedActivityRibbon';
+// Phil 2026-06-03 — CareOnTheGroundStrip folded into GhostedRecentStories.
+// Single-primitive rule (D53 §1.4). The component file itself is left in
+// the tree for one more PR's worth of grace before deletion; the import
+// is removed here so no consumers remain.
 import { AtmosphericImageCard } from '@/components/brand/AtmosphericImageCard';
 import { supabase } from '@/components/utils/supabaseClient';
 
@@ -191,12 +196,21 @@ export default function GhostedMode() {
       >
 
 
-        {/* ── RECENT — IG/Grindr-style avatar row of recent chats + active
-            beacon-droppers (gold ring = active beacon). Always-on, above the
-            grid, no "Recent" label. Tap an avatar -> their profile (where
-            their active beacons are listed). Renders nothing when there's
-            nobody to show, so the grid below always carries the page. */}
+        {/* ── ROW — IG/Grindr-style circle vocabulary. Gold rings for people
+            with an active beacon; cream rings for curated care beacons. One
+            row, two ring vocabularies (D53 §1.4 single primitive). Phil
+            2026-06-03 — care beacons folded in from the deprecated
+            CareOnTheGroundStrip. Newest-first within each group; older
+            signals drift right as fresh ones come in. Renders nothing when
+            there's nothing to show, so the grid below always carries the
+            page. */}
         <GhostedRecentStories currentUserEmail={myEmail} currentUserId={myUserId} />
+
+        {/* ── ACTIVITY RIBBON — qualitative atmospheric tone line. Bands
+            (HUSHED / STEADY / FILLING / FULL) describe the room without
+            naming numbers. Phil 2026-06-03 — inhouse metrics rule: never
+            surface digits without explicit OK. */}
+        <GhostedActivityRibbon />
 
         {/* Filter chips — Brief 03 doctrine. Tap to toggle; second tap clears.
             Filter logic lives in useGhostedGrid (server-side row filter).
