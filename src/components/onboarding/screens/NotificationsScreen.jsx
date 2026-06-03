@@ -55,7 +55,7 @@ export default function NotificationsScreen({ session, onComplete, onBack }) {
     writeChannelAndContinue(selected);
   };
 
-      const update = { notification_channel: channel };  return (
+  return (
     <div className="min-h-screen bg-[#050507] text-white flex flex-col">
       {onBack && (
         <div className="px-4 pt-4">
@@ -178,3 +178,4 @@ function Option({ label, subline, icon, selected, onClick, children }) {
     </button>
   );
 }
+
