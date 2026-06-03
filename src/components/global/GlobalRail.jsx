@@ -118,9 +118,16 @@ export default function GlobalRail() {
 
   return (
     <div
-      className="fixed right-3 z-40 flex flex-col items-end gap-2 pointer-events-none"
+      // HOTFIX 2026-06-03 round 3: explicit width + pointer-events-none keeps
+      // the container hit-box constrained to the two button column. Without
+      // width:fit-content, fixed+flex can extend the hit region across the
+      // viewport in some Safari/Chromium layouts, blocking taps on the
+      // Ghosted card grid below.
+      className="fixed right-3 z-[35] flex flex-col items-end gap-2 pointer-events-none"
       style={{
         top: `calc(96px + env(safe-area-inset-top, 0px))`,
+        width: 'fit-content',
+        height: 'fit-content',
       }}
       aria-label="Quick actions"
     >
