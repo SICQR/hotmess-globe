@@ -263,7 +263,7 @@ export function DropsEngine({ search, className = '' }: DropsEngineProps) {
               key={product.id}
               product={product}
               index={i}
-              onTap={() => openSheet('product', { product, handle: product.handle || product.metadata?.handle, source: product.source })}
+              onTap={() => openSheet('product', { product, handle: (product as any).handle || (product as any).metadata?.handle, source: product.source })}
             />
           ))}
         </div>
