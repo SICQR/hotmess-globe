@@ -20,7 +20,7 @@
  * city visibly registers the signal.
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { nanoid } from 'nanoid';
 import { Loader2, Crosshair, Zap, MapPin } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
