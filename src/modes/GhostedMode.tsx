@@ -7,16 +7,8 @@ import { useGPS } from '@/hooks/useGPS';
 import { useSheet } from '@/contexts/SheetContext';
 import { useTaps } from '@/hooks/useTaps';
 import { useUnreadCount } from '@/hooks/useUnreadCount';
-import { useBoostedUserIds } from '@/hooks/useBoostedUserIds';
-import { useUserBenefits } from '@/hooks/useUserBenefits';
 import { GhostedCard } from '@/components/ghosted/GhostedCard';
 import { GhostedRecentStories } from '@/components/ghosted/GhostedRecentStories';
-import { GhostedActivityRibbon } from '@/components/ghosted/GhostedActivityRibbon';
-// Phil 2026-06-03 — CareOnTheGroundStrip folded into GhostedRecentStories.
-// Single-primitive rule (D53 §1.4). The component file itself is left in
-// the tree for one more PR's worth of grace before deletion; the import
-// is removed here so no consumers remain.
-import { AtmosphericImageCard } from '@/components/brand/AtmosphericImageCard';
 import { supabase } from '@/components/utils/supabaseClient';
 
 
@@ -50,27 +42,13 @@ export default function GhostedMode() {
   // pointless Nearby toggle — the grid works on location anyway). Falls back
   // to recent if no GPS yet.
   const tab = position?.lat != null && position?.lng != null ? 'nearby' : 'recent';
-  const [activeFilter, setActiveFilter] = React.useState<string | null>(null);
-  const { cards, isLoading, refetch } = useGhostedGrid(
+  const { cards, isLoading } = useGhostedGrid(
     tab,
     position?.lat ?? null,
     position?.lng ?? null,
-    activeFilter,
+    null
   );
-
-  // Phil 2026-05-31: Global PTR used to fall through to window.location.reload()
-  // which (a) wiped the cached geo position and re-surfaced the consent UI on
-  // some browsers, and (b) flipped useGPS from null → resolved which switched
-  // useGhostedGrid from `recent` (many users) to `nearby` (location-filtered)
-  // mid-render — Phil's grid "collapsed to TELEGRAM TEST". App.jsx now
-  // dispatches `hm:ptr-refresh` instead; we refetch in place, preserving the
-  // current tab, position, and cached geo.
-  React.useEffect(() => {
-    const handler = () => { try { refetch(); } catch { /* noop */ } };
-    window.addEventListener('hm:ptr-refresh', handler as EventListener);
-    return () => window.removeEventListener('hm:ptr-refresh', handler as EventListener);
-  }, [refetch]);
-
+  
   const [myUserId, setMyUserId] = React.useState<string | null>(null);
   const [myEmail, setMyEmail] = React.useState<string | null>(null);
 
@@ -83,205 +61,29 @@ export default function GhostedMode() {
     });
   }, []);
 
-  // Backfill prompt for the 142 users with consent ticked but no location
-  // point ever captured (gap between consent flag and actual GPS write,
-  // fixed at source for new users in PR #444 — backfill for existing users
-  // surfaces here as a one-shot dismissable banner).
-  const [needsLocation, setNeedsLocation] = React.useState(false);
-  const [locationDismissed, setLocationDismissed] = React.useState<boolean>(
-    () => {
-      try { return window.localStorage.getItem('hm_loc_banner_dismissed') === '1'; }
-      catch { return false; }
-    }
-  );
-  const [enableLocPending, setEnableLocPending] = React.useState(false);
-  React.useEffect(() => {
-    if (!myUserId) return;
-    let cancelled = false;
-    supabase
-      .from('profiles')
-      .select('location, location_consent')
-      .eq('id', myUserId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (cancelled || !data) return;
-        // location is null OR location_consent off → can't appear on Ghosted
-        setNeedsLocation(!data.location || data.location_consent === false);
-      });
-    return () => { cancelled = true; };
-  }, [myUserId]);
-
-  const handleEnableLocation = React.useCallback(() => {
-    if (enableLocPending || !('geolocation' in navigator)) return;
-    setEnableLocPending(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          await supabase.rpc('update_my_location', {
-            p_lng: pos.coords.longitude,
-            p_lat: pos.coords.latitude,
-          });
-          setNeedsLocation(false);
-          try { window.localStorage.removeItem('hm_loc_banner_dismissed'); } catch {}
-        } catch (e) {
-          console.warn('[Ghosted] update_my_location failed:', e);
-        } finally {
-          setEnableLocPending(false);
-        }
-      },
-      () => { setEnableLocPending(false); },
-      { timeout: 8000, enableHighAccuracy: false, maximumAge: 60000 }
-    );
-  }, [enableLocPending]);
-
-  const handleDismissLocBanner = React.useCallback(() => {
-    try { window.localStorage.setItem('hm_loc_banner_dismissed', '1'); } catch {}
-    setLocationDismissed(true);
-  }, []);
-
   const { isTapped, isMutualBoo } = useTaps(myUserId, myEmail);
   const { unreadCount } = useUnreadCount();
-
-  // profile_bump — paying users sort to top of grid + render outer gold glow.
-  // Empty set when nobody is boosted (steady state) → zero render impact.
-  const boostedUserIds = useBoostedUserIds();
-
-  // Tier gate — has_full_ghosted decides whether MESS users see the fog past
-  // ghosted_preview_limit. Defaults (MESS): limit=3, full=false. While loading
-  // we use those defaults — fail-closed: never accidentally show paid grid.
-  const benefits = useUserBenefits();
-  const hasFullGhosted = !!benefits.has_full_ghosted;
-  const previewLimit = typeof benefits.ghosted_preview_limit === 'number' ? benefits.ghosted_preview_limit : 3;
-  // -1 = unlimited (HOTMESS+); otherwise card index >= limit gets fogged for non-paying users
-  const isCardFogged = (index: number) => !hasFullGhosted && previewLimit !== -1 && index >= previewLimit;
 
   return (
     <div className="relative h-full w-full bg-[#050507] flex flex-col overflow-hidden">
 
-      {/*
-        Phil 2026-06-01 Task #517 — mobile horizontal-stability fix.
-
-        Both the page scroll container AND the chip rail previously embedded
-        a <style> element as a *flex child*. React mounts/unmounts these on
-        every render and they took layout slots in the flex children list,
-        which produced the "unstable" feel Phil reported on iPhone.
-
-        On top of that the chip rail was missing:
-          - `gh-filters` className (so the .gh-filters::-webkit-scrollbar
-            rule was dead code — scrollbars still flashed on iOS Safari)
-          - `overscroll-behavior-x: contain` — without it iOS edge-swipe-back
-            collides with chip-rail horizontal scroll
-          - `touch-action: pan-x` — without it any vertical drift during a
-            chip-rail swipe hijacks the gesture between the rail and the
-            parent vertical scroll, producing the "wobble"
-
-        Fix: hoist the scoped scrollbar-hide CSS to a single component-level
-        <style> rendered OUTSIDE the flex containers, then apply the missing
-        classes + mobile-safe gesture properties on each rail.
-      */}
-      <style dangerouslySetInnerHTML={{__html:
-        '.gh-no-sb::-webkit-scrollbar{display:none}' +
-        '.gh-filters::-webkit-scrollbar{display:none}'
-      }} />
-
       {/* Scrollable Container */}
       <div
-        className="gh-no-sb flex-1 overflow-y-auto overflow-x-hidden pb-24"
+        className="flex-1 overflow-y-auto pb-24"
         style={{
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
-          overscrollBehaviorX: 'contain',
-          touchAction: 'pan-y',
         }}
       >
+        <style dangerouslySetInnerHTML={{__html: `::-webkit-scrollbar { display: none; }`}} />
 
 
-        {/* ── ROW — IG/Grindr-style circle vocabulary. Gold rings for people
-            with an active beacon; cream rings for curated care beacons. One
-            row, two ring vocabularies (D53 §1.4 single primitive). Phil
-            2026-06-03 — care beacons folded in from the deprecated
-            CareOnTheGroundStrip. Newest-first within each group; older
-            signals drift right as fresh ones come in. Renders nothing when
-            there's nothing to show, so the grid below always carries the
-            page. */}
+        {/* ── RECENT — IG/Grindr-style avatar row of recent chats + active
+            beacon-droppers (gold ring = active beacon). Always-on, above the
+            grid, no "Recent" label. Tap an avatar -> their profile (where
+            their active beacons are listed). Renders nothing when there's
+            nobody to show, so the grid below always carries the page. */}
         <GhostedRecentStories currentUserEmail={myEmail} currentUserId={myUserId} />
-
-        {/* ── ACTIVITY RIBBON — qualitative atmospheric tone line. Bands
-            (HUSHED / STEADY / FILLING / FULL) describe the room without
-            naming numbers. Phil 2026-06-03 — inhouse metrics rule: never
-            surface digits without explicit OK. */}
-        <GhostedActivityRibbon />
-
-        {/* Filter chips — Brief 03 doctrine. Tap to toggle; second tap clears.
-            Filter logic lives in useGhostedGrid (server-side row filter).
-            Doctrine: no popularity counts on chips (no "ALL · 247"). */}
-        <div
-          className="gh-filters px-3 pt-2 pb-1 flex gap-2 overflow-x-auto"
-          style={{
-            scrollbarWidth: 'none',
-            WebkitOverflowScrolling: 'touch',
-            overscrollBehaviorX: 'contain',
-            touchAction: 'pan-x',
-          }}
-        >
-          {[
-            { key: null, label: 'ALL' },
-            { key: 'online', label: 'ONLINE' },
-            { key: 'new', label: 'NEW' },
-            { key: 'looking', label: 'LOOKING' },
-            { key: 'hang', label: 'HANG' },
-            { key: 'tonight', label: 'TONIGHT' },
-          ].map((chip) => {
-            const isActive = activeFilter === chip.key || (chip.key === null && !activeFilter);
-            return (
-              <button
-                key={chip.label}
-                type="button"
-                onClick={() => setActiveFilter(chip.key === activeFilter ? null : chip.key)}
-                data-pull-refresh-ignore
-                className="shrink-0 px-3 h-7 rounded-full text-[10px] font-black uppercase tracking-wider transition-colors"
-                style={{
-                  background: isActive ? '#C8962C' : 'rgba(255,255,255,0.04)',
-                  color: isActive ? '#000' : 'rgba(255,255,255,0.55)',
-                  border: isActive ? '1px solid #C8962C' : '1px solid rgba(255,255,255,0.08)',
-                }}
-              >
-                {chip.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Backfill prompt — signed-in users without a location point won't
-            appear on Ghosted at all (RPC filter). One-shot, dismissable. */}
-        {needsLocation && !locationDismissed && (
-          <div
-            className="mx-3 mt-2 mb-1 p-3 rounded-xl flex items-center gap-3 text-[12px]"
-            style={{ background: 'rgba(200,150,44,0.10)', border: '1px solid rgba(200,150,44,0.30)' }}
-          >
-            <div className="flex-1 min-w-0">
-              <div className="text-[#C8962C] font-bold tracking-wide uppercase text-[11px] mb-0.5">Be seen</div>
-              <div className="text-white/75 leading-snug">Enable location so others can see you nearby. Approximate only.</div>
-            </div>
-            <button
-              type="button"
-              onClick={handleEnableLocation}
-              disabled={enableLocPending}
-              className="shrink-0 px-3 h-8 rounded-full text-[11px] font-bold uppercase tracking-wider"
-              style={{ background: '#C8962C', color: '#000', opacity: enableLocPending ? 0.6 : 1 }}
-            >
-              {enableLocPending ? 'Enabling…' : 'Enable'}
-            </button>
-            <button
-              type="button"
-              onClick={handleDismissLocBanner}
-              aria-label="Dismiss"
-              className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-white/40 hover:text-white/80"
-            >
-              ×
-            </button>
-          </div>
-        )}
 
 
         {/* ── LIVE FIELD — the emotional center. Orbit mechanics: zero
@@ -297,27 +99,18 @@ export default function GhostedMode() {
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-0">
-            {(boostedUserIds.size === 0
-              ? cards
-              : [...cards].sort((a, b) => {
-                  const aBoosted = boostedUserIds.has(a.id) ? 1 : 0;
-                  const bBoosted = boostedUserIds.has(b.id) ? 1 : 0;
-                  return bBoosted - aBoosted; // boosted first, stable otherwise
-                })
-            ).map((card, i) => {
+            {cards.map((card, i) => {
               // Index-based jitter — quietly breaks "app grid" feel without
               // requiring scroll detection. Pattern repeats every 7 cards
               // so the field has rhythm but no obvious tile.
               const cycle = i % 7;
               const dim   = cycle === 1 || cycle === 4 ? 0.82 : cycle === 6 ? 0.92 : 1.0;
               const scale = cycle === 2 ? 1.015 : cycle === 5 ? 0.985 : 1.0;
-              const fogged = isCardFogged(i);
               return (
                 <div
                   key={card.id}
-                  className="relative"
                   style={{
-                    opacity: fogged ? 0.55 : dim,
+                    opacity: dim,
                     transform: `scale(${scale})`,
                     transformOrigin: 'center',
                   }}
@@ -327,27 +120,8 @@ export default function GhostedMode() {
                     index={i}
                     isBood={isTapped(card.id, 'boo')}
                     isMutual={isMutualBoo(card.id)}
-                    isBoosted={boostedUserIds.has(card.id)}
-                    onTap={(id) => {
-                      if (fogged) {
-                        // Felt copy doctrine 07 — one line, no chrome.
-                        navigate('/upgrade');
-                      } else {
-                        openSheet('profile', { id });
-                      }
-                    }}
+                    onTap={(id) => openSheet('profile', { uid: id })}
                   />
-                  {fogged && (
-                    <div
-                      aria-hidden="true"
-                      className="absolute inset-0 pointer-events-none"
-                      style={{
-                        backdropFilter: 'blur(14px) saturate(0.6)',
-                        WebkitBackdropFilter: 'blur(14px) saturate(0.6)',
-                        background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 100%)',
-                      }}
-                    />
-                  )}
                 </div>
               );
             })}
@@ -355,21 +129,11 @@ export default function GhostedMode() {
         )}
 
         {/* Inline empty hint — never replaces the grid scaffold (Phil 2026-05-26:
-            'the grid should always be there'). Now also surfaces an
-            atmospheric inhabited card so the empty state reads as discovery
-            atmosphere, not a void. Phil 2026-05-30: "Imagery should make
-            HOTMESS feel INHABITED, not decorated." */}
+            'the grid should always be there'). Just a soft note when zero cards. */}
         {!isLoading && cards.length === 0 && (
-          <div className="px-3 pt-3 pb-1 space-y-3">
-            <AtmosphericImageCard
-              imageUrl="https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/ghosted/no-signal-yet.png"
-              copy="No signal yet. Go make one."
-              aspect="16/9"
-            />
-            <p className="text-center text-white/25 text-[11px] tracking-wider uppercase pt-1">
-              Field quiet · pull to refresh
-            </p>
-          </div>
+          <p className="text-center text-white/25 text-[11px] tracking-wider uppercase py-3">
+            Field quiet · pull to refresh
+          </p>
         )}
       </div>
 
@@ -380,6 +144,9 @@ export default function GhostedMode() {
           live here so there's one consistent control surface and no duplicate
           buttons elsewhere on the page. */}
       <div className="absolute top-[calc(88px+env(safe-area-inset-top,0px))] right-4 z-30 flex flex-col items-end gap-2 pointer-events-none">
+        {/* Bell + Search are handled by GlobalRail (mounted in Layout) — Phil
+            ratified Z 2026-06-03: rail icons sit in the safe top-right zone
+            away from SafetyFAB, not inside Ghosted's page-local rail. */}
         <GhostedRailButton icon={Music} label="Music" onClick={() => navigate('/music')} />
         <GhostedRailButton icon={Radio} label="Radio" onClick={() => navigate('/radio')} />
       </div>
@@ -394,17 +161,9 @@ export default function GhostedMode() {
       >
         <div className="relative">
           <MessageCircle className="w-6 h-6 text-black" strokeWidth={2.5} />
-          {/* Unread badge — numbered so the user knows how much is waiting.
-              The pulsing dot variant hid the actual count; if you can see a
-              number you know exactly what's there (Phil 2026-05-27). */}
+          {/* Subtle indicator if unread */}
           {unreadCount > 0 && (
-            <div
-              className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full border-2 border-[#C8962C] flex items-center justify-center text-[10px] font-black text-white animate-pulse"
-              style={{ background: '#FF3B30' }}
-              aria-label={`${unreadCount} unread`}
-            >
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </div>
+            <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-[#C8962C] animate-pulse" style={{ background: '#FF3B30' }} />
           )}
         </div>
       </motion.button>
@@ -412,5 +171,3 @@ export default function GhostedMode() {
     </div>
   );
 }
-
-

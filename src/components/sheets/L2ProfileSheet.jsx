@@ -9,12 +9,11 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
 import {
-  MessageCircle,
+  MessageCircle, Shield, Plane, MapPin,
   Loader2, MoreVertical, Flag, Ban, X, Ghost,
   Footprints, Bike, Car, Heart, Video, ShoppingBag, Music,
 } from 'lucide-react';
@@ -26,32 +25,13 @@ import { useTaps } from '@/hooks/useTaps';
 import { useV6Flag } from '@/hooks/useV6Flag';
 import { ProfileProximityPanel } from '@/components/profile/ProfileProximityPanel';
 import VaultAccessRequest from '@/components/messaging/VaultAccessRequest';
+import ProfileMediaStack from '@/components/profile/ProfileMediaStack';
 import ProfileBeaconsSection from '@/components/profile/ProfileBeaconsSection';
 import MutualStateOverlay from '@/components/profile/MutualStateOverlay';
+import IntentLayer from '@/components/profile/IntentLayer';
 import RecoveryStateCard from '@/components/profile/RecoveryStateCard';
 import useProfileDwell from '@/hooks/useProfileDwell';
 import useRecoveryState from '@/hooks/useRecoveryState';
-import { ProximityRow } from '@/components/ui/ProximityRow';
-import { useGPS } from '@/hooks/useGPS';
-import { safeName } from '@/lib/identity/safeName';
-
-// Slice A — D262 stable-online helper. Presence dot only when
-// is_online AND last_seen <= 5min. No "stale online" lies.
-const STABLE_ONLINE_MS = 5 * 60_000;
-function isStablyOnline(p) {
-  if (!p?.is_online) return false;
-  const ls = p?.last_seen;
-  if (!ls) return false;
-  const ms = Date.now() - new Date(ls).getTime();
-  return ms <= STABLE_ONLINE_MS;
-}
-
-// Slice A — D08 off-grid recognition. Hides distance row and replaces it
-// with the locked "Laying low" copy when the profile owner is hiding.
-function isOffGrid(p) {
-  const v = p?.visibility_state;
-  return v === 'off_grid' || v === 'off_grid_week' || v === 'trusted_only';
-}
 
 const Chip = ({ children, gold = false }) => (
   <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
@@ -64,10 +44,7 @@ const Chip = ({ children, gold = false }) => (
 );
 
 // ── Photo carousel (CSS snap-scroll, 3:4 portrait) ──────────────────────────
-// D262 §2.5 / LOCKS.md — empty state never renders a letter monogram.
-// Silhouette gradient + small Ghost glyph instead. Dignity-floor invariant:
-// "If identity confidence is low, the UI becomes quieter, not faker."
-function PhotoCarousel({ images = [], onIndexChange }) {
+function PhotoCarousel({ images = [], fallbackInitial = '?', onIndexChange }) {
   const scrollRef = useRef(null);
   const [activeIdx, setActiveIdx] = useState(0);
 
@@ -80,21 +57,12 @@ function PhotoCarousel({ images = [], onIndexChange }) {
     onIndexChange?.(clamped);
   }, [images.length, onIndexChange]);
 
-  // 0 photos — silhouette + Ghost glyph. No initial. No letter. No "A".
+  // 0 photos — initials fallback
   if (!images.length) {
     return (
       <div className="relative" style={{ aspectRatio: '3/4', maxHeight: '55vh' }}>
-        <div
-          className="w-full h-full flex items-center justify-center"
-          style={{
-            background: 'radial-gradient(ellipse at 50% 42%, #1a1410 0%, #0d0a08 55%, #050405 100%)',
-          }}
-        >
-          <Ghost
-            className="w-16 h-16"
-            strokeWidth={1.4}
-            style={{ color: 'rgba(255,255,255,0.14)' }}
-          />
+        <div className="w-full h-full bg-gradient-to-br from-[#C8962C]/40 via-[#1C1C1E] to-black flex items-center justify-center">
+          <span className="text-6xl font-black text-white/20">{fallbackInitial}</span>
         </div>
       </div>
     );
@@ -147,7 +115,6 @@ function PhotoCarousel({ images = [], onIndexChange }) {
 export default function L2ProfileSheet({ email, uid, id }) {
   const navigate = useNavigate();
   const { openSheet, closeSheet } = useSheet();
-  const { position: viewerPos } = useGPS();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
@@ -163,7 +130,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
     });
   }, []);
 
-  const { isTapped, sendTap, isMutualBoo, hasReceivedBoo } = useTaps(myUserId, myEmail);
+  const { isTapped, sendTap, isMutualBoo } = useTaps(myUserId, myEmail);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
@@ -620,45 +587,18 @@ export default function L2ProfileSheet({ email, uid, id }) {
     if (!profileUser?.auth_user_id && !profileUser?.id) return;
     openSheet(SHEET_TYPES.VIDEO, {
       toUid: profileUser.auth_user_id || profileUser.id,
-      title: `Video with ${safeName(profileUser)}`,
+      title: `Video with ${profileUser.username || profileUser.display_name || 'Anonymous'}`,
     });
   };
 
   const handleMessage = () => {
-    const targetId = profileUser?.auth_user_id || profileUser?.id;
-    if (!targetId) return;
-    // Phil 2026-05-29 hard gate — chat is post-mutual-boo only.
-    // Pre-mutual taps on Message = toast nudge to Boo first.
-    // Boo lives on the profile (this sheet), so the user is already in the
-    // right place to send it. Doctrine 07: relational truth before writing surface.
-    if (!isMutualBoo(targetId)) {
-      toast('Boo first. They have to want it back.');
-      return;
-    }
-    // Phil 2026-06-02 #551 - tapping MESSAGE opened to a blurred void because
-    // L2ChatSheet's primary contract is { thread, to, title }. Passing only
-    // userId triggered an async email-lookup before the thread could be
-    // auto-selected, leaving the sheet rendering an empty threads-list view
-    // with no visible content. Now passes BOTH userId AND to so the
-    // synchronous auto-select-or-create logic fires immediately.
-    //
-    // Phil 2026-06-02 #566 P0 — calling openSheet directly while profile
-    // is still activeSheet causes AnimatePresence mode='wait' race: chat
-    // motion.div mounts mid-exit, controls.start never settles, sheet stays
-    // at y:100% offscreen, backdrop visible at z:79, user trapped behind
-    // blur. Fix: closeSheet first, then setTimeout 300ms (matches spring
-    // settle for damping 26 stiffness 320) before openSheet for chat.
-    // Phil 2026-06-02 - profile.email is RLS-hidden for non-self viewers.
-    // Pass whatever's available (userId always present, email when visible).
-    // L2ChatSheet falls back to inbox view if email is missing; the user
-    // can pick the existing thread from the list rather than being stuck.
-    const chatProps = {
-      userId: targetId,
-      to: profileUser?.email || undefined,
-      title: `Chat with ${safeName(profileUser)}`,
-    };
-    closeSheet();
-    setTimeout(() => openSheet(SHEET_TYPES.CHAT, chatProps), 300);
+    if (!profileUser?.auth_user_id && !profileUser?.id) return;
+    // Pass uid instead of email (email is not exposed in profile response for GDPR)
+    // ChatSheet will look up the email server-side
+    openSheet(SHEET_TYPES.CHAT, {
+      userId: profileUser.auth_user_id || profileUser.id,
+      title: `Chat with ${profileUser.username || profileUser.profileName || profileUser.display_name || 'Anonymous'}`,
+    });
   };
 
   const handleBlock = async () => {
@@ -678,7 +618,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
 
       if (error && !error.message?.includes('duplicate')) throw error;
 
-      toast.success(`${safeName(profileUser)} blocked`);
+      toast.success(`${profileUser.username || profileUser.display_name || 'User'} blocked`);
       setShowMoreMenu(false);
       closeSheet();
     } catch {
@@ -861,17 +801,8 @@ export default function L2ProfileSheet({ email, uid, id }) {
 
   // ── Derived data ────────────────────────────────────────────────────────
 
-  // IDENTITY MODEL — D262 / LOCKS.md dignity-floor invariant.
-  // safeName() is the single source of truth: returns display_name (or
-  // displayName / name), rejects @-containing strings, falls back to
-  // "Member". Never "Anonymous", never the email, never the user id.
-  const name = safeName(profileUser);
-  // Mutual is required to unlock Message + Albums + Logistics descent per
-  // D262 §1.1 + §2.7. Compute once here so the JSX below stays readable.
-  const targetIdForMutual = profileUser.auth_user_id || profileUser.id;
-  const isMutual = !!targetIdForMutual && isMutualBoo(targetIdForMutual);
-  const offGrid = isOffGrid(profileUser) && !isMutual; // off-grid for mutuals = normal render
-  const stableOnline = !offGrid && isStablyOnline(profileUser);
+  // IDENTITY MODEL: username is the public handle — never expose real name to other users
+  const name = profileUser.username || profileUser.profileName || profileUser.display_name || 'Anonymous';
   const avatarUrl = profileUser.avatar_url || profileUser.photos?.[0];
   const isTravel = profileUser.persona === 'TRAVEL' || profileUser.persona === 'travel';
   const _rawCity = profileUser.city || profileUser.visiting_city;
@@ -953,314 +884,147 @@ export default function L2ProfileSheet({ email, uid, id }) {
     },
   ];
 
-  // ── Render — mockup composition (D262 wholesale port 2026-05-30) ──────
-  // The previous render lived as ~660 lines of v6/legacy/proximity branches.
-  // This pass throws all of that out and uses the MOCKUP.html composition
-  // as the literal blueprint: hero, identity row, action bar, content cards,
-  // logistics-gated-on-mutual, with the desktop max-width fix on the
-  // L2SheetContainer side.
   return (
-    <div className="relative bg-black" style={{ paddingBottom: 24 }}>
-      {/* ── HERO — full-bleed photo carousel + identity overlay ────────── */}
-      <div className="relative w-full" style={{ aspectRatio: '4/5', background: 'black' }}>
-        {photoUrls.length > 0 ? (
-          <>
-            {/* D10 §103-112 swipe carousel. Heavy damping (≥22), low stiffness
-                (≤400), snap-precise, no bounce, no autoplay. Haptic on snap. */}
-            {photoUrls.length === 1 ? (
-              <img
-                src={photoUrls[0]}
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            ) : (
-              <motion.div
-                className="absolute inset-0 flex"
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.18}
-                onDragEnd={(_, info) => {
-                  // §104 snap-precise — threshold of viewport/4 or velocity >400
-                  const threshold = (typeof window !== 'undefined' ? window.innerWidth : 400) / 4;
-                  let next = activePhotoIdx;
-                  if (info.offset.x < -threshold || info.velocity.x < -400) {
-                    next = Math.min(photoUrls.length - 1, activePhotoIdx + 1);
-                  } else if (info.offset.x > threshold || info.velocity.x > 400) {
-                    next = Math.max(0, activePhotoIdx - 1);
-                  }
-                  if (next !== activePhotoIdx) {
-                    // §106 haptic on every successful gesture
-                    if (typeof navigator !== 'undefined' && navigator.vibrate) {
-                      try { navigator.vibrate(8); } catch (_) { /* non-fatal */ }
-                    }
-                    setActivePhotoIdx(next);
-                  }
-                }}
-                animate={{ x: `-${activePhotoIdx * 100}%` }}
-                transition={{ type: 'spring', stiffness: 280, damping: 26 }}
-                style={{ touchAction: 'pan-y' }}
-              >
-                {photoUrls.map((url, i) => (
-                  <img
-                    key={i}
-                    src={url}
-                    alt=""
-                    className="w-full h-full object-cover flex-shrink-0"
-                    style={{ minWidth: '100%' }}
-                    draggable={false}
-                    loading={i === 0 ? 'eager' : 'lazy'}
-                  />
-                ))}
-              </motion.div>
-            )}
-            {photoUrls.length > 1 && (
-              /* dot paginator */
-              <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-20 pointer-events-none">
-                {photoUrls.map((_, i) => (
-                  <span
-                    key={i}
-                    aria-hidden="true"
-                    style={i === activePhotoIdx
-                      ? { width: 18, height: 4, background: 'white', borderRadius: 99 }
-                      : { width: 6, height: 4, background: 'rgba(255,255,255,0.4)', borderRadius: 99 }}
-                  />
-                ))}
-              </div>
-            )}
-          </>
+    <div className="pb-20 -mt-4">
+      {/* ── Photo carousel (full-bleed, 3:4 portrait) ────────────────── */}
+      {(() => { const heroBody = (
+      <div className="relative">
+        {v6GhostedLoop && photoUrls.length > 0 ? (
+          <ProfileMediaStack
+            images={photoUrls}
+            isMutual={mutualArmed && !recoveryVariant}
+            softBorder={!!recoveryVariant && !recoveryDismissed}
+            onIndexChange={setActivePhotoIdx}
+            aspect="3 / 4"
+          />
         ) : (
-          // Empty photo state — silhouette gradient + Ghost glyph (LOCKS.md
-          // dignity-floor invariant: quieter, not faker).
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{ background: 'radial-gradient(ellipse at 50% 42%, #1a1410 0%, #0d0a08 55%, #050405 100%)' }}
-          >
-            <Ghost className="w-20 h-20" strokeWidth={1.4} style={{ color: 'rgba(255,255,255,0.14)' }} />
-          </div>
+          <PhotoCarousel
+            images={photoUrls}
+            fallbackInitial={name[0]}
+            onIndexChange={setActivePhotoIdx}
+          />
         )}
 
-        {/* Top-right: More menu */}
-        {!isOwnProfile && (
-          <button
-            onClick={() => setShowMoreMenu(!showMoreMenu)}
-            className="absolute right-3 w-9 h-9 rounded-full flex items-center justify-center z-30"
-            style={{
-              top: 'calc(env(safe-area-inset-top, 0px) + 12px)',
-              background: 'rgba(0,0,0,0.5)',
-              backdropFilter: 'blur(8px)',
-              border: 'none',
-            }}
-            aria-label="More"
-          >
-            <MoreVertical className="w-4 h-4 text-white" />
-          </button>
-        )}
-
-        {/* Photo counter pill killed 2026-05-30 per Phil — the dot
-            paginator already conveys "there are more photos here", and
-            the "1 / N" text on top of someone's face was reading as
-            chrome clutter, not affordance. */}
-
-        {/* Bottom gradient — lets the identity overlay sit on the photo */}
+        {/* Gradient overlay at bottom */}
         <div
-          className="absolute inset-x-0 bottom-0 pointer-events-none"
-          style={{
-            height: '55%',
-            background: 'linear-gradient(to top, rgba(0,0,0,0.95) 5%, rgba(0,0,0,0.55) 35%, transparent 100%)',
-          }}
+          className="absolute inset-x-0 bottom-0 h-2/3 pointer-events-none"
+          style={{ background: 'linear-gradient(to top, #050507 0%, transparent 100%)' }}
         />
 
-        {/* Identity overlay at bottom of hero — name + verified + mutual + presence + venue */}
-        <div className="absolute left-4 right-4 bottom-4 z-20 flex flex-col gap-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-2xl font-black text-white tracking-tight leading-tight">{name}</h1>
+        {/* Top-left back chevron removed — drag handle / swipe / backdrop tap is the dismissal. */}
+
+        {/* Top-right action: only More (report/block). Share is killed
+            entirely — Phil exec review: profile sharing contradicts the
+            Ghosted philosophy of bounded discovery, regardless of UI
+            surface (intent layer or native share-sheet). */}
+        {!isOwnProfile && (
+          <div
+            className="absolute top-4 right-4 flex items-center gap-2 z-20"
+            style={{ marginTop: 'env(safe-area-inset-top, 0px)' }}
+          >
+            <button
+              onClick={() => setShowMoreMenu(!showMoreMenu)}
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm active:bg-black/70"
+              aria-label="More"
+            >
+              <MoreVertical className="w-5 h-5 text-white" />
+            </button>
+          </div>
+        )}
+
+        {/* Views badge */}
+        {viewCount > 0 && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/50 backdrop-blur-sm z-20">
+            <span className="text-white/70 text-xs font-medium">👁 {viewCount} views</span>
+          </div>
+        )}
+
+        {/* Name + presence + persona overlay at bottom of hero */}
+        <div className="absolute bottom-4 left-4 right-4 z-20">
+          <div className="flex items-center gap-2">
+            {/* Presence status */}
+            {(() => {
+              const ls = profileUser.last_seen;
+              const ms = ls ? Date.now() - new Date(ls).getTime() : Infinity;
+              const isOn = profileUser.is_online || ms < 10 * 60_000;
+              const isAway = !isOn && ms < 60 * 60_000;
+              const isOff = !isOn && !isAway;
+
+              const dot = isOn
+                ? { color: '#30D158', glow: '0 0 6px #30D158' }
+                : isAway
+                  ? { color: '#FFAB00', glow: undefined }
+                  : { color: '#8E8E93', glow: undefined };
+
+              return (
+                <span
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ background: dot.color, boxShadow: dot.glow }}
+                  title={isOn ? 'Online now' : isAway ? 'Recently active' : 'Offline'}
+                />
+              );
+            })()}
+            <h2 className="text-2xl font-black text-white">{name}</h2>
+            {isTravel && <Plane className="w-5 h-5 text-white/70 -rotate-45" />}
             {isVerified && (
-              <span
-                className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: '#C8962C' }}
-                aria-label="Verified"
-                title="Verified"
-              >
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
+              <div className="w-5 h-5 bg-[#00C2E0] rounded-full flex items-center justify-center">
+                <Shield className="w-3 h-3 text-black" />
+              </div>
+            )}
+          </div>
+          {/* Status label */}
+          {(() => {
+            const ls = profileUser.last_seen;
+            const ms = ls ? Date.now() - new Date(ls).getTime() : Infinity;
+            const isOn = profileUser.is_online || ms < 10 * 60_000;
+            const isAway = !isOn && ms < 60 * 60_000;
+            const label = isOn ? 'Online now' : isAway ? 'Recently active' : 'Offline';
+            const color = isOn ? '#30D158' : isAway ? '#FFAB00' : '#8E8E93';
+            return (
+              <span className="text-xs font-medium mt-0.5 block" style={{ color }}>{label}</span>
+            );
+          })()}
+          <div className="flex items-center gap-2 mt-0.5">
+            {visitingCity && (
+              <span className="text-white/60 text-sm">
+                {isTravel ? 'Visiting' : ''} {visitingCity}
+                {profileUser.country_flag ? ` ${profileUser.country_flag}` : ''}
               </span>
             )}
-            {isMutual && (
-              <span
-                className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full flex-shrink-0"
-                style={{
-                  background: 'rgba(200,150,44,0.15)',
-                  color: '#C8962C',
-                  border: '1px solid rgba(200,150,44,0.5)',
-                  letterSpacing: '0.14em',
-                }}
-              >
-                Mutual
+            {(distance || etaMin) && (
+              <span className="text-white/40 text-sm">
+                {distance ? `${(distance / 1.60934).toFixed(1)} mi away` : ''}
+                {profileUser.location_area ? ` in ${profileUser.location_area}` : ''}
+                {etaMin ? ` · ${etaMin} min` : ''}
               </span>
             )}
           </div>
-
-          {/* Presence sub-line */}
-          {(stableOnline || offGrid) && (
-            <div className="text-xs flex items-center gap-1.5" style={{ color: offGrid ? '#8E8E93' : '#34C759' }}>
-              {stableOnline && <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#34C759' }} />}
-              <span>{offGrid ? 'Laying low' : 'Online'}</span>
-            </div>
-          )}
-
-          {/* City line — suppressed when off-grid */}
-          {!offGrid && visitingCity && (
-            <div className="text-white/65 text-xs">
-              {isTravel ? 'Visiting ' : ''}{visitingCity}{profileUser.country_flag ? ` ${profileUser.country_flag}` : ''}
-            </div>
-          )}
         </div>
       </div>
-
-      {/* ── RELATIONSHIP ACTION BAR — Phil 2026-06-02 locked state machine
-            Neutral → BOO
-            Outgoing (you boo'd them) → BOO'D · WAITING (status, no second action)
-            Incoming (they boo'd you) → BOO BACK
-            Mutual → MESSAGE (+ Video secondary)
-            Save is independent of relationship state and stays present.
-            One primary relationship action per state. Never two competing CTAs. */}
-      {!isOwnProfile && (() => {
-        const iBooed_ = !!targetIdForMutual && isTapped(targetIdForMutual, 'boo');
-        const theyBooed_ = !!targetIdForMutual && typeof hasReceivedBoo === 'function' && hasReceivedBoo(targetIdForMutual);
-        const relState =
-          iBooed_ && theyBooed_ ? 'mutual' :
-          theyBooed_ ? 'incoming' :
-          iBooed_ ? 'outgoing' :
-          'neutral';
-
-        const stateHeader =
-          relState === 'incoming' ? 'They reached for you' :
-          relState === 'outgoing' ? 'Waiting on them' :
-          null;
-
+      ); if (v6GhostedLoop && photoUrls.length > 0 && !isOwnProfile) {
         return (
-          <div className="px-4 pt-4 pb-2">
-            {stateHeader && (
-              <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-white/45 mb-2 text-center">
-                {stateHeader}
-              </p>
-            )}
-            <div className="flex items-stretch gap-2">
-              {/* Save — independent of relationship state */}
-              <button
-                onClick={handleSaveToggle}
-                disabled={isSaving}
-                className="flex flex-col items-center justify-center gap-0.5 px-3 rounded-2xl flex-shrink-0"
-                style={{
-                  minWidth: 56,
-                  height: 52,
-                  background: isSaved ? 'rgba(200,150,44,0.2)' : 'rgba(255,255,255,0.05)',
-                  border: `1px solid ${isSaved ? '#C8962C' : 'rgba(255,255,255,0.1)'}`,
-                  cursor: 'pointer',
-                }}
-                aria-label={isSaved ? 'Saved' : 'Save'}
-              >
-                <Heart className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} style={{ color: isSaved ? '#C8962C' : 'white' }} />
-                <span className="text-[9px] font-mono uppercase tracking-wider" style={{ color: isSaved ? '#C8962C' : 'white' }}>
-                  {isSaved ? 'SAVED' : 'SAVE'}
-                </span>
-              </button>
-
-              {/* Primary relationship CTA — one per state */}
-              {relState === 'neutral' && (
-                <button
-                  onClick={handleBoo}
-                  className="flex-1 rounded-2xl font-black text-sm uppercase flex items-center justify-center gap-2"
-                  style={{
-                    height: 52,
-                    background: 'rgba(200,150,44,0.12)',
-                    color: '#C8962C',
-                    border: '1px solid #C8962C',
-                    letterSpacing: '0.14em',
-                    cursor: 'pointer',
-                  }}
-                  aria-label="Boo"
-                >
-                  <Ghost className="w-4 h-4" />
-                  BOO
-                </button>
-              )}
-
-              {relState === 'outgoing' && (
-                <div
-                  className="flex-1 rounded-2xl font-black text-sm uppercase flex items-center justify-center gap-2 select-none"
-                  style={{
-                    height: 52,
-                    background: 'rgba(200,150,44,0.10)',
-                    color: 'rgba(200,150,44,0.65)',
-                    border: '1px solid rgba(200,150,44,0.35)',
-                    letterSpacing: '0.14em',
-                  }}
-                  aria-label="Booed, waiting for them"
-                  role="status"
-                >
-                  <Ghost className="w-4 h-4" />
-                  BOO'D
-                </div>
-              )}
-
-              {relState === 'incoming' && (
-                <button
-                  onClick={handleBoo}
-                  className="flex-1 rounded-2xl font-black text-sm uppercase flex items-center justify-center gap-2 text-black"
-                  style={{
-                    height: 52,
-                    background: '#C8962C',
-                    border: 'none',
-                    letterSpacing: '0.14em',
-                    cursor: 'pointer',
-                    boxShadow: '0 0 24px rgba(200,150,44,0.32)',
-                  }}
-                  aria-label="Boo back"
-                >
-                  <Ghost className="w-4 h-4" />
-                  BOO BACK
-                </button>
-              )}
-
-              {relState === 'mutual' && (
-                <>
-                  <button
-                    onClick={handleMessage}
-                    className="flex-1 rounded-2xl font-black text-sm uppercase text-black"
-                    style={{
-                      height: 52,
-                      background: '#C8962C',
-                      border: 'none',
-                      letterSpacing: '0.14em',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Message
-                  </button>
-                  <button
-                    onClick={handleVideoCall}
-                    className="rounded-2xl flex items-center justify-center flex-shrink-0"
-                    style={{
-                      width: 52,
-                      height: 52,
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      cursor: 'pointer',
-                    }}
-                    aria-label="Video call"
-                  >
-                    <Video className="w-4 h-4 text-white" />
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
+          <IntentLayer
+            primary={booPrimary}
+            actions={intentActions}
+            onStateChange={(s) => {
+              if (s === 'dormant') return;
+              dwellApi.trackDragUp(s === 'retracting' ? 'cancelled' : s);
+            }}
+          >{heroBody}</IntentLayer>
         );
-      })()}
+      } return heroBody; })()}
 
-      {/* VaultAccessRequest (non-self) */}
+      {/* ── RecoveryState v0.1 (bible Part 7) ──────────────────────────── */}
+      {v6GhostedLoop && recoveryVariant && !recoveryDismissed && !isOwnProfile && (
+        <RecoveryStateCard
+          variant={recoveryVariant}
+          theirName={name}
+          onAction={() => { setRecoveryDismissed(true); handleMessage(); }}
+          onDismiss={() => setRecoveryDismissed(true)}
+        />
+      )}
+
+      {/* ── Private vault gate (someone else's profile only) ──────────── */}
       {!isOwnProfile && (profileUser.auth_user_id || profileUser.id) && (
         <div className="px-4 py-2">
           <VaultAccessRequest
@@ -1270,91 +1034,35 @@ export default function L2ProfileSheet({ email, uid, id }) {
         </div>
       )}
 
-      {/* RecoveryStateCard (v6_ghosted_loop) */}
-      {v6GhostedLoop && recoveryVariant && !recoveryDismissed && !isOwnProfile && (
-        <div className="px-4">
-          <RecoveryStateCard
-            variant={recoveryVariant}
-            theirName={name}
-            onAction={() => { setRecoveryDismissed(true); handleMessage(); }}
-            onDismiss={() => setRecoveryDismissed(true)}
-          />
-        </div>
-      )}
+      {/* ── Identity chips ────────────────────────────────────────────── */}
+      <div className="flex gap-1.5 px-4 py-2 overflow-x-auto no-scrollbar">
+        {profileUser?.public_attributes?.age && (
+          <span className="shrink-0 px-2.5 py-1 bg-white/8 text-white/60 text-xs rounded-full border border-white/10">
+            {profileUser.public_attributes.age}
+          </span>
+        )}
+        {profileUser?.public_attributes?.position && (
+          <span className="shrink-0 px-2.5 py-1 bg-[#C8962C]/15 text-[#C8962C] text-xs font-bold rounded-full border border-[#C8962C]/30">
+            {profileUser.public_attributes.position}
+          </span>
+        )}
+        {(profileUser?.public_attributes?.looking_for||[]).map(l=>(
+          <span key={l} className="shrink-0 px-2.5 py-1 bg-white/8 text-white/60 text-xs rounded-full border border-white/10">{l}</span>
+        ))}
+        {profileUser?.public_attributes?.time_horizon && (
+          <span className="shrink-0 px-2.5 py-1 bg-[#C8962C]/15 text-[#C8962C] text-xs font-bold rounded-full border border-[#C8962C]/30">
+            {profileUser.public_attributes.time_horizon}
+          </span>
+        )}
+      </div>
 
-      {/* ── LOOKING-FOR TAGS row — gold-tinted pills ─────────────────────── */}
-      {((profileAttrs?.looking_for) || profileUser?.public_attributes?.looking_for || []).length > 0 && (
-        <div className="px-4 pt-3 pb-1">
-          <div className="flex flex-wrap gap-1.5">
-            {((profileAttrs?.looking_for) || profileUser?.public_attributes?.looking_for || []).map(tag => (
-              <span
-                key={tag}
-                className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full"
-                style={{
-                  background: 'rgba(200,150,44,0.12)',
-                  color: '#C8962C',
-                  border: '1px solid rgba(200,150,44,0.3)',
-                }}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── PROXIMITY — bucketed walk distance, person variant. Suppressed
-             when off-grid; gated via D08 + LOCKS.md confidence handling. */}
-      {!offGrid && profileUser?.last_lat != null && profileUser?.last_lng != null && (
-        <div className="px-1">
-          <ProximityRow
-            type="person"
-            venueLat={Number(profileUser.last_lat)}
-            venueLng={Number(profileUser.last_lng)}
-            viewerLat={viewerPos?.lat ?? null}
-            viewerLng={viewerPos?.lng ?? null}
-            locationUpdatedAt={viewerPos?.timestamp ?? null}
-          />
-        </div>
-      )}
-
-      {/* ── IDENTITY ATTRIBUTE CHIPS (pronouns / position / body / height) */}
-      {profileAttrs && (
-        profileAttrs.pronouns ||
-        profileAttrs.sexual_orientation ||
-        profileAttrs.position ||
-        profileAttrs.body_type ||
-        profileAttrs.height_cm ||
-        profileAttrs.hosting ||
-        (profileAttrs.ethnicity || []).length > 0
-      ) && (
-        <div className="px-4 pt-3 pb-1">
-          <div className="flex flex-wrap gap-1.5">
-            {profileAttrs.pronouns && <Chip>{profileAttrs.pronouns}</Chip>}
-            {profileAttrs.sexual_orientation && <Chip>{profileAttrs.sexual_orientation}</Chip>}
-            {profileAttrs.position && <Chip gold>{profileAttrs.position}</Chip>}
-            {profileAttrs.height_cm && <Chip>{profileAttrs.height_cm} cm</Chip>}
-            {profileAttrs.body_type && <Chip>{profileAttrs.body_type}</Chip>}
-            {profileAttrs.hosting && <Chip>{profileAttrs.hosting}</Chip>}
-            {(profileAttrs.ethnicity || []).map(e => <Chip key={e}>{e}</Chip>)}
-          </div>
-        </div>
-      )}
-
-      {/* ── BIO (single source of truth — duplicate at bottom removed) */}
-      {profileUser?.bio && (
-        <div className="px-4 pt-4 pb-2">
-          <h3 className="text-[11px] font-black uppercase tracking-widest text-white/40 mb-2">About</h3>
-          <p className="text-sm text-white/80 leading-relaxed">{profileUser.bio}</p>
-        </div>
-      )}
-
-      {/* ── ACTIVE BEACONS — render only when the section has rows.
-             ProfileBeaconsSection no-ops when there are no active beacons. */}
+      {/* ── Active beacons (loop closer for PR #406 ring) ─────────────── */}
       <ProfileBeaconsSection userId={profileUser.auth_user_id || profileUser.id} />
 
-      {/* ── PROXIMITY PANEL (v6_profile_proximity) — mutual-gated */}
-      {isMutual && !offGrid && isProximityCard && !isOwnProfile && travelTimes?.distKm && profileUser?.last_lat && (
+      {/* ── Logistics moved below content cards (descent into operational
+          space per Phil exec review 2026-05-13). Proximity card still
+          renders here when v6_profile_proximity is on. ──────────────── */}
+      {isProximityCard && !isOwnProfile && travelTimes?.distKm && profileUser?.last_lat && (
         <ProfileProximityPanel
           distanceM={Math.round(travelTimes.distKm * 1000)}
           approxLat={profileUser.last_lat}
@@ -1364,93 +1072,193 @@ export default function L2ProfileSheet({ email, uid, id }) {
         />
       )}
 
-      {/* ── CONTENT CARDS — Right Now / For Sale / Creator */}
-      {(rightNowStatus || listings.length > 0 || isCreator) && (
-        <div className="px-4 pt-3 space-y-3">
-          {rightNowStatus && (
-            <ProfileContentCard
-              variant="hookup"
-              intent={intentLabel || 'Hookup'}
-              boundaries={rightNowStatus.preferences?.boundaries || rightNowStatus.logistics?.join(' & ')}
-              meetingArea={rightNowStatus.meeting_area || visitingCity}
-              yourEta={etaMin || 7}
-              theirEta={rightNowStatus.their_eta || 4}
-              theirName={name.split(' ')[0]}
-              lat={rightNowStatus.lat || profileUser.geoLat}
-              lng={rightNowStatus.lng || profileUser.geoLng}
-              imageUrl={avatarUrl}
-            />
-          )}
-
-          {listings.map((listing) => (
-            <ProfileContentCard
-              key={listing.id}
-              variant="for-sale"
-              title={listing.title}
-              subtitle={listing.delivery_type === 'same_day' ? 'Same Day Delivery' : listing.delivery_type || ''}
-              price={listing.price ? `${listing.currency || '£'}${listing.price}` : undefined}
-              imageUrl={listing.images?.[0]}
-              onView={() => openSheet('product', { id: listing.id, source: 'preloved' })}
-              onBuy={() => openSheet('product', { id: listing.id, source: 'preloved', action: 'buy' })}
-            />
-          ))}
-
-          {isCreator && (
-            <ProfileContentCard
-              variant="creator"
-              title={profileUser.creator_title || 'HotMess Radio DJ'}
-              subtitle={profileUser.creator_subtitle || (profileUser.radio_show_url ? 'Tap to listen' : '')}
-              imageUrl={avatarUrl}
-              onListen={() => {
-                if (profileUser.radio_show_url) window.open(profileUser.radio_show_url, '_blank');
-                else if (profileUser.soundcloud) window.open(profileUser.soundcloud, '_blank');
-                else { navigate('/radio'); closeSheet(); }
-              }}
-              onFollow={() => toast('Following — subscriptions coming soon')}
-              onSubscribe={
-                profileUser.userId || profileUser.authUserId
-                  ? () => openSheet('creator-subscription', {
-                      creatorId: profileUser.userId || profileUser.authUserId,
-                      creatorName: name,
-                      priceCents: profileUser.subscription_price_cents || 499,
-                    })
-                  : undefined
-              }
-            />
-          )}
+      {/* ── Bio ────────────────────────────────────────────────────────── */}
+      {profileUser?.bio && (
+        <div className="px-4 py-2">
+          <p className="text-white/70 text-sm leading-relaxed">{profileUser.bio}</p>
         </div>
       )}
 
-      {/* ── LOGISTICS — descent into operational. D262 §1.1 mutual gate.
-             Footprints / Bike / Uber rendered only when isMutual + travelTimes
-             + not off-grid + not v6_profile_proximity (which renders above). */}
-      {isMutual && !offGrid && !isProximityCard && !isOwnProfile && travelTimes && (
-        <div className="px-4 pt-4 pb-2">
-          <div className="text-[10px] font-black tracking-[0.28em] uppercase mb-2" style={{ color: 'rgba(255,255,255,0.32)' }}>
+      {/* ── Profile attribute chips ────────────────────────────────────── */}
+      {profileAttrs && Object.keys(profileAttrs).some(k => profileAttrs[k] && (Array.isArray(profileAttrs[k]) ? profileAttrs[k].length : true)) && (
+        <div className="px-4 pt-2 pb-2">
+          <div className="flex flex-wrap gap-1.5">
+            {profileAttrs.pronouns && (
+              <Chip>{profileAttrs.pronouns}</Chip>
+            )}
+            {profileAttrs.sexual_orientation && (
+              <Chip>{profileAttrs.sexual_orientation}</Chip>
+            )}
+            {profileAttrs.position && (
+              <Chip>{profileAttrs.position}</Chip>
+            )}
+            {profileAttrs.height_cm && (
+              <Chip>{profileAttrs.height_cm} cm</Chip>
+            )}
+            {profileAttrs.body_type && (
+              <Chip>{profileAttrs.body_type}</Chip>
+            )}
+            {profileAttrs.hosting && (
+              <Chip>{profileAttrs.hosting}</Chip>
+            )}
+            {(profileAttrs.looking_for || []).map(lf => (
+              <Chip key={lf} gold>{lf}</Chip>
+            ))}
+            {(profileAttrs.ethnicity || []).map(e => (
+              <Chip key={e}>{e}</Chip>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Content cards stack ────────────────────────────────────────── */}
+      <div className="px-4 space-y-3 -mt-2">
+
+        {/* Hookup card (if Right Now active) */}
+        {rightNowStatus && (
+          <ProfileContentCard
+            variant="hookup"
+            intent={intentLabel || 'Hookup'}
+            boundaries={rightNowStatus.preferences?.boundaries || rightNowStatus.logistics?.join(' & ')}
+            meetingArea={rightNowStatus.meeting_area || visitingCity}
+            yourEta={etaMin || 7}
+            theirEta={rightNowStatus.their_eta || 4}
+            theirName={name.split(' ')[0]}
+            lat={rightNowStatus.lat || profileUser.geoLat}
+            lng={rightNowStatus.lng || profileUser.geoLng}
+            imageUrl={avatarUrl}
+          />
+        )}
+
+        {/* For Sale cards */}
+        {listings.map((listing) => (
+          <ProfileContentCard
+            key={listing.id}
+            variant="for-sale"
+            title={listing.title}
+            subtitle={listing.delivery_type === 'same_day' ? 'Same Day Delivery' : listing.delivery_type || ''}
+            price={listing.price ? `${listing.currency || '£'}${listing.price}` : undefined}
+            imageUrl={listing.images?.[0]}
+            onView={() => openSheet('product', { id: listing.id, source: 'preloved' })}
+            onBuy={() => openSheet('product', { id: listing.id, source: 'preloved', action: 'buy' })}
+          />
+        ))}
+
+        {/* Creator card */}
+        {isCreator && (
+          <ProfileContentCard
+            variant="creator"
+            title={profileUser.creator_title || 'HotMess Radio DJ'}
+            subtitle={profileUser.creator_subtitle || profileUser.radio_show_url ? 'Tap to listen' : ''}
+            imageUrl={avatarUrl}
+            onListen={() => {
+              if (profileUser.radio_show_url) {
+                window.open(profileUser.radio_show_url, '_blank');
+              } else if (profileUser.soundcloud) {
+                window.open(profileUser.soundcloud, '_blank');
+              } else {
+                navigate('/radio');
+                closeSheet();
+              }
+            }}
+            onFollow={() => toast('Following — subscriptions coming soon')}
+            onSubscribe={
+              profileUser.userId || profileUser.authUserId
+                ? () => openSheet('creator-subscription', {
+                    creatorId:   profileUser.userId || profileUser.authUserId,
+                    creatorName: name,
+                    priceCents:  profileUser.subscription_price_cents || 499,
+                  })
+                : undefined
+            }
+          />
+        )}
+
+        {/* Bio section (if no content cards) */}
+        {!rightNowStatus && listings.length === 0 && !isCreator && profileUser.bio && (
+          <div
+            className="rounded-2xl p-4"
+            style={{ background: '#1C1C1E', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <p className="text-white/70 text-sm leading-relaxed">{profileUser.bio}</p>
+          </div>
+        )}
+      </div>
+
+      {/* ── Logistics block — descent into operational (bible Part 7 +
+          Phil exec review 2026-05-13). Coordination AFTER intent, not
+          alongside it. Tone hierarchy:
+            BOO       = full gold #C8962C  (primary)
+            Location  = utility gold (muted)
+            ETA       = metadata tone (neutral)
+            Ride      = service tone (most muted)
+          Suppressed when v6_profile_proximity already rendered above. */}
+      {!isProximityCard && !isOwnProfile && (
+        <div className="px-4 pt-3 pb-1 mt-2">
+          <div
+            className="text-[9px] font-medium tracking-[0.28em] uppercase mb-2"
+            style={{ color: 'rgba(255,255,255,0.32)' }}
+          >
             Logistics
           </div>
+          {travelTimes && (
+            <div className="flex gap-2 mb-2">
+              {travelTimes.walking && travelTimes.distKm < 5 && (
+                <div
+                  className="flex-1 flex flex-col items-center py-2 rounded-md"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)' }}
+                >
+                  <Footprints className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.55)' }} />
+                  <span className="text-sm font-medium mt-0.5" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                    {Math.round(travelTimes.walking.durationSeconds/60)}m
+                  </span>
+                  <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.32)' }}>walk</span>
+                </div>
+              )}
+              {travelTimes.bicycling && travelTimes.distKm < 10 && (
+                <div
+                  className="flex-1 flex flex-col items-center py-2 rounded-md"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)' }}
+                >
+                  <Bike className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.55)' }} />
+                  <span className="text-sm font-medium mt-0.5" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                    {Math.round(travelTimes.bicycling.durationSeconds/60)}m
+                  </span>
+                  <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.32)' }}>bike</span>
+                </div>
+              )}
+              {travelTimes.uber && (
+                <div
+                  className="flex-1 flex flex-col items-center py-2 rounded-md"
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.06)' }}
+                >
+                  <Car className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.42)' }} />
+                  <span className="text-sm font-medium mt-0.5" style={{ color: 'rgba(255,255,255,0.58)' }}>
+                    {Math.round(travelTimes.uber.durationSeconds/60)}m
+                  </span>
+                  <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.30)' }}>uber</span>
+                </div>
+              )}
+            </div>
+          )}
           <div className="flex gap-2">
-            {travelTimes.walking && travelTimes.distKm < 5 && (
-              <div className="flex-1 flex flex-col items-center py-2 rounded-md"
-                   style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)' }}>
-                <Footprints className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.55)' }} />
-                <span className="text-sm font-medium mt-0.5" style={{ color: 'rgba(255,255,255,0.75)' }}>
-                  {Math.round(travelTimes.walking.durationSeconds/60)}m
-                </span>
-                <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.32)' }}>walk</span>
-              </div>
-            )}
-            {travelTimes.bicycling && travelTimes.distKm < 10 && (
-              <div className="flex-1 flex flex-col items-center py-2 rounded-md"
-                   style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)' }}>
-                <Bike className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.55)' }} />
-                <span className="text-sm font-medium mt-0.5" style={{ color: 'rgba(255,255,255,0.75)' }}>
-                  {Math.round(travelTimes.bicycling.durationSeconds/60)}m
-                </span>
-                <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.32)' }}>bike</span>
-              </div>
-            )}
-            {travelTimes.uber && (
+            <button
+              onClick={handleShareLocation}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 active:scale-95 transition-all"
+              style={{
+                background: 'rgba(200,150,44,0.04)',
+                border: '0.5px solid rgba(200,150,44,0.28)',
+                borderRadius: 6,
+                color: 'rgba(255,255,255,0.72)',
+                fontSize: 11,
+                fontWeight: 500,
+                letterSpacing: '0.04em',
+              }}
+            >
+              <MapPin className="w-3.5 h-3.5" style={{ color: 'rgba(200,150,44,0.55)' }} />
+              Share location
+            </button>
+            {travelTimes?.uber && (
               <button
                 onClick={() => openSheet?.('uber', {
                   lat: profileUser.last_lat,
@@ -1459,29 +1267,36 @@ export default function L2ProfileSheet({ email, uid, id }) {
                   travelTimes,
                   profileUser,
                 })}
-                className="flex-1 flex flex-col items-center py-2 rounded-md"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 active:scale-95 transition-all"
+                style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '0.5px solid rgba(255,255,255,0.08)',
+                  borderRadius: 6,
+                  color: 'rgba(255,255,255,0.58)',
+                  fontSize: 11,
+                  fontWeight: 500,
+                  letterSpacing: '0.04em',
+                }}
               >
-                <Car className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.55)' }} />
-                <span className="text-sm font-medium mt-0.5" style={{ color: 'rgba(255,255,255,0.75)' }}>
-                  {Math.round(travelTimes.uber.durationSeconds/60)}m
-                </span>
-                <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.32)' }}>uber</span>
+                <Car className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.42)' }} />
+                Get Uber
               </button>
             )}
           </div>
         </div>
       )}
 
-      {/* ── Cross-links (listings / music) */}
+      {/* ── Cross-links (listings / music) ─────────────────────────────── */}
       {(totalListingCount > 0 || artistRecord) && (
-        <div className="px-4 pt-3 space-y-2">
+        <div className="px-4 py-3 space-y-2">
           <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold">More from {name.split(' ')[0]}</p>
           {totalListingCount > 0 && (
             <button
-              onClick={() => { closeSheet(); navigate(`/market?seller_id=${encodeURIComponent(profileUser.auth_user_id || profileUser.id)}`); }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}
+              onClick={() => {
+                closeSheet();
+                navigate(`/market?seller_id=${encodeURIComponent(profileUser.auth_user_id || profileUser.id)}`);
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/8 active:bg-white/10 transition-colors"
             >
               <ShoppingBag className="w-5 h-5 text-[#C8962C]" />
               <div className="text-left flex-1">
@@ -1492,39 +1307,110 @@ export default function L2ProfileSheet({ email, uid, id }) {
           )}
           {artistRecord && (
             <button
-              onClick={() => { closeSheet(); navigate(`/music?artist=${encodeURIComponent(artistRecord.id)}`); }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}
+              onClick={() => {
+                closeSheet();
+                navigate(`/music?artist=${encodeURIComponent(artistRecord.id)}`);
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/8 active:bg-white/10 transition-colors"
             >
-              <Music className="w-5 h-5 text-[#C8962C]" />
+              <Music className="w-5 h-5 text-[#00C2E0]" />
               <div className="text-left flex-1">
-                <span className="text-white text-sm font-semibold">Listen to {artistRecord.artist_name || name.split(' ')[0]}</span>
+                <span className="text-white text-sm font-semibold">View music</span>
+                <span className="text-white/40 text-xs ml-2">{artistRecord.artist_name}</span>
               </div>
             </button>
           )}
         </div>
       )}
 
-      {/* Views micro-badge */}
-      {viewCount > 0 && (
-        <div className="px-5 pt-3 pb-1 text-center">
-          <span className="text-white/30 text-[10px] font-mono tracking-widest">{viewCount} VIEWS</span>
-        </div>
+      {/* ── Bottom action bar (legacy — suppressed under v6_ghosted_loop) */}
+      {!(v6GhostedLoop && photoUrls.length > 0 && !isOwnProfile) && (
+      <div
+        className="fixed bottom-0 left-0 right-0 px-4 py-3 z-10 flex gap-2"
+        style={{
+          background: 'rgba(5,5,7,0.95)',
+          backdropFilter: 'blur(16px)',
+          paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+        }}
+      >
+        {/* Boo button */}
+        <button
+          onClick={async () => {
+            const targetUid = profileUser.auth_user_id || profileUser.id;
+            if (!targetUid) return;
+            const result = await sendTap(targetUid, name, 'boo');
+            if (v6GhostedLoop) {
+              dwellApi.trackBoo(!!result?.mutual);
+              if (result?.mutual) {
+                setMutualArmed(true);
+                setShowMutual(true);
+              }
+            }
+          }}
+          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+            (profileUser.auth_user_id || profileUser.id) && isTapped(profileUser.auth_user_id || profileUser.id, 'boo')
+              ? 'bg-[#C8962C] text-black' : 'bg-white/10 text-white/60 hover:bg-white/15'
+          }`}
+          title="Boo"
+        >
+          <Ghost className="w-5 h-5" />
+        </button>
+
+        {/* Save / Favorite button */}
+        <button
+          onClick={handleSaveToggle}
+          disabled={isSaving}
+          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+            isSaved
+              ? 'bg-[#C8962C] text-black'
+              : 'bg-white/10 text-white/60 hover:bg-white/15'
+          }`}
+          title={isSaved ? 'Unsave' : 'Save profile'}
+        >
+          <Heart className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
+        </button>
+
+        {/* Message button */}
+        <Button
+          onClick={handleMessage}
+          className="flex-1 h-12 bg-[#C8962C] hover:bg-[#C8962C]/90 rounded-xl font-bold"
+        >
+          <MessageCircle className="w-5 h-5 mr-2" />
+          Message
+        </Button>
+
+        {/* Video Call button */}
+        <button
+          onClick={handleVideoCall}
+          className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/10 text-white/60 hover:bg-white/15 transition-all"
+          title="Video call"
+        >
+          <Video className="w-5 h-5" />
+        </button>
+      </div>
       )}
 
-      {/* ── MUTUAL OVERLAY (v6_ghosted_loop) */}
+      {/* ── Mutual reveal (v6_ghosted_loop) ─────────────────────────────── */}
       {v6GhostedLoop && (
         <MutualStateOverlay
           open={showMutual}
           theirName={name}
           theirAvatar={avatarUrl}
-          onMessage={() => { setShowMutual(false); handleMessage(); }}
+          // HOTFIX 2026-06-03 — delay handleMessage by 260ms so the overlay
+          // exit animation finishes before the chat sheet mounts. Prior to
+          // this the overlay's MESSAGE CTA stacked on top of the profile's
+          // own MESSAGE button mid-fade (Phil live repro).
+          onMessage={() => {
+            setShowMutual(false);
+            setTimeout(() => handleMessage(), 260);
+          }}
           onDismiss={() => setShowMutual(false)}
         />
       )}
 
-      {/* ── More menu (Report / Block) */}
-      {showMoreMenu && !isOwnProfile && (
+      {/* ── More menu dropdown ─────────────────────────────────────────── */}
+      {showMoreMenu && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setShowMoreMenu(false)} />
           <div
@@ -1534,16 +1420,54 @@ export default function L2ProfileSheet({ email, uid, id }) {
             <button
               onClick={() => { setShowMoreMenu(false); setShowReportModal(true); }}
               className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 text-left"
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
             >
               <Flag className="w-4 h-4 text-[#C8962C]" />
               <span className="text-white text-sm font-medium">Report User</span>
             </button>
             <button
+              onClick={async () => {
+                setShowMoreMenu(false);
+                try {
+                  let { data: { user } } = await supabase.auth.getUser();
+                  if (!user || !profileUser) return;
+                  const allPhotos = [];
+                  const seen = new Set();
+                  const addUrl = (u) => { if (u && !seen.has(u)) { seen.add(u); allPhotos.push(u); } };
+                  addUrl(profileUser.avatar_url || profileUser.photos?.[0]);
+                  (profileUser.photos || []).forEach(p => addUrl(typeof p === 'string' ? p : p?.url));
+                  const reportedPhotoUrl = allPhotos[activePhotoIdx] || allPhotos[0] || null;
+
+                  await supabase.from('photo_moderation_events').insert({
+                    user_id: user.id,
+                    event_type: 'user_reported',
+                    reason: 'Reported from profile sheet',
+                    metadata: {
+                      reported_user_id: profileUser.id || profileUser.auth_user_id,
+                      photo_url: reportedPhotoUrl,
+                      photo_index: activePhotoIdx,
+                    },
+                  });
+                  // Flag the photo in profile_photos so RLS hides it from others
+                  if (reportedPhotoUrl) {
+                    await supabase
+                      .from('profile_photos')
+                      .update({ moderation_status: 'flagged' })
+                      .eq('profile_id', profileUser.id || profileUser.auth_user_id)
+                      .eq('url', reportedPhotoUrl)
+                      .then(() => {}); // best-effort
+                  }
+                  toast.success('Photo reported. Our team will review it.');
+                } catch { toast.error('Could not report photo.'); }
+              }}
+              className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 text-left border-t border-white/5"
+            >
+              <Flag className="w-4 h-4 text-[#C8962C]" />
+              <span className="text-white text-sm font-medium">Report Photo</span>
+            </button>
+            <button
               onClick={handleBlock}
               disabled={isBlocking}
-              className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 text-left"
-              style={{ background: 'transparent', border: 'none', borderTop: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer' }}
+              className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 text-left border-t border-white/5"
             >
               {isBlocking ? (
                 <Loader2 className="w-4 h-4 text-red-500 animate-spin" />
@@ -1556,7 +1480,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
         </>
       )}
 
-      {/* ── Report modal */}
+      {/* ── Report modal ───────────────────────────────────────────────── */}
       {showReportModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="w-full max-w-sm bg-[#1C1C1E] border border-white/10 rounded-2xl overflow-hidden">
@@ -1565,7 +1489,6 @@ export default function L2ProfileSheet({ email, uid, id }) {
               <button
                 onClick={() => { setShowReportModal(false); setReportReason(''); }}
                 className="p-1 rounded-full hover:bg-white/10"
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
               >
                 <X className="w-5 h-5 text-white/60" />
               </button>
@@ -1584,7 +1507,6 @@ export default function L2ProfileSheet({ email, uid, id }) {
                         ? 'bg-[#C8962C] text-black'
                         : 'bg-white/5 text-white hover:bg-white/10'
                     }`}
-                    style={{ border: 'none', cursor: 'pointer' }}
                   >
                     {reason}
                   </button>
@@ -1604,5 +1526,3 @@ export default function L2ProfileSheet({ email, uid, id }) {
     </div>
   );
 }
-
-

@@ -596,7 +596,9 @@ export default function MorePage() {
   // ── Quick items with live counts ──────────────────────────────────────
 
   const youItems: QuickItem[] = useMemo(() => [
-    { icon: Heart, label: 'Boos', count: activity.tapCount, onTap: () => openSheet('notification-inbox'), accent: '#FF5500' },
+    // HOTFIX 2026-06-03: Boos entry removed — duplication with the bell
+    // rail icon + the unified inbox sheet filter chips covering boos.
+    // Phil live repro: two notification lists in More tab was confusing.
     { icon: Ticket, label: 'Orders', count: activity.pendingOrders, onTap: () => openSheet('my-orders'), accent: GOLD },
     { icon: ShoppingBag, label: 'My Listings', count: activity.liveListings, onTap: () => openSheet('my-listings'), accent: '#9E7D47' },
     { icon: Bookmark, label: 'Saved', onTap: () => openSheet('favorites'), accent: GOLD },
@@ -612,7 +614,9 @@ export default function MorePage() {
   const accountItems: QuickItem[] = useMemo(() => [
     { icon: Crown, label: 'Membership', onTap: () => openSheet('membership'), accent: GOLD },
     { icon: Eye, label: 'Privacy', onTap: () => navigate('/settings') },
-    { icon: Bell, label: 'Notifications', onTap: () => openSheet('notification-inbox') },
+    // HOTFIX 2026-06-03: Notifications entry removed — bell rail icon on
+    // every page is the canonical entry point now (PR #828 + GhostedMode
+    // rail wiring). Avoids dual-list confusion in More tab.
     { icon: Lock, label: 'Blocked', onTap: () => openSheet('blocked') },
     { icon: HelpCircle, label: 'Help', onTap: () => openSheet('help') },
     { icon: Settings, label: 'Settings', onTap: () => navigate('/settings') },
