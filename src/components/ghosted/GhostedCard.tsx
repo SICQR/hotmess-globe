@@ -266,14 +266,19 @@ function GhostedCardInner({
         // the eye still groups the card with live cards but registers fade.
         const shadows: string[] = [];
 
-        // Phil 2026-06-03 — Beacon halo bleed. When the card sits ≤200m from
-        // a live beacon (and doesn't own one itself), render a thin outer
-        // ring tinted to the beacon's category colour. Subtle — 1.5px,
-        // ~45% alpha, no glow. Reads as ambient environmental warmth, not as
-        // ownership. This is the move that ties the grid to the room.
+        // Phil 2026-06-03 — Beacon halo bleed. When the card sits within
+        // the halo radius from a live beacon (and doesn't own one itself),
+        // render an outer ring tinted to the beacon's category colour.
+        // Reads as ambient environmental warmth, not as ownership.
+        //
+        // Calibration 2026-06-03: bumped from 1px @ ~40% alpha to 2px @
+        // ~70% alpha + brighter glow. The original was too subtle to read
+        // on mobile (Phil verified live and couldn't see it). The halo is
+        // meant to land emotionally — "this person is near something
+        // happening" — not whisper.
         if (beaconHaloColor && !beacon) {
-          shadows.push(`0 0 0 1px ${beaconHaloColor}66`);
-          shadows.push(`0 0 10px ${beaconHaloColor}26`);
+          shadows.push(`0 0 0 2px ${beaconHaloColor}B3`);
+          shadows.push(`0 0 16px ${beaconHaloColor}55`);
         }
 
         if (beacon) {

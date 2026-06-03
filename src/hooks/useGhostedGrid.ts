@@ -208,11 +208,17 @@ export function useGhostedGrid(
     return list;
   }, [activeBeaconsQuery.data]);
 
-  // Closest active beacon within 200m of (lat,lng). Returns null when none.
+  // Closest active beacon within 1000m of (lat,lng). Returns null when none.
   // Skips the user's own owned beacon — that's already painted as the
   // first-class beacon ring; halo is for OTHER beacons in the neighbourhood
   // so the card communicates "near something happening" rather than
   // double-counting the user's own signal.
+  //
+  // Phil 2026-06-03 calibration — bumped 200m → 1000m. Substrate audit:
+  // beta cohort has 66 profiles with location, closest one to a live
+  // beacon was 1448m away. 200m was venue-tight; 1km is "neighbourhood"
+  // and matches D54's "shared atmosphere nearby" register. Halo can be
+  // tightened again once user density rises in a target district.
   const findBeaconHalo = useCallback(
     (lat: number | null | undefined, lng: number | null | undefined, ownerIdToSkip?: string | null) => {
       if (lat == null || lng == null) return null;
@@ -220,7 +226,7 @@ export function useGhostedGrid(
       for (const b of activeBeaconsWithCoords) {
         if (ownerIdToSkip && b.owner_id === ownerIdToSkip) continue;
         const d = calculateDistance(lat, lng, b.lat, b.lng);
-        if (d > 200) continue;
+        if (d > 1000) continue;
         if (!best || d < best.distanceM) {
           best = { category: b.category, color: b.color, distanceM: d };
         }
