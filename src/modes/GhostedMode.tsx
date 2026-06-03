@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Bell, MessageCircle, Music, Radio } from 'lucide-react';
+import { MessageCircle, Music, Radio } from 'lucide-react';
 import { useGhostedGrid } from '@/hooks/useGhostedGrid';
 import { useGPS } from '@/hooks/useGPS';
 import { useSheet } from '@/contexts/SheetContext';
@@ -144,10 +144,9 @@ export default function GhostedMode() {
           live here so there's one consistent control surface and no duplicate
           buttons elsewhere on the page. */}
       <div className="absolute top-[calc(88px+env(safe-area-inset-top,0px))] right-4 z-30 flex flex-col items-end gap-2 pointer-events-none">
-        {/* HOTFIX 2026-06-03: Bell missing from Ghosted page despite global
-            BellRailIcon ship (#828). GhostedMode owns its own rail and never
-            included it. Add inline alongside Music/Radio. */}
-        <GhostedRailButton icon={Bell}  label="Inbox" onClick={() => openSheet('notification-inbox')} />
+        {/* Bell + Search are handled by GlobalRail (mounted in Layout) — Phil
+            ratified Z 2026-06-03: rail icons sit in the safe top-right zone
+            away from SafetyFAB, not inside Ghosted's page-local rail. */}
         <GhostedRailButton icon={Music} label="Music" onClick={() => navigate('/music')} />
         <GhostedRailButton icon={Radio} label="Radio" onClick={() => navigate('/radio')} />
       </div>
