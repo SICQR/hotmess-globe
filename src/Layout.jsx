@@ -6,7 +6,10 @@ import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Search
 import { supabase } from '@/components/utils/supabaseClient';
 import { updatePresence } from '@/api/presence';
 import SafetyFAB from '@/components/safety/SafetyFAB';
-import GlobalRail from '@/components/global/GlobalRail';
+import IOSInstallPrompt from '@/components/install/IOSInstallPrompt';
+import BellRailIcon from '@/components/rail/BellRailIcon';
+import RadioRailIcon from '@/components/rail/RadioRailIcon';
+import SearchRailIcon from '@/components/rail/SearchRailIcon';
 import NotificationBadge from '@/components/messaging/NotificationBadge';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import GlobalSearch from '@/components/search/GlobalSearch';
@@ -20,6 +23,7 @@ import SkipToContent from '@/components/accessibility/SkipToContent';
 import { useKeyboardNav } from '@/components/accessibility/KeyboardNav';
 import { A11yAnnouncer } from '@/components/accessibility/KeyboardNav';
 import WelcomeTour from '@/components/onboarding/WelcomeTour';
+import UsernameClaimSheet from '@/components/onboarding/UsernameClaimSheet';
 import RightNowNotifications from '@/components/discovery/RightNowNotifications';
 import { useRadio } from '@/contexts/RadioContext';
 import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
@@ -50,14 +54,6 @@ function LayoutInner({ children, currentPageName }) {
   const [showSearch, setShowSearch] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-
-  // GlobalRail dispatches 'global-search:open' when its Search icon is tapped.
-  // Layout owns the GlobalSearch overlay state, so we listen and flip the flag.
-  useEffect(() => {
-    const handler = () => setShowSearch(true);
-    window.addEventListener('global-search:open', handler);
-    return () => window.removeEventListener('global-search:open', handler);
-  }, []);
   const { togglePlay: toggleRadio, isPlaying: isRadioOpen } = useRadio();
 
   // Enable OS URL sync
@@ -197,8 +193,39 @@ function LayoutInner({ children, currentPageName }) {
           }
         }
 
-        // GATEKEEPER: Block all access until consent_accepted is true
-        if (currentPageName !== 'AccountConsents' && currentPageName !== 'AgeGate' && !currentUser?.consent_accepted) {
+        // Phil 2026-05-31 hotfix-4: the bouncer Phil pointed at from the
+        // start. The Layout chrome wraps these Settings-linked legacy pages
+        // (CommunityGuidelines, HelpCenter, Contact, PrivacyPolicy,
+        // TermsOfService, AccountDeletion) and previously ran the
+        // consent + onboarding + profile-completeness gates on mount. If
+        // ANY of those gates fired (e.g. user without has_consented_data
+        // navigates to /Contact from Settings), Layout pushed to
+        // OnboardingGate/AccountConsents/Profile, swallowing the
+        // navigation. These pages are HELP / LEGAL surfaces and must
+        // remain accessible regardless of consent state — they are how
+        // users find policy info, get help, or request account deletion.
+        const LAYOUT_GATE_BYPASS = new Set([
+          'AccountConsents',
+          'AgeGate',
+          'Auth',
+          'OnboardingGate',
+          'Settings',
+          'Profile',
+          // Help + legal pages — accessible regardless of consent state.
+          'CommunityGuidelines',
+          'HelpCenter',
+          'Contact',
+          'PrivacyPolicy',
+          'TermsOfService',
+          'AccountDeletion',
+        ]);
+
+        // GATEKEEPER: Block all access until consent_accepted is true.
+        // /auth (currentPageName='Auth') is exempt — it's a public sign-in surface
+        // and the consent check happens AFTER successful login. Without this
+        // exemption, /auth bounces to AccountConsents which cascades into the
+        // splash + navigate('/') chain (Phil bug report 2026-05-27).
+        if (!LAYOUT_GATE_BYPASS.has(currentPageName) && !currentUser?.consent_accepted) {
           navigate(createPageUrl('AccountConsents'));
           return;
         }
@@ -206,10 +233,7 @@ function LayoutInner({ children, currentPageName }) {
         // Onboarding gate: require terms + data consent.
         // GPS consent is optional and should only gate location-based features.
         if (
-          currentPageName !== 'OnboardingGate' &&
-          currentPageName !== 'AccountConsents' &&
-          currentPageName !== 'AgeGate' &&
-          currentPageName !== 'Settings' &&
+          !LAYOUT_GATE_BYPASS.has(currentPageName) &&
           (!currentUser?.has_agreed_terms || !currentUser?.has_consented_data)
         ) {
           navigate(createPageUrl('OnboardingGate'));
@@ -218,11 +242,7 @@ function LayoutInner({ children, currentPageName }) {
 
         // Check if profile setup is incomplete
         if (
-          currentPageName !== 'Profile' &&
-          currentPageName !== 'Settings' &&
-          currentPageName !== 'OnboardingGate' &&
-          currentPageName !== 'AccountConsents' &&
-          currentPageName !== 'AgeGate' &&
+          !LAYOUT_GATE_BYPASS.has(currentPageName) &&
           (!currentUser?.full_name || !currentUser?.avatar_url)
         ) {
           const next = encodeURIComponent(`${window.location.pathname}${window.location.search || ''}`);
@@ -329,14 +349,46 @@ function LayoutInner({ children, currentPageName }) {
     };
   }, [user?.has_consented_gps]);
 
-  // On OS mode routes, render children only — no old header/nav/chrome
-  // (placed after all hooks to satisfy Rules of Hooks)
-  // On OS mode routes, render children with proper safety padding so they aren't hidden by bars
+  // Phil 2026-05-31 hotfix-5: ALWAYS pass-through. OSArchitecture is the
+  // canonical chrome provider (TopHUD + OSBottomNav + SafetyFAB live inside
+  // OSArchitecture, OUTSIDE this Layout's positioning). When Layout ALSO
+  // renders its full chrome (mobile header + sidebar + bottom nav), Phil
+  // sees DOUBLE everything — duplicate HOTMESS bar, duplicate Settings link
+  // in the Layout sidebar (which already exists in OS chrome), duplicate
+  // Profile section card, duplicate bottom nav. That's "the other nav bar
+  // at the top" Phil flagged on the very first message.
+  //
+  // Auth / AgeGate / OnboardingGate / AccountConsents render via
+  // OnboardingRouter — which is rendered by BootRouter INSTEAD of
+  // OSArchitecture, so this Layout never wraps them in that mode. If a
+  // user somehow lands on /onboarding while authenticated, OSArchitecture
+  // chrome wraps it; that's acceptable since OnboardingGate has its own
+  // page chrome.
+  //
+  // The full Layout chrome JSX below is preserved as dead code in case a
+  // standalone-shell render is ever needed (legacy /auth surfaces, etc.)
+  // but is unreachable via the production route table.
+  // Phil 2026-05-31 hotfix-6: long pages (CommunityGuidelines, HelpCenter,
+  // PrivacyPolicy, TermsOfService) need to scroll. OSArchitecture wraps
+  // AuthenticatedApp in an absolute-positioned div with bounded top/bottom
+  // and no overflow — so the scroll container has to live HERE.
+  // h-full + overflow-y-auto matches the chromed-render path's wrapper
+  // (which was `<div className="h-full overflow-y-auto bg-black text-white">`)
+  // so any page that expected to scroll inside Layout still scrolls.
+  return (
+    <div className="h-full overflow-y-auto overflow-x-hidden bg-black text-white">
+      <main className="min-h-full w-full">
+        {children}
+      </main>
+    </div>
+  );
+
+  // eslint-disable-next-line no-unreachable
   if (isOSModePath(pathname)) {
     return (
       <div className="flex flex-col min-h-screen bg-black overflow-x-hidden transition-all duration-300">
         {/* Top spacer for the marquee/banner - Balanced with App.jsx offset */}
-        <div className="h-10 flex-shrink-0" /> 
+        <div className="h-10 flex-shrink-0" />
 
         <main className="flex-1 w-full max-w-lg mx-auto md:ml-64 relative px-4 md:px-0">
           {children}
@@ -362,6 +414,11 @@ function LayoutInner({ children, currentPageName }) {
   return (
     <ErrorBoundary>
         <TaxonomyProvider>
+          {/* Phil 2026-06-01 Task #510 — Forced username gate. Mounts inside the
+              providers but above page chrome so it covers every route including
+              /pulse. Component is null-safe: returns null when user has a
+              username, when unauthenticated, or while bootState is LOADING. */}
+          <UsernameClaimSheet />
           <SkipToContent />
           <A11yAnnouncer />
           <OfflineIndicator />
@@ -531,7 +588,7 @@ function LayoutInner({ children, currentPageName }) {
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
-                      window.location.href = '/auth';
+                      window.location.href = "/";
                     }}
                     className="w-full text-left px-3 py-2 bg-[#C8962C] hover:bg-[#B07F1F] text-black text-xs uppercase tracking-wider font-bold mt-2"
                   >
@@ -652,7 +709,7 @@ function LayoutInner({ children, currentPageName }) {
                 </>
               ) : (
                 <button
-                  onClick={() => { window.location.href = '/auth'; }}
+                  onClick={() => { window.location.href = "/"; }}
                   className="w-full px-3 py-2 bg-[#C8962C] hover:bg-[#B07F1F] text-black text-xs uppercase tracking-wider font-bold transition-all"
                 >
                   Login
@@ -683,13 +740,27 @@ function LayoutInner({ children, currentPageName }) {
       {/* Safety FAB - replaces old Panic Button */}
       {user && <SafetyFAB />}
 
-      {/* Global Rail — Bell + Search Tier 2 icons (D16 §10.1) — Phil ratified
-          2026-06-03 (Z). Sits top-right safely away from SafetyFAB. The bell
-          opens notification-inbox which now receives boo rows via the new
-          notify_on_boo trigger. */}
-      {user && <GlobalRail />}
+      {/* iOS regular-Safari → Add to Home Screen prompt (D17, gated by detection) */}
+      {user && <IOSInstallPrompt />}
 
-      {/* Global Search — listens for global-search:open event from GlobalRail */}
+      {/* Notification bell — Tier 2 (System) per D16 §10. Lives on every page,
+          replaces inconsistent TopHUD bell that was hidden on Pulse via !isPulse. */}
+      {user && <BellRailIcon />}
+
+      {/* Search rail icon — Tier 2 (System) per D16 §10, Pulse-only mount.
+          Phil 2026-06-02 P0.3 — relocated from TopHUD centre input to the rail.
+          Overlay it opens is D35 §13.4-compliant (living context first frame). */}
+      {user && currentPageName === 'Pulse' && <SearchRailIcon top={116} />}
+
+      {/* Radio rail icon — Tier 4 (Page-secondary) per D16 §10.
+          Phil 2026-06-02 P0.4 — mounted on Pulse / Ghosted / Music / Shop.
+          Position 116 on non-Pulse pages (no Search above it), 168 on Pulse
+          (below Search). State-at-rest: now-playing dot when broadcasting. */}
+      {user && ['Pulse', 'Ghosted', 'Music', 'Shop'].includes(currentPageName) && (
+        <RadioRailIcon top={currentPageName === 'Pulse' ? 168 : 116} />
+      )}
+
+      {/* Global Search */}
       {user && <GlobalSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />}
 
       {/* Event Reminders Background Service */}
@@ -719,4 +790,3 @@ export default function Layout(props) {
     </TonightModeProvider>
   );
 }
-
