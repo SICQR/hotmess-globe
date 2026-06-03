@@ -327,7 +327,10 @@ function BeaconCreator({ onSuccess }) {
       const now = new Date();
       const endsAt = new Date(now.getTime() + duration.ms);
 
-      const titleStr = formData.title.trim() || null;
+      // P0 — title is NOT NULL in DB. Empty input was producing null insert
+      // → Postgres 23502. Default to intent label so user can drop without
+      // typing a title (the intent IS the signal). Phil 2026-06-03 live repro.
+      const titleStr = formData.title.trim() || intentSpec.label || 'Beacon';
       const descStr  = formData.description.trim() || null;
       const addrStr  = formData.address.trim() || null;
 
