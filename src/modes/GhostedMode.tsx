@@ -11,6 +11,8 @@ import { useBoostedUserIds } from '@/hooks/useBoostedUserIds';
 import { useUserBenefits } from '@/hooks/useUserBenefits';
 import { GhostedCard } from '@/components/ghosted/GhostedCard';
 import { GhostedRecentStories } from '@/components/ghosted/GhostedRecentStories';
+import { GhostedActivityRibbon } from '@/components/ghosted/GhostedActivityRibbon';
+import { CareOnTheGroundStrip } from '@/components/ghosted/CareOnTheGroundStrip';
 import { AtmosphericImageCard } from '@/components/brand/AtmosphericImageCard';
 import { supabase } from '@/components/utils/supabaseClient';
 
@@ -197,6 +199,20 @@ export default function GhostedMode() {
             their active beacons are listed). Renders nothing when there's
             nobody to show, so the grid below always carries the page. */}
         <GhostedRecentStories currentUserEmail={myEmail} currentUserId={myUserId} />
+
+        {/* ── ON THE GROUND TONIGHT — curated care beacons. Phil 2026-06-03
+            Samui Ghosted revival. Cream-quiet visual, NOT gold-glowy, so the
+            sexual/social grid still leads the room. Care reads as ground
+            truth here, never as a recovery directory. Renders nothing when
+            no live care beacons exist. */}
+        <CareOnTheGroundStrip />
+
+        {/* ── ACTIVITY RIBBON — honest pulse of the room. "X now · Y today
+            · Z this week" plus an atmospheric tone line when the field is
+            genuinely quiet ("The field is quiet. Signals still moving.").
+            Phil 2026-06-03 Samui — no faked heat, no fake "everyone online".
+            Says the truth so the room reads watched-over, not dead. */}
+        <GhostedActivityRibbon />
 
         {/* Filter chips — Brief 03 doctrine. Tap to toggle; second tap clears.
             Filter logic lives in useGhostedGrid (server-side row filter).

@@ -28,6 +28,9 @@ import {
 // signalStrengthFromMeters import removed — replaced with travelTime.personDefaultCue
 // per Phil brief 2026-05-26 Phase 2 (bucketed walk-only cue, no signal jargon).
 import { personDefaultCue } from '@/lib/travelTime';
+// Phil 2026-06-03 Samui — Ghosted grid revival. Shared recency + FRESH
+// vocabulary so the inbox row and the grid card speak the same language.
+import { recencyLabel, isFreshProfile } from '@/lib/identity/recencyLabel';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -84,6 +87,15 @@ export interface GhostedCardProps {
    *  glow distinct from the beacon ring. Sort-to-top is handled upstream
    *  in GhostedMode; this prop is purely visual affordance. */
   isBoosted?: boolean;
+  /** Phil 2026-06-03 — counterpart last_seen ISO. Used to render the
+   *  recency fallback line (ACTIVE NOW / EARLIER / TODAY / THIS WEEK) when
+   *  distance is unavailable so quiet hours don't read as dead. Also
+   *  hardens the online dot — pulse only fires for genuine ACTIVE_NOW. */
+  lastSeenISO?: string | null;
+  /** Phil 2026-06-03 — counterpart profile created_at ISO. Drives the
+   *  FRESH corner pill for accounts under 7 days old. Adds variation
+   *  across cards without needing presence data. */
+  createdAtISO?: string | null;
 }
 
 interface GhostedCardComponentProps extends GhostedCardProps {
@@ -117,6 +129,8 @@ function GhostedCardInner({
   lookingFor,
   beacon,
   isBoosted,
+  lastSeenISO,
+  createdAtISO,
   index,
   onTap,
 }: GhostedCardComponentProps) {
@@ -153,6 +167,17 @@ function GhostedCardInner({
   const mergedLine = (distanceM != null && Number.isFinite(distanceM) && distanceM <= 30000)
     ? personDefaultCue(distanceM)
     : null;
+
+  // Phil 2026-06-03 Samui — recency fallback. When distance is unavailable
+  // (86% of profiles today have no location), the card otherwise renders
+  // no human signal at all. Recency lets the field breathe: ACTIVE NOW /
+  // EARLIER / TODAY / THIS WEEK depending on last_seen. Returns { label:
+  // null } when last_seen is older than a week — silence beats a stale cue.
+  const recency = recencyLabel(lastSeenISO);
+  // Recency renders ONLY as a fallback when there's no distance line. The
+  // proximity primitive wins when both are available — a real metres-away
+  // cue is more useful to the user than a recency bucket.
+  const recencyFallbackLabel = !mergedLine ? recency.label : null;
 
   return (
     <motion.button
@@ -247,18 +272,45 @@ function GhostedCardInner({
         }}
       />
 
-      {/* Presence — detected, not announced. 6px, desaturated, inset. */}
+      {/* Presence — louder, pulsing, only when genuinely online.
+          Phil 2026-06-03 Samui — old dot was 6px @ 55% alpha, invisible to
+          the user. Bumped to 9px @ 95%, soft pulse animation, broader glow.
+          Hard requirement Phil set: pulse fires ONLY when truly online —
+          never simulate liveness when the substrate is quiet. */}
       {isOnline && (
-        <span
+        <motion.span
           className="absolute rounded-full"
           style={{
-            top: 10, right: 10,
-            width: 6, height: 6,
-            background: 'rgba(48,209,88,0.55)',
-            boxShadow: '0 0 4px rgba(48,209,88,0.25)',
+            top: 9, right: 9,
+            width: 9, height: 9,
+            background: '#30D158',
+            boxShadow: '0 0 8px rgba(48,209,88,0.65), 0 0 0 1.5px rgba(5,5,7,0.55)',
           }}
+          animate={{ opacity: [0.85, 1, 0.85] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
           aria-label="Online"
         />
+      )}
+
+      {/* FRESH pill — accounts under 7 days old. Phil 2026-06-03 Samui:
+          adds variation across cards even when presence signals are dim.
+          Cream tag (not gold) so it never competes with the beacon ring,
+          tucked top-LEFT to avoid colliding with the online dot top-right.
+          Suppressed when mutual/boo glyph already occupies that corner. */}
+      {createdAtISO && isFreshProfile(createdAtISO) && !(isMutual || isBood) && (
+        <span
+          className="absolute text-[8px] font-black tracking-[0.12em] uppercase rounded-sm px-1 py-0.5"
+          style={{
+            top: 7, left: 7,
+            color: 'rgba(245,238,220,0.92)',
+            background: 'rgba(5,5,7,0.6)',
+            border: '1px solid rgba(245,238,220,0.32)',
+            backdropFilter: 'blur(2px)',
+          }}
+          aria-label="New profile"
+        >
+          FRESH
+        </span>
       )}
 
       {/* Mutual / Boo — tiny corner glyph, no loud labels. Mutual gets the
@@ -401,6 +453,42 @@ function GhostedCardInner({
               </motion.span>
             )}
             {mergedLine}
+          </span>
+        )}
+
+        {/* Recency fallback line — renders only when distance is unavailable
+            AND there's a valid recency band. ACTIVE NOW reads green, the
+            older bands fade through cream. Caps + tracking so it reads as
+            state, not a tag line. Phil 2026-06-03 Samui — breaks the
+            "< 5 min away" monotony when proximity data isn't there.
+            Doctrine: D17 no silent affordance, D35 caps for state words. */}
+        {!mergedLine && recencyFallbackLabel && !beaconLabel && (
+          <span
+            className="text-[10px] font-black tracking-[0.10em] uppercase leading-tight flex items-center gap-1 truncate"
+            style={{
+              color: recency.isLive
+                ? '#30D158'
+                : recency.band === 'EARLIER'
+                  ? 'rgba(245,238,220,0.72)'
+                  : recency.band === 'TODAY'
+                    ? 'rgba(245,238,220,0.55)'
+                    : 'rgba(245,238,220,0.40)',
+            }}
+            aria-label={`Last active: ${recencyFallbackLabel}`}
+          >
+            {recency.isLive && (
+              <span
+                aria-hidden="true"
+                className="inline-block rounded-full flex-shrink-0"
+                style={{
+                  width: 4,
+                  height: 4,
+                  background: '#30D158',
+                  boxShadow: '0 0 3px #30D158',
+                }}
+              />
+            )}
+            <span className="truncate">{recencyFallbackLabel}</span>
           </span>
         )}
       </div>

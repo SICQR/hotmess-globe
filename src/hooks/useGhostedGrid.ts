@@ -325,7 +325,7 @@ export function useGhostedGrid(
         .from('profiles')
         .select(`
           id, email, display_name, username, avatar_url,
-          is_online, age, looking_for, is_verified, last_seen
+          is_online, age, looking_for, is_verified, last_seen, created_at
         `)
         .in('id', visibleIds)
         ;
@@ -449,6 +449,12 @@ export function useGhostedGrid(
           lookingFor: Array.isArray(p.looking_for) ? p.looking_for.filter(Boolean) : null,
           email: p.email || null,
           beacon: beaconBadgesByOwner.get(p.id) || null,
+          // Phil 2026-06-03 Samui — recency + FRESH state for the card.
+          // GhostedCard uses lastSeenISO to render ACTIVE NOW / EARLIER /
+          // TODAY / THIS WEEK when distance is unavailable, and createdAtISO
+          // to render a FRESH pill on accounts under 7 days old.
+          lastSeenISO: p.last_seen || null,
+          createdAtISO: p.created_at || null,
         } as GhostedCardProps;
       })
       .sort((a: GhostedCardProps, b: GhostedCardProps) => {
@@ -519,6 +525,9 @@ export function useGhostedGrid(
           intent: null,
           email: p.email || null,
           beacon: beaconBadgesByOwner.get(p.id) || null,
+          // Phil 2026-06-03 Samui — recency + FRESH state parity (see nearby).
+          lastSeenISO: p.last_seen || null,
+          createdAtISO: p.created_at || null,
         } as GhostedCardProps;
       });
   }, [liveQuery.data, blockedIds, myLat, myLng, beaconBadgesByOwner]);
@@ -555,6 +564,9 @@ export function useGhostedGrid(
           lookingFor: Array.isArray(p.looking_for) ? p.looking_for.filter(Boolean) : null,
           email: p.email || null,
           beacon: beaconBadgesByOwner.get(p.id) || null,
+          // Phil 2026-06-03 Samui — recency + FRESH state parity (see nearby).
+          lastSeenISO: p.last_seen || null,
+          createdAtISO: p.created_at || null,
         } as GhostedCardProps;
       });
   }, [recentQuery.data, blockedIds, myLat, myLng, beaconBadgesByOwner]);
