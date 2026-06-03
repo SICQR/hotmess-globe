@@ -168,3 +168,33 @@ Doctrines pending hooks: D11, D14, D15, D16, D17, D18, D20, D22, D34, D35, D43, 
 ---
 
 *End of D53.*
+
+
+---
+
+## §4.1 v2 — Personal Beacon Anchor (Phil 2026-06-03 Samui ratification)
+
+D53 §4.1 originally locked three classes: RADIO anchor (leftmost), care (max 3), person stories. This amendment adds a fourth class — the **Personal Beacon Anchor** — and re-numbers position 0.
+
+### Locked positions
+
+| Position | Class | Permanence | Tap behavior |
+| --- | --- | --- | --- |
+| 0 | Personal beacon anchor | always (when authed) | inactive → drop intent picker; active → flyTo my beacon on Pulse |
+| 1 | RADIO operator entity | always | open radio sheet |
+| 2..4 | Care beacons | max 3 | flyTo beacon on Pulse |
+| 5..N | Person stories | newest beacon-first | open profile |
+
+The personal anchor inherits the Instagram-familiar leftmost-avatar-with-plus interaction language. It does NOT inherit Instagram's emotional system. The mechanic is observation-shorthand; the meaning is presence-broadcasting.
+
+### Cognitive rule
+
+The tile must psychologically read **"go live"** — never **"create content"**.
+
+Allowed visual states: avatar + `+` badge (inactive), gold ring + pulse (live), faded (recently expired). Disallowed: notification counters, viewer counts, like-style affordances, "story" framing.
+
+### Why this is not a doctrine violation
+
+Three creator entries now exist for beacon drop: Pulse Drop FAB (D17), Home Drop Hero (D17), and Ghosted Personal Anchor (this section). D17 §3 is amended below to permit multiple entry points provided every one routes to the same canonical L2BeaconSheet creator branch and preserves the emit-presence framing.
+
+See D17 §3 amendment "Familiar Patterns / Adapted Meaning."
