@@ -223,7 +223,7 @@ export function ShopEngine({ search, className = '' }: { search: string; classNa
                 key={product.id}
                 product={product}
                 index={i}
-                onTap={() => openSheet('product', { product, source: 'shopify' })}
+                onTap={() => openSheet('product', { product, handle: product.handle || product.metadata?.handle, source: 'shopify' })}
               />
             ))}
           </div>
