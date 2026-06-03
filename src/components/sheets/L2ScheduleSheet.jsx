@@ -4,23 +4,28 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Radio, Calendar, Clock, Loader2, Play } from 'lucide-react';
+import { Radio, Calendar, Clock, Loader2, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { format, isToday, isTomorrow } from 'date-fns';
-
-const SHOWS = [
-  { id: '1', title: 'Wake the Mess', host: 'DJ Chaos', time: '08:00', days: 'Mon–Fri', genre: 'House / Disco' },
-  { id: '2', title: 'Hand N Hand', host: 'RAWCONVICT', time: '12:00', days: 'Daily', genre: 'Deep House' },
-  { id: '3', title: 'Dial-a-Daddy', host: 'Big Daddy', time: '22:00', days: 'Fri–Sat', genre: 'Techno / Dark' },
-  { id: '4', title: 'Raw Sessions', host: 'The Collective', time: '18:00', days: 'Wed', genre: 'Experimental' },
-];
+import { RADIO_SHOWS } from '@/lib/data/radioShows';
+// Phil 2026-06-03 — local SHOWS array deleted; single source of truth lives
+// in @/lib/data/radioShows (D53 §1.4). Adding/editing shows happens there.
 
 export default function L2ScheduleSheet() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('radio');
-  const { openSheet } = useSheet();
+  const { openSheet, closeSheet } = useSheet();
+  const navigate = useNavigate();
+  // closeSheet is called before navigate so the schedule sheet doesn't
+  // briefly cover the show page. The route change would also unmount, but
+  // explicit close keeps the transition clean.
+  const handleShowTap = (showId) => {
+    try { closeSheet?.(); } catch (_) { /* non-fatal */ }
+    navigate(`/music/shows/${showId}`);
+  };
 
   useEffect(() => {
     supabase
@@ -67,27 +72,38 @@ export default function L2ScheduleSheet() {
       <div className="flex-1 overflow-y-auto">
         {tab === 'radio' && (
           <div className="divide-y divide-white/5">
-            {SHOWS.map(show => (
-              <div key={show.id} className="px-4 py-4 flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl bg-[#C8962C]/20 flex items-center justify-center flex-shrink-0">
-                  <Radio className="w-5 h-5 text-[#C8962C]" />
+            {RADIO_SHOWS.map(show => (
+              <button
+                key={show.id}
+                onClick={() => handleShowTap(show.id)}
+                className="w-full px-4 py-4 flex items-center gap-3 text-left active:bg-white/5 transition-colors"
+                aria-label={`Open show: ${show.name}`}
+              >
+                <div className="w-11 h-11 rounded-xl bg-[#C8962C]/20 flex items-center justify-center flex-shrink-0 text-xl">
+                  <span aria-hidden>{show.emoji}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white font-bold text-sm">{show.title}</p>
-                  <p className="text-white/40 text-xs mt-0.5">{show.host} · {show.genre}</p>
-                  <p className="text-[#C8962C] text-[10px] mt-0.5 font-semibold">
-                    {show.time} · {show.days}
+                  <p className="text-white font-bold text-sm truncate">{show.name}</p>
+                  <p className="text-white/40 text-xs mt-0.5 truncate">{show.host}</p>
+                  <p className="text-[#C8962C] text-[10px] mt-0.5 font-semibold truncate">
+                    {show.time}
                   </p>
                 </div>
-                <a
-                  href="https://listen.radioking.com/radio/736103/stream/802454"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-8 h-8 rounded-full bg-[#C8962C]/20 flex items-center justify-center flex-shrink-0"
+                {/* Coming Soon atmospheric pill — D55 register, replaces
+                    the external Play link that was a dead-end out of the app
+                    and lied about which show was playing. */}
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.15em] border flex-shrink-0"
+                  style={{
+                    background: 'rgba(200,150,44,0.08)',
+                    borderColor: 'rgba(200,150,44,0.35)',
+                    color: '#C8962C',
+                  }}
                 >
-                  <Play className="w-3.5 h-3.5 text-[#C8962C] ml-0.5" />
-                </a>
-              </div>
+                  Soon
+                </span>
+                <ChevronRight className="w-4 h-4 text-white/20 flex-shrink-0" />
+              </button>
             ))}
           </div>
         )}
