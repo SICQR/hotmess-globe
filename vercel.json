@@ -116,6 +116,10 @@
       "dest": "/api/$1"
     },
     {
+      "src": "^/feedback/?$",
+      "dest": "/feedback.html"
+    },
+    {
       "handle": "filesystem"
     },
     {
