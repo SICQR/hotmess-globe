@@ -240,11 +240,42 @@ function GhostedCardInner({
     <motion.button
       className="relative w-full aspect-[4/5] rounded-xl overflow-hidden bg-[#1C1C1E] focus:outline-none focus:ring-2 focus:ring-[#C8962C]/50"
       style={(() => {
+        // Phil 2026-06-03 Vitality Slice 2 — signal density weight.
+        // Count emitted signals to drive opacity / scale / glow. The grid stops
+        // reading as identical rectangles when loud cards literally radiate
+        // and quiet cards recede. Three bands:
+        //   loud   (>=3 signals) — full opacity + slight scale-up + soft warm glow
+        //   medium (1-2 signals) — neutral
+        //   quiet  (0 signals)   — opacity 0.65 — silhouette / dead cards fade
+        // Halo bleed COUNTS as a signal — that's the whole point of
+        // environmental warmth; cards near a beacon should read warmer.
+        const signalScore =
+          (isOnline ? 1 : 0) +
+          (beacon ? 1 : 0) +
+          (beaconHaloColor ? 1 : 0) +
+          (isMutual ? 1 : 0) +
+          (createdAtISO && isFreshProfile(createdAtISO) ? 1 : 0) +
+          (Array.isArray(lookingFor) && lookingFor.length > 0 ? 1 : 0) +
+          (recencyLabel(lastSeenISO).isLive ? 1 : 0);
+        const weight: 'loud' | 'medium' | 'quiet' =
+          signalScore >= 3 ? 'loud' : signalScore >= 1 ? 'medium' : 'quiet';
+
         // Beacon ring stacks ON TOP of the mutual-boo inset edge.
         // 2px inset glow in the beacon's category colour reads as "live signal"
         // without crowding the photo. Decaying state drops opacity to 0.55 so
         // the eye still groups the card with live cards but registers fade.
         const shadows: string[] = [];
+
+        // Phil 2026-06-03 — Beacon halo bleed. When the card sits ≤200m from
+        // a live beacon (and doesn't own one itself), render a thin outer
+        // ring tinted to the beacon's category colour. Subtle — 1.5px,
+        // ~45% alpha, no glow. Reads as ambient environmental warmth, not as
+        // ownership. This is the move that ties the grid to the room.
+        if (beaconHaloColor && !beacon) {
+          shadows.push(`0 0 0 1px ${beaconHaloColor}66`);
+          shadows.push(`0 0 10px ${beaconHaloColor}26`);
+        }
+
         if (beacon) {
           const c = beacon.color;
           shadows.push(`inset 0 0 0 2px ${c}`);
@@ -261,7 +292,34 @@ function GhostedCardInner({
           shadows.push('0 0 0 1.5px rgba(200,150,44,0.85)');
           shadows.push('0 0 14px rgba(200,150,44,0.45)');
         }
-        return shadows.length ? { boxShadow: shadows.join(', '), opacity: ringAlpha < 0.95 ? 0.9 : 1 } : undefined;
+
+        // Weight-driven warm glow on loud cards. Subtle gold halo on the
+        // OUTSIDE so the loud card pulls forward visually without imitating
+        // any single signal's colour.
+        if (weight === 'loud') {
+          shadows.push('0 0 18px rgba(200,150,44,0.18)');
+        }
+
+        // Weight-driven opacity. Quiet cards fade so the eye reads them as
+        // ambient rather than competing with loud ones. Decaying beacon
+        // lifecycle still overrides toward 0.9 per existing rule.
+        const weightOpacity =
+          ringAlpha < 0.95 ? 0.9 :
+          weight === 'quiet' ? 0.65 :
+          1;
+
+        // Note: weight-driven scale was considered here but framer-motion's
+        // whileTap={scale: 0.97} composes badly with a CSS transform on the
+        // same element — the tap-scale silently drops. The parent GhostedMode
+        // already applies per-index cycle-based scale jitter, which gives
+        // the grid organic density without colliding with the tap gesture.
+        // Loud cards still pull forward via the warm gold glow above; quiet
+        // cards recede via opacity below. Scale-driven weight is deferred.
+        return {
+          ...(shadows.length ? { boxShadow: shadows.join(', ') } : {}),
+          opacity: weightOpacity,
+          transition: 'opacity 220ms ease, box-shadow 220ms ease',
+        };
       })()}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
