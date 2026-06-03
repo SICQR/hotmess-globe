@@ -1456,7 +1456,7 @@ export default function L2BeaconSheet({ beaconId, beacon }) {
       // and during render — works whether we're already on /pulse or
       // arriving from elsewhere.
       setTimeout(() => {
-        try { window.dispatchEvent(new CustomEvent('pulse:flyto', { detail: { lat, lng, zoom: 15 } })); } catch { /* non-fatal */ }
+        try { window.dispatchEvent(new CustomEvent('pulse:flyto', { detail: { lat, lng, zoom: 14 } })); } catch { /* non-fatal */ }
         navigate('/pulse');
       }, 60);
     }

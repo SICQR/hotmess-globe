@@ -129,7 +129,7 @@ export function GhostedRecentStories({
       navigate('/pulse');
       // Dispatch after the route swap so PulseMap has mounted its listener.
       setTimeout(() => {
-        try { window.dispatchEvent(new CustomEvent('pulse:flyto', { detail: { lat, lng, zoom: 15 } })); } catch { /* non-fatal */ }
+        try { window.dispatchEvent(new CustomEvent('pulse:flyto', { detail: { lat, lng, zoom: 14 } })); } catch { /* non-fatal */ }
       }, 60);
       return;
     }
