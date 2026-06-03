@@ -300,26 +300,27 @@ function GhostedCardInner({
           shadows.push('0 0 18px rgba(200,150,44,0.18)');
         }
 
-        // Weight-driven opacity. Quiet cards fade so the eye reads them as
-        // ambient rather than competing with loud ones. Decaying beacon
-        // lifecycle still overrides toward 0.9 per existing rule.
-        const weightOpacity =
-          ringAlpha < 0.95 ? 0.9 :
-          weight === 'quiet' ? 0.65 :
-          1;
-
-        // Note: weight-driven scale was considered here but framer-motion's
+        // CRITICAL FIX 2026-06-03 — `opacity` MUST NOT be set in inline
+        // style on this motion.button. Framer-motion's `initial={{ opacity:
+        // 0 }} -> animate={{ opacity: 1 }}` animation treats an explicit
+        // style.opacity as a static value, suppresses the enter animation,
+        // and the card stays at opacity 0. Result: invisible grid (verified
+        // on the #856 preview).
+        //
+        // Weight-driven opacity (quiet cards fade) needs to be passed through
+        // framer-motion's animate prop, not inline style. Deferred to the
+        // next iteration. For now, the LOUD card gold glow is doing the
+        // weight work — that's added via boxShadow which doesn't collide
+        // with framer-motion.
+        //
+        // Note also: weight-driven SCALE was considered but framer-motion's
         // whileTap={scale: 0.97} composes badly with a CSS transform on the
-        // same element — the tap-scale silently drops. The parent GhostedMode
-        // already applies per-index cycle-based scale jitter, which gives
-        // the grid organic density without colliding with the tap gesture.
-        // Loud cards still pull forward via the warm gold glow above; quiet
-        // cards recede via opacity below. Scale-driven weight is deferred.
-        return {
-          ...(shadows.length ? { boxShadow: shadows.join(', ') } : {}),
-          opacity: weightOpacity,
-          transition: 'opacity 220ms ease, box-shadow 220ms ease',
-        };
+        // same element. Loud cards pull forward via the warm gold glow;
+        // quiet card fade is deferred.
+        return shadows.length ? {
+          boxShadow: shadows.join(', '),
+          transition: 'box-shadow 220ms ease',
+        } : undefined;
       })()}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
