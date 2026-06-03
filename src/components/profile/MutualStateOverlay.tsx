@@ -61,9 +61,7 @@ export function MutualStateOverlay({
           aria-label={`Mutual with ${firstName}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          // HOTFIX 2026-06-03: drop pointer-events on exit so the underlying
-          // profile sheet doesn't absorb mid-fade taps that look like dead UI.
-          exit={{ opacity: 0, pointerEvents: 'none', transition: { duration: 0.24 } }}
+          exit={{ opacity: 0, transition: { duration: 0.24 } }}
           transition={{ duration: 0.28, ease: [0.22, 0.61, 0.36, 1] }}
           style={{
             position: 'absolute',
