@@ -161,7 +161,19 @@ export function SheetProvider({ children }) {
         // Mirror Effect 1's deep-link param set (id/email/thread/handle).
         // Set when provided; delete when not — prevents stale params bleeding
         // from the previous sheet (e.g. profile id leaking into photos).
-        ['id', 'email', 'thread', 'handle'].forEach((k) => {
+        // #599 — read deepLinkParams from registry, not hardcoded.
+        // Old code only synced ['id','email','thread','handle']. The 'beacon'
+        // kind needs 'beaconId' (registry contract). Tapping a beacon set
+        // ?sheet=beacon but dropped beaconId, so URL→state rehydration mounted
+        // L2BeaconSheet with empty props → fell through to BeaconCreator
+        // (drop intent picker) on every beacon tap. Phil 2026-06-03 live repro.
+        const def = SHEET_REGISTRY[type];
+        const linkParams = (def && Array.isArray(def.deepLinkParams) && def.deepLinkParams.length > 0)
+          ? def.deepLinkParams
+          : ['id', 'email', 'thread', 'handle'];
+        // Always clear the legacy set too so stale params from a different
+        // sheet (e.g. ?id= left from a profile sheet) don't bleed across.
+        new Set([...linkParams, 'id', 'email', 'thread', 'handle']).forEach((k) => {
           if (props && props[k] != null) u.searchParams.set(k, String(props[k]));
           else u.searchParams.delete(k);
         });
@@ -194,11 +206,22 @@ export function SheetProvider({ children }) {
     if (typeof window !== 'undefined') {
       try {
         const u = new URL(window.location.href);
+        // #599 — delete ALL possible link params from any registered sheet kind
         u.searchParams.delete('sheet');
-        u.searchParams.delete('id');
-        u.searchParams.delete('email');
-        u.searchParams.delete('thread');
-        u.searchParams.delete('handle');
+        try {
+          const allKeys = new Set(['id','email','thread','handle']);
+          if (typeof SHEET_REGISTRY === 'object') {
+            for (const def of Object.values(SHEET_REGISTRY)) {
+              if (def && Array.isArray(def.deepLinkParams)) {
+                for (const k of def.deepLinkParams) allKeys.add(k);
+              }
+            }
+          }
+          for (const k of allKeys) u.searchParams.delete(k);
+        } catch (_) {
+          // fallback: delete the legacy hardcoded set
+          ['id','email','thread','handle'].forEach(k => u.searchParams.delete(k));
+        }
         window.history.replaceState(null, '', u.toString());
       } catch (_) { /* non-fatal */ }
     }
