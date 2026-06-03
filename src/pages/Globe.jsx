@@ -699,13 +699,14 @@ export default function GlobePage({ embedded = false }) {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => {
-                  if (localModeEnabled && pulseApiRef.current && pulseApiRef.current.getCenter) {
-                    const c = pulseApiRef.current.getCenter();
-                    if (c) setBeaconDropLocation(c);
-                  }
-                  setShowBeaconModal(true);
+                  // D56 — Unified Signal Emission Surface. Pulse FAB now routes through
+                  // the canonical L2 sheet system instead of the legacy BeaconDropModal.
+                  // Same primitive as Ghosted YOU anchor + Home Drop hero. The post-drop
+                  // continuity (closeSheet → pulse:flyto → navigate('/pulse')) is handled
+                  // inside L2BeaconSheet's handleDropSuccess. Phil 2026-06-03 Samui.
+                  openSheet('beacon');
                 }}
-                aria-label="Drop Beacon"
+                aria-label="Go Live"
                 data-pull-refresh-ignore
                 className="pointer-events-auto mt-3 w-14 h-14 bg-[#C8962C] rounded-2xl flex items-center justify-center shadow-[0_15px_35px_-12px_rgba(200,150,44,0.6)] border border-white/30 overflow-hidden group backdrop-blur-md relative"
               >
