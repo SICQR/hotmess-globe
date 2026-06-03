@@ -301,7 +301,7 @@ export function GhostedRecentStories({
         <button
           key="hotmess-radio-anchor"
           type="button"
-          onClick={() => navigate('/radio')}
+          onClick={() => openSheet('radio-player')}
           aria-label={radioIsPlaying ? `HOTMESS RADIO — ${radioShowName || 'live'} playing` : 'HOTMESS RADIO'}
           className="flex flex-col items-center gap-1 flex-shrink-0 w-16 focus:outline-none active:scale-95 transition-transform"
         >
