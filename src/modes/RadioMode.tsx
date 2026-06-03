@@ -38,7 +38,6 @@ import {
   Share2,
   X,
   Music,
-  ChevronLeft,
   ChevronRight,
   Calendar,
 } from 'lucide-react';
@@ -279,14 +278,20 @@ export function RadioMode({ className = '' }: RadioModeProps) {
   // Select show card
   const handleShowTap = useCallback(
     (show: ShowData) => {
-      if (selectedShow?.id === show.id) {
-        setSelectedShow(null);
-      } else {
-        setSelectedShow(show);
-      }
+      // Phil 2026-06-03 — show tap now navigates to the show page instead of
+      // just toggling a visual ring on the card. Toggle-without-destination
+      // was a dead end. Sheet dismisses then the page renders so context
+      // continuity is preserved (user was looking at the show on Radio, now
+      // they're on the show, not bounced back to wherever they came from).
       setCurrentShowName(show.name);
+      try {
+        // closeSheet may not exist depending on consumer; openSheet from context
+        // is what we have. Closing-by-navigating works because routes change
+        // unmounts the sheet via the sheet system's route-change listener.
+      } catch (_) { /* non-fatal */ }
+      navigate(`/music/shows/${show.slug}`);
     },
-    [selectedShow, setCurrentShowName]
+    [setCurrentShowName, navigate]
   );
 
   // The active show for the Now Playing card
@@ -305,16 +310,10 @@ export function RadioMode({ className = '' }: RadioModeProps) {
         </button>
       </div>
 
-      {/* ---- Fixed back button (top-left) ---- */}
-      <div className="fixed top-0 left-0 z-10 p-4 pt-[max(16px,env(safe-area-inset-top))]">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Go back"
-          className="w-10 h-10 rounded-full bg-white/8 flex items-center justify-center active:scale-95 transition-transform focus:ring-2 focus:ring-[#C8962C] focus:outline-none"
-        >
-          <ChevronLeft className="w-5 h-5 text-white/60" />
-        </button>
-      </div>
+      {/* Phil 2026-06-03 — back chevron removed. Sheet dismisses via drag-pip,
+          which is the canonical L2 dismiss. navigate(-1) was a dead-end —
+          went to whatever page the user was on before, which is unpredictable
+          and breaks emotional continuity (user was on Ghosted, not "back"). */}
 
       {/* ---- Scrollable content (hero + cards) ---- */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum scrollbar-hide" {...pullHandlers}>
@@ -324,18 +323,22 @@ export function RadioMode({ className = '' }: RadioModeProps) {
         <section
           className="relative min-h-[60vh] flex flex-col items-center justify-center px-6 pt-[max(60px,env(safe-area-inset-top))]"
           style={{
-            backgroundImage: 'url(/assets/hero-radio.jpg)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center top',
+            // Phil 2026-06-03 — background image (/assets/hero-radio.jpg) removed.
+            // Hero now reads on pure black; HOTMESS RADIO typography + waveform +
+            // gold play CTA carry the room. Atmosphere comes from motion + light,
+            // not from a heavy stock-style photo overlay. Luxury brutalism.
+            background: '#000000',
           }}
         >
-          {/* Dark overlay for readability */}
+          {/* Subtle gold breath when playing — replaces the photo overlay.
+              Cinematic darkness with a hint of warmth, not a hero card. */}
           <div
-            className="absolute inset-0"
+            className="absolute inset-0 pointer-events-none"
             style={{
               background: isPlaying
-                ? 'linear-gradient(to bottom, rgba(0,0,0,0.40) 0%, rgba(13,13,13,0.85) 50%, #000000 100%)'
-                : 'linear-gradient(to bottom, rgba(0,0,0,0.60) 0%, rgba(13,13,13,0.90) 50%, #000000 100%)',
+                ? 'radial-gradient(ellipse 60% 40% at center 35%, rgba(200,150,44,0.10) 0%, transparent 60%)'
+                : 'transparent',
+              transition: 'background 600ms ease',
             }}
           />
           {/* Ambient pulse rings -- only when playing */}
