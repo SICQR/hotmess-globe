@@ -139,6 +139,8 @@ function GhostedCardInner({
   isBoosted,
   lastSeenISO,
   createdAtISO,
+  beaconHaloCategory,
+  beaconHaloColor,
   index,
   onTap,
 }: GhostedCardComponentProps) {
