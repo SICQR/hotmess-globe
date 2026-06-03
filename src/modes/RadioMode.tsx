@@ -289,7 +289,7 @@ export function RadioMode({ className = '' }: RadioModeProps) {
         // is what we have. Closing-by-navigating works because routes change
         // unmounts the sheet via the sheet system's route-change listener.
       } catch (_) { /* non-fatal */ }
-      navigate(`/music/shows/${show.slug}`);
+      navigate(`/music/shows/${show.id}`);
     },
     [setCurrentShowName, navigate]
   );
