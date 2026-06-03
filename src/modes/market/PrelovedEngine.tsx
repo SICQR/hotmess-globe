@@ -454,7 +454,7 @@ export function PrelovedEngine({ search, className = '' }: PrelovedEngineProps) 
                 key={product.id}
                 product={product}
                 index={i}
-                onTap={() => openSheet('product', { product, source: 'preloved' })}
+                onTap={() => openSheet('product', { product, handle: (product as any).handle || (product as any).metadata?.handle, source: 'preloved' })}
                 onMessage={() => handleMessageSeller(product)}
                 onSave={() => handleSaveListing(product)}
               />
