@@ -217,6 +217,13 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     height: 'large',
     auth: false,
     deepLinkParams: ['productId'],
+    // Phil 2026-06-03 — half-open-then-dismiss P0. The 'product' sheet
+    // reuses L2ShopSheet (see SheetRouter), so the same expand rule as
+    // 'shop' (Phil 2026-05-31 above) applies: opens fully expanded so
+    // the image is visible without the user dragging up. Without this
+    // the sheet defaults to a low peek and bounces back to dismissed
+    // before the product renders.
+    peekFraction: 0.92,
   },
   // Convergence Slice v1 — beacon-contextualised exchange surface. Sits
   // between profile and shop in surface taxonomy. Per D34 §4 + D19 §6.10.
