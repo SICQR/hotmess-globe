@@ -1,57 +1,84 @@
 /**
- * GhostedActivityRibbon — Honest pulse of the room above the grid.
+ * GhostedActivityRibbon — Qualitative atmospheric tone line above the grid.
  *
- * Two lines:
- *   1. Tone line (only when activity is genuinely low):
- *        "The field is quiet. Signals still moving."
- *      Brand-voice atmospheric admission so the page never lies, never
- *      panics, but says the room is watched-over.
+ * Phil 2026-06-03 Samui — Vitality Slice 1 amendment.
  *
- *   2. Count line:
- *        "● 2 now · 5 today · 69 this week"
- *      Honest aggregates, no fake heat.
+ * Locked product rule: "the app should never show inhouse metrix unless
+ * i say. ghosted currently says, 1 now, 5 today and 72 last week" — the
+ * v0 ribbon (PR #853) exposed `N now · N today · N this week` numbers.
+ * Stripped. The numbers are operational truth, not consumer signal —
+ * they advertise low activity to users and to anyone screenshotting the
+ * grid. Removed.
  *
- * Phil 2026-06-03 Samui — Ghosted grid revival.
+ * The ribbon now surfaces ONE thing: a qualitative band that describes
+ * the room without naming numbers. Bands are derived from real activity
+ * data (so they're never wrong) but expose only the atmosphere, not the
+ * arithmetic.
  *
- * Product ruling (Phil, same session):
- *   "If there is only 1 person online, don't fake heat. But do make the
- *   room feel watched-over and alive."
+ * Bands (in cream, italic, low volume):
+ *   HUSHED   — almost no one active right now → "Field hushed. Still listening."
+ *   STEADY   — sane night-time baseline      → "Steady tonight."
+ *   FILLING  — meaningful momentum           → "Room's filling."
+ *   FULL     — peak activity                 → "Room is full."
  *
- * Doctrine:
- *   D35 Language Operating System — dry, declarative, no hype.
- *   D17 No silent affordance — render real numbers, no vague "many".
- *   D44 Privacy — only aggregates, never identities.
+ * Doctrine refs:
+ *   D17 No silent affordance — the line still says something true.
+ *   D35 Language Operating System — caps for state words only; this
+ *     line is sentence case, italic, atmospheric.
+ *   Internal metrics rule (Phil 2026-06-03) — no counts, no metrics,
+ *     no timeline numbers surfaced to consumer view without explicit OK.
+ *
+ * Future:
+ *   - Phil-only "metrics overlay" gated behind dev flag if internal
+ *     observation is needed (separate slice, not in this PR).
  */
 
 import React from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 
-interface ActivityCounts {
-  onlineNow: number;
-  today: number;
-  week: number;
+type Band = 'HUSHED' | 'STEADY' | 'FILLING' | 'FULL';
+
+const BAND_VARIANTS: Record<Band, string[]> = {
+  HUSHED: [
+    'Field hushed. Still listening.',
+    'Quiet room. The night isn\'t done.',
+    'Low signal. Eyes still open.',
+    'Field hushed. Still listening.',
+  ],
+  STEADY: [
+    'Steady tonight.',
+    'Room\'s holding its own.',
+    'Quiet pull. Watch the door.',
+  ],
+  FILLING: [
+    'Room\'s filling.',
+    'Pulse picking up.',
+    'Pressure rising.',
+  ],
+  FULL: [
+    'Room is full.',
+    'Loud night.',
+    'The city is awake.',
+  ],
+};
+
+// Internal-only thresholds. Used to derive the band; NEVER rendered.
+// Loose so the band feels true across a wide range of real cohorts.
+function bandFromCounts(onlineNow: number, today: number, week: number): Band {
+  if (onlineNow >= 25) return 'FULL';
+  if (onlineNow >= 10 || today >= 60) return 'FILLING';
+  if (onlineNow >= 3 || today >= 15 || week >= 80) return 'STEADY';
+  return 'HUSHED';
 }
 
-// Threshold: "the room is quiet" trigger. Below this, surface the tone line.
-const QUIET_THRESHOLD_NOW = 2;
-
-// Atmospheric tone lines — rotated deterministically by date so the same
-// user sees the same line for one calendar day. Brand voice: restrained,
-// watched-over, never apologetic.
-const QUIET_LINES = [
-  'The field is quiet. Signals still moving.',
-  'Quiet room. The night isn\'t done.',
-  'Low signal. Eyes still open.',
-  'Field hushed. Still listening.',
-];
-
-function pickQuietLine(): string {
+function pickVariant(band: Band): string {
+  const list = BAND_VARIANTS[band];
   const dayKey = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
-  return QUIET_LINES[dayKey % QUIET_LINES.length];
+  return list[dayKey % list.length];
 }
 
 export function GhostedActivityRibbon() {
-  const [counts, setCounts] = React.useState<ActivityCounts | null>(null);
+  const [line, setLine] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -62,78 +89,35 @@ export function GhostedActivityRibbon() {
         const t7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
         const [onlineRes, todayRes, weekRes] = await Promise.all([
-          supabase
-            .from('profiles')
-            .select('id', { count: 'exact', head: true })
-            .gt('last_seen', t15),
-          supabase
-            .from('profiles')
-            .select('id', { count: 'exact', head: true })
-            .gt('last_seen', t24h),
-          supabase
-            .from('profiles')
-            .select('id', { count: 'exact', head: true })
-            .gt('last_seen', t7d),
+          supabase.from('profiles').select('id', { count: 'exact', head: true }).gt('last_seen', t15),
+          supabase.from('profiles').select('id', { count: 'exact', head: true }).gt('last_seen', t24h),
+          supabase.from('profiles').select('id', { count: 'exact', head: true }).gt('last_seen', t7d),
         ]);
 
         if (cancelled) return;
-        setCounts({
-          onlineNow: onlineRes.count || 0,
-          today: todayRes.count || 0,
-          week: weekRes.count || 0,
-        });
+        const band = bandFromCounts(
+          onlineRes.count || 0,
+          todayRes.count || 0,
+          weekRes.count || 0,
+        );
+        setLine(pickVariant(band));
       } catch {
-        // Non-fatal — ribbon stays empty.
+        // Non-fatal — ribbon stays silent rather than rendering broken state.
       }
     })();
     return () => { cancelled = true; };
   }, []);
 
-  if (!counts) return null;
-  if (counts.week === 0) return null;
-
-  const isQuiet = counts.onlineNow < QUIET_THRESHOLD_NOW;
-  const toneLine = isQuiet ? pickQuietLine() : null;
+  if (!line) return null;
 
   return (
     <div className="px-3 pt-2 pb-1 select-none">
-      {/* Tone line — only when the room is actually quiet. Italic, low-volume,
-          says the truth without panic. Reads as nightlife rhythm, not failure. */}
-      {toneLine && (
-        <div
-          className="text-[11px] italic text-white/40 leading-tight mb-1"
-          aria-hidden="true"
-        >
-          {toneLine}
-        </div>
-      )}
-
-      {/* Count line — three aggregates, never named. The green dot pulses
-          only when there's actually someone online; otherwise it's a dim
-          cream pip so the row keeps its rhythm. */}
       <div
-        className="flex items-center gap-3 text-[10px] font-bold tracking-[0.08em] uppercase"
-        aria-label={`${counts.onlineNow} active now, ${counts.today} today, ${counts.week} this week`}
+        className="text-[11px] italic leading-tight"
+        style={{ color: 'rgba(245,238,220,0.45)' }}
+        aria-hidden="true"
       >
-        <span className="flex items-center gap-1.5 text-white/70">
-          <span
-            aria-hidden="true"
-            className="inline-block w-1.5 h-1.5 rounded-full"
-            style={{
-              background: counts.onlineNow > 0 ? '#30D158' : 'rgba(245,238,220,0.25)',
-              boxShadow: counts.onlineNow > 0 ? '0 0 4px rgba(48,209,88,0.45)' : undefined,
-              animation: counts.onlineNow > 0 ? 'hm-activity-pulse 1.8s ease-in-out infinite' : undefined,
-            }}
-          />
-          <span>{counts.onlineNow} now</span>
-        </span>
-        <span className="text-white/15">·</span>
-        <span className="text-white/50">{counts.today} today</span>
-        <span className="text-white/15">·</span>
-        <span className="text-white/40">{counts.week} this week</span>
-        <style dangerouslySetInnerHTML={{ __html:
-          '@keyframes hm-activity-pulse{0%,100%{opacity:.6}50%{opacity:1}}'
-        }} />
+        {line}
       </div>
     </div>
   );

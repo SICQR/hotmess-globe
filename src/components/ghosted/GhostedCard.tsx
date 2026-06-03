@@ -93,9 +93,17 @@ export interface GhostedCardProps {
    *  hardens the online dot — pulse only fires for genuine ACTIVE_NOW. */
   lastSeenISO?: string | null;
   /** Phil 2026-06-03 — counterpart profile created_at ISO. Drives the
-   *  FRESH corner pill for accounts under 7 days old. Adds variation
-   *  across cards without needing presence data. */
+   *  FRESH corner pill for accounts under 14 days old (beta calibration).
+   *  Adds variation across cards without needing presence data. */
   createdAtISO?: string | null;
+  /** Phil 2026-06-03 Vitality Slice 1 — beacon halo bleed. When the
+   *  counterpart has no beacon of their own BUT is geo-close (≤200m) to
+   *  one of the live curated beacons (Vauxhall chemsex hub, 56 Dean St,
+   *  Antidote, etc.), this carries the beacon category for ambient ring
+   *  tinting. Reads as "this person is near something happening" — the
+   *  single biggest unlock for environmental atmosphere on the grid. */
+  beaconHaloCategory?: string | null;
+  beaconHaloColor?: string | null;
 }
 
 interface GhostedCardComponentProps extends GhostedCardProps {
@@ -131,6 +139,8 @@ function GhostedCardInner({
   isBoosted,
   lastSeenISO,
   createdAtISO,
+  beaconHaloCategory,
+  beaconHaloColor,
   index,
   onTap,
 }: GhostedCardComponentProps) {
@@ -159,25 +169,72 @@ function GhostedCardInner({
     : null;
   const ringAlpha = beacon?.lifecycle === 'decaying' ? 0.55 : 0.95;
 
-  // Doctrine v2 (Phil 2026-05-26 Phase 2): bucketed walk-only travel cue.
-  // No signal jargon. No raw metres. "Travel time" expand button lives in
-  // the preview sheet (L2GhostedPreviewSheet), not on grid tiles — tiles
-  // stay quiet. Suppress entirely when distance unavailable OR > 30km
-  // (silence beats a wrong number).
-  const mergedLine = (distanceM != null && Number.isFinite(distanceM) && distanceM <= 30000)
+  // ── State Line — Phil 2026-06-03 Vitality Slice 1 ──────────────────────
+  // PRODUCT RULING (locked same session):
+  //   "State first. Distance last. Distance is the fallback, not the headline."
+  //
+  // Priority ladder (first matching wins the line's STATE; distance, when
+  // available, attaches as a quiet suffix):
+  //   1. ACTIVE NOW         (online green — strongest signal)
+  //   2. NEAR A LIVE BEACON (gold — environmental pressure, halo) [#855 wires]
+  //   3. LOOKING            (gold — intent surface)
+  //   4. FRESH              (cream — new profile)
+  //   5. EARLIER TONIGHT    (cream/72)
+  //   6. TODAY              (cream/55)
+  //   7. THIS WEEK          (cream/40)
+  //   8. distance only      (white/50 — only when nothing else is true)
+  //
+  // Forbidden: rendering the distance "< 5 min away" cue as a headline
+  // when a stronger signal applies. The bucketed walk cue (personDefaultCue)
+  // is now relegated to a suffix or, when alone, the eighth-rank line.
+  const distanceSuffix = (distanceM != null && Number.isFinite(distanceM) && distanceM <= 30000)
     ? personDefaultCue(distanceM)
     : null;
-
-  // Phil 2026-06-03 Samui — recency fallback. When distance is unavailable
-  // (86% of profiles today have no location), the card otherwise renders
-  // no human signal at all. Recency lets the field breathe: ACTIVE NOW /
-  // EARLIER / TODAY / THIS WEEK depending on last_seen. Returns { label:
-  // null } when last_seen is older than a week — silence beats a stale cue.
   const recency = recencyLabel(lastSeenISO);
-  // Recency renders ONLY as a fallback when there's no distance line. The
-  // proximity primitive wins when both are available — a real metres-away
-  // cue is more useful to the user than a recency bucket.
-  const recencyFallbackLabel = !mergedLine ? recency.label : null;
+  const isFresh = isFreshProfile(createdAtISO);
+  const hasLookingFor = Array.isArray(lookingFor) && lookingFor.length > 0;
+
+  // Compose the state line. {label, color, dot, suffix} — `dot` is the
+  // colour of the prefix pip (null = no dot). The eighth-rank fallback
+  // returns just the distance line with no STATE word, no dot.
+  let stateLabel: string | null = null;
+  let stateColor: string = 'rgba(255,255,255,0.55)';
+  let stateDotColor: string | null = null;
+  let bareLine: string | null = null;
+
+  if (isOnline) {
+    stateLabel = 'ACTIVE NOW';
+    stateColor = '#30D158';
+    stateDotColor = '#30D158';
+  } else if (beaconHaloColor && !beacon) {
+    // Beacon halo — set when a profile is geo-close to a curated/other
+    // beacon (passed in by useGhostedGrid in PR #855). Reads as
+    // environmental pressure.
+    stateLabel = 'NEAR A LIVE BEACON';
+    stateColor = beaconHaloColor;
+    stateDotColor = beaconHaloColor;
+  } else if (hasLookingFor) {
+    stateLabel = 'LOOKING';
+    stateColor = '#C8962C';
+    stateDotColor = '#C8962C';
+  } else if (isFresh) {
+    stateLabel = 'FRESH';
+    stateColor = 'rgba(245,238,220,0.92)';
+    stateDotColor = null; // FRESH reads as label, not a live pulse
+  } else if (recency.band === 'EARLIER') {
+    stateLabel = 'EARLIER TONIGHT';
+    stateColor = 'rgba(245,238,220,0.72)';
+  } else if (recency.band === 'TODAY') {
+    stateLabel = 'TODAY';
+    stateColor = 'rgba(245,238,220,0.55)';
+  } else if (recency.band === 'THIS_WEEK') {
+    stateLabel = 'THIS WEEK';
+    stateColor = 'rgba(245,238,220,0.40)';
+  } else if (distanceSuffix) {
+    // Eighth rank — pure distance, no STATE label, no dot. Sentence case,
+    // softer styling so it reads as fallback not headline.
+    bareLine = distanceSuffix;
+  }
 
   return (
     <motion.button
@@ -292,26 +349,10 @@ function GhostedCardInner({
         />
       )}
 
-      {/* FRESH pill — accounts under 7 days old. Phil 2026-06-03 Samui:
-          adds variation across cards even when presence signals are dim.
-          Cream tag (not gold) so it never competes with the beacon ring,
-          tucked top-LEFT to avoid colliding with the online dot top-right.
-          Suppressed when mutual/boo glyph already occupies that corner. */}
-      {createdAtISO && isFreshProfile(createdAtISO) && !(isMutual || isBood) && (
-        <span
-          className="absolute text-[8px] font-black tracking-[0.12em] uppercase rounded-sm px-1 py-0.5"
-          style={{
-            top: 7, left: 7,
-            color: 'rgba(245,238,220,0.92)',
-            background: 'rgba(5,5,7,0.6)',
-            border: '1px solid rgba(245,238,220,0.32)',
-            backdropFilter: 'blur(2px)',
-          }}
-          aria-label="New profile"
-        >
-          FRESH
-        </span>
-      )}
+      {/* FRESH corner pill removed Phil 2026-06-03 — FRESH is now rank 4 in
+          the StateLine ladder so it reads as state (under the name), not as
+          a separate corner tag. Avoids double-render and keeps the corner
+          quiet for online dot + mutual/boo glyphs only. */}
 
       {/* Mutual / Boo — tiny corner glyph, no loud labels. Mutual gets the
           inset gold edge (set on the motion.button). */}
@@ -439,8 +480,51 @@ function GhostedCardInner({
           </div>
         )}
 
-        {/* Single human proximity line — distance + place merged. */}
-        {mergedLine && (
+        {/* StateLine — Phil 2026-06-03 Vitality Slice 1. Priority ladder:
+            STATE first (caps), distance suffix only when present. The
+            eighth-rank fallback is bare distance in sentence case (the only
+            place "< 5 min away" survives). Doctrine: D17 no silent
+            affordance, D35 caps for state words, distance never the
+            headline when a stronger signal exists.
+
+            Beacon LIVE has its own dedicated line above this (rendered
+            earlier in the card body) — we don't re-emit it here. */}
+        {!beaconLabel && stateLabel && (
+          <span
+            className="text-[10px] font-black tracking-[0.10em] uppercase leading-tight flex items-center gap-1 truncate"
+            style={{ color: stateColor }}
+            aria-label={`State: ${stateLabel}${distanceSuffix ? ' — ' + distanceSuffix : ''}`}
+          >
+            {stateDotColor && (
+              <span
+                aria-hidden="true"
+                className="inline-block rounded-full flex-shrink-0"
+                style={{
+                  width: 4,
+                  height: 4,
+                  background: stateDotColor,
+                  boxShadow: `0 0 3px ${stateDotColor}`,
+                }}
+              />
+            )}
+            <span className="truncate">
+              {stateLabel}
+              {distanceSuffix && (
+                <span
+                  className="ml-1.5 font-medium normal-case tracking-normal"
+                  style={{ color: 'rgba(255,255,255,0.42)' }}
+                >
+                  {distanceSuffix}
+                </span>
+              )}
+            </span>
+          </span>
+        )}
+
+        {/* Bare distance line — rank 8 fallback. Only renders when no other
+            state applies. Sentence case, soft white. This is the only path
+            "< 5 min away" can headline a card. */}
+        {!beaconLabel && !stateLabel && bareLine && (
           <span className="text-[11px] text-white/50 truncate leading-tight flex items-center gap-1">
             {contextType === 'moving' && (
               <motion.span
@@ -452,43 +536,7 @@ function GhostedCardInner({
                 &rarr;
               </motion.span>
             )}
-            {mergedLine}
-          </span>
-        )}
-
-        {/* Recency fallback line — renders only when distance is unavailable
-            AND there's a valid recency band. ACTIVE NOW reads green, the
-            older bands fade through cream. Caps + tracking so it reads as
-            state, not a tag line. Phil 2026-06-03 Samui — breaks the
-            "< 5 min away" monotony when proximity data isn't there.
-            Doctrine: D17 no silent affordance, D35 caps for state words. */}
-        {!mergedLine && recencyFallbackLabel && !beaconLabel && (
-          <span
-            className="text-[10px] font-black tracking-[0.10em] uppercase leading-tight flex items-center gap-1 truncate"
-            style={{
-              color: recency.isLive
-                ? '#30D158'
-                : recency.band === 'EARLIER'
-                  ? 'rgba(245,238,220,0.72)'
-                  : recency.band === 'TODAY'
-                    ? 'rgba(245,238,220,0.55)'
-                    : 'rgba(245,238,220,0.40)',
-            }}
-            aria-label={`Last active: ${recencyFallbackLabel}`}
-          >
-            {recency.isLive && (
-              <span
-                aria-hidden="true"
-                className="inline-block rounded-full flex-shrink-0"
-                style={{
-                  width: 4,
-                  height: 4,
-                  background: '#30D158',
-                  boxShadow: '0 0 3px #30D158',
-                }}
-              />
-            )}
-            <span className="truncate">{recencyFallbackLabel}</span>
+            {bareLine}
           </span>
         )}
       </div>

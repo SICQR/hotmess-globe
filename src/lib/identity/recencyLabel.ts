@@ -49,15 +49,22 @@ export function recencyLabel(lastSeenISO: string | null | undefined): RecencyLab
 }
 
 /**
- * Returns true when `createdAtISO` is within the FRESH window (7 days).
- * Used by Ghosted card "FRESH" pill (grid only — not surfaced in inbox
- * because inbox counterparts have by definition been spoken to already).
+ * Returns true when `createdAtISO` is within the FRESH window.
+ *
+ * Phil 2026-06-03 — beta calibration: bumped default to 14d. The 7d
+ * cutoff (PR #853) never fired against the current beta cohort because
+ * almost all accounts predate it, so the FRESH pill was invisible. 14d
+ * catches the actual onboarding wave so the pill surfaces somewhere on
+ * the grid. Caller can override.
  */
-const FRESH_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+const DEFAULT_FRESH_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 
-export function isFreshProfile(createdAtISO: string | null | undefined): boolean {
+export function isFreshProfile(
+  createdAtISO: string | null | undefined,
+  windowMs: number = DEFAULT_FRESH_WINDOW_MS,
+): boolean {
   if (!createdAtISO) return false;
   const t = new Date(createdAtISO).getTime();
   if (!Number.isFinite(t)) return false;
-  return Date.now() - t < FRESH_WINDOW_MS;
+  return Date.now() - t < windowMs;
 }
