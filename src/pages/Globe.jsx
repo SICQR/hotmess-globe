@@ -517,9 +517,20 @@ export default function GlobePage({ embedded = false }) {
     // it so the sheet's Supabase fetch hits the right row. The full beacon
     // object is also passed through so the viewer renders synchronously even
     // before the fetch resolves.
-    const cleanId = typeof beacon.id === 'string' ? beacon.id.replace(/^beacon[:_]/, '') : beacon.id;
-    openSheet('beacon', { beaconId: cleanId, beacon });
-  }, [openSheet, setFocusedBeaconId]);
+    // #599 — never strip id to empty. The old regex `/^beacon[:_]/` turned ids
+    // like "beacon:" or "beacon_" into "", which made L2BeaconSheet fall through
+    // to BeaconCreator (drop intent picker). L2BeaconSheet has its own
+    // normaliseBeaconId (line 835) — let it handle prefix stripping safely.
+    //
+    // If the id is genuinely missing, do NOT open the heavy sheet — peek instead.
+    // BeaconCreator must ONLY open from the Drop FAB, never from a tap on map data.
+    const rawId = beacon.id;
+    if (rawId === null || rawId === undefined || rawId === '') {
+      setPreviewBeacon(beacon);
+      return;
+    }
+    openSheet('beacon', { beaconId: rawId, beacon });
+  }, [openSheet, setFocusedBeaconId, setPreviewBeacon]);
 
   const handleViewFullDetails = useCallback(() => {
     if (!previewBeacon) return;
