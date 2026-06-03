@@ -347,11 +347,12 @@ function BeaconCreator({ onSuccess }) {
         owner_id:         user.id,
         geo_lat:          coords.lat,
         geo_lng:          coords.lng,
-        // latitude/longitude mirror geo_lat/geo_lng — both columns exist on
-        // the table for legacy compatibility; populate both so the mapboxLayerStack
-        // payload (which reads `lat||location_lat`) finds something.
-        latitude:         coords.lat,
-        longitude:        coords.lng,
+        // P0 — latitude/longitude are GENERATED columns in DB (Postgres 428C9
+        // on INSERT). Same bug shipped in task #183, re-introduced in this file.
+        // The legacy comment about populating both columns was wrong — generated
+        // columns reject non-DEFAULT inserts. mapboxLayerStack reads from the
+        // pulse_signals view which derives lat/lng from geo_lat/geo_lng anyway.
+        // Phil 2026-06-03 live repro: Ghosted YOU anchor → 400 → "Failed to drop".
         starts_at:        now.toISOString(),
         ends_at:          endsAt.toISOString(),
         intensity:        intensity,
