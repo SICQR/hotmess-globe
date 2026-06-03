@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>HOTMESS — tell me the truth</title>
+<style>
+  :root{ --bg:#050507; --surface:#0D0D10; --line:#1C1C22; --gold:#C8962C; --text:#EDEDED; --muted:#8A8A8A; --radius:12px; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; background:var(--bg); }
+  body{ font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif; color:var(--text); line-height:1.6;
+        padding:max(30px,env(safe-area-inset-top)) 20px max(40px,env(safe-area-inset-bottom)); display:flex; justify-content:center; }
+  .wrap{ width:100%; max-width:560px; }
+  .wordmark{ font-weight:800; letter-spacing:1px; text-transform:uppercase; font-size:30px; text-align:center; }
+  .wordmark .h{ color:var(--text); } .wordmark .m{ color:var(--gold); }
+  .tag{ text-align:center; font-style:italic; color:#C8B79A; font-size:14px; margin:6px 0 0; }
+  .rule{ width:64px; height:3px; background:var(--gold); margin:18px auto 30px; }
+  .eyebrow{ font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--gold); margin:0 0 8px; }
+  h1{ font-size:30px; line-height:1.15; font-weight:800; margin:0 0 14px; }
+  .lede{ margin:0 0 28px; } .lede b{ color:var(--gold); }
+  .q{ margin:0 0 22px; }
+  label{ display:block; font-weight:700; margin:0 0 8px; font-size:16px; }
+  label .n{ color:var(--gold); margin-right:8px; }
+  textarea{ width:100%; min-height:74px; resize:vertical; background:var(--surface); color:var(--text); border:1px solid var(--line);
+            border-radius:var(--radius); padding:14px; font:inherit; line-height:1.5; }
+  textarea::placeholder{ color:var(--muted); } textarea:focus{ outline:none; border-color:var(--gold); }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{ border:1px solid var(--line); background:var(--surface); color:var(--text); border-radius:999px; padding:9px 15px;
+         font:inherit; font-size:14px; cursor:pointer; transition:border-color .15s,color .15s; }
+  .chip[aria-pressed="true"]{ border-color:var(--gold); color:var(--gold); }
+  button.submit{ width:100%; background:var(--gold); color:#050507; border:none; border-radius:var(--radius); padding:16px;
+                 font:inherit; font-weight:800; font-size:16px; letter-spacing:.3px; cursor:pointer; margin-top:6px; }
+  button.submit:disabled{ opacity:.6; }
+  .foot{ color:var(--muted); font-size:12px; text-align:center; margin-top:22px; } .foot a{ color:var(--muted); }
+  .thanks{ display:none; text-align:center; padding:60px 10px; } .thanks p{ color:var(--muted); }
+  .err{ display:none; color:#E0A0A0; font-size:13px; text-align:center; margin-top:12px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <form id="f" novalidate>
+      <div class="wordmark"><span class="h">HOT</span><span class="m">MESS</span></div>
+      <div class="tag">always too much, yet never enough</div>
+      <div class="rule"></div>
+      <p class="eyebrow">Two minutes · no scores</p>
+      <h1>Tell me the truth.</h1>
+      <p class="lede">You're early, so what you say changes what gets built. Whatever's real — <b>I read every one.</b></p>
+
+      <div class="q"><label><span class="n">·</span>What felt confusing?</label><textarea name="confusing" placeholder="Where you got lost, or had to guess…"></textarea></div>
+      <div class="q"><label><span class="n">·</span>What felt dead?</label><textarea name="dead" placeholder="Anything empty, slow, or like nothing happened…"></textarea></div>
+      <div class="q"><label><span class="n">·</span>What did you expect to happen that didn't?</label><textarea name="expected" placeholder="A tap that should've done something…"></textarea></div>
+      <div class="q"><label><span class="n">·</span>Which feature did you actually use?</label>
+        <div class="chips" id="chips">
+          <button type="button" class="chip" aria-pressed="false">Pulse</button>
+          <button type="button" class="chip" aria-pressed="false">Ghosted</button>
+          <button type="button" class="chip" aria-pressed="false">Beacons</button>
+          <button type="button" class="chip" aria-pressed="false">Music</button>
+          <button type="button" class="chip" aria-pressed="false">Care Suite</button>
+          <button type="button" class="chip" aria-pressed="false">Shop</button>
+        </div>
+      </div>
+      <div class="q"><label><span class="n">·</span>What would make you come back tonight?</label><textarea name="return" placeholder="The thing that'd pull you back in…"></textarea></div>
+      <div class="q"><label><span class="n">·</span>What broke trust?</label><textarea name="trust" placeholder="Anything that made you hesitate…"></textarea></div>
+
+      <button type="submit" class="submit" id="sb">Send it to Phil</button>
+      <p class="err" id="err">Couldn't send — tap again in a sec.</p>
+      <p class="foot">HOTMESS · <a href="https://hotmessldn.com">hotmessldn.com</a></p>
+    </form>
+
+    <div class="thanks" id="thanks">
+      <div class="wordmark"><span class="h">HOT</span><span class="m">MESS</span></div>
+      <div class="rule"></div>
+      <h1>Got it.</h1>
+      <p>That changes what gets built next. See you in there. — Phil</p>
+    </div>
+  </div>
+
+<script>
+  var SUPABASE_URL="https://rfoftonnlwudilafhfkl.supabase.co";
+  var SUPABASE_KEY="sb_publishable_z3hcrnU3ggSBO9O1Nr-v1w_4ds8gTlo";
+  var chips=[];
+  document.getElementById('chips').addEventListener('click',function(e){
+    var b=e.target.closest('.chip'); if(!b) return;
+    var on=b.getAttribute('aria-pressed')==='true'; b.setAttribute('aria-pressed',String(!on));
+    chips=Array.from(document.querySelectorAll('.chip[aria-pressed="true"]')).map(function(c){return c.textContent;});
+  });
+  document.getElementById('f').addEventListener('submit',function(e){
+    e.preventDefault();
+    var sb=document.getElementById('sb'), err=document.getElementById('err');
+    sb.disabled=true; sb.textContent='Sending…'; err.style.display='none';
+    var fd=new FormData(e.target);
+    var row={ confusing:fd.get('confusing')||'', dead:fd.get('dead')||'', expected:fd.get('expected')||'',
+              used:chips, return_tonight:fd.get('return')||'', trust:fd.get('trust')||'', user_agent:navigator.userAgent, source:'feedback-page' };
+    fetch(SUPABASE_URL+"/rest/v1/wave2_feedback",{
+      method:"POST",
+      headers:{ "apikey":SUPABASE_KEY, "Authorization":"Bearer "+SUPABASE_KEY, "Content-Type":"application/json", "Prefer":"return=minimal" },
+      body:JSON.stringify(row)
+    }).then(function(r){
+      if(r.ok){ document.getElementById('f').style.display='none'; document.getElementById('thanks').style.display='block'; window.scrollTo(0,0); }
+      else { throw new Error(r.status); }
+    }).catch(function(){ sb.disabled=false; sb.textContent='Send it to Phil'; err.style.display='block'; });
+  });
+</script>
+</body>
+</html>
