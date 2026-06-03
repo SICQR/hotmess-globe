@@ -67,9 +67,12 @@ export default function RadioShowPage() {
       <button
         onClick={() => navigate('/radio')}
         aria-label="Back to Radio"
-        className="fixed top-0 left-0 z-20 m-4 mt-[max(16px,env(safe-area-inset-top))] w-10 h-10 rounded-full bg-white/8 backdrop-blur-md flex items-center justify-center active:scale-95 transition-transform"
+        // Phil 2026-06-03 — z-[200] sits above the global app header (HOTMESS logo +
+        // avatar at z ~ 50-100) so the chevron is reliably tappable. Black/60 + border
+        // for legibility against any background.
+        className="fixed top-0 left-0 z-[200] m-4 mt-[max(16px,env(safe-area-inset-top))] w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center active:scale-95 transition-transform"
       >
-        <ChevronLeft className="w-5 h-5 text-white/60" />
+        <ChevronLeft className="w-5 h-5 text-white/85" />
       </button>
 
       {/* Hero — typography-led, no photo overlay (luxury brutalism) */}
