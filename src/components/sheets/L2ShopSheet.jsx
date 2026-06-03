@@ -561,11 +561,34 @@ export default function L2ShopSheet({ handle, product: initialPropProduct, selle
     );
   }
 
-  // SHOP LIST VIEW
+  // Phil 2026-06-03 — Market product cards were rendering this SHOP LIST VIEW
+  // instead of the product detail. Root cause: when sheet opens as 'product' with
+  // {product, source}, in some flows activeProduct resolves null (handle was never
+  // persisted to URL, props lost on rehydration). Without source-gating, the
+  // listing rendered with hardcoded "Legend Drop: Series 01" placeholder + the
+  // featured-products grid — which is the bug Phil saw on yellow swim brief +
+  // others. Fix: engines now pass `handle`, so handleProd query rehydrates
+  // activeProduct; AND the listing only fires when source is undefined (the
+  // canonical 'shop' browse use case — currently unwired but kept for future).
+  if (source) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center bg-[#050507] text-white/50 px-6 text-center">
+        <Loader2 className="w-6 h-6 animate-spin mb-4 text-[#C8962C]" />
+        <p className="text-[11px] uppercase tracking-[0.3em]">Loading product…</p>
+        {handle && (
+          <p className="text-[10px] text-white/30 mt-2 font-mono">{handle}</p>
+        )}
+      </div>
+    );
+  }
+
+  // SHOP LIST VIEW — browse mode only (no source passed).
+  // Note: 'shop' surface currently shows the Market page directly; this listing
+  // is vestigial but preserved for any future browse-mode sheet wiring.
   return (
     <div className="bg-[#050507] pb-32">
         <div className="px-6 pt-10 pb-6 border-b border-white/5 flex items-center justify-between">
-            <h2 className="text-[12px] font-black text-white/50 uppercase tracking-[0.4em]">Legend Drop: Series 01</h2>
+            <h2 className="text-[12px] font-black text-white/50 uppercase tracking-[0.4em]">Shop</h2>
             <button onClick={() => openSheet('cart')} className="flex items-center gap-2 text-[#C8962C] text-[11px] font-black uppercase tracking-wider transition-opacity hover:opacity-70 group">
                 <ShoppingCart className="w-4 h-4 group-hover:scale-110 transition-transform" />
                 BAG ({cart?.totalQuantity || 0})
