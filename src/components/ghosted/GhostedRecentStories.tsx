@@ -79,6 +79,64 @@ export function GhostedRecentStories({
   const [careCircles, setCareCircles] = React.useState<RowCare[]>([]);
   const [loading, setLoading] = React.useState(true);
 
+  // D53 §4.1 v2 (Phil 2026-06-03 Samui) — Personal Beacon Anchor.
+  //
+  // Position 0 of the rail = ME. Insta-familiar interaction language
+  // (leftmost avatar with +), HOTMESS-native meaning ("go live / emit
+  // presence", NOT "post content"). The mechanic inherits familiarity;
+  // the emotional system stays atmospheric/infrastructural. See D17
+  // amendment (Familiar Patterns / Adapted Meaning) and D53 §4.1 v2.
+  //
+  // States: inactive (avatar + gold "+" badge), active (gold ring +
+  // pulse + caption "Live"), recently expired (faded — TODO slice 2).
+  const [myAvatar, setMyAvatar] = React.useState<string | null>(null);
+  const [myActiveBeacon, setMyActiveBeacon] = React.useState<{ id: string; lat: number | null; lng: number | null } | null>(null);
+
+  React.useEffect(() => {
+    if (!currentUserId) { setMyAvatar(null); setMyActiveBeacon(null); return; }
+    let alive = true;
+    (async () => {
+      try {
+        const [{ data: prof }, { data: beacons }] = await Promise.all([
+          supabase.from('profiles').select('avatar_url').eq('id', currentUserId).maybeSingle(),
+          supabase.from('beacons')
+            .select('id, latitude, longitude, starts_at, ends_at')
+            .eq('owner_id', currentUserId)
+            .eq('active', true)
+            .gt('ends_at', new Date().toISOString())
+            .order('starts_at', { ascending: false })
+            .limit(1),
+        ]);
+        if (!alive) return;
+        setMyAvatar((prof && (prof as any).avatar_url) || null);
+        const b = beacons && beacons[0];
+        setMyActiveBeacon(b ? { id: (b as any).id, lat: (b as any).latitude ?? null, lng: (b as any).longitude ?? null } : null);
+      } catch {
+        if (!alive) return;
+        setMyActiveBeacon(null);
+      }
+    })();
+    return () => { alive = false; };
+  }, [currentUserId]);
+
+  const hasActiveBeacon = !!myActiveBeacon;
+
+  const onPersonalAnchorTap = React.useCallback(() => {
+    if (hasActiveBeacon && myActiveBeacon && myActiveBeacon.lat != null && myActiveBeacon.lng != null) {
+      // Live state → fly to my beacon on Pulse. Atmospheric, not navigational.
+      const lat = myActiveBeacon.lat;
+      const lng = myActiveBeacon.lng;
+      navigate('/pulse');
+      // Dispatch after the route swap so PulseMap has mounted its listener.
+      setTimeout(() => {
+        try { window.dispatchEvent(new CustomEvent('pulse:flyto', { detail: { lat, lng, zoom: 15 } })); } catch { /* non-fatal */ }
+      }, 60);
+      return;
+    }
+    // Inactive state → drop intent picker (L2BeaconSheet creator branch).
+    openSheet('beacon');
+  }, [hasActiveBeacon, myActiveBeacon, navigate, openSheet]);
+
   React.useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -295,8 +353,58 @@ export function GhostedRecentStories({
         className="gh-stories flex gap-3 overflow-x-auto pb-1"
         style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', overscrollBehaviorX: 'contain', touchAction: 'pan-x' }}
       >
+        {/* D53 §4.1 v2 — Personal Beacon Anchor. Position 0. Familiar
+            Insta-anchor mechanic (avatar + plus), HOTMESS meaning (go live,
+            not post). Inactive: gold "+" badge + caption "You". Active:
+            gold ring + caption "Live", tap flies to beacon on Pulse.
+            Doctrine: D17 (Familiar Patterns / Adapted Meaning) + D53 §4.1 v2. */}
+        {currentUserId && (
+          <button
+            key="personal-beacon-anchor"
+            type="button"
+            onClick={onPersonalAnchorTap}
+            aria-label={hasActiveBeacon ? 'Your live beacon — open on Pulse' : 'Drop a beacon'}
+            className="flex flex-col items-center gap-1 flex-shrink-0 w-16 focus:outline-none active:scale-95 transition-transform"
+          >
+            <span
+              className="relative w-[58px] h-[58px] rounded-full p-[2px]"
+              style={{
+                background: hasActiveBeacon
+                  ? 'linear-gradient(135deg, #C8962C 0%, #D4A84B 50%, #B8821A 100%)'
+                  : 'rgba(255,255,255,0.08)',
+                boxShadow: hasActiveBeacon
+                  ? '0 0 14px rgba(200,150,44,0.55), 0 0 28px rgba(200,150,44,0.22)'
+                  : 'none',
+                transition: 'box-shadow 280ms ease',
+              }}
+            >
+              <span className="block w-full h-full rounded-full overflow-hidden bg-[#0C0C0E] border border-black relative">
+                {myAvatar ? (
+                  <img src={myAvatar} alt="" className="w-full h-full object-cover" loading="lazy" />
+                ) : (
+                  <div className="w-full h-full bg-[#1C1C1E]" />
+                )}
+                {!hasActiveBeacon && (
+                  <span
+                    className="absolute -right-[2px] -bottom-[2px] w-[20px] h-[20px] rounded-full bg-[#C8962C] border-[2px] border-black flex items-center justify-center text-black text-[13px] font-bold leading-none"
+                    aria-hidden="true"
+                  >
+                    +
+                  </span>
+                )}
+              </span>
+            </span>
+            <span
+              className="text-[10px] uppercase tracking-wider truncate w-full text-center leading-tight"
+              style={{ color: hasActiveBeacon ? '#C8962C' : 'rgba(245,238,220,0.78)' }}
+            >
+              {hasActiveBeacon ? 'Live' : 'You'}
+            </span>
+          </button>
+        )}
+
         {/* D53 §4.1 — HOTMESS RADIO operator entity anchor.
-            Permanent, leftmost, never dismissable. Pulses when isPlaying.
+            Permanent, position 1 (after personal anchor). Pulses when isPlaying.
             Tap → /radio. See doctrine docs/doctrine/53-surface-continuity-substrate.md §4.1. */}
         <button
           key="hotmess-radio-anchor"
