@@ -25,7 +25,7 @@ import { nanoid } from 'nanoid';
 import { Loader2, Crosshair, Zap, MapPin } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
-import { usePowerups } from '@/contexts/PowerupsContext';
+import { usePowerups } from '@/hooks/usePowerups';
 
 const BEACON_DAILY_LIMIT = 3;
 
