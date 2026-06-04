@@ -255,7 +255,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
 }) {
   // Accept both prop names — callers may pass userId or legacy toUid
   const resolvedUserId = initialUserId || toUid;
-  const { openSheet, updateSheetProps } = useSheet();
+  const { openSheet, updateSheetProps, closeSheet } = useSheet();
   const { isActive: isBoostActive, refresh: refreshBoosts, consume: consumeBoost } = usePowerups();
 
   const [currentUser, setCurrentUser]   = useState(null); // { id, email }
@@ -792,12 +792,29 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     }
   };
 
+  // Phil 2026-06-04 D57 N6 r4 — dismissal convergence.
+  // Per Phil's ruling (Option 1, "no cleverness"): the chat header back-arrow
+  // means LEAVE this chat surface and return to the parent that opened it.
+  // The chat sheet is an overlay in the continuity stack, not a mini-app
+  // with its own private navigation doctrine.
+  //
+  // Previously this function did setSelectedThread(null) + setMessages([]) +
+  // updateSheetProps({thread:null, title:'Messages'}) + loadThreads(),
+  // which kept activeSheet='chat' and rendered the inbox-list view inside
+  // the chat sheet. That bypassed SheetContext.closeSheet's smart-pop so
+  // Profile→MESSAGE→back never returned to Profile — it landed on a chat
+  // inbox view instead. CF-3 / N6 was unprovable until this converged.
+  //
+  // closeSheet handles both cases via its smart-pop:
+  //   - If sheetStack non-empty (chat was push'd from a parent): pop to parent
+  //   - If sheetStack empty (chat opened as primary substrate, e.g. /messages
+  //     deep-link or Bell→Inbox→...): clean full close, no parent to return to
+  //
+  // Realtime channel + local state cleanup happens via L2ChatSheet's own
+  // unmount lifecycle when SheetErrorBoundary's key={activeSheet} forces
+  // a remount on activeSheet transition. No need to manually tear down here.
   const handleBack = () => {
-    setSelectedThread(null);
-    setMessages([]);
-    if (realtimeRef.current) { supabase.removeChannel(realtimeRef.current); realtimeRef.current = null; }
-    updateSheetProps?.({ thread: null, to: null, title: 'Messages' });
-    loadThreads();
+    closeSheet();
   };
 
   // ── Helper: extract other party's email from thread ────────────────────────
