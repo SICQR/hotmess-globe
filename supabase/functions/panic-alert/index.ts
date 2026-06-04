@@ -105,18 +105,129 @@ function clamp(body: string): string {
   return body.length > MAX_BODY_CHARS ? body.slice(0, MAX_BODY_CHARS - 1) + "…" : body;
 }
 
+// D58 S0 — canonical SOS payload (Amendments 6, 8, 9).
+//
+// Inlined here because Supabase edge functions cannot import from the api/
+// directory at deploy time (they ship as standalone Deno bundles). Keep this
+// function and api/safety/_payload-compose.js in lockstep: any template change
+// must be mirrored here. Composer tests in api/safety/_payload-compose.test.js
+// cover the api side; this edge function is verified by the live test ping
+// per D58 S0 acceptance gate.
+//
+// Template version: D58-S0-v1.
+
+const TEMPLATE_VERSION_EDGE = "D58-S0-v1";
+
+const ALPHABET_EDGE = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+
+function formatEventCodeEdge(createdAt: string | Date | null, eventId: string | null): string {
+  const d = createdAt ? new Date(createdAt) : new Date();
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  let tag = "XXXX";
+  if (eventId) {
+    const hex = eventId.replace(/-/g, "").toLowerCase();
+    let n = 0n;
+    for (let i = 0; i < Math.min(16, hex.length); i++) {
+      const v = parseInt(hex[i], 16);
+      if (Number.isNaN(v)) continue;
+      n = (n << 4n) | BigInt(v);
+    }
+    const mask = (1n << 20n) - 1n;
+    const folded = (n ^ (n >> 20n) ^ (n >> 40n)) & mask;
+    let out = "";
+    let x = folded;
+    for (let i = 0; i < 4; i++) {
+      out = ALPHABET_EDGE[Number(x & 31n)] + out;
+      x = x >> 5n;
+    }
+    tag = out;
+  }
+  return `HM-SOS-${y}${m}${day}-${tag}`;
+}
+
+function formatTriggeredAtEdge(createdAt: string | Date | null): string {
+  const d = createdAt ? new Date(createdAt) : new Date();
+  if (Number.isNaN(d.getTime())) return "unknown";
+  try {
+    return new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "Europe/London",
+      timeZoneName: "short",
+    }).format(d);
+  } catch {
+    return d.toISOString();
+  }
+}
+
+function displayPhoneEdge(raw: string | null | undefined): string | null {
+  const v = String(raw ?? "").trim();
+  if (!v) return null;
+  return v.startsWith("+") ? v : `+${v.replace(/\D/g, "")}`;
+}
+
+interface ComposeOpts {
+  displayName: string | null;
+  phone: string | null;
+  lat: number | null;
+  lng: number | null;
+  ackUrl: string | null;
+  eventId: string | null;
+  createdAt: string | null;
+}
+
+interface ComposedPayload {
+  body: string;
+  eventCode: string;
+  templateVersion: string;
+}
+
+function composeSmsPayload(opts: ComposeOpts): ComposedPayload {
+  const name = (opts.displayName?.trim()) || "A HOTMESS member";
+  const firstName = name.split(/\s+/)[0];
+  const phone = displayPhoneEdge(opts.phone);
+  const mapsLink = (opts.lat != null && opts.lng != null)
+    ? `https://maps.apple.com/?ll=${Number(opts.lat).toFixed(5)},${Number(opts.lng).toFixed(5)}&q=${Number(opts.lat).toFixed(5)},${Number(opts.lng).toFixed(5)}`
+    : null;
+  const triggeredAt = formatTriggeredAtEdge(opts.createdAt);
+  const eventCode = formatEventCodeEdge(opts.createdAt, opts.eventId);
+
+  const parts: string[] = [];
+  parts.push(`🚨 HOTMESS SOS: ${name} triggered SOS.`);
+  parts.push(`You're a trusted contact for ${firstName}.`);
+  if (phone) parts.push(`Call: ${phone}`);
+  else parts.push(`Phone not on file.`);
+  if (opts.ackUrl) parts.push(`Live: ${opts.ackUrl}`);
+  if (mapsLink) parts.push(`Map: ${mapsLink}`);
+  parts.push(`At ${triggeredAt}.`);
+  parts.push(`Event: ${eventCode}`);
+
+  return { body: parts.join(" "), eventCode, templateVersion: TEMPLATE_VERSION_EDGE };
+}
+
+// Legacy entry kept for any internal callers — now delegates.
 function buildAlertText(opts: {
   displayName: string;
   situation: string;
   locationCity: string | null | undefined;
   additionalNotes: string | null | undefined;
 }): string {
-  const name = opts.displayName?.trim() || "A friend";
-  const where = opts.locationCity?.trim() || "Location unavailable";
-  const notes = opts.additionalNotes?.trim();
-  const situation = opts.situation?.trim() || "needs help";
-  const tail = notes ? ` Note: ${notes}` : "";
-  return `${name} pressed SOS on HOTMESS. ${situation}. ${where}.${tail}`;
+  // Used in dispatch ordering only; full canonical payload is composed via
+  // composeSmsPayload() at the actual send site so we capture eventCode +
+  // templateVersion + rendered_body for the safety_alerts audit row.
+  const { body } = composeSmsPayload({
+    displayName: opts.displayName,
+    phone: null,
+    lat: null,
+    lng: null,
+    ackUrl: null,
+    eventId: null,
+    createdAt: null,
+  });
+  return body;
 }
 
 async function sendSms(to: string, body: string): Promise<ChannelResult> {
@@ -308,12 +419,25 @@ Deno.serve(async (req: Request) => {
   }
 
   const contacts = (contactsRaw ?? []) as TrustedContact[];
-  const alertText = buildAlertText({
+
+  // D58 S0 — resolve phone for tap-to-call in payload. Mandatory per
+  // Amendments 1 + 5 — trusted-contact emergency disclosure is fixed at
+  // enrolment, no consent gate at trigger time.
+  const userPhone = (profile as { phone?: string | null } | null)?.phone ?? null;
+
+  // D58 S0 — canonical SMS payload (Amendment 8). Identity, recognition line,
+  // phone, view-live, maps, time, event ID all present. Composer keeps the SMS
+  // shape within the two-segment budget.
+  const composed = composeSmsPayload({
     displayName,
-    situation: body.situation ?? "needs help",
-    locationCity: body.location_city ?? null,
-    additionalNotes: body.additional_notes ?? null,
+    phone: userPhone,
+    lat: body.lat ?? null,
+    lng: body.lng ?? null,
+    ackUrl: null, // TODO S2: ack page route
+    eventId: eventId ?? null,
+    createdAt: new Date().toISOString(),
   });
+  const alertText = composed.body;
 
   // 3. Fan out per contact. Each gets its own safety_alerts row so the audit
   //    trail captures channel + status + error_message per delivery attempt.
@@ -328,6 +452,9 @@ Deno.serve(async (req: Request) => {
     const hasPhone = !!normalisePhone(contact.contact_phone);
     const channel = hasPhone ? "sms" : "email";
 
+    // D58 S0 — persist rendered_body + destination + template_version + event_code
+    // for forensic incident review (Amendments 6 + 9).
+    const destination = normalisePhone(contact.contact_phone) ?? contact.contact_email ?? null;
     const { data: alertRow, error: insErr } = await admin
       .from("safety_alerts")
       .insert({
@@ -336,6 +463,10 @@ Deno.serve(async (req: Request) => {
         alert_type: "sos",
         channel,
         status: "queued",
+        rendered_body: alertText,
+        destination,
+        template_version: composed.templateVersion,
+        event_code: composed.eventCode,
         location_data: body.lat != null && body.lng != null
           ? { lat: body.lat, lng: body.lng, city: body.location_city ?? null }
           : null,

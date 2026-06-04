@@ -29,6 +29,7 @@
  *     → { delivered, failed, skipped, log_ids }
  */
 import { buildAckUrl } from '../safety/_ack-token.js';
+import { composeSosPayload } from '../safety/_payload-compose.js';
 import * as pushChannel from './channels/push.js';
 import * as smsChannel from './channels/sms.js';
 import * as emailChannel from './channels/email.js';
@@ -89,21 +90,25 @@ async function loadEvent(supabase, eventId) {
 }
 
 async function loadUser(supabase, userId) {
+  // D58 S0 — pull phone + photo_url so the canonical composer can emit
+  // tap-to-call lines and (future S2) attach profile photo to the ack page.
+  // No consent gate per Amendment 1: trusted-contact emergency disclosure is
+  // mandatory once a contact is enrolled.
   const { data } = await supabase
     .from('profiles')
-    .select('id, display_name, email, last_lat, last_lng, timezone')
+    .select('id, display_name, email, phone, photo_url, last_lat, last_lng, timezone')
     .eq('id', userId)
     .maybeSingle();
-  return data || { id: userId, display_name: null, email: null };
+  return data || { id: userId, display_name: null, email: null, phone: null, photo_url: null };
 }
 
 async function loadContacts(supabase, userId) {
   const { data } = await supabase
     .from('trusted_contacts')
-    .select('id, contact_name, contact_phone, contact_email, contact_whatsapp, contact_telegram_handle, contact_telegram_chat_id, channels_enabled, preferred_channel, role, notify_on_sos')
+    .select('id, contact_name, contact_phone, contact_email, role, notify_on_sos')
     .eq('user_id', userId)
     .eq('notify_on_sos', true)
-    .limit(3); // Phil 2026-05-27 — cost cap: max 3 SOS recipients per fanout
+    .limit(5);
   // Best-effort: see if the contact's phone matches an internal HOTMESS user
   // — if so, web push becomes possible. Skipped if no matching profile.
   const enriched = [];
@@ -453,18 +458,43 @@ async function dispatchPhilOpsAlert({ supabase, event, user }) {
   // happens this is a skipped no-op.
   if (philChatId && process.env.TELEGRAM_BOT_TOKEN) {
     try {
-      const meta = (event.metadata && typeof event.metadata === 'object') ? event.metadata : {};
-      const loc = (meta.lat != null && meta.lng != null)
-        ? `https://maps.google.com/?q=${Number(meta.lat).toFixed(5)},${Number(meta.lng).toFixed(5)}`
-        : '(no location)';
-      const text = `🚨 HOTMESS SOS\n${user.display_name || 'A member'} (id: ${event.user_id.slice(0,8)}) triggered ${event.type.toUpperCase()} at ${event.created_at}.\nLocation: ${loc}\nEvent id: ${event.id}`;
+      // D58 S0 (Amendment 8): canonical composer — no inline template drift.
+      const { body, eventCode, templateVersion } = composeSosPayload({
+        channel: 'ops',
+        event,
+        user,
+        ackUrl: null, // ops alert doesn't carry the trusted-contact ack token; Phil sees the raw event_id
+      });
       const tgRes = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: philChatId, text, parse_mode: 'Markdown' }),
+        body: JSON.stringify({ chat_id: philChatId, text: body, disable_web_page_preview: false }),
       });
       const tgOk = tgRes.ok;
-      stats.attempts.push({ channel: 'telegram', ok: tgOk, error: tgOk ? null : `telegram_${tgRes.status}` });
+      const tgData = await tgRes.json().catch(() => ({}));
+
+      // D58 S0 (Amendments 6 + 9): persist rendered_body + destination + channel + template_version + event_code
+      try {
+        await supabase.from('safety_delivery_log').insert({
+          safety_event_id: event.id,
+          user_id: event.user_id,
+          trusted_contact_id: null,
+          channel: 'telegram',
+          destination: philChatId,
+          rendered_body: body,
+          template_version: templateVersion,
+          event_code: eventCode,
+          attempt_number: 1,
+          status: tgOk ? 'sent' : 'failed',
+          provider_id: tgData?.result?.message_id ? String(tgData.result.message_id) : null,
+          provider_response: tgData || null,
+          error: tgOk ? null : `telegram_${tgRes.status}`,
+        });
+      } catch (logErr) {
+        console.error('[ops-alert] safety_delivery_log insert failed:', logErr?.message);
+      }
+
+      stats.attempts.push({ channel: 'telegram', ok: tgOk, error: tgOk ? null : `telegram_${tgRes.status}`, eventCode });
       if (tgOk) stats.delivered++; else stats.failed++;
     } catch (e) {
       stats.failed++;
