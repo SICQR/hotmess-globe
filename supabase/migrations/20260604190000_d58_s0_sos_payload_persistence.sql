@@ -20,6 +20,28 @@ BEGIN;
 -- safety_delivery_log
 -- ============================================================================
 
+-- D58 S0 hidden-bug fix surfaced during audit verification (2026-06-04):
+-- api/notifications/dispatcher.js FANOUT_IMMEDIATE has included 'telegram'
+-- since the 2026-05-18 multichannel audit, but the CHECK constraint was
+-- never extended. Every trusted-contact Telegram fan-out was silently
+-- failing the delivery_log write. Without 'telegram' allowed, Amendments
+-- 6 + 9 (rendered_body / event_code persistence) cannot land on the most
+-- important safety channel. Constraint amendment is in scope for S0.
+ALTER TABLE public.safety_delivery_log
+  DROP CONSTRAINT IF EXISTS safety_delivery_log_channel_check;
+
+ALTER TABLE public.safety_delivery_log
+  ADD CONSTRAINT safety_delivery_log_channel_check
+  CHECK (channel = ANY (ARRAY[
+    'push'::text,
+    'sms'::text,
+    'whatsapp'::text,
+    'telegram'::text,
+    'email'::text,
+    'voice'::text,
+    'health_check'::text
+  ]));
+
 ALTER TABLE public.safety_delivery_log
   ADD COLUMN IF NOT EXISTS rendered_body    text,
   ADD COLUMN IF NOT EXISTS destination      text,
@@ -66,6 +88,7 @@ CREATE INDEX IF NOT EXISTS idx_safety_alerts_event_code
 -- ============================================================================
 
 -- safety_delivery_log backfill: event_code derived from the linked event
+-- (uses attempted_at — safety_delivery_log does not have a created_at column)
 UPDATE public.safety_delivery_log dl
 SET event_code = 'HM-SOS-' ||
                  to_char(coalesce(se.created_at, dl.attempted_at, now()), 'YYYYMMDD') ||
@@ -101,7 +124,7 @@ SELECT
   dl.rendered_body      AS rendered_body,
   dl.status             AS status,
   dl.provider_id        AS provider_id,
-  dl.created_at         AS dispatched_at,
+  dl.attempted_at       AS dispatched_at,
   dl.delivered_at       AS delivered_at,
   dl.error              AS error
 FROM public.safety_delivery_log dl
