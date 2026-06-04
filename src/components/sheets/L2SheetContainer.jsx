@@ -112,13 +112,15 @@ export default function L2SheetContainer({
   // Snap state — 'peek' (default), 'expanded' (user dragged up).
   const [snap, setSnap] = useState('peek');
 
-  // Fire entrance animation: slide in from offscreen to peek translateY.
-  // Each time the sheet opens we reset to peek.
+  // Phil 2026-06-04 D57 N6 r3 — declarative entrance via animate prop.
+  // The motion.div's animate={{y: snap==='expanded' ? 0 : peekOffset}} runs
+  // initial→animate on every new mount (push/pop or first-open), so we no
+  // longer need imperative controls.start for entrance. Reset snap to 'peek'
+  // when sheet opens / activeSheet changes.
   useEffect(() => {
     if (!isOpen) return;
     setSnap('peek');
-    controls.start({ y: peekOffset, transition: { type: 'spring', damping: 26, stiffness: 320, mass: 0.85 } });
-  }, [isOpen, controls, peekOffset]);
+  }, [isOpen, activeSheet]);
 
   const handleClose = useCallback(() => {
     if (customOnClose) {
@@ -192,11 +194,9 @@ export default function L2SheetContainer({
       if (expandable && (dy < -EXPAND_OFFSET || vy < -VELOCITY_FLICK)) {
         setSnap('expanded');
         hapticSnap();
-        controls.start({ y: 0, transition: { type: 'spring', damping: 28, stiffness: 320 } });
-        return;
+          return;
       }
       // Snap back to peek.
-      controls.start({ y: peekOffset, transition: { type: 'spring', damping: 28, stiffness: 320 } });
     } else {
       // Currently expanded.
       //
@@ -219,37 +219,19 @@ export default function L2SheetContainer({
       if (peekOffset >= EXPAND_OFFSET && (dy > peekOffset / 2 || vy > VELOCITY_FLICK / 2)) {
         setSnap('peek');
         hapticSnap();
-        controls.start({ y: peekOffset, transition: { type: 'spring', damping: 28, stiffness: 320 } });
-        return;
+          return;
       }
       // Snap back to expanded.
-      controls.start({ y: 0, transition: { type: 'spring', damping: 28, stiffness: 320 } });
     }
   }, [snap, peekOffset, expandable, controls, handleClose]);
 
-  // Phil 2026-06-04 D57 N6 hotfix r2 — push/pop reentrance animation.
-  // AnimatePresence mode="wait" exits the old motion.div, then mounts the
-  // new motion.div with initial={{y:'100%'}} + animate={controls}. The
-  // existing entrance useEffect only fires controls.start() when isOpen
-  // toggles, so on push (profile→chat) or pop (chat→profile) the new
-  // sheet adopts a dormant controller and sits at y:100% off-screen.
-  // r1 fired controls.start() in onExitComplete — but onExitComplete fires
-  // BEFORE the new motion.div mounts in mode='wait'. So the start() command
-  // happened against a dormant controls with no connected motion.div, then
-  // the new mount adopted controls with no active command. Round trip
-  // landed sheet stuck off-screen still.
-  // r2 defers one animation frame via rAF so React commits the new mount
-  // BEFORE controls.start() fires. Now the new motion.div is connected
-  // when the entrance animation runs.
+  // Phil 2026-06-04 D57 N6 r3 — onExitComplete just forwards to the reducer hook.
+  // The declarative animate prop on the new motion.div drives the entrance —
+  // no need to retrigger controls. r1's onExitComplete + r2's rAF were both
+  // working around an imperative-controls timing bug that no longer exists.
   const handleExitComplete = useCallback(() => {
-    if (isOpen) {
-      requestAnimationFrame(() => {
-        setSnap('peek');
-        controls.start({ y: peekOffset, transition: { type: 'spring', damping: 26, stiffness: 320, mass: 0.85 } });
-      });
-    }
     if (onAnimationComplete) onAnimationComplete();
-  }, [isOpen, controls, peekOffset, onAnimationComplete]);
+  }, [onAnimationComplete]);
 
   // Click backdrop to close — always dismisses, regardless of snap.
   const handleBackdropClick = useCallback((e) => {
@@ -289,7 +271,8 @@ export default function L2SheetContainer({
             ref={sheetRef}
             key={`sheet-${activeSheet}`}
             initial={{ y: '100%' }}
-            animate={controls}
+            animate={{ y: snap === 'expanded' ? 0 : peekOffset }}
+            transition={{ type: 'spring', damping: 26, stiffness: 320, mass: 0.85 }}
             exit={{ y: '100%', transition: { type: 'spring', damping: 26, stiffness: 320 } }}
             // Drag config — outer sheet is what slides, not the handle pip.
             // top: -peekOffset lets the user drag UP from peek to expanded (and
