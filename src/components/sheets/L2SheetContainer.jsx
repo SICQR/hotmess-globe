@@ -227,6 +227,24 @@ export default function L2SheetContainer({
     }
   }, [snap, peekOffset, expandable, controls, handleClose]);
 
+  // Phil 2026-06-04 D57 N6 hotfix — push/pop reentrance animation.
+  // AnimatePresence mode="wait" exits the old motion.div, then mounts the
+  // new motion.div with initial={{y:'100%'}} + animate={controls}. The
+  // existing entrance useEffect only fires controls.start() when isOpen
+  // toggles, so on push (profile→chat) or pop (chat→profile) the new
+  // sheet adopts a dormant controller and sits at y:100% off-screen.
+  // Screen blurs from the backdrop fade but no sheet appears.
+  // Fix: retrigger controls.start() the moment the exit completes and
+  // before the next mount settles. Forwards to the existing
+  // onAnimationComplete reducer hook so isAnimating clears.
+  const handleExitComplete = useCallback(() => {
+    if (isOpen) {
+      setSnap('peek');
+      controls.start({ y: peekOffset, transition: { type: 'spring', damping: 26, stiffness: 320, mass: 0.85 } });
+    }
+    if (onAnimationComplete) onAnimationComplete();
+  }, [isOpen, controls, peekOffset, onAnimationComplete]);
+
   // Click backdrop to close — always dismisses, regardless of snap.
   const handleBackdropClick = useCallback((e) => {
     if (e.target === e.currentTarget) {
@@ -235,7 +253,7 @@ export default function L2SheetContainer({
   }, [handleClose]);
 
   return (
-    <AnimatePresence mode="wait" onExitComplete={onAnimationComplete}>
+    <AnimatePresence mode="wait" onExitComplete={handleExitComplete}>
       {isOpen && (
         <>
           {/* Backdrop */}
