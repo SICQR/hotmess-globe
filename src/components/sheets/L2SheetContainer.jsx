@@ -227,20 +227,26 @@ export default function L2SheetContainer({
     }
   }, [snap, peekOffset, expandable, controls, handleClose]);
 
-  // Phil 2026-06-04 D57 N6 hotfix — push/pop reentrance animation.
+  // Phil 2026-06-04 D57 N6 hotfix r2 — push/pop reentrance animation.
   // AnimatePresence mode="wait" exits the old motion.div, then mounts the
   // new motion.div with initial={{y:'100%'}} + animate={controls}. The
   // existing entrance useEffect only fires controls.start() when isOpen
   // toggles, so on push (profile→chat) or pop (chat→profile) the new
   // sheet adopts a dormant controller and sits at y:100% off-screen.
-  // Screen blurs from the backdrop fade but no sheet appears.
-  // Fix: retrigger controls.start() the moment the exit completes and
-  // before the next mount settles. Forwards to the existing
-  // onAnimationComplete reducer hook so isAnimating clears.
+  // r1 fired controls.start() in onExitComplete — but onExitComplete fires
+  // BEFORE the new motion.div mounts in mode='wait'. So the start() command
+  // happened against a dormant controls with no connected motion.div, then
+  // the new mount adopted controls with no active command. Round trip
+  // landed sheet stuck off-screen still.
+  // r2 defers one animation frame via rAF so React commits the new mount
+  // BEFORE controls.start() fires. Now the new motion.div is connected
+  // when the entrance animation runs.
   const handleExitComplete = useCallback(() => {
     if (isOpen) {
-      setSnap('peek');
-      controls.start({ y: peekOffset, transition: { type: 'spring', damping: 26, stiffness: 320, mass: 0.85 } });
+      requestAnimationFrame(() => {
+        setSnap('peek');
+        controls.start({ y: peekOffset, transition: { type: 'spring', damping: 26, stiffness: 320, mass: 0.85 } });
+      });
     }
     if (onAnimationComplete) onAnimationComplete();
   }, [isOpen, controls, peekOffset, onAnimationComplete]);
