@@ -17,7 +17,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Ghost, MessageSquare, Flag, MapPin, Clock } from 'lucide-react';
+import { Ghost, MessageSquare, Flag, MapPin, Clock, Loader2 } from 'lucide-react';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useTaps } from '@/hooks/useTaps';
@@ -123,6 +123,12 @@ export function ActiveBeaconModule({ beacon, ownerId, ownerName, fadedBeaconId }
   const { openSheet } = useSheet();
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
   const [myUserId, setMyUserId] = useState<string | null>(null);
+  // D57 CF-4 fix — Boo button needs pending/booed/mutual visual state. The
+  // write itself worked (Phil → Tony 2026-06-04 00:30:53 UTC) but the UI
+  // gave zero feedback, so Phil thought it was dead and assumed the entire
+  // comms path was broken. Local pending flag drives the spinner; useTaps
+  // drives the booed / mutual states.
+  const [booPending, setBooPending] = useState(false);
 
   // Self id for boo (M9 Phil 2026-05-28: handleBoo was a console.log)
   useEffect(() => {
@@ -196,11 +202,31 @@ export function ActiveBeaconModule({ beacon, ownerId, ownerName, fadedBeaconId }
 
   const handleBoo = async () => {
     // M9 (Phil 2026-05-28): real boo via useTaps.sendTap (was console.log only).
-    if (!ownerId || !myUserId) return;
+    // D57 CF-4 fix (Phil 2026-06-04): the write was always working — Phil
+    // booed Tony at 00:30:53 UTC and the row landed in public.taps. What was
+    // missing was the continuity layer: pending → confirmed → state-aware
+    // button text. Phil read "no visible change" as "Boo is dead", thought
+    // the M8 gate was unreachable, and the whole comms path felt blocked.
+    //
+    // Now: set pending immediately, read sendTap's return, surface error
+    // inline. The button visual state (Boo / sending / Booed / Booed back)
+    // is driven by useTaps.isTapped + isMutualBoo so it updates on success
+    // without a refetch.
+    if (!ownerId || !myUserId || booPending) return;
+    setBooPending(true);
     try {
-      await sendTap(ownerId, ownerName || 'them');
+      const result = await sendTap(ownerId, ownerName || 'them');
+      if (result?.error) {
+        // useTaps already captured to Sentry + analytics. Surface inline
+        // (not toast-only — but on a profile route a small toast is the
+        // cleanest signal since there is no dedicated error chip slot here).
+        toast.error("Couldn't boo. Tap to retry.");
+      }
     } catch (e) {
-      console.warn('[ActiveBeaconModule] sendTap failed', e);
+      console.warn('[ActiveBeaconModule] sendTap threw', e);
+      toast.error("Couldn't boo. Tap to retry.");
+    } finally {
+      setBooPending(false);
     }
   };
 
@@ -312,17 +338,48 @@ export function ActiveBeaconModule({ beacon, ownerId, ownerName, fadedBeaconId }
           Beacon active now. Respect the signal. Consent still comes first.
         </p>
 
-        {/* CTAs */}
+        {/* CTAs — D57 CF-4 fix (Phil 2026-06-04): Boo button now has
+            pending / booed / mutual-booed visual states. Previous build
+            kept the same "Boo" label and dark background no matter what,
+            so the user got zero feedback that their tap landed; the entire
+            comms gate looked broken. */}
+        {(() => {
+          // Compute Boo button state. ownerId is checked before useTaps
+          // returns falsy (it requires both ids), so we guard explicitly.
+          const isBooed = !!(ownerId && isTapped(ownerId, 'boo'));
+          const isMutual = !!(ownerId && isMutualBoo(ownerId));
+          const booBg = booPending
+            ? '#2A2A2C'
+            : isMutual
+              ? accent
+              : isBooed
+                ? 'rgba(200,150,44,0.18)' // soft gold tint when one-way booed
+                : '#2A2A2C';
+          const booColor = isMutual ? '#000' : isBooed ? '#C8962C' : 'rgba(255,255,255,0.85)';
+          const booLabel = booPending
+            ? 'sending'
+            : isMutual
+              ? 'Booed back'
+              : isBooed
+                ? 'Booed'
+                : 'Boo';
+          return (
         <div className="grid grid-cols-3 gap-2 pt-1">
           <button
             type="button"
             onClick={handleBoo}
-            className="flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[13px] font-medium text-white/85 active:scale-[0.98] transition-transform"
-            style={{ background: '#2A2A2C' }}
-            aria-label="Boo this beacon"
+            disabled={booPending || !ownerId || !myUserId}
+            aria-pressed={isBooed}
+            className="flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[13px] font-medium active:scale-[0.98] transition-all disabled:cursor-not-allowed"
+            style={{ background: booBg, color: booColor, fontWeight: isMutual ? 700 : 500 }}
+            aria-label={isMutual ? 'Mutual boo' : isBooed ? "Un-boo this beacon" : "Boo this beacon"}
           >
-            <Ghost size={14} aria-hidden />
-            <span>Boo</span>
+            {booPending ? (
+              <Loader2 size={14} className="animate-spin" aria-hidden />
+            ) : (
+              <Ghost size={14} aria-hidden style={{ fill: isMutual ? '#000' : isBooed ? '#C8962C' : 'transparent' }} />
+            )}
+            <span>{booLabel}</span>
           </button>
           <button
             type="button"
@@ -346,6 +403,8 @@ export function ActiveBeaconModule({ beacon, ownerId, ownerName, fadedBeaconId }
             <span>Report</span>
           </button>
         </div>
+          );
+        })()}
       </div>
     </section>
   );
