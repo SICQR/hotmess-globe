@@ -795,7 +795,7 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
   const [loading, setLoading] = useState(!passedBeacon);
   const [checkinCount, setCheckinCount] = useState(0);
   const [recentPosts, setRecentPosts] = useState([]);
-  const { openSheet, closeSheet } = useSheet();
+  const { openSheet, closeSheet, pushSheet } = useSheet();
   const navigate = useNavigate();
 
   // ── Viewer identity for user-beacon Boo/Message gate ──
@@ -1068,8 +1068,8 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
       toast('Boo first. They have to want it back.');
       return;
     }
-    closeSheet();
-    openSheet(SHEET_TYPES.CHAT, { userId: ownerId, beaconId: beacon.id });
+    // D57 P0.3 N6 — push so closing the chat returns to this beacon sheet.
+    pushSheet(SHEET_TYPES.CHAT, { userId: ownerId, beaconId: beacon.id });
   };
 
   // Time-remaining string for the sheet header chip.
