@@ -195,3 +195,4 @@ export default async function handler(req, res) {
 
   return res.status(200).json({ ok: true, action: 'accepted' });
 }
+// gauntlet-rebuild-marker: 2026-06-05T03:00Z (env: SAFETY_ACK_SECRET added preview-only)
