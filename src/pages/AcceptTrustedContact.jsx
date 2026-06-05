@@ -263,8 +263,8 @@ export default function AcceptTrustedContact() {
                 HOTMESS.
               </p>
               <p className="mt-3 text-[14px] leading-relaxed text-white/65">
-                If they ever send an SOS, the people on their trusted-contact
-                list get notified. They've nominated you. Accepting means HOTMESS
+                If they ever send an SOS, the people on their safety network
+                get notified. They've nominated you. Accepting means HOTMESS
                 may contact you on their behalf if they ask for help.
               </p>
             </section>
