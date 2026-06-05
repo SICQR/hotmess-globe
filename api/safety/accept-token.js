@@ -146,13 +146,21 @@ export default async function handler(req, res) {
     // Best-effort nominator notification — Care Language compliant.
     // (Outbox path may not exist on all envs; failures here are non-fatal.)
     try {
+      // Use canonical notification_outbox schema (notification_type/title/
+      // message/metadata) — the legacy {kind, payload} shape from earlier
+      // gauntlet draft silently failed against the real columns.
       await supabaseAdmin.from('notification_outbox').insert({
         user_id: tc.user_id,
-        kind: 'safety_contact_declined',
-        payload: {
+        notification_type: 'safety_contact_declined',
+        title: 'Safety contact invitation declined',
+        message: tc.contact_name
+          ? `${tc.contact_name} couldn't take on being your trusted contact.`
+          : "One of your invited contacts couldn't take on being your trusted contact.",
+        metadata: {
           contact_name: tc.contact_name,
           decline_reason: declineReason || null,
         },
+        status: 'queued',
       });
     } catch (e) {
       console.warn('[accept-token] nominator notify failed (non-fatal):', e?.message);
@@ -182,12 +190,18 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Canonical schema — see decline path note above.
     await supabaseAdmin.from('notification_outbox').insert({
       user_id: tc.user_id,
-      kind: 'safety_contact_accepted',
-      payload: {
+      notification_type: 'safety_contact_accepted',
+      title: 'Safety contact confirmed',
+      message: tc.contact_name
+        ? `${tc.contact_name} accepted being your trusted contact.`
+        : 'One of your invited contacts accepted being your trusted contact.',
+      metadata: {
         contact_name: tc.contact_name,
       },
+      status: 'queued',
     });
   } catch (e) {
     console.warn('[accept-token] nominator notify failed (non-fatal):', e?.message);
