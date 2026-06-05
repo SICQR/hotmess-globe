@@ -18,9 +18,15 @@ import { formatEventCode } from './_event-id.js';
 export const TEMPLATE_VERSION = 'D58-S0-v1';
 
 const BANNED_PHRASES = [
-  'A friend just pressed SOS',  // pre-D58 anonymous template
-  'Acknowledge here',            // pre-D58 weak CTA
-  'call the member now',         // pre-D58 weak CTA
+  'A friend just pressed SOS',   // pre-D58 anonymous template
+  'Acknowledge here',             // pre-D58 weak CTA
+  'call the member now',          // pre-D58 weak CTA
+  // D59 Appendix A §A.1, §A.9 — "trusted contact" is a post-acceptance label.
+  // Until the two-party acceptance flow exists (D59-S2), every SOS recipient is
+  // technically a Safety Recipient who never agreed. Banning the word at the
+  // composer protects against quiet regressions.
+  'trusted contact',
+  'Trusted Contact',
 ];
 
 /**
@@ -143,7 +149,7 @@ function composeTelegram({ name, firstName, phone, ackUrl, mapsLink, coords, tri
   lines.push('');
   lines.push(`${name.toUpperCase()} triggered SOS.`);
   lines.push('');
-  lines.push(`You are receiving this alert because ${firstName} selected you as a trusted contact.`);
+  lines.push(`You are receiving this alert because ${firstName} listed you as a contact to reach in an emergency.`);
   lines.push('');
   if (phone) {
     lines.push('Call now:');
@@ -158,6 +164,8 @@ function composeTelegram({ name, firstName, phone, ackUrl, mapsLink, coords, tri
     lines.push(ackUrl);
     lines.push('');
   }
+  // D59 Appendix A §A.1 — HOTMESS-as-infrastructure-not-rescuer.
+  // Keep the recipient anchored to a phone-someone-they-know contract.
   if (mapsLink) {
     lines.push('Last known location:');
     lines.push(mapsLink);
@@ -187,7 +195,7 @@ function composeSms({ name, firstName, phone, ackUrl, mapsLink, triggeredAt, eve
   // Compact recognition line + identity + tap-to-call + view-link + maps + time + event
   const parts = [];
   parts.push(`🚨 HOTMESS SOS: ${name} triggered SOS.`);
-  parts.push(`You're a trusted contact for ${firstName}.`);
+  parts.push(`${firstName} listed you as an emergency contact.`);
   if (phone) {
     parts.push(`Call: ${phone}`);
   } else {

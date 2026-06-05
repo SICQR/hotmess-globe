@@ -197,7 +197,7 @@ function composeSmsPayload(opts: ComposeOpts): ComposedPayload {
 
   const parts: string[] = [];
   parts.push(`🚨 HOTMESS SOS: ${name} triggered SOS.`);
-  parts.push(`You're a trusted contact for ${firstName}.`);
+  parts.push(`${firstName} listed you as an emergency contact.`);
   if (phone) parts.push(`Call: ${phone}`);
   else parts.push(`Phone not on file.`);
   if (opts.ackUrl) parts.push(`Live: ${opts.ackUrl}`);

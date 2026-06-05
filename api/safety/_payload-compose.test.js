@@ -67,7 +67,7 @@ describe('D58 composer — Telegram channel', () => {
     });
     expect(body).toContain('🚨 HOTMESS SOS');
     expect(body).toContain('ALEX SMITH triggered SOS');
-    expect(body).toContain('You are receiving this alert because Alex selected you as a trusted contact');
+    expect(body).toContain('You are receiving this alert because Alex listed you as a contact to reach in an emergency');
     expect(body).toContain('Call now:');
     expect(body).toContain('+447700900123');
     expect(body).toContain('View live location:');
@@ -114,7 +114,7 @@ describe('D58 composer — SMS channel', () => {
     });
     expect(body).toContain('🚨 HOTMESS SOS');
     expect(body).toContain('Alex Smith triggered SOS');
-    expect(body).toContain("You're a trusted contact for Alex");
+    expect(body).toContain('Alex listed you as an emergency contact');
     expect(body).toContain('Call: +447700900123');
     expect(body).toMatch(/Map: https:\/\/maps\.apple\.com/);
     expect(body).toMatch(/At \d{2}:\d{2}/);
