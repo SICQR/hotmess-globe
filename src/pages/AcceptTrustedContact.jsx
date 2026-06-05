@@ -50,7 +50,7 @@ const RELATIONSHIP_LABEL = {
   flatmate: 'their flatmate',
   club_contact: 'a club contact',
   emergency: 'an emergency contact',
-  contact: 'a trusted contact',
+  contact: 'someone they trust',
 };
 
 async function postEndpoint(body) {
@@ -220,8 +220,8 @@ export default function AcceptTrustedContact() {
   const nominator = preview?.nominator_name || 'A HOTMESS member';
   const contactName = preview?.contact_name;
   const relLabel = preview?.relationship
-    ? RELATIONSHIP_LABEL[preview.relationship] || 'a trusted contact'
-    : 'a trusted contact';
+    ? RELATIONSHIP_LABEL[preview.relationship] || 'someone they trust'
+    : 'someone they trust';
 
   return (
     <div
@@ -234,10 +234,10 @@ export default function AcceptTrustedContact() {
           className="text-[10px] uppercase tracking-[0.4em] mb-2"
           style={{ color: TOKENS.gold }}
         >
-          HOTMESS · Trusted contact
+          HOTMESS · Safety invitation
         </p>
         <h1 className="text-xl font-semibold leading-tight">
-          You've been asked to be someone's trusted contact.
+          You've been asked to join someone's safety network.
         </h1>
       </header>
 
@@ -289,7 +289,7 @@ export default function AcceptTrustedContact() {
                            transition-opacity hover:opacity-90 active:opacity-80"
                 style={{ background: TOKENS.gold, color: TOKENS.ink }}
               >
-                Accept — I'll be a trusted contact
+                Accept invitation
               </button>
               <button
                 type="button"
