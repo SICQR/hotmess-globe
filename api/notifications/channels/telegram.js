@@ -57,13 +57,64 @@ export async function send(opts) {
   }
 }
 
-/** Format an SOS body for Telegram. Parallel to the SMS body shape. */
+/**
+ * Format an SOS body for Telegram.
+ *
+ * D58 S0 (Phil 2026-06-04, Amendment 8): this is now a thin delegator to the
+ * canonical composer. DO NOT add channel-specific copy here — extend
+ * api/safety/_payload-compose.js instead. Three composers caused payload drift
+ * that produced anonymous-alert + duplicate-trigger production behaviour. One
+ * source of truth closes that failure door.
+ *
+ * Backward-compatible signature: callers that pass the legacy `userName`,
+ * `locationStr` shape are auto-wrapped into the composer's `user` + `event`
+ * inputs. New callers should pass `event` + `user` directly.
+ */
+import { composeSosPayload } from '../../safety/_payload-compose.js';
+
 export function buildSosTelegramText(opts) {
-  const {
-    userName = 'A friend',
-    eventType = 'SOS',
-    locationStr = 'location unavailable',
-    ackUrl = 'https://hotmessldn.com/',
-  } = opts || {};
-  return `🚨 HOTMESS ${String(eventType).toUpperCase()}\n\n${userName} just triggered a safety alert.\n\nLocation: ${locationStr}\n\nAcknowledge: ${ackUrl}\n— call them now`;
+  const o = opts || {};
+
+  // New-shape call: pass through to composer directly.
+  if (o.event && o.user) {
+    const { body } = composeSosPayload({
+      channel: 'telegram',
+      event: o.event,
+      user: o.user,
+      ackUrl: o.ackUrl || null,
+    });
+    return body;
+  }
+
+  // Legacy-shape call: synthesise the composer inputs from old fields. Best-
+  // effort only — callers should migrate to new shape so display_name + phone
+  // come from the actual profile row, not a string.
+  const { body } = composeSosPayload({
+    channel: 'telegram',
+    event: {
+      id: o.eventId || null,
+      created_at: o.createdAt || new Date().toISOString(),
+      type: o.eventType || 'sos',
+      metadata: o.metadata || {},
+    },
+    user: {
+      display_name: o.userName || null,
+      phone: o.userPhone || null,
+      last_lat: o.lat ?? null,
+      last_lng: o.lng ?? null,
+    },
+    ackUrl: o.ackUrl || null,
+  });
+  return body;
+}
+
+/**
+ * D58 S0: full composer result (body + eventCode + templateVersion + missing
+ * fields) for callers that need to persist the dispatch audit shape per
+ * Amendments 6 + 9. Telegram channel adapter should use this in preference to
+ * buildSosTelegramText so it can write rendered_body / event_code /
+ * template_version to safety_delivery_log alongside the send.
+ */
+export function buildSosTelegramPayload({ event, user, ackUrl }) {
+  return composeSosPayload({ channel: 'telegram', event, user, ackUrl });
 }
