@@ -328,12 +328,15 @@ export default function Safety() {
         {/* 6. Persistent disclaimer — sticky thin bar at the bottom of the
             scroll container. Calm, product-positioning copy (no 999 line). */}
         <div
-          className="fixed bottom-0 left-0 right-0 z-20 px-4 pt-2"
+          className="fixed left-0 right-0 z-30 px-4 pt-2"
           style={{
+            // Sit ABOVE the bottom nav (~64px tall) + safe-area-inset.
+            // z-30 keeps it above nav backdrop overlays without covering nav.
+            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 64px)',
             background: 'linear-gradient(to top, rgba(5,5,7,0.92) 60%, rgba(5,5,7,0))',
             backdropFilter: 'blur(8px)',
             WebkitBackdropFilter: 'blur(8px)',
-            paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.75rem)',
+            paddingBottom: '0.5rem',
           }}
         >
           <p className="text-[11px] text-white/45 text-center leading-snug max-w-md mx-auto">
