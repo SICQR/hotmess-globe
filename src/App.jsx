@@ -52,10 +52,8 @@ import { GlobeProvider } from '@/contexts/GlobeContext';
 import { LiveModeProvider } from '@/contexts/LiveModeContext';
 import LiveModeOverlay from '@/components/live/LiveModeOverlay';
 import { RadioMiniPlayer } from '@/components/radio/RadioMiniPlayer';
-import { MusicPlayerProvider, useMusicPlayer } from '@/contexts/MusicPlayerContext';
+import { MusicPlayerProvider } from '@/contexts/MusicPlayerContext';
 import { MusicMiniPlayer } from '@/components/music/MusicMiniPlayer';
-const MusicTierGuard = lazy(() => import('@/components/music/MusicTierGuard'));
-const MusicPreviewCapCard = lazy(() => import('@/components/music/MusicPreviewCapCard'));
 import { GlobalTicker } from '@/components/banners/GlobalTicker';
 import { TopHUD } from '@/components/shell/TopHUD';
 import { MovementStatusCard } from '@/components/movement/MovementStatusCard';
@@ -87,10 +85,6 @@ const ChatMeetupPage = lazy(() => import('@/pages/ChatMeetupPage'));
 const ModerationPage = lazy(() => import('@/pages/admin/ModerationPage'));
 const FlagsAdmin    = lazy(() => import('@/pages/admin/FlagsAdmin'));
 const FunnelPage    = lazy(() => import('@/pages/admin/FunnelPage'));
-const RedeemPage    = lazy(() => import('@/pages/beta/RedeemPage'));
-const PrivacyPolicyStandalone = lazy(() => import('@/pages/legal/PrivacyPolicy'));
-const PulseFeedbackButton = lazy(() => import('@/components/feedback/PulseFeedbackButton'));
-const TermsOfServiceStandalone = lazy(() => import('@/pages/legal/TermsOfService'));
 const RevenueDashboard = lazy(() => import('@/pages/admin/RevenueDashboard'));
 const VerificationQueue = lazy(() => import('@/pages/admin/VerificationQueue'));
 const SOSPage = lazy(() => import('@/pages/SOSPage'));
@@ -101,7 +95,6 @@ const SafetySeedScreen = lazy(() => import('@/components/onboarding/screens/Safe
 const MusicMode = lazy(() => import('@/modes/MusicMode'));
 const MusicLibraryPage = lazy(() => import('@/pages/music/MusicLibraryPage'));
 const MusicReleasePage = lazy(() => import('@/pages/music/MusicReleasePage'));
-const RadioShowPage = lazy(() => import('@/pages/music/RadioShowPage'));
 import MorePage from '@/pages/MorePage';
 const CarePage = lazy(() => import('@/pages/CarePage'));
 import AftercareNudge from '@/components/safety/AftercareNudge';
@@ -131,7 +124,6 @@ const ProfileSetupScreen = lazy(() => import('@/examples/auth/ProfileSetupScreen
 
 // Legacy page imports
 const ChatHistoryPage = lazy(() => import('@/pages/ChatHistoryPage'));
-const UserProfile = lazy(() => import('@/pages/UserProfile'));
 
 const isProdBuild = import.meta.env.MODE === 'production';
 
@@ -164,18 +156,8 @@ const LEGACY_PAGE_ROUTE_ALLOWLIST = new Set([
   'Calendar',
   'Scan',
   'Community',
-  'CommunityGuidelines',
   'Leaderboard',
   'AdminDashboard',
-  // Phil 2026-05-31 hotfix: Settings page (and others) link to these via
-  // createPageUrl('PageName') -> /PageName. Without entry here the legacy
-  // route handler 404s and the gate chain bounces the user to '/'.
-  'HelpCenter',
-  'Contact',
-  'PrivacyPolicy',
-  'TermsOfService',
-  'AccountConsents',
-  'AccountDeletion',
   // Business pages
   'PromoterDashboard',
   'BusinessDashboard',
@@ -213,21 +195,6 @@ const PageRoute = ({ pageKey }) => {
       <Page />
     </LayoutWrapper>
   );
-};
-
-// Phil 2026-05-31 hotfix-2: legacy /:PageName catch-all consults the
-// LEGACY_PAGE_ROUTE_ALLOWLIST and renders the matching page through PageRoute.
-// Without this, Settings-linked pages (CommunityGuidelines, HelpCenter,
-// Contact, AccountConsents, AccountDeletion) fell through to the '*' catch-all
-// and rendered PageNotFound, which the gate chain treated as a bounce.
-// This is what makes the LEGACY_PAGE_ROUTE_ALLOWLIST defined above actually
-// matter — without this route, the allowlist was unreachable.
-const LegacyPageCatchAll = () => {
-  const { pageKey } = useParams();
-  if (pageKey && LEGACY_PAGE_ROUTE_ALLOWLIST.has(pageKey)) {
-    return <PageRoute pageKey={pageKey} />;
-  }
-  return <PageNotFound />;
 };
 
 const EventDetailRedirect = () => {
@@ -422,19 +389,11 @@ const AuthenticatedApp = () => {
     const tier = p.get('tier');
 
     if (bs) {
-      // Phil 2026-05-27 doctrine: one-line confirmation, no feature explanation.
-      // Each boost has its own felt copy — what the user EXPERIENCES, not what
-      // they bought. Generic 'Boost activated' fallback stays for any future
-      // boost added before its copy is locked.
-      const FELT = {
-        globe_glow: 'Your pulse is glowing tonight.',
-        profile_bump: "You're at the top of the field.",
-        vibe_blast: 'Your vibe is going out.',
-        incognito_week: "You're off the grid.",
-        extra_beacon_drop: 'Drop another. The room is listening.',
-        highlighted_message: 'Your message stands out.',
+      const L = {
+        globe_glow: 'Globe Glow', profile_bump: 'Profile Bump', vibe_blast: 'Vibe Blast',
+        incognito_week: 'Incognito Mode', extra_beacon_drop: 'Extra Beacon Drop', highlighted_message: 'Highlighted Message'
       };
-      toast.success(FELT[bs] || 'Boost activated.');
+      toast.success(`${L[bs] || 'Boost'} activated! ⚡`);
       window.history.replaceState({}, '', window.location.pathname);
     }
 
@@ -497,56 +456,38 @@ const AuthenticatedApp = () => {
       <Route path="/music" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><MusicMode /></Suspense>} />
       <Route path="/music/library" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><MusicLibraryPage /></Suspense>} />
       <Route path="/music/release/:id" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><MusicReleasePage /></Suspense>} />
-              {/* Phil 2026-06-03 — radio show page closes the dead end from RadioMode show cards. */}
-              <Route path="/music/shows/:showId" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><RadioShowPage /></Suspense>} />
       <Route path="/care" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><CarePage /></Suspense>} />
-      <Route path="/help" element={<Navigate to="/more?sheet=help" replace />} />
       <Route path="/more/*" element={<Suspense fallback={null}><MorePage /></Suspense>} />
       <Route path="/safety" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><SafetyPage /></Suspense>} />
+      {/* #661-B/C — Active Network Enrollment. MUST come before /safety/* wildcard. */}
+      <Route path="/safety/setup" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><SafetySeedScreen standalone /></Suspense>} />
       <Route path="/safety/*" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><SafetyPage /></Suspense>} />
       <Route path="/safe" element={<Suspense fallback={null}><SafePage /></Suspense>} />
       <Route path="/fake-call" element={<Suspense fallback={null}><FakeCallPage /></Suspense>} />
 
       
-      {/* AUTH & INFRASTRUCTURE
-          Doctrine 11: Single Auth Authority. /auth is the legacy parallel
-          surface that bypassed the gate chain (compliance audit 2026-05-29).
-          Both /auth and /auth/* redirect to / so all unauthenticated entry
-          points resolve to OnboardingRouter (Splash → AgeGate → Bridge → SignUp).
-          /auth/callback remains the OAuth return endpoint and is public. */}
-      <Route path="/auth" element={<Navigate to="/" replace />} />
+      {/* AUTH & INFRASTRUCTURE */}
+      <Route path="/auth" element={<PageRoute pageKey="Auth" />} />
+      <Route path="/auth/*" element={<PageRoute pageKey="Auth" />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route path="/auth/*" element={<Navigate to="/" replace />} />
       <Route path="/portal" element={<PortalPage />} />
       <Route path="/reentry" element={<ReentryPage />} />
       {/* v3 reentry welcome screen secondary CTA targets /pricing. Pricing.jsx
           component exists but was not routed; wiring here. The tier query
           param is read by Pricing if implemented; otherwise informational. */}
       <Route path="/pricing" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><PricingPage /></Suspense>} />
-      {/* M1 (Phil 2026-05-28): 6 paywall CTAs navigate('/upgrade') but the route never existed,
-          breaking the highest-intent conversion moments. Alias to /pricing so the dead button works. */}
-      <Route path="/upgrade" element={<Navigate to="/pricing" replace />} />
       <Route path="/onboarding" element={<PageRoute pageKey="OnboardingGate" />} />
       <Route path="/onboarding/*" element={<PageRoute pageKey="OnboardingGate" />} />
       
       {/* SETTINGS (Accessible via More) */}
       <Route path="/settings" element={<PageRoute pageKey="Settings" />} />
       <Route path="/settings/*" element={<PageRoute pageKey="Settings" />} />
-      {/* Entity-aware public profile route (beacon doctrine destination). Must come before the /profile -> /settings redirect. */}
-      <Route path="/profile/:userId" element={<Suspense fallback={<PageLoadingSkeleton type="profiles" />}><UserProfile /></Suspense>} />
       <Route path="/profile" element={<Navigate to="/settings" replace />} />
       
       {/* LEGAL (Accessible via More) */}
       <Route path="/legal/privacy" element={<LegalPrivacyRoute />} />
       <Route path="/legal/terms" element={<LegalTermsRoute />} />
       <Route path="/legal/*" element={<AboutPage />} />
-      {/* Canonical /privacy and /terms — Phil 2026-05-28 hotfix.
-          Required by Google OAuth consent screen verification: those URLs
-          MUST resolve or Google will reject. Standalone (no LayoutWrapper)
-          so the crawler gets clean HTML + no auth-state computation.
-          Lazy + Suspense fallback null per #584 postmortem rule 1. */}
-      <Route path="/privacy" element={<Suspense fallback={null}><PrivacyPolicyStandalone /></Suspense>} />
-      <Route path="/terms" element={<Suspense fallback={null}><TermsOfServiceStandalone /></Suspense>} />
 
       {/* Fallback auto-generated /PageName routes for internal createPageUrl() redirects */}
       {Object.entries(Pages).map(([path, Page]) => {
@@ -570,18 +511,10 @@ const AuthenticatedApp = () => {
       <Route path="/admin/flags" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><FlagsAdmin /></Suspense>} />
       {/* ADMIN — v6 Funnel Dashboard */}
       <Route path="/admin/funnel" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><FunnelPage /></Suspense>} />
-      {/* Beta access — Phil 2026-05-27 — 250-user 2-week cohort */}
-      <Route path="/redeem" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><RedeemPage /></Suspense>} />
-      <Route path="/redeem/:code" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><RedeemPage /></Suspense>} />
       {/* ADMIN — D3 Revenue Dashboard */}
       <Route path="/admin/revenue" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><RevenueDashboard /></Suspense>} />
       {/* ADMIN — selfie verification queue (MEGA-3 §3.4) */}
       <Route path="/admin/verification" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><VerificationQueue /></Suspense>} />
-      {/* Phil 2026-05-31 hotfix-2: legacy /PageName URLs (CommunityGuidelines,
-          HelpCenter, Contact, AccountConsents, AccountDeletion etc.) — must
-          come BEFORE the '*' catch-all so they reach LegacyPageCatchAll
-          which consults LEGACY_PAGE_ROUTE_ALLOWLIST. */}
-      <Route path="/:pageKey" element={<LegacyPageCatchAll />} />
       <Route path="*" element={<PageNotFound />} />
       </Routes>
     </PageTransition>
@@ -629,10 +562,6 @@ function App() {
               <Toaster />
               {/* SW update banner — listens for hm_sw_update_available and prompts refresh */}
               <SWUpdateBanner />
-            {/* Phil 2026-05-28: PulseFeedbackButton UNMOUNTED.
-                Initial placement at bottom-right overlapped Ghosted inbox icon.
-                Need correct positioning before re-mounting. Lazy-import left
-                in place so the module bundles only when referenced again. */}
               {/* PIN Lock Overlay - Z-200, above everything */}
               <PinLockOverlay />
             </QueryClientProvider>
@@ -669,27 +598,7 @@ function OSArchitecture() {
   usePresenceHeartbeat();
   // iOS-style edge swipe to go back
   useSwipeBack();
-  // PTR allowlist (Phil 2026-05-29). The global pull-to-refresh bar previously
-  // appeared on every page including Home / Music / Shop / More — breaking the
-  // tactical/luxury feel and turning HOTMESS into a web wrapper. Page-level
-  // opt-in now: Ghosted only. Pulse already opts out separately via the
-  // data-globe-interactive marker checked in shouldIgnorePullToRefresh().
-  // For other surfaces refresh happens on focus / route enter / manual button.
-  const ptrLocation = useLocation();
-  const ptrAllowlist = ['/ghosted'];
-  const ptrAllowed = ptrAllowlist.some(p => ptrLocation.pathname === p || ptrLocation.pathname.startsWith(p + '/'));
-  // Phil 2026-05-31: do NOT default to window.location.reload(). A full reload
-  // (a) drops the cached geo position, which makes some browsers re-surface
-  // the consent UI, and (b) flips useGPS from null → resolved which switches
-  // useGhostedGrid from `recent` (many users) to `nearby` (location-filtered)
-  // mid-render — Phil's grid "collapsed to TELEGRAM TEST". Dispatch an event
-  // instead; GhostedMode listens and calls useGhostedGrid.refetch() in place.
-  const { pullProgress, isRefreshing } = usePullToRefresh({
-    disabled: !ptrAllowed,
-    onRefresh: () => {
-      try { window.dispatchEvent(new CustomEvent('hm:ptr-refresh', { detail: { path: ptrLocation.pathname } })); } catch { /* noop */ }
-    },
-  });
+  const { pullProgress, isRefreshing } = usePullToRefresh();
 
 
   // Part B: Sync location on app open (once per mount)
@@ -784,15 +693,11 @@ function OSArchitecture() {
   }, []);
 
   const onRadioActive = location.pathname.startsWith('/more/radio') || location.pathname === '/radio';
-  // 2026-05-27 Phil: mutually exclusive mini players — when music has a current
-  // track, hide the radio mini bar so we never stack two playback bars at the
-  // bottom of the screen.
-  const musicHasTrack = !!useMusicPlayer().currentTrack;
 
   return (
     <div className="hotmess-os relative h-dvh w-full overflow-hidden bg-[#050507]">
-      {/* Pull to Refresh Indicator — page-level opt-in (see ptrAllowlist above) */}
-      {ptrAllowed && pullProgress > 0 && (
+      {/* Pull to Refresh Indicator */}
+      {pullProgress > 0 && (
         <div 
           className="fixed top-0 left-0 right-0 z-[1000] pointer-events-none flex flex-col items-center pt-2"
           style={{ opacity: pullProgress }}
@@ -829,20 +734,12 @@ function OSArchitecture() {
           re-mount this line if/when the ticker is wanted again. */}
       {/* <GlobalTicker className="fixed top-12 left-0 right-0 z-[60]" /> */}
 
-      {/* Radio Mini Player — sits just above OSBottomNav (Z-40).
-          2026-05-27 Phil: hide when music is also playing — avoids the
-          "duplicate play bars" stack at the bottom of the screen. The
-          radio audio keeps streaming; user pauses via Radio page. */}
-      <RadioMiniPlayer hidden={onRadioActive || musicHasTrack} />
+      {/* Radio Mini Player — sits just above OSBottomNav (Z-40) */}
+      <RadioMiniPlayer hidden={onRadioActive} />
 
 
       {/* Music Mini Player — sits just above radio player or nav (Z-50) */}
       <MusicMiniPlayer />
-      {/* Tier preview-cap enforcement + upsell card (Phil 2026-05-28).
-          Lazy-loaded per PR #584 postmortem rule 1 — wrapped in Suspense
-          fallback null so they never block the shell render. */}
-      <Suspense fallback={null}><MusicTierGuard /></Suspense>
-      <Suspense fallback={null}><MusicPreviewCapCard /></Suspense>
 
       {/* Global Ticker was moved to the very top to prevent hiding Shopping buttons */}
 
