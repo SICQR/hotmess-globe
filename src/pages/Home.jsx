@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { useWorldPulse } from '@/contexts/WorldPulseContext';
 import CityPulseBar from '@/components/globe/CityPulseBar';
 import LiveFeed from '@/components/globe/LiveFeed';
+import SafetyNetworkCard from '@/components/safety/SafetyNetworkCard';
 import ErrorBoundary from '@/components/error/ErrorBoundary';
 import { ProfilesGrid } from '@/features/profilesGrid';
 import { 
@@ -313,6 +314,16 @@ export default function Home() {
       <div className="sticky top-0 z-50">
         <CityPulseBar />
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          #661-D — Safety Network Card. Visible on Home above all else, both
+          mobile + desktop. Reads get_my_safety_network_summary() (#661-A) and
+          renders one of three states: Not Active / Pending / Active. The card
+          is the only way Coverage moves — users must keep seeing the state.
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="px-4 pt-4 pb-1 bg-black">
+        <SafetyNetworkCard />
+      </section>
 
       {/* ═══════════════════════════════════════════════════════════════════
           MOBILE-FIRST: PEOPLE NEAR YOU - Shows immediately on mobile
@@ -1045,7 +1056,7 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <Link to="/">
+            <Link to="/auth">
               <Button className="bg-[#C8962C] hover:bg-white text-black font-black uppercase px-12 py-8 text-2xl">
                 GET STARTED
               </Button>
