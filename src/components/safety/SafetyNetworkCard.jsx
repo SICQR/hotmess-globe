@@ -8,7 +8,8 @@
  * Reads from get_my_safety_network_summary() (#661-A). Three render states:
  *
  *   NOT_ACTIVE → "You haven't added anyone yet" + [Build Network]
- *   PENDING    → "Waiting for {firstName} to respond" + [View]
+ *   PENDING    → "N invitations waiting on a response" + [View]
+ *                (no names — Home is glanceable, nominator sovereignty)
  *   ACTIVE     → "{N} accepted contact{s}" + [Manage]
  *
  * Tap routes to /safety/setup (nudge phase) when NOT_ACTIVE, /safety
@@ -74,8 +75,12 @@ export default function SafetyNetworkCard() {
     );
   }
 
-  const { state, accepted_count = 0, first_contact_name } = summary;
-  const firstName = (first_contact_name || '').trim().split(/\s+/)[0] || 'them';
+  const { state, accepted_count = 0, pending_count = 0 } = summary;
+  // Phil amendment 2026-06-05: never name the contact on Home. Home is
+  // glanceable — a controlling partner, shoulder surfer, or anyone borrowing
+  // the device can see this surface. Names belong behind a tap (inside
+  // /safety), not on the main screen. Nominator sovereignty as a sibling
+  // doctrine to recipient sovereignty.
 
   // ── State 1: NOT_ACTIVE
   if (state === 'not_active') {
@@ -148,11 +153,13 @@ export default function SafetyNetworkCard() {
                 Pending
               </p>
             </div>
-            {/* Phil amendment 2026-06-05: show WHY it's pending, not just that
-                it is. Prevents false comfort — until accept lands, no one
-                gets notified. The substrate-honest second line is locked. */}
+            {/* Phil amendments 2026-06-05:
+                  (1) show WHY it's pending — prevents false comfort
+                  (2) NO names — Home is glanceable, names belong behind a tap */}
             <p className="text-white/70 text-sm leading-relaxed mb-1">
-              Waiting for {firstName} to accept.
+              {pending_count === 1
+                ? '1 invitation waiting on a response.'
+                : `${pending_count} invitations waiting on a response.`}
             </p>
             <p className="text-white/45 text-xs leading-relaxed mb-3">
               SOS contact alerts are not active yet.
