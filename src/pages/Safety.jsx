@@ -328,7 +328,7 @@ export default function Safety() {
         {/* 6. Persistent disclaimer — sticky thin bar at the bottom of the
             scroll container. Calm, product-positioning copy (no 999 line). */}
         <div
-          className="sticky bottom-0 left-0 right-0 z-20 px-4 pt-2"
+          className="fixed bottom-0 left-0 right-0 z-20 px-4 pt-2"
           style={{
             background: 'linear-gradient(to top, rgba(5,5,7,0.92) 60%, rgba(5,5,7,0))',
             backdropFilter: 'blur(8px)',
