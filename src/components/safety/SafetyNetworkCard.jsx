@@ -148,8 +148,14 @@ export default function SafetyNetworkCard() {
                 Pending
               </p>
             </div>
-            <p className="text-white/60 text-sm leading-relaxed mb-3">
-              Waiting for {firstName} to respond.
+            {/* Phil amendment 2026-06-05: show WHY it's pending, not just that
+                it is. Prevents false comfort — until accept lands, no one
+                gets notified. The substrate-honest second line is locked. */}
+            <p className="text-white/70 text-sm leading-relaxed mb-1">
+              Waiting for {firstName} to accept.
+            </p>
+            <p className="text-white/45 text-xs leading-relaxed mb-3">
+              SOS contact alerts are not active yet.
             </p>
             <div className="flex items-center gap-1">
               <span className="text-sm font-semibold text-white/80">View</span>
