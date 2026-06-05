@@ -4,14 +4,16 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 // Public pages (no auth required)
 const HotmessSplash = lazy(() => import('@/components/splash/HotmessSplash'));
 import AgeGate from '@/pages/AgeGate';
-// Auth.jsx is preserved as a parked orphan until task #274 confirms zero /auth
-// traffic via telemetry (Doctrine 11 Single Auth Authority). Lint must not
-// drop it — deletion is a doctrinal decision, not a hygiene one.
-// eslint-disable-next-line unused-imports/no-unused-imports
 import Auth from '@/pages/Auth';
 import ResetPassword from '@/pages/ResetPassword';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
 import { PrivacyPolicyPage, LegalPage } from '@/pages/legal/LegalPages';
+// D59 S2 — Trusted-contact acceptance landing. Account-free (Safety
+// Constitution invariant). Recipient lands here from the invitation email,
+// SMS, or Telegram message and accepts/declines without signing up.
+const AcceptTrustedContact = lazy(
+  () => import('@/pages/AcceptTrustedContact')
+);
 
 // Polish-sweep 2026-05-18 Issue 3: brand the cold-visitor transition state.
 // Was a 5px spinner — visually indistinguishable from a frozen black page on a
@@ -39,25 +41,30 @@ export default function PublicShell({ startAt = '/' }) {
         <Route path="/age" element={<AgeGate />} />
         <Route path="/AgeGate" element={<AgeGate />} />
 
-        {/* Legacy /auth routes removed 2026-05-29 (Doctrine 11 Single Auth
-            Authority + compliance audit). App.jsx now redirects /auth and
-            /auth/* → /. The Auth.jsx import is preserved temporarily so the
-            file does not become an orphaned dead import; PR 5 deletes the
-            file once telemetry confirms zero /auth traffic. */}
+        {/* Legacy auth route */}
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/auth/*" element={<Auth />} />
+        <Route path="/Auth" element={<Auth />} />
 
         {/* Password reset — linked from Supabase reset email */}
         <Route path="/reset-password" element={<ResetPassword />} />
 
+        {/* D59 S2 — Trusted-contact acceptance landing (account-free).
+            Recipient arrives here from email/SMS/Telegram invitation. */}
+        <Route
+          path="/contact/accept/:id"
+          element={
+            <Suspense fallback={<Spinner />}>
+              <AcceptTrustedContact />
+            </Suspense>
+          }
+        />
+
         {/* Legal */}
         <Route path="/legal/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/legal/terms" element={<LegalPage />} />
-        {/* Phil 2026-05-28 (#251): /privacy + /terms removed from PublicShell.
-            App.jsx already declares standalone routes pointing to the new
-            PrivacyPolicy.jsx + TermsOfService.jsx components. Having them here
-            ALSO created a double-registration that React Router resolved to the
-            wrong target depending on render order — Google OAuth crawler hit
-            the wrong shell, Phil saw "Lost in the fog". Single source of truth
-            now: App.jsx. */}
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms" element={<LegalPage />} />
         <Route path="/PrivacyHub" element={<PrivacyHub />} />
 
         {/* Catch-all → splash */}
