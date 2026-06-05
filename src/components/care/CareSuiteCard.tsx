@@ -40,30 +40,45 @@ function activationCopy(cohort: CareCohort): string {
 export default function CareSuiteCard({ onOpen }: { onOpen: () => void }) {
   const benefits = useUserBenefits();
   const cohort = deriveCohort(benefits);
-  const [trustedCount, setTrustedCount] = useState<number | null>(null);
+  const [networkState, setNetworkState] = useState<string | null>(null);
+  const [acceptedCount, setAcceptedCount] = useState<number | null>(null);
 
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user || !alive) return;
-        const { count } = await supabase
-          .from('trusted_contacts')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', user.id);
-        if (alive) setTrustedCount(count ?? 0);
+        // Phil 2026-06-05 — D62 substrate-honesty fix.
+        // Previously this counted raw trusted_contacts rows, which gave
+        // count > 0 for PENDING invitations and contradicted the
+        // SafetyNetworkCard reading 'pending' state from the same domain.
+        // Both surfaces now read from the same state oracle. Cannot drift.
+        const { data, error } = await supabase
+          .rpc('get_my_safety_network_summary');
+        if (!alive) return;
+        if (error || !Array.isArray(data) || data.length === 0) {
+          setNetworkState('not_active');
+          setAcceptedCount(0);
+          return;
+        }
+        const row = data[0];
+        setNetworkState(row?.state ?? 'not_active');
+        setAcceptedCount(row?.accepted_count ?? 0);
       } catch {
-        if (alive) setTrustedCount(0); // fail-safe: treat as inactive
+        if (alive) {
+          setNetworkState('not_active'); // fail-safe: treat as inactive
+          setAcceptedCount(0);
+        }
       }
     })();
     return () => { alive = false; };
   }, []);
 
-  // Active = at least one trusted contact configured.
-  // Future: also require notification channel verified. Keeping the bar
-  // honest-to-state for slice 1 — the dispatcher discipline ships in slice 2.
-  const isActive = (trustedCount ?? 0) > 0;
+  // Active = the safety network is ACTIVE (≥1 accepted contact).
+  // Pending invitations do NOT make the suite active — that was the contradiction.
+  // Both Home surfaces (SafetyNetworkCard + CareSuiteCard) now share substrate.
+  const isActive = networkState === 'active' && (acceptedCount ?? 0) > 0;
+  const isPending = networkState === 'pending';
+  const isLoading = networkState === null;
   const canActivate = cohort !== 'free';
 
   const handleTap = () => {
@@ -135,7 +150,7 @@ export default function CareSuiteCard({ onOpen }: { onOpen: () => void }) {
                   className="text-[11px] uppercase tracking-[0.14em] font-medium"
                   style={{ color: isActive ? '#30D158' : MUTED }}
                 >
-                  Status: {trustedCount === null ? '…' : isActive ? 'active' : 'inactive'}
+                  Status: {isLoading ? '…' : isActive ? 'active' : isPending ? 'pending' : 'inactive'}
                 </span>
               </div>
 
