@@ -35,12 +35,11 @@ import { useRadio } from '@/contexts/RadioContext';
 import { useBootGuard } from '@/contexts/BootGuardContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { motionTokens, getMotion, useReducedMotion } from '@/lib/motionTokens';
-import CareSuiteCard from '@/components/care/CareSuiteCard';
-import CareSuiteExplainer from '@/components/care/CareSuiteExplainer';
 import RightNowModal from '@/components/globe/RightNowModal';
 import { trackEvent } from '@/components/utils/analytics';
 import { TrackPlayer } from '@/components/music/TrackPlayer';
 import { HotmessText } from '@/components/brand/HotmessWordmark';
+import SafetyNetworkCard from '@/components/safety/SafetyNetworkCard';
 
 // ── Brand tokens ────────────────────────────────────────────────────────────
 const AMBER = '#C8962C';
@@ -118,11 +117,8 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
   const profileIncomplete = profile?.onboarding_completed &&
     (!profile?.avatar_url || !profile?.bio || !profile?.display_name);
 
-  // Phil 2026-06-01 — Go Live band removed from Home (D17 dead-end).
-  // The "off-grid → Go Live" affordance now lives only in the Drop A Beacon
-  // hero below. State card surfaces only when there is real state to show.
-  type CardVariant = 'live' | 'complete-profile' | 'hidden';
-  let cardVariant: CardVariant = 'hidden';
+  type CardVariant = 'go-live' | 'live' | 'complete-profile';
+  let cardVariant: CardVariant = 'go-live';
   if (userRnStatus) cardVariant = 'live';
   else if (profileIncomplete) cardVariant = 'complete-profile';
 
@@ -135,10 +131,6 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
     trackEvent('home_cta_tap', { cta: 'enter_pulse' });
     navigate('/pulse');
   }, [navigate]);
-
-  // Phil 2026-05-29 — Care Suite explainer sheet state (slice 1).
-  const [showCareExplainer, setShowCareExplainer] = useState(false);
-  const [homeBeaconImgFailed, setHomeBeaconImgFailed] = useState(false);
 
   // ── Signal line (compact, inline with hero) ───────────────────────────────
   const signalParts: string[] = [];
@@ -241,12 +233,17 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         </section>
 
         {/* ================================================================ */}
-        {/* 2. STATE CARD — single contextual action                       */}
-        {/*    Only renders when there's real state (live / incomplete).    */}
-        {/*    Default 'hidden' kills the legacy "off the grid / Go Live"  */}
-        {/*    dead-end band (Phil 2026-06-01).                            */}
+        {/* 1.5 SAFETY NETWORK CARD — #661-D Phil-locked 2026-06-05.        */}
+        {/* Three-state mirror reading get_my_safety_network_summary().     */}
+        {/* Coverage only moves if users repeatedly see the state.          */}
         {/* ================================================================ */}
-        {cardVariant !== 'hidden' && (
+        <section className="px-5 pb-2">
+          <SafetyNetworkCard />
+        </section>
+
+        {/* ================================================================ */}
+        {/* 2. STATE CARD — single contextual action                       */}
+        {/* ================================================================ */}
         <section className="px-5 pb-5">
           <motion.div
             className="rounded-2xl p-4"
@@ -277,6 +274,24 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
                 </motion.button>
               </div>
             )}
+            {cardVariant === 'go-live' && (
+              <div className="flex items-center justify-between">
+                <div className="min-w-0">
+                  <p className="text-white text-sm font-medium leading-tight">You&rsquo;re off the grid</p>
+                  <p className="text-[11px]" style={{ color: MUTED }}>Go Live so people nearby can find you</p>
+                </div>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleGoLive}
+                  className="h-9 px-4 rounded-full text-xs font-medium flex items-center gap-1.5 flex-shrink-0 ml-3"
+                  style={{ background: AMBER, color: '#000' }}
+                  aria-label="Go Live"
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  Go Live
+                </motion.button>
+              </div>
+            )}
             {cardVariant === 'complete-profile' && (
               <div className="flex items-center justify-between">
                 <div className="min-w-0">
@@ -296,124 +311,6 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
               </div>
             )}
           </motion.div>
-        </section>
-        )}
-
-        {/* ================================================================ */}
-        {/* 2b. CARE SUITE — doctrine 11: care outranks commerce            */}
-        {/*    Visibility universal, activation tiered. Stateful card.      */}
-        {/* ================================================================ */}
-        <CareSuiteCard onOpen={() => setShowCareExplainer(true)} />
-
-        {/* ================================================================ */}
-        {/* 2c. DROP A BEACON — Phil 2026-05-30 logical order: state first  */}
-        {/*    (section 2), care second (CareSuiteCard above), invitation   */}
-        {/*    third. Teach the platform's primary write action AFTER the   */}
-        {/*    user is oriented and safe, BEFORE the lane strip. Designed   */}
-        {/*    Soho comp (CARE label, headline, subhead, CTA, 4-chip row    */}
-        {/*    baked in). Code wires invisible click hotspots over the      */}
-        {/*    CTA + chip row. D16 §2/§7: CENTER zone, content card.        */}
-        {/* ================================================================ */}
-        <section className="px-5 pb-5">
-          <div
-            role="img"
-            aria-label="Drop a Beacon. Let the right people find you."
-            className="relative w-full overflow-hidden rounded-2xl border border-white/5"
-            style={{ aspectRatio: '3 / 2', background: '#0a0a0a' }}
-          >
-            {!homeBeaconImgFailed && (
-              <img
-                src="https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/home/drop-a-beacon.png"
-                alt=""
-                loading="lazy"
-                onError={() => setHomeBeaconImgFailed(true)}
-                className="absolute inset-0 w-full h-full object-cover"
-                style={{ display: 'block' }}
-              />
-            )}
-
-            {homeBeaconImgFailed && (
-              <>
-                <div
-                  aria-hidden
-                  className="absolute inset-0"
-                  style={{
-                    background: 'linear-gradient(180deg, rgba(10,10,10,0.7) 0%, rgba(10,10,10,0.95) 100%)',
-                  }}
-                />
-                <div className="absolute left-5 top-6 text-[11px] tracking-[0.32em] font-bold text-white/90 select-none">
-                  GHOSTED
-                </div>
-                <div className="absolute left-5 right-5 top-1/3 text-white font-black uppercase leading-[0.95]" style={{ fontSize: 'clamp(28px, 8vw, 48px)' }}>
-                  Drop a<br />beacon.
-                </div>
-                <div className="absolute left-5 right-5 bottom-24 text-sm text-white/70 max-w-xs">
-                  Let the right people find you. When you&rsquo;re ready.
-                </div>
-              </>
-            )}
-
-            {/* Invisible click overlay — positioned over the visible CTA
-                button baked into the comp (~middle-left of the image). */}
-            <button
-              type="button"
-              aria-label="Drop a Beacon"
-              onClick={() => {
-                trackEvent('home_cta_tap', { cta: 'drop_beacon_hero' });
-                navigate('/pulse?drop=1');
-              }}
-              className="absolute left-[4%] w-[44%] h-[9%] active:bg-white/5 transition-colors"
-              style={{ top: '57%', background: 'transparent' }}
-            />
-
-            {/* Invisible click grid — positioned over the visible 4-chip
-                row at the bottom ~22% of the comp. */}
-            <div
-              className="absolute left-0 right-0 grid grid-cols-4"
-              style={{ top: '76%', bottom: 0 }}
-            >
-              <button
-                type="button"
-                aria-label="Be seen — go live"
-                onClick={() => {
-                  trackEvent('home_cta_tap', { cta: 'be_seen' });
-                  handleGoLive();
-                }}
-                className="w-full h-full active:bg-white/5 transition-colors"
-                style={{ background: 'transparent' }}
-              />
-              <button
-                type="button"
-                aria-label="Find others"
-                onClick={() => {
-                  trackEvent('home_cta_tap', { cta: 'find_others' });
-                  navigate('/ghosted');
-                }}
-                className="w-full h-full active:bg-white/5 transition-colors"
-                style={{ background: 'transparent' }}
-              />
-              <button
-                type="button"
-                aria-label="Make a move"
-                onClick={() => {
-                  trackEvent('home_cta_tap', { cta: 'make_a_move' });
-                  navigate('/pulse');
-                }}
-                className="w-full h-full active:bg-white/5 transition-colors"
-                style={{ background: 'transparent' }}
-              />
-              <button
-                type="button"
-                aria-label="Stay in control"
-                onClick={() => {
-                  trackEvent('home_cta_tap', { cta: 'stay_in_control' });
-                  navigate('/safety');
-                }}
-                className="w-full h-full active:bg-white/5 transition-colors"
-                style={{ background: 'transparent' }}
-              />
-            </div>
-          </div>
         </section>
 
         {/* ================================================================ */}
@@ -572,27 +469,6 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
       {showRightNow && (
         <RightNowModal onClose={() => setShowRightNow(false)} />
       )}
-
-      {/* Care Suite explainer (slice 1) — inline overlay */}
-      {showCareExplainer && (
-        <div
-          className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center"
-          style={{ background: 'rgba(0,0,0,0.75)' }}
-          onClick={() => setShowCareExplainer(false)}
-        >
-          <div
-            className="w-full sm:max-w-md bg-[#0a0a0c] rounded-t-2xl sm:rounded-2xl border-t sm:border border-white/10 max-h-[88vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.5rem)' }}
-          >
-            <CareSuiteExplainer
-              onSetup={() => { setShowCareExplainer(false); window.location.href = '/safety'; }}
-              onClose={() => setShowCareExplainer(false)}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }
-
