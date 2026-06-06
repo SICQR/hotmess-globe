@@ -282,12 +282,11 @@ export default async function handler(req, res) {
             user_email: notification.user_email,
             type: notification.notification_type,
             title: notification.title || 'Notification',
-            message: notification.message || '',
+            body: notification.message || '', // table column is `body` (was `message` — broke every in-app delivery since 2026-05-17)
             link: notification.metadata?.link ?? null,
             metadata: notification.metadata || {},
             read: false,
             created_at: new Date().toISOString(),
-            created_date: new Date().toISOString(),
           });
 
         if (notifError) {
