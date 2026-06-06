@@ -279,7 +279,7 @@ export default async function handler(req, res) {
         const { error: notifError } = await supabase
           .from('notifications')
           .insert({
-            user_email: notification.user_email,
+            user_id: notification.user_id ?? null, user_email: notification.user_email ?? (notification.user_id ? (await supabase.from('profiles').select('email').eq('id', notification.user_id).maybeSingle()).data?.email ?? null : null), // bell matches on user_email; some producers (accept-token) queue id-only
             type: notification.notification_type,
             title: notification.title || 'Notification',
             body: notification.message || '', // table column is `body` (was `message` — broke every in-app delivery since 2026-05-17)
