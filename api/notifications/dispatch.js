@@ -166,7 +166,7 @@ export default async function handler(req, res) {
           user_email: item.user_email,
           type: item.notification_type,
           title: item.title || 'Notification',
-          message: item.message || '',
+          body: item.message || '', // table column is `body`
           link,
           metadata: item.metadata || {},
           read: false,
