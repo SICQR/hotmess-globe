@@ -273,6 +273,7 @@ export default async function handler(req, res) {
           if (localHour >= PUSH_QUIET_START && localHour < PUSH_QUIET_END) {
             notification.channel = 'in_app';
           }
+        }
 
         // 1. Create in-app notification (table uses "type", outbox uses "notification_type")
         const { error: notifError } = await supabase
