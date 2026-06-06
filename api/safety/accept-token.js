@@ -153,9 +153,7 @@ export default async function handler(req, res) {
         user_id: tc.user_id,
         notification_type: 'safety_contact_declined',
         title: 'Safety contact invitation declined',
-        message: tc.contact_name
-          ? `${tc.contact_name} couldn't take on being your trusted contact.`
-          : "One of your invited contacts couldn't take on being your trusted contact.",
+        message: "One of your invited contacts couldn't take on being your trusted contact.", // D63 Class A: no names in lock-screen-visible bodies
         metadata: {
           contact_name: tc.contact_name,
           decline_reason: declineReason || null,
@@ -195,9 +193,7 @@ export default async function handler(req, res) {
       user_id: tc.user_id,
       notification_type: 'safety_contact_accepted',
       title: 'Safety contact confirmed',
-      message: tc.contact_name
-        ? `${tc.contact_name} accepted being your trusted contact.`
-        : 'One of your invited contacts accepted being your trusted contact.',
+      message: 'One of your invited contacts accepted being your trusted contact.', // D63 Class A: no names in lock-screen-visible bodies
       metadata: {
         contact_name: tc.contact_name,
       },
