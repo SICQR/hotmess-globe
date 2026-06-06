@@ -36,6 +36,7 @@ import SheetRouter from '@/components/sheets/SheetRouter';
 import { SOSProvider, useSOSContext } from '@/contexts/SOSContext';
 import { CheckinTimerProvider } from '@/contexts/CheckinTimerContext';
 import SafetyFAB from '@/components/safety/SafetyFAB';
+import BellRailIcon from '@/components/rail/BellRailIcon';
 import SOSOverlay from '@/components/interrupts/SOSOverlay';
 import FakeCallGenerator from '@/components/safety/FakeCallGenerator';
 import SafetyRecoveryScreen from '@/components/safety/SafetyRecoveryScreen';
@@ -760,7 +761,8 @@ function OSArchitecture() {
 
       {/* Invisible Safety FAB — sits over OSBottomNav (Z-120) */}
       <SafetyFAB />
-
+      {isAuthenticated && <BellRailIcon />}
+      
       {/* L3: SOS Overlay — blocks entire OS, stops all sharing (Z-200) */}
       {/* SOS Overlay removed — now silent */}
 
