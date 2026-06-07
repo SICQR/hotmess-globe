@@ -248,7 +248,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         {/*     HOTMESS FRIDAY 9PM–midnight. Static schedule, no fetch.     */}
         {/* ================================================================ */}
         <section className="px-5 pb-2 pt-2">
-          <NextUpCard />
+          <NextUpCard slot="next" />
         </section>
 
         {/* ================================================================ */}
@@ -434,6 +434,15 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
               />
             </div>
           </div>
+        </section>
+
+        {/* ================================================================ */}
+        {/* 2.5 COMING UP — the remaining ritual banners (Phil 2026-06-07). */}
+        {/*     One next-event poster lives up top; the rest live here in   */}
+        {/*     Ghosted's world so Safety/Care keep the fold.               */}
+        {/* ================================================================ */}
+        <section className="px-5 pb-5">
+          <NextUpCard slot="rest" />
         </section>
 
         {/* ================================================================ */}
