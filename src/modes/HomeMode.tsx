@@ -42,6 +42,7 @@ import { trackEvent } from '@/components/utils/analytics';
 import { TrackPlayer } from '@/components/music/TrackPlayer';
 import { HotmessText } from '@/components/brand/HotmessWordmark';
 import SafetyNetworkCard from '@/components/safety/SafetyNetworkCard';
+import NextUpCard from '@/components/home/NextUpCard';
 
 // ── Brand tokens ────────────────────────────────────────────────────────────
 const AMBER = '#C8962C';
@@ -239,6 +240,15 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
               </motion.button>
             </motion.div>
           </motion.div>
+        </section>
+
+        {/* ================================================================ */}
+        {/* 1.2 NEXT UP — the weekly ritual clock (Phil 2026-06-07).        */}
+        {/*     Predictable times → habitual attendance. RAW DROP Thu 8PM,  */}
+        {/*     HOTMESS FRIDAY 9PM–midnight. Static schedule, no fetch.     */}
+        {/* ================================================================ */}
+        <section className="px-5 pb-2 pt-2">
+          <NextUpCard />
         </section>
 
         {/* ================================================================ */}
