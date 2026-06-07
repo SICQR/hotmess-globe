@@ -73,7 +73,7 @@ export function usePushNotifications(): void {
                   subscription: subJson,
                   updated_at: new Date().toISOString(),
                 },
-                { onConflict: 'user_id' }
+                { onConflict: 'endpoint' } // table's unique key is endpoint (one row per device); user_id has no unique constraint — 'user_id' here made PostgREST 400 every upsert
               )
               .select();
           }
