@@ -1,32 +1,44 @@
 /**
- * NextUpCard — the clock the week runs on (Phil 2026-06-07).
+ * NextUpCard — full-bleed ritual banners + countdown chips (Phil 2026-06-07).
  * "People synchronize around clocks. If HOTMESS becomes predictable,
  * attendance becomes habitual."
- * Static weekly ritual schedule — no fetch, no push. Always visible on Home.
- *   Thursday 8PM       — RAW DROP (RAW CONVICT release + radio premiere)
- *   Friday 9PM–midnight — HOTMESS FRIDAY (beacons + radio live)
- * Times are Europe/London wall clock.
+ * Whole banner is the button — no extra CTA chrome, the artwork carries it.
+ *   RAW DROP        Thu 8PM   → /music  (radio premiere)
+ *   HOTMESS FRIDAY  Fri 9PM   → /pulse  (drop a beacon, see who's out)
+ *   HAND N HAND     Sunday    → /music  (coming soon — baked into art)
+ * Countdown chip = HTML overlay so art never goes stale. Europe/London clock.
+ * Assets: /public/banners/*.webp (1400w, ~130KB each).
  */
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const GOLD = '#C8962C';
 
-type Ritual = { label: string; when: string; weekday: number; hour: number; durationMin: number };
+type Ritual = {
+  key: string;
+  img: string;
+  alt: string;
+  route: string;
+  weekday: number | null; // null = no countdown (coming soon)
+  hour: number;
+  durationMin: number;
+};
 
 const RITUALS: Ritual[] = [
-  { label: 'RAW DROP', when: 'Thursday 8PM', weekday: 4, hour: 20, durationMin: 60 },
-  { label: 'HOTMESS FRIDAY', when: 'Friday 9PM–midnight', weekday: 5, hour: 21, durationMin: 180 },
+  { key: 'rawdrop', img: '/banners/rawdrop-home.webp', alt: 'RAW DROP — new music, first heard here. Thursday 8PM live on HOTMESS Radio', route: '/music', weekday: 4, hour: 20, durationMin: 60 },
+  { key: 'friday', img: '/banners/friday-home.webp', alt: 'HOTMESS FRIDAY — the weekend has started. Drop a beacon, see who is out', route: '/pulse', weekday: 5, hour: 21, durationMin: 180 },
+  { key: 'hnh', img: '/banners/hnh-home.webp', alt: 'HAND N HAND — the only place to land. Sundays on HOTMESS Radio. Coming soon', route: '/music', weekday: null, hour: 0, durationMin: 0 },
 ];
 
 function londonNow(): Date {
   return new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/London' }));
 }
 
-function nextStart(r: Ritual, from: Date): Date {
+function nextStart(weekday: number, hour: number, durationMin: number, from: Date): Date {
   const d = new Date(from);
-  d.setHours(r.hour, 0, 0, 0);
-  let delta = (r.weekday - d.getDay() + 7) % 7;
-  if (delta === 0 && from.getTime() >= d.getTime() + r.durationMin * 60_000) delta = 7;
+  d.setHours(hour, 0, 0, 0);
+  let delta = (weekday - d.getDay() + 7) % 7;
+  if (delta === 0 && from.getTime() >= d.getTime() + durationMin * 60_000) delta = 7;
   d.setDate(d.getDate() + delta);
   return d;
 }
@@ -42,6 +54,7 @@ function fmtCountdown(ms: number): string {
 }
 
 export default function NextUpCard() {
+  const navigate = useNavigate();
   const [now, setNow] = useState<Date>(() => londonNow());
 
   useEffect(() => {
@@ -50,40 +63,35 @@ export default function NextUpCard() {
   }, []);
 
   return (
-    <div
-      className="rounded-2xl p-4"
-      style={{ background: 'rgba(200,150,44,0.06)', border: '1px solid rgba(200,150,44,0.25)' }}
-    >
-      {RITUALS.map((r, i) => {
-        const start = nextStart(r, now);
-        const live = now.getTime() >= start.getTime() && now.getTime() < start.getTime() + r.durationMin * 60_000;
+    <div className="space-y-3">
+      {RITUALS.map((r) => {
+        let chip: React.ReactNode = null;
+        if (r.weekday !== null) {
+          const start = nextStart(r.weekday, r.hour, r.durationMin, now);
+          const live = now.getTime() >= start.getTime() && now.getTime() < start.getTime() + r.durationMin * 60_000;
+          chip = (
+            <span
+              className="absolute bottom-2.5 right-2.5 text-[11px] font-black tracking-[0.14em] uppercase px-2.5 py-1 rounded-full tabular-nums"
+              style={live
+                ? { background: GOLD, color: '#050507' }
+                : { background: 'rgba(5,5,7,0.72)', color: GOLD, border: '1px solid rgba(200,150,44,0.4)', backdropFilter: 'blur(8px)' }}
+            >
+              {live ? 'ON NOW' : 'in ' + fmtCountdown(start.getTime() - now.getTime())}
+            </span>
+          );
+        }
         return (
-          <div
-            key={r.label}
-            className={'flex items-center justify-between' + (i > 0 ? ' mt-3 pt-3' : '')}
-            style={i > 0 ? { borderTop: '1px solid rgba(255,255,255,0.08)' } : undefined}
+          <button
+            key={r.key}
+            type="button"
+            onClick={() => navigate(r.route)}
+            aria-label={r.alt}
+            className="relative block w-full rounded-2xl overflow-hidden"
+            style={{ border: '1px solid rgba(255,255,255,0.08)', WebkitTapHighlightColor: 'transparent' }}
           >
-            <div>
-              <div className="text-[11px] font-bold tracking-[0.18em] uppercase" style={{ color: GOLD }}>
-                {live ? r.label : 'Next ' + r.label}
-              </div>
-              <div className="text-sm font-medium text-white mt-0.5">{r.when}</div>
-            </div>
-            <div className="text-right">
-              {live ? (
-                <span
-                  className="text-[11px] font-black tracking-[0.18em] uppercase px-2 py-1 rounded-full"
-                  style={{ background: GOLD, color: '#050507' }}
-                >
-                  On now
-                </span>
-              ) : (
-                <span className="text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                  {'in ' + fmtCountdown(start.getTime() - now.getTime())}
-                </span>
-              )}
-            </div>
-          </div>
+            <img src={r.img} alt="" className="block w-full h-auto" loading="lazy" draggable={false} />
+            {chip}
+          </button>
         );
       })}
     </div>
