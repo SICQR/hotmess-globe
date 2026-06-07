@@ -54,8 +54,8 @@ export default function BellRailIcon() {
       aria-label={hasUnread ? `${notifCount} unread notifications` : 'Notifications'}
       style={{
         position: 'fixed',
-        top: 'calc(env(safe-area-inset-top, 0px) + 64px)',
-        right: 12,
+        top: 'calc(env(safe-area-inset-top, 0px) + 74px)', // aligned beside the safety menu button (top-right, 48px @ right:16)
+                right: 68, // Phil 2026-06-07 P0: bell was mounted at right:12 ON TOP of 'Open safety menu' — safety access is non-negotiable, bell yields left
         zIndex: 160, // Phil 2026-06-02 P0.2: was 70, sat below existing Pulse rail icons at z:150 and was visually obscured. 160 puts bell above the page-level rail; SOSOverlay z:200+ and SafetyFAB own higher tiers still.
         width: 44,
         height: 44,
