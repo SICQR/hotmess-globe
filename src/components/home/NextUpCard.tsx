@@ -3,6 +3,12 @@
  * "People synchronize around clocks. If HOTMESS becomes predictable,
  * attendance becomes habitual."
  * Whole banner is the button — no extra CTA chrome, the artwork carries it.
+ *
+ * slot="next"  → renders ONLY the next chronological ritual (top of Home,
+ *                above Safety Network — one poster, not a billboard wall).
+ * slot="rest"  → renders the remaining rituals (mounted further down Home,
+ *                in Ghosted's world). Safety/Care stay above the fold.
+ *
  *   RAW DROP        Thu 8PM   → /music  (radio premiere)
  *   HOTMESS FRIDAY  Fri 9PM   → /pulse  (drop a beacon, see who's out)
  *   HAND N HAND     Sunday    → /music  (coming soon — baked into art)
@@ -53,7 +59,7 @@ function fmtCountdown(ms: number): string {
   return min + 'm';
 }
 
-export default function NextUpCard() {
+export default function NextUpCard({ slot = 'next' }: { slot?: 'next' | 'rest' }) {
   const navigate = useNavigate();
   const [now, setNow] = useState<Date>(() => londonNow());
 
@@ -62,9 +68,20 @@ export default function NextUpCard() {
     return () => clearInterval(t);
   }, []);
 
+  // The next chronological scheduled ritual owns the top slot.
+  const scheduled = RITUALS.filter((r) => r.weekday !== null);
+  const nextKey = scheduled.reduce((best, r) => {
+    const s = nextStart(r.weekday as number, r.hour, r.durationMin, now).getTime();
+    return s < best.t ? { k: r.key, t: s } : best;
+  }, { k: scheduled[0].key, t: Infinity as number }).k;
+
+  const visible = slot === 'next'
+    ? RITUALS.filter((r) => r.key === nextKey)
+    : RITUALS.filter((r) => r.key !== nextKey);
+
   return (
     <div className="space-y-3">
-      {RITUALS.map((r) => {
+      {visible.map((r) => {
         let chip: React.ReactNode = null;
         if (r.weekday !== null) {
           const start = nextStart(r.weekday, r.hour, r.durationMin, now);
