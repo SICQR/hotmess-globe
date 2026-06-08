@@ -488,3 +488,97 @@ That is what makes HOTMESS messaging an OS-level transport rather than a feature
 D25 as originally written (§1–§19) is now correctly read as **the Trajectory mode specification**. §20 promotes D25 to the doctrine that governs all modes, with the other modes inheriting through the §20 amendment plus their respective implementation doctrines.
 
 The remaining doctrines (D23, D26, D27, D29, D30) inherit the mode taxonomy; specifically, any future doctrine that introduces a new communication context inherits D25 §20 by either picking an existing mode or proposing a new one with full property-dimension specification.
+
+---
+
+## §21 Soft entry — the bounded pre-convergence state (amendment, 2026-06-01)
+
+### §21.0 Why this amendment exists
+
+D25 §4.1 holds that chat opens only at D24 `converged` (boo back and the chat opens). Read strictly, that forbids *any* communication before mutual boo. But D17 (Ghosted), the beacon flows, and Preloved all present a surface where one person can signal another with a single tap *before* convergence exists. Until now that was an unresolved constitutional conflict (D17 §8.1): either soft-entry is a recognised exception, or those flows violate D25.
+
+This amendment resolves it the narrow way. Soft entry is a **bounded, decaying, single-shot state that sits in front of the gate — not a hole in it.** It permits the spark (the boo, the wave, the "you around?") and forbids everything that turns a spark into an inbox. The boo-gate at §4.1 is untouched: persistent chat still requires mutual acknowledgement. We have only named the doorway, not moved it.
+
+The single sentence: **before convergence, you get one signal that fades; after convergence, you get a conversation.**
+
+### §21.1 The three communication states
+
+Communication across the entire platform resolves to exactly three states. They are not modes (§20 modes are properties of an *open* thread); they are the stages *before and at* the opening of a thread.
+
+| State | Meaning | Inbox? | Governed by |
+|---|---|---|---|
+| **Ambient** | "I can see you exist." | none | D17 (the field), D08 (visibility), D24 (taps as primitives) |
+| **Soft entry** | "I want to acknowledge you." | a request, not a thread | **this §21** |
+| **Converged** | "We acknowledged each other." | a persistent thread | D25 §1–§20 as written |
+
+Ambient is already fully doctrined: looking is not contact, the field creates no inbox, presence is never position (D17 §0, §2.2). Converged is D25 as it stands. §21 governs only the middle.
+
+### §21.2 Soft entry is a single tap on the `taps` substrate
+
+A soft-entry signal is exactly one thing: a `taps` row with `tap_type='boo'`. **The soft-entry signal set is closed at one member — boo.** This is deliberate. A multi-signal vocabulary (wave, react, poke, …) fragments meaning, manufactures interpretation games ("what did a *wave* mean versus a *boo*?"), and raises the emotional cost of the very gesture §21 exists to make low-risk. Simple signals become iconic; overloaded ones become taxonomy. Adding a second soft-entry type is a constitutional amendment with its own abuse and semiotics analysis — never a config addition.
+
+`save` (the other extant `tap_type`) is **not** a soft-entry signal and is out of §21's scope entirely: it is a private, one-directional bookmark with no reciprocation semantics, no notification to the saved party, and no path to convergence. Saving someone is not signalling them. §21 governs `boo` and only `boo`.
+
+A boo is anchored on the same primitive D24 reads for convergence — soft entry and convergence are the same `taps` substrate seen at one-sided vs two-sided.
+
+- **One signal, not a stream.** A sender may hold **at most one un-reciprocated boo per recipient** at a time. A second boo to the same recipient before the first is reciprocated or decayed is a no-op, not a new notification. This is the structural anti-spam guarantee: soft entry cannot become nudging.
+- **No composer — structurally, not just by rule.** Soft entry carries no free-text body, no media, no attachment. The guarantee is enforced by the substrate, not by policy: `taps` has **no content column**, so there is physically nowhere for a pickup line to live. This is deliberate and load-bearing. The moment soft entry gains freeform text it becomes mini-DMs, copy-paste openers, and a moderation surface — and the whole anti-spam posture collapses back into Grindr-lite. A future opener-text variant, if ever contemplated, requires (a) a doctrinal amendment with its own abuse analysis and (b) a new column whose addition is itself the constitutional flag. It is never a config toggle on this signal.
+- **No thread.** A soft-entry signal does **not** create a `conversations` row, does not create `conversation_members`, does not open the composer. It lands in a **Requests surface** (§21.4), not the inbox.
+
+### §21.3 Soft entry fades for the recipient and cools for the sender — asymmetrical memory
+
+A naive "the boo disappears after 24h" frees the recipient from pressure but also frees the *sender* from any record that they already reached — which silently re-enables low-frequency pestering: a fresh boo tomorrow, and the day after, distributed across days instead of minutes. The fix is **asymmetrical memory: the recipient is allowed to forget; the sender's system is required to remember.**
+
+**Recipient side — fades.** An un-reciprocated boo is visible in the recipient's Requests surface for **24h (the soft-entry tier)**, then fades. After fade there is no backlog, no "someone booed you and you ignored it," no residue. Fade is silent (D15: walking away, and being walked away from, is never shamed).
+
+**The attraction record is destroyed, not archived.** When a boo fades, the boo itself — the who-wanted-whom content — is **deleted from the substrate**, not flipped to an "inactive" row that lingers on `taps`. A surviving one-directional attraction record is exactly the pattern-of-attraction liability §21.6 names as a *safety* concern, so it must not persist. What survives is **not the boo.**
+
+**Sender side — cools.** What survives is a minimal, **sender-private, recipient-invisible** cooldown marker: `(from_user, to_user, last_sent_at, attempt_count)`. It exists only to rate-limit the sender. It is never visible to the recipient, carries **no** "they saw it / they declined / they ignored you" semantics, and is not a trust event (D24 §3.1). The sender, on attempting to re-boo during cooldown, sees only soft, non-rejection language — *"signal already sent," "you already reached," "let the night move," "cooling down"* — never *expired, declined, ignored, rejected, or unanswered.* The principle: **the recipient may forget; the sender remembers they already reached.** That asymmetry is the whole mechanism.
+
+**Cooldown escalates, by principle not by fixed number.** Repeated un-reciprocated boos toward the same recipient lengthen the cooldown monotonically (a first reach cools briefly; repeated reaches cool longer; sustained one-sided reaching eventually requires a fresh mutual context — e.g. genuine co-presence — before another boo is possible). The *starting windows are tuning, not doctrine* (specified, and adjustable, in the implementation brief); the *constitutional* parts are: monotonic increase, sender-private, no rejection language, no hard "you are blocked" humiliation surface, and a path that never fully forecloses a future possibility. Internally and in UX the faded state is *faded / cooled / quieted / passed* — never *expired* (transactional) and never *rejected* (shaming).
+
+**Reciprocation is still the only escalation.** When the recipient boos back within the visible window, `is_mutual_boo` becomes true, the pair reaches D24 `converged`, the cooldown marker is cleared, and the thread opens per §4.1. That is the one and only path from soft entry to a conversation. Accepting *is* booing back; there is no "accept without reciprocating."
+
+**The cooldown is soft entry only.** Escalating cooldown applies to `boo` and nothing else. It must **never** gate a D24 §3.3 care-role pairing, a §3.4 safety-contact pairing, or any D25 §20 Safety- or Care-moded surface. A supporter reaching out or a check-in firing is not flirtation and must never be rate-limited or locked out by this mechanism. (Care/safety pairings live in their own tables, not on `taps`; this clause keeps that separation load-bearing.)
+
+### §21.4 The Requests surface is one inbox with states, not a second inbox
+
+Soft-entry signals surface in a **Requests** view that is a *filter on the existing inbox substrate, not a new table or a parallel inbox.* This is the deliberately conservative answer to "should marketplace feel different from flirting, should recovery feel different from nightlife": **yes — but as thread state and visual mode, not as separate topology.**
+
+- There is **one** conversation substrate (§3). Requests is a query over pending soft-entry signals + not-yet-converged context; the inbox proper is a query over converged threads.
+- The *emotional* separation the platform needs (transactional ≠ flirtation, care ≠ nightlife) is delivered by **§20 thread modes** (Settlement, Care, Safety, Operator, Trajectory), which already exist and already drive tone, persistence, and interruption per mode. A marketplace conversation feels transactional because it is Settlement-moded, not because it lives in a different inbox.
+- Four physical inboxes are **forbidden as premature topology** at current scale. If Requests volume ever demands sharding, that is an implementation decision, not a doctrinal one — the constitutional rule is *one substrate, mode-differentiated presentation.*
+
+### §21.5 What soft entry forbids
+
+- No persistent thread before convergence. No composer, no media, no attachments, no voice/video before §4.1 opens (media remains D06-gated even after).
+- No repeated signalling: one un-reciprocated boo per recipient, full stop. No "boo again to bump."
+- No read receipts, no "seen," no typing indicators, no delivery state on a soft-entry signal. The sender cannot tell whether the recipient has looked. (Presence without position has an emotional analogue here: *interest without surveillance of its reception.*)
+- No paid skip. Per §4.3 + D24 §11.6 + D21 §9 — no tier converts a soft-entry signal into an open thread without reciprocation. "Pay to message before they boo back" is permanently forbidden.
+- No soft-entry-derived movement inference. A boo is a point-in-time signal; the platform must not aggregate boos/taps into co-location patterns, repeat-overlap counts, or "you crossed signals N times" surfaces. That is pattern-of-life inference and it is forbidden by D17 §0 (presence never position) and D48. The romantic framing ("you keep almost meeting") does not launder the surveillance.
+- **No reward-the-sender loop.** A boo may be beautiful to *receive* — glow, sound, arrival animation on the recipient's surface is welcome. It must be *quiet to send*: no escalating animation, streak, counter, sound-on-send, or any feedback that makes expressing intent feel like a slot-machine pull. The asymmetry is constitutional: the more the *sending* of a boo is rewarded, the more the platform optimises for volume of un-consented intent — which is the exact spam pressure §21.2's one-per-recipient rule exists to suppress. Beauty on receipt, restraint on send. "Boos should be satisfying" must never become "boos should be satisfying to spam."
+
+### §21.6 Live-state warning (2026-06-01)
+
+Verified against prod `rfoftonnlwudilafhfkl`:
+
+- `taps` exists (`tap_type` ∈ {`boo`, `save`}; 56 rows, 16 senders). `is_mutual_boo` / `has_mutual_boo` are live functions reading bidirectional boo pairs off `taps`. Convergence (State 3 gate) is therefore real.
+- **`taps` has no expiry, ack, read, or cooldown column.** The 24h recipient-side fade (§21.3) and the sender-side escalating cooldown are **doctrine-only — not implemented.** Taps currently accumulate forever with no fade and no rate limit. Closing this is the first build item: recipient-side fade must *delete* the faded boo (destroy the attraction record), while a separate sender-private cooldown marker `(from_user, to_user, last_sent_at, attempt_count)` survives to rate-limit re-booing. The marker must be invisible to the recipient and carry no rejection semantics.
+- **No anti-spam constraint exists** on `taps`. Nothing prevents N boos from one sender to one recipient, immediately or distributed across days. §21.2 (one live un-reciprocated boo per recipient) and §21.3 (escalating cooldown on the marker) are both currently unenforced. This is the core of the build.
+
+### §21.7 Acceptance test extension
+
+Add to §13:
+
+- A user sends a boo to someone who has not booed them. **Pass:** a pending request appears for the recipient for 24h then fades with no residue; the faded boo row is deleted from the substrate; no thread, composer, or media channel exists; the sender sees no read/seen/typing state. **Fail:** a thread opens, free text or media is sendable, the sender learns the boo was seen, the faded boo lingers as an "inactive" attraction row, or the signal persists in the recipient's view past its window.
+- After a boo fades, the sender attempts to re-boo the same person. **Pass:** the re-boo is prevented during cooldown; the sender sees only non-rejection language ("you already reached" / "cooling down"); the cooldown lengthens on repeated attempts; the recipient is shown nothing and cannot tell a re-attempt occurred. **Fail:** the sender can immediately re-boo; the sender sees "expired/declined/ignored"; the recipient is notified of the retry; or a hard "blocked" humiliation surface appears.
+- A care-supporter or safety contact reaches out to someone who has not reciprocated. **Pass:** no soft-entry cooldown applies; the care/safety surface is unaffected. **Fail:** the boo cooldown mechanism rate-limits or locks out a care/safety action.
+- The platform attempts to show "you and X were near each other 3 times." **Pass:** the surface does not exist. **Fail:** it does.
+
+### §21.8 Forward inheritance
+
+The soft-entry signal set is closed at one member (boo, §21.2). If a future surface ever proposes a second pre-convergence signal, it does not get to inherit §21 by analogy — it must be added by amendment that re-justifies the whole single-signal rationale and specifies the new signal's decay, anti-spam, and no-text properties explicitly. The default answer to "can we add a wave / poke / super-boo" is **no**; the burden is on the proposal, not on this doctrine. Whatever the signal, the invariants are non-negotiable: single-shot, decaying, no composer (structurally — no content column), no thread, no read state, no send-side reward loop, no movement inference, mode-differentiated in presentation only.
+
+### §21.9 Closing
+
+HOTMESS communication should feel like the city gradually allowing two people to exist closer together: awareness, then tension, then permission, then trust. §21 is the *tension* stage made constitutional — one signal that fades, with the conversation held back until both people reach for it. The architecture underneath is bounded and strict; the surface is one tap. That gap, between complex doctrine and effortless UX, is deliberate. The user should feel the night, never the system.

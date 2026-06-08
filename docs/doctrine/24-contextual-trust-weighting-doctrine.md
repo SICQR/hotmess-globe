@@ -55,7 +55,7 @@ D24 does NOT govern:
 
 The full set of events that constitute trust progression. Adding an event to this set is a doctrinal review, not a maintenance task — the set is the contract.
 
-**§3.1 — Mutual boo.** User A boos user B, user B boos user A back, both within a 7-day window. The atomic event is the second boo; the first is operational state until the second arrives. Mutual boo opens the chat gate (per the existing boo-first chat doctrine).
+**§3.1 — Mutual boo.** User A boos user B, user B boos user A back, both within a 7-day window. The atomic event is the second boo; the first is operational state until the second arrives. Mutual boo opens the chat gate (per the existing boo-first chat doctrine). The *first*, un-reciprocated boo is not a trust event — it is a **soft-entry signal** governed by D25 §21: single-shot, decaying (24h), no thread, no composer. It contributes nothing to trust position until reciprocated. Soft entry and convergence are the same `taps` substrate read one-sided vs two-sided.
 
 **§3.2 — Completed handoff.** A beacon-anchored convergence handoff in which both parties confirm a resolution from the D19 §6.10 locked vocabulary (Passed on / Sorted / Covered / Claimed / Going together / Heading there / Picked up / Handed over). The atomic event is the second-party confirmation; the first is operational state until then.
 
