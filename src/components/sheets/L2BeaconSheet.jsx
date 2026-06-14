@@ -1270,6 +1270,21 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
           )
         )}
 
+        {/* ── Buy Tickets — shown when metadata.tickets_url is set (partner/vendor events) ── */}
+        {/* Phil 2026-06-14: SBN and other partner events store tickets_url in metadata */}
+        {beacon.metadata?.tickets_url && (
+          <a
+            href={beacon.metadata.tickets_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full bg-[#C8962C] text-black font-black text-sm rounded-2xl py-3.5 flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            onClick={() => closeSheet()}
+          >
+            <ExternalLink className="w-4 h-4" />
+            Buy tickets
+          </a>
+        )}
+
         {/* ── kind: event — I'm going (real scheduled event with venue) ── */}
         {kind === 'event' && (
           <button
