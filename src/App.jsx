@@ -772,7 +772,9 @@ function OSArchitecture() {
 
       {/* Invisible Safety FAB — sits over OSBottomNav (Z-120) */}
       <SafetyFAB />
-      {isAuthenticated && <BellRailIcon />}
+      {/* Phil 2026-06-14: BellRailIcon removed — TopHUD now renders the bell
+          to the left of the profile avatar on every page. No need for a
+          second floating bell. */}
       
       {/* L3: SOS Overlay — blocks entire OS, stops all sharing (Z-200) */}
       {/* SOS Overlay removed — now silent */}
