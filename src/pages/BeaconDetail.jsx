@@ -136,6 +136,18 @@ export default function BeaconDetail() {
     <div className="min-h-screen bg-black text-white">
       {/* Hero */}
       <div className="relative h-64 bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20 border-b border-white/10">
+        {/* Phil 2026-06-14: show partner event poster if present in metadata */}
+        {beacon.metadata?.poster_url && (
+          <img
+            src={beacon.metadata.poster_url}
+            alt={beacon.title}
+            className="absolute inset-0 w-full h-full object-cover opacity-60"
+          />
+        )}
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(to top, rgba(5,5,7,0.95) 0%, rgba(5,5,7,0.4) 60%, transparent 100%)' }}
+        />
         <div className="absolute inset-0 flex items-end">
           <div className="w-full p-6 md:p-8">
             <div className="flex items-center gap-2 mb-4">

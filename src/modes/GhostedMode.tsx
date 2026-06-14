@@ -140,7 +140,12 @@ export default function GhostedMode() {
   }, []);
 
   const { isTapped, isMutualBoo } = useTaps(myUserId, myEmail);
-  const { unreadCount } = useUnreadCount();
+  const { unreadCount, clearTapsBadge, fetchChatCount } = useUnreadCount();
+
+  // Phil 2026-06-14: clear taps badge on Ghosted mount
+  React.useEffect(() => {
+    clearTapsBadge();
+  }, [clearTapsBadge]);
 
   // profile_bump — paying users sort to top of grid + render outer gold glow.
   // Empty set when nobody is boosted (steady state) → zero render impact.
@@ -185,6 +190,7 @@ export default function GhostedMode() {
       }} />
 
       {/* Scrollable Container */}
+      {/* Phil 2026-06-14: paddingRight 72px stops GhostedRailButtons overlapping column 3 */}
       <div
         className="gh-no-sb flex-1 overflow-y-auto overflow-x-hidden pb-24"
         style={{
@@ -192,6 +198,7 @@ export default function GhostedMode() {
           scrollbarWidth: 'none',
           overscrollBehaviorX: 'contain',
           touchAction: 'pan-y',
+          paddingRight: 72,
         }}
       >
 
@@ -389,7 +396,7 @@ export default function GhostedMode() {
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         whileTap={{ scale: 0.9 }}
-        onClick={() => openSheet('chat')}
+        onClick={() => { fetchChatCount(); openSheet('chat'); }}
         className="absolute bottom-6 right-6 w-14 h-14 bg-[#C8962C] rounded-full flex items-center justify-center shadow-[0_8px_32px_rgba(200,150,44,0.3)] z-[50]"
       >
         <div className="relative">

@@ -930,7 +930,7 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
         source:        'beacon',
         checked_in_at: now.toISOString(),
         metadata: {
-          beacon_id:          beacon.id,
+          beacon_id:          cleanBeaconId || beacon.id,
           checkin_visibility: checkinVisibility,
           origin:             'globe_tap',
         },
@@ -940,8 +940,10 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
       // Write timed_checkins — fires trg_timed_checkin_globe (globe flare)
       const { data: tc, error: tcErr } = await supabase.from('timed_checkins').insert({
         user_id:            user.id,
-        venue_id:           beacon.venue_id || beacon.id,
-        beacon_id:          beacon.id,
+        // Phil 2026-06-14: globe layer prefixes IDs as 'beacon:UUID'.
+        // cleanBeaconId strips the prefix so we always store raw UUIDs.
+        venue_id:           beacon.venue_id || (cleanBeaconId || beacon.id),
+        beacon_id:          cleanBeaconId || beacon.id,
         started_at:         now.toISOString(),
         expires_at:         expires.toISOString(),
         tonight_intention:  tonightIntention.trim() || null,
@@ -1112,6 +1114,22 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
 
   return (
     <div className="relative flex flex-col h-full overflow-y-auto">
+      {/* Phil 2026-06-14: partner event poster — full-bleed hero image
+          when metadata.poster_url is set (e.g. SBN, Horsefair, etc.) */}
+      {beacon?.metadata?.poster_url && (
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16/9' }}>
+          <img
+            src={beacon.metadata.poster_url}
+            alt={beacon.title || 'Event'}
+            className="w-full h-full object-cover"
+          />
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(to top, rgba(5,5,7,0.9) 0%, rgba(5,5,7,0.1) 60%, transparent 100%)' }}
+          />
+        </div>
+      )}
+
       {/* No X close button — Phil 2026-05-29 (matches audit #82/#88).
           Drag-to-dismiss (via L2SheetContainer), backdrop tap, and Escape
           are the reverse actions. The peek state keeps the bottom half of

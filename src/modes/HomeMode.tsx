@@ -43,6 +43,7 @@ import { TrackPlayer } from '@/components/music/TrackPlayer';
 import { HotmessText } from '@/components/brand/HotmessWordmark';
 import SafetyNetworkCard from '@/components/safety/SafetyNetworkCard';
 import NextUpCard from '@/components/home/NextUpCard';
+import PartnerEventBanners from '@/components/home/PartnerEventBanners';
 
 // ── Brand tokens ────────────────────────────────────────────────────────────
 const AMBER = '#C8962C';
@@ -443,6 +444,9 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         {/* ================================================================ */}
         <section className="px-5 pb-5">
           <NextUpCard slot="rest" />
+
+        {/* Phil 2026-06-14: partner event banners — SBN, Horsefair etc. */}
+        <PartnerEventBanners />
         </section>
 
         {/* ================================================================ */}
