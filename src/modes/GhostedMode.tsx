@@ -140,7 +140,14 @@ export default function GhostedMode() {
   }, []);
 
   const { isTapped, isMutualBoo } = useTaps(myUserId, myEmail);
-  const { unreadCount } = useUnreadCount();
+  const { unreadCount, clearTapsBadge, fetchChatCount } = useUnreadCount();
+
+  // Phil 2026-06-14: clear taps badge the moment the user lands on Ghosted —
+  // they're here, they've seen the content. Without this, the red dot
+  // persisted stale across sessions even after the user visited the page.
+  React.useEffect(() => {
+    clearTapsBadge();
+  }, [clearTapsBadge]);
 
   // profile_bump — paying users sort to top of grid + render outer gold glow.
   // Empty set when nobody is boosted (steady state) → zero render impact.
@@ -389,7 +396,7 @@ export default function GhostedMode() {
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         whileTap={{ scale: 0.9 }}
-        onClick={() => openSheet('chat')}
+        onClick={() => { fetchChatCount(); openSheet('chat'); }}
         className="absolute bottom-6 right-6 w-14 h-14 bg-[#C8962C] rounded-full flex items-center justify-center shadow-[0_8px_32px_rgba(200,150,44,0.3)] z-[50]"
       >
         <div className="relative">
