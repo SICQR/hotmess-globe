@@ -11,7 +11,7 @@ export default function PageNotFound() {
   const path = location?.pathname || '/';
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-black">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-black" data-pull-refresh-ignore>
       <div className="max-w-md w-full text-center space-y-8">
         <div className="space-y-3">
           <h1 className="text-7xl font-black tracking-tight text-white/30">404</h1>
