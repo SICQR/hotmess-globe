@@ -58,6 +58,20 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull, onView
           marginRight: 'auto',
         }}
       >
+        {/* Phil 2026-06-14: partner event poster — shown above drag handle when set */}
+        {beacon.metadata?.poster_url && (
+          <div className="relative w-full rounded-t-2xl overflow-hidden" style={{ aspectRatio: '16/7' }}>
+            <img
+              src={beacon.metadata.poster_url}
+              alt={beacon.title || 'Event'}
+              className="w-full h-full object-cover"
+            />
+            <div
+              className="absolute inset-0"
+              style={{ background: 'linear-gradient(to top, rgba(10,10,10,0.8) 0%, transparent 60%)' }}
+            />
+          </div>
+        )}
         {/* Drag Handle */}
         <div className="flex justify-center py-1.5">
           <div className="w-10 h-1 bg-white/10 rounded-full" />
@@ -66,13 +80,18 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull, onView
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: isRecovery ? 'rgba(255,255,255,0.10)' : 'rgba(200,150,44,0.10)' }}
-            >
-              {isRecovery
-                ? <HeartHandshake className="w-5 h-5 text-white" />
-                : <MapPin className={`w-5 h-5 ${isPerson ? 'text-[#00C2E0]' : isVenue ? 'text-white/70' : 'text-[#C8962C]'}`} />}
+            <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
+              {beacon.metadata?.poster_url
+                ? <img src={beacon.metadata.poster_url} alt="" className="w-full h-full object-cover" />
+                : <div
+                    className="w-full h-full flex items-center justify-center"
+                    style={{ background: isRecovery ? 'rgba(255,255,255,0.10)' : 'rgba(200,150,44,0.10)' }}
+                  >
+                    {isRecovery
+                      ? <HeartHandshake className="w-5 h-5 text-white" />
+                      : <MapPin className={`w-5 h-5 ${isPerson ? 'text-[#00C2E0]' : isVenue ? 'text-white/70' : 'text-[#C8962C]'}`} />}
+                  </div>
+              }
             </div>
             <div>
               <h3 className="text-xl font-black italic tracking-tight text-white uppercase leading-none">
