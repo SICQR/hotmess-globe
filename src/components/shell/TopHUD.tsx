@@ -53,13 +53,38 @@ export function TopHUD({ safetyStatus = 'safe' }: TopHUDProps) {
           permanent topbar input field. */}
       <div className="flex-1" />
 
-      {/* Right: Profile Avatar.
-          Phil 2026-06-02 #552 — notification bell removed from TopHUD per
-          D16 §10.1 (Tier 2 System actions live in the rail, not the top bar).
-          BellRailIcon is now mounted globally in Layout.jsx and renders on
-          every page including Pulse. The previous !isPulse gate was the
-          inconsistency §10 forbids. */}
+      {/* Right: Bell (left of avatar) + Profile Avatar.
+          Phil 2026-06-14: bell back in TopHUD, to the left of the avatar.
+          "Top right, left hand side of the profile pic — that way it's on all pages."
+          On /pulse the Globe rail ALSO has a Bell, so it's intentionally duplicated
+          there (different z-layer, users expect it in both places). */}
       <div className="flex items-center gap-3 justify-end shrink-0">
+
+        {/* Notification Bell — left of profile avatar, every page */}
+        {notifCount > 0 ? (
+          <button
+            type="button"
+            onClick={() => { clearNotifBadge(); openSheet('notification-inbox'); }}
+            aria-label={`${notifCount} unread notifications`}
+            className="relative flex items-center justify-center w-8 h-8 rounded-full active:scale-95 transition-transform"
+            style={{ background: 'rgba(200,150,44,0.12)', border: '1.5px solid #C8962C' }}
+          >
+            <Bell className="w-4 h-4" style={{ color: '#C8962C' }} />
+            <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black text-[#050507] flex items-center justify-center" style={{ background: '#C8962C' }}>
+              {notifCount > 99 ? '99+' : notifCount}
+            </span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => openSheet('notification-inbox')}
+            aria-label="Notifications"
+            className="relative flex items-center justify-center w-8 h-8 rounded-full active:scale-95 transition-transform"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)' }}
+          >
+            <Bell className="w-4 h-4 text-white/40" />
+          </button>
+        )}
 
         <button
           onClick={() => openSheet('edit-profile')}
