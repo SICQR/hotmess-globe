@@ -43,6 +43,7 @@ import { TrackPlayer } from '@/components/music/TrackPlayer';
 import { HotmessText } from '@/components/brand/HotmessWordmark';
 import SafetyNetworkCard from '@/components/safety/SafetyNetworkCard';
 import NextUpCard from '@/components/home/NextUpCard';
+import PartnerEventBanners from '@/components/home/PartnerEventBanners';
 
 // ── Brand tokens ────────────────────────────────────────────────────────────
 const AMBER = '#C8962C';
@@ -241,6 +242,13 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
             </motion.div>
           </motion.div>
         </section>
+
+        {/* ================================================================ */}
+        {/* 1.1 HAPPENING NOW — partner events live tonight (Phil 2026-06-14).  */}
+        {/* Moved above NextUpCard: if something is ON NOW it leads. No DB fetch */}
+        {/* needed for positioning — isLive check inside the component.         */}
+        {/* ================================================================ */}
+        <PartnerEventBanners />
 
         {/* ================================================================ */}
         {/* 1.2 NEXT UP — the weekly ritual clock (Phil 2026-06-07).        */}
@@ -443,6 +451,8 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         {/* ================================================================ */}
         <section className="px-5 pb-5">
           <NextUpCard slot="rest" />
+
+        {/* Phil 2026-06-14: partner event banners — SBN, Horsefair etc. */}
         </section>
 
         {/* ================================================================ */}

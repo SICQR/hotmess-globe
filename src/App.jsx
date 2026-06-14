@@ -263,6 +263,12 @@ const ProfileRedirect = () => {
   return <Navigate to={target} replace />;
 };
 
+// Phil 2026-06-14: /profile/:id deep-link — was 404. Redirects to Profile?uid=:id.
+const ProfileByIdRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={`${createPageUrl('Profile')}?uid=${encodeURIComponent(id ?? '')}`} replace />;
+};
+
 const OrdersRedirect = () => {
   return <Navigate to={createPageUrl('OrderHistory')} replace />;
 };
@@ -484,6 +490,7 @@ const AuthenticatedApp = () => {
       <Route path="/settings" element={<PageRoute pageKey="Settings" />} />
       <Route path="/settings/*" element={<PageRoute pageKey="Settings" />} />
       <Route path="/profile" element={<Navigate to="/settings" replace />} />
+      <Route path="/profile/:id" element={<ProfileByIdRedirect />} />
       
       {/* LEGAL (Accessible via More) */}
       <Route path="/legal/privacy" element={<LegalPrivacyRoute />} />
@@ -599,7 +606,11 @@ function OSArchitecture() {
   usePresenceHeartbeat();
   // iOS-style edge swipe to go back
   useSwipeBack();
-  const { pullProgress, isRefreshing } = usePullToRefresh();
+  // Phil 2026-06-14: dispatch hm:ptr-refresh instead of window.location.reload()
+  // so each page handles its own refresh. No-op on pages that don't listen.
+  const { pullProgress, isRefreshing } = usePullToRefresh({
+    onRefresh: () => window.dispatchEvent(new CustomEvent('hm:ptr-refresh')),
+  });
 
 
   // Part B: Sync location on app open (once per mount)
@@ -761,7 +772,9 @@ function OSArchitecture() {
 
       {/* Invisible Safety FAB — sits over OSBottomNav (Z-120) */}
       <SafetyFAB />
-      {isAuthenticated && <BellRailIcon />}
+      {/* Phil 2026-06-14: BellRailIcon removed — TopHUD now renders the bell
+          to the left of the profile avatar on every page. No need for a
+          second floating bell. */}
       
       {/* L3: SOS Overlay — blocks entire OS, stops all sharing (Z-200) */}
       {/* SOS Overlay removed — now silent */}
