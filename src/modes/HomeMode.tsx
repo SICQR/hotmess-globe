@@ -244,6 +244,13 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         </section>
 
         {/* ================================================================ */}
+        {/* 1.1 HAPPENING NOW — partner events live tonight (Phil 2026-06-14).  */}
+        {/* Moved above NextUpCard: if something is ON NOW it leads. No DB fetch */}
+        {/* needed for positioning — isLive check inside the component.         */}
+        {/* ================================================================ */}
+        <PartnerEventBanners />
+
+        {/* ================================================================ */}
         {/* 1.2 NEXT UP — the weekly ritual clock (Phil 2026-06-07).        */}
         {/*     Predictable times → habitual attendance. RAW DROP Thu 8PM,  */}
         {/*     HOTMESS FRIDAY 9PM–midnight. Static schedule, no fetch.     */}
@@ -446,7 +453,6 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
           <NextUpCard slot="rest" />
 
         {/* Phil 2026-06-14: partner event banners — SBN, Horsefair etc. */}
-        <PartnerEventBanners />
         </section>
 
         {/* ================================================================ */}
