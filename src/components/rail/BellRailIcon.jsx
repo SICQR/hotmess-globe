@@ -1,45 +1,45 @@
 /**
  * BellRailIcon — global notification bell, Tier 2 (System) per D16 §10.
  *
- * Phil 2026-06-02 — relocated from TopHUD (where it was hidden on Pulse via
- * !isPulse condition) to the rail layer where it lives on every page,
- * consistent with §10.1's 4-tier matrix.
- *
- * Visual hierarchy per Phil's §10 ratification:
- *  - When unread > 0: subtle pulse animation, persistent gold dot, glow ring
- *  - When idle (no unread): clear, legible, no animation, ambient state
- *  - Distinct from Tier 4 passive icons via stronger glow + size baseline
+ * Phil 2026-06-14 — repositioned from right:68 (cluttered next to SafetyFAB,
+ * appeared in same horizontal band as stories row on Ghosted, duplicated on
+ * Pulse where Globe rail already has its own Bell). Now:
+ *   - Yields on /pulse (Globe rail handles it there)
+ *   - Yields on /ghosted (stories row + SafetyFAB conflict at same height)
+ *   - Positioned left:16 so it never touches the right-rail cluster
  *
  * Action contract (§10.2): tap opens L2NotificationInboxSheet
  * State broadcast (§10.2): unread count rendered as badge + pulse + dot
  *
- * Positioning: top-right of viewport, fixed, below safe-area-top.
- * Coordinates with SafetyFAB which lives bottom-right (Tier 1).
- *
- * Tonal register (D35 surface-meta when ratified): clarity-first.
- * NOT atmospheric. Notification surfaces need to be operationally trustworthy
- * — see Phil's bell/search distinction (clarity-first vs traversal-atmospheric).
+ * Positioning: top-LEFT of viewport, fixed. Left side clears SafetyFAB,
+ * Globe right rail (which has its own Bell), and GhostedRailButtons.
  */
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { useSheet } from '@/contexts/SheetContext';
 import { useNotifCount } from '@/hooks/useNotifCount';
 
 const GOLD = '#C8962C';
 
 export default function BellRailIcon() {
+  const { pathname } = useLocation();
   const { openSheet, activeSheet } = useSheet();
-  // Hooks must be called before any conditional return (rules-of-hooks).
-  // D16 §10.4 yield-to-sheet check moves below.
   const { notifCount, clearNotifBadge } = useNotifCount();
-  // D16 §10.4 — rail yields to active sheets. Sheet is focal interaction;
-  // rail is ambient. When any sheet is open, Tier 2/3/4 rail icons render
-  // null so they don't block sheet drag affordances (pip touches were being
-  // captured at z:160 over the sheet pip at z:80 — Phil 2026-06-02 P0
-  // regression caused by adding more rail icons in PR #836).
+
+  // /pulse: Globe rail has its own Bell RailButton — don't double-render.
+  if (pathname === '/pulse' || pathname.startsWith('/pulse/')) return null;
+
+  // /ghosted: stories row + SafetyFAB fill top area at same height.
+  // Bell at top:72 was visually part of the story circles row.
+  // Message count lives on the MessageCircle FAB (bottom-right) instead.
+  if (pathname === '/ghosted' || pathname.startsWith('/ghosted/')) return null;
+
+  // D16 §10.4 — rail yields to active sheets.
   if (activeSheet) return null;
+
   const hasUnread = notifCount > 0;
 
   const handleTap = () => {
@@ -54,9 +54,9 @@ export default function BellRailIcon() {
       aria-label={hasUnread ? `${notifCount} unread notifications` : 'Notifications'}
       style={{
         position: 'fixed',
-        top: 'calc(env(safe-area-inset-top, 0px) + 74px)', // aligned beside the safety menu button (top-right, 48px @ right:16)
-                right: 68, // Phil 2026-06-07 P0: bell was mounted at right:12 ON TOP of 'Open safety menu' — safety access is non-negotiable, bell yields left
-        zIndex: 160, // Phil 2026-06-02 P0.2: was 70, sat below existing Pulse rail icons at z:150 and was visually obscured. 160 puts bell above the page-level rail; SOSOverlay z:200+ and SafetyFAB own higher tiers still.
+        top: 'calc(env(safe-area-inset-top, 0px) + 72px)',
+        left: 16,
+        zIndex: 160,
         width: 44,
         height: 44,
         borderRadius: '50%',
@@ -75,7 +75,6 @@ export default function BellRailIcon() {
         WebkitTapHighlightColor: 'transparent',
       }}
     >
-      {/* §10.2 state broadcast: subtle pulse when unread */}
       {hasUnread && (
         <motion.span
           aria-hidden
@@ -91,7 +90,6 @@ export default function BellRailIcon() {
           }}
         />
       )}
-
       <Bell
         className="w-5 h-5"
         style={{
@@ -99,8 +97,6 @@ export default function BellRailIcon() {
           filter: hasUnread ? `drop-shadow(0 0 6px rgba(200,150,44,0.6))` : 'none',
         }}
       />
-
-      {/* §10.2 state broadcast: count badge */}
       <AnimatePresence>
         {hasUnread && (
           <motion.span
@@ -136,4 +132,3 @@ export default function BellRailIcon() {
     </button>
   );
 }
-
