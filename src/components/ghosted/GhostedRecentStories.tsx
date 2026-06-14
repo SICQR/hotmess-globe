@@ -62,6 +62,7 @@ interface RowCare {
   title: string;
   lat: number | null;
   lng: number | null;
+  imageUrl: string | null;
 }
 
 export function GhostedRecentStories({
@@ -177,7 +178,7 @@ export function GhostedRecentStories({
         // sits left of a long-standing one.
         const careP = supabase
           .from('beacons')
-          .select('id, title, latitude, longitude, created_at')
+          .select('id, title, latitude, longitude, created_at, metadata')
           .is('owner_id', null)
           .eq('active', true)
           .gt('ends_at', nowIso)
@@ -293,11 +294,12 @@ export function GhostedRecentStories({
 
         // Care circles — care list arrives newest-first from the query already
         // (order created_at desc), so we just map to the row shape.
-        const careOut: RowCare[] = careList.map((c) => ({
+        const careOut: RowCare[] = careList.map((c: any) => ({
           id: c.id,
           title: c.title || 'Care',
           lat: typeof c.latitude === 'number' ? c.latitude : null,
           lng: typeof c.longitude === 'number' ? c.longitude : null,
+          imageUrl: (c as any).metadata?.poster_url || null,
         }));
 
         if (!cancelled) {
@@ -553,11 +555,14 @@ export function GhostedRecentStories({
                 }}
               >
                 <span className="block w-full h-full rounded-full overflow-hidden bg-[#0C0C0E] border border-black flex items-center justify-center">
-                  <MapPin
-                    className="w-5 h-5"
-                    style={{ color: 'rgba(245,238,220,0.78)' }}
-                    strokeWidth={1.6}
-                  />
+                  {c.imageUrl
+                    ? <img src={c.imageUrl} alt={c.title} className="w-full h-full object-cover" />
+                    : <MapPin
+                        className="w-5 h-5"
+                        style={{ color: 'rgba(245,238,220,0.78)' }}
+                        strokeWidth={1.6}
+                      />
+                  }
                 </span>
               </span>
               <span
