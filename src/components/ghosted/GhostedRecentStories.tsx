@@ -78,6 +78,8 @@ export function GhostedRecentStories({
   const [people, setPeople] = React.useState<RowPerson[]>([]);
   const [careCircles, setCareCircles] = React.useState<RowCare[]>([]);
   const [loading, setLoading] = React.useState(true);
+  // Phil 2026-06-14: tick to force re-fetch after beacon drop or tab return
+  const [refreshTick, setRefreshTick] = React.useState(0);
 
   // D53 §4.1 v2 (Phil 2026-06-03 Samui) — Personal Beacon Anchor.
   //
@@ -312,7 +314,24 @@ export function GhostedRecentStories({
     return () => {
       cancelled = true;
     };
-  }, [currentUserEmail, currentUserId]);
+  }, [currentUserEmail, currentUserId, refreshTick]);
+
+  // Phil 2026-06-14: refresh stories on tab focus + every 30s so beacon drops
+  // appear without a full page reload.
+  React.useEffect(() => {
+    const tick = () => setRefreshTick((n) => n + 1);
+    const onVisibility = () => { if (!document.hidden) tick(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    const id = setInterval(tick, 30_000);
+    // Also refresh when a beacon is created/updated
+    const onBeaconDrop = () => tick();
+    window.addEventListener('hm:beacon-dropped', onBeaconDrop);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      clearInterval(id);
+      window.removeEventListener('hm:beacon-dropped', onBeaconDrop);
+    };
+  }, []);
 
   // Phil 2026-06-03 — render the row whenever EITHER list has content.
   // Empty-and-empty stays silent so the grid carries the page.
@@ -320,14 +339,11 @@ export function GhostedRecentStories({
   if (loading) return null;
 
   const open = (p: RowPerson) => {
-    // Doctrine: globe tap AND carousel tap both resolve to the creator's
-    // canonical profile with the beacon id in the query string. The profile
-    // page renders ActiveBeaconModule when ?beacon= is present.
+    // Phil 2026-06-14: use profile SHEET, not navigate(). Navigating to
+    // /profile/:id was hitting the self-guard (→ settings) for own profile,
+    // or /profile redirect for others. Sheet is consistent with GhostedCard.
     if (p.userId) {
-      const url = p.beaconId
-        ? `/profile/${p.userId}?beacon=${p.beaconId}`
-        : `/profile/${p.userId}`;
-      navigate(url);
+      openSheet('profile', { id: p.userId, ...(p.beaconId ? { beaconId: p.beaconId } : {}) });
       return;
     }
     if (p.threadId) openSheet('chat', { thread: p.threadId, to: p.email, title: p.name });
