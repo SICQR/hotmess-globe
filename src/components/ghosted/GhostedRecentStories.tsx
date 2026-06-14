@@ -65,6 +65,16 @@ interface RowCare {
   imageUrl: string | null;
 }
 
+// Phil 2026-06-14: partner/venue events (club, event, sauna) — HAPPENING TONIGHT.
+// Distinct from care (health services). Gold ring, shows poster image.
+interface RowEvent {
+  id: string;
+  title: string;
+  lat: number | null;
+  lng: number | null;
+  imageUrl: string | null;
+}
+
 export function GhostedRecentStories({
   currentUserEmail,
   currentUserId,
@@ -78,6 +88,7 @@ export function GhostedRecentStories({
   const navigate = useNavigate();
   const [people, setPeople] = React.useState<RowPerson[]>([]);
   const [careCircles, setCareCircles] = React.useState<RowCare[]>([]);
+  const [eventCircles, setEventCircles] = React.useState<RowEvent[]>([]);
   const [loading, setLoading] = React.useState(true);
   // Phil 2026-06-14: tick to force re-fetch after beacon drop or tab return
   const [refreshTick, setRefreshTick] = React.useState(0);
@@ -171,7 +182,19 @@ export function GhostedRecentStories({
           .order('starts_at', { ascending: false })
           .limit(40);
 
-        // 3. Curated CARE beacons (owner_id NULL, aftercare/care category).
+        // 3a. Partner/venue EVENT beacons (owner_id NULL, club/event/sauna/venue categories).
+        // Phil 2026-06-14: distinct from care — these are parties/venues happening tonight.
+        const eventsP = supabase
+          .from('beacons')
+          .select('id, title, latitude, longitude, created_at, metadata')
+          .is('owner_id', null)
+          .eq('active', true)
+          .gt('ends_at', nowIso)
+          .in('beacon_category', ['club', 'event', 'sauna', 'venue', 'leather'])
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        // 3b. Curated CARE beacons (owner_id NULL, aftercare/care category).
         // Phil 2026-06-03 — folded in from the now-deleted CareOnTheGroundStrip.
         // Single primitive (D53 §1.4). Render in same row, cream ring not gold.
         // Newest-first via created_at desc so a freshly-seeded care beacon
@@ -186,13 +209,14 @@ export function GhostedRecentStories({
           .order('created_at', { ascending: false })
           .limit(12);
 
-        const [{ data: threads }, { data: beacons }, { data: careRows }] = await Promise.all([
-          threadsP, beaconsP, careP,
+        const [{ data: threads }, { data: beacons }, { data: careRows }, { data: eventRows }] = await Promise.all([
+          threadsP, beaconsP, careP, eventsP,
         ] as any);
 
         const threadList: any[] = threads || [];
         const beaconList: any[] = beacons || [];
         const careList: any[] = careRows || [];
+        const eventList: any[] = eventRows || [];
 
         // Most-recent active beacon per owner. Phil 2026-06-01 — INCLUDE
         // self so the user can see confirmation that their own beacon is
@@ -302,9 +326,18 @@ export function GhostedRecentStories({
           imageUrl: (c as any).metadata?.poster_url || null,
         }));
 
+        const eventOut: RowEvent[] = eventList.map((c: any) => ({
+          id: c.id,
+          title: c.title || 'Event',
+          lat: typeof c.latitude === 'number' ? c.latitude : null,
+          lng: typeof c.longitude === 'number' ? c.longitude : null,
+          imageUrl: c.metadata?.poster_url || null,
+        }));
+
         if (!cancelled) {
           setPeople(out);
           setCareCircles(careOut);
+          setEventCircles(eventOut);
         }
       } catch (err) {
         console.error('[GhostedRecentStories] load error:', err);
@@ -355,14 +388,15 @@ export function GhostedRecentStories({
   // Phil 2026-06-03 — care circle tap. D14 routing as continuity: never
   // open external maps. Fly /pulse to the beacon coord with the beacon id
   // pre-focused so the user can land on the beacon card directly.
+  // Phil 2026-06-14: open beacon sheet directly — don't navigate to Pulse first.
+  // The care/event circle tap now opens L2BeaconSheet so users see the beacon
+  // detail inline (consistent with how GhostedCard taps work for profiles).
   const openCare = (c: RowCare) => {
-    if (c.lat == null || c.lng == null) return;
-    navigate('/pulse', {
-      state: {
-        flyTo: { lat: c.lat, lng: c.lng, zoom: 15 },
-        focusBeaconId: c.id,
-      },
-    });
+    openSheet('beacon', { beaconId: c.id });
+  };
+
+  const openEvent = (e: RowEvent) => {
+    openSheet('beacon', { beaconId: e.id });
   };
 
   return (
@@ -528,6 +562,34 @@ export function GhostedRecentStories({
             </button>
           );
         })}
+
+        {/* EVENT circles — partner events/clubs/sauna happening tonight.
+            Phil 2026-06-14: gold ring (distinct from cream care ring) because
+            these are parties and venues, not health services. */}
+        {eventCircles.slice(0, 3).map((e) => (
+          <button
+            key={`event-${e.id}`}
+            type="button"
+            onClick={() => openEvent(e)}
+            aria-label={`${e.title} — happening tonight`}
+            className="flex flex-col items-center gap-1 flex-shrink-0 w-16 focus:outline-none active:scale-95 transition-transform"
+          >
+            <span
+              className="relative w-14 h-14 rounded-full p-[2px]"
+              style={{ background: 'linear-gradient(135deg, #C8962C 0%, #FF6B35 100%)' }}
+            >
+              <span className="block w-full h-full rounded-full overflow-hidden bg-[#0C0C0E] border border-black flex items-center justify-center">
+                {e.imageUrl
+                  ? <img src={e.imageUrl} alt={e.title} className="w-full h-full object-cover" />
+                  : <span className="text-[#C8962C] text-base font-black">★</span>
+                }
+              </span>
+            </span>
+            <span className="text-[10px] truncate w-full text-center leading-tight text-[#C8962C]/80">
+              {e.title}
+            </span>
+          </button>
+        ))}
 
         {/* Care circles — folded in from the deprecated CareOnTheGroundStrip.
             Same circle vocabulary as people above, but cream ring (not gold→
