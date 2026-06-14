@@ -20,6 +20,7 @@ import OrderHistory from './pages/OrderHistory';
 import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
 import Safety from './pages/Safety';
+import BeaconDetail from './pages/BeaconDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -47,7 +48,7 @@ export const PAGES = {
     "PrivacyPolicy": PrivacyPolicy,
     "Contact": Contact,
     "HelpCenter": HelpCenter,
-    "BeaconDetail": () => import('./pages/BeaconDetail'),
+    "BeaconDetail": BeaconDetail,
 }
 
 
