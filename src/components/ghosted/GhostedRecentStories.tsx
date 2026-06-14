@@ -339,10 +339,11 @@ export function GhostedRecentStories({
   if (loading) return null;
 
   const open = (p: RowPerson) => {
-    // Phil 2026-06-14: use profile SHEET, not navigate(). Navigating to
-    // /profile/:id was hitting the self-guard (→ settings) for own profile,
-    // or /profile redirect for others. Sheet is consistent with GhostedCard.
     if (p.userId) {
+      // Phil 2026-06-14: skip own profile — the L2ProfileSheet self-guard fires
+      // AFTER profileUser loads asynchronously. Sheet opens then immediately calls
+      // closeSheet() = "jumps back down". Own story is handled by the MY slot.
+      if (p.userId === currentUserId) return;
       openSheet('profile', { id: p.userId, ...(p.beaconId ? { beaconId: p.beaconId } : {}) });
       return;
     }
