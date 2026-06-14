@@ -13,8 +13,15 @@
  * Action contract (§10.2): tap opens L2NotificationInboxSheet
  * State broadcast (§10.2): unread count rendered as badge + pulse + dot
  *
- * Positioning: top-right of viewport, fixed, below safe-area-top.
- * Coordinates with SafetyFAB which lives bottom-right (Tier 1).
+ * Positioning: top-LEFT of viewport, fixed, below safe-area-top.
+ * Left side keeps it fully clear of:
+ *   - SafetyFAB (top-right, right:16) — non-negotiable safety access
+ *   - Globe right rail (top-right, right:4) — which has its own Bell
+ *   - GhostedRailButtons (top-right, right:4)
+ *
+ * Phil 2026-06-14: moved from right:68 (sat next to SafetyFAB at same height,
+ * cluttered; also duplicated on /pulse where Globe's rail has its own Bell).
+ * Now lives left:16 so no right-rail conflicts on any page.
  *
  * Tonal register (D35 surface-meta when ratified): clarity-first.
  * NOT atmospheric. Notification surfaces need to be operationally trustworthy
@@ -22,6 +29,7 @@
  */
 
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
@@ -30,15 +38,18 @@ import { useNotifCount } from '@/hooks/useNotifCount';
 const GOLD = '#C8962C';
 
 export default function BellRailIcon() {
+  const { pathname } = useLocation();
   const { openSheet, activeSheet } = useSheet();
   // Hooks must be called before any conditional return (rules-of-hooks).
   // D16 §10.4 yield-to-sheet check moves below.
   const { notifCount, clearNotifBadge } = useNotifCount();
-  // D16 §10.4 — rail yields to active sheets. Sheet is focal interaction;
-  // rail is ambient. When any sheet is open, Tier 2/3/4 rail icons render
-  // null so they don't block sheet drag affordances (pip touches were being
-  // captured at z:160 over the sheet pip at z:80 — Phil 2026-06-02 P0
-  // regression caused by adding more rail icons in PR #836).
+
+  // /pulse owns its own Bell RailButton in the Globe right rail (Globe.jsx
+  // line ~677). Rendering BellRailIcon there too double-counts the badge and
+  // creates two tappable bells pointing to the same sheet. Yield entirely.
+  if (pathname === '/pulse' || pathname.startsWith('/pulse/')) return null;
+
+  // D16 §10.4 — rail yields to active sheets.
   if (activeSheet) return null;
   const hasUnread = notifCount > 0;
 
@@ -54,9 +65,9 @@ export default function BellRailIcon() {
       aria-label={hasUnread ? `${notifCount} unread notifications` : 'Notifications'}
       style={{
         position: 'fixed',
-        top: 'calc(env(safe-area-inset-top, 0px) + 74px)', // aligned beside the safety menu button (top-right, 48px @ right:16)
-                right: 68, // Phil 2026-06-07 P0: bell was mounted at right:12 ON TOP of 'Open safety menu' — safety access is non-negotiable, bell yields left
-        zIndex: 160, // Phil 2026-06-02 P0.2: was 70, sat below existing Pulse rail icons at z:150 and was visually obscured. 160 puts bell above the page-level rail; SOSOverlay z:200+ and SafetyFAB own higher tiers still.
+        top: 'calc(env(safe-area-inset-top, 0px) + 72px)', // vertically level with SafetyFAB (top-right, same row)
+        left: 16, // Phil 2026-06-14: moved from right:68 — left side clears SafetyFAB, Globe rail, and GhostedRailButtons
+        zIndex: 160, // above page rail (z:150); below SOSOverlay (z:200+) and SafetyFAB (z:150 but different position)
         width: 44,
         height: 44,
         borderRadius: '50%',
