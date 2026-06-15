@@ -68,8 +68,20 @@ These must be enforced at the application layer, not left to convention:
 
 `scanned → valid` is the only reverse transition permitted. It is used when a venue operates a
 re-entry policy (member leaves and comes back). The door scanner records both the outbound and
-inbound timestamps in `metadata`. The number of re-entries may be capped by the venue at inventory
-pool level. A re-entry cap of 0 means `scanned` is terminal for that event.
+inbound timestamps in `metadata`. The number of re-entries is controlled by `re_entry_cap` on the
+inventory pool.
+
+**Door scanner enforcement (hard requirement, not a guideline):**
+- If `re_entry_cap = 0`: the door scanner **must reject** any QR that is already in state
+  `scanned`. The transition to `valid` is blocked. The member is not re-admitted. This must be
+  enforced at the scanner level, not left to the promoter to manually check.
+- If `re_entry_cap > 0`: each re-entry decrements the remaining allowance. When the allowance
+  reaches 0, subsequent presentations are rejected.
+- If `re_entry_cap IS NULL`: unlimited re-entries are permitted.
+
+The outbound timestamp is recorded in `scanned_at_out` when the member exits. The inbound
+timestamp updates `scanned_at` on the `valid → scanned` transition. Both are visible to the venue
+in the beacon dashboard.
 
 ### Anti-tout Guarantee
 
@@ -228,7 +240,12 @@ and controls which transitions are available and which validations apply.
 - `ticket_type = 'guest_comp'`
 - `price_paid = 0`, `fee_amount = 0`
 - `issued_by` = the `profiles.id` of the promoter or staff member who issued it
-- `redemption_limit` = 1 (default) — a comp ticket is for one person
+- **One row per person, always.** Each `guest_comp` ticket binds to exactly one `profiles.id`.
+  A promoter comping a group of 6 issues 6 separate `guest_comp` rows, one per member profile.
+  There is no "table of 6 on one ticket" model.
+- `redemption_limit` controls door-scan re-uses for that individual ticket (default 1, meaning
+  once scanned they are in — re-entry is then governed by the pool's `re_entry_cap` like any
+  other ticket type). It does not represent group size.
 - Cannot be resold (resale transition is blocked for this type)
 
 **VIP**
@@ -277,14 +294,31 @@ stores the Stripe `payment_intent_id` or `checkout_session_id`.
 
 ### Payout intent (vs OutSavvy's 5-day model)
 
-Payout to venue is triggered immediately upon event completion (i.e., `beacon.ends_at` passes and
-total `ticket_state = 'scanned'` count is stable). The mechanism is a Stripe transfer from the
-Smash Daddys platform account to the venue's connected Stripe account. The `payout_intent_id`
-column stores the transfer ID for reconciliation.
+The Stripe transfer to the venue's connected account is **initiated** immediately upon event
+completion (i.e., `beacon.ends_at` passes and `ticket_state = 'scanned'` counts are stable).
+**Initiation is not the same as funds clearing.** Stripe's standard settlement window for UK
+connected accounts applies — typically T+2 business days from transfer initiation. The venue's
+Stripe dashboard will show the transfer as pending from the moment it is initiated; the funds
+clear per Stripe's schedule, not ours. The dashboard should display: "Payout initiated" with
+the Stripe transfer ID and estimated settlement date — not "Payout complete" until confirmed.
 
-Founding venues receive 0% platform fee — the Stripe processing fee (typically 1.4% + 20p for UK
-cards) is the only deduction, and is passed through at cost. Standard venues pay 2–3% platform fee
-(set at beacon creation, stored on the inventory pool, never renegotiated).
+The `payout_intent_id` column stores the Stripe transfer ID for reconciliation.
+
+### Founding venue fee definition
+
+Founding venues receive `fee_rate = 0.00` — the Stripe processing fee (typically 1.4% + 20p for
+UK cards) is the only deduction, passed through at cost.
+
+**Definition of a founding venue (hard cap — not open-ended):**
+- A founding venue is a `profiles` row with `tier = 'venue'` that was onboarded during the
+  founding partner programme (tracked via `beacons.founding_partner_inquiry_id IS NOT NULL`).
+- The founding cohort is **capped at 50 venues** globally. Once 50 founding venue accounts exist,
+  no further founding rate can be granted.
+- The founding rate is **permanent** for that account — it does not expire after a time period.
+  It is forfeited only if the venue account is terminated for cause.
+- Founding status is set at the inventory pool level (`fee_rate = 0.00`). It is not retroactively
+  applicable to tickets sold before founding status was granted.
+- Standard venues pay 2–3% platform fee (set at beacon creation on the pool, never renegotiated).
 
 ### Refund as dashboard action
 
@@ -305,13 +339,43 @@ When Stripe fires a `charge.dispute.created` webhook, the system:
 4. On `charge.dispute.closed` (won), ticket can optionally be reissued (promoter action)
 5. On `charge.dispute.closed` (lost), no further action — row remains `refunded_void`
 
+### Door dispute resolution
+
+This covers the case where a member claims their ticket didn't work at the door, or that they were
+turned away, despite the system showing `ticket_state = 'valid'` or `ticket_state = 'scanned'`.
+
+**What the promoter can see from the beacon dashboard:**
+- `scanned_at` — exact timestamp of door validation
+- `scanned_by` — the `profiles.id` of the door operator who scanned it
+- `ticket_state` at the time of the claim
+
+**What the promoter cannot do unilaterally:**
+- Refund a `scanned` ticket. `scanned → refunded_void` is an illegal transition (§ 2.1). A member
+  who was admitted cannot be refunded via the dashboard. This is intentional.
+
+**Resolution path:**
+- If the member claims they were **not admitted** despite `ticket_state = 'valid'` (i.e., the door
+  scanner failed or the member was incorrectly turned away), the promoter raises a support ticket
+  with HOTMESS ops. Ops can inspect the audit trail and issue a manual refund if warranted. SLA
+  for this is 24h on event day, 48h otherwise.
+- If `ticket_state = 'scanned'` and the member disputes entry, the `scanned_at` and `scanned_by`
+  fields are the authoritative evidence. The promoter presents this. If there is a genuine
+  operational error (e.g., a door operator scanned the wrong ticket), HOTMESS ops handles it.
+- The promoter does not have a "override and refund scanned ticket" button. That action requires
+  ops involvement by design — it prevents fraudulent post-event refund claims.
+
 ### VAT treatment
 
-The platform fee is subject to UK VAT at 20%. The ticket face value is treated as the venue's
-revenue and is not subject to platform VAT (the venue handles their own VAT obligations). Smash
-Daddys Ltd invoices the fee + VAT to the venue. VAT is calculated as `fee_amount * 0.20` and
-stored in `metadata.vat_amount` on the ticket row (for now; this may move to a dedicated ledger
-table in a future phase).
+The platform fee is subject to UK VAT at 20%. Smash Daddys Ltd invoices `fee_amount + (fee_amount
+* 0.20)` to the venue. VAT is calculated as `fee_amount * 0.20` and stored in `metadata.vat_amount`
+on the ticket row (for now; this may move to a dedicated ledger table in a future phase).
+
+The ticket face value (`price_paid`) is treated as the venue's own revenue. VAT liability on that
+revenue is the venue's responsibility, not the platform's. The net-to-venue figure displayed on
+the dashboard (`price_paid − fee_amount − stripe_processing_cost`) is after the platform fee but
+**before** any VAT the venue may owe on their own ticket revenue. For VAT-registered venues,
+their accountant will need to account for output VAT on the face value separately. The dashboard
+does not compute or display the venue's VAT liability — that is explicitly out of scope.
 
 ### Net-to-venue headline
 
