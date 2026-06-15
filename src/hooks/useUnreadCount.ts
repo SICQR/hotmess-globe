@@ -154,8 +154,30 @@ export function useUnreadCount(): { unreadCount: number; clearTapsBadge: () => v
 
     subscribe();
 
+    // ── Visibility refresh (Phil 2026-06-14) ──────────────────────────
+    // Realtime drops silently when app backgrounds; badge goes stale.
+    // Refresh both counts whenever the tab becomes visible again.
+    const handleVisibility = () => {
+      if (!document.hidden && mountedRef.current) {
+        fetchChatCount();
+        fetchTapsCount();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // ── Polling fallback — 60s interval ────────────────────────────────
+    // Insurance against silent realtime drops on mobile. Visible-only.
+    const pollId = setInterval(() => {
+      if (mountedRef.current && !document.hidden) {
+        fetchChatCount();
+        fetchTapsCount();
+      }
+    }, 60_000);
+
     return () => {
       mountedRef.current = false;
+      document.removeEventListener('visibilitychange', handleVisibility);
+      clearInterval(pollId);
       if (channelRef.current) supabase.removeChannel(channelRef.current);
     };
   }, [fetchChatCount, fetchTapsCount, uid]);
