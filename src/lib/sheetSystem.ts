@@ -632,6 +632,17 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────
+  // TICKET BROWSE — Phase 3 S1 — public event listings
+  // ─────────────────────────────────────────────────────────────────────────
+  'ticket-browse': {
+    id: 'ticket-browse',
+    title: 'Events',
+    height: 'large',
+    auth: false,
+    deepLinkParams: ['city'],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
   // COMMUNITY FEATURES (DB live, UI added)
   // ─────────────────────────────────────────────────────────────────────────
   'community': {

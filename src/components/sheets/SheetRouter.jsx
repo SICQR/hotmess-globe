@@ -71,6 +71,7 @@ const L2AdminSheet = lazy(() => import('./L2AdminSheet'));
 const L2AmplifySheet = lazy(() => import('./L2AmplifySheet'));
 const L2BrandSheet = lazy(() => import('./L2BrandSheet'));
 const L2TicketSheet = lazy(() => import('./L2TicketSheet'));
+const L2TicketBrowseSheet = lazy(() => import('./L2TicketBrowseSheet'));
 const L2TapsSheet = lazy(() => import('./L2TapsSheet'));
 const L2CommunityPostSheet = lazy(() => import('./L2CommunityPostSheet'));
 const L2CreatorSubscriptionSheet = lazy(() => import('./L2CreatorSubscriptionSheet'));
@@ -254,6 +255,8 @@ const SHEET_COMPONENTS = {
   'brand': L2BrandSheet,
   // Ticket resale market
   'ticket-market': L2TicketSheet,
+  // Ticket browse — Phase 3 S1
+  'ticket-browse': L2TicketBrowseSheet,
   // Community features (DB live, UI added)
   'community': L2CommunityPostSheet,
   // Creator subscription
