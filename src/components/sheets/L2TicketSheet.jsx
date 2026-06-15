@@ -150,9 +150,42 @@ function MyTicketView({ ticketId }) {
       });
   }, [ticketId]);
 
-  const handleResale = () => {
-    if (!ticket) return;
-    toast('Resale coming in Phase 3 — hold tight.');
+  const [resalePrice, setResalePrice] = useState('');
+  const [listingResale, setListingResale] = useState(false);
+  const [showResaleModal, setShowResaleModal] = useState(false);
+  const [listed, setListed] = useState(false);
+
+  const handleListForResale = async () => {
+    const price = parseFloat(resalePrice);
+    if (!price || price <= 0) { toast.error('Enter a valid price'); return; }
+    setListingResale(true);
+    try {
+      const { error } = await supabase
+        .from('ticket_orders')
+        .update({ resale_price: price, updated_at: new Date().toISOString() })
+        .eq('id', ticket.id);
+      if (error) throw error;
+      setListed(true);
+      setShowResaleModal(false);
+      toast.success('Ticket listed for resale');
+    } catch (err) {
+      toast.error(err.message || 'Could not list ticket');
+    } finally {
+      setListingResale(false);
+    }
+  };
+
+  const handleCancelResale = async () => {
+    try {
+      await supabase
+        .from('ticket_orders')
+        .update({ resale_price: null, updated_at: new Date().toISOString() })
+        .eq('id', ticket.id);
+      setListed(false);
+      toast('Resale listing removed');
+    } catch {
+      toast.error('Could not remove listing');
+    }
   };
 
   if (loading) {
@@ -266,18 +299,59 @@ function MyTicketView({ ticketId }) {
       )}
 
       {/* Resale CTA — Phase 3 */}
-      {isActive && (
+      {isActive && !listed && (
         <button
-          onClick={handleResale}
+          onClick={() => setShowResaleModal(true)}
           className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-white/10 active:scale-95 transition-transform"
           style={{ backgroundColor: T.surface }}
         >
           <div className="flex items-center gap-2">
             <ArrowLeftRight className="w-4 h-4 text-white/40" />
-            <span className="text-white/60 font-bold text-sm">Transfer or resell ticket</span>
+            <span className="text-white/60 font-bold text-sm">List for resale</span>
           </div>
           <ChevronRight className="w-4 h-4 text-white/20" />
         </button>
+      )}
+      {isActive && listed && (
+        <button
+          onClick={handleCancelResale}
+          className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border active:scale-95 transition-transform"
+          style={{ borderColor: `${T.gold}50`, backgroundColor: `${T.gold}10` }}
+        >
+          <div className="flex items-center gap-2">
+            <ArrowLeftRight className="w-4 h-4" style={{ color: T.gold }} />
+            <span className="font-bold text-sm" style={{ color: T.gold }}>Listed for resale — tap to remove</span>
+          </div>
+        </button>
+      )}
+      {showResaleModal && (
+        <div className="fixed inset-0 flex items-end justify-center z-50" style={{ background: 'rgba(0,0,0,0.7)' }}
+          onClick={() => setShowResaleModal(false)}>
+          <div className="w-full max-w-lg rounded-t-3xl p-6 pb-10 flex flex-col gap-4"
+            style={{ backgroundColor: T.card }} onClick={e => e.stopPropagation()}>
+            <p className="text-white font-black text-base">Set resale price</p>
+            <p className="text-white/40 text-xs">
+              Capped at face value (£{Number(ticket.price_paid).toFixed(2)}). Anti-tout guarantee.
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-white font-black text-2xl">£</span>
+              <input
+                type="number" step="0.01" min="1" max={ticket.price_paid}
+                value={resalePrice}
+                placeholder={Number(ticket.price_paid).toFixed(2)}
+                onChange={e => setResalePrice(e.target.value)}
+                className="flex-1 bg-transparent text-white font-black text-2xl outline-none"
+                style={{ borderBottom: `2px solid ${T.gold}` }}
+              />
+            </div>
+            <button onClick={handleListForResale} disabled={listingResale}
+              className="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2"
+              style={{ backgroundColor: T.gold, color: '#000' }}>
+              {listingResale ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              List Ticket
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -506,24 +580,193 @@ function BuyTicketView({ beaconId, poolId }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MARKET VIEW — resale listings (stub, Phase 3)
+// MARKET VIEW — live resale listings (Phase 3 S4)
 // ─────────────────────────────────────────────────────────────────────────────
-function MarketView() {
+function MarketView({ poolId }) {
+  const [listings, setListings]   = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [buying, setBuying]       = useState(null); // seller_ticket_id being purchased
+  const [queueStatus, setQueue]   = useState(null); // 'in_queue' | null
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        // Fetch listed tickets: resale_price set, state active
+        let q = supabase
+          .from('ticket_orders')
+          .select(`
+            id, resale_price, ticket_type,
+            beacons:beacon_id (id, title, event_start_at, location_city),
+            ticket_inventory_pools:inventory_pool_id (label, resale_allowed)
+          `)
+          .not('resale_price', 'is', null)
+          .in('ticket_state', ['issued', 'valid'])
+          .eq('ticket_inventory_pools.resale_allowed', true)
+          .order('resale_price', { ascending: true })
+          .limit(30);
+
+        if (poolId) q = q.eq('inventory_pool_id', poolId);
+
+        const { data } = await q;
+        setListings(data ?? []);
+
+        // Check if current user is in queue for this pool
+        if (poolId) {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: qRow } = await supabase
+              .from('ticket_resale_queue')
+              .select('id, accepted_at')
+              .eq('pool_id', poolId)
+              .eq('user_id', user.id)
+              .maybeSingle();
+            setQueue(qRow ? (qRow.accepted_at ? 'matched' : 'in_queue') : null);
+          }
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [poolId]);
+
+  const handleBuy = async (listing) => {
+    setBuying(listing.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error('Sign in to buy'); return; }
+
+      const res = await fetch('/api/tickets/resale-checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ seller_ticket_id: listing.id }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        if (body.code === 'AGE_VERIFICATION_INCOMPLETE') {
+          toast.error('Complete age verification first.');
+        } else {
+          toast.error(body.error || 'Could not start checkout');
+        }
+        return;
+      }
+      window.location.href = body.checkout_url;
+    } catch (err) {
+      toast.error(err.message || 'Checkout failed');
+    } finally {
+      setBuying(null);
+    }
+  };
+
+  const handleJoinQueue = async () => {
+    if (!poolId || queueStatus) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error('Sign in first'); return; }
+      const { error } = await supabase
+        .from('ticket_resale_queue')
+        .insert({ pool_id: poolId, user_id: user.id });
+      if (error && error.code !== '23505') throw error; // 23505 = already in queue
+      setQueue('in_queue');
+      toast.success('Added to waitlist — you'll be notified when a ticket is available.');
+    } catch (err) {
+      toast.error(err.message || 'Could not join queue');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <Loader2 className="w-5 h-5 animate-spin" style={{ color: T.gold }} />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col items-center justify-center h-64 px-6 text-center gap-4">
-      <div
-        className="w-16 h-16 rounded-full flex items-center justify-center"
-        style={{ backgroundColor: T.surface }}
-      >
-        <ArrowLeftRight className="w-8 h-8 text-white/20" />
+    <div className="flex flex-col px-4 pt-6 pb-10 gap-5 h-full overflow-y-auto">
+      <div className="flex items-center justify-between">
+        <h2 className="text-white font-black text-lg">Resale Market</h2>
+        <span className="text-white/40 text-xs">{listings.length} listed</span>
       </div>
-      <div>
-        <p className="text-white font-black text-base">Resale Market</p>
-        <p className="text-white/40 text-sm mt-1">Anti-tout resale coming soon.</p>
-        <p className="text-white/25 text-xs mt-2 leading-relaxed">
-          Face-value capped. Void-before-reissue. Waitlist-matched.
-        </p>
-      </div>
+
+      {listings.length === 0 ? (
+        <div className="flex flex-col items-center gap-4 py-10 text-center">
+          <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: T.surface }}>
+            <ArrowLeftRight className="w-7 h-7 text-white/20" />
+          </div>
+          <div>
+            <p className="text-white/60 font-bold text-sm">No resale tickets right now</p>
+            <p className="text-white/30 text-xs mt-1">Face-value capped · Void-before-reissue</p>
+          </div>
+          {poolId && (
+            <button
+              onClick={handleJoinQueue}
+              disabled={!!queueStatus}
+              className="mt-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all active:scale-95 disabled:opacity-50"
+              style={{ backgroundColor: queueStatus ? T.surface : T.gold, color: queueStatus ? T.muted : '#000' }}
+            >
+              {queueStatus === 'in_queue' ? '✓ On waitlist' : queueStatus === 'matched' ? '✓ Matched' : 'Join waitlist'}
+            </button>
+          )}
+        </div>
+      ) : (
+        <>
+          {listings.map(l => (
+            <div key={l.id} className="rounded-2xl p-4 border border-white/8" style={{ backgroundColor: T.card }}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-black text-sm leading-tight truncate">
+                    {l.beacons?.title || 'Event'}
+                  </p>
+                  {l.beacons?.event_start_at && (
+                    <p className="text-white/40 text-xs mt-1">
+                      {new Date(l.beacons.event_start_at).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+                    </p>
+                  )}
+                  <p className="text-white/30 text-xs mt-0.5 capitalize">
+                    {l.ticket_inventory_pools?.label || l.ticket_type?.replace('_', ' ')}
+                  </p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="font-black text-xl" style={{ color: T.gold }}>
+                    £{Number(l.resale_price).toFixed(2)}
+                  </p>
+                  <p className="text-white/25 text-[10px] mt-0.5">face value</p>
+                </div>
+              </div>
+              <button
+                onClick={() => handleBuy(l)}
+                disabled={buying === l.id}
+                className="mt-4 w-full py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+                style={{ backgroundColor: T.pink, color: T.white }}
+              >
+                {buying === l.id
+                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Opening checkout…</>
+                  : <>Buy Resale · £{Number(l.resale_price).toFixed(2)} <ChevronRight className="w-4 h-4" /></>}
+              </button>
+            </div>
+          ))}
+
+          {poolId && (
+            <button
+              onClick={handleJoinQueue}
+              disabled={!!queueStatus}
+              className="w-full py-3 rounded-2xl font-bold text-sm border border-white/10 transition-all active:scale-95 disabled:opacity-50"
+              style={{ backgroundColor: T.surface, color: queueStatus ? T.muted : T.white }}
+            >
+              {queueStatus === 'in_queue' ? '✓ You're on the waitlist' : queueStatus === 'matched' ? '✓ Matched' : 'Join waitlist instead'}
+            </button>
+          )}
+        </>
+      )}
+
+      <p className="text-white/20 text-[10px] text-center leading-relaxed px-4">
+        All resale tickets are face-value capped. Seller QR is voided on sale. A fresh QR is issued to the buyer.
+      </p>
     </div>
   );
 }

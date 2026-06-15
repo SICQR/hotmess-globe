@@ -6,7 +6,7 @@ export const config = {
 
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
-import { handleTicketCheckout } from '../tickets/webhook-handler.js';
+import { handleTicketCheckout, handleResaleCheckout } from '../tickets/webhook-handler.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -641,7 +641,9 @@ export default async function handler(req, res) {
   // Handle events
   if (event.type === 'checkout.session.completed') {
     // Ticket purchases handled by dedicated handler — keeps webhook.js surgical
-    if (event.data.object.metadata?.type === 'ticket') {
+    if (event.data.object.metadata?.type === 'resale') {
+      await handleResaleCheckout(event.data.object);
+    } else if (event.data.object.metadata?.type === 'ticket') {
       await handleTicketCheckout(event.data.object);
     } else {
       await processOrderCompletion(event.data.object, 'checkout.session.completed', req);
