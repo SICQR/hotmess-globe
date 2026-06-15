@@ -1,0 +1,155 @@
+// api/tickets/webhook-handler.js
+// Called from api/stripe/webhook.js when event.metadata.type === 'ticket'
+//
+// Handles checkout.session.completed for ticket purchases:
+//   - Validates OSA snapshot is present in metadata
+//   - Decrements inventory_sold on the pool (with optimistic concurrency check)
+//   - Generates random 32-char hex QR token
+//   - Inserts ticket_orders row with ticket_state = 'issued'
+//   - Queues AMBIENT notification to buyer confirming issuance
+//
+// IDEMPOTENT: stripe_session_id stored on the ticket row; second call is a no-op.
+
+import crypto from 'crypto';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+export async function handleTicketCheckout(session) {
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const meta = session.metadata ?? {};
+
+  const {
+    pool_id,
+    beacon_id,
+    user_id,
+    plus_one_of,
+    tier_at_purchase,
+    age_verified_at,
+    age_verification_method,
+    fee_rate,
+  } = meta;
+
+  if (!pool_id || !user_id || !beacon_id) {
+    console.error('[ticket-webhook] Missing required metadata fields', meta);
+    return;
+  }
+
+  // ── Idempotency ────────────────────────────────────────────────────────────
+  const { data: existing } = await supabase
+    .from('ticket_orders')
+    .select('id')
+    .eq('external_ref', session.id)
+    .maybeSingle();
+
+  if (existing?.id) {
+    console.log('[ticket-webhook] Already processed session', session.id, '— skipping');
+    return;
+  }
+
+  // ── Load pool ──────────────────────────────────────────────────────────────
+  const { data: pool, error: poolErr } = await supabase
+    .from('ticket_inventory_pools')
+    .select('*')
+    .eq('id', pool_id)
+    .single();
+
+  if (poolErr || !pool) {
+    console.error('[ticket-webhook] Pool not found:', pool_id, poolErr?.message);
+    return;
+  }
+
+  // ── Inventory decrement (concurrency-safe) ─────────────────────────────────
+  // Only decrement if cap allows. Uses a conditional update; if rows_affected = 0
+  // someone else claimed the last slot between checkout creation and now — refund needed.
+  const { count: decremented } = await supabase
+    .from('ticket_inventory_pools')
+    .update({ inventory_sold: pool.inventory_sold + 1, updated_at: new Date().toISOString() })
+    .eq('id', pool_id)
+    .or(
+      pool.inventory_cap === null
+        ? 'id.neq.00000000-0000-0000-0000-000000000000' // always true for null cap
+        : `inventory_sold.lt.${pool.inventory_cap}`
+    )
+    .select('id', { count: 'exact', head: true });
+
+  if (pool.inventory_cap !== null && (!decremented || decremented === 0)) {
+    console.error('[ticket-webhook] Inventory race: pool', pool_id, 'sold out during checkout. Needs refund for session', session.id);
+    // TODO Phase 2: trigger automatic Stripe refund here
+    return;
+  }
+
+  // ── Generate QR token ──────────────────────────────────────────────────────
+  // 32-char random hex. Unique constraint on ticket_orders.qr_token enforces no collisions.
+  const qrToken = crypto.randomBytes(16).toString('hex');
+
+  // ── Compute fees ───────────────────────────────────────────────────────────
+  const amountGbp       = (session.amount_total ?? 0) / 100;
+  const feeRateNum      = parseFloat(fee_rate ?? '0');
+  const feeAmount       = parseFloat((amountGbp * feeRateNum).toFixed(2));
+  // Stripe processing: 1.4% + £0.20 for UK cards (approximate; exact figure in stripe_processing_cost)
+  const stripeProcessing = parseFloat((amountGbp * 0.014 + 0.20).toFixed(2));
+
+  // ── OSA snapshot ──────────────────────────────────────────────────────────
+  const ageVerificationSnapshot = (age_verified_at && age_verification_method)
+    ? { age_verified_at, age_verification_method }
+    : null;
+
+  if (!ageVerificationSnapshot) {
+    console.error('[ticket-webhook] OSA: age verification snapshot missing for user', user_id, '— ticket will not be issued');
+    // TODO Phase 2: trigger automatic Stripe refund
+    return;
+  }
+
+  // ── Insert ticket_orders ───────────────────────────────────────────────────
+  const { data: ticket, error: insertErr } = await supabase
+    .from('ticket_orders')
+    .insert({
+      user_id,
+      beacon_id,
+      inventory_pool_id:         pool_id,
+      provider:                  'stripe',
+      external_ref:              session.id,
+      amount:                    amountGbp,          // gross
+      currency:                  'gbp',
+      status:                    'paid',             // Stripe payment status
+      ticket_state:              'issued',           // lifecycle state
+      ticket_type:               pool.ticket_type,
+      qr_token:                  qrToken,
+      tier_at_purchase:          tier_at_purchase ?? 'mess',
+      plus_one_of:               plus_one_of || null,
+      price_paid:                amountGbp,
+      fee_amount:                feeAmount,
+      stripe_processing_cost:    stripeProcessing,
+      payout_status:             'pending',
+      age_verification_snapshot: ageVerificationSnapshot,
+      metadata: {
+        stripe_session_id: session.id,
+        payment_intent:    session.payment_intent,
+      },
+    })
+    .select('id')
+    .single();
+
+  if (insertErr) {
+    console.error('[ticket-webhook] Insert failed:', insertErr.message, 'session:', session.id);
+    return;
+  }
+
+  console.log('[ticket-webhook] Ticket issued:', ticket.id, 'for user:', user_id, 'pool:', pool_id);
+
+  // ── AMBIENT notification to buyer ──────────────────────────────────────────
+  await supabase.from('notification_outbox').insert({
+    user_id,
+    title:    'Your ticket is confirmed',
+    body:     `Tap to view your ticket for ${pool.label}.`,
+    priority: 'AMBIENT',
+    status:   'queued',
+    metadata: {
+      ticket_id: ticket.id,
+      beacon_id,
+      type: 'ticket_issued',
+    },
+  });
+}
