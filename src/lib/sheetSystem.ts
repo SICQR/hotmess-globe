@@ -460,6 +460,20 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────
+  // DOOR SCANNER — venue/promoter door mode for ticketed events
+  // Phase 2 ticketing (PR #962)
+  // ─────────────────────────────────────────────────────────────────────────
+  'door-scanner': {
+    id: 'door-scanner',
+    title: 'Door Mode',
+    height: 'full',
+    // Full-screen so camera viewport has maximum space.
+    peekFraction: 0.92,
+    auth: true,
+    deepLinkParams: ['beaconId'],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
   // SELLING / ONBOARDING / PAYOUTS
   // ─────────────────────────────────────────────────────────────────────────
   'sell': {
