@@ -609,6 +609,7 @@ function OSArchitecture() {
   // Phil 2026-06-14: dispatch hm:ptr-refresh instead of window.location.reload()
   // so each page handles its own refresh. No-op on pages that don't listen.
   const { pullProgress, isRefreshing } = usePullToRefresh({
+    disabled: !location.pathname.startsWith('/ghosted'),
     onRefresh: () => window.dispatchEvent(new CustomEvent('hm:ptr-refresh')),
   });
 

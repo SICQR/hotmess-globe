@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useSheet } from '@/contexts/SheetContext';
 import { useBootGuard, BOOT_STATES } from '@/contexts/BootGuardContext';
 
@@ -7,17 +8,19 @@ import { useBootGuard, BOOT_STATES } from '@/contexts/BootGuardContext';
  *
  * Triggered by service worker navigation to URLs like:
  * - /?sheet=safety
- * - /ghosted?sheet=chat&threadId=abc
+ * - /ghosted?sheet=chat&thread=abc
  * - /?sheet=notification-inbox
  * - /?sheet=location-watcher&shareId=xyz
  * - /?sheet=profile&id=user123
  *
- * Runs once after READY state, reads URL params, opens the sheet,
- * then cleans the URL using replaceState.
+ * Runs after READY state AND whenever location.search changes — so it
+ * fires both on cold open (bootState → READY) and when the app is already
+ * open and a NOTIFICATION_CLICK navigates to a ?sheet= URL (Phil 2026-06-15).
  */
 export function useDeepLinkSheet() {
   const { openSheet } = useSheet();
   const { bootState } = useBootGuard();
+  const location = useLocation();
 
   useEffect(() => {
     // Only run when user is fully authenticated and ready
@@ -26,7 +29,7 @@ export function useDeepLinkSheet() {
     }
 
     // Read sheet param from URL
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(location.search);
     const sheetType = params.get('sheet');
 
     if (!sheetType) {
@@ -67,5 +70,5 @@ export function useDeepLinkSheet() {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [bootState, openSheet]);
+  }, [bootState, location.search, openSheet]);
 }
