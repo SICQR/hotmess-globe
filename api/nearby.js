@@ -69,7 +69,7 @@ const getViewerProfile = async ({ serviceClient, authUserId, email }) => {
   // profiles.id = auth.uid(); membership_tier maps to subscription_tier
   const { data, error } = await serviceClient
     .from('profiles')
-    .select('id, email, membership_tier, privacy_hide_proximity')
+    .select('id, email, membership_tier, location_consent')
     .or(`id.eq.${authUserId},email.eq.${email}`)
     .maybeSingle();
   if (!error && data) {
@@ -80,6 +80,8 @@ const getViewerProfile = async ({ serviceClient, authUserId, email }) => {
         auth_user_id: data.id,
         // map profiles column name to what the handler expects
         subscription_tier: data.membership_tier || null,
+        // location_consent=false means user opted out → hide proximity
+        privacy_hide_proximity: !data.location_consent,
       },
     };
   }
