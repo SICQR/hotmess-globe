@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MessageCircle, Music, Radio } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { useGhostedGrid } from '@/hooks/useGhostedGrid';
 import { useGPS } from '@/hooks/useGPS';
 import { useSheet } from '@/contexts/SheetContext';
@@ -20,35 +20,11 @@ import { AtmosphericImageCard } from '@/components/brand/AtmosphericImageCard';
 import { supabase } from '@/components/utils/supabaseClient';
 
 
-// Right-rail control for the Ghosted page. Visual pattern mirrors the Pulse
-// rail's RailButton (src/pages/Globe.jsx): icons-only pill, label slides out
-// on hover. Kept as its own component so the Pulse rail wiring is never touched.
-function GhostedRailButton({ icon: Icon, label, onClick }: { icon: React.FC<{ className?: string }>; label: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      data-pull-refresh-ignore
-      className="group pointer-events-auto flex items-center justify-end gap-0 hover:gap-2 h-11 px-3 bg-black/60 border border-white/20 backdrop-blur-md rounded-full text-white shadow-lg overflow-hidden transition-all hover:bg-white hover:text-black"
-    >
-      <span className="max-w-0 group-hover:max-w-[120px] overflow-hidden whitespace-nowrap text-[11px] font-black uppercase tracking-wider transition-[max-width] duration-200">{label}</span>
-      <span className="relative flex-shrink-0">
-        <Icon className="w-5 h-5" />
-      </span>
-    </button>
-  );
-}
-
 export default function GhostedMode() {
   const navigate = useNavigate();
   const { position } = useGPS();
   const { openSheet } = useSheet();
 
-  // Grid auto-uses location when available (Phil 2026-05-26: removed the
-  // pointless Nearby toggle — the grid works on location anyway). Falls back
-  // to recent if no GPS yet.
   const tab = position?.lat != null && position?.lng != null ? 'nearby' : 'recent';
   const [activeFilter, setActiveFilter] = React.useState<string | null>(null);
   const { cards, isLoading, refetch } = useGhostedGrid(
@@ -58,13 +34,6 @@ export default function GhostedMode() {
     activeFilter,
   );
 
-  // Phil 2026-05-31: Global PTR used to fall through to window.location.reload()
-  // which (a) wiped the cached geo position and re-surfaced the consent UI on
-  // some browsers, and (b) flipped useGPS from null → resolved which switched
-  // useGhostedGrid from `recent` (many users) to `nearby` (location-filtered)
-  // mid-render — Phil's grid "collapsed to TELEGRAM TEST". App.jsx now
-  // dispatches `hm:ptr-refresh` instead; we refetch in place, preserving the
-  // current tab, position, and cached geo.
   React.useEffect(() => {
     const handler = () => { try { refetch(); } catch { /* noop */ } };
     window.addEventListener('hm:ptr-refresh', handler as EventListener);
@@ -83,10 +52,6 @@ export default function GhostedMode() {
     });
   }, []);
 
-  // Backfill prompt for the 142 users with consent ticked but no location
-  // point ever captured (gap between consent flag and actual GPS write,
-  // fixed at source for new users in PR #444 — backfill for existing users
-  // surfaces here as a one-shot dismissable banner).
   const [needsLocation, setNeedsLocation] = React.useState(false);
   const [locationDismissed, setLocationDismissed] = React.useState<boolean>(
     () => {
@@ -105,7 +70,6 @@ export default function GhostedMode() {
       .maybeSingle()
       .then(({ data }) => {
         if (cancelled || !data) return;
-        // location is null OR location_consent off → can't appear on Ghosted
         setNeedsLocation(!data.location || data.location_consent === false);
       });
     return () => { cancelled = true; };
@@ -142,55 +106,27 @@ export default function GhostedMode() {
   const { isTapped, isMutualBoo } = useTaps(myUserId, myEmail);
   const { unreadCount, clearTapsBadge, fetchChatCount } = useUnreadCount();
 
-  // Phil 2026-06-14: clear taps badge on Ghosted mount
   React.useEffect(() => {
     clearTapsBadge();
   }, [clearTapsBadge]);
 
-  // profile_bump — paying users sort to top of grid + render outer gold glow.
-  // Empty set when nobody is boosted (steady state) → zero render impact.
   const boostedUserIds = useBoostedUserIds();
 
-  // Tier gate — has_full_ghosted decides whether MESS users see the fog past
-  // ghosted_preview_limit. Defaults (MESS): limit=3, full=false. While loading
-  // we use those defaults — fail-closed: never accidentally show paid grid.
   const benefits = useUserBenefits();
   const hasFullGhosted = !!benefits.has_full_ghosted;
   const previewLimit = typeof benefits.ghosted_preview_limit === 'number' ? benefits.ghosted_preview_limit : 3;
-  // -1 = unlimited (HOTMESS+); otherwise card index >= limit gets fogged for non-paying users
   const isCardFogged = (index: number) => !hasFullGhosted && previewLimit !== -1 && index >= previewLimit;
 
   return (
     <div className="relative h-full w-full bg-[#050507] flex flex-col overflow-hidden">
-
-      {/*
-        Phil 2026-06-01 Task #517 — mobile horizontal-stability fix.
-
-        Both the page scroll container AND the chip rail previously embedded
-        a <style> element as a *flex child*. React mounts/unmounts these on
-        every render and they took layout slots in the flex children list,
-        which produced the "unstable" feel Phil reported on iPhone.
-
-        On top of that the chip rail was missing:
-          - `gh-filters` className (so the .gh-filters::-webkit-scrollbar
-            rule was dead code — scrollbars still flashed on iOS Safari)
-          - `overscroll-behavior-x: contain` — without it iOS edge-swipe-back
-            collides with chip-rail horizontal scroll
-          - `touch-action: pan-x` — without it any vertical drift during a
-            chip-rail swipe hijacks the gesture between the rail and the
-            parent vertical scroll, producing the "wobble"
-
-        Fix: hoist the scoped scrollbar-hide CSS to a single component-level
-        <style> rendered OUTSIDE the flex containers, then apply the missing
-        classes + mobile-safe gesture properties on each rail.
-      */}
       <style dangerouslySetInnerHTML={{__html:
         '.gh-no-sb::-webkit-scrollbar{display:none}' +
         '.gh-filters::-webkit-scrollbar{display:none}'
       }} />
 
-      {/* Scrollable Container */}
-      {/* Phil 2026-06-14: paddingRight 72px stops GhostedRailButtons overlapping column 3 */}
+      {/* Scrollable Container — Phil 2026-06-15: removed right rail (Music/Radio
+          floating buttons) that was overlapping column 3 of the grid. Bottom nav
+          has Music; stories row has Radio. Rail was redundant AND breaking layout. */}
       <div
         className="gh-no-sb flex-1 overflow-y-auto overflow-x-hidden pb-24"
         style={{
@@ -201,27 +137,9 @@ export default function GhostedMode() {
           paddingRight: 72,
         }}
       >
-
-
-        {/* ── ROW — IG/Grindr-style circle vocabulary. Gold rings for people
-            with an active beacon; cream rings for curated care beacons. One
-            row, two ring vocabularies (D53 §1.4 single primitive). Phil
-            2026-06-03 — care beacons folded in from the deprecated
-            CareOnTheGroundStrip. Newest-first within each group; older
-            signals drift right as fresh ones come in. Renders nothing when
-            there's nothing to show, so the grid below always carries the
-            page. */}
         <GhostedRecentStories currentUserEmail={myEmail} currentUserId={myUserId} />
-
-        {/* ── ACTIVITY RIBBON — qualitative atmospheric tone line. Bands
-            (HUSHED / STEADY / FILLING / FULL) describe the room without
-            naming numbers. Phil 2026-06-03 — inhouse metrics rule: never
-            surface digits without explicit OK. */}
         <GhostedActivityRibbon />
 
-        {/* Filter chips — Brief 03 doctrine. Tap to toggle; second tap clears.
-            Filter logic lives in useGhostedGrid (server-side row filter).
-            Doctrine: no popularity counts on chips (no "ALL · 247"). */}
         <div
           className="gh-filters px-3 pt-2 pb-1 flex gap-2 overflow-x-auto"
           style={{
@@ -259,8 +177,6 @@ export default function GhostedMode() {
           })}
         </div>
 
-        {/* Backfill prompt — signed-in users without a location point won't
-            appear on Ghosted at all (RPC filter). One-shot, dismissable. */}
         {needsLocation && !locationDismissed && (
           <div
             className="mx-3 mt-2 mb-1 p-3 rounded-xl flex items-center gap-3 text-[12px]"
@@ -290,12 +206,6 @@ export default function GhostedMode() {
           </div>
         )}
 
-
-        {/* ── LIVE FIELD — the emotional center. Orbit mechanics: zero
-            gutters, deterministic per-index opacity jitter so the grid
-            doesn't read as uniform "app tiles." Full orbit pass (active
-            card 1.06×, partial-clip, intersection-observer focus) is
-            queued separately. */}
         {isLoading && cards.length === 0 ? (
           <div className="grid grid-cols-3 gap-0">
             {Array.from({ length: 9 }).map((_, i) => (
@@ -309,12 +219,9 @@ export default function GhostedMode() {
               : [...cards].sort((a, b) => {
                   const aBoosted = boostedUserIds.has(a.id) ? 1 : 0;
                   const bBoosted = boostedUserIds.has(b.id) ? 1 : 0;
-                  return bBoosted - aBoosted; // boosted first, stable otherwise
+                  return bBoosted - aBoosted;
                 })
             ).map((card, i) => {
-              // Index-based jitter — quietly breaks "app grid" feel without
-              // requiring scroll detection. Pattern repeats every 7 cards
-              // so the field has rhythm but no obvious tile.
               const cycle = i % 7;
               const dim   = cycle === 1 || cycle === 4 ? 0.82 : cycle === 6 ? 0.92 : 1.0;
               const scale = cycle === 2 ? 1.015 : cycle === 5 ? 0.985 : 1.0;
@@ -337,7 +244,6 @@ export default function GhostedMode() {
                     isBoosted={boostedUserIds.has(card.id)}
                     onTap={(id) => {
                       if (fogged) {
-                        // Felt copy doctrine 07 — one line, no chrome.
                         navigate('/upgrade');
                       } else {
                         openSheet('profile', { id });
@@ -361,11 +267,6 @@ export default function GhostedMode() {
           </div>
         )}
 
-        {/* Inline empty hint — never replaces the grid scaffold (Phil 2026-05-26:
-            'the grid should always be there'). Now also surfaces an
-            atmospheric inhabited card so the empty state reads as discovery
-            atmosphere, not a void. Phil 2026-05-30: "Imagery should make
-            HOTMESS feel INHABITED, not decorated." */}
         {!isLoading && cards.length === 0 && (
           <div className="px-3 pt-3 pb-1 space-y-3">
             <AtmosphericImageCard
@@ -380,18 +281,7 @@ export default function GhostedMode() {
         )}
       </div>
 
-      {/* Right control rail — page-aware (Phil 2026-05-25): Ghosted gains a
-          rail with Music + Radio. Styled to match the Pulse rail (right-edge
-          vertical icon stack, hover-expand labels). The previously in-page
-          music/radio entry points (the GHOSTED radio play + /music nav) now
-          live here so there's one consistent control surface and no duplicate
-          buttons elsewhere on the page. */}
-      <div className="absolute top-[calc(88px+env(safe-area-inset-top,0px))] right-4 z-30 flex flex-col items-end gap-2 pointer-events-none">
-        <GhostedRailButton icon={Music} label="Music" onClick={() => navigate('/music')} />
-        <GhostedRailButton icon={Radio} label="Radio" onClick={() => navigate('/radio')} />
-      </div>
-
-      {/* Floating Inbox/Messages button — shifted specifically into GhostedMode per Zia's request */}
+      {/* Floating Inbox/Messages button */}
       <motion.button
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -401,9 +291,6 @@ export default function GhostedMode() {
       >
         <div className="relative">
           <MessageCircle className="w-6 h-6 text-black" strokeWidth={2.5} />
-          {/* Unread badge — numbered so the user knows how much is waiting.
-              The pulsing dot variant hid the actual count; if you can see a
-              number you know exactly what's there (Phil 2026-05-27). */}
           {unreadCount > 0 && (
             <div
               className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full border-2 border-[#C8962C] flex items-center justify-center text-[10px] font-black text-white animate-pulse"
@@ -419,5 +306,3 @@ export default function GhostedMode() {
     </div>
   );
 }
-
-
