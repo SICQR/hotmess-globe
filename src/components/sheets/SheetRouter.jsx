@@ -97,6 +97,7 @@ const L2MovementShareSheet = lazy(() => import('./L2MovementShareSheet'));
 const L2RadioPlayerSheet = lazy(() => import('./L2RadioPlayerSheet'));
 const L2CareSheet = lazy(() => import('./L2CareSheet'));
 const L2MeetSheet = lazy(() => import('./L2MeetSheet'));
+const L2DoorScannerSheet = lazy(() => import('./L2DoorScannerSheet'));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PLACEHOLDER FOR UNIMPLEMENTED SHEETS
@@ -232,6 +233,7 @@ const SHEET_COMPONENTS = {
   'favorites': L2FavoritesSheet,
   'beacon': L2BeaconSheet,
   'beacon-cluster': L2ClusterPreviewSheet,
+  'door-scanner': L2DoorScannerSheet,
   'schedule': L2ScheduleSheet,
   'radio-player': L2RadioPlayerSheet,
   'show': L2ScheduleSheet,
