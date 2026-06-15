@@ -153,3 +153,79 @@ export async function handleTicketCheckout(session) {
     },
   });
 }
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RESALE CHECKOUT — Phase 3 S4
+// Called from api/stripe/webhook.js when session.metadata.type === 'resale'
+// ─────────────────────────────────────────────────────────────────────────────
+export async function handleResaleCheckout(session) {
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const meta = session.metadata ?? {};
+
+  const { seller_ticket_id, buyer_id } = meta;
+  const payment_ref = session.payment_intent;
+
+  if (!seller_ticket_id || !buyer_id || !payment_ref) {
+    console.error('[resale-webhook] Missing required metadata', meta);
+    return;
+  }
+
+  // Idempotency: check if already matched
+  const { data: sellerTick } = await supabase
+    .from('ticket_orders')
+    .select('ticket_state')
+    .eq('id', seller_ticket_id)
+    .maybeSingle();
+
+  if (sellerTick?.ticket_state === 'resold_void') {
+    console.log('[resale-webhook] Already matched, skipping', seller_ticket_id);
+    return;
+  }
+
+  // Call match_resale_ticket RPC (payment-first guarantee: payment confirmed above)
+  const { data, error } = await supabase.rpc('match_resale_ticket', {
+    p_seller_ticket_id: seller_ticket_id,
+    p_buyer_id:         buyer_id,
+    p_payment_ref:      payment_ref,
+  });
+
+  if (error) {
+    console.error('[resale-webhook] match_resale_ticket error:', error.message, { seller_ticket_id, buyer_id });
+    return;
+  }
+
+  if (!data?.success) {
+    console.warn('[resale-webhook] match returned not success:', data?.reason, { seller_ticket_id });
+    return;
+  }
+
+  console.log('[resale-webhook] Resale matched:', data.new_qr_token, 'buyer:', buyer_id);
+
+  // Notify buyer of new QR
+  await supabase.from('notification_outbox').insert({
+    user_id:  buyer_id,
+    title:    'Your resale ticket is ready',
+    body:     'Tap to view your ticket QR code.',
+    priority: 'SIGNAL',
+    status:   'queued',
+    metadata: {
+      new_qr_token: data.new_qr_token,
+      beacon_id:    meta.beacon_id,
+      type:         'resale_matched',
+    },
+  }).catch(() => {});
+
+  // Notify seller that their ticket sold
+  await supabase.from('notification_outbox').insert({
+    user_id:  sellerTick?.user_id || meta.seller_user_id,
+    title:    'Your ticket has been resold',
+    body:     'Payout queued — check your earnings.',
+    priority: 'AMBIENT',
+    status:   'queued',
+    metadata: {
+      voided_ticket: seller_ticket_id,
+      type:          'resale_sold',
+    },
+  }).catch(() => {});
+}
