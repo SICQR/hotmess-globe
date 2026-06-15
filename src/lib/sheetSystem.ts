@@ -643,6 +643,24 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────
+  // VENDOR / PROMOTER DASHBOARD — Phase 3 S2
+  // ─────────────────────────────────────────────────────────────────────────
+  'vendor-dashboard': {
+    id: 'vendor-dashboard',
+    title: 'Promoter Dashboard',
+    height: 'large',
+    auth: true,
+    deepLinkParams: [],
+  },
+  'vendor-event': {
+    id: 'vendor-event',
+    title: 'Manage Event',
+    height: 'large',
+    auth: true,
+    deepLinkParams: ['beaconId'],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
   // COMMUNITY FEATURES (DB live, UI added)
   // ─────────────────────────────────────────────────────────────────────────
   'community': {
