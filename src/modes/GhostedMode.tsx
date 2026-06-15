@@ -134,7 +134,6 @@ export default function GhostedMode() {
           scrollbarWidth: 'none',
           overscrollBehaviorX: 'contain',
           touchAction: 'pan-y',
-          paddingRight: 72,
         }}
       >
         <GhostedRecentStories currentUserEmail={myEmail} currentUserId={myUserId} />
