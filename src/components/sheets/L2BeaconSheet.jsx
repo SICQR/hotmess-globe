@@ -11,6 +11,7 @@ import { nanoid } from 'nanoid';
 import {
   MapPin, Clock, Radio, Loader2, Navigation, ExternalLink,
   CheckCircle, ChevronRight, ChevronLeft, Zap, Heart, MessageCircle,
+  ScanLine, QrCode,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
@@ -842,6 +843,10 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
   const [checkingIn, setCheckingIn]               = useState(false);
   const [activeCheckin, setActiveCheckin]         = useState(null);
 
+  // Ticket pool + user's existing ticket for this event (event kind only)
+  const [ticketPool, setTicketPool]   = useState(null);
+  const [userTicket, setUserTicket]   = useState(null);
+
   // The id arriving via deep-link / globe feature is sometimes prefixed
   // (`beacon:` from useRealtimeBeacons.js, `beacon_` from the pulse_signals
   // view). The raw uuid is what `beacons.id` stores — normalise before query.
@@ -898,6 +903,37 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
         .then(({ data }) => setActiveCheckin(data || null));
     });
   }, [beacon?.venue_id, beacon?.id, beacon?.checkin_count]);
+
+  // Load ticket pool + user's existing ticket for event beacons
+  useEffect(() => {
+    const kind = beacon ? detectBeaconKind(beacon) : null;
+    if (kind !== 'event' || !beacon) return;
+    const beaconUUID = cleanBeaconId || beacon.id;
+    Promise.all([
+      supabase
+        .from('ticket_inventory_pools')
+        .select('id, label, price, ticket_type, inventory_cap, inventory_sold, closes_at')
+        .eq('beacon_id', beaconUUID)
+        .eq('is_active', true)
+        .order('price', { ascending: true })
+        .limit(1)
+        .maybeSingle(),
+      (async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { data: null };
+        return supabase
+          .from('ticket_orders')
+          .select('id, ticket_state, qr_token, ticket_type')
+          .eq('user_id', user.id)
+          .eq('beacon_id', beaconUUID)
+          .in('ticket_state', ['issued', 'valid', 'scanned', 'reissued'])
+          .maybeSingle();
+      })(),
+    ]).then(([poolRes, ticketRes]) => {
+      setTicketPool(poolRes?.data || null);
+      setUserTicket(ticketRes?.data || null);
+    }).catch(() => { /* non-fatal */ });
+  }, [beacon, cleanBeaconId]);
 
   // Opens modal instead of immediately checking in
   const handleCheckIn = () => {
@@ -1285,15 +1321,63 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
           </a>
         )}
 
-        {/* ── kind: event — I'm going (real scheduled event with venue) ── */}
+        {/* ── kind: event ── */}
         {kind === 'event' && (
-          <button
-            onClick={handleCheckIn}
-            disabled={checkingIn}
-            className="w-full bg-[#FF4F9A] text-white font-black text-sm rounded-2xl py-3.5 flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
-          >
-            I&apos;m going
-          </button>
+          <>
+            {/* Door Mode — event owner only */}
+            {ownerId && myUserId && ownerId === myUserId && (
+              <button
+                onClick={() => {
+                  closeSheet();
+                  window.setTimeout(() => openSheet('door-scanner', { beaconId: cleanBeaconId || beacon.id }), 80);
+                }}
+                className="w-full flex items-center justify-center gap-2 font-black text-sm rounded-2xl py-3.5 active:scale-95 transition-transform border"
+                style={{ backgroundColor: 'rgba(200,150,44,0.12)', color: '#C8962C', borderColor: 'rgba(200,150,44,0.35)' }}
+              >
+                <ScanLine className="w-4 h-4" />
+                Door Mode
+              </button>
+            )}
+
+            {/* Get Ticket — pool available, user hasn't purchased */}
+            {ticketPool && !userTicket && ownerId !== myUserId && (
+              <button
+                onClick={() => {
+                  closeSheet();
+                  window.setTimeout(() => openSheet('ticket-market', { mode: 'buy', beaconId: cleanBeaconId || beacon.id, poolId: ticketPool.id }), 80);
+                }}
+                className="w-full bg-[#FF4F9A] text-white font-black text-sm rounded-2xl py-3.5 flex items-center justify-center gap-2 active:scale-95 transition-transform"
+              >
+                Get Ticket — £{Number(ticketPool.price).toFixed(2)}
+              </button>
+            )}
+
+            {/* My Ticket — user already has a ticket */}
+            {userTicket && (
+              <button
+                onClick={() => {
+                  closeSheet();
+                  window.setTimeout(() => openSheet('ticket-market', { mode: 'my-ticket', ticketId: userTicket.id }), 80);
+                }}
+                className="w-full flex items-center justify-center gap-2 font-black text-sm rounded-2xl py-3.5 active:scale-95 transition-transform border"
+                style={{ backgroundColor: 'rgba(200,150,44,0.12)', color: '#C8962C', borderColor: 'rgba(200,150,44,0.35)' }}
+              >
+                <QrCode className="w-4 h-4" />
+                My Ticket
+              </button>
+            )}
+
+            {/* I'm going — fallback when no pool available */}
+            {!ticketPool && !userTicket && (
+              <button
+                onClick={handleCheckIn}
+                disabled={checkingIn}
+                className="w-full bg-[#FF4F9A] text-white font-black text-sm rounded-2xl py-3.5 flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
+              >
+                I&apos;m going
+              </button>
+            )}
+          </>
         )}
 
         {/* ── kind: care — never a Boo target, surface care affordance only ── */}
