@@ -174,38 +174,62 @@ function EventCard({ listing, index, onTap }: { listing: Listing; index: number;
 // HERO
 // ─────────────────────────────────────────────────────────────────────────────
 
+const HERO_URL = 'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/market/tickets.png';
+
 function TicketsHero() {
+  const [failed, setFailed] = useState(false);
+
   return (
-    <div
-      className="mx-4 mt-4 mb-2 rounded-2xl overflow-hidden relative"
-      style={{ aspectRatio: '16/7', background: '#0A0A0C' }}
-    >
-      {/* Atmospheric gradient */}
+    <div className="px-4 pt-3 pb-2">
       <div
-        className="absolute inset-0"
-        style={{
-          background: 'radial-gradient(ellipse at 30% 50%, rgba(200,150,44,0.18) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(0,194,224,0.08) 0%, transparent 50%)',
-        }}
-      />
-      {/* Grid texture */}
-      <div
-        className="absolute inset-0 opacity-[0.04]"
-        style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)',
-          backgroundSize: '32px 32px',
-        }}
-      />
-      <div className="absolute inset-0 flex flex-col justify-end p-5">
-        <div className="flex items-center gap-2 mb-2">
-          <Ticket className="w-4 h-4" style={{ color: AMBER }} />
-          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">HOTMESS</span>
-        </div>
-        <h2 className="text-[22px] font-black uppercase tracking-tight text-white leading-none mb-1">
-          Events &amp; Tickets
-        </h2>
-        <p className="text-[12px] text-white/40">
-          Queer nightlife across the city
-        </p>
+        className="relative w-full overflow-hidden rounded-2xl border border-white/5"
+        style={{ aspectRatio: '16 / 9', background: '#050507' }}
+      >
+        {!failed && (
+          <img
+            src={HERO_URL}
+            alt="HOTMESS Events & Tickets"
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="eager"
+            onError={() => setFailed(true)}
+          />
+        )}
+        {failed && (
+          <div
+            className="absolute inset-0 flex flex-col items-start justify-end p-6"
+            style={{ background: 'linear-gradient(135deg, #050507 0%, #111116 100%)' }}
+          >
+            {/* Ticket stub perforations top */}
+            <div className="absolute top-0 left-0 right-0 flex gap-[6px] px-3 py-2">
+              {Array.from({ length: 28 }).map((_, i) => (
+                <div key={i} className="flex-1 h-[2px] rounded-full bg-white/[0.05]" />
+              ))}
+            </div>
+            {/* Gold left stripe */}
+            <div
+              className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-2xl"
+              style={{ background: `linear-gradient(to bottom, ${AMBER}, transparent)` }}
+            />
+            <div className="mb-3">
+              <div
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-4"
+                style={{ background: `${AMBER}18`, border: `1px solid ${AMBER}40` }}
+              >
+                <Ticket className="w-3 h-3" style={{ color: AMBER }} />
+                <span className="text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: AMBER }}>
+                  HOTMESS EVENTS
+                </span>
+              </div>
+              <div className="text-[38px] font-black uppercase leading-none tracking-tight text-white">
+                LIVE<br />
+                <span style={{ color: AMBER }}>TONIGHT</span>
+              </div>
+            </div>
+            <p className="text-[12px] text-white/35 uppercase tracking-[0.15em]">
+              Queer nightlife · Real venues · Real tickets
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
