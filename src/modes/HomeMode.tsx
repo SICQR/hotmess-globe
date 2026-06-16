@@ -16,19 +16,17 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Ghost, ShoppingBag, Music, Globe, User, ChevronRight } from 'lucide-react';
+import { Ghost, ShoppingBag, Music, User, ChevronRight } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useRadio } from '@/contexts/RadioContext';
 import { useBootGuard } from '@/contexts/BootGuardContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { motionTokens, useReducedMotion } from '@/lib/motionTokens';
-import CareSuiteCard from '@/components/care/CareSuiteCard';
 import CareSuiteExplainer from '@/components/care/CareSuiteExplainer';
 import RightNowModal from '@/components/globe/RightNowModal';
 import { trackEvent } from '@/components/utils/analytics';
 import { TrackPlayer } from '@/components/music/TrackPlayer';
 import { HotmessText } from '@/components/brand/HotmessWordmark';
-import SafetyNetworkCard from '@/components/safety/SafetyNetworkCard';
 import NextUpCard from '@/components/home/NextUpCard';
 import VenueDiscoveryCards from '@/components/home/VenueDiscoveryCards';
 import GhostedStrip from '@/components/home/GhostedStrip';
@@ -203,21 +201,6 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
               </span>
             </motion.div>
 
-            <motion.div variants={reduced ? {} : motionTokens.fadeUpMd} className="mt-5">
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  trackEvent('home_cta_tap', { cta: 'enter_pulse' });
-                  navigate('/pulse');
-                }}
-                className="h-11 px-7 rounded-2xl text-sm font-medium flex items-center gap-2"
-                style={{ background: AMBER, color: '#000' }}
-                aria-label="Enter Pulse — live globe"
-              >
-                <Globe className="w-4 h-4" />
-                Enter Pulse
-              </motion.button>
-            </motion.div>
           </motion.div>
         </section>
 
@@ -430,16 +413,29 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         </section>
 
         {/* ================================================================ */}
-        {/* 10. SAFETY NETWORK — below the fold (admin)                    */}
+        {/* 10. BELOW FOLD — Safety / Care / Market compact row             */}
         {/* ================================================================ */}
-        <section className="px-5 pb-2">
-          <SafetyNetworkCard />
+        <section className="px-5 pb-6">
+          <p className="text-[9px] font-bold tracking-[0.22em] uppercase text-center mb-3"
+            style={{ color: 'rgba(255,255,255,0.1)' }}>More</p>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => navigate('/safety')}
+              className="flex-1 h-10 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-semibold"
+              style={{ background: 'rgba(255,255,255,0.04)', color: '#8E8E93', border: '1px solid rgba(255,255,255,0.07)' }}>
+              Safety
+            </button>
+            <button type="button" onClick={() => setShowCareExplainer(true)}
+              className="flex-1 h-10 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-semibold"
+              style={{ background: 'rgba(255,255,255,0.04)', color: '#8E8E93', border: '1px solid rgba(255,255,255,0.07)' }}>
+              Care
+            </button>
+            <button type="button" onClick={() => navigate('/market')}
+              className="flex-1 h-10 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-semibold"
+              style={{ background: 'rgba(255,255,255,0.04)', color: '#8E8E93', border: '1px solid rgba(255,255,255,0.07)' }}>
+              Market
+            </button>
+          </div>
         </section>
-
-        {/* ================================================================ */}
-        {/* 11. CARE SUITE — doctrine: care outranks commerce              */}
-        {/* ================================================================ */}
-        <CareSuiteCard onOpen={() => setShowCareExplainer(true)} />
 
         {/* ================================================================ */}
         {/* 12. HNH MESS — commerce below care, always                     */}
