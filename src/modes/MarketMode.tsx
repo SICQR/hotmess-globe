@@ -52,6 +52,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { ShopEngine } from '@/modes/market/ShopEngine';
 import { DropsEngine } from '@/modes/market/DropsEngine';
 import { PrelovedEngine } from '@/modes/market/PrelovedEngine';
+import { TicketsEngine } from '@/modes/market/TicketsEngine';
 import L2OrderSheet from '@/components/sheets/L2OrderSheet';
 import { useQuery } from '@tanstack/react-query';
 import { getShopifyProducts, type Product } from '@/lib/data/market';
@@ -103,7 +104,7 @@ const ENGINE_TABS: { key: MarketEngine; label: string; icon: React.FC<{ classNam
   { key: 'shop', label: 'Shop', icon: ShoppingBag, color: '#C8962C', path: '/market' },
   { key: 'drops', label: 'Drops', icon: Flame, color: '#C8962C', path: '/market/drops' },  // Phil 2026-06-03 — drops gold-only; CF3A10 was pre-D35 retail-urgent register
   { key: 'preloved', label: 'Preloved', icon: MessageCircle, color: '#9E7D47', path: '/market/preloved' },
-  { key: 'tickets', label: 'Tickets', icon: Ticket, color: '#C8962C', path: '#' },
+  { key: 'tickets', label: 'Tickets', icon: Ticket, color: '#C8962C', path: '/market/tickets' },
 ];
 
 // ---- Constants --------------------------------------------------------------
@@ -153,6 +154,7 @@ function useDebouncedValue<T>(value: T, delay: number): T {
 function deriveEngine(pathname: string): MarketEngine {
   if (pathname.startsWith('/market/drops')) return 'drops';
   if (pathname.startsWith('/market/preloved')) return 'preloved';
+  if (pathname.startsWith('/market/tickets')) return 'tickets';
   return 'shop';
 }
 
@@ -276,10 +278,9 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   }, [setSearchParams]);
 
   const handleEngineSwitch = useCallback((engine: MarketEngine) => {
-    if (engine === 'tickets') { openSheet('ticket-browse'); return; }
     const tab = ENGINE_TABS.find(t => t.key === engine);
     if (tab) navigate(tab.path, { replace: true });
-  }, [navigate, openSheet]);
+  }, [navigate]);
 
   // Active engine color
   const activeColor = ENGINE_TABS.find(t => t.key === activeEngine)?.color ?? AMBER;
@@ -510,6 +511,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder={
                 activeEngine === 'shop' ? 'Search merch, HNH MESS...'
+                : activeEngine === 'tickets' ? 'Search events...'
                 : activeEngine === 'drops' ? 'Search drops...'
                 : 'Search preloved listings...'
               }
@@ -588,6 +590,11 @@ export function MarketMode({ className = '' }: MarketModeProps) {
             <DropsEngine search={debouncedSearch} />
           </motion.div>
         )}
+        {activeEngine === 'tickets' && (
+          <motion.div key='tickets' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className='flex flex-col flex-1 min-h-0'>
+            <TicketsEngine search={debouncedSearch} />
+          </motion.div>
+        )}
         {activeEngine === 'preloved' && (
           <motion.div
             key="preloved"
@@ -623,6 +630,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
 }
 
 export default MarketMode;
+
 
 
 
