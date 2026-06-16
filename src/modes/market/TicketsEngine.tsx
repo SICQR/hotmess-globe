@@ -175,6 +175,7 @@ function EventCard({ listing, index, onTap }: { listing: Listing; index: number;
 // ─────────────────────────────────────────────────────────────────────────────
 
 const HERO_URLS = [
+  '/tickets-hero.png',
   'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/market/tickets.jpg',
   'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/market/tickets.png',
 ];
