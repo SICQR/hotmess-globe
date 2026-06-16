@@ -758,7 +758,7 @@ function MarketView({ poolId }) {
               className="w-full py-3 rounded-2xl font-bold text-sm border border-white/10 transition-all active:scale-95 disabled:opacity-50"
               style={{ backgroundColor: T.surface, color: queueStatus ? T.muted : T.white }}
             >
-              {queueStatus === 'in_queue' ? '✓ You're on the waitlist' : queueStatus === 'matched' ? '✓ Matched' : 'Join waitlist instead'}
+              {queueStatus === 'in_queue' ? `✓ You're on the waitlist` : queueStatus === 'matched' ? '✓ Matched' : 'Join waitlist instead'}
             </button>
           )}
         </>
