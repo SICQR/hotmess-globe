@@ -632,6 +632,35 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────
+  // TICKET BROWSE — Phase 3 S1 — public event listings
+  // ─────────────────────────────────────────────────────────────────────────
+  'ticket-browse': {
+    id: 'ticket-browse',
+    title: 'Events',
+    height: 'large',
+    auth: false,
+    deepLinkParams: ['city'],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // VENDOR / PROMOTER DASHBOARD — Phase 3 S2
+  // ─────────────────────────────────────────────────────────────────────────
+  'vendor-dashboard': {
+    id: 'vendor-dashboard',
+    title: 'Promoter Dashboard',
+    height: 'large',
+    auth: true,
+    deepLinkParams: [],
+  },
+  'vendor-event': {
+    id: 'vendor-event',
+    title: 'Manage Event',
+    height: 'large',
+    auth: true,
+    deepLinkParams: ['beaconId'],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
   // COMMUNITY FEATURES (DB live, UI added)
   // ─────────────────────────────────────────────────────────────────────────
   'community': {
