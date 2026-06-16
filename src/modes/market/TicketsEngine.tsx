@@ -174,10 +174,14 @@ function EventCard({ listing, index, onTap }: { listing: Listing; index: number;
 // HERO
 // ─────────────────────────────────────────────────────────────────────────────
 
-const HERO_URL = 'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/market/tickets.png';
+const HERO_URLS = [
+  'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/market/tickets.jpg',
+  'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/brand-assets/market/tickets.png',
+];
 
 function TicketsHero() {
-  const [failed, setFailed] = useState(false);
+  const [urlIdx, setUrlIdx] = useState(0);
+  const failed = urlIdx >= HERO_URLS.length;
 
   return (
     <div className="px-4 pt-3 pb-2">
@@ -187,11 +191,11 @@ function TicketsHero() {
       >
         {!failed && (
           <img
-            src={HERO_URL}
+            src={HERO_URLS[urlIdx]}
             alt="HOTMESS Events & Tickets"
             className="absolute inset-0 w-full h-full object-cover"
             loading="eager"
-            onError={() => setFailed(true)}
+            onError={() => setUrlIdx(i => i + 1)}
           />
         )}
         {failed && (
