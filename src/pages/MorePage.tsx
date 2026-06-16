@@ -607,6 +607,7 @@ export default function MorePage() {
     { icon: RadioIcon, label: 'Radio', onTap: () => openSheet('radio-player'), accent: GOLD },
     { icon: Shield, label: 'Safety', onTap: () => navigate('/safety'), accent: '#FF3B30' },
     { icon: Zap, label: 'Power-Ups', onTap: () => openSheet('boost-shop'), accent: GOLD },
+    { icon: Ticket, label: 'Tickets', onTap: () => openSheet('ticket-browse'), accent: GOLD },
   ], [openSheet, navigate]);
 
   const accountItems: QuickItem[] = useMemo(() => [
