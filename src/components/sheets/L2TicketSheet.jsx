@@ -672,7 +672,7 @@ function MarketView({ poolId }) {
         .insert({ pool_id: poolId, user_id: user.id });
       if (error && error.code !== '23505') throw error; // 23505 = already in queue
       setQueue('in_queue');
-      toast.success('Added to waitlist — you'll be notified when a ticket is available.');
+      toast.success("Added to waitlist — you'll be notified when a ticket is available.");
     } catch (err) {
       toast.error(err.message || 'Could not join queue');
     }
