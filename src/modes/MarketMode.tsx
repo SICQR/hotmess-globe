@@ -42,6 +42,7 @@ import {
   CheckCircle,
   CheckCircle2,
   Loader2,
+  Ticket,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
@@ -96,12 +97,13 @@ function cleanVendor(v?: string): string | undefined {
 
 // ---- Types ------------------------------------------------------------------
 
-type MarketEngine = 'shop' | 'drops' | 'preloved';
+type MarketEngine = 'shop' | 'drops' | 'preloved' | 'tickets';
 
 const ENGINE_TABS: { key: MarketEngine; label: string; icon: React.FC<{ className?: string }>; color: string; path: string }[] = [
   { key: 'shop', label: 'Shop', icon: ShoppingBag, color: '#C8962C', path: '/market' },
   { key: 'drops', label: 'Drops', icon: Flame, color: '#C8962C', path: '/market/drops' },  // Phil 2026-06-03 — drops gold-only; CF3A10 was pre-D35 retail-urgent register
   { key: 'preloved', label: 'Preloved', icon: MessageCircle, color: '#9E7D47', path: '/market/preloved' },
+  { key: 'tickets', label: 'Tickets', icon: Ticket, color: '#C8962C', path: '#' },
 ];
 
 // ---- Constants --------------------------------------------------------------
@@ -274,9 +276,10 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   }, [setSearchParams]);
 
   const handleEngineSwitch = useCallback((engine: MarketEngine) => {
+    if (engine === 'tickets') { openSheet('ticket-browse'); return; }
     const tab = ENGINE_TABS.find(t => t.key === engine);
     if (tab) navigate(tab.path, { replace: true });
-  }, [navigate]);
+  }, [navigate, openSheet]);
 
   // Active engine color
   const activeColor = ENGINE_TABS.find(t => t.key === activeEngine)?.color ?? AMBER;
@@ -620,6 +623,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
 }
 
 export default MarketMode;
+
 
 
 
