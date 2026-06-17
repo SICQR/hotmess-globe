@@ -32,6 +32,7 @@ import DistrictEditorialCard from '../components/editorial/DistrictEditorialCard
 import CareDecompressionCue from '../components/editorial/CareDecompressionCue';
 import AtmosphereCue from '../components/environment/AtmosphereCue';
 import ArrivalSignal from '@/components/arrival/ArrivalSignal';
+import PulseVenueDrawer from '@/components/pulse/PulseVenueDrawer';
 
 const CITY_COORDS = {
   'London':    { lat: 51.5074, lng: -0.1278 },
@@ -826,6 +827,32 @@ export default function GlobePage({ embedded = false }) {
         {localModeEnabled && (
           <BeaconA11yList beacons={mapSignals} viewerLocation={userLocation} onSelect={handleBeaconClick} />
         )}
+        {/* PulseVenueDrawer — browseable venue+event list above the nav */}
+        <PulseVenueDrawer
+          places={Array.isArray(pulsePlaces) ? pulsePlaces : []}
+          eventBeacons={(Array.isArray(mapSignals) ? mapSignals : [])
+            .filter(b => b.type === 'event')
+            .map(b => ({
+              id:              b.id,
+              title:           b.title || '',
+              type:            'event',
+              beacon_category: b.beacon_category || 'event',
+              geo_lat:         b.geo_lat,
+              geo_lng:         b.geo_lng,
+              starts_at:       b.starts_at || null,
+              ends_at:         b.ends_at   || null,
+            }))
+          }
+          onSelect={(beacon) => {
+            // Fly camera to the selected venue/event then open its sheet
+            if (pulseApiRef.current && pulseApiRef.current.flyTo) {
+              try {
+                pulseApiRef.current.flyTo({ lat: beacon.geo_lat, lng: beacon.geo_lng, zoom: 14 });
+              } catch (_e) { /* non-fatal */ }
+            }
+            handleBeaconClick(beacon);
+          }}
+        />
         <LayersSheet key="layers-sheet" open={showLayersSheet} onClose={() => setShowLayersSheet(false)} activeLayer={activeLayer} setActiveLayer={setActiveLayer} />
       </div>
     </ErrorBoundary>
