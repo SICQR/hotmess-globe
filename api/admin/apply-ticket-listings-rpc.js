@@ -94,7 +94,8 @@ export default async function handler(req, res) {
   }
 
   // Fallback: direct pg connection
-  const rawUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.SUPABASE_DB_URL || process.env.POSTGRES_URL_NON_POOLING;
+  // NON_POOLING = direct pg (no PgBouncer) — required for DDL
+  const rawUrl = process.env.POSTGRES_URL_NON_POOLING || process.env.SUPABASE_DB_URL || process.env.DATABASE_URL || process.env.POSTGRES_URL;
   if (!rawUrl) {
     const keys = Object.keys(process.env).filter(k => /POSTGRES|DATABASE|SUPABASE|PG/.test(k)).sort();
     return res.status(500).json({ ok: false, error: 'No DB URL env var found', available_keys: keys });
