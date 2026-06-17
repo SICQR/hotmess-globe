@@ -94,13 +94,25 @@ export default async function handler(req, res) {
   }
 
   // Fallback: direct pg connection
-  const dbUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.SUPABASE_DB_URL || process.env.POSTGRES_URL_NON_POOLING;
-  if (!dbUrl) {
+  const rawUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.SUPABASE_DB_URL || process.env.POSTGRES_URL_NON_POOLING;
+  if (!rawUrl) {
     const keys = Object.keys(process.env).filter(k => /POSTGRES|DATABASE|SUPABASE|PG/.test(k)).sort();
     return res.status(500).json({ ok: false, error: 'No DB URL env var found', available_keys: keys });
   }
 
-  const client = new Client({ connectionString: dbUrl, ssl: { rejectUnauthorized: false } });
+  // Strip sslmode from URL — we handle SSL via the client option instead
+  let dbUrl = rawUrl;
+  try {
+    const u = new URL(rawUrl);
+    u.searchParams.delete('sslmode');
+    u.searchParams.delete('pgbouncer');
+    dbUrl = u.toString();
+  } catch (_) { /* not a parseable URL, use as-is */ }
+
+  // Bypass self-signed cert in Supabase connection chain
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
+  const client = new Client({ connectionString: dbUrl, ssl: true });
   try {
     await client.connect();
     await client.query(SQL);
