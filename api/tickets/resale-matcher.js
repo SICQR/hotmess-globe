@@ -53,7 +53,7 @@ export default async function handler(req, res) {
     return json(res, 500, { error: 'Missing credentials' });
   }
 
-  const stripe   = new Stripe(stripeKey, { apiVersion: '2024-12-18.acacia' });
+  const stripe   = new Stripe(stripeKey, { apiVersion: '2026-05-27.dahlia' });
   const supabase = createClient(sbUrl, sbKey);
 
   const results = { swept: 0, matched: 0, skipped: 0, failed: 0, errors: [] };
