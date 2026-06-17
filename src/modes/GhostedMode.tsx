@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MessageCircle } from 'lucide-react';
 import { useGhostedGrid } from '@/hooks/useGhostedGrid';
@@ -8,7 +7,6 @@ import { useSheet } from '@/contexts/SheetContext';
 import { useTaps } from '@/hooks/useTaps';
 import { useUnreadCount } from '@/hooks/useUnreadCount';
 import { useBoostedUserIds } from '@/hooks/useBoostedUserIds';
-import { useUserBenefits } from '@/hooks/useUserBenefits';
 import { GhostedCard } from '@/components/ghosted/GhostedCard';
 import { GhostedRecentStories } from '@/components/ghosted/GhostedRecentStories';
 import { GhostedActivityRibbon } from '@/components/ghosted/GhostedActivityRibbon';
@@ -19,18 +17,74 @@ import { GhostedActivityRibbon } from '@/components/ghosted/GhostedActivityRibbo
 import { AtmosphericImageCard } from '@/components/brand/AtmosphericImageCard';
 import { supabase } from '@/components/utils/supabaseClient';
 
+// London queer neighbourhoods — GPS fallback when device location is unavailable
+const LONDON_HOODS = [
+  { label: 'Soho',           lat: 51.5136, lng: -0.1320 },
+  { label: 'Vauxhall',       lat: 51.4855, lng: -0.1228 },
+  { label: 'Shoreditch',     lat: 51.5232, lng: -0.0756 },
+  { label: 'Dalston',        lat: 51.5481, lng: -0.0750 },
+  { label: 'Brixton',        lat: 51.4618, lng: -0.1143 },
+  { label: 'Hackney',        lat: 51.5450, lng: -0.0553 },
+  { label: 'Clapham',        lat: 51.4618, lng: -0.1382 },
+  { label: 'Bethnal Green',  lat: 51.5256, lng: -0.0558 },
+  { label: 'Angel',          lat: 51.5339, lng: -0.1045 },
+  { label: 'Peckham',        lat: 51.4731, lng: -0.0696 },
+] as const;
+
+type Hood = typeof LONDON_HOODS[number];
+
+const LS_HOOD_KEY = 'hm_ghosted_hood';
+
+function loadSavedHood(): Hood | null {
+  try {
+    const raw = window.localStorage.getItem(LS_HOOD_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const match = LONDON_HOODS.find((h) => h.label === parsed?.label);
+    return match || null;
+  } catch {
+    return null;
+  }
+}
+
+function saveHood(hood: Hood | null) {
+  try {
+    if (hood) window.localStorage.setItem(LS_HOOD_KEY, JSON.stringify(hood));
+    else window.localStorage.removeItem(LS_HOOD_KEY);
+  } catch {}
+}
 
 export default function GhostedMode() {
-  const navigate = useNavigate();
   const { position } = useGPS();
   const { openSheet } = useSheet();
 
-  const tab = position?.lat != null && position?.lng != null ? 'nearby' : 'recent';
+  // GPS fallback: neighbourhood selector
+  const hasGPS = position?.lat != null && position?.lng != null;
+  const [selectedHood, setSelectedHood] = React.useState<Hood | null>(
+    () => loadSavedHood()
+  );
+  const [showHoodPicker, setShowHoodPicker] = React.useState(false);
+
+  const effectiveLat = hasGPS ? position!.lat : (selectedHood?.lat ?? null);
+  const effectiveLng = hasGPS ? position!.lng : (selectedHood?.lng ?? null);
+  const tab = effectiveLat != null && effectiveLng != null ? 'nearby' : 'recent';
+
+  const handleSelectHood = React.useCallback((hood: Hood) => {
+    setSelectedHood(hood);
+    saveHood(hood);
+    setShowHoodPicker(false);
+  }, []);
+
+  const handleClearHood = React.useCallback(() => {
+    setSelectedHood(null);
+    saveHood(null);
+  }, []);
+
   const [activeFilter, setActiveFilter] = React.useState<string | null>(null);
   const { cards, isLoading, refetch } = useGhostedGrid(
     tab,
-    position?.lat ?? null,
-    position?.lng ?? null,
+    effectiveLat,
+    effectiveLng,
     activeFilter,
   );
 
@@ -112,16 +166,12 @@ export default function GhostedMode() {
 
   const boostedUserIds = useBoostedUserIds();
 
-  const benefits = useUserBenefits();
-  const hasFullGhosted = !!benefits.has_full_ghosted;
-  const previewLimit = typeof benefits.ghosted_preview_limit === 'number' ? benefits.ghosted_preview_limit : 3;
-  const isCardFogged = (index: number) => !hasFullGhosted && previewLimit !== -1 && index >= previewLimit;
-
   return (
     <div className="relative h-full w-full bg-[#050507] flex flex-col overflow-hidden">
       <style dangerouslySetInnerHTML={{__html:
         '.gh-no-sb::-webkit-scrollbar{display:none}' +
-        '.gh-filters::-webkit-scrollbar{display:none}'
+        '.gh-filters::-webkit-scrollbar{display:none}' +
+        '.gh-hoods::-webkit-scrollbar{display:none}'
       }} />
 
       {/* Scrollable Container — Phil 2026-06-15: removed right rail (Music/Radio
@@ -176,7 +226,8 @@ export default function GhostedMode() {
           })}
         </div>
 
-        {needsLocation && !locationDismissed && (
+        {/* GPS location banner — only show when GPS is unavailable and no hood selected */}
+        {needsLocation && !locationDismissed && !selectedHood && (
           <div
             className="mx-3 mt-2 mb-1 p-3 rounded-xl flex items-center gap-3 text-[12px]"
             style={{ background: 'rgba(200,150,44,0.10)', border: '1px solid rgba(200,150,44,0.30)' }}
@@ -205,6 +256,105 @@ export default function GhostedMode() {
           </div>
         )}
 
+        {/* Neighbourhood picker — GPS fallback when no device location */}
+        {!hasGPS && (
+          <div className="mx-3 mt-2 mb-1">
+            {selectedHood ? (
+              /* Active selection — compact bar */
+              <div
+                className="flex items-center gap-2 px-3 py-2 rounded-xl text-[11px]"
+                style={{ background: 'rgba(200,150,44,0.08)', border: '1px solid rgba(200,150,44,0.20)' }}
+              >
+                <span className="text-[#C8962C] font-bold uppercase tracking-wider">
+                  📍 {selectedHood.label}
+                </span>
+                <span className="text-white/35 flex-1">· showing nearby</span>
+                <button
+                  type="button"
+                  onClick={() => setShowHoodPicker(true)}
+                  className="text-white/50 hover:text-white/80 text-[11px] uppercase tracking-wider"
+                >
+                  Change
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClearHood}
+                  aria-label="Clear neighbourhood"
+                  className="text-white/30 hover:text-white/60 ml-1"
+                >
+                  ×
+                </button>
+              </div>
+            ) : (
+              /* No selection — prompt */
+              <div
+                className="p-3 rounded-xl"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                <div className="text-white/50 text-[11px] uppercase tracking-wider mb-2">
+                  No GPS · pick a neighbourhood to see who's nearby
+                </div>
+                <div
+                  className="gh-hoods flex gap-2 overflow-x-auto pb-1"
+                  style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
+                >
+                  {LONDON_HOODS.map((hood) => (
+                    <button
+                      key={hood.label}
+                      type="button"
+                      onClick={() => handleSelectHood(hood)}
+                      className="shrink-0 px-3 h-7 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                      style={{
+                        background: 'rgba(200,150,44,0.12)',
+                        color: '#C8962C',
+                        border: '1px solid rgba(200,150,44,0.25)',
+                      }}
+                    >
+                      {hood.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Hood picker modal (inline, full-width) */}
+        {showHoodPicker && (
+          <div
+            className="mx-3 mb-2 p-3 rounded-xl"
+            style={{ background: '#0d0d10', border: '1px solid rgba(200,150,44,0.30)' }}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[#C8962C] font-bold text-[11px] uppercase tracking-wider">Choose neighbourhood</span>
+              <button
+                type="button"
+                onClick={() => setShowHoodPicker(false)}
+                className="text-white/40 hover:text-white/80 text-[16px] leading-none"
+              >
+                ×
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {LONDON_HOODS.map((hood) => (
+                <button
+                  key={hood.label}
+                  type="button"
+                  onClick={() => handleSelectHood(hood)}
+                  className="px-3 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider text-left"
+                  style={{
+                    background: selectedHood?.label === hood.label ? 'rgba(200,150,44,0.20)' : 'rgba(255,255,255,0.04)',
+                    color: selectedHood?.label === hood.label ? '#C8962C' : 'rgba(255,255,255,0.65)',
+                    border: selectedHood?.label === hood.label ? '1px solid rgba(200,150,44,0.40)' : '1px solid rgba(255,255,255,0.07)',
+                  }}
+                >
+                  {hood.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {isLoading && cards.length === 0 ? (
           <div className="grid grid-cols-3 gap-0">
             {Array.from({ length: 9 }).map((_, i) => (
@@ -224,13 +374,12 @@ export default function GhostedMode() {
               const cycle = i % 7;
               const dim   = cycle === 1 || cycle === 4 ? 0.82 : cycle === 6 ? 0.92 : 1.0;
               const scale = cycle === 2 ? 1.015 : cycle === 5 ? 0.985 : 1.0;
-              const fogged = isCardFogged(i);
               return (
                 <div
                   key={card.id}
                   className="relative"
                   style={{
-                    opacity: fogged ? 0.55 : dim,
+                    opacity: dim,
                     transform: `scale(${scale})`,
                     transformOrigin: 'center',
                   }}
@@ -241,25 +390,8 @@ export default function GhostedMode() {
                     isBood={isTapped(card.id, 'boo')}
                     isMutual={isMutualBoo(card.id)}
                     isBoosted={boostedUserIds.has(card.id)}
-                    onTap={(id) => {
-                      if (fogged) {
-                        navigate('/upgrade');
-                      } else {
-                        openSheet('profile', { id });
-                      }
-                    }}
+                    onTap={(id) => openSheet('profile', { id })}
                   />
-                  {fogged && (
-                    <div
-                      aria-hidden="true"
-                      className="absolute inset-0 pointer-events-none"
-                      style={{
-                        backdropFilter: 'blur(14px) saturate(0.6)',
-                        WebkitBackdropFilter: 'blur(14px) saturate(0.6)',
-                        background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 100%)',
-                      }}
-                    />
-                  )}
                 </div>
               );
             })}
