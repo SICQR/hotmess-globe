@@ -781,14 +781,14 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
           // Hand the imperative camera api to the parent (right-side toggle, drop-at-centre).
           try {
             if (onMapApiRef.current) {
-              const dur = reducedMotion ? 0 : 1600;
+              const dur = reducedMotion ? 0 : 600;
               onMapApiRef.current({
                 getCenter: () => { try { const c = map.getCenter(); return { lat: c.lat, lng: c.lng }; } catch (e) { return null; } },
                 // Search results / external jumps land here.
                 flyTo: (loc) => {
                   if (!loc || !Number.isFinite(Number(loc.lat)) || !Number.isFinite(Number(loc.lng))) return;
                   const z = Number.isFinite(Number(loc.zoom)) ? Number(loc.zoom) : LOCAL_ZOOM;
-                  try { map.flyTo({ center: [Number(loc.lng), Number(loc.lat)], zoom: z, duration: dur, essential: true }); } catch (e) {}
+                  try { map.stop(); map.flyTo({ center: [Number(loc.lng), Number(loc.lat)], zoom: z, duration: dur, essential: true }); } catch (e) {}
                 },
                 flyToLocal: () => {
                   const u = userLocRef.current;

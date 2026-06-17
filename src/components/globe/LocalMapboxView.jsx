@@ -94,7 +94,7 @@ export default function LocalMapboxView({ focus, beacons, onClose, onReady, onDr
           // Stage-5 descent: district → street, a gentle decelerating pull (no
           // violent easing). Skipped under reduced motion (we start at street zoom).
           if (!reducedMotion) {
-            try { map.easeTo({ zoom: 14.5, duration: 1400, easing: (t) => 1 - Math.pow(1 - t, 3) }); } catch (e) { /* non-fatal */ }
+            try { map.easeTo({ zoom: 14.5, duration: 600, easing: (t) => 1 - Math.pow(1 - t, 3) }); } catch (e) { /* non-fatal */ }
           }
 
           // L6 interaction — tap cluster expands (no immediate pin explosion).
