@@ -81,7 +81,7 @@ export default async function handler(req, res) {
   // 4. Stripe Checkout
   const stripeKey = process.env.STRIPE_SECRET_KEY;
   if (!stripeKey) return json(res, 500, { error: 'Stripe not configured' });
-  const stripe = new Stripe(stripeKey, { apiVersion: '2024-12-18.acacia' });
+  const stripe = new Stripe(stripeKey, { apiVersion: '2026-05-27.dahlia' });
 
   const resalePricePence = Math.round(Number(sellerTicket.resale_price) * 100);
   const pool = sellerTicket.ticket_inventory_pools;

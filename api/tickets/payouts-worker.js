@@ -59,7 +59,7 @@ export default async function handler(req, res) {
     const sbKey      = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!sbUrl || !sbKey) throw new Error('Missing Supabase credentials');
 
-    stripe   = new Stripe(stripeKey, { apiVersion: '2024-12-18.acacia' });
+    stripe   = new Stripe(stripeKey, { apiVersion: '2026-05-27.dahlia' });
     supabase = createClient(sbUrl, sbKey);
   } catch (err) {
     console.error('[payouts-worker] init error:', err.message);
