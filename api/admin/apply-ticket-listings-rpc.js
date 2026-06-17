@@ -121,6 +121,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, method: 'pg' });
   } catch (err) {
     await client.end().catch(() => {});
-    return res.status(500).json({ ok: false, method: 'pg', error: err.message });
+    const dbKeys = Object.keys(process.env).filter(k => /POSTGRES|DATABASE|SUPABASE|PG/.test(k)).sort();
+    return res.status(500).json({ ok: false, method: 'pg', error: err.message, tried_url_prefix: rawUrl.slice(0,40), available_keys: dbKeys });
   }
 }
