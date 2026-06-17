@@ -39,6 +39,44 @@ import { pushNotify } from '@/lib/pushNotify';
 import { parseLocation } from '@/lib/locationParser';
 import ChatTravelCard from '@/components/chat/ChatTravelCard';
 import JourneyStatusCard from '@/components/chat/JourneyStatusCard';
+// D57 P0.5 N5 — send verification telemetry. track() is fire-and-forget
+// PostHog (via /api/analytics/track); Sentry captures the actual exception.
+import { track } from '@/lib/analytics';
+import * as Sentry from '@sentry/react';
+
+// D57 P0.5 N5 — idempotency token for chat sends. The token rides in
+// chat_messages.metadata.client_id so that if a send appears to fail but
+// the DB row actually wrote (network timeout, edge case), the retry can
+// detect the prior write and promote the optimistic bubble instead of
+// inserting a duplicate.
+const newSendClientId = () => {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+  } catch { /* fall through */ }
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
+// D57 §10.5-aligned — capture send failures with context to PostHog + Sentry.
+// Never throws; called from catch blocks.
+const reportSendFailure = (err, ctx) => {
+  try {
+    track('chat_send_failed', 'messaging', undefined, undefined, {
+      thread_id: ctx?.threadId || null,
+      client_id: ctx?.clientId || null,
+      attempt: ctx?.attempt || 1,
+      error_code: err?.code || null,
+      error_message: typeof err?.message === 'string' ? err.message.slice(0, 200) : null,
+    });
+  } catch { /* never block UX */ }
+  try {
+    Sentry.captureException(err, {
+      tags: { surface: 'chat_composer', doctrine: 'D57_N5' },
+      extra: { thread_id: ctx?.threadId, client_id: ctx?.clientId, attempt: ctx?.attempt },
+    });
+  } catch { /* never block UX */ }
+};
 
 // ── Read-state helpers ────────────────────────────────────────────────────────
 // getLastRead: kept for backward compat (returns local timestamp or 0)
@@ -524,8 +562,24 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   }, [messages.length]);
 
   // ── Send message ───────────────────────────────────────────────────────────
-  const handleSend = async () => {
-    const text = newMessage.trim();
+  // D57 P0.5 N5 — chat send with strict trust plumbing.
+  //
+  // The optimistic bubble exists but never claims success before the DB
+  // confirms. On failure:
+  //   - no toast (inline failed bubble is the only signal)
+  //   - composer text is restored so the user doesn't lose what they typed
+  //   - failure context is captured to PostHog (event) + Sentry (exception)
+  // On retry of a previously-failed bubble, the same client_id is reused
+  // so that if the original insert quietly succeeded (network blip, edge
+  // timeout), we detect the prior write and promote the bubble instead of
+  // duplicating.
+  //
+  // retryFrom: optional { content, clientId, isHighlighted } — supplied
+  // when the user taps a failed bubble. Re-uses the original clientId so
+  // the insert is idempotent against a prior phantom-success.
+  const handleSend = async (retryFrom = null) => {
+    const isRetry = !!retryFrom;
+    const text = isRetry ? retryFrom.content : newMessage.trim();
     if (!text || !currentUser?.email || sending) return;
     // M8: boo-first gate — first message in a thread requires mutual boo.
     // (Existing conversations bypass; only the initial reach-out is gated.)
@@ -544,16 +598,26 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     }
 
     setSending(true);
-    setNewMessage('');
-    console.log('[Chat] 📤 Sending message:', { text, threadId: selectedThread?.id });
+    if (!isRetry) {
+      // Only clear composer on fresh send. On retry the composer is already
+      // free (the failed bubble carries the text). If this send fails, we
+      // restore the text in the catch — see "Trust lock" below.
+      setNewMessage('');
+    }
+    // D57 P0.5 — idempotency token. Reused on retry so a prior phantom-success
+    // (DB write that the client missed the response for) is detected.
+    const clientId = isRetry ? retryFrom.clientId : newSendClientId();
+    console.log('[Chat] 📤 Sending message:', { len: text.length, threadId: selectedThread?.id, clientId, isRetry });
+
+    let thread = selectedThread;
+    const isHighlighted = isRetry ? !!retryFrom.isHighlighted : (highlightNext && isBoostActive('highlighted_message'));
+    const now = new Date().toISOString();
 
     try {
-      let thread = selectedThread;
-
       // 1. Resolve/Create thread if it's a new conversation
       if (thread?._new) {
         console.log('[Chat] 🆕 Attempting to create new thread...');
-        
+
         // Double check if a thread was created while we were typing
         const { data: existing } = await supabase
           .from('chat_threads')
@@ -583,7 +647,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           thread = newThread;
           console.log('[Chat] ✅ New thread created:', thread.id);
         }
-        
+
         setSelectedThread(thread);
         setThreads(prev => [thread, ...prev.filter(t => t.id !== thread.id)]);
 
@@ -592,11 +656,13 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         if (other) await loadProfilesByEmail([other]);
       }
 
-      // 2. Optimistic Update
-      const isHighlighted = highlightNext && isBoostActive('highlighted_message');
-      const now = new Date().toISOString();
+      // 2. Optimistic bubble — tagged with _clientId so we can update the
+      // exact bubble later (no fragile content-string matching). On retry
+      // we re-insert the bubble since the prior one was removed by the
+      // retry handler.
       const optimisticMsg = {
-        _optimistic: true, 
+        _optimistic: true,
+        _clientId: clientId,
         thread_id: thread.id,
         sender_email: currentUser.email,
         content: isHighlighted ? JSON.stringify({ text, is_highlighted: true }) : text,
@@ -605,25 +671,62 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       };
       setMessages(prev => [...prev, optimisticMsg]);
 
-      // 3. Insert Message to DB
+      // 2.5 Idempotency check on retry — if the original send actually
+      // wrote (we just didn't get the response), promote the optimistic
+      // bubble to "sent" without inserting again.
+      if (isRetry) {
+        try {
+          const { data: priorWrite } = await supabase
+            .from('chat_messages')
+            .select('id, created_at, metadata')
+            .eq('thread_id', thread.id)
+            .filter('metadata->>client_id', 'eq', clientId)
+            .maybeSingle();
+          if (priorWrite) {
+            console.log('[Chat] ↪︎ Retry: prior write found, promoting bubble:', priorWrite.id);
+            setMessages(prev => prev.map(m =>
+              m._clientId === clientId
+                ? { ...m, id: priorWrite.id, _optimistic: false, _failed: false }
+                : m
+            ));
+            return;
+          }
+        } catch (probeErr) {
+          // Probe failure is non-fatal — fall through to normal insert.
+          console.warn('[Chat] retry probe non-fatal err:', probeErr?.message);
+        }
+      }
+
+      // 3. Insert message to DB. Metadata carries client_id for idempotent retry.
       console.log('[Chat] 💾 Inserting message to DB...');
-      const { error: msgError } = await supabase
+      const { data: insertedMsg, error: msgError } = await supabase
         .from('chat_messages')
         .insert({
           thread_id: thread.id,
           sender_email: currentUser.email,
-          content: isHighlighted ? JSON.stringify({ text, is_highlighted: true }) : (text || optimisticMsg.content),
+          content: isHighlighted ? JSON.stringify({ text, is_highlighted: true }) : text,
           message_type: 'text',
-          created_date: new Date().toISOString(),
-          metadata: {}, // Ensure metadata is present even for text messages
-        });
+          created_date: now,
+          metadata: { client_id: clientId },
+        })
+        .select()
+        .single();
 
       if (msgError) {
         console.error('[Chat] ❌ Message Insertion Error:', msgError.message, msgError.details, msgError.code);
         throw msgError;
       }
 
-      if (isHighlighted) {
+      // 3.5 Promote optimistic bubble to "sent" — quiet tick state.
+      if (insertedMsg) {
+        setMessages(prev => prev.map(m =>
+          m._clientId === clientId
+            ? { ...insertedMsg, _optimistic: false, _failed: false }
+            : m
+        ));
+      }
+
+      if (isHighlighted && !isRetry) {
         setHighlightNext(false);
         // Phil 2026-05-27 — decrement the active charge after the highlighted
         // message lands. Async no-block; usePowerups.consume refreshes the set.
@@ -659,7 +762,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
             unread_count: newUnreadCount,
           })
           .eq('id', thread.id);
-        
+
         if (threadUpdateErr) {
           console.warn('[Chat] ⚠️ Thread update warning (non-fatal):', threadUpdateErr.message);
         }
@@ -668,7 +771,9 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       }
 
       console.log('[Chat] ✨ Message sent successfully!');
-      
+      // Telemetry: success ping (low-cardinality, no PII).
+      try { track('chat_send_success', 'messaging', undefined, undefined, { thread_id: thread.id, was_retry: isRetry }); } catch { /* never block */ }
+
       // Mark read as part of the send flow
       markRead(thread.id, currentUser?.email);
 
@@ -677,11 +782,19 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         openThread(thread);
       }
     } catch (err) {
+      // Trust lock: failure is inline-only, NOT a toast. Mark the optimistic
+      // bubble as failed by its clientId (precise, not content-string match).
+      // Restore composer text so the user doesn't lose what they typed.
       console.error('[Chat] 💥 Critical Send Error:', err);
-      toast.error("Couldn't send. Tap message to retry.");
       setMessages(prev => prev.map(m =>
-        m._optimistic && m.content === text ? { ...m, _failed: true } : m
+        m._clientId === clientId ? { ...m, _failed: true } : m
       ));
+      // Composer recovery — only on fresh send (retry already has a failed
+      // bubble on screen as the recovery surface).
+      if (!isRetry) {
+        setNewMessage(prev => prev || text);
+      }
+      reportSendFailure(err, { threadId: thread?.id, clientId, attempt: isRetry ? 2 : 1 });
     } finally {
       setSending(false);
       inputRef.current?.focus();
@@ -1410,7 +1523,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                     {msg.created_date && (
                       <p className="text-[10px] mt-1 opacity-40 text-white flex items-center gap-0.5 px-1">
                         {formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
-                        {isMe && messageStatus && <motion.span initial={messageStatus === 'Seen' ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={messageStatus === 'Seen' ? { delay: 0.2, duration: 0.3 } : { duration: 0.15 }} className={`text-[10px] ml-1 ${messageStatus === 'Seen' ? 'text-[#C8962C] font-medium' : messageStatus === '!' ? 'text-[#FF3B30] font-bold' : 'text-white/30'}`}>{messageStatus === '!' ? '⚠ Tap to retry' : messageStatus}</motion.span>}
+                        {isMe && messageStatus && <motion.span initial={messageStatus === 'Seen' ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={messageStatus === 'Seen' ? { delay: 0.2, duration: 0.3 } : { duration: 0.15 }} className={`text-[10px] ml-1 ${messageStatus === 'Seen' ? 'text-[#C8962C] font-medium' : messageStatus === '!' ? 'text-[#FF3B30] font-bold' : 'text-white/30'}`}>{messageStatus === '!' ? 'Not sent · Retry' : messageStatus === '✓' ? 'sending' : messageStatus}</motion.span>}
                       </p>
                     )}
                   </div>
@@ -1433,9 +1546,18 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                       border: isMe ? 'none' : '1px solid rgba(255,255,255,0.08)'
                     }}
                     onClick={isFailed ? () => {
-                      // Remove failed message and retry
+                      // D57 P0.5 N5 — idempotent retry. Re-use the original
+                      // client_id from the failed bubble so handleSend can
+                      // detect a phantom-success prior write and avoid a
+                      // duplicate. Drop the failed bubble; handleSend will
+                      // re-insert a fresh optimistic bubble with the same
+                      // client_id.
+                      if (sending) return;
+                      const retryContent = msg.content;
+                      const retryClientId = msg._clientId;
+                      const retryHighlighted = !!msg.metadata?.is_highlighted;
                       setMessages(prev => prev.filter(m => m !== msg));
-                      setNewMessage(msg.content);
+                      handleSend({ content: retryContent, clientId: retryClientId, isHighlighted: retryHighlighted });
                     } : undefined}
                     role={isFailed ? 'button' : undefined}
                   >
@@ -1449,7 +1571,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                     {msg.created_date && (
                       <p className="text-[10px] mt-1 opacity-50 flex items-center gap-0.5">
                         {formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
-                        {isMe && messageStatus && <motion.span initial={messageStatus === 'Seen' ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={messageStatus === 'Seen' ? { delay: 0.2, duration: 0.3 } : { duration: 0.15 }} className={`text-[10px] ml-1 ${messageStatus === 'Seen' ? 'text-[#C8962C] font-medium' : messageStatus === '!' ? 'text-[#FF3B30] font-bold' : 'text-white/30'}`}>{messageStatus === '!' ? '⚠ Tap to retry' : messageStatus}</motion.span>}
+                        {isMe && messageStatus && <motion.span initial={messageStatus === 'Seen' ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={messageStatus === 'Seen' ? { delay: 0.2, duration: 0.3 } : { duration: 0.15 }} className={`text-[10px] ml-1 ${messageStatus === 'Seen' ? 'text-[#C8962C] font-medium' : messageStatus === '!' ? 'text-[#FF3B30] font-bold' : 'text-white/30'}`}>{messageStatus === '!' ? 'Not sent · Retry' : messageStatus === '✓' ? 'sending' : messageStatus}</motion.span>}
                       </p>
                     )}
                   </div>
