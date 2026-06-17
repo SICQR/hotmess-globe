@@ -274,22 +274,30 @@ export function SheetProvider({ children }) {
       const newParams = new URLSearchParams(searchParams);
       newParams.set('sheet', state.activeSheet);
       
-      // Add relevant props to URL for deep linking
-      if (state.sheetProps.id) newParams.set('id', state.sheetProps.id);
-      if (state.sheetProps.email) newParams.set('email', state.sheetProps.email);
-      if (state.sheetProps.thread) newParams.set('thread', state.sheetProps.thread);
-      if (state.sheetProps.handle) newParams.set('handle', state.sheetProps.handle);
+      // Use deepLinkParams from registry (same source openSheet uses) so
+      // params like beaconId aren't silently dropped when state→URL syncs.
+      // Falls back to legacy hardcoded set if registry entry has none.
+      const def = SHEET_REGISTRY[state.activeSheet];
+      const registryParams = (def && Array.isArray(def.deepLinkParams) && def.deepLinkParams.length > 0)
+        ? def.deepLinkParams
+        : [];
+      const legacyParams = ['id', 'email', 'thread', 'handle'];
+      const allParams = [...new Set([...registryParams, ...legacyParams])];
+      for (const k of allParams) {
+        if (state.sheetProps[k] != null) newParams.set(k, String(state.sheetProps[k]));
+      }
       
       // Use push (not replace) so back button creates separate history entry
       setSearchParams(newParams, { replace: false });
     } else if (!state.activeSheet && currentSheet) {
       // Sheet closed — replace URL to clean up params (no new history entry)
+      // Also delete registry params for whichever sheet just closed.
       const newParams = new URLSearchParams(searchParams);
+      const def = SHEET_REGISTRY[currentSheet];
+      const registryParams = (def && Array.isArray(def.deepLinkParams)) ? def.deepLinkParams : [];
+      const allCleanParams = [...new Set([...registryParams, 'id', 'email', 'thread', 'handle'])];
       newParams.delete('sheet');
-      newParams.delete('id');
-      newParams.delete('email');
-      newParams.delete('thread');
-      newParams.delete('handle');
+      for (const k of allCleanParams) newParams.delete(k);
       setSearchParams(newParams, { replace: true });
     }
   }, [state.activeSheet, state.sheetProps]);
