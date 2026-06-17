@@ -1,7 +1,9 @@
 /**
- * ONE-SHOT migration: apply get_ticket_listings RPC.
- * DELETE THIS FILE after running. Token: hm-migrate-2026-ticket-rpc-9x7k
+ * ONE-SHOT migration — delete after running. Token: hm-migrate-2026-ticket-rpc-9x7k
  */
+import pg from 'pg';
+const { Client } = pg;
+
 const SQL = `DROP FUNCTION IF EXISTS get_ticket_listings(text, date, date, float8, float8, numeric);
 
 CREATE OR REPLACE FUNCTION get_ticket_listings(
@@ -39,16 +41,9 @@ RETURNS TABLE (
   geo_lng             float8,
   distance_km         float8
 )
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   WITH viewer_verified AS (
-    SELECT COALESCE(
-      (SELECT age_verified FROM profiles WHERE id = p_user_id LIMIT 1),
-      false
-    ) AS is_verified
+    SELECT COALESCE((SELECT age_verified FROM profiles WHERE id = p_user_id LIMIT 1), false) AS is_verified
   )
   SELECT
     tip.id, tip.beacon_id, tip.ticket_type::text, tip.label, tip.price, tip.fee_rate,
@@ -59,81 +54,60 @@ AS $$
     b.geo_lat, b.geo_lng,
     CASE
       WHEN p_lat IS NOT NULL AND p_lng IS NOT NULL AND b.geo_lat IS NOT NULL AND b.geo_lng IS NOT NULL
-      THEN 6371.0 * acos(LEAST(1.0,
-        cos(radians(p_lat)) * cos(radians(b.geo_lat)) *
-        cos(radians(b.geo_lng) - radians(p_lng)) +
-        sin(radians(p_lat)) * sin(radians(b.geo_lat))))
+      THEN 6371.0 * acos(LEAST(1.0, cos(radians(p_lat)) * cos(radians(b.geo_lat)) * cos(radians(b.geo_lng) - radians(p_lng)) + sin(radians(p_lat)) * sin(radians(b.geo_lat))))
       ELSE NULL
     END
   FROM ticket_inventory_pools tip
   JOIN beacons b ON b.id = tip.beacon_id
   CROSS JOIN viewer_verified vv
-  WHERE tip.is_active = true
-    AND tip.released_at <= now() AND tip.closes_at > now()
+  WHERE tip.is_active = true AND tip.released_at <= now() AND tip.closes_at > now()
     AND GREATEST(0, tip.inventory_cap - tip.inventory_sold) > 0
     AND (tip.tier_gate IS NULL OR vv.is_verified = true)
     AND (p_city IS NULL OR b.city ILIKE '%' || p_city || '%' OR b.city_slug ILIKE '%' || p_city || '%')
     AND (p_date_from IS NULL OR b.event_start_at::date >= p_date_from)
-    AND (p_date_to   IS NULL OR b.event_start_at::date <= p_date_to)
+    AND (p_date_to IS NULL OR b.event_start_at::date <= p_date_to)
     AND (p_max_price IS NULL OR tip.price <= p_max_price)
   ORDER BY
-    CASE
-      WHEN p_lat IS NOT NULL AND p_lng IS NOT NULL AND b.geo_lat IS NOT NULL AND b.geo_lng IS NOT NULL
-      THEN 6371.0 * acos(LEAST(1.0,
-        cos(radians(p_lat)) * cos(radians(b.geo_lat)) *
-        cos(radians(b.geo_lng) - radians(p_lng)) +
-        sin(radians(p_lat)) * sin(radians(b.geo_lat))))
-      ELSE NULL
-    END ASC NULLS LAST,
-    b.event_start_at ASC NULLS LAST
+    CASE WHEN p_lat IS NOT NULL AND p_lng IS NOT NULL AND b.geo_lat IS NOT NULL AND b.geo_lng IS NOT NULL
+      THEN 6371.0 * acos(LEAST(1.0, cos(radians(p_lat)) * cos(radians(b.geo_lat)) * cos(radians(b.geo_lng) - radians(p_lng)) + sin(radians(p_lat)) * sin(radians(b.geo_lat))))
+      ELSE NULL END ASC NULLS LAST, b.event_start_at ASC NULLS LAST
   LIMIT LEAST(p_limit, 50) OFFSET GREATEST(p_offset, 0);
 $$;
 
-GRANT EXECUTE ON FUNCTION get_ticket_listings(uuid,text,date,date,numeric,float8,float8,int,int)
-  TO anon, authenticated, service_role;`;
+GRANT EXECUTE ON FUNCTION get_ticket_listings(uuid,text,date,date,numeric,float8,float8,int,int) TO anon, authenticated, service_role;`;
 
 export default async function handler(req, res) {
   const auth = req.headers['authorization'] || '';
-  // One-time token — endpoint deleted immediately after use
-  if (auth !== 'Bearer hm-migrate-2026-ticket-rpc-9x7k') {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  if (auth !== 'Bearer hm-migrate-2026-ticket-rpc-9x7k') return res.status(401).json({ error: 'Unauthorized' });
 
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  // Try Supabase Management API first (if personal access token is set)
   const accessToken = process.env.SUPABASE_ACCESS_TOKEN;
-  const projectRef  = 'rfoftonnlwudilafhfkl';
-
-  // Try Supabase Management API
   if (accessToken) {
-    const r = await fetch(
-      `https://api.supabase.com/v1/projects/${projectRef}/database/query`,
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: SQL }),
-      }
-    );
+    const r = await fetch('https://api.supabase.com/v1/projects/rfoftonnlwudilafhfkl/database/query', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: SQL }),
+    });
     const data = await r.json().catch(() => ({}));
     if (r.ok) return res.status(200).json({ ok: true, method: 'management_api', result: data });
-    console.error('[migrate] mgmt api fail:', r.status, JSON.stringify(data));
+    console.error('[migrate] mgmt api:', r.status, data);
   }
 
-  // Try direct pg
-  const dbUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
-  if (dbUrl) {
-    try {
-      const { default: postgres } = await import('postgres');
-      const sql = postgres(dbUrl, { ssl: 'require', max: 1 });
-      await sql.unsafe(SQL);
-      await sql.end();
-      return res.status(200).json({ ok: true, method: 'direct_pg' });
-    } catch (err) {
-      return res.status(500).json({ ok: false, method: 'direct_pg', error: err.message });
-    }
+  // Fallback: direct pg connection
+  const dbUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.SUPABASE_DB_URL || process.env.POSTGRES_URL_NON_POOLING;
+  if (!dbUrl) {
+    const keys = Object.keys(process.env).filter(k => /POSTGRES|DATABASE|SUPABASE|PG/.test(k)).sort();
+    return res.status(500).json({ ok: false, error: 'No DB URL env var found', available_keys: keys });
   }
 
-  return res.status(500).json({
-    ok: false,
-    error: 'No SQL execution method — set SUPABASE_ACCESS_TOKEN or POSTGRES_URL in Vercel env',
-  });
+  const client = new Client({ connectionString: dbUrl, ssl: { rejectUnauthorized: false } });
+  try {
+    await client.connect();
+    await client.query(SQL);
+    await client.end();
+    return res.status(200).json({ ok: true, method: 'pg' });
+  } catch (err) {
+    await client.end().catch(() => {});
+    return res.status(500).json({ ok: false, method: 'pg', error: err.message });
+  }
 }
