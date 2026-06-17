@@ -80,17 +80,23 @@ export default async function handler(req, res) {
   const auth = req.headers['authorization'] || '';
   if (auth !== 'Bearer hm-migrate-2026-ticket-rpc-9x7k') return res.status(401).json({ error: 'Unauthorized' });
 
-  // Try Supabase Management API first (if personal access token is set)
-  const accessToken = process.env.SUPABASE_ACCESS_TOKEN;
-  if (accessToken) {
+  // Try Supabase Management API — PAT first, then service role keys as fallback
+  const mgmtTokens = [
+    process.env.SUPABASE_ACCESS_TOKEN,
+    process.env.SUPABASE_SECRET_KEY,
+    process.env.SUPABASE_DEFAULT_SECRET_KEY,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+  ].filter(Boolean);
+
+  for (const token of mgmtTokens) {
     const r = await fetch('https://api.supabase.com/v1/projects/rfoftonnlwudilafhfkl/database/query', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ query: SQL }),
     });
     const data = await r.json().catch(() => ({}));
     if (r.ok) return res.status(200).json({ ok: true, method: 'management_api', result: data });
-    console.error('[migrate] mgmt api:', r.status, data);
+    console.error('[migrate] mgmt api attempt failed:', r.status, JSON.stringify(data).slice(0,100));
   }
 
   // Fallback: direct pg connection
