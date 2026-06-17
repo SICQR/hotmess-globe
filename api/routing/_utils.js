@@ -1,3 +1,4 @@
+import '../_silence-dep0169.js'; // suppress DEP0169 globally (web-push / supabase url.parse)
 import crypto from 'node:crypto';
 import { getBearerToken, getEnv, json, readJsonBody } from '../shopify/_utils.js';
 import { createSupabaseClients } from '../events/_admin.js';
