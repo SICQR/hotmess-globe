@@ -26,6 +26,7 @@ export const LAYER_IDS = {
   venueClusterCircles: 'hm-venue-cluster-circles',
   venueClusterCount: 'hm-venue-cluster-symbols',
   venueMarkers: 'hm-venue-markers',
+  venueLabels:   'hm-venue-labels',
 };
 export const SOURCE_IDS = {
   public: 'hm-public',     // semantically: signals (active broadcasts only)
@@ -555,6 +556,7 @@ export function addLayerStack(map, opts) {
       id: LAYER_IDS.venueClusterCircles,
       type: 'circle',
       source: SOURCE_IDS.venues,
+      minzoom: 13,   // D5X: venue geography is reference layer only, hidden at globe/city zoom
       filter: ['has', 'point_count'],
       paint: {
         // Cool grey-blue: reads as geography aggregate, not atmospheric heat.
@@ -574,6 +576,7 @@ export function addLayerStack(map, opts) {
       id: LAYER_IDS.venueClusterCount,
       type: 'symbol',
       source: SOURCE_IDS.venues,
+      minzoom: 13,
       filter: ['has', 'point_count'],
       layout: {
         'text-field': ['get', 'point_count_abbreviated'],
@@ -589,17 +592,45 @@ export function addLayerStack(map, opts) {
       id: LAYER_IDS.venueMarkers,
       type: 'circle',
       source: SOURCE_IDS.venues,
+      minzoom: 13,   // D5X: venues are geography reference, not Pulse signals
       filter: ['!', ['has', 'point_count']],
       paint: {
-        'circle-color': '#5c6878',     // neutral place dot
-        'circle-radius': 4,
+        'circle-color': '#5c6878',     // neutral grey — D5X three-colour doctrine (gold/pink/amber only for signals)
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 3, 15, 5],
         'circle-stroke-width': 1,
         'circle-stroke-color': 'rgba(0,0,0,0.5)',
-        'circle-opacity': 0.9,
+        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 13, 0.5, 15, 0.85],
       },
     });
   }
 
+
+  // Venue name labels — street zoom only (≥ 14). D5X: geography reference layer.
+  // Shows venue name so users know what grey dot they're about to tap.
+  if (!map.getLayer(LAYER_IDS.venueLabels)) {
+    map.addLayer({
+      id: LAYER_IDS.venueLabels,
+      type: 'symbol',
+      source: SOURCE_IDS.venues,
+      minzoom: 14,
+      filter: ['!', ['has', 'point_count']],
+      layout: {
+        'text-field': ['get', 'title'],
+        'text-size': 10,
+        'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+        'text-anchor': 'top',
+        'text-offset': [0, 0.5],
+        'text-optional': true,
+        'text-allow-overlap': false,
+      },
+      paint: {
+        'text-color': '#8a96a8',
+        'text-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0.5, 16, 0.85],
+        'text-halo-color': '#050507',
+        'text-halo-width': 1,
+      },
+    });
+  }
   // L6 — cluster circles (count-scaled, gold)
   if (!map.getLayer(LAYER_IDS.clusterCircles)) {
     map.addLayer({

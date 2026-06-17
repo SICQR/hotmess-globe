@@ -855,6 +855,52 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
   useEffect(() => {
     if (passedBeacon) { setBeacon(passedBeacon); setLoading(false); }
     if (!cleanBeaconId) { setLoading(false); return; }
+
+    // D5X: pulse_places venue IDs are prefixed 'place-{slug}'.
+    // These don't exist in the beacons table — fetch from pulse_places instead
+    // and normalise into the shape the sheet expects.
+    if (cleanBeaconId.startsWith('place-')) {
+      const slug = cleanBeaconId.replace(/^place-/, '');
+      supabase
+        .from('pulse_places')
+        .select('id, slug, name, type, beacon_category, lat, lng, address, opening_hours, website, phone, description')
+        .eq('slug', slug)
+        .maybeSingle()
+        .then(async ({ data: place }) => {
+          if (place) {
+            // Normalise pulse_place → beacon shape
+            const normalised = {
+              id:              cleanBeaconId,
+              title:           place.name,
+              type:            'venue',
+              beacon_category: place.beacon_category || place.type || 'venue',
+              geo_lat:         place.lat,
+              geo_lng:         place.lng,
+              description:     place.description,
+              metadata: {
+                address:       place.address,
+                opening_hours: place.opening_hours,
+                website:       place.website,
+                phone:         place.phone,
+                kind:          'venue',
+              },
+            };
+            // Also fetch upcoming events at this venue
+            const { data: events } = await supabase
+              .from('pulse_events')
+              .select('id, title, event_start_at, event_end_at, outout_occurrence_id')
+              .eq('place_slug', slug)
+              .gte('event_start_at', new Date().toISOString())
+              .order('event_start_at', { ascending: true })
+              .limit(5);
+            if (events && events.length) normalised.metadata.upcoming_events = events;
+            setBeacon(prev => prev || normalised);
+          }
+          setLoading(false);
+        });
+      return;
+    }
+
     supabase
       .from('beacons')
       .select('id, code, type, beacon_category, geo_lat, geo_lng, starts_at, ends_at, intensity, title, description, city_slug, globe_color, globe_pulse_type, globe_size_base, checkin_count, venue_id, owner_id, event_start_at, event_end_at, metadata')

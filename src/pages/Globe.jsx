@@ -476,14 +476,9 @@ export default function GlobePage({ embedded = false }) {
     // but are not broadcasting. Surfacing them with the heavy L2 sheet
     // misrepresents them as signals and crowds the map for beta users.
     //
-    // Venues now route to the existing BeaconPreviewPanel peek (already
-    // venue-aware: hours / website / phone / proximity rows render natively).
-    // The peek's "Open" CTA escalates to the L2 venue branch when the user
-    // wants the full surface.
-    if (beacon.entity_kind === 'venue') {
-      setPreviewBeacon(beacon);
-      return;
-    }
+    // D49 §6 REVERTED 2026-06-17 — venue tap goes straight to L2 sheet.
+    // Two-step peek → CTA added friction. BeaconPreviewPanel still available
+    // for hover/atmospheric contexts but no longer the primary venue tap target.
 
     // Phil 2026-05-29 — locked interaction contract.
     //
