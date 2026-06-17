@@ -179,6 +179,63 @@ export function useGhostedGrid(
     },
   });
 
+  // Phil 2026-06-03 Vitality Slice 2 — Beacon halo bleed.
+  // For each active beacon with coords, build a flat list once. The card
+  // construction loop below calls findNearbyBeacon(profileLat, profileLng)
+  // to find the closest active beacon within 200m and inherit its colour.
+  // This is the single move that turns the grid environmental — cards near
+  // a live beacon (own or someone else's) carry that ring tint as ambient
+  // pressure rather than reading as isolated rectangles.
+  //
+  // Doctrine refs:
+  //   D49 Entity ontology — halo is a perception of nearby BROADCAST, not
+  //     ownership.
+  //   D17 No silent affordance — halo is a real signal derived from real
+  //     spatial proximity, never random.
+  //   D54 (forthcoming, "Ambient Vitality") — beacon halo bleed is its
+  //     canonical example.
+  const activeBeaconsWithCoords = useMemo(() => {
+    const list = (activeBeaconsQuery.data || [])
+      .map((b: any) => {
+        const lat = Number(b.geo_lat ?? b.latitude);
+        const lng = Number(b.geo_lng ?? b.longitude);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+        const category = (b.beacon_category || b.type || '').toString().toLowerCase() || null;
+        const color = (category && (BEACON_CATEGORY_COLORS as any)[category]) || BEACON_NEUTRAL_RING;
+        return { id: b.id, owner_id: b.owner_id || null, lat, lng, category, color };
+      })
+      .filter((b: any): b is { id: string; owner_id: string | null; lat: number; lng: number; category: string | null; color: string } => b !== null);
+    return list;
+  }, [activeBeaconsQuery.data]);
+
+  // Closest active beacon within 1000m of (lat,lng). Returns null when none.
+  // Skips the user's own owned beacon — that's already painted as the
+  // first-class beacon ring; halo is for OTHER beacons in the neighbourhood
+  // so the card communicates "near something happening" rather than
+  // double-counting the user's own signal.
+  //
+  // Phil 2026-06-03 calibration — bumped 200m → 1000m. Substrate audit:
+  // beta cohort has 66 profiles with location, closest one to a live
+  // beacon was 1448m away. 200m was venue-tight; 1km is "neighbourhood"
+  // and matches D54's "shared atmosphere nearby" register. Halo can be
+  // tightened again once user density rises in a target district.
+  const findBeaconHalo = useCallback(
+    (lat: number | null | undefined, lng: number | null | undefined, ownerIdToSkip?: string | null) => {
+      if (lat == null || lng == null) return null;
+      let best: { category: string | null; color: string; distanceM: number } | null = null;
+      for (const b of activeBeaconsWithCoords) {
+        if (ownerIdToSkip && b.owner_id === ownerIdToSkip) continue;
+        const d = calculateDistance(lat, lng, b.lat, b.lng);
+        if (d > 1000) continue;
+        if (!best || d < best.distanceM) {
+          best = { category: b.category, color: b.color, distanceM: d };
+        }
+      }
+      return best;
+    },
+    [activeBeaconsWithCoords],
+  );
+
   // Build owner_id -> primary badge (highest-priority category + colour +
   // flyTo coords + venue label). The Ghosted card uses this purely for the
   // visual ring/badge/label and the tap-to-fly nav-state.
@@ -455,6 +512,17 @@ export function useGhostedGrid(
           // to render a FRESH pill on accounts under 7 days old.
           lastSeenISO: p.last_seen || null,
           createdAtISO: p.created_at || null,
+          // Phil 2026-06-03 Vitality Slice 2 — beacon halo bleed. Skip own
+          // beacon (already painted as the first-class ring). When this
+          // profile sits ≤200m from any OTHER active beacon, inherit that
+          // beacon's category colour as ambient ring tint. Reads as
+          // environmental pressure on the card.
+          ...(() => {
+            const halo = findBeaconHalo(p.last_lat, p.last_lng, p.id);
+            return halo
+              ? { beaconHaloCategory: halo.category, beaconHaloColor: halo.color }
+              : {};
+          })(),
         } as GhostedCardProps;
       })
       .sort((a: GhostedCardProps, b: GhostedCardProps) => {
@@ -463,7 +531,7 @@ export function useGhostedGrid(
         if (!a.isOnline && b.isOnline) return 1;
         return (a.distanceM ?? Infinity) - (b.distanceM ?? Infinity);
       });
-  }, [nearbyQuery.data, blockedIds, myLat, myLng, filterChip, beaconBadgesByOwner]);
+  }, [nearbyQuery.data, blockedIds, myLat, myLng, filterChip, beaconBadgesByOwner, findBeaconHalo]);
 
   // ── Transform live profiles to GhostedCardProps ───────────────────────────
   const liveCards = useMemo(() => {
@@ -528,9 +596,17 @@ export function useGhostedGrid(
           // Phil 2026-06-03 Samui — recency + FRESH state parity (see nearby).
           lastSeenISO: p.last_seen || null,
           createdAtISO: p.created_at || null,
+          // Phil 2026-06-03 Vitality Slice 2 — beacon halo bleed (see nearby).
+          // Use pLat/pLng since live mode prefers movement coords when available.
+          ...(() => {
+            const halo = findBeaconHalo(pLat, pLng, p.id);
+            return halo
+              ? { beaconHaloCategory: halo.category, beaconHaloColor: halo.color }
+              : {};
+          })(),
         } as GhostedCardProps;
       });
-  }, [liveQuery.data, blockedIds, myLat, myLng, beaconBadgesByOwner]);
+  }, [liveQuery.data, blockedIds, myLat, myLng, beaconBadgesByOwner, findBeaconHalo]);
 
   // ── Transform recent profiles to GhostedCardProps ─────────────────────────
   const recentCards = useMemo(() => {
@@ -567,9 +643,16 @@ export function useGhostedGrid(
           // Phil 2026-06-03 Samui — recency + FRESH state parity (see nearby).
           lastSeenISO: p.last_seen || null,
           createdAtISO: p.created_at || null,
+          // Phil 2026-06-03 Vitality Slice 2 — beacon halo bleed (see nearby).
+          ...(() => {
+            const halo = findBeaconHalo(p.last_lat, p.last_lng, p.id);
+            return halo
+              ? { beaconHaloCategory: halo.category, beaconHaloColor: halo.color }
+              : {};
+          })(),
         } as GhostedCardProps;
       });
-  }, [recentQuery.data, blockedIds, myLat, myLng, beaconBadgesByOwner]);
+  }, [recentQuery.data, blockedIds, myLat, myLng, beaconBadgesByOwner, findBeaconHalo]);
 
   // ── Select data based on active tab ───────────────────────────────────────
   const cards = tab === 'nearby'

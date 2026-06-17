@@ -240,11 +240,47 @@ function GhostedCardInner({
     <motion.button
       className="relative w-full aspect-[4/5] rounded-xl overflow-hidden bg-[#1C1C1E] focus:outline-none focus:ring-2 focus:ring-[#C8962C]/50"
       style={(() => {
+        // Phil 2026-06-03 Vitality Slice 2 — signal density weight.
+        // Count emitted signals to drive opacity / scale / glow. The grid stops
+        // reading as identical rectangles when loud cards literally radiate
+        // and quiet cards recede. Three bands:
+        //   loud   (>=3 signals) — full opacity + slight scale-up + soft warm glow
+        //   medium (1-2 signals) — neutral
+        //   quiet  (0 signals)   — opacity 0.65 — silhouette / dead cards fade
+        // Halo bleed COUNTS as a signal — that's the whole point of
+        // environmental warmth; cards near a beacon should read warmer.
+        const signalScore =
+          (isOnline ? 1 : 0) +
+          (beacon ? 1 : 0) +
+          (beaconHaloColor ? 1 : 0) +
+          (isMutual ? 1 : 0) +
+          (createdAtISO && isFreshProfile(createdAtISO) ? 1 : 0) +
+          (Array.isArray(lookingFor) && lookingFor.length > 0 ? 1 : 0) +
+          (recencyLabel(lastSeenISO).isLive ? 1 : 0);
+        const weight: 'loud' | 'medium' | 'quiet' =
+          signalScore >= 3 ? 'loud' : signalScore >= 1 ? 'medium' : 'quiet';
+
         // Beacon ring stacks ON TOP of the mutual-boo inset edge.
         // 2px inset glow in the beacon's category colour reads as "live signal"
         // without crowding the photo. Decaying state drops opacity to 0.55 so
         // the eye still groups the card with live cards but registers fade.
         const shadows: string[] = [];
+
+        // Phil 2026-06-03 — Beacon halo bleed. When the card sits within
+        // the halo radius from a live beacon (and doesn't own one itself),
+        // render an outer ring tinted to the beacon's category colour.
+        // Reads as ambient environmental warmth, not as ownership.
+        //
+        // Calibration 2026-06-03: bumped from 1px @ ~40% alpha to 2px @
+        // ~70% alpha + brighter glow. The original was too subtle to read
+        // on mobile (Phil verified live and couldn't see it). The halo is
+        // meant to land emotionally — "this person is near something
+        // happening" — not whisper.
+        if (beaconHaloColor && !beacon) {
+          shadows.push(`0 0 0 2px ${beaconHaloColor}B3`);
+          shadows.push(`0 0 16px ${beaconHaloColor}55`);
+        }
+
         if (beacon) {
           const c = beacon.color;
           shadows.push(`inset 0 0 0 2px ${c}`);
@@ -261,7 +297,35 @@ function GhostedCardInner({
           shadows.push('0 0 0 1.5px rgba(200,150,44,0.85)');
           shadows.push('0 0 14px rgba(200,150,44,0.45)');
         }
-        return shadows.length ? { boxShadow: shadows.join(', '), opacity: ringAlpha < 0.95 ? 0.9 : 1 } : undefined;
+
+        // Weight-driven warm glow on loud cards. Subtle gold halo on the
+        // OUTSIDE so the loud card pulls forward visually without imitating
+        // any single signal's colour.
+        if (weight === 'loud') {
+          shadows.push('0 0 18px rgba(200,150,44,0.18)');
+        }
+
+        // CRITICAL FIX 2026-06-03 — `opacity` MUST NOT be set in inline
+        // style on this motion.button. Framer-motion's `initial={{ opacity:
+        // 0 }} -> animate={{ opacity: 1 }}` animation treats an explicit
+        // style.opacity as a static value, suppresses the enter animation,
+        // and the card stays at opacity 0. Result: invisible grid (verified
+        // on the #856 preview).
+        //
+        // Weight-driven opacity (quiet cards fade) needs to be passed through
+        // framer-motion's animate prop, not inline style. Deferred to the
+        // next iteration. For now, the LOUD card gold glow is doing the
+        // weight work — that's added via boxShadow which doesn't collide
+        // with framer-motion.
+        //
+        // Note also: weight-driven SCALE was considered but framer-motion's
+        // whileTap={scale: 0.97} composes badly with a CSS transform on the
+        // same element. Loud cards pull forward via the warm gold glow;
+        // quiet card fade is deferred.
+        return shadows.length ? {
+          boxShadow: shadows.join(', '),
+          transition: 'box-shadow 220ms ease',
+        } : undefined;
       })()}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
