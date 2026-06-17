@@ -124,6 +124,7 @@ export function useGlobeRealtime() {
       // Fetch in parallel:
       //   1. Temporary user beacons (beacons table — 4hr cap per RLS)
       //   2. Permanent venues (pulse_places — clubs/saunas/cafes/recovery/cities)
+      //   3. OutOut event beacons (pulse_events — RLS handles adult gate)
       // Both render on the same map layer through the same beacon model so a
       // single source-of-truth feeds toPublicSafeFeatureCollection.
       // Phil 2026-05-27: pulse_places had 81 rows that were never on the globe
@@ -139,18 +140,33 @@ export function useGlobeRealtime() {
       //
       // Anonymous viewers pass p_viewer = null; the RPC treats them as
       // logged-out and returns only beacons with visibility_snapshot='visible'.
+      //
+      // pulse_events: RLS enforces event_end_at > now() and adult gate.
+      // HERO events (layer='HERO') render larger than BASE. No new Mapbox layers.
       const { data: { user } } = await supabase.auth.getUser();
       const viewerId = user?.id ?? null;
 
-      const [{ data, error }, { data: placesData, error: placesError }] = await Promise.all([
+      const [
+        { data, error },
+        { data: placesData, error: placesError },
+        { data: eventsData, error: eventsError },
+      ] = await Promise.all([
         supabase.rpc('get_renderable_beacons_for_viewer', { p_viewer: viewerId }),
         supabase
           .from('pulse_places')
           .select('slug, name, type, lat, lng, priority, is_active, notes, address, opening_hours, website, phone')
           .eq('is_active', true),
+        supabase
+          .from('pulse_events')
+          .select('outout_occurrence_id, place_slug, title, event_start_at, event_end_at, layer, beacon_category, lat, lng')
+          .order('event_start_at', { ascending: true }),
       ]);
+
       if (placesError) {
         console.warn('[GlobeRealtime] pulse_places fetch failed:', placesError.message);
+      }
+      if (eventsError) {
+        console.warn('[GlobeRealtime] pulse_events fetch failed:', eventsError.message);
       }
       if (error) {
         console.warn('[GlobeRealtime] beacons fetch failed:', {
@@ -204,8 +220,37 @@ export function useGlobeRealtime() {
         };
       });
 
+      // Map pulse_events → beacon shape.
+      // RLS has already filtered: event_end_at > now() and adult gate.
+      // HERO events render at size 3.5 / intensity 2 vs BASE at 2.5 / intensity 1.
+      const eventBeacons = (eventsData || []).map((e: Record<string, unknown>) => {
+        const isHero = String(e.layer) === 'HERO';
+        return {
+          id: 'event-' + String(e.outout_occurrence_id),
+          code: 'event-' + String(e.place_slug),
+          type: 'event',
+          beacon_category: 'event',
+          title: String(e.title || ''),
+          status: 'active',
+          geo_lat: Number(e.lat),
+          geo_lng: Number(e.lng),
+          city_slug: null,
+          globe_color: BEACON_VISUALS.event.color,
+          globe_pulse_type: BEACON_VISUALS.event.pulse,
+          globe_size_base: isHero ? 3.5 : BEACON_VISUALS.event.size,
+          intensity: isHero ? 2 : 1,
+          checkin_count: 0,
+          venue_id: null,
+          ends_at: e.event_end_at ? String(e.event_end_at) : null,
+          starts_at: e.event_start_at ? String(e.event_start_at) : null,
+          description: null,
+          owner_id: null,
+        };
+      });
+
       setBeacons([
         ...placeBeacons,
+        ...eventBeacons,
         ...(data || [])
           .filter((b: Record<string, unknown>) => !b.ends_at || new Date(String(b.ends_at)) > now)
           .map((b: Record<string, unknown>) => ({
@@ -359,5 +404,3 @@ export function useGlobeRealtime() {
 
   return { cityHeat, beacons, globeEvents };
 }
-
-
