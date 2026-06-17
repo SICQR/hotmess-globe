@@ -198,9 +198,8 @@ export function RadioMode({ className = '' }: RadioModeProps) {
       try {
         const { data, error } = await supabase
           .from('radio_shows')
-          .select('id, title, host_name, start_time, image_url, description, genre')
-          .eq('is_active', true)
-          .order('start_time', { ascending: true })
+          .select('id, title, host, schedule, description, slug')
+          .order('id', { ascending: true })
           .limit(10);
 
         if (error || !data || data.length === 0) {
@@ -212,15 +211,11 @@ export function RadioMode({ className = '' }: RadioModeProps) {
           const mapped: ShowData[] = data.map((row: Record<string, unknown>) => ({
             id: String(row.id),
             name: String(row.title || ''),
-            host: String(row.host_name || ''),
-            time: row.start_time
-              ? new Date(String(row.start_time)).toLocaleTimeString([], {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })
-              : '',
-            emoji: String(row.genre || '\u{1F3B6}') === 'house' ? '\u{1F3B5}' : '\u{1F3B6}',
+            host: String(row.host || ''),
+            time: String(row.schedule || ''),
+            emoji: '\u{1F3B6}',
             description: String(row.description || ''),
+            blurb: String(row.description || ''),
           }));
           setShows(mapped);
         }
