@@ -114,10 +114,21 @@ export default async function handler(req, res) {
     } else {
       const generated = await generateEventsWithOpenAI({ cities, daysAhead });
       if (!generated.ok) {
-        return json(res, 400, {
-          success: false,
-          error:
-            'No events supplied and no configured sources. Set EVENT_SCRAPER_SOURCES_JSON or set OPENAI_API_KEY to enable LLM generation.',
+        // No sources configured and no LLM fallback — not an error, just nothing to do.
+        // Update the run log so the row doesn't stay stuck as 'running'.
+        await serviceClient.from('event_scraper_runs').update({
+          status: 'skipped',
+          finished_at: new Date().toISOString(),
+          events_found: 0,
+          events_created: 0,
+          events_updated: 0,
+          error_count: 0,
+          logs: [`sources: ${fetched.error}`, `llm: ${generated.error}`],
+        }).eq('id', runId);
+        return json(res, 200, {
+          success: true,
+          skipped: true,
+          reason: 'No events supplied and no configured sources. Set EVENT_SCRAPER_SOURCES_JSON or set OPENAI_API_KEY to enable LLM generation.',
           details: { sources: fetched.error, llm: generated.error },
         });
       }
