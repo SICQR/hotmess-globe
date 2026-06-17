@@ -12,7 +12,6 @@
  */
 import React, { useEffect, useState } from 'react';
 import { HotmessWordmark } from '@/components/brand/HotmessWordmark';
-import BetaBadge from '@/components/feedback/BetaBadge';
 
 const GOLD = '#C8962C';
 
@@ -91,13 +90,7 @@ export default function SplashScreen({ onJoin, onSignIn, fastPath = false, onFas
         >
           London
         </p>
-        {/* M-new (#252) Phil 2026-05-28: BETA badge — manages expectations cheaply. */}
-        <div
-          className="mt-3"
-          style={{ opacity: rulesIn ? 1 : 0, transition: 'opacity 0.5s ease 0.7s' }}
-        >
-          <BetaBadge size="lg" />
-        </div>
+
         {/* Phil 2026-05-29 HOTFIX — the splash IS the redeem moment when an
             invite is pending. We render the invite hero in place of the
             default tagline so beta invitees feel recognised before walking
@@ -132,7 +125,7 @@ export default function SplashScreen({ onJoin, onSignIn, fastPath = false, onFas
               transition: 'opacity 0.6s ease 0.7s',
             }}
           >
-            Real venues. Real boys. Built for the room you're already looking for.
+            357 queer venues. London, live.
           </p>
         )}
       </div>
