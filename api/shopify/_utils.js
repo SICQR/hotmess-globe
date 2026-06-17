@@ -1,4 +1,4 @@
-import './_silence-dep0169.js'; // suppress DEP0169 globally (web-push / supabase url.parse)
+import '../_silence-dep0169.js'; // suppress DEP0169 globally (web-push / supabase url.parse)
 export const json = (res, status, body) => {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json');
