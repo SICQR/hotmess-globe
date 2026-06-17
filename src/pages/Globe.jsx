@@ -525,6 +525,7 @@ export default function GlobePage({ embedded = false }) {
       setPreviewBeacon(beacon);
       return;
     }
+    setPreviewBeacon(null);
     openSheet('beacon', { beaconId: rawId, beacon });
   }, [openSheet, setFocusedBeaconId, setPreviewBeacon]);
 
