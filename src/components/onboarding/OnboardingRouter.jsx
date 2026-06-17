@@ -40,6 +40,7 @@ import SignUpScreen from './screens/SignUpScreen';
 import QuickSetupScreen from './screens/QuickSetupScreen';
 import NotificationsScreen from './screens/NotificationsScreen';
 import BridgeScreen from './screens/BridgeScreen';
+import GlobePreviewScreen from './screens/GlobePreviewScreen';
 
 // Screen keys
 const SCREENS = {
@@ -50,6 +51,7 @@ const SCREENS = {
   QUICK_SETUP: 'quick_setup',
   NOTIFICATIONS: 'notifications',  // T5 (Phil 2026-05-26): channel pref before completion
   BRIDGE: 'bridge',  // Phase 1 conversion repair (Phil 2026-05-28): explanation layer between age_gate + signup
+  GLOBE_PREVIEW: 'globe_preview', // Task #13: product reveal before location ask
 };
 
 // Map onboarding_stage → screen.
@@ -277,7 +279,16 @@ export default function OnboardingRouter() {
     // Map stage to screen
     const targetScreen = STAGE_TO_SCREEN[freshProfile.onboarding_stage];
     if (targetScreen) {
-      setScreen(targetScreen);
+      // Task #13: first-time QUICK_SETUP visitors see GlobePreview first.
+      // localStorage flag prevents re-showing on session resume.
+      if (
+        targetScreen === SCREENS.QUICK_SETUP &&
+        !localStorage.getItem('hm_globe_preview_seen_v1')
+      ) {
+        setScreen(SCREENS.GLOBE_PREVIEW);
+      } else {
+        setScreen(targetScreen);
+      }
     } else if (!freshProfile.onboarding_stage && !freshProfile.age_verified) {
       // Brand new user (null stage, age not verified) — start from age gate
       setScreen(SCREENS.AGE_GATE);
@@ -359,6 +370,12 @@ export default function OnboardingRouter() {
   const handleBridgeContinue = useCallback(() => {
     try { localStorage.setItem('hm_bridge_seen_v1', 'true'); } catch {}
     goTo(SCREENS.SIGNUP);
+  }, [goTo]);
+
+  // Task #13: GlobePreview complete → stamp localStorage, advance to QuickSetup
+  const handleGlobePreviewComplete = useCallback(() => {
+    try { localStorage.setItem('hm_globe_preview_seen_v1', 'true'); } catch {}
+    goTo(SCREENS.QUICK_SETUP);
   }, [goTo]);
 
   // QuickSetup is now the FINAL gate. Both ProfileScreen and PinSetup are
@@ -459,6 +476,13 @@ export default function OnboardingRouter() {
           session={session}
           onComplete={() => goTo(SCREENS.NOTIFICATIONS)}
           onBack={canGoBack ? goBack : undefined}
+        />
+      );
+
+    case SCREENS.GLOBE_PREVIEW:
+      return (
+        <GlobePreviewScreen
+          onContinue={handleGlobePreviewComplete}
         />
       );
 
