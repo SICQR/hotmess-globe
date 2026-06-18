@@ -37,11 +37,14 @@ export function canOpenSheet(
   //      profile sheet opens chat directly. Pre-mutual-boo gating is the caller's
   //      job (handleMessage shouldn't even fire pre-mutual; that check lives in the
   //      action button rendering, not here).
+  //   4. Beacon sheet open in stack OR as activeSheet — mutual-boo users can message
+  //      directly from a beacon without navigating to Ghosted first (#32).
   const onGhosted = pathname === '/ghosted' || pathname.startsWith('/ghosted/');
   const onProfile = pathname.startsWith('/profile/');
   const profileInStack = sheetStack.some((s) => s.type === 'profile');
   const profileActive = activeSheet === 'profile';
+  const beaconActive = activeSheet === 'beacon';
+  const beaconInStack = sheetStack.some((s) => s.type === 'beacon');
 
-  return onGhosted || onProfile || profileInStack || profileActive;
+  return onGhosted || onProfile || profileInStack || profileActive || beaconActive || beaconInStack;
 }
-
