@@ -111,7 +111,7 @@ export default function L2ReportSheet({ targetType, targetId, targetName, profil
       const isUrgent = selectedReason.urgent || isP1Urgent(selectedReason.value);
 
       // Insert report
-      await supabase.from('reports').insert({
+      const { error: reportErr } = await supabase.from('reports').insert({
         reporter_id:  session.user.id,
         target_type:  surface,
         target_id:    targetId   || null,
@@ -120,21 +120,23 @@ export default function L2ReportSheet({ targetType, targetId, targetName, profil
         priority:     selectedReason.priority || 'p3',
         urgent:       isUrgent,
       });
+      if (reportErr) throw reportErr;
 
-      // P1 → ops notification
+      // P1 → ops notification (fire-and-forget — never block report submission)
       if (selectedReason.priority === 'p1') {
-        await supabase.from('notification_outbox').insert({
-          recipient_id: null,
-          type:         'content_report_p1',
-          payload: {
+        supabase.from('notification_outbox').insert({
+          notification_type: 'content_report_p1',
+          metadata: {
             surface,
             reason:      selectedReason.value,
             target_id:   targetId || null,
             reporter_id: session.user.id,
             urgent:      isUrgent,
           },
-          status: 'queued',
-        }).throwOnError();
+          status:          'queued',
+          push_priority:   1,
+          action_required: true,
+        }).catch(() => {});
       }
 
       setStep(4);
