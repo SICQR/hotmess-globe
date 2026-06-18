@@ -194,7 +194,7 @@ export default function GlobePage({ embedded = false }) {
     },
   });
 
-  const { cityHeat, globeEvents } = useGlobeRealtime();
+  const { cityHeat, ltgoSignals, globeEvents } = useGlobeRealtime();
   const cities = cityHeat.map((c) => ({
     id: c.city_id,
     name: c.city_name,
@@ -601,6 +601,7 @@ export default function GlobePage({ embedded = false }) {
               proven-clean state — accept the modest extra memory for reliability. */}
           <PulseMap
             beacons={mapSignals}
+            ltgoSignals={ltgoSignals}
             userLocation={userLocation}
             onBeaconClick={handleBeaconClick}
             onMapApi={(api) => {

@@ -33,6 +33,8 @@ import NextUpCard from '@/components/home/NextUpCard';
 import VenueDiscoveryCards from '@/components/home/VenueDiscoveryCards';
 import GhostedStrip from '@/components/home/GhostedStrip';
 import RadioStrip from '@/components/home/RadioStrip';
+import LTGOHomeCard from '@/components/home/LTGOHomeCard';
+import LTGOBroadcastButton from '@/components/signals/LTGOBroadcastButton';
 
 // ── Brand tokens ─────────────────────────────────────────────────────────────
 const AMBER = '#C8962C';
@@ -224,6 +226,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         {/* ================================================================ */}
         {/* 2. VENUE DISCOVERY — what's on tonight (horizontal scroll)     */}
         {/* ================================================================ */}
+        <LTGOBroadcastButton />
         <VenueDiscoveryCards />
 
         {/* ================================================================ */}
@@ -237,6 +240,8 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         {/* 4. GHOSTED STRIP — who's out right now                         */}
         {/* ================================================================ */}
         <GhostedStrip rnCount={rnCount} />
+
+        <LTGOHomeCard />
 
         {/* ================================================================ */}
         {/* 5. RADIO STRIP — tune in                                       */}
