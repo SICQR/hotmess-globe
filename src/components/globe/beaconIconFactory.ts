@@ -424,3 +424,102 @@ export function registerBeaconIcons(map: mapboxgl.Map): Promise<void> {
     }),
   ).then(() => undefined);
 }
+
+
+// ─── Venue teardrop pins ──────────────────────────────────────────────────
+
+/** Colors per venue category — Phil's confirmed design system 2026-06-18 */
+export const VENUE_PIN_COLORS: Record<string, string> = {
+  club:      '#C8962C',
+  sauna:     '#20B2AA',
+  leather:   '#8B1A1A',
+  cruising:  '#7B2D8B',
+  gym:       '#6B7280',
+  aftercare: '#F4ECD8',
+  cafe:      '#C8962C',
+  clinic:    '#F4ECD8',
+  market:    '#C8962C',
+  default:   '#C8962C',
+};
+
+/** Build a 26×34 teardrop ImageData for a venue category (category fill, dark inner dot). */
+export async function buildVenueTeardropAsync(category: string): Promise<ImageData | null> {
+  if (!isBrowser()) return null;
+  // @2x: 52×68
+  const W = 52, H = 68;
+  let canvas: HTMLCanvasElement | OffscreenCanvas | null = null;
+  let ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null = null;
+
+  if (typeof OffscreenCanvas !== 'undefined') {
+    canvas = new OffscreenCanvas(W, H);
+    ctx = (canvas as OffscreenCanvas).getContext('2d') as OffscreenCanvasRenderingContext2D;
+  } else {
+    canvas = document.createElement('canvas');
+    (canvas as HTMLCanvasElement).width = W;
+    (canvas as HTMLCanvasElement).height = H;
+    ctx = (canvas as HTMLCanvasElement).getContext('2d');
+  }
+  if (!canvas || !ctx) return null;
+  ctx.clearRect(0, 0, W, H);
+
+  const color = VENUE_PIN_COLORS[category] || VENUE_PIN_COLORS.default;
+  // Parse hex to rgb
+  const r = parseInt(color.slice(1,3),16);
+  const g = parseInt(color.slice(3,5),16);
+  const b = parseInt(color.slice(5,7),16);
+
+  // Teardrop path: center X=26, body from y=4 to y=54, tip at y=64
+  const cx = 26, bodyY = 26, tipY = 64, radius = 20;
+  ctx.beginPath();
+  ctx.moveTo(cx, tipY);
+  ctx.bezierCurveTo(cx - 20, 44, cx - radius, bodyY, cx - radius, bodyY);
+  ctx.arc(cx, bodyY, radius, Math.PI, 0, false);
+  ctx.bezierCurveTo(cx + radius, bodyY, cx + 20, 44, cx, tipY);
+  ctx.closePath();
+
+  // Gradient fill
+  const grad = ctx.createLinearGradient(cx - radius, bodyY - radius, cx + radius, bodyY + radius);
+  grad.addColorStop(0, `rgba(${r},${g},${b},1)`);
+  grad.addColorStop(1, `rgba(${Math.max(0,r-40)},${Math.max(0,g-40)},${Math.max(0,b-40)},1)`);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Drop shadow via stroke
+  ctx.strokeStyle = `rgba(0,0,0,0.35)`;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Inner circle (dark dot)
+  ctx.beginPath();
+  ctx.arc(cx, bodyY, 8, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.fill();
+
+  return ctx.getImageData(0, 0, W, H);
+}
+
+/** Sprite id for a venue teardrop: `hm-venue-pin-<category>` */
+export function venuePinIconId(category: string): string {
+  return `hm-venue-pin-${category}`;
+}
+
+const VENUE_CATEGORIES: string[] = ['gym','club','sauna','leather','cafe','clinic','aftercare','cruising','market'];
+
+/** Register all venue teardrop sprites on a Mapbox map. */
+export function registerVenuePins(map: mapboxgl.Map): Promise<void> {
+  if (!isBrowser()) return Promise.resolve();
+  if (!map || typeof (map as any).addImage !== 'function') return Promise.resolve();
+  return Promise.all(
+    VENUE_CATEGORIES.map(async (cat) => {
+      const id = venuePinIconId(cat);
+      try {
+        if (typeof (map as any).hasImage === 'function' && (map as any).hasImage(id)) return;
+        const W = 52, H = 68;
+        const imgData = await buildVenueTeardropAsync(cat);
+        if (!imgData) return;
+        if (typeof (map as any).hasImage === 'function' && (map as any).hasImage(id)) return;
+        (map as any).addImage(id, { width: W, height: H, data: new Uint8Array(imgData.data.buffer) } as any, { pixelRatio: 2 });
+      } catch { /* swallow */ }
+    }),
+  ).then(() => undefined);
+}
