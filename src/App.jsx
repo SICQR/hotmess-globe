@@ -93,6 +93,7 @@ const FakeCallPage = lazy(() => import('@/pages/FakeCallPage'));
 const SafetyPage = lazy(() => import('@/pages/Safety'));
 const SafePage = lazy(() => import('@/pages/SafePage'));
 const SafetySeedScreen = lazy(() => import('@/components/onboarding/screens/SafetySeedScreen'));
+const AcceptTrustedContact = lazy(() => import('@/pages/AcceptTrustedContact'));
 const MusicMode = lazy(() => import('@/modes/MusicMode'));
 const MusicLibraryPage = lazy(() => import('@/pages/music/MusicLibraryPage'));
 const MusicReleasePage = lazy(() => import('@/pages/music/MusicReleasePage'));
@@ -471,6 +472,10 @@ const AuthenticatedApp = () => {
       <Route path="/safety/*" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><SafetyPage /></Suspense>} />
       <Route path="/safe" element={<Suspense fallback={null}><SafePage /></Suspense>} />
       <Route path="/fake-call" element={<Suspense fallback={null}><FakeCallPage /></Suspense>} />
+      {/* Safety: trusted-contact invitation acceptance — public, no auth required.
+          Reached via SMS/email link: /contact/accept/:id?token=...&exp=...
+          AcceptTrustedContact verifies the HMAC token anonymously (Safety Constitution). */}
+      <Route path="/contact/accept/:id" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><AcceptTrustedContact /></Suspense>} />
 
       
       {/* AUTH & INFRASTRUCTURE */}
