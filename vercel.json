@@ -86,6 +86,10 @@
     {
       "path": "/api/tickets/resale-matcher",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/signals/expire",
+      "schedule": "*/5 * * * *"
     }
   ],
   "routes": [
