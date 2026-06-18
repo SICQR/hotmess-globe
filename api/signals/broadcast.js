@@ -58,7 +58,7 @@ export default async function handler(req, res) {
     p_lat: lat,
     p_area_hint: area_hint ?? null,
     p_vibe_note: vibe_note ?? null,
-    p_duration_hours: duration_hours ?? null,
+    ...(duration_hours != null ? { p_duration_hours: duration_hours } : {}),
   });
 
   if (error) {
