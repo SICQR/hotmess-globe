@@ -49,6 +49,7 @@ export const ICON_MIN_ZOOM = 11;
 // D12 Slice 2 / #303 Phase A dual-read helpers — single point of truth for
 // reading the new entity_kind / intent columns with legacy fallback.
 import { readEntityKind, isAftercare } from '@/lib/beacons/beaconKind';
+import { registerVenuePins, venuePinIconId } from '@/components/globe/beaconIconFactory';
 
 export const CATEGORY_COLOR = {
   editorial: '#C8962C', // brand gold — curated district pulse
@@ -586,20 +587,34 @@ export function addLayerStack(map, opts) {
       paint: { 'text-color': '#cfd6e0', 'text-opacity': 0.85 },
     });
   }
-  // Individual venue markers — small neutral dots.
+  // Individual venue markers — teardrop SVG pins, category-coloured.
+  // Phil's confirmed design system 2026-06-18: permanent venues use teardrop
+  // shape to distinguish from live signal circles. Color is per-category.
   if (!map.getLayer(LAYER_IDS.venueMarkers)) {
+    // Register venue pin sprites (async — fires once per map instance).
+    registerVenuePins(map).catch((e) => {
+      console.warn('[PulseMap] venue pin registration failed:', e && e.message || e);
+    });
+
     map.addLayer({
       id: LAYER_IDS.venueMarkers,
-      type: 'circle',
+      type: 'symbol',
       source: SOURCE_IDS.venues,
-      minzoom: 13,   // D5X: venues are geography reference, not Pulse signals
+      minzoom: 13,
       filter: ['!', ['has', 'point_count']],
+      layout: {
+        'icon-image': [
+          'coalesce',
+          ['image', ['concat', 'hm-venue-pin-', ['coalesce', ['get', 'beacon_category'], '']]],
+          ['image', 'hm-venue-pin-club'],
+        ],
+        'icon-size': 0.5,
+        'icon-anchor': 'bottom',
+        'icon-allow-overlap': true,
+        'icon-ignore-placement': false,
+      },
       paint: {
-        'circle-color': '#5c6878',     // neutral grey — D5X three-colour doctrine (gold/pink/amber only for signals)
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 3, 15, 5],
-        'circle-stroke-width': 1,
-        'circle-stroke-color': 'rgba(0,0,0,0.5)',
-        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 13, 0.5, 15, 0.85],
+        'icon-opacity': ['interpolate', ['linear'], ['zoom'], 13, 0.6, 15, 1.0],
       },
     });
   }
@@ -624,7 +639,7 @@ export function addLayerStack(map, opts) {
         'text-allow-overlap': false,
       },
       paint: {
-        'text-color': '#8a96a8',
+        'text-color': '#aab4c0',
         'text-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0.5, 16, 0.85],
         'text-halo-color': '#050507',
         'text-halo-width': 1,
@@ -807,5 +822,6 @@ export function addLayerStack(map, opts) {
     });
   }
 }
+
 
 
