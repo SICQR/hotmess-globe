@@ -61,6 +61,22 @@ export interface GlobeBeacon {
   owner_id: string | null;
 }
 
+export interface LtgoSignal {
+  id: string;
+  signal_type: string;
+  lat: number;
+  lng: number;
+  fuzz_radius_m: number;
+  area_hint: string | null;
+  vibe_note: string | null;
+  freshness: 'fresh' | 'normal' | 'fading';
+  state: string;
+  beacon_category: 'ltgo';
+  entity_kind: 'signal';
+  globe_color: '#BF5AF2';
+  globe_pulse_type: 'diamond';
+}
+
 // ─── Beacon category visual config ──────────────────────────────────────────
 
 export const BEACON_VISUALS: Record<string, { color: string; pulse: string; size: number }> = {
@@ -76,6 +92,7 @@ export const BEACON_VISUALS: Record<string, { color: string; pulse: string; size
 export function useGlobeRealtime() {
   const [cityHeat, setCityHeat] = useState<CityHeat[]>([]);
   const [beacons, setBeacons] = useState<GlobeBeacon[]>([]);
+  const [ltgoSignals, setLtgoSignals] = useState<LtgoSignal[]>([]);
   const [globeEvents, setGlobeEvents] = useState<GlobeEvent[]>([]);
   const mountedRef = useRef(true);
 
@@ -283,6 +300,42 @@ export function useGlobeRealtime() {
     }
   }, []);
 
+  const fetchLtgoSignals = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('person_signals_public')
+        .select('id, signal_type, lat, lng, fuzz_radius_m, area_hint, vibe_note, freshness, state')
+        .eq('signal_type', 'looking_to_go_out')
+        .eq('state', 'active');
+      if (error) {
+        console.warn('[GlobeRealtime] ltgo signals fetch failed:', error.message);
+        return;
+      }
+      if (!mountedRef.current) return;
+      setLtgoSignals(
+        (data || [])
+          .filter((s: Record<string, unknown>) => Number.isFinite(Number(s.lat)) && Number.isFinite(Number(s.lng)))
+          .map((s: Record<string, unknown>) => ({
+            id: String(s.id),
+            signal_type: String(s.signal_type),
+            lat: Number(s.lat),
+            lng: Number(s.lng),
+            fuzz_radius_m: Number(s.fuzz_radius_m) || 200,
+            area_hint: s.area_hint ? String(s.area_hint) : null,
+            vibe_note: s.vibe_note ? String(s.vibe_note) : null,
+            freshness: (String(s.freshness) as 'fresh' | 'normal' | 'fading'),
+            state: String(s.state),
+            beacon_category: 'ltgo' as const,
+            entity_kind: 'signal' as const,
+            globe_color: '#BF5AF2' as const,
+            globe_pulse_type: 'diamond' as const,
+          }))
+      );
+    } catch (e) {
+      console.warn('[GlobeRealtime] ltgo fetch threw:', e instanceof Error ? e.message : String(e));
+    }
+  }, []);
+
   // ── 3. Globe events: subscribe to INSERT for visual effects ─────────────
 
   // Cleanup expired events every 5s
@@ -307,9 +360,11 @@ export function useGlobeRealtime() {
     // Initial fetches
     fetchCityHeat();
     fetchBeacons();
+    fetchLtgoSignals();
 
     // City heat poll
     const heatInterval = setInterval(fetchCityHeat, 60_000);
+    const ltgoInterval = setInterval(fetchLtgoSignals, 60_000);
 
     // Globe events realtime
     const globeEventsChannel = supabase
@@ -397,10 +452,11 @@ export function useGlobeRealtime() {
     return () => {
       mountedRef.current = false;
       clearInterval(heatInterval);
+      clearInterval(ltgoInterval);
       supabase.removeChannel(globeEventsChannel);
       supabase.removeChannel(beaconsChannel);
     };
-  }, [fetchCityHeat, fetchBeacons]);
+  }, [fetchCityHeat, fetchBeacons, fetchLtgoSignals]);
 
-  return { cityHeat, beacons, globeEvents };
+  return { cityHeat, beacons, ltgoSignals, globeEvents };
 }

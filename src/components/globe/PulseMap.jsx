@@ -80,7 +80,7 @@ function resolveEditorialCity(lat, lng, zoom) {
   return best && bestD <= LOCAL_FOCUS_MAX_DEG ? best : null;
 }
 
-export default function PulseMap({ beacons = [], userLocation, onBeaconClick, onMapApi, onReady, onLocalFocus }) {
+export default function PulseMap({ beacons = [], ltgoSignals = [], userLocation, onBeaconClick, onMapApi, onReady, onLocalFocus }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   // Latest props via refs so the create-once effect never needs to re-run.
@@ -143,6 +143,7 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
   // Now: a pulsing gold dot painted at userLocation, always visible, no presence
   // dependency, distinct from beacons.
   const selfMarkerRef = useRef(null);
+  const ltgoMarkersRef = useRef([]);
   const mapInstanceRef = useRef(null);
   const mapboxglRef = useRef(null);
 
@@ -942,6 +943,77 @@ export default function PulseMap({ beacons = [], userLocation, onBeaconClick, on
       // Don't remove on every re-render — only on unmount or location-null path
     };
   }, [userLocation]);
+
+
+  // ── LTGO diamond markers ─────────────────────────────────────────────────────
+  // Renders a pulsing violet diamond for each active LTGO signal.
+  // Custom HTML markers — not in the beacon layer stack (different visual grammar).
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    const mapboxgl = mapboxglRef.current;
+    if (!map || !mapboxgl) return;
+
+    // Inject CSS once
+    if (!document.getElementById('hm-ltgo-style')) {
+      const style = document.createElement('style');
+      style.id = 'hm-ltgo-style';
+      style.textContent = `
+        @keyframes ltgoBreathe {
+          0%, 100% { transform: scale(1); opacity: var(--ltgo-op, 1); }
+          50% { transform: scale(1.1); opacity: calc(var(--ltgo-op, 1) * 0.8); }
+        }
+        .hm-ltgo-diamond { animation: ltgoBreathe 2.5s ease-in-out infinite; }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Remove old markers
+    (ltgoMarkersRef.current || []).forEach((m) => { try { m.remove(); } catch (e) {} });
+    ltgoMarkersRef.current = [];
+
+    (ltgoSignals || []).forEach((sig) => {
+      if (!Number.isFinite(sig.lat) || !Number.isFinite(sig.lng)) return;
+      const opacity = sig.freshness === 'fresh' ? 1.0 : sig.freshness === 'normal' ? 0.6 : 0.25;
+
+      // Fuzz disc (radius circle)
+      const discEl = document.createElement('div');
+      const radiusPx = Math.max(20, Math.min(80, (sig.fuzz_radius_m || 200) / 10));
+      discEl.style.cssText = `
+        width:${radiusPx * 2}px;height:${radiusPx * 2}px;
+        border-radius:50%;
+        border:1.5px dashed rgba(191,90,242,0.35);
+        background:rgba(191,90,242,0.06);
+        pointer-events:none;
+      `;
+      try {
+        const discMarker = new mapboxgl.Marker({ element: discEl, anchor: 'center' })
+          .setLngLat([sig.lng, sig.lat])
+          .addTo(map);
+        ltgoMarkersRef.current.push(discMarker);
+      } catch (e) {}
+
+      // Diamond marker
+      const el = document.createElement('div');
+      el.className = 'hm-ltgo-diamond';
+      el.style.cssText = `width:36px;height:36px;cursor:pointer;--ltgo-op:${opacity};`;
+      el.innerHTML = `<svg width="36" height="36" viewBox="-18 -18 36 36" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="0" cy="0" r="16" fill="rgba(191,90,242,0.1)"/>
+        <rect x="-10" y="-10" width="20" height="20" rx="2.5" fill="#BF5AF2" transform="rotate(45)" opacity="${opacity}"/>
+        <rect x="-5.5" y="-5.5" width="11" height="11" rx="1.5" fill="rgba(0,0,0,0.32)" transform="rotate(45)" opacity="${opacity}"/>
+      </svg>`;
+      try {
+        const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+          .setLngLat([sig.lng, sig.lat])
+          .addTo(map);
+        ltgoMarkersRef.current.push(marker);
+      } catch (e) {}
+    });
+
+    return () => {
+      (ltgoMarkersRef.current || []).forEach((m) => { try { m.remove(); } catch (e) {} });
+      ltgoMarkersRef.current = [];
+    };
+  }, [ltgoSignals]);
 
   // Unmount cleanup
   useEffect(() => () => {
