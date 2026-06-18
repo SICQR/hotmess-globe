@@ -19,7 +19,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, UserPlus, Phone, Trash2 } from 'lucide-react';
+import { ArrowLeft, UserPlus, Phone, Trash2, Send } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 
@@ -52,6 +52,7 @@ export default function Safety() {
   const { showRecovery, dismissRecovery } = useSOSContext();
 
   const [userId, setUserId] = useState(null);
+  const [sendingInvite, setSendingInvite] = useState(null); // contact id being invited
   // Deeper aftercare state: when SOS recovery fires, expand the resources
   // panel inside the always-mounted aftercare block.
   const [expandResources, setExpandResources] = useState(false);
@@ -87,7 +88,7 @@ export default function Safety() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('trusted_contacts')
-        .select('id, contact_name, contact_phone, relationship')
+        .select('id, contact_name, contact_phone, relationship, invitation_sent_at, accepted_at')
         .eq('user_id', userId);
       if (error) throw error;
       return data || [];
@@ -147,6 +148,39 @@ export default function Safety() {
     // After a real send the dispatcher (when re-enabled) writes safety_events
     // → TrustedContactStatus picks it up live. Aftercare is already mounted.
   }, []);
+
+  const sendInvite = useCallback(async (contactId) => {
+    setSendingInvite(contactId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const jwt = session?.access_token;
+      if (!jwt) { toast.error('Not signed in.'); return; }
+      const res = await fetch('/api/safety/dispatch-invitation', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', Authorization: `Bearer ${jwt}` },
+        body: JSON.stringify({ trusted_contact_id: contactId, force: false }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data?.error || 'Could not send invitation.');
+        return;
+      }
+      if (data.throttled) {
+        toast.message('Invitation already sent recently. Use Resend to force.');
+        return;
+      }
+      if (data.any_succeeded) {
+        toast.success('Invitation sent.');
+      } else {
+        toast.error('Invitation dispatched but all channels failed — check contact details.');
+      }
+      queryClient.invalidateQueries({ queryKey: ['safety-trusted-contacts'] });
+    } catch (e) {
+      toast.error(e?.message || 'Network error sending invitation.');
+    } finally {
+      setSendingInvite(null);
+    }
+  }, [queryClient]);
 
   return (
     <div
@@ -252,15 +286,32 @@ export default function Safety() {
                         {c.contact_phone}
                         {c.relationship && <span className="text-white/30">· {c.relationship}</span>}
                       </p>
+                      <p className="text-[10px] mt-0.5" style={{ color: c.accepted_at ? '#30D158' : c.invitation_sent_at ? 'rgba(200,150,44,0.7)' : 'rgba(255,255,255,0.25)' }}>
+                        {c.accepted_at ? 'Accepted' : c.invitation_sent_at ? 'Invite sent' : 'Invite not sent'}
+                      </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removeContact.mutate(c.id)}
-                      aria-label={`Remove ${c.contact_name}`}
-                      className="text-white/35 hover:text-white/70 p-1.5"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      {!c.accepted_at && (
+                        <button
+                          type="button"
+                          onClick={() => sendInvite(c.id)}
+                          disabled={sendingInvite === c.id}
+                          aria-label={`Send invitation to ${c.contact_name}`}
+                          title={c.invitation_sent_at ? 'Resend invitation' : 'Send invitation'}
+                          className="text-white/55 hover:text-[#C8962C] p-1.5 disabled:opacity-40"
+                        >
+                          <Send className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeContact.mutate(c.id)}
+                        aria-label={`Remove ${c.contact_name}`}
+                        className="text-white/35 hover:text-white/70 p-1.5"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
