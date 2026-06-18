@@ -20,6 +20,7 @@ const VaultMode   = lazy(() => import('./VaultMode'));
 const MarketMode  = lazy(() => import('./MarketMode'));
 const RadioMode   = lazy(() => import('./RadioMode'));
 const ProfileMode = lazy(() => import('./ProfileMode'));
+const MorePage    = lazy(() => import('@/pages/MorePage'));
 
 function ModeLoadingFallback() {
   return (
@@ -84,6 +85,10 @@ export function OSShell({ className = '' }: OSShellProps) {
                 <Route path="/profile" element={<ProfileMode />} />
                 <Route path="/settings" element={<Navigate to="/profile" replace />} />
                 <Route path="/account" element={<Navigate to="/profile" replace />} />
+
+                {/* More (Control Deck) */}
+                <Route path="/more" element={<MorePage />} />
+                <Route path="/more/*" element={<MorePage />} />
               </Routes>
             </Suspense>
           </motion.div>
