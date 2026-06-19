@@ -111,9 +111,8 @@ function RailButton({ icon: Icon, label, onClick, badge = 0, active = false }) {
       title={label}
       aria-label={label}
       data-pull-refresh-ignore
-      className="group pointer-events-auto flex items-center justify-end gap-0 hover:gap-2 h-11 px-3 bg-black/60 border border-white/20 backdrop-blur-md rounded-full text-white shadow-lg overflow-hidden transition-all hover:bg-white hover:text-black"
+      className={`pointer-events-auto flex flex-col items-center justify-center gap-0.5 w-14 py-2 bg-black/60 border backdrop-blur-md rounded-2xl text-white shadow-lg transition-all ${active ? 'border-[#C8962C] bg-[#C8962C]/20' : 'border-white/20 hover:bg-white/10'}`}
     >
-      <span className="max-w-0 group-hover:max-w-[120px] overflow-hidden whitespace-nowrap text-[11px] font-black uppercase tracking-wider transition-[max-width] duration-200">{label}</span>
       <span className="relative flex-shrink-0">
         <Icon className="w-5 h-5" />
         {badge > 0 && (
@@ -122,6 +121,7 @@ function RailButton({ icon: Icon, label, onClick, badge = 0, active = false }) {
           </span>
         )}
       </span>
+      <span className="text-[9px] text-white/50 leading-none font-medium uppercase tracking-wide">{label}</span>
     </button>
   );
 }
@@ -706,10 +706,11 @@ export default function GlobePage({ embedded = false }) {
                 }}
                 aria-label="Go Live"
                 data-pull-refresh-ignore
-                className="pointer-events-auto mt-3 w-14 h-14 bg-[#C8962C] rounded-2xl flex items-center justify-center shadow-[0_15px_35px_-12px_rgba(200,150,44,0.6)] border border-white/30 overflow-hidden group backdrop-blur-md relative"
+                className="pointer-events-auto mt-3 w-14 bg-[#C8962C] rounded-2xl flex flex-col items-center justify-center py-2 gap-0.5 shadow-[0_15px_35px_-12px_rgba(200,150,44,0.6)] border border-white/30 overflow-hidden group backdrop-blur-md relative"
               >
                 <div className="absolute inset-0 bg-gradient-to-tr from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <MapPin className="w-6 h-6 text-black" />
+                <span className="text-[9px] text-black/70 leading-none font-medium uppercase tracking-wide mt-0.5">Live</span>
               </motion.button>
             </>
           )}
