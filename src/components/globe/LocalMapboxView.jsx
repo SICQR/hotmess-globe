@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 // Static CSS import: mapbox-gl needs its stylesheet for the canvas to size and
 // paint correctly. ~30KB, cheap, and reliable in the prod bundle.
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { X, MapPin } from 'lucide-react';
+import { X, Radio } from 'lucide-react';
 import {
   LAYER_IDS,
   SOURCE_IDS,
@@ -191,7 +191,7 @@ export default function LocalMapboxView({ focus, beacons, onClose, onReady, onDr
           aria-label="Drop a beacon at the map centre"
           data-pull-refresh-ignore
         >
-          <MapPin className="w-6 h-6 text-black" />
+          <Radio className="w-5 h-5 text-black" />
         </button>
       )}
     </div>
