@@ -148,6 +148,7 @@ export default function PulseMap({ beacons = [], ltgoSignals = [], userLocation,
   const mapboxglRef = useRef(null);
 
   const [status, setStatus] = useState('loading'); // loading | ready | error
+  const [zoom, setZoom] = useState(1); // tracks map zoom for conditional rendering
   const reducedMotion = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
     : false;
@@ -199,6 +200,7 @@ export default function PulseMap({ beacons = [], ltgoSignals = [], userLocation,
             }
           }
         });
+        map.on('zoom', () => { try { setZoom(map.getZoom()); } catch (e) { /* non-fatal */ } });
 
         // Run setup on style.load (style parsed) rather than 'load' (which waits for
         // the first tile batch): the dark base + atmosphere + controls appear fast and
@@ -1057,7 +1059,7 @@ export default function PulseMap({ beacons = [], ltgoSignals = [], userLocation,
           />
         </div>
       )}
-      {status !== 'ready' && (
+      {zoom >= 10 && status !== 'ready' && (
         <div className="absolute inset-0 flex items-center justify-center text-white/60 text-sm pointer-events-none">
           {status === 'error' ? 'Map unavailable' : 'Loading the signal…'}
         </div>
