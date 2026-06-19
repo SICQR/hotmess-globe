@@ -11,10 +11,14 @@
  *                          stripe_subscription_id, cancelled_at, created_at
  *   creator_profiles:      id, user_id, creator_name, subscription_price_cents,
  *                          subscriber_count, total_earnings_cents, is_verified_creator
+ *
+ * NOTE: Stripe recurring billing not yet wired. Subscribe button is intentionally
+ * disabled until api/subscriptions/creator.js is implemented.
+ * See: https://github.com/SICQR/hotmess-globe/issues — "Creator subscription billing"
  */
 
 import { useState, useEffect } from 'react';
-import { Star, Users, CheckCircle, XCircle, Loader2, Crown, TrendingUp, Lock } from 'lucide-react';
+import { Star, Users, CheckCircle, XCircle, Loader2, Crown, TrendingUp, Lock, Clock } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 
@@ -67,7 +71,6 @@ export default function L2CreatorSubscriptionSheet({ creatorId, creatorName, pri
   const [creatorProfile, setCreatorProfile]       = useState(null);
   const [existing, setExisting]                   = useState(null);
   const [loading, setLoading]                     = useState(true);
-  const [subscribing, setSubscribing]             = useState(false);
   const [cancelling, setCancelling]               = useState(false);
   const [tab, setTab]                             = useState('active');
   const [currentUser, setCurrentUser]             = useState(null);
@@ -120,34 +123,13 @@ export default function L2CreatorSubscriptionSheet({ creatorId, creatorName, pri
     }
   }
 
-  async function handleSubscribe() {
-    if (!currentUser || !creatorId) return;
-    setSubscribing(true);
-    try {
-      const price = priceCents || creatorProfile?.subscription_price_cents || 499;
-      const now = new Date();
-      const periodEnd = new Date(now);
-      periodEnd.setMonth(periodEnd.getMonth() + 1);
-
-      const { error } = await supabase
-        .from('creator_subscriptions')
-        .insert({
-          creator_id: creatorId,
-          subscriber_id: currentUser.id,
-          price_cents: price,
-          status: 'active',
-          current_period_start: now.toISOString(),
-          current_period_end: periodEnd.toISOString(),
-        });
-
-      if (error) throw error;
-      toast.success('Subscribed!');
-      await loadData();
-    } catch (err) {
-      toast.error(err?.message || 'Subscribe failed');
-    } finally {
-      setSubscribing(false);
-    }
+  // ── Subscribe: DISABLED until Stripe recurring billing is wired ───────────
+  // DO NOT re-enable this without first:
+  //   1. Creating api/subscriptions/creator.js (Stripe Subscription API)
+  //   2. Storing stripe_subscription_id in creator_subscriptions
+  //   3. Handling webhook events for renewal + cancellation
+  function handleSubscribeComingSoon() {
+    toast.info('Creator subscriptions launching soon — stay tuned.');
   }
 
   async function handleCancel() {
@@ -245,34 +227,22 @@ export default function L2CreatorSubscriptionSheet({ creatorId, creatorName, pri
                 Cancel Subscription
               </button>
             </div>
-          ) : existing?.status === 'cancelled' ? (
-            <div className="space-y-3">
-              <div className="bg-white/5 rounded-2xl p-4 text-center">
-                <p className="text-white/50 text-sm">Subscription cancelled {fmtDate(existing.cancelled_at)}</p>
-              </div>
-              <button
-                onClick={handleSubscribe}
-                disabled={subscribing}
-                className="w-full py-4 bg-[#C8962C] rounded-2xl text-black font-black text-base flex items-center justify-center gap-2 disabled:opacity-60 active:scale-[0.98] transition-transform"
-              >
-                {subscribing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Star className="w-5 h-5" />}
-                Resubscribe — {fmt(displayPrice)}/mo
-              </button>
-            </div>
           ) : (
-            <button
-              onClick={handleSubscribe}
-              disabled={subscribing}
-              className="w-full py-4 bg-[#C8962C] rounded-2xl text-black font-black text-base flex items-center justify-center gap-2 disabled:opacity-60 active:scale-[0.98] transition-transform"
-            >
-              {subscribing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Star className="w-5 h-5" />}
-              Subscribe — {fmt(displayPrice)}/mo
-            </button>
+            /* Subscribe button — disabled, coming soon */
+            <div className="space-y-3">
+              <button
+                onClick={handleSubscribeComingSoon}
+                className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-white/40 font-black text-base flex items-center justify-center gap-2 cursor-default"
+              >
+                <Clock className="w-5 h-5" />
+                Coming Soon — {fmt(displayPrice)}/mo
+              </button>
+              <p className="text-white/20 text-xs text-center">
+                Creator subscriptions launching soon with Stripe billing.
+              </p>
+            </div>
           )}
 
-          <p className="text-white/20 text-xs text-center">
-            Subscriptions are managed manually. Stripe integration coming soon.
-          </p>
         </div>
       </div>
     );
@@ -341,7 +311,7 @@ export default function L2CreatorSubscriptionSheet({ creatorId, creatorName, pri
               {tab === 'active' ? 'No active subscriptions' : 'No subscriptions yet'}
             </p>
             <p className="text-white/30 text-xs mt-1">
-              Subscribe to creators from their profile to get exclusive content.
+              Creator subscriptions are launching soon.
             </p>
           </div>
         ) : (
@@ -359,7 +329,7 @@ export default function L2CreatorSubscriptionSheet({ creatorId, creatorName, pri
           <Lock className="w-5 h-5 text-[#C8962C] flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-white font-black text-sm">Want subscribers?</p>
-            <p className="text-white/40 text-xs mt-0.5">Set up your creator profile to start earning.</p>
+            <p className="text-white/40 text-xs mt-0.5">Creator billing launching soon. Set up your profile now.</p>
           </div>
           <button className="px-3 py-1.5 bg-[#C8962C] text-black font-black text-xs rounded-xl">
             Set up
@@ -369,4 +339,3 @@ export default function L2CreatorSubscriptionSheet({ creatorId, creatorName, pri
     </div>
   );
 }
-
