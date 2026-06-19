@@ -325,6 +325,26 @@ export default function PulseMap({ beacons = [], ltgoSignals = [], userLocation,
                 console.warn('[PulseMap] beacon icon registration failed (will fall back to gold dots):', err && err.message || err);
               });
               addLayerStack(map, { reducedMotion, clusterMaxZoom: 13 });
+              // Venue teardrop fallback — re-register any missing pin sprite
+              // on demand. Handles the race where registerVenuePins completes
+              // after Mapbox first tries to render the icon-image expression.
+              if (!map.__hmVenuePinMissingBound) {
+                map.__hmVenuePinMissingBound = true;
+                map.on('styleimagemissing', (ev) => {
+                  if (!ev || !ev.id || !ev.id.startsWith('hm-venue-pin-')) return;
+                  const cat = ev.id.replace('hm-venue-pin-', '');
+                  import('@/components/globe/beaconIconFactory').then(({ buildVenueTeardropAsync, venuePinIconId }) => {
+                    buildVenueTeardropAsync(cat).then((imgData) => {
+                      if (!imgData) return;
+                      try {
+                        if (!map.hasImage(ev.id)) {
+                          map.addImage(ev.id, { width: 52, height: 68, data: new Uint8Array(imgData.data.buffer) }, { pixelRatio: 2 });
+                        }
+                      } catch { /* already added by concurrent handler */ }
+                    }).catch(() => {});
+                  }).catch(() => {});
+                });
+              }
               // D49 Slice 1 — feed both sources from the split FC.
               // .signals → hm-public (atmospheric layer, active broadcasts only)
               // .venues  → hm-venues (geography layer, persistent places)
@@ -362,9 +382,18 @@ export default function PulseMap({ beacons = [], ltgoSignals = [], userLocation,
             src.getClusterExpansionZoom(clusterId, (err, zoom) => {
               if (err) return;
               try {
+                const cur = map.getZoom();
+                // getClusterExpansionZoom returns the zoom at which the cluster
+                // first sub-divides, which can be very low for a large dense
+                // cluster (e.g. all London venues expand at zoom 4).
+                // Always jump at least 3 zoom levels so the tap feels decisive.
+                const target = zoom != null
+                  ? Math.max(zoom, cur + 3)
+                  : Math.min(cur + 4, 16);
+                map.stop();
                 map.flyTo({
                   center: coords,
-                  zoom: zoom != null ? zoom : Math.min(map.getZoom() + 2, 16),
+                  zoom: Math.min(target, 16),
                   duration: reducedMotion ? 0 : 600,
                   essential: true,
                 });
