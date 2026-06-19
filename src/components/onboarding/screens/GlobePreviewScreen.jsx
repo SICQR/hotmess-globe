@@ -41,6 +41,9 @@ export default function GlobePreviewScreen({ onContinue }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // Stamp localStorage on mount — not just on exit. Fixes the 49-user loop where
+    // closing before tapping Continue left onboarding_stage=signed_up forever.
+    try { localStorage.setItem('hm_globe_preview_seen_v1', 'true'); } catch { /* private mode */ }
     trackOnce('globe_preview_seen_session', 'globe_preview_seen', 'onboarding');
     // Stagger content in after canvas has a moment to breathe
     const t = setTimeout(() => setVisible(true), 200);
