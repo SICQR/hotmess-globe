@@ -110,13 +110,29 @@ export default function VenueDiscoveryCards() {
               }}
               aria-label={b.headline}
             >
-              {b.image_url && (
+              {b.image_url ? (
                 <img
                   src={b.image_url}
                   alt=""
                   loading="lazy"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
+              ) : (
+                <div
+                  className="absolute inset-0 w-full h-full"
+                  style={{
+                    background: b.bg_color
+                      ? `linear-gradient(135deg, ${b.bg_color}cc 0%, ${b.bg_color}44 100%)`
+                      : 'linear-gradient(135deg, #1a0533 0%, #0d1117 50%, #0a1628 100%)',
+                  }}
+                >
+                  <span
+                    className="absolute bottom-16 left-4 text-[72px] font-black leading-none select-none"
+                    style={{ color: 'rgba(255,255,255,0.06)' }}
+                  >
+                    {b.headline?.[0]?.toUpperCase()}
+                  </span>
+                </div>
               )}
 
               <div
