@@ -171,7 +171,7 @@ export function useGlobeRealtime() {
         supabase.rpc('get_renderable_beacons_for_viewer', { p_viewer: viewerId }),
         supabase
           .from('pulse_places')
-          .select('slug, name, type, lat, lng, priority, is_active, notes, address, opening_hours, website, phone')
+          .select('slug, name, type, lat, lng, priority, is_active, notes, address, opening_hours, website, phone, beacon_category')
           .eq('is_active', true),
         supabase
           .from('pulse_events')
@@ -203,12 +203,23 @@ export function useGlobeRealtime() {
         club: 'club', sauna: 'sauna', gym: 'gym', cafe: 'cafe',
         clinic: 'clinic', leather: 'leather', cruising: 'cruising', market: 'market',
         recovery: 'aftercare', // recovery places get the aftercare sprite
-        city: 'club',   // city anchors visible at globe scale — paint as club for visibility
+        event_brand: null,     // uses beacon_category stored per-row in DB
+        care: 'aftercare',     // care nodes default to aftercare sprite
+        city: 'club',          // city anchors visible at globe scale
         zone: null, curated: null,
       };
+      // Valid sprite keys recognised by BEACON_VISUALS + Mapbox layer
+      const VALID_SPRITES = new Set([
+        'club', 'sauna', 'gym', 'cafe', 'clinic', 'leather', 'cruising', 'market', 'aftercare'
+      ]);
       const placeBeacons = (placesData || []).map((p: Record<string, unknown>) => {
         const placeType = String(p.type || '').toLowerCase();
-        const sprite = PLACE_TYPE_TO_SPRITE[placeType] ?? null;
+        // Prefer beacon_category stored per-row (set for event_brand + care nodes)
+        // Fall back to type-based lookup for legacy rows without beacon_category set
+        const directCat = p.beacon_category ? String(p.beacon_category).toLowerCase() : null;
+        const sprite = (directCat && VALID_SPRITES.has(directCat))
+          ? directCat
+          : (PLACE_TYPE_TO_SPRITE[placeType] ?? null);
         return {
           id: 'place-' + String(p.slug),
           code: String(p.slug),
