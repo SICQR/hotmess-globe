@@ -1,7 +1,7 @@
 /**
  * GET /api/tickets/payouts-worker
  *
- * Cron: 0 */6 * * *  (every 6 hours)
+ * Cron: every 6 hours (schedule: 0 *-slash-6 * * *)
  *
  * Processes pending ticket sale payouts:
  *   1. Reads all payouts WHERE status='pending'
