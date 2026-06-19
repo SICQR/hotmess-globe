@@ -85,7 +85,7 @@ export const MODES: Record<OSMode, ModeConfig> = {
   },
 };
 
-export const MODE_ORDER: OSMode[] = ['home', 'pulse', 'ghosted', 'market', 'profile', 'more'];
+export const MODE_ORDER: OSMode[] = ['home', 'pulse', 'ghosted', 'market', 'radio', 'more'];
 
 export function getModeFromPath(pathname: string): OSMode {
   // Check exact matches first
