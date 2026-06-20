@@ -67,11 +67,36 @@ export default function Events() {
   const { data: events = [] } = useQuery({
     queryKey: ['events'],
     queryFn: async () => {
-      const beacons = await supabase.from('beacons').select('*').eq(
-        { kind: 'event', status: 'published', active: true },
-        '-event_date'
-      );
-      return beacons;
+      const now = new Date().toISOString();
+      const [{ data: beaconData }, { data: peData }] = await Promise.all([
+        supabase.from('beacons')
+          .select('*')
+          .eq('kind', 'event')
+          .eq('status', 'published')
+          .eq('active', true)
+          .gte('starts_at', now)
+          .order('starts_at', { ascending: true })
+          .limit(100),
+        supabase.from('pulse_events')
+          .select('*')
+          .gte('event_start_at', now)
+          .order('event_start_at', { ascending: true })
+          .limit(100),
+      ]);
+      // Normalise pulse_events to beacon shape expected by EventCard/filters
+      const normalised = (peData || []).map(e => ({
+        ...e,
+        starts_at:  e.event_start_at,
+        event_date: e.event_start_at,
+        ends_at:    e.event_end_at,
+        venue_name: e.place_slug,
+        status:     'published',
+        active:     true,
+        _source:    'pulse',
+      }));
+      const merged = [...(beaconData || []), ...normalised];
+      merged.sort((a, b) => new Date(a.event_date || a.starts_at) - new Date(b.event_date || b.starts_at));
+      return merged;
     }
   });
 
