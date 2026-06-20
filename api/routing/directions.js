@@ -9,6 +9,7 @@ import {
   parseNumber,
   readJsonBody,
   requireGoogleApiKey,
+  requireMapboxToken,
 } from './_utils.js';
 import { bestEffortRateLimit, minuteBucket } from '../_rateLimit.js';
 
@@ -27,6 +28,8 @@ const importGoogle = async () => {
 
   return import('./_google.js');
 };
+
+const importMapbox = () => import('./_mapbox.js');
 
 const validatePoint = (point, name) => {
   const lat = parseNumber(point?.lat);
@@ -132,42 +135,31 @@ export default async function handler(req, res) {
       }
     }
 
-    const { key: googleKey, error: googleErr } = requireGoogleApiKey();
+    const { key: googleKey } = requireGoogleApiKey();
+    const { key: mapboxToken } = requireMapboxToken();
     const trafficAware = String(process.env.GOOGLE_ROUTES_DRIVE_TRAFFIC_AWARE || '').toLowerCase() === 'true';
 
-    // If Google isn't configured, return a straight-line fallback route so we can still keep users in-app.
-    if (googleErr || !googleKey) {
-      const approx = approximateDurationSeconds({ origin, destination, mode });
-      const seconds = approx.seconds;
-      return json(res, 200, {
-        mode,
-        origin,
-        destination,
-        duration_seconds: seconds,
-        distance_meters: approx.distanceMeters,
-        provider: 'approx',
-        polyline: {
-          encoded: null,
-          points: [origin, destination],
-        },
-        steps: [],
-        ttl_seconds: ttlSeconds,
-      });
+    let route = null;
+
+    // Try Google first (if key is configured)
+    if (googleKey) {
+      const { fetchRoutesV2Directions } = await importGoogle();
+      route = await fetchRoutesV2Directions({ apiKey: googleKey, origin, destination, mode, trafficAware });
     }
 
-    const { fetchRoutesV2Directions } = await importGoogle();
+    // Fall back to Mapbox if Google not configured or failed
+    if ((!route || !route.ok) && mapboxToken) {
+      const { fetchMapboxDirections } = await importMapbox();
+      route = await fetchMapboxDirections({ token: mapboxToken, origin, destination, mode });
+    }
 
-    const route = await fetchRoutesV2Directions({
-      apiKey: googleKey,
-      origin,
-      destination,
-      mode,
-      trafficAware,
-    });
-
-    if (!route.ok) {
-      if (strict) {
-        return json(res, 502, { error: route.error || 'Directions request failed', details: route.details || null });
+    // Both providers unavailable or failed — return approximate fallback to keep user in-app
+    if (!route?.ok) {
+      if (strict && (googleKey || mapboxToken)) {
+        return json(res, 502, {
+          error: route?.error || 'Directions request failed',
+          details: route?.details || null,
+        });
       }
 
       const approx = approximateDurationSeconds({ origin, destination, mode });
@@ -185,9 +177,9 @@ export default async function handler(req, res) {
         steps: [],
         ttl_seconds: ttlSeconds,
         warning: {
-          code: 'google_directions_unavailable',
-          message: route.error || 'Directions request failed',
-          details: route.details || null,
+          code: 'directions_unavailable',
+          message: route?.error || 'Directions unavailable',
+          details: route?.details || null,
         },
       });
     }
