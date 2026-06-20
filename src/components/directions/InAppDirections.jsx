@@ -355,7 +355,7 @@ export default function InAppDirections({
 
   useEffect(() => {
     ensureConstellationKeyframes();
-    if (!MAPBOX_TOKEN || !containerRef.current || locationError) return;
+    if (!MAPBOX_TOKEN || !containerRef.current) return;
 
     let cancelled = false;
     let resizeT;
@@ -603,22 +603,21 @@ export default function InAppDirections({
 
       {/* Map — fixed-height. No internal chrome. */}
       <div className="relative h-[260px] mx-4 mt-1 rounded-xl overflow-hidden">
-        {locationError ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/[0.03] border border-white/5 rounded-xl">
-            <div className="text-center p-4">
-              <MapPin className="w-10 h-10 text-white/15 mx-auto mb-2" />
-              <p className="text-white/55 text-sm">{locationError}</p>
-            </div>
-          </div>
-        ) : (
           <div
             ref={containerRef}
             className="absolute inset-0"
             style={{ width: '100%', height: '100%' }}
           />
-        )}
+          {locationError && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm rounded-xl">
+              <div className="text-center p-4">
+                <MapPin className="w-10 h-10 text-white/15 mx-auto mb-2" />
+                <p className="text-white/55 text-sm">{locationError}</p>
+              </div>
+            </div>
+          )}
 
-        {isLoading && !locationError && !originIsFar && (
+        {isLoading && !originIsFar && (
           <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-black/75 px-2.5 py-1 rounded-full text-[10px] text-white/55">
             <Loader2 className="w-3 h-3 animate-spin" />
             <span>Loading route…</span>
@@ -628,7 +627,7 @@ export default function InAppDirections({
         {/* D14 §0 far-origin contextual overlay. Replaces the route corridor
             with a destination-only district view + a quiet message. HOTMESS
             register (D15) — no travel-app phrasing, no "directions disabled". */}
-        {originIsFar && !locationError && (
+        {originIsFar && (
           <div className="absolute top-2 left-2 right-2 bg-black/75 backdrop-blur-md px-3 py-2 rounded-xl border border-white/8">
             <p className="text-white text-xs font-bold leading-snug">
               You're not near this signal.

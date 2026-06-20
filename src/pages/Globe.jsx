@@ -849,7 +849,7 @@ export default function GlobePage({ embedded = false }) {
         )}
         {/* PulseVenueDrawer — browseable venue+event list above the nav */}
         <PulseVenueDrawer
-          navHeight={56}
+          navHeight={64}
           places={Array.isArray(pulsePlaces) ? pulsePlaces : []}
           eventBeacons={[
             // Curated events from pulse_events (OutOut ingest + manual seeds)
@@ -862,6 +862,7 @@ export default function GlobePage({ embedded = false }) {
               geo_lng:         e.lng,
               starts_at:       e.starts_at,
               ends_at:         e.ends_at,
+              image_url:       e.image_url || null,
             })),
             // User-dropped event beacons from the live map
             ...(Array.isArray(mapSignals) ? mapSignals : [])
