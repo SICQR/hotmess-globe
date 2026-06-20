@@ -24,10 +24,10 @@ export default async function handler(req, res) {
   const user = await getUser(req);
   if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-  // NEVER select geog_precise
+  // NEVER select geog_precise. freshness is view-computed — derive from created_at.
   const { data, error } = await supabase
     .from('person_signals')
-    .select('id, signal_type, fuzz_radius_m, area_hint, vibe_note, expires_at, freshness')
+    .select('id, signal_type, fuzz_radius_m, area_hint, vibe_note, expires_at, created_at')
     .eq('user_id', user.id)
     .eq('state', 'active')
     .gt('expires_at', new Date().toISOString())
@@ -42,6 +42,9 @@ export default async function handler(req, res) {
     return res.status(200).json({ active: false });
   }
 
+  const ageMs = Date.now() - new Date(data.created_at).getTime();
+  const freshness = ageMs < 3_600_000 ? 'fresh' : ageMs < 7_200_000 ? 'normal' : 'fading';
+
   return res.status(200).json({
     active: true,
     signal: {
@@ -51,7 +54,7 @@ export default async function handler(req, res) {
       area_hint: data.area_hint,
       vibe_note: data.vibe_note,
       expires_at: data.expires_at,
-      freshness: data.freshness,
+      freshness,
     },
   });
 }
