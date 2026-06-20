@@ -976,26 +976,72 @@ export default function PulseMap({ beacons = [], ltgoSignals = [], userLocation,
   }, [userLocation]);
 
 
-  // ── LTGO diamond markers ─────────────────────────────────────────────────────
-  // Renders a pulsing violet diamond for each active LTGO signal.
-  // Custom HTML markers — not in the beacon layer stack (different visual grammar).
+  // ── LTGO comet markers ───────────────────────────────────────────────────────
+  // "Comet, not line" — present position + directional lean + fading tail.
+  // Privacy contract: fuzz radius only. Heading is derived from signal ID hash
+  // (stable but not real) with gentle sinusoidal drift. No traceable route.
   useEffect(() => {
     const map = mapInstanceRef.current;
     const mapboxgl = mapboxglRef.current;
     if (!map || !mapboxgl) return;
 
-    // Inject CSS once
-    if (!document.getElementById('hm-ltgo-style')) {
-      const style = document.createElement('style');
-      style.id = 'hm-ltgo-style';
-      style.textContent = `
-        @keyframes ltgoBreathe {
-          0%, 100% { transform: scale(1); opacity: var(--ltgo-op, 1); }
-          50% { transform: scale(1.1); opacity: calc(var(--ltgo-op, 1) * 0.8); }
-        }
-        .hm-ltgo-diamond { animation: ltgoBreathe 2.5s ease-in-out infinite; }
-      `;
-      document.head.appendChild(style);
+    // Stable hash → base heading angle. Not a real direction.
+    function hashAngle(id) {
+      let h = 0;
+      for (let i = 0; i < (id || '').length; i++) {
+        h = Math.imul(h * 31 + id.charCodeAt(i), 1) | 0;
+      }
+      return ((h >>> 0) / 0xffffffff) * Math.PI * 2;
+    }
+
+    // Single RAF loop redraws all active comet canvases each frame
+    const cometRafMap = new Map(); // id → { canvas, ctx, angle, phase, opacity }
+    let rafId = null;
+
+    function drawOne({ canvas, ctx, angle, phase, opacity }) {
+      const dpr = window.devicePixelRatio || 1;
+      const W = canvas.width / dpr;
+      const H = canvas.height / dpr;
+      const cx = W / 2;
+      const cy = H / 2;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      const t = Date.now() / 1000;
+      const liveAngle = angle + Math.sin(t * 0.7 + phase) * 0.18;
+      const tailLen = 30 + 6 * Math.sin(t * 1.1 + phase);
+      // Tail — behind the comet (opposite of travel direction)
+      const tx = cx - Math.cos(liveAngle) * tailLen;
+      const ty = cy - Math.sin(liveAngle) * tailLen;
+      const tailGrad = ctx.createLinearGradient(cx, cy, tx, ty);
+      tailGrad.addColorStop(0, `rgba(191,90,242,${0.55 * opacity})`);
+      tailGrad.addColorStop(1, 'rgba(191,90,242,0)');
+      ctx.strokeStyle = tailGrad;
+      ctx.lineWidth = 7;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(tx, ty);
+      ctx.stroke();
+      // Head glow
+      const headGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 15);
+      headGrad.addColorStop(0, `rgba(191,90,242,${0.45 * opacity})`);
+      headGrad.addColorStop(1, 'rgba(191,90,242,0)');
+      ctx.fillStyle = headGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 15, 0, Math.PI * 2);
+      ctx.fill();
+      // Core dot
+      ctx.fillStyle = `rgba(220,160,255,${opacity})`;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function rafLoop() {
+      cometRafMap.forEach((data) => drawOne(data));
+      rafId = requestAnimationFrame(rafLoop);
     }
 
     // Remove old markers
@@ -1004,43 +1050,51 @@ export default function PulseMap({ beacons = [], ltgoSignals = [], userLocation,
 
     (ltgoSignals || []).forEach((sig) => {
       if (!Number.isFinite(sig.lat) || !Number.isFinite(sig.lng)) return;
-      const opacity = sig.freshness === 'fresh' ? 1.0 : sig.freshness === 'normal' ? 0.6 : 0.25;
+      const opacity = sig.freshness === 'fresh' ? 1.0 : sig.freshness === 'normal' ? 0.65 : 0.3;
+      const radiusPx = Math.max(22, Math.min(90, (sig.fuzz_radius_m || 200) / 10));
 
-      // Fuzz disc (radius circle)
+      // Fuzz disc — the only honest public footprint
       const discEl = document.createElement('div');
-      const radiusPx = Math.max(20, Math.min(80, (sig.fuzz_radius_m || 200) / 10));
-      discEl.style.cssText = `
-        width:${radiusPx * 2}px;height:${radiusPx * 2}px;
-        border-radius:50%;
-        border:1.5px dashed rgba(191,90,242,0.35);
-        background:rgba(191,90,242,0.06);
-        pointer-events:none;
-      `;
+      discEl.style.cssText = [
+        `width:${radiusPx * 2}px`, `height:${radiusPx * 2}px`,
+        'border-radius:50%',
+        'border:1.5px dashed rgba(191,90,242,0.3)',
+        'background:rgba(191,90,242,0.04)',
+        'pointer-events:none',
+      ].join(';');
       try {
         const discMarker = new mapboxgl.Marker({ element: discEl, anchor: 'center' })
-          .setLngLat([sig.lng, sig.lat])
-          .addTo(map);
+          .setLngLat([sig.lng, sig.lat]).addTo(map);
         ltgoMarkersRef.current.push(discMarker);
       } catch (e) {}
 
-      // Diamond marker
-      const el = document.createElement('div');
-      el.className = 'hm-ltgo-diamond';
-      el.style.cssText = `width:36px;height:36px;cursor:pointer;--ltgo-op:${opacity};`;
-      el.innerHTML = `<svg width="36" height="36" viewBox="-18 -18 36 36" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="0" cy="0" r="16" fill="rgba(191,90,242,0.1)"/>
-        <rect x="-10" y="-10" width="20" height="20" rx="2.5" fill="#BF5AF2" transform="rotate(45)" opacity="${opacity}"/>
-        <rect x="-5.5" y="-5.5" width="11" height="11" rx="1.5" fill="rgba(0,0,0,0.32)" transform="rotate(45)" opacity="${opacity}"/>
-      </svg>`;
+      // Comet canvas marker
+      const SIZE = 80;
+      const dpr = window.devicePixelRatio || 1;
+      const canvas = document.createElement('canvas');
+      canvas.width = SIZE * dpr;
+      canvas.height = SIZE * dpr;
+      canvas.style.width = `${SIZE}px`;
+      canvas.style.height = `${SIZE}px`;
+      canvas.style.cursor = 'pointer';
+      const ctx = canvas.getContext('2d');
+      const angle = hashAngle(sig.id);
+      const phase = (hashAngle(sig.id + 'p') / Math.PI) * 3; // independent phase offset
+      cometRafMap.set(sig.id, { canvas, ctx, angle, phase, opacity });
       try {
-        const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
-          .setLngLat([sig.lng, sig.lat])
-          .addTo(map);
-        ltgoMarkersRef.current.push(marker);
+        const cometMarker = new mapboxgl.Marker({ element: canvas, anchor: 'center' })
+          .setLngLat([sig.lng, sig.lat]).addTo(map);
+        ltgoMarkersRef.current.push(cometMarker);
       } catch (e) {}
     });
 
+    if (cometRafMap.size > 0) {
+      rafId = requestAnimationFrame(rafLoop);
+    }
+
     return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      cometRafMap.clear();
       (ltgoMarkersRef.current || []).forEach((m) => { try { m.remove(); } catch (e) {} });
       ltgoMarkersRef.current = [];
     };
