@@ -213,7 +213,7 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
   // ─────────────────────────────────────────────────────────────────────────
   'product': {
     id: 'product',
-    title: 'Product',
+    title: '',
     height: 'large',
     auth: false,
     deepLinkParams: ['productId'],
@@ -441,7 +441,7 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
   // ─────────────────────────────────────────────────────────────────────────
   'beacon': {
     id: 'beacon',
-    title: 'Beacon',
+    title: '',
     height: 'large',
     auth: true,
     deepLinkParams: ['beaconId'],
