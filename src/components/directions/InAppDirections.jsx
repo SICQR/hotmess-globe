@@ -750,7 +750,7 @@ export function DirectionsButton({
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 40, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg bg-black border-t border-[#C8962C]/40 sm:border sm:rounded-2xl overflow-hidden"
+              className="w-full max-w-lg bg-black border-t border-[#C8962C]/40 sm:border sm:rounded-2xl overflow-hidden max-h-[90vh] flex flex-col"
             >
               {/* Drag handle — visual cue that backdrop tap dismisses; matches
                   L2SheetContainer's top handle so the standalone modal feels
