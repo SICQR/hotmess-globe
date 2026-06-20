@@ -21,6 +21,7 @@ import { useGlobeRealtime } from '@/hooks/useGlobeRealtime';
 import { useProfileOpener } from '@/lib/profile';
 import LocationShopPanel from '../components/globe/LocationShopPanel';
 import { usePulsePlacesByType } from '@/hooks/usePulsePlaces';
+import { usePulseEvents } from '@/hooks/usePulseEvents';
 import { useVenueIntensity } from '@/hooks/useVenueIntensity';
 import BeaconDropModal from '../components/globe/BeaconDropModal';
 import { MapPin } from 'lucide-react';
@@ -180,6 +181,9 @@ export default function GlobePage({ embedded = false }) {
     if (!rawBeaconsLoading) setBeaconsLoading(false);
   }, [rawBeaconsLoading]);
 
+  // Map cold-start skeleton
+  const [mapLoaded, setMapLoaded] = useState(false);
+
   const onlineMemberCount = useRightNowCount();
   const { locations: realtimeLocations } = useRealtimeLocations();
   const { routes: realtimeRoutes } = useRealtimeRoutes();
@@ -250,6 +254,7 @@ export default function GlobePage({ embedded = false }) {
   }, [__location.state]);
 
   const { recovery, allPlaces: pulsePlaces } = usePulsePlacesByType();
+  const { events: pulseEvents } = usePulseEvents();
   const { intensityMap: venueIntensity } = useVenueIntensity();
 
   const { data: venueVibes } = useQuery({
@@ -616,7 +621,24 @@ export default function GlobePage({ embedded = false }) {
               }
             }}
             onLocalFocus={(focus) => setLocalFocus(focus)}
+            onReady={() => setMapLoaded(true)}
           />
+        </div>
+
+        {/* Map cold-start skeleton — covers the Mapbox white flash on first load */}
+        <div
+          className="pointer-events-none absolute inset-0 z-[5] flex flex-col items-center justify-center transition-opacity duration-700"
+          style={{ opacity: mapLoaded ? 0 : 1, background: '#050507' }}
+          aria-hidden="true"
+        >
+          <div className="relative flex items-center justify-center">
+            <div className="absolute w-24 h-24 rounded-full border border-[#C8962C]/30 animate-ping" />
+            <div className="absolute w-16 h-16 rounded-full border border-[#C8962C]/20 animate-ping" style={{ animationDelay: '0.3s' }} />
+            <div className="w-8 h-8 rounded-full bg-[#C8962C]/10 border border-[#C8962C]/40 flex items-center justify-center">
+              <div className="w-2 h-2 rounded-full bg-[#C8962C] animate-pulse" />
+            </div>
+          </div>
+          <p className="mt-6 text-[10px] font-black uppercase tracking-[0.3em] text-white/20">PULSE</p>
         </div>
 
         {/* Map mode is search-first: the big PULSE wordmark + tagline collide with the
@@ -827,20 +849,34 @@ export default function GlobePage({ embedded = false }) {
         )}
         {/* PulseVenueDrawer — browseable venue+event list above the nav */}
         <PulseVenueDrawer
+          navHeight={56}
           places={Array.isArray(pulsePlaces) ? pulsePlaces : []}
-          eventBeacons={(Array.isArray(mapSignals) ? mapSignals : [])
-            .filter(b => b.type === 'event')
-            .map(b => ({
-              id:              b.id,
-              title:           b.title || '',
-              type:            'event',
-              beacon_category: b.beacon_category || 'event',
-              geo_lat:         b.geo_lat,
-              geo_lng:         b.geo_lng,
-              starts_at:       b.starts_at || null,
-              ends_at:         b.ends_at   || null,
-            }))
-          }
+          eventBeacons={[
+            // Curated events from pulse_events (OutOut ingest + manual seeds)
+            ...pulseEvents.map(e => ({
+              id:              e.id,
+              title:           e.title,
+              type:            'event' as const,
+              beacon_category: e.beacon_category || 'event',
+              geo_lat:         e.lat,
+              geo_lng:         e.lng,
+              starts_at:       e.starts_at,
+              ends_at:         e.ends_at,
+            })),
+            // User-dropped event beacons from the live map
+            ...(Array.isArray(mapSignals) ? mapSignals : [])
+              .filter(b => b.type === 'event')
+              .map(b => ({
+                id:              b.id,
+                title:           b.title || '',
+                type:            'event' as const,
+                beacon_category: b.beacon_category || 'event',
+                geo_lat:         b.geo_lat,
+                geo_lng:         b.geo_lng,
+                starts_at:       b.starts_at || null,
+                ends_at:         b.ends_at   || null,
+              })),
+          ]}
           onSelect={(beacon) => {
             // Fly camera to the selected venue/event then open its sheet
             if (pulseApiRef.current && pulseApiRef.current.flyTo) {
