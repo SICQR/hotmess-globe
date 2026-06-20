@@ -247,6 +247,18 @@ export default function InAppDirections({
   );
   const originIsFar = Number.isFinite(distanceKm) && distanceKm > FAR_THRESHOLD_KM;
 
+  // When the user is far or has no GPS, fabricate a local origin ~1.3km NW of
+  // the destination so we can still fetch meaningful steps for the venue area.
+  // D14 §0 forbids a planet-spanning line — this stays local, so it's fine.
+  // The YOU pin is still suppressed when originIsFar (it'd be dishonest).
+  const previewOrigin = useMemo(() => {
+    if (!destination) return null;
+    return { lat: destination.lat + 0.012, lng: destination.lng - 0.008 };
+  }, [destination?.lat, destination?.lng]);
+
+  // fetchOrigin: real GPS when nearby, fabricated local point otherwise.
+  const fetchOrigin = (!origin || originIsFar) ? previewOrigin : origin;
+
   // Fetch constellation candidates. Reads from base `beacons` so curated/care
   // metadata stays intact (pulse_signals view strips it).
   // - Near origin: bbox spans origin↔destination + 600m pad (route corridor).
@@ -304,12 +316,12 @@ export default function InAppDirections({
   // spans the planet. Saves API calls + prevents the route polyline from
   // obscuring the destination view.
   const modeConfig = TRAVEL_MODES.find(m => m.id === mode);
-  const canFetch = !!origin && !!destination && !originIsFar;
+  const canFetch = !!fetchOrigin && !!destination;
 
   const { data: directions, isLoading } = useQuery({
-    queryKey: ['directions', mode, origin?.lat, origin?.lng, destination?.lat, destination?.lng],
+    queryKey: ['directions', mode, fetchOrigin?.lat, fetchOrigin?.lng, destination?.lat, destination?.lng],
     queryFn: () => fetchRoutingDirections({
-      origin, destination,
+      origin: fetchOrigin, destination,
       mode: modeConfig?.apiMode || 'WALK',
       ttlSeconds: 120
     }),
@@ -322,7 +334,6 @@ export default function InAppDirections({
   // D14 §0: when origin is far, route is empty — no straight-line fallback,
   // no polyline at all. The destination view is the whole rendering.
   const routeLngLat = useMemo(() => {
-    if (originIsFar) return [];
     const encoded = directions?.polyline?.encoded;
     if (typeof encoded === 'string' && encoded.trim()) {
       return decodeGooglePolyline(encoded).map((p) => [p.lng, p.lat]);
@@ -333,7 +344,8 @@ export default function InAppDirections({
         .filter((p) => Number.isFinite(p?.lat) && Number.isFinite(p?.lng))
         .map((p) => [p.lng, p.lat]);
     }
-    if (origin && destination) {
+    // Straight-line fallback only when user is nearby (avoids planet-spanning line).
+    if (!originIsFar && origin && destination) {
       return [[origin.lng, origin.lat], [destination.lng, destination.lat]];
     }
     return [];
@@ -570,13 +582,8 @@ export default function InAppDirections({
           </div>
         )}
         {originIsFar && (
-          <div className="absolute top-2 left-2 right-2 bg-black/75 backdrop-blur-md px-3 py-2 rounded-xl border border-white/8">
-            <p className="text-white text-xs font-bold leading-snug">
-              You're not near this signal.
-            </p>
-            <p className="text-white/50 text-[11px] mt-0.5 leading-snug">
-              Map's around the destination. Plan when nearby.
-            </p>
+          <div className="absolute top-2 left-2 bg-black/70 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/10">
+            <p className="text-white/55 text-[10px] font-bold tracking-[0.06em]">Area preview</p>
           </div>
         )}
       </div>
@@ -594,7 +601,7 @@ export default function InAppDirections({
             </span>
           </div>
           {/* ETA pill inline with header */}
-          {!originIsFar && (duration || distance) && (
+          {(duration || distance) && (
             <div className="flex items-center gap-2 text-white/60">
               {duration && (
                 <div className="flex items-center gap-1">
@@ -655,7 +662,7 @@ export default function InAppDirections({
       </div>
 
       {/* ── TURN-BY-TURN STEPS ── */}
-      {!originIsFar && directions?.steps?.length > 0 && (
+      {directions?.steps?.length > 0 && (
         <div className="px-4 pb-6 mt-1">
           <p className="text-[10px] font-black uppercase tracking-[0.14em] text-white/30 mb-2">
             Step by step
@@ -694,7 +701,7 @@ export default function InAppDirections({
       )}
 
       {/* Far-origin: no steps, just a bottom spacer. */}
-      {(originIsFar || !directions?.steps?.length) && <div className="h-4" />}
+      {!directions?.steps?.length && <div className="h-4" />}
     </div>
   );
 }
