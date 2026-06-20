@@ -29,6 +29,39 @@ const mapboxProfile = (mode) => {
   return null;
 };
 
+// Post-process: merge consecutive unnamed-path steps.
+// Mapbox labels unnamed pedestrian footways as "the walkway" which is noise.
+// Consecutive unnamed steps get collapsed into one "Continue along the path."
+// instruction with summed distance + duration.
+const UNNAMED_STEP_RE = /\b(walkway|footway|path|pedestrian)\b/i;
+const ARRIVAL_RE = /\b(destination|arrive)\b/i;
+
+const mergeUnnamedSteps = (rawSteps) => {
+  const out = [];
+  let buf = null;
+  for (const step of rawSteps) {
+    const txt = step.instruction || '';
+    const isUnnamed = UNNAMED_STEP_RE.test(txt) && !ARRIVAL_RE.test(txt);
+    if (isUnnamed) {
+      if (buf) {
+        buf.distance_meters = (buf.distance_meters || 0) + (step.distance_meters || 0);
+        buf.duration_seconds = (buf.duration_seconds || 0) + (step.duration_seconds || 0);
+      } else {
+        buf = {
+          instruction: 'Continue along the path.',
+          distance_meters: step.distance_meters || 0,
+          duration_seconds: step.duration_seconds || 0,
+        };
+      }
+    } else {
+      if (buf) { out.push(buf); buf = null; }
+      out.push(step);
+    }
+  }
+  if (buf) out.push(buf);
+  return out;
+};
+
 export const fetchMapboxDirections = async ({ token, origin, destination, mode }) => {
   const profile = mapboxProfile(mode);
   if (!profile) return { ok: false, error: `Unsupported mode: ${mode}` };
@@ -71,7 +104,7 @@ export const fetchMapboxDirections = async ({ token, origin, destination, mode }
   const encoded_polyline = typeof route.geometry === 'string' ? route.geometry : null;
 
   const stepsRaw = route?.legs?.[0]?.steps;
-  const steps = Array.isArray(stepsRaw)
+  const rawMapped = Array.isArray(stepsRaw)
     ? stepsRaw
         .map((step) => {
           const instruction = step?.maneuver?.instruction || null;
@@ -86,6 +119,8 @@ export const fetchMapboxDirections = async ({ token, origin, destination, mode }
         })
         .filter(Boolean)
     : [];
+
+  const steps = mergeUnnamedSteps(rawMapped);
 
   return {
     ok: true,
