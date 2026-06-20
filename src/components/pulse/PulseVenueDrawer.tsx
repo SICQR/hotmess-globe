@@ -29,6 +29,7 @@ export interface DrawerBeacon {
   ends_at?: string | null;
   address?: string | null;
   description?: string | null;
+  image_url?: string | null;
 }
 
 interface Props {
@@ -304,6 +305,7 @@ export default function PulseVenueDrawer({ places, eventBeacons, onSelect, navHe
                   <ListRow
                     key={ev.id}
                     dot={PINK}
+                    thumb={ev.image_url}
                     primary={ev.title}
                     secondary={fmtDate(ev.starts_at)}
                     onClick={() => { onSelect(ev); snapTo('peek'); }}
@@ -376,9 +378,10 @@ function SectionHeader({ icon, label, className = '' }: { icon: React.ReactNode;
 }
 
 function ListRow({
-  dot, primary, secondary, badge, badgeColor, onClick, onDirections,
+  dot, thumb, primary, secondary, badge, badgeColor, onClick, onDirections,
 }: {
   dot: string;
+  thumb?: string | null;
   primary: string;
   secondary?: string;
   badge?: string;
@@ -397,10 +400,14 @@ function ListRow({
       onClick={onClick}
       className="flex-1 text-left flex items-center gap-3 p-3 rounded-xl active:opacity-70"
     >
-      <div
-        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-        style={{ background: dot, boxShadow: `0 0 6px ${dot}66` }}
-      />
+      {thumb ? (
+        <img src={thumb} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+      ) : (
+        <div
+          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+          style={{ background: dot, boxShadow: `0 0 6px ${dot}66` }}
+        />
+      )}
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-white truncate">{primary}</p>
         {secondary && (
