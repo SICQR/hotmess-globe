@@ -7,10 +7,12 @@ import {
   Footprints,
   Bike,
   Car,
+  Train,
   Moon,
   Clock,
   MapPin,
   Loader2,
+  ChevronRight,
   ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -54,9 +56,10 @@ import { cn } from '@/lib/utils';
 
 // Mode-chip reframe (D14 §3). id/apiMode stable for backward compat.
 const TRAVEL_MODES = [
-  { id: 'foot',  label: 'Walk',        subtitle: 'Quiet, simple, present',   icon: Footprints, apiMode: 'WALK',    color: '#39FF14' },
-  { id: 'bike',  label: 'Fastest',     subtitle: 'You have somewhere to be', icon: Bike,       apiMode: 'BICYCLE', color: '#00C2E0' },
-  { id: 'drive', label: 'Night Route', subtitle: 'Safer late-night path',    icon: Moon,       apiMode: 'DRIVE',   color: '#C8962C' },
+  { id: 'foot',    label: 'Walk',        subtitle: 'Quiet, simple, present',   icon: Footprints, apiMode: 'WALK',    color: '#39FF14' },
+  { id: 'transit', label: 'Tube',        subtitle: 'Underground & bus',         icon: Train,      apiMode: 'TRANSIT', color: '#E84040' },
+  { id: 'bike',    label: 'Fastest',     subtitle: 'You have somewhere to be', icon: Bike,       apiMode: 'BICYCLE', color: '#00C2E0' },
+  { id: 'drive',   label: 'Night Route', subtitle: 'Safer late-night path',    icon: Moon,       apiMode: 'DRIVE',   color: '#C8962C' },
 ];
 
 // Brand colours — locked, must match mapboxLayerStack categories on the globe.
@@ -543,90 +546,29 @@ export default function InAppDirections({
   // → tab row → quiet body. No X, no max/min, no inner border.
   return (
     <div className={cn('flex flex-col', className)}>
-      {/* Header — chip + heading + address. Matches cluster preview. */}
-      <div className="px-4 pt-4 pb-2">
-        <div className="flex items-center gap-2 mb-2">
-          <span
-            className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border tracking-[0.14em]"
-            style={{ color: '#C8962C', borderColor: 'rgba(200,150,44,0.25)', backgroundColor: 'rgba(200,150,44,0.08)' }}
-          >
-            <Navigation className="w-2.5 h-2.5" />
-            route
-          </span>
-        </div>
-        <h2 className="text-white font-black text-xl leading-tight">
-          {destinationName || 'Directions'}
-        </h2>
-        {destinationAddress && (
-          <p className="text-white/55 text-sm mt-1 leading-snug truncate">
-            {destinationAddress}
-          </p>
-        )}
-      </div>
 
-      {/* Mode chips — same border-weight + radius as cluster's primary button.
-          Subtitle under active mode carries the D14 §3 emotional cue. */}
-      <div className="px-4 pt-2 pb-2 flex flex-col gap-1.5">
-        <div className="flex gap-1.5">
-          {TRAVEL_MODES.map((m) => (
-            <button
-              key={m.id}
-              onClick={() => setMode(m.id)}
-              className={cn(
-                'flex-1 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl text-xs font-bold border active:scale-95 transition-transform',
-                mode === m.id
-                  ? 'bg-white/10 border-white/25 text-white'
-                  : 'bg-white/[0.03] border-white/10 text-white/55'
-              )}
-            >
-              <m.icon className="w-3.5 h-3.5" style={{ color: mode === m.id ? m.color : undefined }} />
-              <span>{m.label}</span>
-            </button>
-          ))}
-          {/* Uber chip — external eject, outline-only to signal "leaves the app". */}
-          <button
-            onClick={() => uberUrl && window.open(uberUrl, '_blank')}
-            disabled={!uberUrl}
-            className="flex items-center justify-center gap-1 px-2.5 py-2.5 rounded-xl text-xs font-bold border border-white/10 bg-transparent text-white/45 active:scale-95 transition-transform"
-          >
-            <Car className="w-3.5 h-3.5" />
-            <span>Uber</span>
-            <ExternalLink className="w-2.5 h-2.5 opacity-50" />
-          </button>
-        </div>
-        {modeConfig?.subtitle && (
-          <p className="text-[10px] text-white/40 text-center tracking-[0.08em]">
-            {modeConfig.subtitle}
-          </p>
-        )}
-      </div>
-
-      {/* Map — fixed-height. No internal chrome. */}
-      <div className="relative h-[260px] mx-4 mt-1 rounded-xl overflow-hidden">
-          <div
-            ref={containerRef}
-            className="absolute inset-0"
-            style={{ width: '100%', height: '100%' }}
-          />
-          {locationError && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm rounded-xl">
-              <div className="text-center p-4">
-                <MapPin className="w-10 h-10 text-white/15 mx-auto mb-2" />
-                <p className="text-white/55 text-sm">{locationError}</p>
-              </div>
+      {/* ── MAP FIRST — visible the moment the sheet snaps open ── */}
+      <div className="relative h-[240px] mx-4 mt-3 rounded-xl overflow-hidden flex-shrink-0">
+        <div
+          ref={containerRef}
+          className="absolute inset-0"
+          style={{ width: '100%', height: '100%' }}
+        />
+        {/* Location error overlay — shown above the map, not instead of it */}
+        {locationError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm rounded-xl">
+            <div className="text-center p-4">
+              <MapPin className="w-10 h-10 text-white/15 mx-auto mb-2" />
+              <p className="text-white/55 text-sm">{locationError}</p>
             </div>
-          )}
-
+          </div>
+        )}
         {isLoading && !originIsFar && (
           <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-black/75 px-2.5 py-1 rounded-full text-[10px] text-white/55">
             <Loader2 className="w-3 h-3 animate-spin" />
             <span>Loading route…</span>
           </div>
         )}
-
-        {/* D14 §0 far-origin contextual overlay. Replaces the route corridor
-            with a destination-only district view + a quiet message. HOTMESS
-            register (D15) — no travel-app phrasing, no "directions disabled". */}
         {originIsFar && (
           <div className="absolute top-2 left-2 right-2 bg-black/75 backdrop-blur-md px-3 py-2 rounded-xl border border-white/8">
             <p className="text-white text-xs font-bold leading-snug">
@@ -639,25 +581,120 @@ export default function InAppDirections({
         )}
       </div>
 
-      {/* ETA row — terse, cluster-style. No density label, no ranking copy
-          (D14 §4.5). The constellation does the talking. Suppressed when
-          origin is far — distance / duration aren't meaningful information
-          when the user isn't moving toward the destination tonight. */}
-      {!originIsFar && (
-        <div className="px-4 pt-3 pb-4 flex items-center gap-3">
-          {duration && (
-            <div className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-white/40" />
-              <span className="text-sm font-bold text-white">{duration}</span>
+      {/* ── HEADER — chip + venue name + address ── */}
+      <div className="px-4 pt-3 pb-1">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span
+              className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border tracking-[0.14em]"
+              style={{ color: '#C8962C', borderColor: 'rgba(200,150,44,0.25)', backgroundColor: 'rgba(200,150,44,0.08)' }}
+            >
+              <Navigation className="w-2.5 h-2.5" />
+              route
+            </span>
+          </div>
+          {/* ETA pill inline with header */}
+          {!originIsFar && (duration || distance) && (
+            <div className="flex items-center gap-2 text-white/60">
+              {duration && (
+                <div className="flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-white/35" />
+                  <span className="text-sm font-black text-white">{duration}</span>
+                </div>
+              )}
+              {distance && (
+                <span className="text-xs text-white/40 tabular-nums">{distance}</span>
+              )}
             </div>
           )}
-          {distance && (
-            <span className="text-white/40 text-xs tabular-nums">{distance}</span>
-          )}
+        </div>
+        <h2 className="text-white font-black text-xl leading-tight mt-1.5">
+          {destinationName || 'Directions'}
+        </h2>
+        {destinationAddress && (
+          <p className="text-white/45 text-sm mt-0.5 leading-snug truncate">
+            {destinationAddress}
+          </p>
+        )}
+      </div>
+
+      {/* ── MODE CHIPS — Walk / Tube / Fastest / Night Route + Uber ── */}
+      <div className="px-4 pt-2 pb-2 flex flex-col gap-1.5">
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+          {TRAVEL_MODES.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => setMode(m.id)}
+              className={cn(
+                'flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold border active:scale-95 transition-transform',
+                mode === m.id
+                  ? 'bg-white/10 border-white/25 text-white'
+                  : 'bg-white/[0.03] border-white/10 text-white/50'
+              )}
+            >
+              <m.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: mode === m.id ? m.color : undefined }} />
+              <span>{m.label}</span>
+            </button>
+          ))}
+          {/* Uber — external eject. Outline-only signals "leaves the app". */}
+          <button
+            onClick={() => uberUrl && window.open(uberUrl, '_blank')}
+            disabled={!uberUrl}
+            className="flex-shrink-0 flex items-center justify-center gap-1 px-2.5 py-2.5 rounded-xl text-xs font-bold border border-white/10 bg-transparent text-white/40 active:scale-95 transition-transform"
+          >
+            <Car className="w-3.5 h-3.5" />
+            <span>Uber</span>
+            <ExternalLink className="w-2.5 h-2.5 opacity-50" />
+          </button>
+        </div>
+        {modeConfig?.subtitle && (
+          <p className="text-[10px] text-white/35 text-center tracking-[0.08em]">
+            {modeConfig.subtitle}
+          </p>
+        )}
+      </div>
+
+      {/* ── TURN-BY-TURN STEPS ── */}
+      {!originIsFar && directions?.steps?.length > 0 && (
+        <div className="px-4 pb-6 mt-1">
+          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-white/30 mb-2">
+            Step by step
+          </p>
+          <div className="flex flex-col rounded-xl overflow-hidden border border-white/[0.07]">
+            {directions.steps.map((step, i) => (
+              <div
+                key={i}
+                className="flex items-start gap-3 px-3 py-3 border-b border-white/[0.05] last:border-0 bg-white/[0.02]"
+              >
+                {/* Step number */}
+                <div
+                  className="w-5 h-5 mt-0.5 rounded-full flex items-center justify-center flex-shrink-0 border border-white/10"
+                  style={{ background: i === 0 ? `${modeConfig?.color}22` : undefined }}
+                >
+                  <span className="text-[9px] font-black" style={{ color: modeConfig?.color || 'rgba(255,255,255,0.4)' }}>
+                    {i + 1}
+                  </span>
+                </div>
+                {/* Instruction + distance */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-white/90 leading-snug">{step.instruction}</p>
+                  {(step.distance_meters != null || step.duration_seconds != null) && (
+                    <p className="text-[11px] text-white/35 mt-0.5 tabular-nums">
+                      {step.distance_meters != null ? formatDistance(step.distance_meters) : ''}
+                      {step.distance_meters != null && step.duration_seconds != null ? ' · ' : ''}
+                      {step.duration_seconds != null ? formatDuration(step.duration_seconds) : ''}
+                    </p>
+                  )}
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-white/15 mt-0.5 flex-shrink-0" />
+              </div>
+            ))}
+          </div>
         </div>
       )}
-      {/* Far-origin spacer so the sheet doesn't slam into the map's bottom edge. */}
-      {originIsFar && <div className="h-4" />}
+
+      {/* Far-origin: no steps, just a bottom spacer. */}
+      {(originIsFar || !directions?.steps?.length) && <div className="h-4" />}
     </div>
   );
 }
