@@ -17,6 +17,7 @@ import {
   MessageCircle,
   Loader2, MoreVertical, Flag, Ban, X, Ghost,
   Footprints, Bike, Car, Heart, Video, ShoppingBag, Music,
+  Sparkles, Copy, CheckCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
@@ -153,6 +154,11 @@ export default function L2ProfileSheet({ email, uid, id }) {
   const [reportReason, setReportReason] = useState('');
   const [isBlocking, setIsBlocking] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
+  const [wingmanOpen, setWingmanOpen] = useState(false);
+  const [wingmanLoading, setWingmanLoading] = useState(false);
+  const [wingmanData, setWingmanData] = useState(null);
+  const [wingmanError, setWingmanError] = useState(null);
+  const [copiedIdx, setCopiedIdx] = useState(null);
   const [myUserId, setMyUserId] = useState(null);
   const [myEmail, setMyEmail] = useState(null);
 
@@ -899,6 +905,41 @@ export default function L2ProfileSheet({ email, uid, id }) {
       }
     }
   };
+
+  // ── AI Wingman — generates 3 conversation starters for this profile ───
+  const handleWingman = async () => {
+    if (wingmanOpen && wingmanData) { setWingmanOpen(false); return; }
+    setWingmanOpen(true);
+    if (wingmanData) return; // already fetched
+    setWingmanLoading(true);
+    setWingmanError(null);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      const res = await fetch('/api/ai/wingman', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ targetProfileId: profileUser?.id }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setWingmanError(res.status === 403 ? 'upgrade' : res.status === 429 ? 'limit' : (json.error || 'Failed'));
+      } else {
+        setWingmanData(json);
+      }
+    } catch {
+      setWingmanError('Network error');
+    } finally {
+      setWingmanLoading(false);
+    }
+  };
+
+  const handleCopyOpener = (text, idx) => {
+    navigator.clipboard?.writeText(text).catch(() => {});
+    setCopiedIdx(idx);
+    setTimeout(() => setCopiedIdx(null), 2000);
+  };
+
   const booActive = !!targetUid && isTapped(targetUid, 'boo');
   const booPrimary = (
     <button
@@ -1253,12 +1294,105 @@ export default function L2ProfileSheet({ email, uid, id }) {
                   >
                     <Video className="w-4 h-4 text-white" />
                   </button>
+                  {/* Wingman button — only in mutual state */}
+                  <button
+                    onClick={handleWingman}
+                    disabled={wingmanLoading}
+                    className="rounded-2xl flex items-center justify-center flex-shrink-0"
+                    style={{
+                      width: 52,
+                      height: 52,
+                      background: wingmanOpen ? 'rgba(200,150,44,0.18)' : 'rgba(255,255,255,0.05)',
+                      border: wingmanOpen ? '1px solid rgba(200,150,44,0.6)' : '1px solid rgba(255,255,255,0.1)',
+                      cursor: 'pointer',
+                    }}
+                    aria-label="AI Wingman — get a line"
+                  >
+                    {wingmanLoading
+                      ? <Loader2 className="w-4 h-4 text-[#C8962C] animate-spin" />
+                      : <Sparkles className="w-4 h-4" style={{ color: wingmanOpen ? '#C8962C' : 'white' }} />
+                    }
+                  </button>
                 </>
               )}
             </div>
           </div>
         );
       })()}
+
+      {/* ── AI WINGMAN PANEL — openers + common ground ─────────────────── */}
+      {!isOwnProfile && wingmanOpen && (
+        <div className="mx-4 mb-2 rounded-2xl overflow-hidden" style={{ background: 'rgba(200,150,44,0.06)', border: '1px solid rgba(200,150,44,0.18)' }}>
+          {/* header */}
+          <div className="flex items-center gap-2 px-4 pt-3 pb-2">
+            <Sparkles className="w-3.5 h-3.5 text-[#C8962C]" />
+            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#C8962C]">Wingman</span>
+            <span className="text-[10px] text-white/35 ml-auto">tap to copy</span>
+          </div>
+
+          {wingmanLoading && (
+            <div className="flex items-center justify-center py-6 gap-2">
+              <Loader2 className="w-4 h-4 text-[#C8962C] animate-spin" />
+              <span className="text-xs text-white/50">Reading the vibe…</span>
+            </div>
+          )}
+
+          {wingmanError === 'upgrade' && (
+            <div className="px-4 pb-4">
+              <p className="text-xs text-white/55 mb-3">Wingman is available on HOTMESS tier and above.</p>
+              <button
+                onClick={() => openSheet('upgrade')}
+                className="text-[11px] font-black uppercase tracking-wider text-[#C8962C] underline"
+              >Upgrade →</button>
+            </div>
+          )}
+
+          {wingmanError === 'limit' && (
+            <p className="px-4 pb-4 text-xs text-white/55">You've used your Wingman credits for this month.</p>
+          )}
+
+          {wingmanError && wingmanError !== 'upgrade' && wingmanError !== 'limit' && (
+            <p className="px-4 pb-4 text-xs text-white/40">{wingmanError}</p>
+          )}
+
+          {wingmanData && !wingmanLoading && (
+            <div className="pb-3">
+              {/* Common ground chips */}
+              {(() => {
+                const cg = wingmanData.commonGround || {};
+                const all = [...(cg.interests||[]), ...(cg.music||[]), ...(cg.tribes||[])].slice(0, 4);
+                return all.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5 px-4 pb-2">
+                    {all.map(item => (
+                      <span key={item} className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: 'rgba(200,150,44,0.12)', color: '#C8962C', border: '1px solid rgba(200,150,44,0.25)' }}>
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Openers */}
+              {(wingmanData.openers || []).map((opener, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleCopyOpener(opener.text, i)}
+                  className="w-full text-left px-4 py-2.5 flex items-start gap-3 transition-colors"
+                  style={{ background: copiedIdx === i ? 'rgba(200,150,44,0.08)' : 'transparent' }}
+                >
+                  <span className="text-sm text-white/85 leading-snug flex-1">{opener.text}</span>
+                  <span className="flex-shrink-0 mt-0.5">
+                    {copiedIdx === i
+                      ? <CheckCheck className="w-3.5 h-3.5 text-[#C8962C]" />
+                      : <Copy className="w-3.5 h-3.5 text-white/25" />
+                    }
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* VaultAccessRequest (non-self) */}
       {!isOwnProfile && (profileUser.auth_user_id || profileUser.id) && (

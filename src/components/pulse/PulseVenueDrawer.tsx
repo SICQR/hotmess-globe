@@ -12,7 +12,8 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
 import type { PanInfo } from 'framer-motion';
-import { ChevronUp, MapPin, Calendar, X } from 'lucide-react';
+import { ChevronUp, MapPin, Calendar, X, Navigation } from 'lucide-react';
+import { useSheet } from '@/contexts/SheetContext';
 import type { PulsePlace } from '@/hooks/usePulsePlaces';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -104,7 +105,8 @@ type SnapPoint  = 'peek' | 'half' | 'full';
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export default function PulseVenueDrawer({ places, eventBeacons, onSelect, navHeight = 83 }: Props) {
+export default function PulseVenueDrawer({ places, eventBeacons, onSelect, navHeight = 56 }: Props) {
+  const { openSheet } = useSheet();
   const [snap, setSnap]           = useState<SnapPoint>('peek');
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('all');
   const [catFilter, setCatFilter]  = useState('all');
@@ -175,7 +177,7 @@ export default function PulseVenueDrawer({ places, eventBeacons, onSelect, navHe
     <motion.div
       style={{
         position: 'fixed',
-        bottom:   navHeight,
+        bottom:   `calc(${navHeight}px + env(safe-area-inset-bottom, 0px))`,
         left:     0,
         right:    0,
         height,
@@ -329,6 +331,7 @@ export default function PulseVenueDrawer({ places, eventBeacons, onSelect, navHe
                       badge={place.beacon_category || undefined}
                       badgeColor={dot}
                       onClick={() => { onSelect(placeToBeacon(place)); snapTo('peek'); }}
+                      onDirections={() => { snapTo('peek'); openSheet('directions', { lat: place.lat, lng: place.lng, label: place.name, address: place.address || '' }); }}
                     />
                   );
                 })}
@@ -373,7 +376,7 @@ function SectionHeader({ icon, label, className = '' }: { icon: React.ReactNode;
 }
 
 function ListRow({
-  dot, primary, secondary, badge, badgeColor, onClick,
+  dot, primary, secondary, badge, badgeColor, onClick, onDirections,
 }: {
   dot: string;
   primary: string;
@@ -381,14 +384,18 @@ function ListRow({
   badge?: string;
   badgeColor?: string;
   onClick: () => void;
+  onDirections?: () => void;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className="w-full text-left flex items-center gap-3 p-3 rounded-xl transition-colors active:opacity-70"
+    <div
+      className="w-full flex items-center rounded-xl transition-colors"
       style={{ background: 'transparent' }}
       onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+    >
+    <button
+      onClick={onClick}
+      className="flex-1 text-left flex items-center gap-3 p-3 rounded-xl active:opacity-70"
     >
       <div
         className="w-2.5 h-2.5 rounded-full flex-shrink-0"
@@ -411,5 +418,17 @@ function ListRow({
         </span>
       )}
     </button>
+    {onDirections && (
+      <button
+        onClick={(e) => { e.stopPropagation(); onDirections(); }}
+        className="flex-shrink-0 p-2.5 mr-1 rounded-xl active:scale-90 transition-transform"
+        style={{ color: 'rgba(200,150,44,0.55)' }}
+        title="Get directions"
+        aria-label="Get directions"
+      >
+        <Navigation className="w-4 h-4" />
+      </button>
+    )}
+    </div>
   );
 }

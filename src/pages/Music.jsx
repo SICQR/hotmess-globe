@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRadio } from '@/contexts/RadioContext';
+import { useSheet } from '@/contexts/SheetContext';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
@@ -80,6 +81,7 @@ async function postFormWithAuth(url, formData) {
 export default function Music() {
   const location = useLocation();
   const { isPlaying: isRadioOpen, togglePlay: openRadio } = useRadio();
+  const { openSheet } = useSheet();
   const [activeTab, setActiveTab] = useState(() => {
     const path = location?.pathname ?? '';
     if (path.startsWith('/music/releases')) return 'releases';
@@ -459,7 +461,7 @@ export default function Music() {
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Button 
-              onClick={openRadio}
+              onClick={() => { openRadio(); if (!isRadioOpen) openSheet('radio-player'); }}
               variant="cyan"
               size="xl"
               className="shadow-2xl w-full sm:w-auto font-black uppercase"
@@ -518,7 +520,7 @@ export default function Music() {
               </p>
               <p className="text-sm text-white/60 uppercase mb-8">24/7 LONDON OS SOUNDTRACK</p>
               <Button 
-                onClick={openRadio}
+                onClick={() => { openRadio(); if (!isRadioOpen) openSheet('radio-player'); }}
                 variant="cyan"
                 size="xl"
                 className="font-black uppercase"

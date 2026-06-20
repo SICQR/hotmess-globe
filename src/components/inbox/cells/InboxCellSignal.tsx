@@ -29,7 +29,7 @@ function tapTypeGlyph(tapType: string): { Icon: React.ElementType; verb: string 
 
 export default function InboxCellSignal({ item, counterparts }: CellProps) {
   const navigate = useNavigate();
-  const { closeSheet } = useSheet();
+  const { openSheet } = useSheet();
   const counterpart = item.counterpart_id ? counterparts.get(item.counterpart_id) : undefined;
   const name = counterpartName(counterpart);
   const avatar = counterpart?.avatar_url;
@@ -42,8 +42,11 @@ export default function InboxCellSignal({ item, counterparts }: CellProps) {
     : '';
 
   const handleTap = () => {
-    closeSheet();
-    navigate('/ghosted');
+    if (item.counterpart_id) {
+      openSheet('profile', { userId: item.counterpart_id });
+    } else {
+      navigate('/ghosted');
+    }
   };
 
   return (
@@ -77,7 +80,7 @@ export default function InboxCellSignal({ item, counterparts }: CellProps) {
           <span className="text-[10px] text-white/25 flex-shrink-0">{timeAgo}</span>
         </div>
         <p className="text-[10px] mt-1" style={{ color: '#C8962C99' }}>
-          Open Ghosted →
+          View profile →
         </p>
       </div>
 

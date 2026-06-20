@@ -35,42 +35,53 @@ export default function L2EventsSheet() {
     queryKey: ['events-sheet', filter],
     queryFn: async () => {
       try {
-        let query = supabase
+        const now = new Date();
+        let rangeEnd = null;
+
+        if (filter === 'Tonight') {
+          rangeEnd = new Date(now);
+          rangeEnd.setHours(23, 59, 59, 999);
+        } else if (filter === 'This Week') {
+          rangeEnd = new Date(now);
+          rangeEnd.setDate(rangeEnd.getDate() + 7);
+        }
+
+        // Query beacons table
+        let beaconQuery = supabase
           .from('beacons')
           .select('*')
           .eq('kind', 'event')
+          .gte('starts_at', now.toISOString())
           .order('starts_at', { ascending: true })
-          .limit(30);
+          .limit(50);
+        if (rangeEnd) beaconQuery = beaconQuery.lte('starts_at', rangeEnd.toISOString());
 
-        const now = new Date();
+        // Query pulse_events table (127 curated upcoming events)
+        let peQuery = supabase
+          .from('pulse_events')
+          .select('*')
+          .gte('event_start_at', now.toISOString())
+          .order('event_start_at', { ascending: true })
+          .limit(50);
+        if (rangeEnd) peQuery = peQuery.lte('event_start_at', rangeEnd.toISOString());
 
-        if (filter === 'Tonight') {
-          const todayEnd = new Date(now);
-          todayEnd.setHours(23, 59, 59, 999);
-          query = query.gte('starts_at', now.toISOString()).lte('starts_at', todayEnd.toISOString());
-        } else if (filter === 'This Week') {
-          const weekEnd = new Date(now);
-          weekEnd.setDate(weekEnd.getDate() + 7);
-          query = query.gte('starts_at', now.toISOString()).lte('starts_at', weekEnd.toISOString());
-        } else {
-          query = query.gte('starts_at', now.toISOString());
-        }
+        const [{ data: beaconData }, { data: peData }] = await Promise.all([beaconQuery, peQuery]);
 
-        const { data, error } = await query;
-        if (error) throw error;
-        return data || [];
+        // Normalise pulse_events to beacon shape
+        const normalised = (peData || []).map(e => ({
+          ...e,
+          starts_at:   e.event_start_at,
+          ends_at:     e.event_end_at,
+          title:       e.title,
+          venue_name:  e.place_slug,
+          _source:     'pulse',
+        }));
+
+        const merged = [...(beaconData || []), ...normalised];
+        merged.sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
+        return merged;
       } catch {
-        // Fallback to direct query
-        try {
-          const { data, error } = await supabase
-            .from('event_rsvps')
-            .select('*')
-            .order('created_date', { ascending: false });
-          if (error) throw error;
-          return data || [];
-        } catch {
-          return [];
-        }
+        return [];
       }
     },
     refetchInterval: 60000,
