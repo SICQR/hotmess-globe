@@ -856,7 +856,7 @@ export default function GlobePage({ embedded = false }) {
             ...pulseEvents.map(e => ({
               id:              e.id,
               title:           e.title,
-              type:            'event' as const,
+              type:            'event',
               beacon_category: e.beacon_category || 'event',
               geo_lat:         e.lat,
               geo_lng:         e.lng,
@@ -869,7 +869,7 @@ export default function GlobePage({ embedded = false }) {
               .map(b => ({
                 id:              b.id,
                 title:           b.title || '',
-                type:            'event' as const,
+                type:            'event',
                 beacon_category: b.beacon_category || 'event',
                 geo_lat:         b.geo_lat,
                 geo_lng:         b.geo_lng,
@@ -892,7 +892,3 @@ export default function GlobePage({ embedded = false }) {
     </ErrorBoundary>
   );
 }
-
-
-
-
