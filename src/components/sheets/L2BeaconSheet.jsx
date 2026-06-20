@@ -871,6 +871,7 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
             // Normalise pulse_place → beacon shape
             const normalised = {
               id:              cleanBeaconId,
+              venue_id:        place.id,
               title:           place.name,
               type:            'venue',
               beacon_category: place.beacon_category || place.type || 'venue',
@@ -1012,7 +1013,7 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
         source:        'beacon',
         checked_in_at: now.toISOString(),
         metadata: {
-          beacon_id:          cleanBeaconId || beacon.id,
+          beacon_id:          cleanBeaconId?.startsWith('place-') ? null : (cleanBeaconId || beacon.id),
           checkin_visibility: checkinVisibility,
           origin:             'globe_tap',
         },
@@ -1025,7 +1026,7 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
         // Phil 2026-06-14: globe layer prefixes IDs as 'beacon:UUID'.
         // cleanBeaconId strips the prefix so we always store raw UUIDs.
         venue_id:           beacon.venue_id || (cleanBeaconId || beacon.id),
-        beacon_id:          cleanBeaconId || beacon.id,
+        beacon_id:          cleanBeaconId?.startsWith('place-') ? null : (cleanBeaconId || beacon.id),
         started_at:         now.toISOString(),
         expires_at:         expires.toISOString(),
         tonight_intention:  tonightIntention.trim() || null,
