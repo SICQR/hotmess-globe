@@ -85,7 +85,7 @@ export const getAuthedUser = async ({ anonClient, accessToken }) => {
 };
 
 export const requireGoogleApiKey = () => {
-  const key = getEnv('GOOGLE_MAPS_API_KEY');
+  const key = getEnv('GOOGLE_MAPS_API_KEY', ['VITE_GOOGLE_MAPS_API_KEY']);
   if (!key) return { key: null, error: 'Missing GOOGLE_MAPS_API_KEY' };
   return { key, error: null };
 };
