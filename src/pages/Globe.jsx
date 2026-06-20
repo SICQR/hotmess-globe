@@ -531,7 +531,7 @@ export default function GlobePage({ embedded = false }) {
       return;
     }
     setPreviewBeacon(null);
-    openSheet('beacon', { beaconId: rawId, beacon });
+    openSheet('beacon', { beaconId: rawId, beacon, title: beacon?.title });
   }, [openSheet, setFocusedBeaconId, setPreviewBeacon]);
 
   const handleViewFullDetails = useCallback(() => {
@@ -547,7 +547,7 @@ export default function GlobePage({ embedded = false }) {
     // from the peek tier to the full venue card.
     if (previewBeacon?.entity_kind === 'venue') {
       const cleanId = typeof previewBeacon.id === 'string' ? previewBeacon.id.replace(/^venue[:_]/, '') : previewBeacon.id;
-      openSheet('beacon', { beaconId: cleanId, beacon: previewBeacon });
+      openSheet('beacon', { beaconId: cleanId, beacon: previewBeacon, title: previewBeacon?.title });
       setPreviewBeacon(null);
       return;
     }
