@@ -12,7 +12,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
 import type { PanInfo } from 'framer-motion';
-import { ChevronUp, MapPin, Calendar, X, Navigation } from 'lucide-react';
+import { ChevronUp, MapPin, Calendar, X, Navigation, Ticket } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import type { PulsePlace } from '@/hooks/usePulsePlaces';
 
@@ -144,7 +144,7 @@ export default function PulseVenueDrawer({ places, eventBeacons, onSelect, navHe
     }
   }, [heightMv, halfH, fullH, snapTo]);
 
-  // ── Filtered data ─────────────────────────────────────────────────────────
+  // ── Filtered data ─────────────────────────────────────────────────────
 
   const filteredEvents = useMemo(() => eventBeacons
     .filter(e => timeFilter === 'all' || (timeFilter === 'tonight' ? isTonight(e.starts_at) : isThisWeekend(e.starts_at)))
@@ -158,7 +158,7 @@ export default function PulseVenueDrawer({ places, eventBeacons, onSelect, navHe
     .sort((a, b) => (b.priority || 0) - (a.priority || 0)),
     [places, catFilter, query]);
 
-  // ── Adapter ───────────────────────────────────────────────────────────────
+  // ── Adapter ──────────────────────────────────────────────────────────────────
 
   const placeToBeacon = (p: PulsePlace): DrawerBeacon => ({
     id:              'place-' + p.slug,
@@ -172,7 +172,7 @@ export default function PulseVenueDrawer({ places, eventBeacons, onSelect, navHe
 
   const isOpen = snap !== 'peek';
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────
 
   return (
     <motion.div
@@ -294,54 +294,59 @@ export default function PulseVenueDrawer({ places, eventBeacons, onSelect, navHe
 
           {/* Scrollable list */}
           <div
-            className="flex-1 px-4 space-y-0.5"
-            style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
+            className="flex-1"
+            style={{ overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch' }}
           >
             {/* Events section */}
             {filteredEvents.length > 0 && (
               <>
-                <SectionHeader icon={<Calendar className="w-3.5 h-3.5" style={{ color: PINK }} />} label="Events" />
-                {filteredEvents.map(ev => (
-                  <ListRow
-                    key={ev.id}
-                    dot={PINK}
-                    thumb={ev.image_url}
-                    primary={ev.title}
-                    secondary={fmtDate(ev.starts_at)}
-                    onClick={() => { onSelect(ev); snapTo('peek'); }}
-                  />
-                ))}
+                <div className="px-4">
+                  <SectionHeader icon={<Calendar className="w-3.5 h-3.5" style={{ color: PINK }} />} label="Events" />
+                </div>
+                <div className="px-4 space-y-3 pb-2">
+                  {filteredEvents.map(ev => (
+                    <EventCard
+                      key={ev.id}
+                      event={ev}
+                      onClick={() => { onSelect(ev); snapTo('peek'); }}
+                    />
+                  ))}
+                </div>
               </>
             )}
 
             {/* Venues section */}
             {filteredPlaces.length > 0 && (
               <>
-                <SectionHeader
-                  icon={<MapPin className="w-3.5 h-3.5" style={{ color: GOLD }} />}
-                  label="Venues"
-                  className="mt-2"
-                />
-                {filteredPlaces.map(place => {
-                  const dot = catColor(place.beacon_category || '');
-                  return (
-                    <ListRow
-                      key={place.id}
-                      dot={dot}
-                      primary={place.name}
-                      secondary={place.address || undefined}
-                      badge={place.beacon_category || undefined}
-                      badgeColor={dot}
-                      onClick={() => { onSelect(placeToBeacon(place)); snapTo('peek'); }}
-                      onDirections={() => { snapTo('peek'); openSheet('directions', { lat: place.lat, lng: place.lng, label: place.name, address: place.address || '' }); }}
-                    />
-                  );
-                })}
+                <div className="px-4">
+                  <SectionHeader
+                    icon={<MapPin className="w-3.5 h-3.5" style={{ color: GOLD }} />}
+                    label="Venues"
+                    className={filteredEvents.length > 0 ? 'mt-2' : ''}
+                  />
+                </div>
+                <div className="px-4 space-y-0.5 pb-2">
+                  {filteredPlaces.map(place => {
+                    const dot = catColor(place.beacon_category || '');
+                    return (
+                      <ListRow
+                        key={place.id}
+                        dot={dot}
+                        primary={place.name}
+                        secondary={place.address || undefined}
+                        badge={place.beacon_category || undefined}
+                        badgeColor={dot}
+                        onClick={() => { onSelect(placeToBeacon(place)); snapTo('peek'); }}
+                        onDirections={() => { snapTo('peek'); openSheet('directions', { lat: place.lat, lng: place.lng, label: place.name, address: place.address || '' }); }}
+                      />
+                    );
+                  })}
+                </div>
               </>
             )}
 
             {filteredEvents.length === 0 && filteredPlaces.length === 0 && (
-              <div className="py-12 text-center">
+              <div className="py-12 text-center px-4">
                 <p className="text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>Nothing matches</p>
                 <button
                   onClick={() => { setQuery(''); setTimeFilter('all'); setCatFilter('all'); }}
@@ -377,11 +382,80 @@ function SectionHeader({ icon, label, className = '' }: { icon: React.ReactNode;
   );
 }
 
+// ─── EventCard — full visual card for events ─────────────────────────────────
+
+function EventCard({ event, onClick }: { event: DrawerBeacon; onClick: () => void }) {
+  const dateStr = event.starts_at
+    ? new Date(event.starts_at).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+    : '';
+  const timeStr = event.starts_at
+    ? new Date(event.starts_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+    : '';
+  const displayDate = dateStr && timeStr ? `${dateStr} · ${timeStr}` : dateStr || timeStr;
+
+  return (
+    <button
+      onClick={onClick}
+      className="w-full text-left rounded-2xl overflow-hidden active:scale-[0.98] transition-transform"
+      style={{
+        background: 'rgba(255,255,255,0.04)',
+        border: '1px solid rgba(255,255,255,0.07)',
+      }}
+    >
+      {/* Image */}
+      {event.image_url ? (
+        <img
+          src={event.image_url}
+          alt={event.title}
+          className="w-full object-cover"
+          style={{ height: 128 }}
+        />
+      ) : (
+        <div
+          className="w-full flex items-center justify-center"
+          style={{ height: 80, background: 'rgba(255,79,154,0.08)' }}
+        >
+          <Ticket className="w-6 h-6" style={{ color: 'rgba(255,79,154,0.3)' }} />
+        </div>
+      )}
+
+      <div className="p-3">
+        {/* Date row */}
+        {displayDate && (
+          <p
+            className="text-[11px] font-semibold mb-1"
+            style={{ color: PINK }}
+          >
+            {displayDate}
+          </p>
+        )}
+
+        {/* Title */}
+        <p className="text-sm font-bold text-white leading-snug">
+          {event.title}
+        </p>
+
+        {/* Address / venue */}
+        {event.address && (
+          <p
+            className="text-[11px] mt-0.5 flex items-center gap-1"
+            style={{ color: 'rgba(255,255,255,0.35)' }}
+          >
+            <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
+            {event.address}
+          </p>
+        )}
+      </div>
+    </button>
+  );
+}
+
+// ─── ListRow — compact row for venues ────────────────────────────────────────
+
 function ListRow({
-  dot, thumb, primary, secondary, badge, badgeColor, onClick, onDirections,
+  dot, primary, secondary, badge, badgeColor, onClick, onDirections,
 }: {
   dot: string;
-  thumb?: string | null;
   primary: string;
   secondary?: string;
   badge?: string;
@@ -398,16 +472,12 @@ function ListRow({
     >
     <button
       onClick={onClick}
-      className="flex-1 text-left flex items-center gap-3 p-3 rounded-xl active:opacity-70"
+      className="flex-1 min-w-0 text-left flex items-center gap-3 p-3 rounded-xl active:opacity-70"
     >
-      {thumb ? (
-        <img src={thumb} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
-      ) : (
-        <div
-          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-          style={{ background: dot, boxShadow: `0 0 6px ${dot}66` }}
-        />
-      )}
+      <div
+        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+        style={{ background: dot, boxShadow: `0 0 6px ${dot}66` }}
+      />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-white truncate">{primary}</p>
         {secondary && (
