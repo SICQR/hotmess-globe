@@ -116,6 +116,26 @@ export default async function handler(req, res) {
       return json(res, 400, { error: 'Invalid mode' });
     }
 
+    // TRANSIT: no provider supports public transit routing. Return a structured
+    // unavailability response rather than silently serving a walking route.
+    if (mode === 'TRANSIT') {
+      return json(res, 200, {
+        mode,
+        origin,
+        destination,
+        duration_seconds: null,
+        distance_meters: null,
+        provider: 'TRANSIT_UNAVAILABLE',
+        polyline: { encoded: null, points: null },
+        steps: [],
+        ttl_seconds: ttlSeconds,
+        warning: {
+          code: 'transit_unavailable',
+          message: 'Live transit directions are not available in-app. Use Citymapper or TfL.',
+        },
+      });
+    }
+
     // Rate limits: per-user + per-IP (best-effort).
     // If service role isn't configured (common in local dev), skip DB-backed rate limiting.
     {
