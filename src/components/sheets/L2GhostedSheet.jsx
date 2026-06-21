@@ -31,7 +31,7 @@ const DURATION_OPTIONS = [
 
 export default function L2GhostedSheet() {
   const queryClient = useQueryClient();
-  const { openSheet } = useSheet();
+  const { openSheet, pushSheet } = useSheet();
   const [selectedDuration, setSelectedDuration] = useState(60);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -149,7 +149,8 @@ export default function L2GhostedSheet() {
 
   // Start chat
   const handleStartChat = (email, userName) => {
-    openSheet(SHEET_TYPES.CHAT, { to: email, title: `Chat with ${userName}` });
+    // D57 P0.3 N6 — push so closing the chat returns to this ghosted sheet.
+    pushSheet(SHEET_TYPES.CHAT, { to: email, title: `Chat with ${userName}` });
   };
 
   return (

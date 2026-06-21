@@ -213,6 +213,20 @@ export function SheetProvider({ children }) {
   //     React Router's async setSearchParams has a chance to lose the race.
   //     React Router's internal state catches up via the normal effect path.
   const closeSheet = useCallback(() => {
+    // D57 P0.3 N6 — smart pop. If the LIFO stack has items (the current
+    // sheet was push'd from a parent sheet via pushSheet), pop to the
+    // parent instead of clearing entirely. This is how "close chat returns
+    // to inbox" / "close chat returns to profile" works.
+    //
+    // The state→URL Effect 1 will re-sync URL params to the popped-to sheet
+    // (so deeplink params for the parent are restored). We don't pre-clear
+    // URL params here — that would strip the parent's params before the
+    // effect can write them back.
+    if (state.sheetStack.length > 0) {
+      dispatch({ type: 'POP_SHEET' });
+      return;
+    }
+
     justClosedRef.current = true;
     if (typeof window !== 'undefined') {
       try {
@@ -237,7 +251,7 @@ export function SheetProvider({ children }) {
       } catch (_) { /* non-fatal */ }
     }
     dispatch({ type: 'CLOSE_SHEET' });
-  }, []);
+  }, [state.sheetStack.length]);
 
   // Push a nested sheet (keeps current in stack)
   const pushSheet = useCallback((type, props = {}) => {

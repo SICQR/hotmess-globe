@@ -147,7 +147,7 @@ function PhotoCarousel({ images = [], onIndexChange }) {
 
 export default function L2ProfileSheet({ email, uid, id }) {
   const navigate = useNavigate();
-  const { openSheet, closeSheet } = useSheet();
+  const { openSheet, closeSheet, pushSheet } = useSheet();
   const { position: viewerPos } = useGPS();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -610,8 +610,8 @@ export default function L2ProfileSheet({ email, uid, id }) {
 
       toast.success('Location shared in chat! 📍', { id: toastId });
       
-      // Optionally open the chat sheet
-      openSheet(SHEET_TYPES.CHAT, {
+      // D57 P0.3 N6 — push so closing the chat returns to profile sheet.
+      pushSheet(SHEET_TYPES.CHAT, {
         thread: thread.id,
         userId: profileUser.id,
         title: `Chat with ${name}`
@@ -663,8 +663,12 @@ export default function L2ProfileSheet({ email, uid, id }) {
       to: profileUser?.email || undefined,
       title: `Chat with ${safeName(profileUser)}`,
     };
-    closeSheet();
-    setTimeout(() => openSheet(SHEET_TYPES.CHAT, chatProps), 300);
+    // D57 P0.3 N6 — pushSheet (atomic transition + parent preserved on
+    // stack) replaces the previous close-then-setTimeout-open pattern.
+    // Single dispatch avoids the AnimatePresence mode='wait' race that
+    // #566 worked around. Closing the chat returns user to this profile
+    // sheet via smart-pop in SheetContext.closeSheet.
+    pushSheet(SHEET_TYPES.CHAT, chatProps);
   };
 
   const handleBlock = async () => {
