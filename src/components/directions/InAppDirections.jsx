@@ -316,6 +316,7 @@ export default function InAppDirections({
   // spans the planet. Saves API calls + prevents the route polyline from
   // obscuring the destination view.
   const modeConfig = TRAVEL_MODES.find(m => m.id === mode);
+  const isTransitMode = modeConfig?.apiMode === 'TRANSIT';
   const canFetch = !!fetchOrigin && !!destination;
 
   const { data: directions, isLoading } = useQuery({
@@ -325,7 +326,7 @@ export default function InAppDirections({
       mode: modeConfig?.apiMode || 'WALK',
       ttlSeconds: 120
     }),
-    enabled: canFetch,
+    enabled: canFetch && !isTransitMode,
     retry: false,
     staleTime: 60000,
   });
@@ -334,6 +335,7 @@ export default function InAppDirections({
   // D14 §0: when origin is far, route is empty — no straight-line fallback,
   // no polyline at all. The destination view is the whole rendering.
   const routeLngLat = useMemo(() => {
+    if (isTransitMode) return [];
     const encoded = directions?.polyline?.encoded;
     if (typeof encoded === 'string' && encoded.trim()) {
       return decodeGooglePolyline(encoded).map((p) => [p.lng, p.lat]);
@@ -701,8 +703,46 @@ export default function InAppDirections({
         </div>
       )}
 
-      {/* Far-origin: no steps, just a bottom spacer. */}
-      {!directions?.steps?.length && <div className="h-4" />}
+      {/* TRANSIT — no in-app route. Open Citymapper or TfL. */}
+      {mode === 'transit' && (
+        <div className="px-4 pb-6 mt-1">
+          <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4 flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <Train className="w-4 h-4" style={{ color: '#E84040' }} />
+              <p className="text-sm font-black text-white">Tube &amp; Bus</p>
+            </div>
+            <p className="text-xs text-white/45 leading-relaxed">
+              Live transit directions aren&#39;t available in-app yet. Use Citymapper for tube, bus, and rail routes.
+            </p>
+            <button
+              onClick={() => {
+                const params = new URLSearchParams({
+                  endcoord: `${destination.lat},${destination.lng}`,
+                  endname: destinationName || 'Destination',
+                });
+                if (origin && !originIsFar) params.set('startcoord', `${origin.lat},${origin.lng}`);
+                window.open(`https://citymapper.com/directions?${params}`, '_blank');
+              }}
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-[#E84040]/10 border border-[#E84040]/25 text-[#E84040] text-sm font-black active:scale-95 transition-transform"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Open Citymapper
+            </button>
+            <button
+              onClick={() => {
+                const dest = destinationName ? encodeURIComponent(destinationName) : `${destination.lat},${destination.lng}`;
+                window.open(`https://tfl.gov.uk/plan-a-journey/results?to=${dest}`, '_blank');
+              }}
+              className="flex items-center justify-center gap-2 w-full py-2 rounded-xl border border-white/10 text-white/40 text-xs font-bold active:scale-95 transition-transform"
+            >
+              <ExternalLink className="w-3 h-3" />
+              TfL Journey Planner
+            </button>
+          </div>
+        </div>
+      )}
+      {/* Far-origin or no steps: spacer. Excluded for transit (has its own card). */}
+      {!directions?.steps?.length && mode !== 'transit' && <div className="h-4" />}
     </div>
   );
 }
