@@ -23,6 +23,7 @@ import {
 import { HNHMarketHero } from '@/components/home/HNHMarketHero';
 import { HNHMessStrip } from '@/components/home/HNHMessStrip';
 import { AppBanner } from '@/components/banners/AppBanner';
+import { HnhMessPromoCard } from '@/components/promos/HnhMessPromoCard';
 
 
 const AMBER = '#C8962C';
@@ -175,6 +176,9 @@ export function ShopEngine({ search, className = '' }: { search: string; classNa
           designed comp (headline + wordmark baked in); object-cover at
           16:9 keeps the design intact. */}
       <ShopMarketHero />
+
+      {/* HNH MESS promo card — dismissible, 7-day cooldown, MESS20 code (Phil 2026-06-21) */}
+      <HnhMessPromoCard />
 
       {isLoading && (
         <div className="grid grid-cols-2 gap-3 px-4 pt-4">

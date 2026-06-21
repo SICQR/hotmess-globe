@@ -35,6 +35,7 @@ import GhostedStrip from '@/components/home/GhostedStrip';
 import RadioStrip from '@/components/home/RadioStrip';
 import LTGOHomeCard from '@/components/home/LTGOHomeCard';
 import LTGOBroadcastButton from '@/components/signals/LTGOBroadcastButton';
+import { HnhMessPromoCard } from '@/components/promos/HnhMessPromoCard';
 
 // ── Brand tokens ─────────────────────────────────────────────────────────────
 const AMBER = '#C8962C';
@@ -445,6 +446,11 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         {/* 11. CARE SUITE — doctrine: care outranks commerce              */}
         {/* ================================================================ */}
         <CareSuiteCard onOpen={() => setShowCareExplainer(true)} />
+
+        {/* ================================================================ */}
+        {/* 11b. HNH MESS PROMO — dismissible, MESS20, 7-day cooldown (Phil 2026-06-21) */}
+        {/* ================================================================ */}
+        <HnhMessPromoCard />
 
         {/* ================================================================ */}
         {/* 12. HNH MESS — commerce below care, always                     */}
