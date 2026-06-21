@@ -1,5 +1,5 @@
 /**
- * HomeMode V4 — Discovery First
+ * HomeMode V4 â Discovery First
  *
  * Order of precedence:
  *   1. What's on right now (venues, partner events)
@@ -9,7 +9,7 @@
  *   5. Quick nav
  *   6. State / admin / commerce (below the fold)
  *
- * Phil 2026-06-16: Home redesign — nightlife discovery leads, admin follows.
+ * Phil 2026-06-16: Home redesign â nightlife discovery leads, admin follows.
  */
 
 import { useState, useCallback } from 'react';
@@ -35,8 +35,9 @@ import GhostedStrip from '@/components/home/GhostedStrip';
 import RadioStrip from '@/components/home/RadioStrip';
 import LTGOHomeCard from '@/components/home/LTGOHomeCard';
 import LTGOBroadcastButton from '@/components/signals/LTGOBroadcastButton';
+import { HnhMessPromoCard } from '@/components/promos/HnhMessPromoCard';
 
-// ── Brand tokens ─────────────────────────────────────────────────────────────
+// ââ Brand tokens âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const AMBER = '#C8962C';
 const ROOT_BG = '#050507';
 const MUTED = '#8E8E93';
@@ -44,7 +45,7 @@ const TEAL = '#00C2E0';
 const MESS_TRACK_URL =
   'https://rfoftonnlwudilafhfkl.supabase.co/storage/v1/object/public/records-audio/hnh-mess-2-remastered.wav';
 
-// ── Lane config ───────────────────────────────────────────────────────────────
+// ââ Lane config âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const LANES = [
   { label: 'Ghosted', icon: Ghost, route: '/ghosted' },
   { label: 'Market', icon: ShoppingBag, route: '/market' },
@@ -66,7 +67,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
   const [showCareExplainer, setShowCareExplainer] = useState(false);
   const [homeBeaconImgFailed, setHomeBeaconImgFailed] = useState(false);
 
-  // ── Data: right_now_status count ─────────────────────────────────────────
+  // ââ Data: right_now_status count âââââââââââââââââââââââââââââââââââââââââ
   const { data: rnCount = 0 } = useQuery({
     queryKey: ['home-rn-count'],
     queryFn: async () => {
@@ -80,7 +81,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
     refetchInterval: 30_000,
   });
 
-  // ── Data: active venue/event count ───────────────────────────────────────
+  // ââ Data: active venue/event count âââââââââââââââââââââââââââââââââââââââ
   const { data: venueCount = 0 } = useQuery({
     queryKey: ['home-venue-count'],
     queryFn: async () => {
@@ -94,7 +95,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
     refetchInterval: 60_000,
   });
 
-  // ── Data: current user's right_now_status ────────────────────────────────
+  // ââ Data: current user's right_now_status ââââââââââââââââââââââââââââââââ
   const { data: userRnStatus } = useQuery({
     queryKey: ['home-user-rn'],
     queryFn: async () => {
@@ -113,7 +114,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
     refetchInterval: 30_000,
   });
 
-  // ── State card variant ────────────────────────────────────────────────────
+  // ââ State card variant ââââââââââââââââââââââââââââââââââââââââââââââââââââ
   const profileIncomplete =
     profile?.onboarding_completed &&
     (!profile?.avatar_url || !profile?.bio || !profile?.display_name);
@@ -128,17 +129,17 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
     openSheet('go-live', {});
   }, [openSheet]);
 
-  // ── Signal line ───────────────────────────────────────────────────────────
+  // ââ Signal line âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   const signalParts: string[] = [];
   if (rnCount > 0) signalParts.push(`${rnCount} live`);
   if (venueCount > 0) signalParts.push(`${venueCount} venue${venueCount !== 1 ? 's' : ''}`);
   if (radioPlaying && currentShowName) signalParts.push('On air');
-  const signalLine = signalParts.length > 0 ? signalParts.join(' · ') : 'Quiet right now';
+  const signalLine = signalParts.length > 0 ? signalParts.join(' Â· ') : 'Quiet right now';
   const hasSignal = signalParts.length > 0;
 
-  // ════════════════════════════════════════════════════════════════════════════
+  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   // RENDER
-  // ════════════════════════════════════════════════════════════════════════════
+  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
   return (
     <div
@@ -155,7 +156,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
       >
 
         {/* ================================================================ */}
-        {/* 1. HERO — compact signal layer, single CTA                     */}
+        {/* 1. HERO â compact signal layer, single CTA                     */}
         {/* ================================================================ */}
         <section
           className="relative w-full flex flex-col justify-end px-6 pt-8 pb-5"
@@ -214,7 +215,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
                 }}
                 className="h-11 px-7 rounded-2xl text-sm font-medium flex items-center gap-2"
                 style={{ background: AMBER, color: '#000' }}
-                aria-label="Enter Pulse — live globe"
+                aria-label="Enter Pulse â live globe"
               >
                 <Globe className="w-4 h-4" />
                 Enter Pulse
@@ -224,32 +225,32 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         </section>
 
         {/* ================================================================ */}
-        {/* 2. VENUE DISCOVERY — what's on tonight (horizontal scroll)     */}
+        {/* 2. VENUE DISCOVERY â what's on tonight (horizontal scroll)     */}
         {/* ================================================================ */}
         <LTGOBroadcastButton />
         <VenueDiscoveryCards />
 
         {/* ================================================================ */}
-        {/* 3. NEXT UP — upcoming ritual (one card, countdown)             */}
+        {/* 3. NEXT UP â upcoming ritual (one card, countdown)             */}
         {/* ================================================================ */}
         <section className="px-5 pb-4">
           <NextUpCard slot="next" />
         </section>
 
         {/* ================================================================ */}
-        {/* 4. GHOSTED STRIP — who's out right now                         */}
+        {/* 4. GHOSTED STRIP â who's out right now                         */}
         {/* ================================================================ */}
         <GhostedStrip rnCount={rnCount} />
 
         <LTGOHomeCard />
 
         {/* ================================================================ */}
-        {/* 5. RADIO STRIP — tune in                                       */}
+        {/* 5. RADIO STRIP â tune in                                       */}
         {/* ================================================================ */}
         <RadioStrip />
 
         {/* ================================================================ */}
-        {/* 6. LANE STRIP — quick doors                                    */}
+        {/* 6. LANE STRIP â quick doors                                    */}
         {/* ================================================================ */}
         <section className="px-5 pb-5">
           <div className="flex gap-2">
@@ -284,7 +285,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         </section>
 
         {/* ================================================================ */}
-        {/* 7. STATE CARD — contextual (live / complete profile)           */}
+        {/* 7. STATE CARD â contextual (live / complete profile)           */}
         {/* ================================================================ */}
         {cardVariant !== 'hidden' && (
           <section className="px-5 pb-5">
@@ -351,14 +352,14 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         )}
 
         {/* ================================================================ */}
-        {/* 8. REMAINING RITUALS — secondary upcoming events               */}
+        {/* 8. REMAINING RITUALS â secondary upcoming events               */}
         {/* ================================================================ */}
         <section className="px-5 pb-5">
           <NextUpCard slot="rest" />
         </section>
 
         {/* ================================================================ */}
-        {/* 9. DROP A BEACON — platform's primary write action             */}
+        {/* 9. DROP A BEACON â platform's primary write action             */}
         {/* ================================================================ */}
         <section className="px-5 pb-5">
           <div
@@ -413,7 +414,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
               style={{ top: '76%', bottom: 0 }}
             >
               {[
-                { label: 'Be seen — go live', action: handleGoLive, cta: 'be_seen' },
+                { label: 'Be seen â go live', action: handleGoLive, cta: 'be_seen' },
                 { label: 'Find others', action: () => navigate('/ghosted'), cta: 'find_others' },
                 { label: 'Make a move', action: () => navigate('/pulse'), cta: 'make_a_move' },
                 { label: 'Stay in control', action: () => navigate('/safety'), cta: 'stay_in_control' },
@@ -435,19 +436,24 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
         </section>
 
         {/* ================================================================ */}
-        {/* 10. SAFETY NETWORK — below the fold (admin)                    */}
+        {/* 10. SAFETY NETWORK â below the fold (admin)                    */}
         {/* ================================================================ */}
         <section className="px-5 pb-2">
           <SafetyNetworkCard />
         </section>
 
         {/* ================================================================ */}
-        {/* 11. CARE SUITE — doctrine: care outranks commerce              */}
+        {/* 11. CARE SUITE â doctrine: care outranks commerce              */}
         {/* ================================================================ */}
         <CareSuiteCard onOpen={() => setShowCareExplainer(true)} />
 
         {/* ================================================================ */}
-        {/* 12. HNH MESS — commerce below care, always                     */}
+        {/* 11b. HNH MESS PROMO â dismissible, MESS20, 7-day cooldown (Phil 2026-06-21) */}
+        {/* ================================================================ */}
+        <HnhMessPromoCard />
+
+        {/* ================================================================ */}
+        {/* 12. HNH MESS â commerce below care, always                     */}
         {/* ================================================================ */}
         <section className="px-5 pb-5">
           <div className="rounded-2xl overflow-hidden relative border border-white/10 p-5 bg-gradient-to-b from-[#1A1A1C] to-[#121214]">
@@ -480,7 +486,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
 
             <div className="mb-5">
               <TrackPlayer
-                trackTitle="HNH MESS — Remastered"
+                trackTitle="HNH MESS â Remastered"
                 trackSource={MESS_TRACK_URL}
                 artistName="HOTMESS RECORDS"
                 minimal={true}
@@ -526,10 +532,10 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
 
       </div>
 
-      {/* ── Right Now Modal ────────────────────────────────────────────────── */}
+      {/* ââ Right Now Modal ââââââââââââââââââââââââââââââââââââââââââââââââââ */}
       {showRightNow && <RightNowModal onClose={() => setShowRightNow(false)} />}
 
-      {/* ── Care Suite explainer overlay ──────────────────────────────────── */}
+      {/* ââ Care Suite explainer overlay ââââââââââââââââââââââââââââââââââââ */}
       {showCareExplainer && (
         <div
           className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center"
