@@ -552,6 +552,19 @@ export default function InAppDirections({
   const duration = formatDuration(directions?.duration_seconds);
   const distance = formatDistance(directions?.distance_meters);
 
+  const getTurnIcon = (instruction = '') => {
+    const t = instruction.toLowerCase();
+    if (t.includes('arrive') || t.includes('destination') || t.includes('you have arrived')) return '⬤';
+    if (t.includes('u-turn') || t.includes('uturn')) return '↩';
+    if (t.includes('roundabout')) return '↻';
+    if (t.includes('turn left') || t.includes('sharp left')) return '←';
+    if (t.includes('turn right') || t.includes('sharp right')) return '→';
+    if (t.includes('slight left') || t.includes('bear left') || t.includes('keep left')) return '↖';
+    if (t.includes('slight right') || t.includes('bear right') || t.includes('keep right')) return '↗';
+    if (t.includes('exit')) return '↪';
+    return '↑';
+  };
+
   // Chromeless render. The wrapping surface (L2SheetContainer for the L2
   // path, DirectionsButton's modal for the standalone path) provides bg,
   // border, dismiss. We just lay out the content.
@@ -591,42 +604,27 @@ export default function InAppDirections({
         )}
       </div>
 
-      {/* ── HEADER — chip + venue name + address ── */}
-      <div className="px-4 pt-3 pb-1">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span
-              className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border tracking-[0.14em]"
-              style={{ color: '#C8962C', borderColor: 'rgba(200,150,44,0.25)', backgroundColor: 'rgba(200,150,44,0.08)' }}
-            >
-              <Navigation className="w-2.5 h-2.5" />
-              route
-            </span>
+        {/* ── HEADER — big ETA + destination ── */}
+        <div className="px-4 pt-4 pb-2">
+          <div className="flex items-baseline gap-2.5 mb-1">
+            {duration && (
+              <span className="text-white font-black text-4xl leading-none tracking-tight">
+                {duration}
+              </span>
+            )}
+            {distance && (
+              <span className="text-white/40 text-lg font-bold">{distance}</span>
+            )}
           </div>
-          {/* ETA pill inline with header */}
-          {(duration || distance) && (
-            <div className="flex items-center gap-2 text-white/60">
-              {duration && (
-                <div className="flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-white/35" />
-                  <span className="text-sm font-black text-white">{duration}</span>
-                </div>
-              )}
-              {distance && (
-                <span className="text-xs text-white/40 tabular-nums">{distance}</span>
-              )}
-            </div>
+          <h2 className="text-white/70 font-semibold text-base leading-tight">
+            {destinationName || 'Directions'}
+          </h2>
+          {destinationAddress && (
+            <p className="text-white/30 text-xs mt-0.5 leading-snug truncate">
+              {destinationAddress}
+            </p>
           )}
         </div>
-        <h2 className="text-white font-black text-xl leading-tight mt-1.5">
-          {destinationName || 'Directions'}
-        </h2>
-        {destinationAddress && (
-          <p className="text-white/45 text-sm mt-0.5 leading-snug truncate">
-            {destinationAddress}
-          </p>
-        )}
-      </div>
 
       {/* ── MODE CHIPS — Walk / Tube / Fastest / Night Route + Uber ── */}
       <div className="px-4 pt-2 pb-2 flex flex-col gap-1.5">
@@ -664,44 +662,49 @@ export default function InAppDirections({
         )}
       </div>
 
-      {/* ── TURN-BY-TURN STEPS ── */}
-      {directions?.steps?.length > 0 && (
-        <div className="px-4 pb-6 mt-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-white/30 mb-2">
-            Step by step
-          </p>
-          <div className="flex flex-col rounded-xl overflow-hidden border border-white/[0.07]">
-            {directions.steps.map((step, i) => (
-              <div
-                key={i}
-                className="flex items-start gap-3 px-3 py-3 border-b border-white/[0.05] last:border-0 bg-white/[0.02]"
-              >
-                {/* Step number */}
-                <div
-                  className="w-5 h-5 mt-0.5 rounded-full flex items-center justify-center flex-shrink-0 border border-white/10"
-                  style={{ background: i === 0 ? `${modeConfig?.color}22` : undefined }}
-                >
-                  <span className="text-[9px] font-black" style={{ color: modeConfig?.color || 'rgba(255,255,255,0.4)' }}>
-                    {i + 1}
-                  </span>
-                </div>
-                {/* Instruction + distance */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white/90 leading-snug">{step.instruction}</p>
-                  {(step.distance_meters != null || step.duration_seconds != null) && (
-                    <p className="text-[11px] text-white/35 mt-0.5 tabular-nums">
-                      {step.distance_meters != null ? formatDistance(step.distance_meters) : ''}
-                      {step.distance_meters != null && step.duration_seconds != null ? ' · ' : ''}
-                      {step.duration_seconds != null ? formatDuration(step.duration_seconds) : ''}
-                    </p>
-                  )}
-                </div>
-                <ChevronRight className="w-3.5 h-3.5 text-white/15 mt-0.5 flex-shrink-0" />
-              </div>
-            ))}
+        {/* ── TURN-BY-TURN STEPS ── */}
+        {directions?.steps?.length > 0 && mode !== 'transit' && (
+          <div className="px-4 pb-8 mt-2">
+            <div className="rounded-2xl overflow-hidden border border-white/[0.07]">
+              {directions.steps.map((step, i) => {
+                const isLast = i === directions.steps.length - 1;
+                return (
+                  <div
+                    key={i}
+                    className={cn(
+                      'flex items-start gap-3.5 px-4 py-3.5',
+                      !isLast && 'border-b border-white/[0.05]'
+                    )}
+                  >
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                      style={{ background: (modeConfig?.color || '#C8962C') + '22' }}
+                    >
+                      <span
+                        className="text-base leading-none"
+                        style={{ color: modeConfig?.color || '#C8962C' }}
+                      >
+                        {getTurnIcon(step.instruction)}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white text-[14px] font-semibold leading-snug">
+                        {step.instruction}
+                      </p>
+                      {(step.distance_meters != null || step.duration_seconds != null) && (
+                        <p className="text-white/35 text-[11px] mt-1 tabular-nums">
+                          {step.distance_meters != null ? formatDistance(step.distance_meters) : ''}
+                          {step.distance_meters != null && step.duration_seconds != null ? '  ·  ' : ''}
+                          {step.duration_seconds != null ? formatDuration(step.duration_seconds) : ''}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* TRANSIT — no in-app route. Open Citymapper or TfL. */}
       {mode === 'transit' && (
