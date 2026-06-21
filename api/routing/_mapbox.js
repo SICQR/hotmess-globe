@@ -24,7 +24,7 @@ const mapboxProfile = (mode) => {
   if (mode === 'WALK') return 'walking';
   if (mode === 'DRIVE') return 'driving-traffic';
   if (mode === 'BICYCLE') return 'cycling';
-  if (mode === 'TRANSIT') return 'walking'; // Mapbox has no transit — walk fallback
+  if (mode === 'TRANSIT') return null; // Mapbox has no transit — caller must handle
   if (mode === 'TWO_WHEELER') return 'driving';
   return null;
 };
