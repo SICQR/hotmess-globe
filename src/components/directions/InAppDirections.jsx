@@ -387,10 +387,11 @@ export default function InAppDirections({
           : [-0.1278, 51.5074];
         const map = new mapboxgl.Map({
           container: containerRef.current,
-          style: 'mapbox://styles/mapbox/dark-v11',
+          style: 'mapbox://styles/mapbox/navigation-night-v1',
           center: startCenter,
           zoom: 14,
-          attributionControl: true,
+          attributionControl: false,
+          scrollZoom: false,
         });
         mapRef.current = map;
         map.on('error', () => { /* keep overlay graceful */ });
@@ -413,8 +414,8 @@ export default function InAppDirections({
             layout: { 'line-cap': 'round', 'line-join': 'round' },
             paint: {
               'line-color': ['get', 'colour'],
-              'line-width': 8,
-              'line-opacity': 0.3,
+              'line-width': 14,
+              'line-opacity': 0.2,
             },
           });
           map.addLayer({
@@ -424,8 +425,8 @@ export default function InAppDirections({
             layout: { 'line-cap': 'round', 'line-join': 'round' },
             paint: {
               'line-color': ['get', 'colour'],
-              'line-width': 5,
-              'line-opacity': 0.9,
+              'line-width': 8,
+              'line-opacity': 1.0,
             },
           });
 
@@ -474,7 +475,7 @@ export default function InAppDirections({
       const swLat = Math.min(origin.lat, destination.lat);
       const neLng = Math.max(origin.lng, destination.lng);
       const neLat = Math.max(origin.lat, destination.lat);
-      map.fitBounds([[swLng, swLat], [neLng, neLat]], { padding: 50, duration: 600 });
+      map.fitBounds([[swLng, swLat], [neLng, neLat]], { padding: { top: 70, bottom: 70, left: 50, right: 50 }, duration: 700 });
     } catch (e) { /* non-fatal */ }
   }, [mapReady, origin?.lat, origin?.lng, destination?.lat, destination?.lng, originIsFar]);
 
@@ -560,7 +561,7 @@ export default function InAppDirections({
     <div className={cn('flex flex-col', className)}>
 
       {/* ── MAP FIRST — visible the moment the sheet snaps open ── */}
-      <div className="relative h-[240px] mx-4 mt-3 rounded-xl overflow-hidden flex-shrink-0">
+      <div className="relative h-[280px] mx-4 mt-3 rounded-xl overflow-hidden flex-shrink-0">
         <div
           ref={containerRef}
           className="absolute inset-0"
