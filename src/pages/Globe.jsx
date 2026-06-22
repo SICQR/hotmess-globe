@@ -847,49 +847,54 @@ export default function GlobePage({ embedded = false }) {
         {localModeEnabled && (
           <BeaconA11yList beacons={mapSignals} viewerLocation={userLocation} onSelect={handleBeaconClick} />
         )}
-        {/* PulseVenueDrawer — browseable venue+event list above the nav */}
-        <PulseVenueDrawer
-          navHeight={64}
-          places={Array.isArray(pulsePlaces) ? pulsePlaces : []}
-          eventBeacons={[
-            // Curated events from pulse_events (OutOut ingest + manual seeds)
-            ...pulseEvents.map(e => ({
-              id:              e.id,
-              title:           e.title,
-              type:            'event',
-              beacon_category: e.beacon_category || 'event',
-              geo_lat:         e.lat,
-              geo_lng:         e.lng,
-              starts_at:       e.starts_at,
-              ends_at:         e.ends_at,
-              image_url:       e.image_url || null,
-            })),
-            // User-dropped event beacons from the live map
-            ...(Array.isArray(mapSignals) ? mapSignals : [])
-              .filter(b => b.type === 'event')
-              .map(b => ({
-                id:              b.id,
-                title:           b.title || '',
-                type:            'event',
-                beacon_category: b.beacon_category || 'event',
-                geo_lat:         b.geo_lat,
-                geo_lng:         b.geo_lng,
-                starts_at:       b.starts_at || null,
-                ends_at:         b.ends_at   || null,
-              })),
-          ]}
-          onSelect={(beacon) => {
-            // Fly camera to the selected venue/event then open its sheet
-            if (pulseApiRef.current && pulseApiRef.current.flyTo) {
-              try {
-                pulseApiRef.current.flyTo({ lat: beacon.geo_lat, lng: beacon.geo_lng, zoom: 14 });
-              } catch (_e) { /* non-fatal */ }
-            }
-            handleBeaconClick(beacon);
-          }}
-        />
         <LayersSheet key="layers-sheet" open={showLayersSheet} onClose={() => setShowLayersSheet(false)} activeLayer={activeLayer} setActiveLayer={setActiveLayer} />
       </div>
+      {/* PulseVenueDrawer — outside overflow-hidden so fixed positioning is not clipped */}
+      <PulseVenueDrawer
+        navHeight={64}
+        places={Array.isArray(pulsePlaces) ? pulsePlaces : []}
+        eventBeacons={[
+          // Curated events from pulse_events (OutOut ingest + manual seeds)
+          ...pulseEvents.map(e => ({
+            id:              e.id,
+            title:           e.title,
+            type:            'event',
+            beacon_category: e.beacon_category || 'event',
+            geo_lat:         e.lat,
+            geo_lng:         e.lng,
+            starts_at:       e.starts_at,
+            ends_at:         e.ends_at,
+            image_url:       e.image_url || null,
+            venue_name:      e.venue_name || null,
+            address:         null,
+          })),
+          // User-dropped event beacons from the live map
+          ...(Array.isArray(mapSignals) ? mapSignals : [])
+            .filter(b => b.type === 'event')
+            .map(b => ({
+              id:              b.id,
+              title:           b.title || '',
+              type:            'event',
+              beacon_category: b.beacon_category || 'event',
+              geo_lat:         b.geo_lat,
+              geo_lng:         b.geo_lng,
+              starts_at:       b.starts_at || null,
+              ends_at:         b.ends_at   || null,
+              image_url:       null,
+              venue_name:      null,
+              address:         null,
+            })),
+        ]}
+        onSelect={(beacon) => {
+          // Fly camera to the selected venue/event then open its sheet
+          if (pulseApiRef.current && pulseApiRef.current.flyTo) {
+            try {
+              pulseApiRef.current.flyTo({ lat: beacon.geo_lat, lng: beacon.geo_lng, zoom: 14 });
+            } catch (_e) { /* non-fatal */ }
+          }
+          handleBeaconClick(beacon);
+        }}
+      />
     </ErrorBoundary>
   );
 }
