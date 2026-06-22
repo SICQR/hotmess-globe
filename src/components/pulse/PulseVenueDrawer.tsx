@@ -30,6 +30,7 @@ export interface DrawerBeacon {
   address?: string | null;
   description?: string | null;
   image_url?: string | null;
+  venue_name?: string | null;
 }
 
 interface Props {
@@ -168,6 +169,7 @@ export default function PulseVenueDrawer({ places, eventBeacons, onSelect, navHe
     geo_lat:         p.lat,
     geo_lng:         p.lng,
     address:         p.address,
+    image_url:       p.image_url ?? null,
   });
 
   const isOpen = snap !== 'peek';
@@ -190,6 +192,7 @@ export default function PulseVenueDrawer({ places, eventBeacons, onSelect, navHe
         backdropFilter: 'blur(24px)',
         WebkitBackdropFilter: 'blur(24px)',
         touchAction: 'none',
+        y: 0,
       }}
       drag="y"
       dragDirectionLock
@@ -436,13 +439,13 @@ function EventCard({ event, onClick }: { event: DrawerBeacon; onClick: () => voi
         </p>
 
         {/* Address / venue */}
-        {event.address && (
+        {(event.address || event.venue_name) && (
           <p
             className="text-[11px] mt-0.5 flex items-center gap-1"
             style={{ color: 'rgba(255,255,255,0.35)' }}
           >
             <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
-            {event.address}
+            {event.address || event.venue_name}
           </p>
         )}
       </div>
