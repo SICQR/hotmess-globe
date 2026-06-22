@@ -27,6 +27,7 @@ export interface PulsePlace {
   opening_hours: Record<string, unknown> | null;
   website: string | null;
   phone: string | null;
+  image_url: string | null;
 }
 
 /**
@@ -39,7 +40,7 @@ export function usePulsePlaces() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pulse_places')
-        .select('id, slug, name, type, country, lat, lng, priority, parent_slug, is_active, notes, tier, event_active, subscription_status, beacon_category, address, opening_hours, website, phone')
+        .select('id, slug, name, type, country, lat, lng, priority, parent_slug, is_active, notes, tier, event_active, subscription_status, beacon_category, address, opening_hours, website, phone, image_url')
         .eq('is_active', true)
         .order('priority', { ascending: false });
 
