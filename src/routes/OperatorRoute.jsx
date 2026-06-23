@@ -1,27 +1,75 @@
 /**
- * OperatorRoute — access gate + role flag for the operator cockpit (/operator).
+ * OperatorRoute — access gate + venue resolution for the operator cockpit (/operator).
  *
- * Reads the membership tier from the existing useUserContext hook (no new hook).
- * Access is limited to operators: tier `venue` OR `promoter`. Everyone else is
- * redirected to home. The derived role flag ('venue' | 'promoter') is passed
- * into OperatorPanel so the panel can adapt its tabs.
+ * VENDOR axis only. Operator access is decided by operator identity, NOT the
+ * consumer membership/profile tier:
+ *   - profiles.role === 'admin'              → full operator access (any venue)
+ *   - operator_venues row(s)                 → operates those venue(s)
+ *   - memberships.tier in (venue, promoter)  → business subscriber (vendor)
+ * Everyone else is redirected home.
+ *
+ * Resolves a venue to manage (explicit ?venue_id wins, else the operator's first
+ * linked venue, else for admins the first venue overall) and passes venue_id +
+ * the role flag into OperatorPanel.
  */
+import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useUserContext } from '@/hooks/useUserContext';
+import { useAuth } from '@/lib/AuthContext';
+import { supabase } from '@/components/utils/supabaseClient';
 import OperatorPanel from '@/pages/OperatorPanel';
 
 export default function OperatorRoute() {
-  const { isVenue, isPromoter, tier, isLoading } = useUserContext();
+  const { user, loading: authLoading } = useAuth();
+  const [state, setState] = useState({ loading: true, allowed: false, role: 'venue', venueId: null });
 
-  // Wait for tier resolution before deciding access (avoids a redirect flash).
-  if (isLoading) return null;
+  useEffect(() => {
+    let cancelled = false;
+    if (authLoading) return;
+    if (!user?.id) {
+      setState({ loading: false, allowed: false, role: 'venue', venueId: null });
+      return;
+    }
 
-  const isOperator = isVenue || isPromoter;
-  if (!isOperator) return <Navigate to="/" replace />;
+    (async () => {
+      const [{ data: profile }, { data: opVenues }, { data: memberships }] = await Promise.all([
+        supabase.from('profiles').select('role').eq('id', user.id).maybeSingle(),
+        supabase.from('operator_venues').select('venue_id').eq('user_id', user.id).is('revoked_at', null),
+        supabase.from('memberships').select('tier').eq('user_id', user.id).in('tier', ['venue', 'promoter']),
+      ]);
 
-  // Derive the role flag from tier. Venue is the superset (also passes
-  // isPromoter), so venue wins when both are true.
-  const role = isVenue || String(tier).toLowerCase() === 'venue' ? 'venue' : 'promoter';
+      const isAdmin = profile?.role === 'admin';
+      const memTiers = (memberships || []).map((m) => m.tier);
+      const linkedVenueIds = (opVenues || []).map((o) => o.venue_id).filter(Boolean);
+      const isVendor = isAdmin || linkedVenueIds.length > 0 || memTiers.length > 0;
 
-  return <OperatorPanel role={role} />;
+      if (!isVendor) {
+        if (!cancelled) setState({ loading: false, allowed: false, role: 'venue', venueId: null });
+        return;
+      }
+
+      // Resolve which venue to manage.
+      const params = new URLSearchParams(window.location.search);
+      let venueId = params.get('venue_id') || linkedVenueIds[0] || null;
+      if (!venueId && isAdmin) {
+        const { data: anyVenue } = await supabase.from('venues').select('id').limit(1).maybeSingle();
+        venueId = anyVenue?.id || null;
+      }
+
+      // Role from the vendor axis: promoter only when promoter-without-venue.
+      const role =
+        memTiers.includes('promoter') && !memTiers.includes('venue') && linkedVenueIds.length === 0
+          ? 'promoter'
+          : 'venue';
+
+      if (!cancelled) setState({ loading: false, allowed: true, role, venueId });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, authLoading]);
+
+  if (authLoading || state.loading) return null;
+  if (!state.allowed) return <Navigate to="/" replace />;
+  return <OperatorPanel role={state.role} venueId={state.venueId} />;
 }

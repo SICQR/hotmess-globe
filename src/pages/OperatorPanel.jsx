@@ -13,6 +13,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useV6Flag as useFlag } from '@/hooks/useV6Flag';
 import { ConfirmProvider, useConfirm } from '@/components/operator/ConfirmModal';
+import MoneyTab from '@/components/operator/MoneyTab';
 
 const T = {
   black:  '#000',
@@ -577,10 +578,10 @@ function ControlTab({ venueId, eventId, onRefresh }) {
 
 // ── Main Panel ────────────────────────────────────────────────────────────────
 
-function OperatorPanelInner({ role }) {
+function OperatorPanelInner({ role, venueId: propVenueId }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const venueId = searchParams.get('venue_id');
+  const venueId = propVenueId || searchParams.get('venue_id');
   const eventId = searchParams.get('event_id');
 
   const [tab, setTab] = useState('LIVE');
@@ -748,7 +749,7 @@ function OperatorPanelInner({ role }) {
               />
             )}
             {tab === 'EVENTS' && <PlaceholderPanel title="Events" />}
-            {tab === 'MONEY' && <PlaceholderPanel title="Money" />}
+            {tab === 'MONEY' && <MoneyTab role={role} venueId={venueId} />}
             {tab === 'CONTROL' && (
               <ControlTab
                 venueId={venueId}
@@ -763,12 +764,12 @@ function OperatorPanelInner({ role }) {
   );
 }
 
-export default function OperatorPanel({ role = 'venue' }) {
+export default function OperatorPanel({ role = 'venue', venueId }) {
   const f5Enabled = useFlag('v6_night_operator_panel');
   if (!f5Enabled) return null;
   return (
     <ConfirmProvider>
-      <OperatorPanelInner role={role} />
+      <OperatorPanelInner role={role} venueId={venueId} />
     </ConfirmProvider>
   );
 }
