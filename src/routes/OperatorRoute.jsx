@@ -43,7 +43,6 @@ export default function OperatorRoute() {
       const isVendor = isAdmin || linkedVenueIds.length > 0 || memTiers.length > 0;
 
       if (!isVendor) {
-        console.error('[OPDBG] gate DENY', JSON.stringify({ uid: user.id, isAdmin, memTiers, linkedVenueIds }));
         if (!cancelled) setState({ loading: false, allowed: false, role: 'venue', venueId: null });
         return;
       }
@@ -62,7 +61,6 @@ export default function OperatorRoute() {
           ? 'promoter'
           : 'venue';
 
-      console.error('[OPDBG] gate', JSON.stringify({ uid: user.id, isAdmin, memTiers, linkedVenueIds, venueId, role }));
       if (!cancelled) setState({ loading: false, allowed: true, role, venueId });
     })();
 
