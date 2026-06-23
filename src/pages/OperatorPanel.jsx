@@ -13,6 +13,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useV6Flag as useFlag } from '@/hooks/useV6Flag';
 import { ConfirmProvider, useConfirm } from '@/components/operator/ConfirmModal';
+import MoneyTab from '@/components/operator/MoneyTab';
 
 const T = {
   black:  '#000',
@@ -748,7 +749,7 @@ function OperatorPanelInner({ role }) {
               />
             )}
             {tab === 'EVENTS' && <PlaceholderPanel title="Events" />}
-            {tab === 'MONEY' && <PlaceholderPanel title="Money" />}
+            {tab === 'MONEY' && <MoneyTab role={role} venueId={venueId} />}
             {tab === 'CONTROL' && (
               <ControlTab
                 venueId={venueId}
