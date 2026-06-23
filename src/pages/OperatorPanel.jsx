@@ -578,10 +578,10 @@ function ControlTab({ venueId, eventId, onRefresh }) {
 
 // ── Main Panel ────────────────────────────────────────────────────────────────
 
-function OperatorPanelInner({ role }) {
+function OperatorPanelInner({ role, venueId: propVenueId }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const venueId = searchParams.get('venue_id');
+  const venueId = propVenueId || searchParams.get('venue_id');
   const eventId = searchParams.get('event_id');
 
   const [tab, setTab] = useState('LIVE');
@@ -764,12 +764,12 @@ function OperatorPanelInner({ role }) {
   );
 }
 
-export default function OperatorPanel({ role = 'venue' }) {
+export default function OperatorPanel({ role = 'venue', venueId }) {
   const f5Enabled = useFlag('v6_night_operator_panel');
   if (!f5Enabled) return null;
   return (
     <ConfirmProvider>
-      <OperatorPanelInner role={role} />
+      <OperatorPanelInner role={role} venueId={venueId} />
     </ConfirmProvider>
   );
 }
