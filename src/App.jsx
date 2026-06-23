@@ -107,6 +107,7 @@ const ComingSoon = lazy(() => import('@/pages/ComingSoon'));
 const SellerDashboard = lazy(() => import('@/pages/SellerDashboard'));
 const SellerOnboarding = lazy(() => import('@/pages/SellerOnboarding'));
 const CreatorDashboard = lazy(() => import('@/pages/CreatorDashboard'));
+const OperatorRoute = lazy(() => import('@/routes/OperatorRoute'));
 const TicketsPage = lazy(() => import('@/pages/tickets/Tickets'));
 const TicketDetailPage = lazy(() => import('@/pages/tickets/TicketDetail'));
 const TicketChatPage = lazy(() => import('@/pages/tickets/TicketChat'));
@@ -483,6 +484,8 @@ const AuthenticatedApp = () => {
       <Route path="/auth/*" element={<PageRoute pageKey="Auth" />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/portal" element={<PortalPage />} />
+      {/* OPERATOR COCKPIT — venue/promoter only; OperatorRoute gates access + derives role */}
+      <Route path="/operator" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><OperatorRoute /></Suspense>} />
       <Route path="/reentry" element={<ReentryPage />} />
       {/* v3 reentry welcome screen secondary CTA targets /pricing. Pricing.jsx
           component exists but was not routed; wiring here. The tier query

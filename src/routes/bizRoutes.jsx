@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { Route } from 'react-router-dom';
+import { Route, Navigate } from 'react-router-dom';
 
 // Lazy load pages
 const PromoterDashboard = React.lazy(() => import('@/pages/biz/PromoterDashboard'));
@@ -25,7 +25,7 @@ export const bizRoutes = [
   },
   {
     path: '/biz/beacon/:id',
-    element: <PromoterDashboard />, // Would be BeaconDetail page
+    element: <Navigate to="/operator" replace />, // was phantom BeaconDetail stub → operator cockpit
     title: 'Beacon Details'
   },
   {
@@ -35,12 +35,12 @@ export const bizRoutes = [
   },
   {
     path: '/creator/upload',
-    element: <CreatorDashboard />, // Would be ContentUpload page
+    element: <Navigate to="/operator" replace />, // was phantom ContentUpload stub → operator cockpit
     title: 'Upload Content'
   },
   {
     path: '/creator/settings',
-    element: <CreatorDashboard />, // Would be CreatorSettings page
+    element: <Navigate to="/operator" replace />, // was phantom CreatorSettings stub → operator cockpit
     title: 'Creator Settings'
   }
 ];

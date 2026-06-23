@@ -26,7 +26,13 @@ const T = {
   warn:   '#FF9500',
 };
 
-const TABS = ['LIVE', 'SIGNALS', 'ZONES', 'CONTROL'];
+// Tab order. ZONES is venue-only; EVENTS/MONEY are placeholders (next release).
+const ALL_TABS = ['LIVE', 'SIGNALS', 'ZONES', 'EVENTS', 'MONEY', 'CONTROL'];
+
+/** Build the visible tab list for a given operator role. */
+function tabsForRole(role) {
+  return ALL_TABS.filter((t) => !(t === 'ZONES' && role === 'promoter'));
+}
 
 const MOMENTUM_STATES = ['EARLY', 'LIVE', 'PEAK', 'WINDING_DOWN'];
 
@@ -96,6 +102,24 @@ function ActionButton({ label, color = T.gold, disabled, onClick, small }) {
     >
       {label}
     </button>
+  );
+}
+
+// ── Placeholder Panel (EVENTS / MONEY — coming next release) ──────────────────
+
+function PlaceholderPanel({ title }) {
+  return (
+    <div style={{
+      background: T.card, border: `1px dashed ${T.border}`,
+      borderRadius: 10, padding: '48px 20px', textAlign: 'center',
+    }}>
+      <p style={{ color: T.white, fontSize: 16, fontWeight: 700, letterSpacing: 1, margin: '0 0 6px', textTransform: 'uppercase' }}>
+        {title}
+      </p>
+      <p style={{ color: T.muted, fontSize: 13, margin: 0 }}>
+        Coming in next release
+      </p>
+    </div>
   );
 }
 
@@ -553,13 +577,14 @@ function ControlTab({ venueId, eventId, onRefresh }) {
 
 // ── Main Panel ────────────────────────────────────────────────────────────────
 
-function OperatorPanelInner() {
+function OperatorPanelInner({ role }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const venueId = searchParams.get('venue_id');
   const eventId = searchParams.get('event_id');
 
   const [tab, setTab] = useState('LIVE');
+  const visibleTabs = tabsForRole(role);
   const [stats, setStats] = useState(null);
   const [beacons, setBeacons] = useState([]);
   const [auditEntries, setAuditEntries] = useState([]);
@@ -667,7 +692,7 @@ function OperatorPanelInner() {
         </div>
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 0 }}>
-          {TABS.map(t => (
+          {visibleTabs.map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -722,6 +747,8 @@ function OperatorPanelInner() {
                 onRefresh={refreshAll}
               />
             )}
+            {tab === 'EVENTS' && <PlaceholderPanel title="Events" />}
+            {tab === 'MONEY' && <PlaceholderPanel title="Money" />}
             {tab === 'CONTROL' && (
               <ControlTab
                 venueId={venueId}
@@ -736,12 +763,12 @@ function OperatorPanelInner() {
   );
 }
 
-export default function OperatorPanel() {
+export default function OperatorPanel({ role = 'venue' }) {
   const f5Enabled = useFlag('v6_night_operator_panel');
   if (!f5Enabled) return null;
   return (
     <ConfirmProvider>
-      <OperatorPanelInner />
+      <OperatorPanelInner role={role} />
     </ConfirmProvider>
   );
 }
