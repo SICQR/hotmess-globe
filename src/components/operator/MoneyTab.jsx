@@ -319,7 +319,7 @@ export default function MoneyTab({ role = 'venue', venueId }) {
     queryFn: async () => {
       const { data } = await supabase
         .from('orders')
-        .select('id, total_gbp, status, payment_method, created_at')
+        .select('id, total_gbp, status, payment_status, created_at')
         .eq('seller_id', userId)
         .order('created_at', { ascending: false })
         .limit(100);
@@ -327,17 +327,23 @@ export default function MoneyTab({ role = 'venue', venueId }) {
     },
   });
 
-  // Payouts for PayoutManager (seller_payouts).
+  // Payouts for PayoutManager (live `payouts` table, mapped below).
   const { data: payouts = [] } = useQuery({
     queryKey: ['operator-money-payouts', seller?.id],
     enabled: !!seller?.id,
     queryFn: async () => {
       const { data } = await supabase
-        .from('seller_payouts')
+        .from('payouts')
         .select('*')
         .eq('seller_id', seller.id)
-        .order('payout_date', { ascending: false });
-      return data || [];
+        .order('created_at', { ascending: false });
+      return (data || []).map((p) => ({
+        ...p,
+        amount_gbp: p.net_pence != null ? p.net_pence / 100 : Number(p.amount) || 0,
+        arrival_date: p.paid_at,
+        stripe_payout_id: p.stripe_transfer_id,
+        order_ids: [],
+      }));
     },
   });
 
