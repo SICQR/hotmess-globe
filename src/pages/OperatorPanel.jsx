@@ -629,11 +629,13 @@ function OperatorPanelInner({ role, venueId: propVenueId }) {
   useEffect(() => {
     if (!venueId) { setAccess(false); return; }
     supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) { navigate('/'); return; }
+      console.error('[OPDBG] panel getUser', JSON.stringify({ user: user && user.id, venueId }));
+      if (!user) { console.error('[OPDBG] panel NAVIGATE / (no user)'); navigate('/'); return; }
       const [{ data: profile }, { data: opRow }] = await Promise.all([
         supabase.from('profiles').select('role').eq('id', user.id).single(),
         supabase.from('operator_venues').select('id').eq('user_id', user.id).eq('venue_id', venueId).is('revoked_at', null).single(),
       ]);
+      console.error('[OPDBG] panel access', JSON.stringify({ profileRole: profile && profile.role, opRow: !!opRow }));
       if (profile?.role === 'admin' || opRow) {
         setAccess(true);
         refreshAll();
