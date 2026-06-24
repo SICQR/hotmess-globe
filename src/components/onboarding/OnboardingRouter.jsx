@@ -206,7 +206,19 @@ export default function OnboardingRouter() {
 
     // Already complete?
     if (freshProfile.onboarding_completed) {
-      navigate('/pulse', { replace: true });
+      // Preserve deep links through boot. A fully-onboarded user who cold-loads
+      // a real app route (e.g. /operator, /market) briefly mounts this router
+      // during the boot window; do NOT clobber their destination with the
+      // default landing — only redirect when they're on a root/onboarding path.
+      const path = window.location.pathname;
+      const isOnboardingOrRoot =
+        path === '/' ||
+        path.startsWith('/onboarding') ||
+        path.startsWith('/auth') ||
+        path.startsWith('/age') ||
+        path.startsWith('/welcome') ||
+        path.startsWith('/signup');
+      if (isOnboardingOrRoot) navigate('/pulse', { replace: true });
       return;
     }
 
