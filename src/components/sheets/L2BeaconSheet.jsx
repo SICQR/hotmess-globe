@@ -26,6 +26,7 @@ import { humanizeError } from '@/lib/errorUtils';
 import { usePowerups } from '@/hooks/usePowerups';
 // D12 Slice 2 / #303 Phase A — first-class entity_kind + intent reader.
 import { readIntent } from '@/lib/beacons/beaconKind';
+import { VENUE_PIN_COLORS } from '@/components/globe/beaconIconFactory';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BEACON ID NORMALISATION + KIND DETECTION
@@ -904,7 +905,7 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
 
     supabase
       .from('beacons')
-      .select('id, code, type, beacon_category, geo_lat, geo_lng, starts_at, ends_at, intensity, title, description, city_slug, globe_color, globe_pulse_type, globe_size_base, checkin_count, venue_id, owner_id, event_start_at, event_end_at, metadata')
+      .select('id, code, type, beacon_category, geo_lat, geo_lng, starts_at, ends_at, intensity, title, description, city_slug, globe_pulse_type, checkin_count, venue_id, owner_id, event_start_at, event_end_at, metadata')
       .eq('id', cleanBeaconId)
       .maybeSingle()
       .then(({ data }) => {
@@ -1124,11 +1125,14 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
   // Curated editorial gets brand gold regardless of category default colour.
   // Doctrine 11 — never render district/hotmess in events-pink.
   const isCurated = kind === 'district' || kind === 'hotmess';
+  // Globe Render Doctrine — VENUE_PIN_COLORS is canonical. The orphan
+  // beacon.globe_color read is removed; venue accent was cyan #00C2E0 → now
+  // gold VENUE_PIN_COLORS.default. care = cream, event = pink.
   const categoryColor = isCurated
-    ? '#C8962C'
+    ? VENUE_PIN_COLORS.default
     : kind === 'care'
-      ? '#F4ECD8'
-      : (beacon.globe_color || (category === 'venue' ? '#00C2E0' : category === 'event' ? '#FF4F9A' : '#C8962C'));
+      ? VENUE_PIN_COLORS.aftercare
+      : (category === 'event' ? '#FF4F9A' : VENUE_PIN_COLORS.default);
   const lat = beacon.geo_lat ?? beacon.lat;
   const lng = beacon.geo_lng ?? beacon.lng;
   const ownerId = beacon.owner_id || null; // ONLY read in the user-kind branch.
