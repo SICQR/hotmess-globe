@@ -991,3 +991,14 @@
 @media (min-width: 1600px) {
   .hotmess-os { zoom: 1.35; }
 }
+
+/* Low-vision contrast lift — desktop only. Exact-token selectors (~=) so only
+   the genuinely faint utility text is affected (never text-white/100 etc.). */
+@media (min-width: 1024px) {
+  .hotmess-os [class~="text-white/30"],
+  .hotmess-os [class~="text-white/25"],
+  .hotmess-os [class~="text-white/20"] { color: rgba(255,255,255,0.72) !important; }
+  .hotmess-os [class~="text-white/15"],
+  .hotmess-os [class~="text-white/10"],
+  .hotmess-os [class~="text-white/5"]  { color: rgba(255,255,255,0.6) !important; }
+}
