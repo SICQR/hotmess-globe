@@ -76,6 +76,7 @@ import { registerVenuePins, venuePinIconId, VENUE_PIN_COLORS } from '@/component
 //   gold  #C8962C  — venues (per-category override below) / editorial / market
 //   pink  #FF4F9A  — events
 //   cream #F4ECD8  — care (quiet, never neon)
+//   amber #FF9E2C  — person signals (distinct from gold venues)
 //
 // Off-doctrine literals removed: venues cyan #00C2E0 and people neon-green
 // #39FF14. Venue is now gold via VENUE_PIN_COLORS.default; per-venue subcategory
@@ -84,7 +85,7 @@ export const CATEGORY_COLOR = {
   editorial: VENUE_PIN_COLORS.default, // brand gold — curated district pulse
   events: '#FF4F9A',                   // pink — live events
   venues: VENUE_PIN_COLORS.default,    // gold — passive geography (per-category override per-feature)
-  people: VENUE_PIN_COLORS.default,    // person/route is a LATER brief — parked on gold, was neon-green #39FF14
+  people: '#FF9E2C',                   // amber — person signals (D5X: distinct from gold venues). was neon-green #39FF14
   market: VENUE_PIN_COLORS.market,     // gold (market) — was #FFD700
   radio: '#B026FF',                    // radio out of in-scope set — left as-is
   care: VENUE_PIN_COLORS.aftercare,    // cream #F4ECD8 — quiet care
