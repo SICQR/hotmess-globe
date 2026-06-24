@@ -105,7 +105,6 @@ import GoldPulseLoader from '@/components/ui/GoldPulseLoader';
 const VenueCheckin = lazy(() => import('@/pages/VenueCheckin'));
 const ComingSoon = lazy(() => import('@/pages/ComingSoon'));
 const SellerDashboard = lazy(() => import('@/pages/SellerDashboard'));
-const SellerOnboarding = lazy(() => import('@/pages/SellerOnboarding'));
 const CreatorDashboard = lazy(() => import('@/pages/CreatorDashboard'));
 const OperatorRoute = lazy(() => import('@/routes/OperatorRoute'));
 const TicketsPage = lazy(() => import('@/pages/tickets/Tickets'));
@@ -161,19 +160,10 @@ const LEGACY_PAGE_ROUTE_ALLOWLIST = new Set([
   'Community',
   'Leaderboard',
   'AdminDashboard',
-  // Business pages
-  'PromoterDashboard',
-  'BusinessDashboard',
-  'BusinessAnalytics',
-  'BusinessOnboarding',
-  'BusinessSettings',
-  'BusinessVenue',
-  'BusinessBilling',
+  // Business pages (kept: live)
   'CreateBeaconBiz',
   'CreatorDashboard',
   'SellerDashboard',
-  'SellerOnboarding',
-  'OrganizerDashboard',
   'ReferralProgram',
   // Shop/market compat is handled separately.
   'Marketplace',
