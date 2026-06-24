@@ -116,23 +116,53 @@ export default async function handler(req, res) {
       return json(res, 400, { error: 'Invalid mode' });
     }
 
-    // TRANSIT: no provider supports public transit routing. Return a structured
-    // unavailability response rather than silently serving a walking route.
+    // TRANSIT: served by TfL Journey Planner (free, London tube/bus/overground/
+    // DLR/Elizabeth line/night-bus). transit_mode picks the preset: 'night'
+    // biases to night buses for the late-night product framing; default day
+    // routing otherwise. No client key — TfL works keyless at low volume, and
+    // TFL_APP_KEY (if set) only lifts the anonymous rate limit.
     if (mode === 'TRANSIT') {
-      return json(res, 200, {
-        mode,
+      const transitMode = String(body.transit_mode || '').toLowerCase() === 'night' ? 'night' : 'transit';
+      const { fetchTflJourney } = await import('./_tfl.js');
+      const tfl = await fetchTflJourney({
         origin,
         destination,
-        duration_seconds: null,
-        distance_meters: null,
-        provider: 'TRANSIT_UNAVAILABLE',
+        mode: transitMode,
+        appKey: process.env.TFL_APP_KEY || null,
+      });
+
+      if (!tfl?.ok) {
+        // Keep the user in-app: surface a structured unavailability response so
+        // the UI can still offer the Citymapper / TfL external fallback.
+        return json(res, 200, {
+          mode,
+          origin,
+          destination,
+          duration_seconds: null,
+          distance_meters: null,
+          provider: 'TRANSIT_UNAVAILABLE',
+          polyline: { encoded: null, points: null },
+          steps: [],
+          ttl_seconds: ttlSeconds,
+          warning: {
+            code: 'transit_unavailable',
+            message: tfl?.error || 'Live transit directions are not available right now. Use Citymapper or TfL.',
+            details: tfl?.details || null,
+          },
+        });
+      }
+
+      return json(res, 200, {
+        mode,
+        transit_mode: transitMode,
+        origin,
+        destination,
+        duration_seconds: tfl.duration_seconds,
+        distance_meters: tfl.distance_meters,
+        provider: tfl.provider,
         polyline: { encoded: null, points: null },
-        steps: [],
+        steps: tfl.steps || [],
         ttl_seconds: ttlSeconds,
-        warning: {
-          code: 'transit_unavailable',
-          message: 'Live transit directions are not available in-app. Use Citymapper or TfL.',
-        },
       });
     }
 

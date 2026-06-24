@@ -67,7 +67,7 @@ export const fetchRoutingEtas = async ({ origin, destination, ttlSeconds = 120, 
   });
 };
 
-export const fetchRoutingDirections = async ({ origin, destination, mode, ttlSeconds = 90 }) => {
+export const fetchRoutingDirections = async ({ origin, destination, mode, transitMode, ttlSeconds = 90 }) => {
   return authedFetch('/api/routing/directions', {
     method: 'POST',
     headers: {
@@ -77,6 +77,8 @@ export const fetchRoutingDirections = async ({ origin, destination, mode, ttlSec
       origin,
       destination,
       mode,
+      // For TRANSIT, 'night' selects TfL night-bus routing; omitted otherwise.
+      ...(transitMode ? { transit_mode: transitMode } : {}),
       ttl_seconds: ttlSeconds,
     }),
   });
