@@ -80,7 +80,7 @@ export default function VenueDiscoveryCards() {
       </div>
 
       <div
-        className="flex gap-2.5 overflow-x-auto pl-5 lg:overflow-x-visible lg:flex-wrap lg:justify-center lg:px-0"
+        className="flex gap-2.5 overflow-x-auto pl-5"
         style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', paddingRight: 20 }}
       >
         {!loaded && [0, 1].map((i) => (

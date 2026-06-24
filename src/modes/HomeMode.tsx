@@ -154,9 +154,6 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
           scrollbarColor: 'rgba(200,150,44,0.3) transparent',
         }}
       >
-        {/* Desktop: centre the feed in a comfortable column instead of stretching
-            phone content across the screen. Mobile (<lg) stays full-width. */}
-        <div className="w-full lg:max-w-2xl lg:mx-auto">
 
         {/* ================================================================ */}
         {/* 1. HERO â compact signal layer, single CTA                     */}
@@ -532,7 +529,6 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
 
         {/* Bottom spacer for home indicator */}
         <div style={{ height: 24 }} />
-        </div>{/* /desktop feed column */}
 
       </div>
 
