@@ -410,10 +410,24 @@ function EventCard({ event, onClick }: { event: DrawerBeacon; onClick: () => voi
         />
       ) : (
         <div
-          className="w-full flex items-center justify-center"
-          style={{ height: 80, background: 'rgba(255,79,154,0.08)' }}
+          className="w-full flex items-center justify-center relative overflow-hidden"
+          style={{
+            height: 128,
+            background:
+              'linear-gradient(135deg, rgba(255,79,154,0.20), rgba(200,150,44,0.10) 55%, rgba(10,10,12,0.5))',
+          }}
         >
-          <Ticket className="w-6 h-6" style={{ color: 'rgba(255,79,154,0.3)' }} />
+          <div
+            className="absolute inset-0"
+            style={{ background: 'radial-gradient(circle at 30% 28%, rgba(255,79,154,0.28), transparent 70%)' }}
+          />
+          <Ticket className="w-7 h-7 relative" style={{ color: 'rgba(255,79,154,0.75)' }} />
+          <span
+            className="absolute bottom-2 right-3 text-[9px] font-black uppercase tracking-[0.18em]"
+            style={{ color: 'rgba(255,255,255,0.45)' }}
+          >
+            HOTMESS
+          </span>
         </div>
       )}
 
