@@ -24,11 +24,16 @@ export default function EventsTab({ venueId }) {
     queryKey: ['operator-events-tickets', venueId],
     enabled: !!venueId,
     queryFn: async () => {
-      const { data: beacons } = await supabase
+      // Beacons are owner-keyed (owner_id), not venue-keyed (0 beacons carry a
+      // venue_id). The operator's events are the beacons THEY own — this unifies
+      // venue + promoter: both manage their own beacons.
+      const { data: { user } } = await supabase.auth.getUser();
+      const ownerId = user?.id;
+      const { data: beacons } = ownerId ? await supabase
         .from('beacons')
         .select('id, title, event_start_at, ends_at')
-        .eq('venue_id', venueId)
-        .order('event_start_at', { ascending: true });
+        .eq('owner_id', ownerId)
+        .order('event_start_at', { ascending: true }) : { data: [] };
 
       const ids = (beacons || []).map((b) => b.id);
       let pools = [];
