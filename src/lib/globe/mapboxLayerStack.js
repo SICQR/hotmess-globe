@@ -652,7 +652,9 @@ export function addLayerStack(map, opts) {
           ['image', ['concat', 'hm-venue-pin-', ['coalesce', ['get', 'beacon_category'], '']]],
           ['image', 'hm-venue-pin-club'],
         ],
-        'icon-size': MARKER_ICON_SIZE, // Brief 2 parity band — same as signal glyphs
+        // Grow teardrops with zoom: parity floor at low zoom, ~0.85 (≈44px tap
+        // target) at street zoom so pins are legible and easy to hit. (Was flat.)
+        'icon-size': ['interpolate', ['linear'], ['zoom'], 13, MARKER_ICON_SIZE, 16, 0.85],
         'icon-anchor': 'bottom',
         'icon-allow-overlap': true,
         'icon-ignore-placement': false,

@@ -10,6 +10,7 @@
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
+import { VENUE_PIN_COLORS } from '@/components/globe/beaconIconFactory';
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
 import type { PanInfo } from 'framer-motion';
 import { ChevronUp, MapPin, Calendar, X, Navigation, Ticket } from 'lucide-react';
@@ -63,16 +64,10 @@ const CATEGORIES = [
   { id: 'gym',       label: 'Gyms'     },
 ];
 
-const CATEGORY_COLORS: Record<string, string> = {
-  club:      '#7C3AED',
-  sauna:     '#0891B2',
-  leather:   '#92400E',
-  cruising:  '#065F46',
-  cafe:      '#B45309',
-  aftercare: '#BE185D',
-  gym:       '#1D4ED8',
-  market:    '#6B7280',
-};
+// Single source of truth — the SAME per-category colours as the globe pins
+// (VENUE_PIN_COLORS). A sauna is teal here AND on the map; leather oxblood here
+// AND on the map. (D5X doctrine: one colour system across every surface.)
+const CATEGORY_COLORS: Record<string, string> = VENUE_PIN_COLORS;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
