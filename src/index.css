@@ -977,3 +977,17 @@
   #root::after { display: none; }
 }
 
+
+/* ════════════════════════════════════════════════════════════════════════
+   DESKTOP + LOW-VISION LAYER — applies ONLY at >=1024px.
+   Mobile (the core experience for 157 users) is completely untouched.
+   Magnifies the mobile-first OS so it is usable on a desktop monitor for a
+   low-vision viewer. `zoom` scales px text too (unlike rem font-size), with
+   no per-component layout surgery. Tuned against desktop screenshots.
+   ════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 1024px) {
+  .hotmess-os { zoom: 1.18; }
+}
+@media (min-width: 1600px) {
+  .hotmess-os { zoom: 1.35; }
+}
