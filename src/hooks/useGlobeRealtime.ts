@@ -11,6 +11,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
+import { VENUE_PIN_COLORS } from '@/components/globe/beaconIconFactory';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -79,12 +80,17 @@ export interface LtgoSignal {
 
 // ─── Beacon category visual config ──────────────────────────────────────────
 
+// Globe Render Doctrine — colours route through VENUE_PIN_COLORS (canonical).
+// venue was cyan #00C2E0 → now gold VENUE_PIN_COLORS.default; care/aftercare =
+// cream. event stays pink, hotmess amber. NOTE: this hook's globeEvents output
+// is not currently consumed by the rendered map (PulseMap renders via
+// mapboxLayerStack); colours kept consistent so it can never drift off-doctrine.
 export const BEACON_VISUALS: Record<string, { color: string; pulse: string; size: number }> = {
-  venue:   { color: '#00C2E0', pulse: 'steady',   size: 2.0 },
-  user:    { color: '#C8962C', pulse: 'standard', size: 1.0 },
-  event:   { color: '#FF4F9A', pulse: 'flare',    size: 2.5 },
-  hotmess: { color: '#F5C842', pulse: 'ripple',   size: 3.0 },
-  safety:  { color: '#FF3B30', pulse: 'private',  size: 0   },
+  venue:   { color: VENUE_PIN_COLORS.default,   pulse: 'steady',   size: 2.0 },
+  user:    { color: VENUE_PIN_COLORS.default,   pulse: 'standard', size: 1.0 },
+  event:   { color: '#FF4F9A',                  pulse: 'flare',    size: 2.5 },
+  hotmess: { color: '#F5C842',                  pulse: 'ripple',   size: 3.0 },
+  safety:  { color: '#FF3B30',                  pulse: 'private',  size: 0   },
 };
 
 // ─── Hook ───────────────────────────────────────────────────────────────────
@@ -291,9 +297,12 @@ export function useGlobeRealtime() {
             geo_lat: Number(b.geo_lat),
             geo_lng: Number(b.geo_lng),
             city_slug: b.city_slug ? String(b.city_slug) : null,
-            globe_color: String(b.globe_color || BEACON_VISUALS[String(b.beacon_category)]?.color || '#C8962C'),
+            // Globe Render Doctrine — orphan columns beacons.globe_color /
+            // beacons.globe_size_base are NO LONGER read. Visuals derive from
+            // BEACON_VISUALS (category) which routes through VENUE_PIN_COLORS.
+            globe_color: BEACON_VISUALS[String(b.beacon_category)]?.color || VENUE_PIN_COLORS.default,
             globe_pulse_type: String(b.globe_pulse_type || BEACON_VISUALS[String(b.beacon_category)]?.pulse || 'standard'),
-            globe_size_base: Number(b.globe_size_base) || BEACON_VISUALS[String(b.beacon_category)]?.size || 1.0,
+            globe_size_base: BEACON_VISUALS[String(b.beacon_category)]?.size || 1.0,
             intensity: Number(b.intensity) || 1,
             checkin_count: Number(b.checkin_count) || 0,
             venue_id: b.venue_id ? String(b.venue_id) : null,
@@ -432,9 +441,11 @@ export function useGlobeRealtime() {
               geo_lat: Number(b.geo_lat),
               geo_lng: Number(b.geo_lng),
               city_slug: b.city_slug ? String(b.city_slug) : null,
-              globe_color: String(b.globe_color || '#C8962C'),
-              globe_pulse_type: String(b.globe_pulse_type || 'standard'),
-              globe_size_base: Number(b.globe_size_base) || 1.0,
+              // Globe Render Doctrine — orphan columns no longer read; derive
+              // from BEACON_VISUALS (canonical via VENUE_PIN_COLORS).
+              globe_color: BEACON_VISUALS[String(b.beacon_category)]?.color || VENUE_PIN_COLORS.default,
+              globe_pulse_type: String(b.globe_pulse_type || BEACON_VISUALS[String(b.beacon_category)]?.pulse || 'standard'),
+              globe_size_base: BEACON_VISUALS[String(b.beacon_category)]?.size || 1.0,
               intensity: Number(b.intensity) || 1,
               checkin_count: Number(b.checkin_count) || 0,
               venue_id: b.venue_id ? String(b.venue_id) : null,
