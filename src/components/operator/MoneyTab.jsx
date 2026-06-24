@@ -5,7 +5,7 @@
  * cockpit instead of rebuilding it. Composes:
  *   - StripeConnectBanner  (lifted from L2VendorDashboardSheet — wired to the
  *     real /api/stripe/connect-onboard Account-Link flow)
- *   - PayoutManager        (reused from components/seller — seller_payouts)
+ *   - PayoutManager        (reused from components/seller — payouts)
  *   - A simple sales summary: ticket orders + market orders + total revenue.
  *
  * Role adaptation (prop `role`):
