@@ -14,6 +14,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { useV6Flag as useFlag } from '@/hooks/useV6Flag';
 import { ConfirmProvider, useConfirm } from '@/components/operator/ConfirmModal';
 import MoneyTab from '@/components/operator/MoneyTab';
+import EventsTab from '@/components/operator/EventsTab';
 
 const T = {
   black:  '#000',
@@ -747,7 +748,7 @@ function OperatorPanelInner({ role, venueId: propVenueId }) {
                 onRefresh={refreshAll}
               />
             )}
-            {tab === 'EVENTS' && <PlaceholderPanel title="Events" />}
+            {tab === 'EVENTS' && <EventsTab venueId={venueId} />}
             {tab === 'MONEY' && <MoneyTab role={role} venueId={venueId} />}
             {tab === 'CONTROL' && (
               <ControlTab
