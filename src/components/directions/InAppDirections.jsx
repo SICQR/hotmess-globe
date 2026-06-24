@@ -57,9 +57,9 @@ import { cn } from '@/lib/utils';
 // Mode-chip reframe (D14 §3). id/apiMode stable for backward compat.
 const TRAVEL_MODES = [
   { id: 'foot',    label: 'Walk',        subtitle: 'Quiet, simple, present',   icon: Footprints, apiMode: 'WALK',    color: '#39FF14' },
-  { id: 'transit', label: 'Tube',        subtitle: 'Underground & bus',         icon: Train,      apiMode: 'TRANSIT', color: '#E84040' },
+  { id: 'transit', label: 'Tube',        subtitle: 'Underground & bus',         icon: Train,      apiMode: 'TRANSIT', tflTransitMode: 'transit', color: '#E84040' },
   { id: 'bike',    label: 'Fastest',     subtitle: 'You have somewhere to be', icon: Bike,       apiMode: 'BICYCLE', color: '#00C2E0' },
-  { id: 'drive',   label: 'Night Route', subtitle: 'Safer late-night path',    icon: Moon,       apiMode: 'DRIVE',   color: '#C8962C' },
+  { id: 'drive',   label: 'Night Route', subtitle: 'Night buses, safer path',  icon: Moon,       apiMode: 'TRANSIT', tflTransitMode: 'night', color: '#C8962C' },
 ];
 
 // Brand colours — locked, must match mapboxLayerStack categories on the globe.
@@ -324,9 +324,12 @@ export default function InAppDirections({
     queryFn: () => fetchRoutingDirections({
       origin: fetchOrigin, destination,
       mode: modeConfig?.apiMode || 'WALK',
+      // TRANSIT modes route through TfL Journey Planner server-side. Night Route
+      // uses the night-bus preset; Tube uses the multimodal day preset.
+      transitMode: isTransitMode ? (modeConfig?.tflTransitMode || 'transit') : undefined,
       ttlSeconds: 120
     }),
-    enabled: canFetch && !isTransitMode,
+    enabled: canFetch,
     retry: false,
     staleTime: 60000,
   });
@@ -552,7 +555,14 @@ export default function InAppDirections({
   const duration = formatDuration(directions?.duration_seconds);
   const distance = formatDistance(directions?.distance_meters);
 
-  const getTurnIcon = (instruction = '') => {
+  const getTurnIcon = (instruction = '', stepMode = null) => {
+    // Transit steps carry an explicit mode hint from TfL (walk/tube/bus/etc).
+    if (stepMode) {
+      const m = String(stepMode).toLowerCase();
+      if (m === 'walk' || m === 'walking') return '\u279F'; // walking arrow
+      if (m === 'bus' || m === 'night-bus' || m === 'coach') return '\uD83D\uDE8C'; // bus
+      if (m && m !== 'transit') return '\uD83D\uDE87'; // metro/tube glyph for rail modes
+    }
     const t = instruction.toLowerCase();
     if (t.includes('arrive') || t.includes('destination') || t.includes('you have arrived')) return '⬤';
     if (t.includes('u-turn') || t.includes('uturn')) return '↩';
@@ -663,7 +673,7 @@ export default function InAppDirections({
       </div>
 
         {/* ── TURN-BY-TURN STEPS ── */}
-        {directions?.steps?.length > 0 && mode !== 'transit' && (
+        {directions?.steps?.length > 0 && (
           <div className="px-4 pb-8 mt-2">
             <div className="rounded-2xl overflow-hidden border border-white/[0.07]">
               {directions.steps.map((step, i) => {
@@ -684,7 +694,7 @@ export default function InAppDirections({
                         className="text-base leading-none"
                         style={{ color: modeConfig?.color || '#C8962C' }}
                       >
-                        {getTurnIcon(step.instruction)}
+                        {getTurnIcon(step.instruction, step.mode)}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
@@ -706,8 +716,9 @@ export default function InAppDirections({
           </div>
         )}
 
-      {/* TRANSIT — no in-app route. Open Citymapper or TfL. */}
-      {mode === 'transit' && (
+      {/* TRANSIT — fallback only when TfL returned no journey. Otherwise the
+          real step list above renders the tube/bus route in-app. */}
+      {isTransitMode && !directions?.steps?.length && !isLoading && (
         <div className="px-4 pb-6 mt-1">
           <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4 flex flex-col gap-3">
             <div className="flex items-center gap-2">
@@ -715,7 +726,7 @@ export default function InAppDirections({
               <p className="text-sm font-black text-white">Tube &amp; Bus</p>
             </div>
             <p className="text-xs text-white/45 leading-relaxed">
-              Live transit directions aren&#39;t available in-app yet. Use Citymapper for tube, bus, and rail routes.
+              No live transit route right now. Try Citymapper or the TfL Journey Planner for tube, bus, and rail.
             </p>
             <button
               onClick={() => {
