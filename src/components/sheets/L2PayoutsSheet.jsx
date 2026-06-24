@@ -5,7 +5,7 @@
  * - Available balance (sum of completed orders minus platform fee)
  * - Pending balance (awaiting delivery confirmation)
  * - Payout history
- * - Request payout button → creates seller_payouts record
+ * - Request payout button → creates payouts record
  */
 
 import React, { useState } from 'react';
@@ -38,6 +38,22 @@ export default function L2PayoutsSheet() {
       return user;
     },
   });
+
+  // Resolve seller row (id + Stripe status) from market_sellers.
+  const { data: sellerData } = useQuery({
+    queryKey: ['seller-stripe-status', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from('market_sellers')
+        .select('id, stripe_account_id, status')
+        .eq('owner_id', user.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+  const sellerId = sellerData?.id;
 
   // Fetch seller orders (delivered/completed) — uses total_gbp column
   const { data: completedOrders = [] } = useQuery({
@@ -73,21 +89,24 @@ export default function L2PayoutsSheet() {
     enabled: !!user?.email,
   });
 
-  // Fetch payout history
+  // Fetch payout history (live `payouts` table, keyed by seller_id, mapped below)
   const { data: payouts = [] } = useQuery({
-    queryKey: ['seller-payouts', user?.email],
+    queryKey: ['seller-payouts', sellerId],
     queryFn: async () => {
-      if (!user?.email) return [];
+      if (!sellerId) return [];
       const { data, error } = await supabase
-        .from('seller_payouts')
+        .from('payouts')
         .select('*')
-        .eq('seller_email', user.email)
+        .eq('seller_id', sellerId)
         .order('created_at', { ascending: false })
         .limit(20);
       if (error) { toast.error('Failed to load payout history'); return []; }
-      return data || [];
+      return (data || []).map((p) => ({
+        ...p,
+        amount_gbp: p.net_pence != null ? p.net_pence / 100 : Number(p.amount) || 0,
+      }));
     },
-    enabled: !!user?.email,
+    enabled: !!sellerId,
   });
 
   const grossRevenue = completedOrders.reduce((sum, o) => sum + (Number(o.total_gbp) || 0), 0);
@@ -108,13 +127,12 @@ export default function L2PayoutsSheet() {
       if (amount <= 0) throw new Error('Nothing to pay out');
       if (amount > availableBalance) throw new Error(`Maximum available: ${fmt(availableBalance)}`);
 
-      const { error } = await supabase.from('seller_payouts').insert({
-        seller_email: user.email,
-        amount_gbp: amount,
-        amount_xp: 0,
-        currency: 'GBP',
+      if (!sellerId) throw new Error('No seller profile');
+      const { error } = await supabase.from('payouts').insert({
+        seller_id: sellerId,
+        amount,
+        net_pence: Math.round(amount * 100),
         status: 'requested',
-        requested_at: new Date().toISOString(),
         created_at: new Date().toISOString(),
       });
       if (error) throw error;
@@ -127,20 +145,6 @@ export default function L2PayoutsSheet() {
     onError: (err) => toast.error(err.message || 'Failed to request payout'),
   });
 
-  // Check Stripe Connect status (must be before any early returns)
-  const { data: sellerData } = useQuery({
-    queryKey: ['seller-stripe-status', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data } = await supabase
-        .from('market_sellers')
-        .select('stripe_account_id, status')
-        .eq('owner_id', user.id)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!user?.id,
-  });
   const hasStripeConnected = !!sellerData?.stripe_account_id;
   const [connectingStripe, setConnectingStripe] = useState(false);
 

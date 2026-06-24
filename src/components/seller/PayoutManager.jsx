@@ -35,15 +35,14 @@ export default function PayoutManager({ payouts, orders, sellerId, stripeConnect
         throw new Error('No orders to pay out');
       }
 
-      const { data, error } = await supabase.from('seller_payouts').insert({
+      const { data, error } = await supabase.from('payouts').insert({
         seller_id: sellerId,
-        amount_gbp: availableBalance,
-        stripe_connect_account_id: stripeConnectId,
+        amount: availableBalance,
+        net_pence: Math.round(availableBalance * 100),
+        sales_count: unpaidOrders.length,
         status: 'pending',
-        payout_date: new Date().toISOString(),
         period_start: format(new Date(unpaidOrders[0].created_at || unpaidOrders[0].created_date), 'yyyy-MM-dd'),
         period_end: format(new Date(), 'yyyy-MM-dd'),
-        order_ids: unpaidOrders.map(o => o.id)
       }).select().single();
       if (error) throw error;
       return data;

@@ -1320,7 +1320,7 @@ const entityTables = [
   // Marketplace / seller tables used by the UI
   'order_items',
   'promotions',
-  'seller_payouts',
+  'payouts',
   'featured_listings',
 ];
 
@@ -1632,7 +1632,9 @@ if (base44.entities.UserTribe) {
 base44.entities.Order = base44.entities.Order ?? base44.entities.Orders;
 base44.entities.OrderItem = base44.entities.OrderItem ?? base44.entities.OrderItems;
 base44.entities.Promotion = base44.entities.Promotion ?? base44.entities.Promotions;
-base44.entities.SellerPayout = base44.entities.SellerPayout ?? base44.entities.SellerPayouts;
+base44.entities.Payout = base44.entities.Payout ?? base44.entities.Payouts;
+base44.entities.SellerPayouts = base44.entities.SellerPayouts ?? base44.entities.Payouts;
+base44.entities.SellerPayout = base44.entities.SellerPayout ?? base44.entities.Payouts;
 base44.entities.FeaturedListing = base44.entities.FeaturedListing ?? base44.entities.FeaturedListings;
 base44.entities.XPLedger = base44.entities.XPLedger ?? base44.entities.XpLedger;
 base44.entities.CartItem = base44.entities.CartItem ?? base44.entities.CartItems;
