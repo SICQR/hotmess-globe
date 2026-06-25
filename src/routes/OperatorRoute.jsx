@@ -31,16 +31,19 @@ export default function OperatorRoute() {
     }
 
     (async () => {
-      const [{ data: profile }, { data: opVenues }, { data: memberships }] = await Promise.all([
+      const [{ data: profile }, { data: opVenues }, { data: memberships }, { count: ownedBeacons }] = await Promise.all([
         supabase.from('profiles').select('role').eq('id', user.id).maybeSingle(),
         supabase.from('operator_venues').select('venue_id').eq('user_id', user.id).is('revoked_at', null),
         supabase.from('memberships').select('tier').eq('user_id', user.id).in('tier', ['venue', 'promoter']),
+        // Doctrine (2026-06-24): owning ≥1 beacon makes you an operator, even
+        // without a venue link or a venue/promoter membership.
+        supabase.from('beacons').select('id', { count: 'exact', head: true }).eq('owner_id', user.id),
       ]);
 
       const isAdmin = profile?.role === 'admin';
       const memTiers = (memberships || []).map((m) => m.tier);
       const linkedVenueIds = (opVenues || []).map((o) => o.venue_id).filter(Boolean);
-      const isVendor = isAdmin || linkedVenueIds.length > 0 || memTiers.length > 0;
+      const isVendor = isAdmin || linkedVenueIds.length > 0 || memTiers.length > 0 || (ownedBeacons ?? 0) > 0;
 
       if (!isVendor) {
         if (!cancelled) setState({ loading: false, allowed: false, role: 'venue', venueId: null });
@@ -69,7 +72,11 @@ export default function OperatorRoute() {
     };
   }, [user?.id, authLoading]);
 
-  if (authLoading || state.loading) return null;
+  if (authLoading || state.loading) {
+    // Opaque full-screen hold so the Home feed never bleeds through the
+    // route crossfade while the async access check resolves.
+    return <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 50 }} />;
+  }
   if (!state.allowed) return <Navigate to="/" replace />;
   return <OperatorPanel role={state.role} venueId={state.venueId} />;
 }
