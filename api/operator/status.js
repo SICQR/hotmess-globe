@@ -54,15 +54,21 @@ export default async function handler(req, res) {
       .eq('owner_id', ctx.user.id)
       .eq('status', 'active'),
 
-    // Feature flag state
+    // Feature flag state — feature_flags uses flag_key + enabled_globally
+    // (not name/enabled). Mirrors api/content/check.js.
     supabaseAdmin
       .from('feature_flags')
-      .select('enabled')
-      .eq('name', 'v6_night_operator_panel')
-      .single(),
+      .select('enabled_globally, enabled_for_user_ids, enabled_for_cohort')
+      .eq('flag_key', 'v6_night_operator_panel')
+      .maybeSingle(),
   ]);
 
-  if (!flagRow?.enabled) {
+  const flagOn = !!flagRow && (
+    flagRow.enabled_globally === true ||
+    flagRow.enabled_for_cohort === 'all' ||
+    (flagRow.enabled_for_user_ids || []).includes(ctx.user.id)
+  );
+  if (!flagOn) {
     return res.status(403).json({ error: 'Feature not available' });
   }
 
@@ -83,16 +89,17 @@ export default async function handler(req, res) {
   // Momentum state (from most recent momentum beacon for this venue)
   const { data: momentumBeacon } = await supabaseAdmin
     .from('beacons')
-    .select('beacon_category, intensity')
+    .select('metadata, intensity')
     .eq('owner_id', ctx.user.id)
-    .eq('beacon_category', 'momentum')
+    .eq('metadata->>role', 'momentum')
     .eq('status', 'active')
     .order('created_at', { ascending: false })
     .limit(1)
     .single()
     .catch(() => ({ data: null }));
 
-  const momentumMap = { 0.25: 'EARLY', 0.5: 'LIVE', 0.75: 'PEAK', 1.0: 'WINDING DOWN' };
+  // intensity is an INTEGER 1..4 (EARLY/LIVE/PEAK/WINDING DOWN)
+  const momentumMap = { 1: 'EARLY', 2: 'LIVE', 3: 'PEAK', 4: 'WINDING DOWN' };
   const momentumState = momentumMap[momentumBeacon?.intensity] ?? 'LIVE';
 
   res.status(200).json({
@@ -104,7 +111,7 @@ export default async function handler(req, res) {
     beacons_active: beaconsActive ?? 0,
     beacon_limit: beaconLimit,
     momentum_state: momentumState,
-    momentum_intensity: momentumBeacon?.intensity ?? 0.5,
+    momentum_intensity: momentumBeacon?.intensity ?? 2,
     ts: new Date().toISOString(),
   });
 }
