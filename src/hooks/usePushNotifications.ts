@@ -26,6 +26,9 @@ export function usePushNotifications(): void {
     if (subscribed.current) return;
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 
+    // Cleanup for the auto-update listeners/timer set up inside setup().
+    let cleanupAutoUpdate: () => void = () => {};
+
     const setup = async () => {
       try {
         const reg = await navigator.serviceWorker.register('/sw.js');
@@ -44,6 +47,31 @@ export function usePushNotifications(): void {
             }
           });
         });
+
+        // ── Auto-update: keep open tabs on the latest deploy ────────────────
+        // The app shell is network-first, but an open tab only re-fetches
+        // sw.js on navigation — so a tab left open across a deploy keeps the
+        // stale bundle until a manual hard-refresh. Poll for a new SW and
+        // reload once when it takes control. Guard on an existing controller
+        // so a first-time visitor is never reloaded out from under themselves.
+        if (navigator.serviceWorker.controller) {
+          let refreshing = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (refreshing) return;
+            refreshing = true;
+            window.location.reload();
+          });
+        }
+        const pollUpdate = () => { reg.update().catch(() => {}); };
+        const updateTimer = window.setInterval(pollUpdate, 60_000);
+        const onVisible = () => { if (!document.hidden) pollUpdate(); };
+        document.addEventListener('visibilitychange', onVisible);
+        window.addEventListener('focus', pollUpdate);
+        cleanupAutoUpdate = () => {
+          window.clearInterval(updateTimer);
+          document.removeEventListener('visibilitychange', onVisible);
+          window.removeEventListener('focus', pollUpdate);
+        };
 
         if (Notification.permission !== 'granted') {
           subscribed.current = true;
@@ -88,6 +116,8 @@ export function usePushNotifications(): void {
     };
 
     setup();
+
+    return () => { cleanupAutoUpdate(); };
   }, []);
 }
 
