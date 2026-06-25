@@ -591,6 +591,7 @@ function OperatorPanelInner({ role, venueId: propVenueId }) {
   const [beacons, setBeacons] = useState([]);
   const [auditEntries, setAuditEntries] = useState([]);
   const [access, setAccess] = useState(null); // null=loading, false=denied, true=ok
+  const [ownerId, setOwnerId] = useState(null); // authed operator user id — beacons are owner-keyed
   const pollRef = useRef(null);
 
   const fetchStats = useCallback(async () => {
@@ -602,15 +603,15 @@ function OperatorPanelInner({ role, venueId: propVenueId }) {
   }, [venueId, eventId]);
 
   const fetchBeacons = useCallback(async () => {
-    if (!venueId) return;
+    if (!ownerId) return;
     const { data } = await supabase
       .from('beacons')
       .select('id, title, beacon_type, beacon_category, status, intensity, ends_at, meta')
-      .eq('venue_id', venueId)
+      .eq('owner_id', ownerId)
       .eq('status', 'active')
       .order('created_at', { ascending: false });
     setBeacons(data ?? []);
-  }, [venueId]);
+  }, [ownerId]);
 
   const fetchAudit = useCallback(async () => {
     if (!venueId) return;
@@ -626,42 +627,41 @@ function OperatorPanelInner({ role, venueId: propVenueId }) {
     fetchAudit();
   }, [fetchStats, fetchBeacons, fetchAudit]);
 
-  // Access check + initial load
+  // Access check + initial load — OWNER-KEYED (doctrine). The operator manages
+  // the beacons they own; venue_id is optional context. An operator is admin OR
+  // owns >=1 beacon OR has an operator_venues link OR a venue/promoter membership.
   useEffect(() => {
-    if (!venueId) { setAccess(false); return; }
     supabase.auth.getUser().then(async ({ data: { user } }) => {
-      const [{ data: profile }, { data: opRow }] = await Promise.all([
-        supabase.from('profiles').select('role').eq('id', user.id).single(),
-        supabase.from('operator_venues').select('id').eq('user_id', user.id).eq('venue_id', venueId).is('revoked_at', null).single(),
+      if (!user) { navigate('/'); return; }
+      setOwnerId(user.id);
+      const [{ data: profile }, { data: opRow }, { data: ownBeacon }, { data: memberships }] = await Promise.all([
+        supabase.from('profiles').select('role').eq('id', user.id).maybeSingle(),
+        supabase.from('operator_venues').select('id').eq('user_id', user.id).is('revoked_at', null).limit(1).maybeSingle(),
+        supabase.from('beacons').select('id').eq('owner_id', user.id).limit(1).maybeSingle(),
+        supabase.from('memberships').select('tier').eq('user_id', user.id).in('tier', ['venue', 'promoter']),
       ]);
-      if (profile?.role === 'admin' || opRow) {
-        setAccess(true);
-        refreshAll();
-      } else {
-        setAccess(false);
-      }
+      const isOperator = profile?.role === 'admin' || !!opRow || !!ownBeacon || ((memberships?.length ?? 0) > 0);
+      if (isOperator) { setAccess(true); refreshAll(); }
+      else setAccess(false);
     });
-  }, [venueId, navigate, refreshAll]);
+  }, [navigate, refreshAll]);
+
+  // Load the operator's beacons once their id is known (owner-keyed).
+  useEffect(() => { if (ownerId) fetchBeacons(); }, [ownerId, fetchBeacons]);
 
   // Poll stats every 30s, beacons realtime
   useEffect(() => {
     if (!access) return;
     pollRef.current = setInterval(fetchStats, 30000);
     const channel = supabase
-      .channel(`nop-beacons-${venueId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'beacons', filter: `venue_id=eq.${venueId}` }, fetchBeacons)
+      .channel(`nop-beacons-${ownerId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'beacons', filter: `owner_id=eq.${ownerId}` }, fetchBeacons)
       .subscribe();
     return () => {
       clearInterval(pollRef.current);
       supabase.removeChannel(channel);
     };
-  }, [access, venueId, fetchStats, fetchBeacons]);
-
-  if (!venueId) return (
-    <div style={{ minHeight: '100vh', background: T.black, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ color: T.muted }}>No venue_id in URL</p>
-    </div>
-  );
+  }, [access, ownerId, fetchStats, fetchBeacons]);
 
   if (access === null) return (
     <div style={{ minHeight: '100vh', background: T.black, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
