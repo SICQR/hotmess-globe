@@ -46,10 +46,12 @@ export default async function handler(req, res) {
       : Promise.resolve({ count: 0 }),
 
     // Active beacons
+    // Active beacons — OWNER-KEYED (doctrine): beacons belong to the operator,
+    // not the venue (0 beacons carry venue_id).
     supabaseAdmin
       .from('beacons')
       .select('id', { count: 'exact', head: true })
-      .eq('venue_id', venue_id)
+      .eq('owner_id', ctx.user.id)
       .eq('status', 'active'),
 
     // Feature flag state
@@ -82,7 +84,7 @@ export default async function handler(req, res) {
   const { data: momentumBeacon } = await supabaseAdmin
     .from('beacons')
     .select('beacon_category, intensity')
-    .eq('venue_id', venue_id)
+    .eq('owner_id', ctx.user.id)
     .eq('beacon_category', 'momentum')
     .eq('status', 'active')
     .order('created_at', { ascending: false })

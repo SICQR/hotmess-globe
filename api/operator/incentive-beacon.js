@@ -47,6 +47,7 @@ export default async function handler(req, res) {
     .insert({
       venue_id,
       event_id: event_id || null,
+      owner_id: ctx.user.id,
       created_by: ctx.user.id,
       beacon_type: 'incentive',
       beacon_category: 'incentive',
