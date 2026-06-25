@@ -80,8 +80,7 @@ export default async function handler(req, res) {
     .in('status', ['active', 'trialing'])
     .order('created_at', { ascending: false })
     .limit(1)
-    .single()
-    .catch(() => ({ data: null }));
+    .maybeSingle();
 
   const beaconLimits = { mess: 2, hotmess: 2, connected: 5, promoter: 5, venue: 8 };
   const beaconLimit = beaconLimits[membership?.tier] ?? 2;
@@ -95,8 +94,7 @@ export default async function handler(req, res) {
     .eq('status', 'active')
     .order('created_at', { ascending: false })
     .limit(1)
-    .single()
-    .catch(() => ({ data: null }));
+    .maybeSingle();
 
   // intensity is an INTEGER 1..4 (EARLY/LIVE/PEAK/WINDING DOWN)
   const momentumMap = { 1: 'EARLY', 2: 'LIVE', 3: 'PEAK', 4: 'WINDING DOWN' };
