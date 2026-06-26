@@ -1390,18 +1390,34 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
               </button>
             )}
 
-            {/* Get Ticket — pool available, user hasn't purchased */}
-            {ticketPool && !userTicket && ownerId !== myUserId && (
-              <button
-                onClick={() => {
-                  closeSheet();
-                  window.setTimeout(() => openSheet('ticket-market', { mode: 'buy', beaconId: cleanBeaconId || beacon.id, poolId: ticketPool.id }), 80);
-                }}
-                className="w-full bg-[#FF4F9A] text-white font-black text-sm rounded-2xl py-3.5 flex items-center justify-center gap-2 active:scale-95 transition-transform"
-              >
-                Get Ticket — £{Number(ticketPool.price).toFixed(2)}
-              </button>
-            )}
+            {/* Get Ticket — pool available, user hasn't purchased.
+                Shows Sold out / Sales closed when the pool is unavailable. */}
+            {ticketPool && !userTicket && ownerId !== myUserId && (() => {
+              const soldOut = ticketPool.inventory_cap != null && (ticketPool.inventory_sold || 0) >= ticketPool.inventory_cap;
+              const closed = ticketPool.closes_at && new Date(ticketPool.closes_at) <= new Date();
+              if (soldOut || closed) {
+                return (
+                  <button
+                    disabled
+                    className="w-full font-black text-sm rounded-2xl py-3.5 flex items-center justify-center gap-2 border"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.4)', borderColor: 'rgba(255,255,255,0.10)', cursor: 'not-allowed' }}
+                  >
+                    {soldOut ? 'Sold out' : 'Sales closed'}
+                  </button>
+                );
+              }
+              return (
+                <button
+                  onClick={() => {
+                    closeSheet();
+                    window.setTimeout(() => openSheet('ticket-market', { mode: 'buy', beaconId: cleanBeaconId || beacon.id, poolId: ticketPool.id }), 80);
+                  }}
+                  className="w-full bg-[#FF4F9A] text-white font-black text-sm rounded-2xl py-3.5 flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                >
+                  Get Ticket — £{Number(ticketPool.price).toFixed(2)}
+                </button>
+              );
+            })()}
 
             {/* My Ticket — user already has a ticket */}
             {userTicket && (
