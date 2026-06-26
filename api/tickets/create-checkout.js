@@ -148,9 +148,9 @@ export default async function handler(req, res) {
       .update({ inventory_sold: pool.inventory_sold + 1, updated_at: new Date().toISOString() })
       .eq('id', pool.id);
     if (pool.inventory_cap !== null) decQ = decQ.lt('inventory_sold', pool.inventory_cap);
-    const { data: decRows, error: decErr } = await decQ.select('id');
+    const { data: decRows } = await decQ.select('id');
     if (pool.inventory_cap !== null && (!decRows || decRows.length === 0)) {
-      return res.status(409).json({ error: 'Sold out', code: 'SOLD_OUT', _debug: { decErr: decErr?.message || null, hasServiceKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY), poolSold: pool.inventory_sold, cap: pool.inventory_cap } });
+      return res.status(409).json({ error: 'Sold out', code: 'SOLD_OUT' });
     }
 
     const orderId  = crypto.randomUUID();
@@ -176,7 +176,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Could not issue ticket', detail: insErr.message });
     }
     await ledgerEntry(supabase, { userId, amountPence: -creditAppliedP, reason: 'ticket_redemption', refType: 'ticket_order', refId: ticket.id, metadata: { paid_with: 'credit' } });
-    await supabase.from('notification_outbox').insert({ user_id: userId, title: 'Your ticket is confirmed', body: `Tap to view your ticket for ${pool.label}.`, priority: 'AMBIENT', status: 'queued', metadata: { ticket_id: ticket.id, beacon_id: beacon?.id, type: 'ticket_issued' } }).catch(() => {});
+    await supabase.from('notification_outbox').insert({ user_id: userId, title: 'Your ticket is confirmed', body: `Tap to view your ticket for ${pool.label}.`, priority: 'AMBIENT', status: 'queued', metadata: { ticket_id: ticket.id, beacon_id: beacon?.id, type: 'ticket_issued' } });
     return res.status(200).json({ ticket_issued: true, ticket_id: ticket.id, qr_token: ticket.qr_token, credit_applied_pence: creditAppliedP });
   }
 
