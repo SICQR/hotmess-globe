@@ -65,16 +65,12 @@ export async function handleTicketCheckout(session) {
   // ── Inventory decrement (concurrency-safe) ─────────────────────────────────
   // Only decrement if cap allows. Uses a conditional update; if rows_affected = 0
   // someone else claimed the last slot between checkout creation and now — refund needed.
-  const { data: decRows } = await supabase
+  let decQ = supabase
     .from('ticket_inventory_pools')
     .update({ inventory_sold: pool.inventory_sold + 1, updated_at: new Date().toISOString() })
-    .eq('id', pool_id)
-    .or(
-      pool.inventory_cap === null
-        ? 'id.neq.00000000-0000-0000-0000-000000000000' // always true for null cap
-        : `inventory_sold.lt.${pool.inventory_cap}`
-    )
-    .select('id');
+    .eq('id', pool_id);
+  if (pool.inventory_cap !== null) decQ = decQ.lt('inventory_sold', pool.inventory_cap);
+  const { data: decRows } = await decQ.select('id');
 
   if (pool.inventory_cap !== null && (!decRows || decRows.length === 0)) {
     console.error('[ticket-webhook] Inventory race: pool', pool_id, 'sold out during checkout. Needs refund for session', session.id);
