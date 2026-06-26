@@ -160,11 +160,14 @@ function MyTicketView({ ticketId }) {
     if (!price || price <= 0) { toast.error('Enter a valid price'); return; }
     setListingResale(true);
     try {
-      const { error } = await supabase
-        .from('ticket_orders')
-        .update({ resale_price: price, updated_at: new Date().toISOString() })
-        .eq('id', ticket.id);
-      if (error) throw error;
+      const { data: { session } } = await supabase.auth.getSession();
+      const r = await fetch('/api/tickets/list-resale', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ ticket_id: ticket.id, resale_price: price }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || 'Could not list ticket');
       setListed(true);
       setShowResaleModal(false);
       toast.success('Ticket listed for resale');
@@ -177,10 +180,13 @@ function MyTicketView({ ticketId }) {
 
   const handleCancelResale = async () => {
     try {
-      await supabase
-        .from('ticket_orders')
-        .update({ resale_price: null, updated_at: new Date().toISOString() })
-        .eq('id', ticket.id);
+      const { data: { session } } = await supabase.auth.getSession();
+      const r = await fetch('/api/tickets/list-resale', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ ticket_id: ticket.id }),
+      });
+      if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || 'failed'); }
       setListed(false);
       toast('Resale listing removed');
     } catch {
