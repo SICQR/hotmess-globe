@@ -53,6 +53,24 @@ export default async function handler(req, res) {
 
   const beacon = pool.beacons;
 
+  // ── Founding carve-out ─────────────────────────────────────────────────────
+  // Founding venues pay 0% platform fee on ticketing (the promise on the
+  // founders site). Everyone else pays the pool's set rate, or the standard
+  // 7% if none is set. Resolved from the beacon owner's seller record.
+  const STANDARD_TICKET_FEE_RATE = 0.07;
+  let sellerFounding = false;
+  if (beacon?.owner_id) {
+    const { data: seller } = await supabase
+      .from('market_sellers')
+      .select('founding')
+      .eq('owner_id', beacon.owner_id)
+      .maybeSingle();
+    sellerFounding = !!seller?.founding;
+  }
+  const effectiveFeeRate = sellerFounding
+    ? 0
+    : (Number(pool.fee_rate) > 0 ? Number(pool.fee_rate) : STANDARD_TICKET_FEE_RATE);
+
   // Pool must be open
   const now = new Date();
   if (pool.closes_at && new Date(pool.closes_at) <= now) {
@@ -148,7 +166,7 @@ export default async function handler(req, res) {
       tier_at_purchase:        activeMembership?.tier ?? 'mess',
       age_verified_at:         profile.age_verified_at,
       age_verification_method: profile.age_verification_method,
-      fee_rate:                String(pool.fee_rate),
+      fee_rate:                String(effectiveFeeRate),
     },
     success_url: successUrl,
     cancel_url:  cancelUrl,
