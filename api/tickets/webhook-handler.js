@@ -12,6 +12,7 @@
 
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
+import { ledgerEntry, sellerNetPence } from './_credit.js';
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -29,6 +30,7 @@ export async function handleTicketCheckout(session) {
     age_verified_at,
     age_verification_method,
     fee_rate,
+    credit_applied_pence,
   } = meta;
 
   if (!pool_id || !user_id || !beacon_id) {
@@ -85,11 +87,14 @@ export async function handleTicketCheckout(session) {
   const qrToken = crypto.randomBytes(16).toString('hex');
 
   // ── Compute fees ───────────────────────────────────────────────────────────
-  const amountGbp       = (session.amount_total ?? 0) / 100;
+  // Face value (what the ticket is worth) drives amount, fee and the venue
+  // payout — NOT the card charge, which may be reduced by HOTMESS credit.
+  const cardChargedGbp  = (session.amount_total ?? 0) / 100;
+  const amountGbp       = Number(pool.price);
   const feeRateNum      = parseFloat(fee_rate ?? '0');
   const feeAmount       = parseFloat((amountGbp * feeRateNum).toFixed(2));
-  // Stripe processing: 1.4% + £0.20 for UK cards (approximate; exact figure in stripe_processing_cost)
-  const stripeProcessing = parseFloat((amountGbp * 0.014 + 0.20).toFixed(2));
+  // Stripe processing applies only to what was actually charged on the card.
+  const stripeProcessing = cardChargedGbp > 0 ? parseFloat((cardChargedGbp * 0.014 + 0.20).toFixed(2)) : 0;
 
   // ── OSA snapshot ──────────────────────────────────────────────────────────
   const ageVerificationSnapshot = (age_verified_at && age_verification_method)
@@ -144,6 +149,16 @@ export async function handleTicketCheckout(session) {
 
   console.log('[ticket-webhook] Ticket issued:', ticket.id, 'for user:', user_id, 'pool:', pool_id);
 
+  // Redeem any HOTMESS credit applied at checkout (idempotent on the order).
+  const creditApplied = parseInt(credit_applied_pence ?? '0', 10) || 0;
+  if (creditApplied > 0) {
+    await ledgerEntry(supabase, {
+      userId: user_id, amountPence: -creditApplied, reason: 'ticket_redemption',
+      refType: 'ticket_order', refId: ticket.id,
+      metadata: { session_id: session.id, beacon_id },
+    });
+  }
+
   // ── AMBIENT notification to buyer ──────────────────────────────────────────
   await supabase.from('notification_outbox').insert({
     user_id,
@@ -179,7 +194,7 @@ export async function handleResaleCheckout(session) {
   // Idempotency: check if already matched
   const { data: sellerTick } = await supabase
     .from('ticket_orders')
-    .select('ticket_state')
+    .select('ticket_state, user_id, inventory_pool_id, resale_price, ticket_inventory_pools:inventory_pool_id (fee_rate)')
     .eq('id', seller_ticket_id)
     .maybeSingle();
 
@@ -206,6 +221,21 @@ export async function handleResaleCheckout(session) {
   }
 
   console.log('[resale-webhook] Resale matched:', data.new_qr_token, 'buyer:', buyer_id);
+
+  // Credit the original seller their net proceeds as HOTMESS credit (idempotent).
+  const resaleGrossP = session.amount_total ?? 0;
+  const sellerUserId = sellerTick?.user_id || meta.seller_user_id;
+  const resaleFeeRate = sellerTick?.ticket_inventory_pools?.fee_rate ?? 0;
+  if (sellerUserId && resaleGrossP > 0) {
+    const netP = sellerNetPence(resaleGrossP, resaleFeeRate);
+    if (netP > 0) {
+      await ledgerEntry(supabase, {
+        userId: sellerUserId, amountPence: netP, reason: 'resale_proceeds',
+        refType: 'ticket_order', refId: seller_ticket_id,
+        metadata: { session_id: session.id, gross_pence: resaleGrossP },
+      });
+    }
+  }
 
   // Notify buyer of new QR
   await supabase.from('notification_outbox').insert({
