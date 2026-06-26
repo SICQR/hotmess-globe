@@ -19,7 +19,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import OperatorPanel from '@/pages/OperatorPanel';
 
 export default function OperatorRoute() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isLoadingAuth: authLoading } = useAuth();
   const [state, setState] = useState({ loading: true, allowed: false, role: 'venue', venueId: null });
 
   useEffect(() => {

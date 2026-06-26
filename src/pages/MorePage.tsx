@@ -686,14 +686,14 @@ export default function MorePage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.25 }}
-                className="w-full flex items-center gap-3 p-5 rounded-2xl bg-[#C8962C]/[0.06] border border-[#C8962C]/20 text-left"
+                className="w-full flex items-center gap-3 p-5 rounded-2xl bg-[#C8962C]/15 border border-[#C8962C]/40 text-left"
               >
                 <div className="w-10 h-10 rounded-xl bg-[#C8962C]/15 flex items-center justify-center">
                   <Zap className="w-5 h-5 text-[#C8962C]" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-white/80">Manage Venue</p>
-                  <p className="text-[10px] text-white/30 uppercase tracking-widest mt-0.5">Operator Cockpit · Live</p>
+                  <p className="text-sm font-semibold text-white">Manage Venue</p>
+                  <p className="text-[10px] text-[#C8962C]/70 uppercase tracking-widest mt-0.5">Operator Cockpit · Live</p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-[#C8962C]/40" />
               </motion.button>
