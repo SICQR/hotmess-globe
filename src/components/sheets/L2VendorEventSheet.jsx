@@ -46,6 +46,22 @@ const STATE_CONFIG = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// POOL API — RLS only lets the service role write ticket_inventory_pools, so all
+// pool mutations go through /api/operator/ticket-pool (a client write is dropped).
+// ─────────────────────────────────────────────────────────────────────────────
+async function poolApi(method, body) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const r = await fetch('/api/operator/ticket-pool', {
+    method,
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+    body: JSON.stringify(body),
+  });
+  const json = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(json.error || `HTTP ${r.status}`);
+  return json;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // POOL EDIT MODAL
 // ─────────────────────────────────────────────────────────────────────────────
 function PoolEditModal({ pool, onSave, onClose }) {
@@ -67,16 +83,10 @@ function PoolEditModal({ pool, onSave, onClose }) {
         inventory_cap:  form.cap ? parseInt(form.cap, 10) : null,
         resale_allowed: form.resale,
         is_active:      form.is_active,
-        updated_at:     new Date().toISOString(),
       };
-      const { error } = await supabase
-        .from('ticket_inventory_pools')
-        .update(update)
-        .eq('id', pool.id);
-
-      if (error) throw error;
+      const { pool: saved } = await poolApi('PATCH', { pool_id: pool.id, ...update });
       toast.success('Pool updated');
-      onSave({ ...pool, ...update });
+      onSave(saved || { ...pool, ...update });
       onClose();
     } catch (err) {
       toast.error(err.message || 'Save failed');
@@ -293,6 +303,80 @@ function GuestRow({ order }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
+function PoolCreateModal({ beaconId, onCreate, onClose }) {
+  const [form, setForm] = useState({ label: '', price: '', cap: '', ticket_type: 'paid_ga' });
+  const [saving, setSaving] = useState(false);
+
+  const create = async () => {
+    if (!form.label.trim()) { toast.error('Label required'); return; }
+    if (form.price === '' || isNaN(parseFloat(form.price))) { toast.error('Price required'); return; }
+    setSaving(true);
+    try {
+      const { pool } = await poolApi('POST', {
+        beacon_id: beaconId,
+        label: form.label.trim(),
+        price: parseFloat(form.price),
+        inventory_cap: form.cap ? parseInt(form.cap, 10) : null,
+        ticket_type: form.ticket_type,
+        is_active: true,
+      });
+      toast.success('Pool created — now selling');
+      onCreate(pool);
+      onClose();
+    } catch (err) {
+      toast.error(err.message || 'Create failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inp = (key, type, placeholder) => (
+    <input type={type} value={form[key]} placeholder={placeholder}
+      onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
+      style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 12px', color: T.white, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+  );
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 9999 }} onClick={onClose}>
+      <div style={{ background: T.card, borderRadius: '20px 20px 0 0', padding: 24, width: '100%', maxWidth: 480, paddingBottom: 'max(24px, env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column', gap: 16 }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ color: T.white, fontWeight: 700, fontSize: 16 }}>New Ticket Pool</span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: T.muted, cursor: 'pointer' }}><X size={20} /></button>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ color: T.muted, fontSize: 12 }}>Label</label>
+          {inp('label', 'text', 'e.g. General Admission')}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ color: T.muted, fontSize: 12 }}>Price (£)</label>
+            {inp('price', 'number', '12.00')}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ color: T.muted, fontSize: 12 }}>Capacity</label>
+            {inp('cap', 'number', 'unlimited')}
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ color: T.muted, fontSize: 12 }}>Type</label>
+          <select value={form.ticket_type} onChange={e => setForm(p => ({ ...p, ticket_type: e.target.value }))}
+            style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 12px', color: T.white, fontSize: 14, outline: 'none' }}>
+            <option value="paid_ga">Paid · General Admission</option>
+            <option value="vip">VIP</option>
+            <option value="guestlist">Guestlist</option>
+            <option value="guest_comp">Guest / Comp</option>
+            <option value="quick_drop">Quick Drop</option>
+          </select>
+        </div>
+        <button onClick={create} disabled={saving} style={{ padding: 12, borderRadius: 12, background: T.gold, border: 'none', color: '#000', fontWeight: 700, fontSize: 15, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          {saving && <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />}
+          Create Pool
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function L2VendorEventSheet({ beaconId }) {
   const [beacon, setBeacon]       = useState(null);
   const [pools, setPools]         = useState([]);
@@ -301,6 +385,7 @@ export default function L2VendorEventSheet({ beaconId }) {
   const [search, setSearch]       = useState('');
   const [stateFilter, setStateFilter] = useState('all');
   const [editPool, setEditPool]   = useState(null);
+  const [showCreate, setShowCreate] = useState(false);
   const [showStaff, setShowStaff] = useState(false);
   const [exporting, setExporting] = useState(false);
   const channelRef                = useRef(null);
@@ -463,8 +548,17 @@ export default function L2VendorEventSheet({ beaconId }) {
 
             {/* Pools */}
             <div style={{ marginBottom: 12 }}>
-              <div style={{ color: T.muted, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', marginBottom: 8, textTransform: 'uppercase' }}>
-                Ticket Pools
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ color: T.muted, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  Ticket Pools
+                </div>
+                <button onClick={() => setShowCreate(true)} style={{
+                  background: T.surface, border: `1px solid ${T.gold}`, borderRadius: 8,
+                  padding: '6px 10px', color: T.gold, cursor: 'pointer', display: 'flex',
+                  alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600,
+                }}>
+                  <Plus size={12} /> New pool
+                </button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {pools.map(pool => (
@@ -549,6 +643,13 @@ export default function L2VendorEventSheet({ beaconId }) {
           pool={editPool}
           onSave={updated => setPools(prev => prev.map(p => p.id === updated.id ? updated : p))}
           onClose={() => setEditPool(null)}
+        />
+      )}
+      {showCreate && (
+        <PoolCreateModal
+          beaconId={beaconId}
+          onCreate={created => setPools(prev => [...prev, created])}
+          onClose={() => setShowCreate(false)}
         />
       )}
       {showStaff && (
