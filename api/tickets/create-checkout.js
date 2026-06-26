@@ -143,13 +143,13 @@ export default async function handler(req, res) {
     }
 
     // Inventory decrement (concurrency-safe, mirrors the webhook).
-    const { count: decremented } = await supabase
+    const { data: decRows } = await supabase
       .from('ticket_inventory_pools')
       .update({ inventory_sold: pool.inventory_sold + 1, updated_at: new Date().toISOString() })
       .eq('id', pool.id)
       .or(pool.inventory_cap === null ? 'id.neq.00000000-0000-0000-0000-000000000000' : `inventory_sold.lt.${pool.inventory_cap}`)
-      .select('id', { count: 'exact', head: true });
-    if (pool.inventory_cap !== null && (!decremented || decremented === 0)) {
+      .select('id');
+    if (pool.inventory_cap !== null && (!decRows || decRows.length === 0)) {
       return res.status(409).json({ error: 'Sold out', code: 'SOLD_OUT' });
     }
 

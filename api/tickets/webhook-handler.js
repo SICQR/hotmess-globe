@@ -65,7 +65,7 @@ export async function handleTicketCheckout(session) {
   // ── Inventory decrement (concurrency-safe) ─────────────────────────────────
   // Only decrement if cap allows. Uses a conditional update; if rows_affected = 0
   // someone else claimed the last slot between checkout creation and now — refund needed.
-  const { count: decremented } = await supabase
+  const { data: decRows } = await supabase
     .from('ticket_inventory_pools')
     .update({ inventory_sold: pool.inventory_sold + 1, updated_at: new Date().toISOString() })
     .eq('id', pool_id)
@@ -74,9 +74,9 @@ export async function handleTicketCheckout(session) {
         ? 'id.neq.00000000-0000-0000-0000-000000000000' // always true for null cap
         : `inventory_sold.lt.${pool.inventory_cap}`
     )
-    .select('id', { count: 'exact', head: true });
+    .select('id');
 
-  if (pool.inventory_cap !== null && (!decremented || decremented === 0)) {
+  if (pool.inventory_cap !== null && (!decRows || decRows.length === 0)) {
     console.error('[ticket-webhook] Inventory race: pool', pool_id, 'sold out during checkout. Needs refund for session', session.id);
     // TODO Phase 2: trigger automatic Stripe refund here
     return;
