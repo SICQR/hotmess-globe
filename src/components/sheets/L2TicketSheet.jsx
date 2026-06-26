@@ -366,7 +366,8 @@ function BuyTicketView({ beaconId, poolId }) {
   const [loading, setLoading] = useState(true);
   const [buying, setBuying]   = useState(false);
   const [profile, setProfile] = useState(null);
-  const { closeSheet }        = useSheet();
+  const [creditP, setCreditP] = useState(0);
+  const { closeSheet, openSheet } = useSheet();
 
   useEffect(() => {
     const load = async () => {
@@ -403,6 +404,12 @@ function BuyTicketView({ beaconId, poolId }) {
           .eq('id', user.id)
           .single();
         setProfile(p);
+        const { data: bal } = await supabase
+          .from('credit_balances')
+          .select('balance_pence')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        setCreditP(bal?.balance_pence || 0);
       }
       setLoading(false);
     };
@@ -432,6 +439,13 @@ function BuyTicketView({ beaconId, poolId }) {
         } else {
           toast.error(json.error || 'Could not start checkout');
         }
+        return;
+      }
+      // Fully covered by HOTMESS credit — issued directly, no payment needed.
+      if (json.ticket_issued) {
+        toast.success('Ticket confirmed with your HOTMESS credit');
+        closeSheet();
+        window.setTimeout(() => openSheet('ticket-market', { mode: 'my-ticket', ticketId: json.ticket_id }), 80);
         return;
       }
       // Redirect to Stripe Checkout
@@ -553,6 +567,12 @@ function BuyTicketView({ beaconId, poolId }) {
         By purchasing, you agree to HOTMESS ticketing terms. Tickets are non-transferable
         except via the resale market. OSA compliance verified at door.
       </p>
+
+      {creditP > 0 && (
+        <div className="text-[12px] text-center mb-2" style={{ color: T.gold }}>
+          HOTMESS credit £{(creditP / 100).toFixed(2)} available — applied at checkout
+        </div>
+      )}
 
       {/* Buy CTA */}
       <button
