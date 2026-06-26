@@ -17,6 +17,10 @@ import { verifyOperatorOrOwner, supabaseAdmin } from './_verify.js';
 // ticket_inventory_pools.ticket_type CHECK
 const TICKET_TYPES = new Set(['paid_ga', 'quick_drop', 'guest_comp', 'vip', 'guestlist']);
 
+// HOTMESS standard platform fee (confirmed 2026-06-26). Server-set so operators
+// cannot lower it; comps/guestlist are price 0 so the fee is 0 in practice.
+const PLATFORM_FEE_RATE = 0.07;
+
 async function canManageBeacon(userId, beaconId) {
   const { data: beacon } = await supabaseAdmin
     .from('beacons')
@@ -63,7 +67,7 @@ export default async function handler(req, res) {
         ticket_type: TICKET_TYPES.has(ticket_type) ? ticket_type : 'paid_ga',
         label: String(label).trim(),
         price: priceNum,
-        fee_rate: fee_rate != null && fee_rate !== '' ? Number(fee_rate) : 0,
+        fee_rate: PLATFORM_FEE_RATE,
         inventory_cap: toCap(inventory_cap),
         is_active: !!is_active,
       })

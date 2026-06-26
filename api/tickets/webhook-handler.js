@@ -127,6 +127,11 @@ export async function handleTicketCheckout(session) {
       metadata: {
         stripe_session_id: session.id,
         payment_intent:    session.payment_intent,
+        // Consent record: completing checkout accepts the Ticket, Resale and
+        // Refund terms in force at purchase (HOTMESS Ticketing Policy Suite).
+        policy_version:    meta.policy_version ?? '1.0',
+        terms_accepted:    true,
+        terms_accepted_at: new Date().toISOString(),
       },
     })
     .select('id')
