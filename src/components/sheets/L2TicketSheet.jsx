@@ -581,6 +581,15 @@ function BuyTicketView({ beaconId, poolId }) {
           <>Pay £{Number(pool.price).toFixed(2)} <ChevronRight className="w-4 h-4" /></>
         )}
       </button>
+
+      {/* Consent — completing checkout accepts the ticketing terms */}
+      <p className="text-[11px] text-center mt-3" style={{ color: T.muted }}>
+        By continuing you agree to the{' '}
+        <a href="/legal/ticketing" style={{ color: T.gold, textDecoration: 'underline' }}>
+          Ticket, Resale &amp; Refund Terms
+        </a>. Tickets are non-refundable except where an event is cancelled or
+        materially changed; resale is in-app only, capped at face value.
+      </p>
     </div>
   );
 }

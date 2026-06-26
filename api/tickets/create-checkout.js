@@ -149,6 +149,7 @@ export default async function handler(req, res) {
       age_verified_at:         profile.age_verified_at,
       age_verification_method: profile.age_verification_method,
       fee_rate:                String(pool.fee_rate),
+      policy_version:          '1.0',
     },
     success_url: successUrl,
     cancel_url:  cancelUrl,

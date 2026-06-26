@@ -828,3 +828,74 @@ export function AIDisclosurePage() {
     </LegalPageLayout>
   );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TICKETING, RESALE & REFUND TERMS  (HOTMESS Ticketing Policy Suite v1.0)
+// ─────────────────────────────────────────────────────────────────────────────
+export function TicketingTermsPage() {
+  return (
+    <LegalPageLayout title="Ticket, Resale & Refund Terms">
+      <p><strong>Version 1.0 · Last updated 26 June 2026</strong></p>
+      <p>
+        When you buy a ticket on HOTMESS you are buying a revocable licence to
+        attend an event run by a venue or promoter — not a physical object. Your
+        ticket lives in the app as a rotating QR code tied to your account.
+      </p>
+
+      <h2>1. Buying a ticket</h2>
+      <ul>
+        <li>Many HOTMESS events are 18+. You must complete age verification before purchase — checkout is blocked until you do.</li>
+        <li>The price shown is the price you pay; we add no buyer-side booking fee at point of sale.</li>
+        <li>Sales stop automatically when an event sells out or its sales close. Your ticket appears in-app immediately on payment.</li>
+        <li>Completing checkout records your acceptance of these terms and the policy version in force at that moment.</li>
+      </ul>
+
+      <h2>2. Resale — member-to-member, no touting</h2>
+      <ul>
+        <li><strong>Face-value cap.</strong> A ticket may be listed for resale only at or below the price you paid. Listing above face value is refused — HOTMESS does not allow ticket touting.</li>
+        <li><strong>Who can list.</strong> Only the holder, only while the ticket is live, and only if the organiser allows resale. Comps and guestlist spots cannot be resold.</li>
+        <li><strong>Safe transfer.</strong> When a resale ticket sells, the seller's QR is voided and a fresh QR is issued to the buyer — a ticket can never be used twice.</li>
+        <li><strong>Off-platform resale</strong> (cash, other sites, social media) is prohibited and may void the ticket without refund.</li>
+        <li>Resale buyers are age-gated identically to primary buyers.</li>
+      </ul>
+
+      <h2>3. Entry &amp; scanning</h2>
+      <p>
+        Each ticket admits one entry unless re-entry is explicitly allowed; a
+        second scan shows "already scanned". Door staff see only what's needed to
+        admit you — validity, tier, and entry flags — never your identity or
+        purchase history. Organisers may refuse entry for conduct, intoxication,
+        capacity, or licensing reasons.
+      </p>
+
+      <h2>4. Refunds &amp; cancellations</h2>
+      <ul>
+        <li>Tickets are generally <strong>non-refundable</strong> once issued (a live event on a specified date is exempt from the 14-day cooling-off right). Your route to recover value is in-app resale at face value.</li>
+        <li>You are entitled to a <strong>full refund</strong> if the event is cancelled, postponed to a date you can't attend, or materially changed (date, headline, or venue).</li>
+        <li>Refund claims should be made within <strong>30 days</strong> of a cancellation, to your original payment method.</li>
+        <li>Genuine accidental duplicate purchases are refunded on request.</li>
+      </ul>
+
+      <h2>5. Fees &amp; how organisers are paid</h2>
+      <p>
+        HOTMESS charges the event organiser a platform fee of <strong>7%</strong>
+        of the ticket price, plus card-processing costs passed through at cost.
+        There is no hidden buyer fee. Organisers receive their net proceeds once
+        they have connected a payout account.
+      </p>
+
+      <h2>6. Your data &amp; consent</h2>
+      <p>
+        At purchase we record your acceptance of these terms, the policy version,
+        the time, and your age-verification status. Payment is handled by Stripe;
+        HOTMESS never stores your card details and does not sell your personal
+        data. You can manage marketing consents any time in Settings.
+      </p>
+
+      <h2>7. Contact</h2>
+      <p>
+        Tickets &amp; refunds: <a href="mailto:tickets@hotmessldn.com">tickets@hotmessldn.com</a>
+      </p>
+    </LegalPageLayout>
+  );
+}

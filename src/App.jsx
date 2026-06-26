@@ -23,7 +23,7 @@ import CreatorsCart from '@/pages/CreatorsCart';
 import CreatorsCheckout from '@/pages/CreatorsCheckout';
 import CreatorsCheckoutSuccess from '@/pages/CreatorsCheckoutSuccess';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
-import { AboutPage, LegalPage, AccessibilityPage, PrivacyPolicyPage, RemixLicensePage, CommercialLicensePage, CreatorAgreementPage, DMCAPage, LocationDisclosurePage, AIDisclosurePage } from '@/pages/legal/LegalPages';
+import { AboutPage, LegalPage, AccessibilityPage, PrivacyPolicyPage, RemixLicensePage, CommercialLicensePage, CreatorAgreementPage, DMCAPage, LocationDisclosurePage, AIDisclosurePage, TicketingTermsPage } from '@/pages/legal/LegalPages';
 import { CookieBanner } from '@/components/legal/CookieBanner';
 import { I18nProvider } from '@/contexts/I18nContext';
 import { TonightModeProvider } from '@/hooks/useTonightMode';
@@ -493,6 +493,7 @@ const AuthenticatedApp = () => {
       {/* LEGAL (Accessible via More) */}
       <Route path="/legal/privacy" element={<LegalPrivacyRoute />} />
       <Route path="/legal/terms" element={<LegalTermsRoute />} />
+      <Route path="/legal/ticketing" element={<LayoutWrapper currentPageName="More"><TicketingTermsPage /></LayoutWrapper>} />
       <Route path="/legal/*" element={<AboutPage />} />
 
       {/* Fallback auto-generated /PageName routes for internal createPageUrl() redirects */}
