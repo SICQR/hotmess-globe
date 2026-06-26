@@ -274,11 +274,28 @@ export default function MoneyTab({ role = 'venue', venueId }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setUserId(user.id);
-      const { data: sellerRow } = await supabase
+      let { data: sellerRow } = await supabase
         .from('market_sellers')
         .select('*')
         .eq('owner_id', user.id)
         .maybeSingle();
+
+      // Nothing else flips stripe_onboarding_complete, so confirm payout
+      // readiness with Stripe on load — and especially after the operator
+      // returns from the hosted onboarding (?stripe_connected=1).
+      const justReturned = typeof window !== 'undefined' && /stripe_connected=1/.test(window.location.search);
+      if (sellerRow?.stripe_account_id && (!sellerRow.stripe_onboarding_complete || justReturned)) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          const r = await fetch('/api/stripe/connect-status', { headers: { Authorization: `Bearer ${session?.access_token}` } });
+          const st = await r.json().catch(() => ({}));
+          if (st?.connected && !sellerRow.stripe_onboarding_complete) {
+            const { data: refreshed } = await supabase
+              .from('market_sellers').select('*').eq('owner_id', user.id).maybeSingle();
+            sellerRow = refreshed || sellerRow;
+          }
+        } catch { /* non-fatal */ }
+      }
       setSeller(sellerRow);
     } finally {
       setBootstrapping(false);
