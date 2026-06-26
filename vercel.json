@@ -81,6 +81,10 @@
       "schedule": "*/15 * * * *"
     },
     {
+      "path": "/api/tickets/settle-payouts",
+      "schedule": "30 */6 * * *"
+    },
+    {
       "path": "/api/tickets/payouts-worker",
       "schedule": "0 */6 * * *"
     },
