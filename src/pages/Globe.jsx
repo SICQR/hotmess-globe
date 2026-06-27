@@ -253,7 +253,7 @@ export default function GlobePage({ embedded = false }) {
     }
   }, [__location.state]);
 
-  const { recovery, allPlaces: pulsePlaces } = usePulsePlacesByType();
+  const { recovery, cruisingAreas, allPlaces: pulsePlaces } = usePulsePlacesByType();
   const { events: pulseEvents } = usePulseEvents();
   const { intensityMap: venueIntensity } = useVenueIntensity();
 
@@ -525,6 +525,11 @@ export default function GlobePage({ embedded = false }) {
     //
     // If the id is genuinely missing, do NOT open the heavy sheet — peek instead.
     // BeaconCreator must ONLY open from the Drop FAB, never from a tap on map data.
+    // Cruising area polygon tap — open the area intelligence sheet.
+    if (beacon && (beacon.entity_kind === 'cruising_area' || beacon.type === 'cruising_area')) {
+      openSheet('cruising_area', { place: beacon, title: beacon.name || beacon.title || 'Cruising Area' });
+      return;
+    }
     const rawId = beacon.id;
     if (rawId === null || rawId === undefined || rawId === '') {
       setPreviewBeacon(beacon);
@@ -608,6 +613,7 @@ export default function GlobePage({ embedded = false }) {
           <PulseMap
             beacons={mapSignals}
             ltgoSignals={ltgoSignals}
+            cruisingAreas={cruisingAreas}
             userLocation={userLocation}
             onBeaconClick={handleBeaconClick}
             onMapApi={(api) => {
