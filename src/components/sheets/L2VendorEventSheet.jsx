@@ -377,6 +377,63 @@ function PoolCreateModal({ beaconId, onCreate, onClose }) {
   );
 }
 
+function CompModal({ beaconId, onClose, onIssued }) {
+  const [email, setEmail] = useState('');
+  const [ticketType, setTicketType] = useState('guestlist');
+  const [saving, setSaving] = useState(false);
+
+  const issue = async () => {
+    if (!email.trim()) return;
+    setSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const r = await fetch('/api/operator/issue-comp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ beacon_id: beaconId, email: email.trim().toLowerCase(), ticket_type: ticketType }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || 'Could not issue ticket');
+      toast.success(j.already ? 'Already on the list' : 'Added to the list \u2014 they have a free ticket');
+      onIssued && onIssued();
+      onClose();
+    } catch (err) {
+      toast.error(err.message || 'Could not issue ticket');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 9999 }} onClick={onClose}>
+      <div style={{ background: T.card, borderRadius: '20px 20px 0 0', padding: 24, width: '100%', maxWidth: 480, paddingBottom: 'max(24px, env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column', gap: 16 }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ color: T.white, fontWeight: 700, fontSize: 16 }}>Add to Guestlist</span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: T.muted, cursor: 'pointer' }}><X size={20} /></button>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ color: T.muted, fontSize: 12 }}>Guest email (their HOTMESS account)</label>
+          <input type="email" value={email} placeholder="guest@example.com" onChange={e => setEmail(e.target.value)}
+            style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 12px', color: T.white, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ color: T.muted, fontSize: 12 }}>Type</label>
+          <select value={ticketType} onChange={e => setTicketType(e.target.value)}
+            style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 12px', color: T.white, fontSize: 14, outline: 'none' }}>
+            <option value="guestlist">Guestlist</option>
+            <option value="guest_comp">Comp</option>
+            <option value="vip">VIP</option>
+          </select>
+        </div>
+        <button onClick={issue} disabled={saving || !email.trim()} style={{ padding: 12, borderRadius: 12, background: T.gold, border: 'none', color: '#000', fontWeight: 700, fontSize: 15, cursor: saving || !email.trim() ? 'not-allowed' : 'pointer', opacity: saving || !email.trim() ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          {saving && <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />}
+          Add free ticket
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function L2VendorEventSheet({ beaconId }) {
   const [beacon, setBeacon]       = useState(null);
   const [pools, setPools]         = useState([]);
@@ -387,6 +444,7 @@ export default function L2VendorEventSheet({ beaconId }) {
   const [editPool, setEditPool]   = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showStaff, setShowStaff] = useState(false);
+  const [showComp, setShowComp] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [cancelStep, setCancelStep] = useState(0);
   const [cancelling, setCancelling] = useState(false);
@@ -536,6 +594,12 @@ export default function L2VendorEventSheet({ beaconId }) {
                 )}
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => setShowComp(true)} style={{
+                  padding: '7px 12px', borderRadius: 20, border: `1px solid ${T.gold}`,
+                  background: 'rgba(200,150,44,0.12)', color: T.gold, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600,
+                }}>
+                  <UserPlus size={14} /> Guestlist
+                </button>
                 <button onClick={() => setShowStaff(true)} style={{
                   padding: '7px 12px', borderRadius: 20, border: `1px solid ${T.border}`,
                   background: T.surface, color: T.muted, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12,
@@ -694,6 +758,9 @@ export default function L2VendorEventSheet({ beaconId }) {
       )}
       {showStaff && (
         <StaffGrantModal beaconId={beaconId} onClose={() => setShowStaff(false)} />
+      )}
+      {showComp && (
+        <CompModal beaconId={beaconId} onClose={() => setShowComp(false)} onIssued={load} />
       )}
     </div>
   );

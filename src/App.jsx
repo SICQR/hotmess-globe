@@ -66,6 +66,7 @@ import { usePresenceHeartbeat } from '@/hooks/usePresenceHeartbeat';
 import { useSwipeBack } from '@/hooks/useSwipeBack';
 import AuthCallback from '@/pages/auth/callback';
 import PortalPage from '@/pages/PortalPage';
+import TicketSuccessPage from '@/pages/TicketSuccessPage';
 import { supabase } from '@/components/utils/supabaseClient';
 import { syncLocation } from '@/utils/locationService';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
@@ -474,6 +475,7 @@ const AuthenticatedApp = () => {
       <Route path="/auth/*" element={<PageRoute pageKey="Auth" />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/portal" element={<PortalPage />} />
+      <Route path="/ticket-success" element={<TicketSuccessPage />} />
       {/* OPERATOR COCKPIT — venue/promoter only; OperatorRoute gates access + derives role */}
       <Route path="/operator" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><OperatorRoute /></Suspense>} />
       <Route path="/reentry" element={<ReentryPage />} />
