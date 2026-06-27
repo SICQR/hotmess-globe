@@ -290,12 +290,14 @@ function CameraScanner({ beaconId, onToken }) {
   const startCamera = useCallback(async () => {
     setCameraState('requesting');
     try {
-      // BarcodeDetector availability check
-      if (!('BarcodeDetector' in window)) {
-        setCameraState('unsupported');
-        return;
+      // Fast native path where available (Android/Chrome/desktop); otherwise the
+      // scan loop falls back to @zxing/browser, which works on iOS Safari too.
+      if ('BarcodeDetector' in window) {
+        try { detectorRef.current = new window.BarcodeDetector({ formats: ['qr_code'] }); }
+        catch { detectorRef.current = null; }
+      } else {
+        detectorRef.current = null;
       }
-      detectorRef.current = new window.BarcodeDetector({ formats: ['qr_code'] });
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 640 } },
@@ -315,31 +317,48 @@ function CameraScanner({ beaconId, onToken }) {
     }
   }, []);
 
-  // Scan loop — runs when camera is active
+  // Scan loop — runs when camera is active.
+  // BarcodeDetector (native) where available; @zxing/browser otherwise (iOS).
   useEffect(() => {
-    if (cameraState !== 'active' || !detectorRef.current) return;
+    if (cameraState !== 'active') return;
     let alive = true;
-    const scan = async () => {
-      if (!alive || !videoRef.current || videoRef.current.readyState < 2) {
-        setTimeout(scan, 200);
-        return;
-      }
-      try {
-        const codes = await detectorRef.current.detect(videoRef.current);
-        if (codes.length > 0) {
-          const raw = codes[0].rawValue;
-          // Token is 32-char hex; strip any prefix the QR might have
-          const match = raw.match(/([a-f0-9]{32})/i);
-          if (match) {
-            onToken(match[1].toLowerCase());
-            return; // pause — parent resets after validation
-          }
-        }
-      } catch { /* detection error — ignore */ }
-      if (alive) setTimeout(scan, 300);
+    let zxingControls = null;
+
+    // Ticket QR encodes a 32-char hex token (possibly prefixed).
+    const handleRaw = (raw) => {
+      const match = String(raw || '').match(/([a-f0-9]{32})/i);
+      if (match) { onToken(match[1].toLowerCase()); return true; }
+      return false;
     };
-    scan();
-    return () => { alive = false; };
+
+    if (detectorRef.current) {
+      const scan = async () => {
+        if (!alive || !videoRef.current || videoRef.current.readyState < 2) {
+          setTimeout(scan, 200); return;
+        }
+        try {
+          const codes = await detectorRef.current.detect(videoRef.current);
+          if (codes.length > 0 && handleRaw(codes[0].rawValue)) return; // parent resets after validation
+        } catch { /* ignore */ }
+        if (alive) setTimeout(scan, 300);
+      };
+      scan();
+    } else {
+      // Cross-browser fallback (iOS Safari has no BarcodeDetector).
+      import('@zxing/browser').then(({ BrowserQRCodeReader }) => {
+        if (!alive || !videoRef.current) return;
+        const reader = new BrowserQRCodeReader();
+        reader.decodeFromVideoElement(videoRef.current, (result) => {
+          if (!alive || !result) return;
+          if (handleRaw(result.getText()) && zxingControls) { try { zxingControls.stop(); } catch { /* */ } }
+        }).then((controls) => {
+          zxingControls = controls;
+          if (!alive) { try { controls.stop(); } catch { /* */ } }
+        }).catch(() => { /* decode setup failed — manual input still available */ });
+      });
+    }
+
+    return () => { alive = false; if (zxingControls) { try { zxingControls.stop(); } catch { /* */ } } };
   }, [cameraState, onToken]);
 
   // Start camera on mount
