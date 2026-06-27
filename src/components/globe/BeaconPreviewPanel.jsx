@@ -107,7 +107,7 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull, onView
         </div>
 
         {/* Content */}
-        <div className="space-y-6 overflow-y-auto max-h-[60vh] pointer-events-auto pb-12">
+        <div className="space-y-6 overflow-y-auto max-h-[60dvh] pointer-events-auto pb-12">
           {(beacon.description || beacon.metadata?.description) && (
             <div className="bg-white/5 border border-white/5 rounded-2xl p-4">
               <p className="text-white/70 text-sm leading-relaxed font-medium">
