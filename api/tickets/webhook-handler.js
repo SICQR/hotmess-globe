@@ -13,6 +13,31 @@
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { ledgerEntry, sellerNetPence } from './_credit.js';
+import Stripe from 'stripe';
+
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+
+// Charged but couldn't issue (inventory race / OSA fail): refund the buyer so
+// they are never left out of pocket. Refunds the card (idempotent) and returns
+// any applied HOTMESS credit. Webhook-level dedup prevents a replay double-refund.
+async function autoRefund(supabase, session, { userId, creditAppliedPence, reason }) {
+  const pi = session.payment_intent;
+  if (stripe && pi) {
+    try {
+      await stripe.refunds.create(
+        { payment_intent: typeof pi === 'string' ? pi : pi.id },
+        { idempotencyKey: `refund_fail_${session.id}` },
+      );
+    } catch (e) { console.error('[ticket-webhook] auto-refund card failed', session.id, e?.message); }
+  }
+  if (creditAppliedPence > 0 && userId) {
+    await ledgerEntry(supabase, {
+      userId, amountPence: creditAppliedPence, reason: 'refund',
+      metadata: { session_id: session.id, reason },
+    });
+  }
+  console.error(`[ticket-webhook] auto-refunded session ${session.id} — ${reason}`);
+}
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -73,8 +98,8 @@ export async function handleTicketCheckout(session) {
   const { data: decRows } = await decQ.select('id');
 
   if (pool.inventory_cap !== null && (!decRows || decRows.length === 0)) {
-    console.error('[ticket-webhook] Inventory race: pool', pool_id, 'sold out during checkout. Needs refund for session', session.id);
-    // TODO Phase 2: trigger automatic Stripe refund here
+    console.error('[ticket-webhook] Inventory race: pool', pool_id, 'sold out during checkout — auto-refunding session', session.id);
+    await autoRefund(supabase, session, { userId: user_id, creditAppliedPence: parseInt(credit_applied_pence ?? '0', 10) || 0, reason: 'inventory_race' });
     return;
   }
 
@@ -98,8 +123,8 @@ export async function handleTicketCheckout(session) {
     : null;
 
   if (!ageVerificationSnapshot) {
-    console.error('[ticket-webhook] OSA: age verification snapshot missing for user', user_id, '— ticket will not be issued');
-    // TODO Phase 2: trigger automatic Stripe refund
+    console.error('[ticket-webhook] OSA: age verification snapshot missing for user', user_id, '— auto-refunding session', session.id);
+    await autoRefund(supabase, session, { userId: user_id, creditAppliedPence: parseInt(credit_applied_pence ?? '0', 10) || 0, reason: 'osa_unverified' });
     return;
   }
 
