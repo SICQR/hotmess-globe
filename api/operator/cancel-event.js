@@ -63,10 +63,14 @@ export default async function handler(req, res) {
         });
         creditRefunded += creditP;
       }
-      await supabaseAdmin
+      // payout_status is constrained to pending/initiated/settled/held — 'held'
+      // keeps a refunded ticket out of venue settlement (the refund itself is
+      // recorded by ticket_state='refunded_void' + refunded_at).
+      const { error: updErr } = await supabaseAdmin
         .from('ticket_orders')
-        .update({ ticket_state: 'refunded_void', refunded_at: now, payout_status: 'refunded', qr_token_voided: true, updated_at: now })
+        .update({ ticket_state: 'refunded_void', refunded_at: now, payout_status: 'held', qr_token_voided: true, updated_at: now })
         .eq('id', t.id);
+      if (updErr) { errors++; console.error('[cancel-event] ticket void failed', t.id, updErr.message); continue; }
       await supabaseAdmin.from('notification_outbox').insert({
         user_id: t.user_id, title: 'Event cancelled — refund issued',
         body: `${beacon.title || 'The event'} was cancelled. Your full refund is on its way.`,
