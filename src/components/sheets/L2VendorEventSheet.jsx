@@ -388,6 +388,8 @@ export default function L2VendorEventSheet({ beaconId }) {
   const [showCreate, setShowCreate] = useState(false);
   const [showStaff, setShowStaff] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [cancelStep, setCancelStep] = useState(0);
+  const [cancelling, setCancelling] = useState(false);
   const channelRef                = useRef(null);
 
   const load = useCallback(async () => {
@@ -409,6 +411,28 @@ export default function L2VendorEventSheet({ beaconId }) {
       setLoading(false);
     }
   }, [beaconId]);
+
+  const cancelEvent = async () => {
+    if (cancelStep === 0) { setCancelStep(1); setTimeout(() => setCancelStep(0), 4000); return; }
+    setCancelling(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const r = await fetch('/api/operator/cancel-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ beacon_id: beaconId }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || 'Cancel failed');
+      toast.success(`Event cancelled — ${j.refunded_count} ticket(s) refunded`);
+      setCancelStep(0);
+      load();
+    } catch (e) {
+      toast.error(e.message || 'Could not cancel event');
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   // Subscribe realtime
   useEffect(() => {
@@ -589,6 +613,22 @@ export default function L2VendorEventSheet({ beaconId }) {
           </>
         )}
       </div>
+
+      {!loading && (
+        <div style={{ padding: '0 20px 8px' }}>
+          <button onClick={cancelEvent} disabled={cancelling} style={{
+            width: '100%', padding: 12, borderRadius: 12,
+            background: cancelStep ? T.red : 'rgba(255,59,48,0.08)',
+            border: `1px solid ${cancelStep ? T.red : 'rgba(255,59,48,0.3)'}`,
+            color: cancelStep ? '#fff' : T.red, fontWeight: 700, fontSize: 13,
+            cursor: cancelling ? 'not-allowed' : 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}>
+            {cancelling ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <AlertTriangle size={14} />}
+            {cancelStep ? 'Tap again to confirm — refunds every buyer' : 'Cancel event & refund all'}
+          </button>
+        </div>
+      )}
 
       {/* Guest list */}
       {!loading && (
