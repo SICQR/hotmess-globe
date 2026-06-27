@@ -53,15 +53,16 @@ function formatTriggeredAt(createdAt) {
 }
 
 /**
- * Build an Apple Maps deeplink that opens correctly on iOS, falls back to
- * google.com/maps redirect on other platforms (apple.com/maps handles this
- * automatically via UA detection on the served page).
+ * Build a UNIVERSAL maps link. The previous Apple Maps deeplink
+ * (maps.apple.com) redirects to the wrong page on non-Apple devices, so an
+ * emergency contact on Android lands somewhere useless. Google's documented
+ * universal URL opens the location correctly on iOS, Android and desktop.
  */
 function buildMapsLink(lat, lng) {
   if (lat == null || lng == null) return null;
   const a = Number(lat).toFixed(5);
   const b = Number(lng).toFixed(5);
-  return `https://maps.apple.com/?ll=${a},${b}&q=${a},${b}`;
+  return `https://www.google.com/maps/search/?api=1&query=${a},${b}`;
 }
 
 function coordPair(lat, lng) {
