@@ -62,7 +62,7 @@ export default function LocationShopPanel({ location, onClose }) {
           if (offset.y > 100 || velocity.y > 500) onClose();
         }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="fixed bottom-0 left-0 right-0 z-[200] max-h-[85vh] flex flex-col bg-black border-t-2 border-x-2 border-[#C8962C] shadow-[0_-20px_50px_rgba(0,0,0,0.8)] touch-none"
+        className="fixed bottom-0 left-0 right-0 z-[200] max-h-[85dvh] flex flex-col bg-black border-t-2 border-x-2 border-[#C8962C] shadow-[0_-20px_50px_rgba(0,0,0,0.8)] touch-none"
       >
         {/* Drag Handle */}
         <div className="flex justify-center py-4">
