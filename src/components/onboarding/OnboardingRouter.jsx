@@ -27,6 +27,7 @@ import First5MinutesFlow from './First5MinutesFlow';
 
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
+import { deriveUsernameSlug } from '@/lib/utils';
 import { useBootGuard } from '@/contexts/BootGuardContext';
 
 // Active screens.
@@ -398,10 +399,15 @@ export default function OnboardingRouter() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        // Never complete onboarding nameless (mirrors BootGuard.completeOnboarding).
+        const { data: idp } = await supabase.from('profiles').select('username, display_name').eq('id', user.id).maybeSingle();
+        const ensureName = (!(idp?.username || '').trim() && !(idp?.display_name || '').trim())
+          ? { username: deriveUsernameSlug({ username: idp?.username, displayName: idp?.display_name }) } : {};
         await supabase.from('profiles').update({
           onboarding_stage: 'complete',
           onboarding_completed: true,
           onboarding_completed_at: new Date().toISOString(),
+          ...ensureName,
           updated_at: new Date().toISOString(),
         }).eq('id', user.id);
       }
