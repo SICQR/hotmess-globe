@@ -626,7 +626,7 @@ export default function OnboardingGate() {
             </div>
 
             {/* Scrollable terms */}
-            <div className="max-h-[40vh] overflow-y-auto bg-[#0D0D0D] border border-white/8 rounded-2xl p-5 mb-6 space-y-4 scrollbar-thin">
+            <div className="max-h-[40dvh] overflow-y-auto bg-[#0D0D0D] border border-white/8 rounded-2xl p-5 mb-6 space-y-4 scrollbar-thin">
               {[
                 ['Eligibility', 'Must be 18+. No exceptions.'],
                 [
