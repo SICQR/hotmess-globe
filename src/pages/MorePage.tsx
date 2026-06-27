@@ -621,6 +621,7 @@ export default function MorePage() {
     { icon: ShoppingBag, label: 'My Listings', count: activity.liveListings, onTap: () => openSheet('my-listings'), accent: '#9E7D47' },
     { icon: Bookmark, label: 'Saved', onTap: () => openSheet('favorites'), accent: GOLD },
     { icon: CalendarDays, label: 'Events', count: activity.upcomingEvents, onTap: () => openSheet('events'), accent: '#00C2E0' },
+    { icon: Ticket, label: 'Tickets', onTap: () => openSheet('ticket-browse'), accent: GOLD },
   ], [activity, openSheet]);
 
   const featureItems: QuickItem[] = useMemo(() => [
