@@ -143,7 +143,7 @@ export default async function handler(req, res) {
       type: 'magiclink',
       email: syntheticEmail,
       options: {
-        redirectTo: `${getOrigin(req)}/auth/callback`,
+        redirectTo: `${process.env.VITE_APP_URL || 'https://hotmessldn.com'}/auth/callback`,
       },
     });
     if (linkErr || !linkData?.properties?.action_link) {
