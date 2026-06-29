@@ -107,6 +107,9 @@ export default function PulseMap({ beacons = [], ltgoSignals = [], userLocation,
   cruisingAreasRef.current = cruisingAreas;
   // Callback ref set by the style.load handler; called by the polling effect.
   const updateCruisingOpacityRef = useRef(null);
+  // Ref to installCruisingLayers fn — so the data-arrival effect below can
+  // re-call it once cruisingAreas loads from Supabase after map init.
+  const installCruisingLayersRef = useRef(null);
 
   // ─── D43 Slice A · PR 3 — in-world cluster preview state ──────────────────
   // The React-state-driven chip replaces the previous Mapbox-native popup.
@@ -474,6 +477,7 @@ export default function PulseMap({ beacons = [], ltgoSignals = [], userLocation,
               console.warn('[PulseMap] cruising layer install error:', e && e.message || e);
             }
           };
+          installCruisingLayersRef.current = installCruisingLayers;
           installCruisingLayers();
 
           // D49 §9 (cascading from D43) — signal cluster tap = zoom in.
@@ -1056,6 +1060,16 @@ export default function PulseMap({ beacons = [], ltgoSignals = [], userLocation,
     poll(); // immediate first fetch
     const interval = setInterval(poll, 2 * 60 * 1000);
     return () => clearInterval(interval);
+  }, [status, cruisingAreas]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-install cruising polygon layers when cruisingAreas data arrives after
+  // map init. installCruisingLayers() fires on style.load but Supabase data
+  // is not ready yet at that point — cruisingAreasRef.current is [] so the
+  // function exits early. This effect re-calls it once data is available.
+  useEffect(() => {
+    if (status !== 'ready' || !cruisingAreas.length) return;
+    if (!installCruisingLayersRef.current) return;
+    installCruisingLayersRef.current();
   }, [status, cruisingAreas]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Feed fresh beacon data in place — never recreate the map.
