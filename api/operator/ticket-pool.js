@@ -40,6 +40,25 @@ async function canManageBeacon(userId, beaconId) {
 }
 
 const toCap = (v) => (v === null || v === undefined || v === '' ? null : parseInt(v, 10));
+const toInt = (v) => {
+  if (v === null || v === undefined || v === '') return null;
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) ? n : null;
+};
+// Dual-platform support: a night can sell on HOTMESS *and* an external platform
+// (e.g. Outsavvy). We never mirror the same seats — we record the room's total
+// (house_capacity) and the slice handled off-platform (external_allocation) so
+// the cockpit can show one true combined picture without oversell.
+function mergeExtMeta(base, body) {
+  const m = { ...(base || {}) };
+  if (body.external_allocation !== undefined) m.external_allocation = toInt(body.external_allocation);
+  if (body.house_capacity !== undefined) m.house_capacity = toInt(body.house_capacity);
+  if (body.external_platform !== undefined) {
+    m.external_platform = body.external_platform ? String(body.external_platform).trim() : null;
+  }
+  return m;
+}
+const hasExtFields = (b) => b.external_allocation !== undefined || b.house_capacity !== undefined || b.external_platform !== undefined;
 
 export default async function handler(req, res) {
   const ctx = await verifyOperatorOrOwner(req, res, null);
@@ -60,17 +79,20 @@ export default async function handler(req, res) {
       if (!auth.ok) return res.status(auth.code).json({ error: auth.error });
     }
 
+    const insertRow = {
+      beacon_id,
+      ticket_type: TICKET_TYPES.has(ticket_type) ? ticket_type : 'paid_ga',
+      label: String(label).trim(),
+      price: priceNum,
+      fee_rate: PLATFORM_FEE_RATE,
+      inventory_cap: toCap(inventory_cap),
+      is_active: !!is_active,
+    };
+    if (hasExtFields(req.body || {})) insertRow.metadata = mergeExtMeta({}, req.body || {});
+
     const { data, error } = await supabaseAdmin
       .from('ticket_inventory_pools')
-      .insert({
-        beacon_id,
-        ticket_type: TICKET_TYPES.has(ticket_type) ? ticket_type : 'paid_ga',
-        label: String(label).trim(),
-        price: priceNum,
-        fee_rate: PLATFORM_FEE_RATE,
-        inventory_cap: toCap(inventory_cap),
-        is_active: !!is_active,
-      })
+      .insert(insertRow)
       .select()
       .single();
 
@@ -85,7 +107,7 @@ export default async function handler(req, res) {
 
     const { data: pool } = await supabaseAdmin
       .from('ticket_inventory_pools')
-      .select('id, beacon_id')
+      .select('id, beacon_id, metadata')
       .eq('id', pool_id)
       .maybeSingle();
     if (!pool) return res.status(404).json({ error: 'Pool not found' });
@@ -106,6 +128,7 @@ export default async function handler(req, res) {
     if (ticket_type !== undefined && TICKET_TYPES.has(ticket_type)) patch.ticket_type = ticket_type;
     if (is_active !== undefined) patch.is_active = !!is_active;
     if (resale_allowed !== undefined) patch.resale_allowed = !!resale_allowed;
+    if (hasExtFields(req.body || {})) patch.metadata = mergeExtMeta(pool.metadata, req.body || {});
 
     const { data, error } = await supabaseAdmin
       .from('ticket_inventory_pools')
