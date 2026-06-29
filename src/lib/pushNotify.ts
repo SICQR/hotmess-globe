@@ -9,10 +9,17 @@
 
 import { supabase } from '@/components/utils/supabaseClient';
 
-// VITE_SUPABASE_URL is already a full URL like "https://xxx.supabase.co"
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
-  ? String(import.meta.env.VITE_SUPABASE_URL).replace(/^["']|["']$/g, '').replace(/\\n$/, '')
-  : null;
+// VITE_SUPABASE_URL is already a full URL like "https://xxx.supabase.co".
+// Force the canonical project URL for any non-*.supabase.co host: the vanity
+// domain auth.hotmessldn.com has no valid TLS cert, so edge-function calls to it
+// fail. (See supabaseClient.jsx for the full rationale.)
+const _rawSupabaseUrl = import.meta.env.VITE_SUPABASE_URL
+  ? String(import.meta.env.VITE_SUPABASE_URL).replace(/^["']|["']$/g, '').replace(/\\n$/, '').replace(/\/+$/, '')
+  : '';
+const SUPABASE_URL = (() => {
+  try { if (_rawSupabaseUrl && new URL(_rawSupabaseUrl).host.toLowerCase().endsWith('.supabase.co')) return _rawSupabaseUrl; } catch { /* fall through */ }
+  return 'https://rfoftonnlwudilafhfkl.supabase.co';
+})();
 
 interface PushPayload {
   emails?: string[];
