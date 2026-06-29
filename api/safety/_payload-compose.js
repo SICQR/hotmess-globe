@@ -157,7 +157,7 @@ function composeTelegram({ name, firstName, phone, ackUrl, mapsLink, coords, tri
     lines.push(phone);
     lines.push('');
   } else {
-    lines.push(`Phone not on file — use the live location link below to coordinate with ${firstName}.`);
+    lines.push(`Phone not on file — use the location link below to coordinate with ${firstName}.`);
     lines.push('');
   }
   if (ackUrl) {
@@ -182,7 +182,7 @@ function composeTelegram({ name, firstName, phone, ackUrl, mapsLink, coords, tri
   lines.push('SOS Event:');
   lines.push(eventCode);
   lines.push('');
-  lines.push(`If you cannot reach ${firstName}, contact emergency services and share the live location above.`);
+  lines.push(`If you cannot reach ${firstName}, contact emergency services and share the location above.`);
   lines.push('');
   lines.push('— HOTMESS member safety');
   return lines.join('\n');
