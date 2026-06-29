@@ -8,6 +8,7 @@
  */
 
 import React from 'react';
+import { supabase } from '@/components/utils/supabaseClient';
 import { MapPin, Clock, AlertTriangle, Navigation, Train, Compass } from 'lucide-react';
 
 const PURPLE = '#7B2D8B';
@@ -126,7 +127,20 @@ export default function L2CruisingAreaSheet({ place }: Props) {
       {/* Divider */}
       <div className="mx-5 mb-5" style={{ height: 1, background: 'rgba(255,255,255,0.06)' }} />
 
-      {/* Body */}
+      {/* leave a mark - busy/quiet/vibe, positive-only */}
+        <div className="px-5 mb-5">
+          <SectionLabel>How is it right now?</SectionLabel>
+          <div className="flex gap-2 mt-1.5">
+            {([['busy','Busy'],['quiet','Quiet'],['vibe','Good vibe']] as [string,string][]).map(([k,label]) => (
+              <button key={k} onClick={(e) => { supabase.rpc('submit_place_mark', { p_place_id: place.id, p_mark: k }); e.currentTarget.textContent = 'Thanks'; }} className="flex-1 text-[11px] font-bold uppercase tracking-wider py-2.5 rounded-xl active:scale-95 transition-transform" style={{ border: '1px solid rgba(255,255,255,0.12)', color: TEXT, background: 'rgba(255,255,255,0.04)' }}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="text-[10px] mt-2" style={{ color: MUTED }}>Anonymous, fuzzed, fades in 4h</p>
+        </div>
+
+        {/* Body */}
       <div className="px-5">
 
         {/* Vibe — runs as intro, no section label */}
