@@ -122,7 +122,7 @@ export default function EventsTab({ venueId }) {
                   {t && t.external > 0 && (
                     <p style={{ color: '#55525c', fontSize: 11, margin: '2px 0 0' }}>
                       {`+ ${t.external} on ${t.extPlatform || 'Outsavvy'}`}
-                      {t.house > 0 ? `  ·  house ${t.house}  ·  ${Math.max(0, t.house - (t.cap || 0) - t.external)} unallocated` : ''}
+                      {t.house > 0 ? `  ·  venue ${t.house}  ·  ${Math.max(0, t.house - (t.cap || 0) - t.external)} unallocated` : ''}
                     </p>
                   )}
                 </div>

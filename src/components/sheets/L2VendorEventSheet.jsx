@@ -155,10 +155,10 @@ function PoolEditModal({ pool, onSave, onClose }) {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           {field('Outsavvy allocation', 'ext_alloc', 'number', 'e.g. 170')}
-          {field('House capacity', 'house', 'number', 'total room')}
+          {field('Venue capacity', 'house', 'number', 'total capacity')}
         </div>
         <p style={{ color: T.muted, fontSize: 11, margin: '-4px 0 0', lineHeight: 1.4 }}>
-          Selling on both? Put the Outsavvy slice and the room's total here. HOTMESS and Outsavvy never share seats — the cockpit adds them up so you can't oversell.
+          Selling on both? Put the Outsavvy share and the venue's total capacity here. HOTMESS and Outsavvy never sell the same tickets — the cockpit adds them up so you can't oversell.
         </p>
         {toggle('Resale allowed', 'resale')}
         {toggle('Pool active', 'is_active')}
@@ -380,7 +380,7 @@ function PoolCreateModal({ beaconId, onCreate, onClose }) {
             {inp('ext_alloc', 'number', 'e.g. 170')}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ color: T.muted, fontSize: 12 }}>House capacity</label>
+            <label style={{ color: T.muted, fontSize: 12 }}>Venue capacity</label>
             {inp('house', 'number', 'total room')}
           </div>
         </div>
