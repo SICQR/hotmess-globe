@@ -40,7 +40,7 @@ export default function EventsTab({ venueId }) {
       if (ids.length) {
         const { data: p } = await supabase
           .from('ticket_inventory_pools')
-          .select('beacon_id, price, inventory_cap, inventory_sold, is_active')
+          .select('beacon_id, price, inventory_cap, inventory_sold, is_active, metadata')
           .in('beacon_id', ids);
         pools = p || [];
       }
@@ -61,11 +61,16 @@ export default function EventsTab({ venueId }) {
 
       const byBeacon = {};
       pools.forEach((p) => {
-        const agg = byBeacon[p.beacon_id] || { cap: 0, sold: 0, revenue: 0, pools: 0 };
+        const agg = byBeacon[p.beacon_id] || { cap: 0, sold: 0, revenue: 0, pools: 0, external: 0, house: 0, extPlatform: null };
         agg.cap += p.inventory_cap || 0;
         agg.sold += p.inventory_sold || 0;
         agg.revenue += (p.inventory_sold || 0) * (Number(p.price) || 0);
         agg.pools += 1;
+        const ext = Number(p.metadata?.external_allocation) || 0;
+        const house = Number(p.metadata?.house_capacity) || 0;
+        if (ext > agg.external) agg.external = ext;
+        if (house > agg.house) agg.house = house;
+        if (p.metadata?.external_platform) agg.extPlatform = p.metadata.external_platform;
         byBeacon[p.beacon_id] = agg;
       });
 
@@ -112,8 +117,14 @@ export default function EventsTab({ venueId }) {
                   </p>
                   <p style={{ color: '#8a857c', fontSize: 12, margin: '2px 0 0' }}>
                     {fmtDate(b.event_start_at)}
-                    {t ? `  ·  ${t.sold}/${t.cap || '∞'} sold  ·  £${t.revenue.toFixed(0)}` : '  ·  No tickets set'}
+                    {t ? `  ·  ${t.sold}/${t.cap || '\u221e'} HOTMESS  ·  \u00a3${t.revenue.toFixed(0)}` : '  ·  No tickets set'}
                   </p>
+                  {t && t.external > 0 && (
+                    <p style={{ color: '#55525c', fontSize: 11, margin: '2px 0 0' }}>
+                      {`+ ${t.external} on ${t.extPlatform || 'Outsavvy'}`}
+                      {t.house > 0 ? `  ·  house ${t.house}  ·  ${Math.max(0, t.house - (t.cap || 0) - t.external)} unallocated` : ''}
+                    </p>
+                  )}
                 </div>
                 <span style={{ color: GOLD, fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
                   {t ? 'Manage' : 'Set up tickets'}

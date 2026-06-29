@@ -69,6 +69,8 @@ function PoolEditModal({ pool, onSave, onClose }) {
     label:      pool.label || '',
     price:      String(pool.price ?? ''),
     cap:        String(pool.inventory_cap ?? ''),
+    ext_alloc:  String(pool.metadata?.external_allocation ?? ''),
+    house:      String(pool.metadata?.house_capacity ?? ''),
     resale:     pool.resale_allowed ?? true,
     is_active:  pool.is_active ?? true,
   });
@@ -77,16 +79,21 @@ function PoolEditModal({ pool, onSave, onClose }) {
   const save = async () => {
     setSaving(true);
     try {
+      const extAlloc = form.ext_alloc === '' ? null : parseInt(form.ext_alloc, 10);
+      const house    = form.house === '' ? null : parseInt(form.house, 10);
       const update = {
         label:          form.label.trim() || pool.label,
         price:          parseFloat(form.price) || pool.price,
         inventory_cap:  form.cap ? parseInt(form.cap, 10) : null,
         resale_allowed: form.resale,
         is_active:      form.is_active,
+        external_allocation: extAlloc,
+        house_capacity:      house,
+        external_platform:   'Outsavvy',
       };
       const { pool: saved } = await poolApi('PATCH', { pool_id: pool.id, ...update });
       toast.success('Pool updated');
-      onSave(saved || { ...pool, ...update });
+      onSave(saved || { ...pool, ...update, metadata: { ...(pool.metadata || {}), external_allocation: extAlloc, house_capacity: house, external_platform: 'Outsavvy' } });
       onClose();
     } catch (err) {
       toast.error(err.message || 'Save failed');
@@ -144,8 +151,15 @@ function PoolEditModal({ pool, onSave, onClose }) {
         {field('Label', 'label', 'text', 'e.g. General Admission')}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           {field('Price (£)', 'price', 'number', '12.00')}
-          {field('Capacity', 'cap', 'number', 'unlimited')}
+          {field('HOTMESS tickets', 'cap', 'number', 'unlimited')}
         </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {field('Outsavvy allocation', 'ext_alloc', 'number', 'e.g. 170')}
+          {field('House capacity', 'house', 'number', 'total room')}
+        </div>
+        <p style={{ color: T.muted, fontSize: 11, margin: '-4px 0 0', lineHeight: 1.4 }}>
+          Selling on both? Put the Outsavvy slice and the room's total here. HOTMESS and Outsavvy never share seats — the cockpit adds them up so you can't oversell.
+        </p>
         {toggle('Resale allowed', 'resale')}
         {toggle('Pool active', 'is_active')}
 
@@ -304,7 +318,7 @@ function GuestRow({ order }) {
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 function PoolCreateModal({ beaconId, onCreate, onClose }) {
-  const [form, setForm] = useState({ label: '', price: '', cap: '', ticket_type: 'paid_ga' });
+  const [form, setForm] = useState({ label: '', price: '', cap: '', ticket_type: 'paid_ga', ext_alloc: '', house: '' });
   const [saving, setSaving] = useState(false);
 
   const create = async () => {
@@ -319,6 +333,9 @@ function PoolCreateModal({ beaconId, onCreate, onClose }) {
         inventory_cap: form.cap ? parseInt(form.cap, 10) : null,
         ticket_type: form.ticket_type,
         is_active: true,
+        external_allocation: form.ext_alloc === '' ? null : parseInt(form.ext_alloc, 10),
+        house_capacity: form.house === '' ? null : parseInt(form.house, 10),
+        external_platform: 'Outsavvy',
       });
       toast.success('Pool created — now selling');
       onCreate(pool);
@@ -353,8 +370,18 @@ function PoolCreateModal({ beaconId, onCreate, onClose }) {
             {inp('price', 'number', '12.00')}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ color: T.muted, fontSize: 12 }}>Capacity</label>
+            <label style={{ color: T.muted, fontSize: 12 }}>HOTMESS tickets</label>
             {inp('cap', 'number', 'unlimited')}
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ color: T.muted, fontSize: 12 }}>Outsavvy allocation</label>
+            {inp('ext_alloc', 'number', 'e.g. 170')}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ color: T.muted, fontSize: 12 }}>House capacity</label>
+            {inp('house', 'number', 'total room')}
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

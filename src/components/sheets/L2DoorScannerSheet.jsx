@@ -61,7 +61,7 @@ function ScanResult({ result, onClear }) {
     : result.error_code === 'ALREADY_SCANNED'
       ? 'ALREADY SCANNED'
       : result.error_code === 'TICKET_NOT_FOUND'
-        ? 'NOT FOUND'
+        ? 'NOT A HOTMESS TICKET'
         : result.error_code === 'WRONG_EVENT'
           ? 'WRONG EVENT'
           : result.error_code === 'TICKET_VOID'
@@ -196,7 +196,7 @@ function ScanResult({ result, onClear }) {
           style={{ backgroundColor: `${T.red}08`, borderColor: `${T.red}30` }}
         >
           <p className="text-white/60 text-sm leading-relaxed">
-            {result.error_code === 'TICKET_NOT_FOUND'  && 'No ticket found for this QR code. May be invalid or already voided.'}
+            {result.error_code === 'TICKET_NOT_FOUND'  && "This isn't a HOTMESS ticket. If they booked on Outsavvy, check the Outsavvy app or guest list. Otherwise the code may be invalid or voided."}
             {result.error_code === 'WRONG_EVENT'        && 'This ticket is for a different event. Cannot admit.'}
             {result.error_code === 'TICKET_VOID'        && 'This ticket has been voided (refunded, transferred, or expired).'}
             {result.error_code === 'ALREADY_SCANNED'    && 'Ticket was already scanned. Check for duplicates.'}
