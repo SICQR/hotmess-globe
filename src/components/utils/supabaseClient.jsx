@@ -6,7 +6,33 @@ const createPageUrl = (pageName) => `/${pageName}`;
 
 // Use environment variables - set in Vercel dashboard
 // Trim to remove any accidental newlines from env vars
-const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+//
+// Canonical project URL. The vanity domain auth.hotmessldn.com was wired up as
+// a Supabase custom domain but its TLS cert was never provisioned, so every
+// browser hitting auth.hotmessldn.com/auth/v1/callback dies with
+// ERR_SSL_VERSION_OR_CIPHER_MISMATCH and OAuth / magic-link login is broken.
+// The app's CSP only permits *.supabase.co for Supabase traffic anyway, so we
+// force the canonical project URL for any non-*.supabase.co host. This makes
+// auth resilient regardless of how VITE_SUPABASE_URL is set per-environment.
+// (Remove this guard only once a custom domain has a valid, provisioned cert.)
+const CANONICAL_SUPABASE_URL = 'https://rfoftonnlwudilafhfkl.supabase.co';
+function canonicalizeSupabaseUrl(raw) {
+  const v = String(raw || '').trim().replace(/["']/g, '').replace(/\\n$/, '').replace(/\/+$/, '');
+  if (!v) return CANONICAL_SUPABASE_URL;
+  try {
+    const host = new URL(v).host.toLowerCase();
+    if (!host.endsWith('.supabase.co')) {
+      if (typeof console !== 'undefined') {
+        console.warn('[supabase] VITE_SUPABASE_URL host', host, 'is not *.supabase.co — using canonical project URL to keep auth working.');
+      }
+      return CANONICAL_SUPABASE_URL;
+    }
+  } catch {
+    return CANONICAL_SUPABASE_URL;
+  }
+  return v;
+}
+const supabaseUrl = canonicalizeSupabaseUrl(import.meta.env.VITE_SUPABASE_URL);
 const supabaseKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 
 if (!supabaseUrl || !supabaseKey) {

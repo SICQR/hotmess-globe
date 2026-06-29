@@ -45,7 +45,10 @@ export class ForbiddenError extends Error {
 // ---------------------------------------------------------------------------
 
 function _getAuditClient() {
-  const url  = import.meta?.env?.VITE_SUPABASE_URL  ?? process.env.VITE_SUPABASE_URL;
+  let url  = import.meta?.env?.VITE_SUPABASE_URL  ?? process.env.VITE_SUPABASE_URL;
+  // Force canonical project URL for non-*.supabase.co hosts (auth.hotmessldn.com
+  // vanity domain has no valid TLS cert). See supabaseClient.jsx for rationale.
+  try { if (!url || !new URL(url).host.toLowerCase().endsWith('.supabase.co')) url = 'https://rfoftonnlwudilafhfkl.supabase.co'; } catch { url = 'https://rfoftonnlwudilafhfkl.supabase.co'; }
   const key  = import.meta?.env?.VITE_SUPABASE_SERVICE_KEY ?? process.env.VITE_SUPABASE_SERVICE_KEY
              ?? import.meta?.env?.VITE_SUPABASE_ANON_KEY   ?? process.env.VITE_SUPABASE_ANON_KEY;
   if (!url || !key) return null;
