@@ -75,7 +75,7 @@ import { registerVenuePins, venuePinIconId, VENUE_PIN_COLORS } from '@/component
 //
 //   gold  #C8962C  — venues (per-category override below) / editorial / market
 //   pink  #FF4F9A  — events
-//   cream #F4ECD8  — care (quiet, never neon)
+//   teal  #4FC3C3  — care orgs (civic, quiet, never competing with gold/pink/amber)
 //   amber #FF9E2C  — person signals (distinct from gold venues)
 //
 // Off-doctrine literals removed: venues cyan #00C2E0 and people neon-green
@@ -88,7 +88,7 @@ export const CATEGORY_COLOR = {
   people: '#FF9E2C',                   // amber — person signals (D5X: distinct from gold venues). was neon-green #39FF14
   market: VENUE_PIN_COLORS.market,     // gold (market) — was #FFD700
   radio: '#B026FF',                    // radio out of in-scope set — left as-is
-  care: VENUE_PIN_COLORS.aftercare,    // cream #F4ECD8 — quiet care
+  care: '#4FC3C3',                    // teal — D5X care_org: civic, quiet, never competing with gold/pink/amber
   other: VENUE_PIN_COLORS.default,     // gold
 };
 
@@ -192,6 +192,10 @@ export function categoryOf(b) {
     const hasSchedule = b && (b.event_start_at || b.event_end_at);
     if (/event/.test(all) && !hasVenue && !hasSchedule) return 'editorial';
   }
+  // D5X: pulse_places type='event_brand' routes to 'events' (pink #FF4F9A)
+  // so roaming brands (Hard On, Pxssy Palace, etc.) render pink, not gold.
+  if (field(b, 'type') === 'event_brand') return 'events';
+  if (/event_brand/.test(all)) return 'events';
   if (/recovery|care|sober|na_aa|naaa|aftercare/.test(all)) return 'care';
   if (/event|ticket/.test(all)) return 'events';
   if (/venue/.test(all)) return 'venues';
