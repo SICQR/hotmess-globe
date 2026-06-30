@@ -15,7 +15,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  MapPin, Calendar, Tag, Loader2, ChevronRight, SlidersHorizontal,
+  MapPin, Calendar, Loader2, ChevronRight, SlidersHorizontal,
   X, TicketIcon,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';

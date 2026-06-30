@@ -12,7 +12,7 @@
  *   - BottomNav or deep-link     → mode='market'
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   QrCode, Loader2, CheckCircle, XCircle, AlertTriangle,
   RefreshCw, Tag, Clock, ChevronRight, ArrowLeftRight,
