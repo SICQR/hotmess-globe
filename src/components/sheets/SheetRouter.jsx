@@ -260,7 +260,6 @@ const SHEET_COMPONENTS = {
   'ticket-market': L2TicketSheet,
   // Ticket browse — Phase 3 S1
   'ticket-browse': L2TicketBrowseSheet,
-  // Vendor / promoter dashboard — Phase 3 S2
   'vendor-event': L2VendorEventSheet,
   // Community features (DB live, UI added)
   'community': L2CommunityPostSheet,

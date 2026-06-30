@@ -85,3 +85,58 @@ export async function verifyOperator(req, res, venueId = null) {
 }
 
 export { supabaseAdmin };
+
+/**
+ * verifyOperatorOrOwner — auth gate for OWNER-KEYED operator writes.
+ *
+ * Per the Operator Cockpit Doctrine (2026-06-24) the cockpit is keyed on the
+ * operator's user (owner_id), not venue_id. Most operators own beacons but have
+ * NO operator_venues row, so the venue-only verifyOperator() 403s them.
+ *
+ * This gate:
+ *   - 401 if not authenticated.
+ *   - admin            -> { user, operatorRow:null, isAdmin:true }
+ *   - venueId + venue rights -> { user, operatorRow, isAdmin:false }
+ *   - otherwise (authenticated) -> { user, operatorRow:null, isAdmin:false } "owner mode"
+ *
+ * Owner mode is safe: every caller scopes its reads/writes to owner_id = user.id,
+ * so a user can only ever affect their own beacons.
+ *
+ * @returns {{ user, operatorRow, isAdmin } | null}  null means already responded.
+ */
+export async function verifyOperatorOrOwner(req, res, venueId = null) {
+  const auth = req.headers['authorization'];
+  if (!auth?.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'Missing auth token' });
+    return null;
+  }
+  const token = auth.slice(7);
+
+  const { data: { user }, error: authErr } = await supabaseAdmin.auth.getUser(token);
+  if (authErr || !user) {
+    res.status(401).json({ error: 'Invalid auth token' });
+    return null;
+  }
+
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+  const isAdmin = profile?.role === 'admin';
+  if (isAdmin) return { user, operatorRow: null, isAdmin: true };
+
+  if (venueId) {
+    const { data: operatorRow } = await supabaseAdmin
+      .from('operator_venues')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('venue_id', venueId)
+      .is('revoked_at', null)
+      .single();
+    if (operatorRow) return { user, operatorRow, isAdmin: false };
+  }
+
+  // Owner mode: authenticated user acting on their own owner-keyed beacons.
+  return { user, operatorRow: null, isAdmin: false };
+}

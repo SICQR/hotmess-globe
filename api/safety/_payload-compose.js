@@ -53,15 +53,16 @@ function formatTriggeredAt(createdAt) {
 }
 
 /**
- * Build an Apple Maps deeplink that opens correctly on iOS, falls back to
- * google.com/maps redirect on other platforms (apple.com/maps handles this
- * automatically via UA detection on the served page).
+ * Build a UNIVERSAL maps link. The previous Apple Maps deeplink
+ * (maps.apple.com) redirects to the wrong page on non-Apple devices, so an
+ * emergency contact on Android lands somewhere useless. Google's documented
+ * universal URL opens the location correctly on iOS, Android and desktop.
  */
 function buildMapsLink(lat, lng) {
   if (lat == null || lng == null) return null;
   const a = Number(lat).toFixed(5);
   const b = Number(lng).toFixed(5);
-  return `https://maps.apple.com/?ll=${a},${b}&q=${a},${b}`;
+  return `https://www.google.com/maps/search/?api=1&query=${a},${b}`;
 }
 
 function coordPair(lat, lng) {
@@ -156,7 +157,7 @@ function composeTelegram({ name, firstName, phone, ackUrl, mapsLink, coords, tri
     lines.push(phone);
     lines.push('');
   } else {
-    lines.push(`Phone not on file — use the live location link below to coordinate with ${firstName}.`);
+    lines.push(`Phone not on file — use the location link below to coordinate with ${firstName}.`);
     lines.push('');
   }
   if (ackUrl) {
@@ -181,7 +182,7 @@ function composeTelegram({ name, firstName, phone, ackUrl, mapsLink, coords, tri
   lines.push('SOS Event:');
   lines.push(eventCode);
   lines.push('');
-  lines.push(`If you cannot reach ${firstName}, contact emergency services and share the live location above.`);
+  lines.push(`If you cannot reach ${firstName}, contact emergency services and share the location above.`);
   lines.push('');
   lines.push('— HOTMESS member safety');
   return lines.join('\n');

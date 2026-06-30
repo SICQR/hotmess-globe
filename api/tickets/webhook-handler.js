@@ -12,6 +12,32 @@
 
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
+import { ledgerEntry, sellerNetPence } from './_credit.js';
+import Stripe from 'stripe';
+
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+
+// Charged but couldn't issue (inventory race / OSA fail): refund the buyer so
+// they are never left out of pocket. Refunds the card (idempotent) and returns
+// any applied HOTMESS credit. Webhook-level dedup prevents a replay double-refund.
+async function autoRefund(supabase, session, { userId, creditAppliedPence, reason }) {
+  const pi = session.payment_intent;
+  if (stripe && pi) {
+    try {
+      await stripe.refunds.create(
+        { payment_intent: typeof pi === 'string' ? pi : pi.id },
+        { idempotencyKey: `refund_fail_${session.id}` },
+      );
+    } catch (e) { console.error('[ticket-webhook] auto-refund card failed', session.id, e?.message); }
+  }
+  if (creditAppliedPence > 0 && userId) {
+    await ledgerEntry(supabase, {
+      userId, amountPence: creditAppliedPence, reason: 'refund',
+      metadata: { session_id: session.id, reason },
+    });
+  }
+  console.error(`[ticket-webhook] auto-refunded session ${session.id} — ${reason}`);
+}
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -29,6 +55,7 @@ export async function handleTicketCheckout(session) {
     age_verified_at,
     age_verification_method,
     fee_rate,
+    credit_applied_pence,
   } = meta;
 
   if (!pool_id || !user_id || !beacon_id) {
@@ -63,20 +90,16 @@ export async function handleTicketCheckout(session) {
   // ── Inventory decrement (concurrency-safe) ─────────────────────────────────
   // Only decrement if cap allows. Uses a conditional update; if rows_affected = 0
   // someone else claimed the last slot between checkout creation and now — refund needed.
-  const { count: decremented } = await supabase
+  let decQ = supabase
     .from('ticket_inventory_pools')
     .update({ inventory_sold: pool.inventory_sold + 1, updated_at: new Date().toISOString() })
-    .eq('id', pool_id)
-    .or(
-      pool.inventory_cap === null
-        ? 'id.neq.00000000-0000-0000-0000-000000000000' // always true for null cap
-        : `inventory_sold.lt.${pool.inventory_cap}`
-    )
-    .select('id', { count: 'exact', head: true });
+    .eq('id', pool_id);
+  if (pool.inventory_cap !== null) decQ = decQ.lt('inventory_sold', pool.inventory_cap);
+  const { data: decRows } = await decQ.select('id');
 
-  if (pool.inventory_cap !== null && (!decremented || decremented === 0)) {
-    console.error('[ticket-webhook] Inventory race: pool', pool_id, 'sold out during checkout. Needs refund for session', session.id);
-    // TODO Phase 2: trigger automatic Stripe refund here
+  if (pool.inventory_cap !== null && (!decRows || decRows.length === 0)) {
+    console.error('[ticket-webhook] Inventory race: pool', pool_id, 'sold out during checkout — auto-refunding session', session.id);
+    await autoRefund(supabase, session, { userId: user_id, creditAppliedPence: parseInt(credit_applied_pence ?? '0', 10) || 0, reason: 'inventory_race' });
     return;
   }
 
@@ -85,11 +108,14 @@ export async function handleTicketCheckout(session) {
   const qrToken = crypto.randomBytes(16).toString('hex');
 
   // ── Compute fees ───────────────────────────────────────────────────────────
-  const amountGbp       = (session.amount_total ?? 0) / 100;
+  // Face value (what the ticket is worth) drives amount, fee and the venue
+  // payout — NOT the card charge, which may be reduced by HOTMESS credit.
+  const cardChargedGbp  = (session.amount_total ?? 0) / 100;
+  const amountGbp       = Number(pool.price);
   const feeRateNum      = parseFloat(fee_rate ?? '0');
   const feeAmount       = parseFloat((amountGbp * feeRateNum).toFixed(2));
-  // Stripe processing: 1.4% + £0.20 for UK cards (approximate; exact figure in stripe_processing_cost)
-  const stripeProcessing = parseFloat((amountGbp * 0.014 + 0.20).toFixed(2));
+  // Stripe processing applies only to what was actually charged on the card.
+  const stripeProcessing = cardChargedGbp > 0 ? parseFloat((cardChargedGbp * 0.014 + 0.20).toFixed(2)) : 0;
 
   // ── OSA snapshot ──────────────────────────────────────────────────────────
   const ageVerificationSnapshot = (age_verified_at && age_verification_method)
@@ -97,8 +123,8 @@ export async function handleTicketCheckout(session) {
     : null;
 
   if (!ageVerificationSnapshot) {
-    console.error('[ticket-webhook] OSA: age verification snapshot missing for user', user_id, '— ticket will not be issued');
-    // TODO Phase 2: trigger automatic Stripe refund
+    console.error('[ticket-webhook] OSA: age verification snapshot missing for user', user_id, '— auto-refunding session', session.id);
+    await autoRefund(supabase, session, { userId: user_id, creditAppliedPence: parseInt(credit_applied_pence ?? '0', 10) || 0, reason: 'osa_unverified' });
     return;
   }
 
@@ -127,6 +153,11 @@ export async function handleTicketCheckout(session) {
       metadata: {
         stripe_session_id: session.id,
         payment_intent:    session.payment_intent,
+        // Consent record: completing checkout accepts the Ticket, Resale and
+        // Refund terms in force at purchase (HOTMESS Ticketing Policy Suite).
+        policy_version:    meta.policy_version ?? '1.0',
+        terms_accepted:    true,
+        terms_accepted_at: new Date().toISOString(),
       },
     })
     .select('id')
@@ -138,6 +169,16 @@ export async function handleTicketCheckout(session) {
   }
 
   console.log('[ticket-webhook] Ticket issued:', ticket.id, 'for user:', user_id, 'pool:', pool_id);
+
+  // Redeem any HOTMESS credit applied at checkout (idempotent on the order).
+  const creditApplied = parseInt(credit_applied_pence ?? '0', 10) || 0;
+  if (creditApplied > 0) {
+    await ledgerEntry(supabase, {
+      userId: user_id, amountPence: -creditApplied, reason: 'ticket_redemption',
+      refType: 'ticket_order', refId: ticket.id,
+      metadata: { session_id: session.id, beacon_id },
+    });
+  }
 
   // ── AMBIENT notification to buyer ──────────────────────────────────────────
   await supabase.from('notification_outbox').insert({
@@ -174,7 +215,7 @@ export async function handleResaleCheckout(session) {
   // Idempotency: check if already matched
   const { data: sellerTick } = await supabase
     .from('ticket_orders')
-    .select('ticket_state')
+    .select('ticket_state, user_id, inventory_pool_id, resale_price, ticket_inventory_pools:inventory_pool_id (fee_rate)')
     .eq('id', seller_ticket_id)
     .maybeSingle();
 
@@ -201,6 +242,21 @@ export async function handleResaleCheckout(session) {
   }
 
   console.log('[resale-webhook] Resale matched:', data.new_qr_token, 'buyer:', buyer_id);
+
+  // Credit the original seller their net proceeds as HOTMESS credit (idempotent).
+  const resaleGrossP = session.amount_total ?? 0;
+  const sellerUserId = sellerTick?.user_id || meta.seller_user_id;
+  const resaleFeeRate = sellerTick?.ticket_inventory_pools?.fee_rate ?? 0;
+  if (sellerUserId && resaleGrossP > 0) {
+    const netP = sellerNetPence(resaleGrossP, resaleFeeRate);
+    if (netP > 0) {
+      await ledgerEntry(supabase, {
+        userId: sellerUserId, amountPence: netP, reason: 'resale_proceeds',
+        refType: 'ticket_order', refId: seller_ticket_id,
+        metadata: { session_id: session.id, gross_pence: resaleGrossP },
+      });
+    }
+  }
 
   // Notify buyer of new QR
   await supabase.from('notification_outbox').insert({

@@ -84,6 +84,19 @@ export default function L2SheetContainer({
   const sheetRef = useRef(null);
   const controls = useAnimation();
   const dragControls = useDragControls();
+
+  // Desktop: render L2 sheets as centred modals instead of mobile bottom-sheets
+  // (which floated as a phone-width strip in black on wide screens). Mobile keeps
+  // the exact bottom-sheet drag behaviour.
+  const [isDesktop, setIsDesktop] = useState(
+    typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const onChange = () => setIsDesktop(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
   const sheetScrollRef = useRef(null);
   // Phil 2026-06-02 #556 — handoff context for nested-scrollable → sheet-drag.
   // When the inner content has its own overflow-y scroll (chat messages list,
@@ -252,8 +265,8 @@ export default function L2SheetContainer({
           />
 
           {/* Sheet — static initial/animate/exit objects. We tried variants +
-              animate="visible" (broken because drag="y" claims y-axis) and
-              also variants + animate={controls} (broken because controls weren't
+              animate="visible" (broken because drag={isDesktop ? false : 'y'} claims y-axis) and
+              also variants + animate={isDesktop ? { opacity: 1, scale: 1 } : controls} (broken because controls weren't
               firing reliably with AnimatePresence mode="wait"). Static object
               animate is the framer-motion pattern that actually works with drag
               enabled: the spring runs to the explicit target on mount, then drag
@@ -264,15 +277,15 @@ export default function L2SheetContainer({
           <motion.div
             ref={sheetRef}
             key={`sheet-${activeSheet}`}
-            initial={{ y: '100%' }}
-            animate={controls}
-            exit={{ y: '100%', transition: { type: 'spring', damping: 26, stiffness: 320 } }}
+            initial={isDesktop ? { opacity: 0, scale: 0.96 } : { y: '100%' }}
+            animate={isDesktop ? { opacity: 1, scale: 1 } : controls}
+            exit={isDesktop ? { opacity: 0, scale: 0.96 } : { y: '100%', transition: { type: 'spring', damping: 26, stiffness: 320 } }}
             // Drag config — outer sheet is what slides, not the handle pip.
             // top: -peekOffset lets the user drag UP from peek to expanded (and
             //   no further — the expanded snap is the ceiling).
             // bottom: peekOffset + DISMISS_OFFSET gives a soft elastic floor
             //   before the dismiss handler picks up beyond it.
-            drag="y"
+            drag={isDesktop ? false : 'y'}
             dragControls={dragControls}
             // Phil 2026-06-02 #555 — was false (drag only via pip pointerDown).
             // Chat sheet's internal header is below the pip; users dragging
@@ -282,21 +295,22 @@ export default function L2SheetContainer({
             dragConstraints={{ top: 0, bottom: viewportH }}
             dragElastic={{ top: 0.04, bottom: 0.35 }}
             onDragEnd={handleDragEnd}
-            style={{ height, overflowX: 'hidden', overscrollBehavior: 'contain', touchAction: 'pan-y' }}
+            style={isDesktop ? { overflowX: 'hidden' } : { height, overflowX: 'hidden', overscrollBehavior: 'contain', touchAction: 'pan-y' }}
             className={cn(
               // 2026-05-30 — desktop max-width cap. L2 sheets are mobile UX.
               // On wide viewports they were rendering full-width which made
               // photo carousels and content cards stretch grotesquely. Cap
               // at 430px (slightly above iPhone Pro Max 428px) and center.
-              'fixed bottom-0 left-0 right-0 z-[80] mx-auto sm:max-w-[460px]',
-              'bg-black border-t border-[#C8962C]/40',
+              isDesktop
+                ? 'fixed inset-0 m-auto h-fit max-h-[85vh] w-[calc(100%-3rem)] max-w-[480px] z-[80] bg-black border border-[#C8962C]/40 rounded-3xl'
+                : 'fixed bottom-0 left-0 right-0 z-[80] mx-auto sm:max-w-[460px] bg-black border-t border-[#C8962C]/40 rounded-t-3xl',
               // Phil 2026-05-29 — unified rounded-top across all L2 sheets.
               // The previous `rounded-none` + brutalist scanner-corner pseudo
               // elements made the sheet feel like a kiosk, not a peek card.
               // Doctrine 13 (Spatial Continuity): the sheet is a continuation
               // of the city, not a hardware terminal — softer top corners
               // read more atmospheric and match the rest of the app.
-              'rounded-t-3xl overflow-hidden',
+              'overflow-hidden',
               'flex flex-col',
               className
             )}

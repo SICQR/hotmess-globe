@@ -1,4 +1,4 @@
-// api/signals/expire.js — called by Vercel cron every 5 min
+// api/signals/expire.js â called by Vercel cron every 5 min
 import '../_silence-dep0169.js';
 
 export const config = { api: { bodyParser: true } };

@@ -39,6 +39,22 @@ export const SOURCE_IDS = {
 export const CLUSTER_RADIUS = 80;
 export const ICON_MIN_ZOOM = 11;
 
+// ─── Globe Render Doctrine (Brief 2) — shared size floor + parity band ──────
+// Single source of truth for in-scope marker sizing so venue/event/care read
+// at one apparent size and differ by SHAPE / MOTION, not size.
+//
+//   MARKER_MIN_RADIUS — the floor. No in-scope circle marker (L9 dot) renders
+//                       below this apparent radius at ANY zoom. Was an implicit
+//                       4px at zoom 2; now an explicit, enforced floor.
+//   MARKER_ICON_SIZE  — the parity band for sprite markers. Venue teardrops
+//                       and signal glyphs share this icon-size so no marker
+//                       type is visually "louder" by size alone.
+//
+// Person / route markers are a LATER brief and intentionally not introduced
+// here. The selected-halo growth (L10) is unaffected by the floor.
+export const MARKER_MIN_RADIUS = 5;
+export const MARKER_ICON_SIZE = 0.5;
+
 // Category → colour, aligned with the globe LAYER_DEFS so the two engines read alike.
 //
 // Phil 2026-05-29: added `editorial` for curated district pulse beacons (Soho ·
@@ -49,18 +65,44 @@ export const ICON_MIN_ZOOM = 11;
 // D12 Slice 2 / #303 Phase A dual-read helpers — single point of truth for
 // reading the new entity_kind / intent columns with legacy fallback.
 import { readEntityKind, isAftercare } from '@/lib/beacons/beaconKind';
-import { registerVenuePins, venuePinIconId } from '@/components/globe/beaconIconFactory';
+import { registerVenuePins, venuePinIconId, VENUE_PIN_COLORS } from '@/components/globe/beaconIconFactory';
 
+// Globe Render Doctrine (Briefs 1 & 2) — VENUE_PIN_COLORS in beaconIconFactory
+// is the SINGLE canonical source for in-scope marker colour. CATEGORY_COLOR no
+// longer carries its own venue/event/care literals: those derive from
+// VENUE_PIN_COLORS so the circle markers (L8 glow, L9 dot) and the venue
+// teardrop sprites can never disagree again.
+//
+//   gold  #C8962C  — venues (per-category override below) / editorial / market
+//   pink  #FF4F9A  — events
+//   cream #F4ECD8  — care (quiet, never neon)
+//   amber #FF9E2C  — person signals (distinct from gold venues)
+//
+// Off-doctrine literals removed: venues cyan #00C2E0 and people neon-green
+// #39FF14. Venue is now gold via VENUE_PIN_COLORS.default; per-venue subcategory
+// colour is resolved per-feature (see resolveMarkerColor).
 export const CATEGORY_COLOR = {
-  editorial: '#C8962C', // brand gold — curated district pulse
-  events: '#FF4F9A',
-  venues: '#00C2E0',
-  people: '#39FF14',
-  market: '#FFD700',
-  radio: '#B026FF',
-  care: '#F4ECD8',  // cream
-  other: '#C8962C',
+  editorial: VENUE_PIN_COLORS.default, // brand gold — curated district pulse
+  events: '#FF4F9A',                   // pink — live events
+  venues: VENUE_PIN_COLORS.default,    // gold — passive geography (per-category override per-feature)
+  people: '#FF9E2C',                   // amber — person signals (D5X: distinct from gold venues). was neon-green #39FF14
+  market: VENUE_PIN_COLORS.market,     // gold (market) — was #FFD700
+  radio: '#B026FF',                    // radio out of in-scope set — left as-is
+  care: VENUE_PIN_COLORS.aftercare,    // cream #F4ECD8 — quiet care
+  other: VENUE_PIN_COLORS.default,     // gold
 };
+
+// Resolve the canonical marker colour for a single beacon/feature. Venues paint
+// their fine-grained per-category colour from VENUE_PIN_COLORS (club/sauna/… →
+// gold/teal/…); everything else falls back to the coarse CATEGORY_COLOR map
+// (which itself derives from VENUE_PIN_COLORS for the in-scope categories).
+// resolvedBeaconCategory is the already-normalised venue subcategory key.
+function resolveMarkerColor(cat, resolvedBeaconCategory) {
+  if (cat === 'venues' && resolvedBeaconCategory) {
+    return VENUE_PIN_COLORS[resolvedBeaconCategory] || VENUE_PIN_COLORS.default;
+  }
+  return CATEGORY_COLOR[cat] || CATEGORY_COLOR.other;
+}
 
 // Privacy contract (§"Privacy constraints"): these never enter the PUBLIC source.
 //
@@ -381,7 +423,9 @@ export function toPublicSafeFeatureCollection(beacons, glowUserIds) {
         owner_id: b.owner_id != null ? String(b.owner_id) : (b.user_id != null ? String(b.user_id) : ''),
         cat,
         ...(resolvedBeaconCategory ? { beacon_category: resolvedBeaconCategory } : {}),
-        color: CATEGORY_COLOR[cat] || CATEGORY_COLOR.other,
+        // Canonical colour — venues resolve per-subcategory via VENUE_PIN_COLORS;
+        // everything else via CATEGORY_COLOR (which derives from VENUE_PIN_COLORS).
+        color: resolveMarkerColor(cat, resolvedBeaconCategory),
         title: String(b.title || b.name || ''),
         // Lifecycle: epoch-ms expiry so the symbol layer can pick the right
         // state-suffixed sprite (active / decaying / stale) via a Mapbox
@@ -608,7 +652,9 @@ export function addLayerStack(map, opts) {
           ['image', ['concat', 'hm-venue-pin-', ['coalesce', ['get', 'beacon_category'], '']]],
           ['image', 'hm-venue-pin-club'],
         ],
-        'icon-size': 0.5,
+        // Grow teardrops with zoom: parity floor at low zoom, ~0.85 (≈44px tap
+        // target) at street zoom so pins are legible and easy to hit. (Was flat.)
+        'icon-size': ['interpolate', ['linear'], ['zoom'], 13, MARKER_ICON_SIZE, 16, 0.85],
         'icon-anchor': 'bottom',
         'icon-allow-overlap': true,
         'icon-ignore-placement': false,
@@ -734,7 +780,10 @@ export function addLayerStack(map, opts) {
         'circle-color': ['coalesce', ['get', 'color'], '#C8962C'],
         // Smaller at low zoom (cluster context), grow toward street zoom
         // where icons take over and the marker becomes the underglow.
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, 4, 8, 6, 14, 8],
+        // Brief 2: clamped to the shared floor (MARKER_MIN_RADIUS) so no
+        // in-scope marker ever drops below the legibility minimum at any zoom.
+        'circle-radius': ['max', MARKER_MIN_RADIUS,
+          ['interpolate', ['linear'], ['zoom'], 2, MARKER_MIN_RADIUS, 8, 6, 14, 8]],
         'circle-opacity': ['interpolate', ['linear'], ['zoom'], 2, 0.85, 14, 0.95],
         'circle-stroke-width': 2,
         'circle-stroke-color': 'rgba(255,255,255,0.55)',
@@ -802,7 +851,7 @@ export function addLayerStack(map, opts) {
         // at street zoom (>=15) where each pin is a decision target.
         'icon-allow-overlap': ['step', ['zoom'], true, 15, false],
         'icon-ignore-placement': ['step', ['zoom'], true, 15, false],
-        'icon-size': 0.5, // 88-source / 44-css = 0.5 to match the 44px MAP-size spec
+        'icon-size': MARKER_ICON_SIZE, // 88-source / 44-css = 0.5; Brief 2 parity band shared with venue teardrops
       },
     });
   }

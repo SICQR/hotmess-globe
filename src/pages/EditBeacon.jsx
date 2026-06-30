@@ -57,7 +57,7 @@ export default function EditBeacon() {
     onSuccess: () => {
       queryClient.invalidateQueries(['beacons']);
       toast.success('Event deleted');
-      navigate(createPageUrl('OrganizerDashboard'));
+      navigate('/operator');
     }
   });
 
@@ -130,7 +130,7 @@ export default function EditBeacon() {
           className="mb-8"
         >
           <Button
-            onClick={() => navigate(createPageUrl('OrganizerDashboard'))}
+            onClick={() => navigate('/operator')}
             variant="ghost"
             className="mb-4 text-white/60 hover:text-white"
           >

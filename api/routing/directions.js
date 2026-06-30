@@ -9,6 +9,7 @@ import {
   parseNumber,
   readJsonBody,
   requireGoogleApiKey,
+  requireMapboxToken,
 } from './_utils.js';
 import { bestEffortRateLimit, minuteBucket } from '../_rateLimit.js';
 
@@ -27,6 +28,8 @@ const importGoogle = async () => {
 
   return import('./_google.js');
 };
+
+const importMapbox = () => import('./_mapbox.js');
 
 const validatePoint = (point, name) => {
   const lat = parseNumber(point?.lat);
@@ -113,6 +116,56 @@ export default async function handler(req, res) {
       return json(res, 400, { error: 'Invalid mode' });
     }
 
+    // TRANSIT: served by TfL Journey Planner (free, London tube/bus/overground/
+    // DLR/Elizabeth line/night-bus). transit_mode picks the preset: 'night'
+    // biases to night buses for the late-night product framing; default day
+    // routing otherwise. No client key — TfL works keyless at low volume, and
+    // TFL_APP_KEY (if set) only lifts the anonymous rate limit.
+    if (mode === 'TRANSIT') {
+      const transitMode = String(body.transit_mode || '').toLowerCase() === 'night' ? 'night' : 'transit';
+      const { fetchTflJourney } = await import('./_tfl.js');
+      const tfl = await fetchTflJourney({
+        origin,
+        destination,
+        mode: transitMode,
+        appKey: process.env.TFL_APP_KEY || null,
+      });
+
+      if (!tfl?.ok) {
+        // Keep the user in-app: surface a structured unavailability response so
+        // the UI can still offer the Citymapper / TfL external fallback.
+        return json(res, 200, {
+          mode,
+          origin,
+          destination,
+          duration_seconds: null,
+          distance_meters: null,
+          provider: 'TRANSIT_UNAVAILABLE',
+          polyline: { encoded: null, points: null },
+          steps: [],
+          ttl_seconds: ttlSeconds,
+          warning: {
+            code: 'transit_unavailable',
+            message: tfl?.error || 'Live transit directions are not available right now. Use Citymapper or TfL.',
+            details: tfl?.details || null,
+          },
+        });
+      }
+
+      return json(res, 200, {
+        mode,
+        transit_mode: transitMode,
+        origin,
+        destination,
+        duration_seconds: tfl.duration_seconds,
+        distance_meters: tfl.distance_meters,
+        provider: tfl.provider,
+        polyline: { encoded: null, points: null },
+        steps: tfl.steps || [],
+        ttl_seconds: ttlSeconds,
+      });
+    }
+
     // Rate limits: per-user + per-IP (best-effort).
     // If service role isn't configured (common in local dev), skip DB-backed rate limiting.
     {
@@ -132,42 +185,31 @@ export default async function handler(req, res) {
       }
     }
 
-    const { key: googleKey, error: googleErr } = requireGoogleApiKey();
+    const { key: googleKey } = requireGoogleApiKey();
+    const { key: mapboxToken } = requireMapboxToken();
     const trafficAware = String(process.env.GOOGLE_ROUTES_DRIVE_TRAFFIC_AWARE || '').toLowerCase() === 'true';
 
-    // If Google isn't configured, return a straight-line fallback route so we can still keep users in-app.
-    if (googleErr || !googleKey) {
-      const approx = approximateDurationSeconds({ origin, destination, mode });
-      const seconds = approx.seconds;
-      return json(res, 200, {
-        mode,
-        origin,
-        destination,
-        duration_seconds: seconds,
-        distance_meters: approx.distanceMeters,
-        provider: 'approx',
-        polyline: {
-          encoded: null,
-          points: [origin, destination],
-        },
-        steps: [],
-        ttl_seconds: ttlSeconds,
-      });
+    let route = null;
+
+    // Try Google first (if key is configured)
+    if (googleKey) {
+      const { fetchRoutesV2Directions } = await importGoogle();
+      route = await fetchRoutesV2Directions({ apiKey: googleKey, origin, destination, mode, trafficAware });
     }
 
-    const { fetchRoutesV2Directions } = await importGoogle();
+    // Fall back to Mapbox if Google not configured or failed
+    if ((!route || !route.ok) && mapboxToken) {
+      const { fetchMapboxDirections } = await importMapbox();
+      route = await fetchMapboxDirections({ token: mapboxToken, origin, destination, mode });
+    }
 
-    const route = await fetchRoutesV2Directions({
-      apiKey: googleKey,
-      origin,
-      destination,
-      mode,
-      trafficAware,
-    });
-
-    if (!route.ok) {
-      if (strict) {
-        return json(res, 502, { error: route.error || 'Directions request failed', details: route.details || null });
+    // Both providers unavailable or failed — return approximate fallback to keep user in-app
+    if (!route?.ok) {
+      if (strict && (googleKey || mapboxToken)) {
+        return json(res, 502, {
+          error: route?.error || 'Directions request failed',
+          details: route?.details || null,
+        });
       }
 
       const approx = approximateDurationSeconds({ origin, destination, mode });
@@ -185,9 +227,9 @@ export default async function handler(req, res) {
         steps: [],
         ttl_seconds: ttlSeconds,
         warning: {
-          code: 'google_directions_unavailable',
-          message: route.error || 'Directions request failed',
-          details: route.details || null,
+          code: 'directions_unavailable',
+          message: route?.error || 'Directions unavailable',
+          details: route?.details || null,
         },
       });
     }

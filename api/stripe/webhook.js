@@ -656,6 +656,16 @@ export default async function handler(req, res) {
     await handleSubscriptionUpdated(event.data.object);
   } else if (event.type === 'invoice.payment_failed') {
     await handleInvoicePaymentFailed(event.data.object);
+  } else if (event.type === 'account.updated') {
+    // Stripe Connect: a venue progressed/finished payout onboarding. Mark the
+    // seller payout-ready so the payouts worker will transfer their proceeds.
+    const acct = event.data.object;
+    if (acct?.id && acct.payouts_enabled && acct.charges_enabled && acct.details_submitted) {
+      await supabaseForIdempotency
+        .from('market_sellers')
+        .update({ stripe_onboarding_complete: true, status: 'active', updated_at: new Date().toISOString() })
+        .eq('stripe_account_id', acct.id);
+    }
   }
 
   // Record processed event for idempotency

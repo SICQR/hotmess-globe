@@ -372,6 +372,18 @@ export default async function handler(req, res) {
       return true;
     });
 
+    // Hide nameless ghost accounts from discovery. These are the backlog from the
+    // pre-2026-06-17 onboarding gap (name capture was deferred), where people
+    // signed up but never set a name. Demo seeds are KEPT (grid density); every
+    // real profile must have a usable public name to appear.
+    rows = rows.filter((r) => {
+      if (r?.is_demo === true) return true;
+      const dn = String(r?.display_name || '').trim();
+      const un = String(r?.username || '').trim();
+      const fn = String(r?.full_name || '').trim();
+      return (un && !un.includes('@')) || (dn && !dn.includes('@')) || (fn && !fn.includes('@'));
+    });
+
     // Self-exclusion: the logged-in user must never appear in their own Ghosted grid
     if (currentAuthUserId) {
       rows = rows.filter((r) => {

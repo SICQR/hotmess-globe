@@ -1,5 +1,5 @@
 /**
- * HnhMessPromoCard — Dismissible in-feed promo card for HNH MESS
+ * HnhMessPromoCard â Dismissible in-feed promo card for HNH MESS
  *
  * - Shows MESS20 discount code
  * - Links to /market (HNH MESS shop)

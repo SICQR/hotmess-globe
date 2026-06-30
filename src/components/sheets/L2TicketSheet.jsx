@@ -160,11 +160,14 @@ function MyTicketView({ ticketId }) {
     if (!price || price <= 0) { toast.error('Enter a valid price'); return; }
     setListingResale(true);
     try {
-      const { error } = await supabase
-        .from('ticket_orders')
-        .update({ resale_price: price, updated_at: new Date().toISOString() })
-        .eq('id', ticket.id);
-      if (error) throw error;
+      const { data: { session } } = await supabase.auth.getSession();
+      const r = await fetch('/api/tickets/list-resale', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ ticket_id: ticket.id, resale_price: price }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || 'Could not list ticket');
       setListed(true);
       setShowResaleModal(false);
       toast.success('Ticket listed for resale');
@@ -177,10 +180,13 @@ function MyTicketView({ ticketId }) {
 
   const handleCancelResale = async () => {
     try {
-      await supabase
-        .from('ticket_orders')
-        .update({ resale_price: null, updated_at: new Date().toISOString() })
-        .eq('id', ticket.id);
+      const { data: { session } } = await supabase.auth.getSession();
+      const r = await fetch('/api/tickets/list-resale', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ ticket_id: ticket.id }),
+      });
+      if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || 'failed'); }
       setListed(false);
       toast('Resale listing removed');
     } catch {
@@ -366,7 +372,8 @@ function BuyTicketView({ beaconId, poolId }) {
   const [loading, setLoading] = useState(true);
   const [buying, setBuying]   = useState(false);
   const [profile, setProfile] = useState(null);
-  const { closeSheet }        = useSheet();
+  const [creditP, setCreditP] = useState(0);
+  const { closeSheet, openSheet } = useSheet();
 
   useEffect(() => {
     const load = async () => {
@@ -403,6 +410,12 @@ function BuyTicketView({ beaconId, poolId }) {
           .eq('id', user.id)
           .single();
         setProfile(p);
+        const { data: bal } = await supabase
+          .from('credit_balances')
+          .select('balance_pence')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        setCreditP(bal?.balance_pence || 0);
       }
       setLoading(false);
     };
@@ -432,6 +445,13 @@ function BuyTicketView({ beaconId, poolId }) {
         } else {
           toast.error(json.error || 'Could not start checkout');
         }
+        return;
+      }
+      // Fully covered by HOTMESS credit — issued directly, no payment needed.
+      if (json.ticket_issued) {
+        toast.success('Ticket confirmed with your HOTMESS credit');
+        closeSheet();
+        window.setTimeout(() => openSheet('ticket-market', { mode: 'my-ticket', ticketId: json.ticket_id }), 80);
         return;
       }
       // Redirect to Stripe Checkout
@@ -554,6 +574,12 @@ function BuyTicketView({ beaconId, poolId }) {
         except via the resale market. OSA compliance verified at door.
       </p>
 
+      {creditP > 0 && (
+        <div className="text-[12px] text-center mb-2" style={{ color: T.gold }}>
+          HOTMESS credit £{(creditP / 100).toFixed(2)} available — applied at checkout
+        </div>
+      )}
+
       {/* Buy CTA */}
       <button
         onClick={handleBuy}
@@ -575,6 +601,15 @@ function BuyTicketView({ beaconId, poolId }) {
           <>Pay £{Number(pool.price).toFixed(2)} <ChevronRight className="w-4 h-4" /></>
         )}
       </button>
+
+      {/* Consent — completing checkout accepts the ticketing terms */}
+      <p className="text-[11px] text-center mt-3" style={{ color: T.muted }}>
+        By continuing you agree to the{' '}
+        <a href="/legal/ticketing" style={{ color: T.gold, textDecoration: 'underline' }}>
+          Ticket, Resale &amp; Refund Terms
+        </a>. Tickets are non-refundable except where an event is cancelled or
+        materially changed; resale is in-app only, capped at face value.
+      </p>
     </div>
   );
 }

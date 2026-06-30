@@ -46,6 +46,22 @@ const STATE_CONFIG = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// POOL API — RLS only lets the service role write ticket_inventory_pools, so all
+// pool mutations go through /api/operator/ticket-pool (a client write is dropped).
+// ─────────────────────────────────────────────────────────────────────────────
+async function poolApi(method, body) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const r = await fetch('/api/operator/ticket-pool', {
+    method,
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+    body: JSON.stringify(body),
+  });
+  const json = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(json.error || `HTTP ${r.status}`);
+  return json;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // POOL EDIT MODAL
 // ─────────────────────────────────────────────────────────────────────────────
 function PoolEditModal({ pool, onSave, onClose }) {
@@ -53,6 +69,8 @@ function PoolEditModal({ pool, onSave, onClose }) {
     label:      pool.label || '',
     price:      String(pool.price ?? ''),
     cap:        String(pool.inventory_cap ?? ''),
+    ext_alloc:  String(pool.metadata?.external_allocation ?? ''),
+    house:      String(pool.metadata?.house_capacity ?? ''),
     resale:     pool.resale_allowed ?? true,
     is_active:  pool.is_active ?? true,
   });
@@ -61,22 +79,21 @@ function PoolEditModal({ pool, onSave, onClose }) {
   const save = async () => {
     setSaving(true);
     try {
+      const extAlloc = form.ext_alloc === '' ? null : parseInt(form.ext_alloc, 10);
+      const house    = form.house === '' ? null : parseInt(form.house, 10);
       const update = {
         label:          form.label.trim() || pool.label,
         price:          parseFloat(form.price) || pool.price,
         inventory_cap:  form.cap ? parseInt(form.cap, 10) : null,
         resale_allowed: form.resale,
         is_active:      form.is_active,
-        updated_at:     new Date().toISOString(),
+        external_allocation: extAlloc,
+        house_capacity:      house,
+        external_platform:   'Outsavvy',
       };
-      const { error } = await supabase
-        .from('ticket_inventory_pools')
-        .update(update)
-        .eq('id', pool.id);
-
-      if (error) throw error;
+      const { pool: saved } = await poolApi('PATCH', { pool_id: pool.id, ...update });
       toast.success('Pool updated');
-      onSave({ ...pool, ...update });
+      onSave(saved || { ...pool, ...update, metadata: { ...(pool.metadata || {}), external_allocation: extAlloc, house_capacity: house, external_platform: 'Outsavvy' } });
       onClose();
     } catch (err) {
       toast.error(err.message || 'Save failed');
@@ -134,8 +151,15 @@ function PoolEditModal({ pool, onSave, onClose }) {
         {field('Label', 'label', 'text', 'e.g. General Admission')}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           {field('Price (£)', 'price', 'number', '12.00')}
-          {field('Capacity', 'cap', 'number', 'unlimited')}
+          {field('HOTMESS tickets', 'cap', 'number', 'unlimited')}
         </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {field('Outsavvy allocation', 'ext_alloc', 'number', 'e.g. 170')}
+          {field('Venue capacity', 'house', 'number', 'total capacity')}
+        </div>
+        <p style={{ color: T.muted, fontSize: 11, margin: '-4px 0 0', lineHeight: 1.4 }}>
+          Selling on both? Put the Outsavvy share and the venue's total capacity here. HOTMESS and Outsavvy never sell the same tickets — the cockpit adds them up so you can't oversell.
+        </p>
         {toggle('Resale allowed', 'resale')}
         {toggle('Pool active', 'is_active')}
 
@@ -293,6 +317,150 @@ function GuestRow({ order }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
+function PoolCreateModal({ beaconId, onCreate, onClose }) {
+  const [form, setForm] = useState({ label: '', price: '', cap: '', ticket_type: 'paid_ga', ext_alloc: '', house: '' });
+  const [saving, setSaving] = useState(false);
+
+  const create = async () => {
+    if (!form.label.trim()) { toast.error('Label required'); return; }
+    if (form.price === '' || isNaN(parseFloat(form.price))) { toast.error('Price required'); return; }
+    setSaving(true);
+    try {
+      const { pool } = await poolApi('POST', {
+        beacon_id: beaconId,
+        label: form.label.trim(),
+        price: parseFloat(form.price),
+        inventory_cap: form.cap ? parseInt(form.cap, 10) : null,
+        ticket_type: form.ticket_type,
+        is_active: true,
+        external_allocation: form.ext_alloc === '' ? null : parseInt(form.ext_alloc, 10),
+        house_capacity: form.house === '' ? null : parseInt(form.house, 10),
+        external_platform: 'Outsavvy',
+      });
+      toast.success('Pool created — now selling');
+      onCreate(pool);
+      onClose();
+    } catch (err) {
+      toast.error(err.message || 'Create failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inp = (key, type, placeholder) => (
+    <input type={type} value={form[key]} placeholder={placeholder}
+      onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
+      style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 12px', color: T.white, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+  );
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 9999 }} onClick={onClose}>
+      <div style={{ background: T.card, borderRadius: '20px 20px 0 0', padding: 24, width: '100%', maxWidth: 480, paddingBottom: 'max(24px, env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column', gap: 16 }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ color: T.white, fontWeight: 700, fontSize: 16 }}>New Ticket Pool</span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: T.muted, cursor: 'pointer' }}><X size={20} /></button>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ color: T.muted, fontSize: 12 }}>Label</label>
+          {inp('label', 'text', 'e.g. General Admission')}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ color: T.muted, fontSize: 12 }}>Price (£)</label>
+            {inp('price', 'number', '12.00')}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ color: T.muted, fontSize: 12 }}>HOTMESS tickets</label>
+            {inp('cap', 'number', 'unlimited')}
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ color: T.muted, fontSize: 12 }}>Outsavvy allocation</label>
+            {inp('ext_alloc', 'number', 'e.g. 170')}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ color: T.muted, fontSize: 12 }}>Venue capacity</label>
+            {inp('house', 'number', 'total room')}
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ color: T.muted, fontSize: 12 }}>Type</label>
+          <select value={form.ticket_type} onChange={e => setForm(p => ({ ...p, ticket_type: e.target.value }))}
+            style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 12px', color: T.white, fontSize: 14, outline: 'none' }}>
+            <option value="paid_ga">Paid · General Admission</option>
+            <option value="vip">VIP</option>
+            <option value="guestlist">Guestlist</option>
+            <option value="guest_comp">Guest / Comp</option>
+            <option value="quick_drop">Quick Drop</option>
+          </select>
+        </div>
+        <button onClick={create} disabled={saving} style={{ padding: 12, borderRadius: 12, background: T.gold, border: 'none', color: '#000', fontWeight: 700, fontSize: 15, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          {saving && <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />}
+          Create Pool
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CompModal({ beaconId, onClose, onIssued }) {
+  const [email, setEmail] = useState('');
+  const [ticketType, setTicketType] = useState('guestlist');
+  const [saving, setSaving] = useState(false);
+
+  const issue = async () => {
+    if (!email.trim()) return;
+    setSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const r = await fetch('/api/operator/issue-comp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ beacon_id: beaconId, email: email.trim().toLowerCase(), ticket_type: ticketType }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || 'Could not issue ticket');
+      toast.success(j.already ? 'Already on the list' : 'Added to the list \u2014 they have a free ticket');
+      onIssued && onIssued();
+      onClose();
+    } catch (err) {
+      toast.error(err.message || 'Could not issue ticket');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 9999 }} onClick={onClose}>
+      <div style={{ background: T.card, borderRadius: '20px 20px 0 0', padding: 24, width: '100%', maxWidth: 480, paddingBottom: 'max(24px, env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column', gap: 16 }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ color: T.white, fontWeight: 700, fontSize: 16 }}>Add to Guestlist</span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: T.muted, cursor: 'pointer' }}><X size={20} /></button>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ color: T.muted, fontSize: 12 }}>Guest email (their HOTMESS account)</label>
+          <input type="email" value={email} placeholder="guest@example.com" onChange={e => setEmail(e.target.value)}
+            style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 12px', color: T.white, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ color: T.muted, fontSize: 12 }}>Type</label>
+          <select value={ticketType} onChange={e => setTicketType(e.target.value)}
+            style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 12px', color: T.white, fontSize: 14, outline: 'none' }}>
+            <option value="guestlist">Guestlist</option>
+            <option value="guest_comp">Comp</option>
+            <option value="vip">VIP</option>
+          </select>
+        </div>
+        <button onClick={issue} disabled={saving || !email.trim()} style={{ padding: 12, borderRadius: 12, background: T.gold, border: 'none', color: '#000', fontWeight: 700, fontSize: 15, cursor: saving || !email.trim() ? 'not-allowed' : 'pointer', opacity: saving || !email.trim() ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          {saving && <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />}
+          Add free ticket
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function L2VendorEventSheet({ beaconId }) {
   const [beacon, setBeacon]       = useState(null);
   const [pools, setPools]         = useState([]);
@@ -301,8 +469,12 @@ export default function L2VendorEventSheet({ beaconId }) {
   const [search, setSearch]       = useState('');
   const [stateFilter, setStateFilter] = useState('all');
   const [editPool, setEditPool]   = useState(null);
+  const [showCreate, setShowCreate] = useState(false);
   const [showStaff, setShowStaff] = useState(false);
+  const [showComp, setShowComp] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [cancelStep, setCancelStep] = useState(0);
+  const [cancelling, setCancelling] = useState(false);
   const channelRef                = useRef(null);
 
   const load = useCallback(async () => {
@@ -324,6 +496,28 @@ export default function L2VendorEventSheet({ beaconId }) {
       setLoading(false);
     }
   }, [beaconId]);
+
+  const cancelEvent = async () => {
+    if (cancelStep === 0) { setCancelStep(1); setTimeout(() => setCancelStep(0), 4000); return; }
+    setCancelling(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const r = await fetch('/api/operator/cancel-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ beacon_id: beaconId }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || 'Cancel failed');
+      toast.success(`Event cancelled — ${j.refunded_count} ticket(s) refunded`);
+      setCancelStep(0);
+      load();
+    } catch (e) {
+      toast.error(e.message || 'Could not cancel event');
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   // Subscribe realtime
   useEffect(() => {
@@ -427,6 +621,12 @@ export default function L2VendorEventSheet({ beaconId }) {
                 )}
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => setShowComp(true)} style={{
+                  padding: '7px 12px', borderRadius: 20, border: `1px solid ${T.gold}`,
+                  background: 'rgba(200,150,44,0.12)', color: T.gold, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600,
+                }}>
+                  <UserPlus size={14} /> Guestlist
+                </button>
                 <button onClick={() => setShowStaff(true)} style={{
                   padding: '7px 12px', borderRadius: 20, border: `1px solid ${T.border}`,
                   background: T.surface, color: T.muted, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12,
@@ -463,8 +663,17 @@ export default function L2VendorEventSheet({ beaconId }) {
 
             {/* Pools */}
             <div style={{ marginBottom: 12 }}>
-              <div style={{ color: T.muted, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', marginBottom: 8, textTransform: 'uppercase' }}>
-                Ticket Pools
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ color: T.muted, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  Ticket Pools
+                </div>
+                <button onClick={() => setShowCreate(true)} style={{
+                  background: T.surface, border: `1px solid ${T.gold}`, borderRadius: 8,
+                  padding: '6px 10px', color: T.gold, cursor: 'pointer', display: 'flex',
+                  alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600,
+                }}>
+                  <Plus size={12} /> New pool
+                </button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {pools.map(pool => (
@@ -495,6 +704,22 @@ export default function L2VendorEventSheet({ beaconId }) {
           </>
         )}
       </div>
+
+      {!loading && (
+        <div style={{ padding: '0 20px 8px' }}>
+          <button onClick={cancelEvent} disabled={cancelling} style={{
+            width: '100%', padding: 12, borderRadius: 12,
+            background: cancelStep ? T.red : 'rgba(255,59,48,0.08)',
+            border: `1px solid ${cancelStep ? T.red : 'rgba(255,59,48,0.3)'}`,
+            color: cancelStep ? '#fff' : T.red, fontWeight: 700, fontSize: 13,
+            cursor: cancelling ? 'not-allowed' : 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}>
+            {cancelling ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <AlertTriangle size={14} />}
+            {cancelStep ? 'Tap again to confirm — refunds every buyer' : 'Cancel event & refund all'}
+          </button>
+        </div>
+      )}
 
       {/* Guest list */}
       {!loading && (
@@ -551,8 +776,18 @@ export default function L2VendorEventSheet({ beaconId }) {
           onClose={() => setEditPool(null)}
         />
       )}
+      {showCreate && (
+        <PoolCreateModal
+          beaconId={beaconId}
+          onCreate={created => setPools(prev => [...prev, created])}
+          onClose={() => setShowCreate(false)}
+        />
+      )}
       {showStaff && (
         <StaffGrantModal beaconId={beaconId} onClose={() => setShowStaff(false)} />
+      )}
+      {showComp && (
+        <CompModal beaconId={beaconId} onClose={() => setShowComp(false)} onIssued={load} />
       )}
     </div>
   );

@@ -13,6 +13,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useV6Flag as useFlag } from '@/hooks/useV6Flag';
 import { ConfirmProvider, useConfirm } from '@/components/operator/ConfirmModal';
+import MoneyTab from '@/components/operator/MoneyTab';
+import EventsTab from '@/components/operator/EventsTab';
 
 const T = {
   black:  '#000',
@@ -26,7 +28,13 @@ const T = {
   warn:   '#FF9500',
 };
 
-const TABS = ['LIVE', 'SIGNALS', 'ZONES', 'CONTROL'];
+// Tab order. ZONES is venue-only; EVENTS/MONEY are placeholders (next release).
+const ALL_TABS = ['LIVE', 'SIGNALS', 'ZONES', 'EVENTS', 'MONEY', 'CONTROL'];
+
+/** Build the visible tab list for a given operator role. */
+function tabsForRole(role) {
+  return ALL_TABS.filter((t) => !(t === 'ZONES' && role === 'promoter'));
+}
 
 const MOMENTUM_STATES = ['EARLY', 'LIVE', 'PEAK', 'WINDING_DOWN'];
 
@@ -96,6 +104,24 @@ function ActionButton({ label, color = T.gold, disabled, onClick, small }) {
     >
       {label}
     </button>
+  );
+}
+
+// ── Placeholder Panel (EVENTS / MONEY — coming next release) ──────────────────
+
+function PlaceholderPanel({ title }) {
+  return (
+    <div style={{
+      background: T.card, border: `1px dashed ${T.border}`,
+      borderRadius: 10, padding: '48px 20px', textAlign: 'center',
+    }}>
+      <p style={{ color: T.white, fontSize: 16, fontWeight: 700, letterSpacing: 1, margin: '0 0 6px', textTransform: 'uppercase' }}>
+        {title}
+      </p>
+      <p style={{ color: T.muted, fontSize: 13, margin: 0 }}>
+        Coming in next release
+      </p>
+    </div>
   );
 }
 
@@ -553,17 +579,19 @@ function ControlTab({ venueId, eventId, onRefresh }) {
 
 // ── Main Panel ────────────────────────────────────────────────────────────────
 
-function OperatorPanelInner() {
+function OperatorPanelInner({ role, venueId: propVenueId }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const venueId = searchParams.get('venue_id');
+  const venueId = propVenueId || searchParams.get('venue_id');
   const eventId = searchParams.get('event_id');
 
   const [tab, setTab] = useState('LIVE');
+  const visibleTabs = tabsForRole(role);
   const [stats, setStats] = useState(null);
   const [beacons, setBeacons] = useState([]);
   const [auditEntries, setAuditEntries] = useState([]);
   const [access, setAccess] = useState(null); // null=loading, false=denied, true=ok
+  const [ownerId, setOwnerId] = useState(null); // authed operator user id — beacons are owner-keyed
   const pollRef = useRef(null);
 
   const fetchStats = useCallback(async () => {
@@ -575,15 +603,15 @@ function OperatorPanelInner() {
   }, [venueId, eventId]);
 
   const fetchBeacons = useCallback(async () => {
-    if (!venueId) return;
+    if (!ownerId) return;
     const { data } = await supabase
       .from('beacons')
       .select('id, title, beacon_type, beacon_category, status, intensity, ends_at, meta')
-      .eq('venue_id', venueId)
+      .eq('owner_id', ownerId)
       .eq('status', 'active')
       .order('created_at', { ascending: false });
     setBeacons(data ?? []);
-  }, [venueId]);
+  }, [ownerId]);
 
   const fetchAudit = useCallback(async () => {
     if (!venueId) return;
@@ -599,43 +627,41 @@ function OperatorPanelInner() {
     fetchAudit();
   }, [fetchStats, fetchBeacons, fetchAudit]);
 
-  // Access check + initial load
+  // Access check + initial load — OWNER-KEYED (doctrine). The operator manages
+  // the beacons they own; venue_id is optional context. An operator is admin OR
+  // owns >=1 beacon OR has an operator_venues link OR a venue/promoter membership.
   useEffect(() => {
-    if (!venueId) { setAccess(false); return; }
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { navigate('/'); return; }
-      const [{ data: profile }, { data: opRow }] = await Promise.all([
-        supabase.from('profiles').select('role').eq('id', user.id).single(),
-        supabase.from('operator_venues').select('id').eq('user_id', user.id).eq('venue_id', venueId).is('revoked_at', null).single(),
+      setOwnerId(user.id);
+      const [{ data: profile }, { data: opRow }, { data: ownBeacon }, { data: memberships }] = await Promise.all([
+        supabase.from('profiles').select('role').eq('id', user.id).maybeSingle(),
+        supabase.from('operator_venues').select('id').eq('user_id', user.id).is('revoked_at', null).limit(1).maybeSingle(),
+        supabase.from('beacons').select('id').eq('owner_id', user.id).limit(1).maybeSingle(),
+        supabase.from('memberships').select('tier').eq('user_id', user.id).in('tier', ['venue', 'promoter']),
       ]);
-      if (profile?.role === 'admin' || opRow) {
-        setAccess(true);
-        refreshAll();
-      } else {
-        setAccess(false);
-      }
+      const isOperator = profile?.role === 'admin' || !!opRow || !!ownBeacon || ((memberships?.length ?? 0) > 0);
+      if (isOperator) { setAccess(true); refreshAll(); }
+      else setAccess(false);
     });
-  }, [venueId, navigate, refreshAll]);
+  }, [navigate, refreshAll]);
+
+  // Load the operator's beacons once their id is known (owner-keyed).
+  useEffect(() => { if (ownerId) fetchBeacons(); }, [ownerId, fetchBeacons]);
 
   // Poll stats every 30s, beacons realtime
   useEffect(() => {
     if (!access) return;
     pollRef.current = setInterval(fetchStats, 30000);
     const channel = supabase
-      .channel(`nop-beacons-${venueId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'beacons', filter: `venue_id=eq.${venueId}` }, fetchBeacons)
+      .channel(`nop-beacons-${ownerId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'beacons', filter: `owner_id=eq.${ownerId}` }, fetchBeacons)
       .subscribe();
     return () => {
       clearInterval(pollRef.current);
       supabase.removeChannel(channel);
     };
-  }, [access, venueId, fetchStats, fetchBeacons]);
-
-  if (!venueId) return (
-    <div style={{ minHeight: '100vh', background: T.black, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ color: T.muted }}>No venue_id in URL</p>
-    </div>
-  );
+  }, [access, ownerId, fetchStats, fetchBeacons]);
 
   if (access === null) return (
     <div style={{ minHeight: '100vh', background: T.black, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -667,7 +693,7 @@ function OperatorPanelInner() {
         </div>
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 0 }}>
-          {TABS.map(t => (
+          {visibleTabs.map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -722,6 +748,8 @@ function OperatorPanelInner() {
                 onRefresh={refreshAll}
               />
             )}
+            {tab === 'EVENTS' && <EventsTab venueId={venueId} />}
+            {tab === 'MONEY' && <MoneyTab role={role} venueId={venueId} />}
             {tab === 'CONTROL' && (
               <ControlTab
                 venueId={venueId}
@@ -736,12 +764,12 @@ function OperatorPanelInner() {
   );
 }
 
-export default function OperatorPanel() {
+export default function OperatorPanel({ role = 'venue', venueId }) {
   const f5Enabled = useFlag('v6_night_operator_panel');
   if (!f5Enabled) return null;
   return (
     <ConfirmProvider>
-      <OperatorPanelInner />
+      <OperatorPanelInner role={role} venueId={venueId} />
     </ConfirmProvider>
   );
 }

@@ -90,6 +90,12 @@ export const requireGoogleApiKey = () => {
   return { key, error: null };
 };
 
+export const requireMapboxToken = () => {
+  const key = getEnv('MAPBOX_TOKEN', ['VITE_MAPBOX_TOKEN']);
+  if (!key) return { key: null, error: 'Missing MAPBOX_TOKEN' };
+  return { key, error: null };
+};
+
 export const normalizeMode = (mode) => {
   const raw = String(mode || '').toUpperCase();
   if (raw === 'WALK' || raw === 'WALKING') return 'WALK';

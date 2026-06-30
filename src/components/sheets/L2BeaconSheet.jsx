@@ -26,6 +26,7 @@ import { humanizeError } from '@/lib/errorUtils';
 import { usePowerups } from '@/hooks/usePowerups';
 // D12 Slice 2 / #303 Phase A — first-class entity_kind + intent reader.
 import { readIntent } from '@/lib/beacons/beaconKind';
+import { VENUE_PIN_COLORS } from '@/components/globe/beaconIconFactory';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BEACON ID NORMALISATION + KIND DETECTION
@@ -904,7 +905,7 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
 
     supabase
       .from('beacons')
-      .select('id, code, type, beacon_category, geo_lat, geo_lng, starts_at, ends_at, intensity, title, description, city_slug, globe_color, globe_pulse_type, globe_size_base, checkin_count, venue_id, owner_id, event_start_at, event_end_at, metadata')
+      .select('id, code, type, beacon_category, geo_lat, geo_lng, starts_at, ends_at, intensity, title, description, city_slug, globe_pulse_type, checkin_count, venue_id, owner_id, event_start_at, event_end_at, metadata')
       .eq('id', cleanBeaconId)
       .maybeSingle()
       .then(({ data }) => {
@@ -1124,11 +1125,14 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
   // Curated editorial gets brand gold regardless of category default colour.
   // Doctrine 11 — never render district/hotmess in events-pink.
   const isCurated = kind === 'district' || kind === 'hotmess';
+  // Globe Render Doctrine — VENUE_PIN_COLORS is canonical. The orphan
+  // beacon.globe_color read is removed; venue accent was cyan #00C2E0 → now
+  // gold VENUE_PIN_COLORS.default. care = cream, event = pink.
   const categoryColor = isCurated
-    ? '#C8962C'
+    ? VENUE_PIN_COLORS.default
     : kind === 'care'
-      ? '#F4ECD8'
-      : (beacon.globe_color || (category === 'venue' ? '#00C2E0' : category === 'event' ? '#FF4F9A' : '#C8962C'));
+      ? VENUE_PIN_COLORS.aftercare
+      : (category === 'event' ? '#FF4F9A' : VENUE_PIN_COLORS.default);
   const lat = beacon.geo_lat ?? beacon.lat;
   const lng = beacon.geo_lng ?? beacon.lng;
   const ownerId = beacon.owner_id || null; // ONLY read in the user-kind branch.
@@ -1386,18 +1390,34 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
               </button>
             )}
 
-            {/* Get Ticket — pool available, user hasn't purchased */}
-            {ticketPool && !userTicket && ownerId !== myUserId && (
-              <button
-                onClick={() => {
-                  closeSheet();
-                  window.setTimeout(() => openSheet('ticket-market', { mode: 'buy', beaconId: cleanBeaconId || beacon.id, poolId: ticketPool.id }), 80);
-                }}
-                className="w-full bg-[#FF4F9A] text-white font-black text-sm rounded-2xl py-3.5 flex items-center justify-center gap-2 active:scale-95 transition-transform"
-              >
-                Get Ticket — £{Number(ticketPool.price).toFixed(2)}
-              </button>
-            )}
+            {/* Get Ticket — pool available, user hasn't purchased.
+                Shows Sold out / Sales closed when the pool is unavailable. */}
+            {ticketPool && !userTicket && ownerId !== myUserId && (() => {
+              const soldOut = ticketPool.inventory_cap != null && (ticketPool.inventory_sold || 0) >= ticketPool.inventory_cap;
+              const closed = ticketPool.closes_at && new Date(ticketPool.closes_at) <= new Date();
+              if (soldOut || closed) {
+                return (
+                  <button
+                    disabled
+                    className="w-full font-black text-sm rounded-2xl py-3.5 flex items-center justify-center gap-2 border"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.4)', borderColor: 'rgba(255,255,255,0.10)', cursor: 'not-allowed' }}
+                  >
+                    {soldOut ? 'Sold out' : 'Sales closed'}
+                  </button>
+                );
+              }
+              return (
+                <button
+                  onClick={() => {
+                    closeSheet();
+                    window.setTimeout(() => openSheet('ticket-market', { mode: 'buy', beaconId: cleanBeaconId || beacon.id, poolId: ticketPool.id }), 80);
+                  }}
+                  className="w-full bg-[#FF4F9A] text-white font-black text-sm rounded-2xl py-3.5 flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                >
+                  Get Ticket — £{Number(ticketPool.price).toFixed(2)}
+                </button>
+              );
+            })()}
 
             {/* My Ticket — user already has a ticket */}
             {userTicket && (

@@ -1,3 +1,29 @@
+-- Ensure the table exists so this migration is self-contained when the CI
+-- shadow DB replays migrations from scratch (radio_shows was created
+-- out-of-band in production; IF NOT EXISTS makes this a no-op there).
+CREATE TABLE IF NOT EXISTS public.radio_shows (
+  id          uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  slug        text NOT NULL,
+  title       text NOT NULL,
+  description text,
+  host        text,
+  stream_url  text,
+  schedule    text,
+  sponsor     text,
+  created_at  timestamptz DEFAULT now(),
+  artwork_url text,
+  is_live     boolean DEFAULT false,
+  is_active   boolean DEFAULT true,
+  azuracast_mount_name text,
+  host_name   text,
+  image_url   text,
+  start_time  timestamptz,
+  genre       text,
+  tone_brief  text,
+  opener_script text,
+  closer_script text
+);
+
 -- Seed radio_shows with the 5 HOTMESS shows
 -- Matches the actual DB schema: id, title, host, schedule, description, slug
 -- Safe to re-run (ON CONFLICT DO UPDATE)

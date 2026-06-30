@@ -5,7 +5,12 @@
  * Body: { venue_id, title, duration_minutes?, event_id? }
  * Confirmation level: MEDIUM
  * Flag: v6_night_operator_panel
+ *
+ * Schema-valid + owner-keyed per Operator Cockpit Doctrine (2026-06-24).
+ * "system" is not a beacons.type/beacon_category value — role lives in
+ * metadata.role; the row is type='social', beacon_category='hotmess'.
  */
+import { randomUUID } from 'node:crypto';
 import { verifyOperator, supabaseAdmin } from './_verify.js';
 
 const COOLDOWN_MS = 30 * 60 * 1000;
@@ -13,19 +18,20 @@ const COOLDOWN_MS = 30 * 60 * 1000;
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { venue_id, title, duration_minutes = 60, event_id } = req.body;
+  const { venue_id, title, duration_minutes = 60, event_id = null } = req.body;
   if (!venue_id || !title) {
     return res.status(400).json({ error: 'venue_id, title required' });
   }
 
   const ctx = await verifyOperator(req, res, venue_id);
   if (!ctx) return;
+  const ownerId = ctx.user.id;
 
   // VENUE role or admin required
   if (!ctx.isAdmin && ctx.operatorRow?.role !== 'manager' && ctx.operatorRow?.role !== 'safety') {
     if (ctx.operatorRow?.role === 'operator') {
       await supabaseAdmin.from('operator_audit_log').insert({
-        user_id: ctx.user.id, venue_id, action_type: 'system_beacon_push',
+        user_id: ownerId, venue_id, action_type: 'system_beacon_push',
         scope: 'venue', payload: { title }, outcome: 'denied',
       });
       return res.status(403).json({ error: 'VENUE/manager role required for system beacons' });
@@ -37,8 +43,7 @@ export default async function handler(req, res) {
     .from('operator_system_beacons')
     .select('*')
     .eq('venue_id', venue_id)
-    .single()
-    .catch(() => ({ data: null }));
+    .maybeSingle();
 
   if (sysRow?.last_pushed_at) {
     const since = Date.now() - new Date(sysRow.last_pushed_at).getTime();
@@ -61,20 +66,21 @@ export default async function handler(req, res) {
   const { data: beacon, error } = await supabaseAdmin
     .from('beacons')
     .insert({
-      venue_id,
-      event_id: event_id || null,
-      created_by: ctx.user.id,
-      beacon_type: 'system',
-      beacon_category: 'system',
+      code: `sys-${randomUUID().slice(0, 8)}`,
+      type: 'social',
+      owner_id: ownerId,
+      venue_id: venue_id || null,
       title,
       status: 'active',
+      beacon_category: 'hotmess',
+      intensity: 2,
       ends_at: expiresAt,
-      intensity: 0.8,
+      metadata: { role: 'system', event_id: event_id || null },
     })
     .select()
     .single();
 
-  if (error) return res.status(500).json({ error: 'Failed to create system beacon' });
+  if (error) return res.status(500).json({ error: 'Failed to create system beacon', detail: error.message });
 
   // Upsert tracking row
   await supabaseAdmin.from('operator_system_beacons').upsert({
@@ -85,10 +91,8 @@ export default async function handler(req, res) {
   });
 
   await supabaseAdmin.from('operator_audit_log').insert({
-    user_id: ctx.user.id, venue_id, event_id: event_id || null,
-    action_type: 'system_beacon_push', scope: 'venue',
-    payload: { beacon_id: beacon.id, title, duration_minutes },
-    outcome: 'success',
+    user_id: ownerId, venue_id, action_type: 'system_beacon_push', scope: 'venue',
+    payload: { beacon_id: beacon.id, title, duration_minutes }, outcome: 'success',
   });
 
   res.status(200).json({ beacon_id: beacon.id, expires_at: expiresAt });

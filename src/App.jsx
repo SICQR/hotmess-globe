@@ -23,7 +23,7 @@ import CreatorsCart from '@/pages/CreatorsCart';
 import CreatorsCheckout from '@/pages/CreatorsCheckout';
 import CreatorsCheckoutSuccess from '@/pages/CreatorsCheckoutSuccess';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
-import { AboutPage, LegalPage, AccessibilityPage, PrivacyPolicyPage, RemixLicensePage, CommercialLicensePage, CreatorAgreementPage, DMCAPage, LocationDisclosurePage, AIDisclosurePage } from '@/pages/legal/LegalPages';
+import { AboutPage, LegalPage, AccessibilityPage, PrivacyPolicyPage, RemixLicensePage, CommercialLicensePage, CreatorAgreementPage, DMCAPage, LocationDisclosurePage, AIDisclosurePage, TicketingTermsPage } from '@/pages/legal/LegalPages';
 import { CookieBanner } from '@/components/legal/CookieBanner';
 import { I18nProvider } from '@/contexts/I18nContext';
 import { TonightModeProvider } from '@/hooks/useTonightMode';
@@ -66,6 +66,7 @@ import { usePresenceHeartbeat } from '@/hooks/usePresenceHeartbeat';
 import { useSwipeBack } from '@/hooks/useSwipeBack';
 import AuthCallback from '@/pages/auth/callback';
 import PortalPage from '@/pages/PortalPage';
+import TicketSuccessPage from '@/pages/TicketSuccessPage';
 import { supabase } from '@/components/utils/supabaseClient';
 import { syncLocation } from '@/utils/locationService';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
@@ -105,8 +106,8 @@ import GoldPulseLoader from '@/components/ui/GoldPulseLoader';
 const VenueCheckin = lazy(() => import('@/pages/VenueCheckin'));
 const ComingSoon = lazy(() => import('@/pages/ComingSoon'));
 const SellerDashboard = lazy(() => import('@/pages/SellerDashboard'));
-const SellerOnboarding = lazy(() => import('@/pages/SellerOnboarding'));
 const CreatorDashboard = lazy(() => import('@/pages/CreatorDashboard'));
+const OperatorRoute = lazy(() => import('@/routes/OperatorRoute'));
 const TicketsPage = lazy(() => import('@/pages/tickets/Tickets'));
 const TicketDetailPage = lazy(() => import('@/pages/tickets/TicketDetail'));
 const TicketChatPage = lazy(() => import('@/pages/tickets/TicketChat'));
@@ -160,19 +161,10 @@ const LEGACY_PAGE_ROUTE_ALLOWLIST = new Set([
   'Community',
   'Leaderboard',
   'AdminDashboard',
-  // Business pages
-  'PromoterDashboard',
-  'BusinessDashboard',
-  'BusinessAnalytics',
-  'BusinessOnboarding',
-  'BusinessSettings',
-  'BusinessVenue',
-  'BusinessBilling',
+  // Business pages (kept: live)
   'CreateBeaconBiz',
   'CreatorDashboard',
   'SellerDashboard',
-  'SellerOnboarding',
-  'OrganizerDashboard',
   'ReferralProgram',
   // Shop/market compat is handled separately.
   'Marketplace',
@@ -483,6 +475,9 @@ const AuthenticatedApp = () => {
       <Route path="/auth/*" element={<PageRoute pageKey="Auth" />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/portal" element={<PortalPage />} />
+      <Route path="/ticket-success" element={<TicketSuccessPage />} />
+      {/* OPERATOR COCKPIT — venue/promoter only; OperatorRoute gates access + derives role */}
+      <Route path="/operator" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><OperatorRoute /></Suspense>} />
       <Route path="/reentry" element={<ReentryPage />} />
       {/* v3 reentry welcome screen secondary CTA targets /pricing. Pricing.jsx
           component exists but was not routed; wiring here. The tier query
@@ -500,6 +495,7 @@ const AuthenticatedApp = () => {
       {/* LEGAL (Accessible via More) */}
       <Route path="/legal/privacy" element={<LegalPrivacyRoute />} />
       <Route path="/legal/terms" element={<LegalTermsRoute />} />
+      <Route path="/legal/ticketing" element={<LayoutWrapper currentPageName="More"><TicketingTermsPage /></LayoutWrapper>} />
       <Route path="/legal/*" element={<AboutPage />} />
 
       {/* Fallback auto-generated /PageName routes for internal createPageUrl() redirects */}

@@ -591,6 +591,26 @@ export default function MorePage() {
   const youNext = getYouNextAction(you);
   const activityNext = getActivityNextAction(activity);
 
+  // ── Vendor identity (operator door) — admin OR operator_venues OR venue/promoter membership.
+  // Kept separate from the consumer surface: only vendors ever see the Operator entry.
+  const { data: vendorState } = useQuery({
+    queryKey: ['more-vendor', userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const [{ data: profile }, { data: opv }, { data: mem }] = await Promise.all([
+        supabase.from('profiles').select('role').eq('id', userId).maybeSingle(),
+        supabase.from('operator_venues').select('venue_id').eq('user_id', userId).is('revoked_at', null),
+        supabase.from('memberships').select('tier').eq('user_id', userId).in('tier', ['venue', 'promoter']),
+      ]);
+      const isAdmin = profile?.role === 'admin';
+      const linked = (opv || []).map((o: any) => o.venue_id).filter(Boolean);
+      const memTiers = (mem || []).map((m: any) => m.tier);
+      return { isVendor: isAdmin || linked.length > 0 || memTiers.length > 0 };
+    },
+    staleTime: 60_000,
+  });
+  const isVendor = !!vendorState?.isVendor;
+
 
 
   // ── Quick items with live counts ──────────────────────────────────────
@@ -601,6 +621,7 @@ export default function MorePage() {
     { icon: ShoppingBag, label: 'My Listings', count: activity.liveListings, onTap: () => openSheet('my-listings'), accent: '#9E7D47' },
     { icon: Bookmark, label: 'Saved', onTap: () => openSheet('favorites'), accent: GOLD },
     { icon: CalendarDays, label: 'Events', count: activity.upcomingEvents, onTap: () => openSheet('events'), accent: '#00C2E0' },
+    { icon: Ticket, label: 'Tickets', onTap: () => openSheet('ticket-browse'), accent: GOLD },
   ], [activity, openSheet]);
 
   const featureItems: QuickItem[] = useMemo(() => [
@@ -656,6 +677,29 @@ export default function MorePage() {
             <h2 className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#C8962C] px-1">Features</h2>
             <QuickRow items={featureItems} delay={0.2} />
           </section>
+
+          {/* ── OPERATOR (vendor-only door) ─────────────────────────── */}
+          {isVendor && (
+            <section className="space-y-4">
+              <h2 className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#C8962C] px-1">Operator</h2>
+              <motion.button
+                onClick={() => navigate('/operator')}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.25 }}
+                className="w-full flex items-center gap-3 p-5 rounded-2xl bg-[#C8962C]/15 border border-[#C8962C]/40 text-left"
+              >
+                <div className="w-10 h-10 rounded-xl bg-[#C8962C]/15 flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-[#C8962C]" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-white">Manage Venue</p>
+                  <p className="text-[10px] text-[#C8962C]/70 uppercase tracking-widest mt-0.5">Operator Cockpit · Live</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[#C8962C]/40" />
+              </motion.button>
+            </section>
+          )}
 
           {/* ── ACCOUNT SECTION ─────────────────────────────────────── */}
           <section className="space-y-4">

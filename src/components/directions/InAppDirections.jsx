@@ -7,10 +7,12 @@ import {
   Footprints,
   Bike,
   Car,
+  Train,
   Moon,
   Clock,
   MapPin,
   Loader2,
+  ChevronRight,
   ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -54,9 +56,10 @@ import { cn } from '@/lib/utils';
 
 // Mode-chip reframe (D14 §3). id/apiMode stable for backward compat.
 const TRAVEL_MODES = [
-  { id: 'foot',  label: 'Walk',        subtitle: 'Quiet, simple, present',   icon: Footprints, apiMode: 'WALK',    color: '#39FF14' },
-  { id: 'bike',  label: 'Fastest',     subtitle: 'You have somewhere to be', icon: Bike,       apiMode: 'BICYCLE', color: '#00C2E0' },
-  { id: 'drive', label: 'Night Route', subtitle: 'Safer late-night path',    icon: Moon,       apiMode: 'DRIVE',   color: '#C8962C' },
+  { id: 'foot',    label: 'Walk',        subtitle: 'Quiet, simple, present',   icon: Footprints, apiMode: 'WALK',    color: '#39FF14' },
+  { id: 'transit', label: 'Tube',        subtitle: 'Underground & bus',         icon: Train,      apiMode: 'TRANSIT', tflTransitMode: 'transit', color: '#E84040' },
+  { id: 'bike',    label: 'Fastest',     subtitle: 'You have somewhere to be', icon: Bike,       apiMode: 'BICYCLE', color: '#00C2E0' },
+  { id: 'drive',   label: 'Night Route', subtitle: 'Night buses, safer path',  icon: Moon,       apiMode: 'TRANSIT', tflTransitMode: 'night', color: '#C8962C' },
 ];
 
 // Brand colours — locked, must match mapboxLayerStack categories on the globe.
@@ -244,6 +247,18 @@ export default function InAppDirections({
   );
   const originIsFar = Number.isFinite(distanceKm) && distanceKm > FAR_THRESHOLD_KM;
 
+  // When the user is far or has no GPS, fabricate a local origin ~1.3km NW of
+  // the destination so we can still fetch meaningful steps for the venue area.
+  // D14 §0 forbids a planet-spanning line — this stays local, so it's fine.
+  // The YOU pin is still suppressed when originIsFar (it'd be dishonest).
+  const previewOrigin = useMemo(() => {
+    if (!destination) return null;
+    return { lat: destination.lat + 0.012, lng: destination.lng - 0.008 };
+  }, [destination?.lat, destination?.lng]);
+
+  // fetchOrigin: real GPS when nearby, fabricated local point otherwise.
+  const fetchOrigin = (!origin || originIsFar) ? previewOrigin : origin;
+
   // Fetch constellation candidates. Reads from base `beacons` so curated/care
   // metadata stays intact (pulse_signals view strips it).
   // - Near origin: bbox spans origin↔destination + 600m pad (route corridor).
@@ -301,13 +316,17 @@ export default function InAppDirections({
   // spans the planet. Saves API calls + prevents the route polyline from
   // obscuring the destination view.
   const modeConfig = TRAVEL_MODES.find(m => m.id === mode);
-  const canFetch = !!origin && !!destination && !originIsFar;
+  const isTransitMode = modeConfig?.apiMode === 'TRANSIT';
+  const canFetch = !!fetchOrigin && !!destination;
 
   const { data: directions, isLoading } = useQuery({
-    queryKey: ['directions', mode, origin?.lat, origin?.lng, destination?.lat, destination?.lng],
+    queryKey: ['directions', mode, fetchOrigin?.lat, fetchOrigin?.lng, destination?.lat, destination?.lng],
     queryFn: () => fetchRoutingDirections({
-      origin, destination,
+      origin: fetchOrigin, destination,
       mode: modeConfig?.apiMode || 'WALK',
+      // TRANSIT modes route through TfL Journey Planner server-side. Night Route
+      // uses the night-bus preset; Tube uses the multimodal day preset.
+      transitMode: isTransitMode ? (modeConfig?.tflTransitMode || 'transit') : undefined,
       ttlSeconds: 120
     }),
     enabled: canFetch,
@@ -319,7 +338,7 @@ export default function InAppDirections({
   // D14 §0: when origin is far, route is empty — no straight-line fallback,
   // no polyline at all. The destination view is the whole rendering.
   const routeLngLat = useMemo(() => {
-    if (originIsFar) return [];
+    if (isTransitMode) return [];
     const encoded = directions?.polyline?.encoded;
     if (typeof encoded === 'string' && encoded.trim()) {
       return decodeGooglePolyline(encoded).map((p) => [p.lng, p.lat]);
@@ -330,7 +349,8 @@ export default function InAppDirections({
         .filter((p) => Number.isFinite(p?.lat) && Number.isFinite(p?.lng))
         .map((p) => [p.lng, p.lat]);
     }
-    if (origin && destination) {
+    // Straight-line fallback only when user is nearby (avoids planet-spanning line).
+    if (!originIsFar && origin && destination) {
       return [[origin.lng, origin.lat], [destination.lng, destination.lat]];
     }
     return [];
@@ -355,7 +375,7 @@ export default function InAppDirections({
 
   useEffect(() => {
     ensureConstellationKeyframes();
-    if (!MAPBOX_TOKEN || !containerRef.current || locationError) return;
+    if (!MAPBOX_TOKEN || !containerRef.current) return;
 
     let cancelled = false;
     let resizeT;
@@ -372,10 +392,11 @@ export default function InAppDirections({
           : [-0.1278, 51.5074];
         const map = new mapboxgl.Map({
           container: containerRef.current,
-          style: 'mapbox://styles/mapbox/dark-v11',
+          style: 'mapbox://styles/mapbox/navigation-night-v1',
           center: startCenter,
           zoom: 14,
-          attributionControl: true,
+          attributionControl: false,
+          scrollZoom: false,
         });
         mapRef.current = map;
         map.on('error', () => { /* keep overlay graceful */ });
@@ -398,8 +419,8 @@ export default function InAppDirections({
             layout: { 'line-cap': 'round', 'line-join': 'round' },
             paint: {
               'line-color': ['get', 'colour'],
-              'line-width': 8,
-              'line-opacity': 0.3,
+              'line-width': 14,
+              'line-opacity': 0.2,
             },
           });
           map.addLayer({
@@ -409,8 +430,8 @@ export default function InAppDirections({
             layout: { 'line-cap': 'round', 'line-join': 'round' },
             paint: {
               'line-color': ['get', 'colour'],
-              'line-width': 5,
-              'line-opacity': 0.9,
+              'line-width': 8,
+              'line-opacity': 1.0,
             },
           });
 
@@ -459,7 +480,7 @@ export default function InAppDirections({
       const swLat = Math.min(origin.lat, destination.lat);
       const neLng = Math.max(origin.lng, destination.lng);
       const neLat = Math.max(origin.lat, destination.lat);
-      map.fitBounds([[swLng, swLat], [neLng, neLat]], { padding: 50, duration: 600 });
+      map.fitBounds([[swLng, swLat], [neLng, neLat]], { padding: { top: 70, bottom: 70, left: 50, right: 50 }, duration: 700 });
     } catch (e) { /* non-fatal */ }
   }, [mapReady, origin?.lat, origin?.lng, destination?.lat, destination?.lng, originIsFar]);
 
@@ -534,6 +555,26 @@ export default function InAppDirections({
   const duration = formatDuration(directions?.duration_seconds);
   const distance = formatDistance(directions?.distance_meters);
 
+  const getTurnIcon = (instruction = '', stepMode = null) => {
+    // Transit steps carry an explicit mode hint from TfL (walk/tube/bus/etc).
+    if (stepMode) {
+      const m = String(stepMode).toLowerCase();
+      if (m === 'walk' || m === 'walking') return '\u279F'; // walking arrow
+      if (m === 'bus' || m === 'night-bus' || m === 'coach') return '\uD83D\uDE8C'; // bus
+      if (m && m !== 'transit') return '\uD83D\uDE87'; // metro/tube glyph for rail modes
+    }
+    const t = instruction.toLowerCase();
+    if (t.includes('arrive') || t.includes('destination') || t.includes('you have arrived')) return '⬤';
+    if (t.includes('u-turn') || t.includes('uturn')) return '↩';
+    if (t.includes('roundabout')) return '↻';
+    if (t.includes('turn left') || t.includes('sharp left')) return '←';
+    if (t.includes('turn right') || t.includes('sharp right')) return '→';
+    if (t.includes('slight left') || t.includes('bear left') || t.includes('keep left')) return '↖';
+    if (t.includes('slight right') || t.includes('bear right') || t.includes('keep right')) return '↗';
+    if (t.includes('exit')) return '↪';
+    return '↑';
+  };
+
   // Chromeless render. The wrapping surface (L2SheetContainer for the L2
   // path, DirectionsButton's modal for the standalone path) provides bg,
   // border, dismiss. We just lay out the content.
@@ -543,51 +584,81 @@ export default function InAppDirections({
   // → tab row → quiet body. No X, no max/min, no inner border.
   return (
     <div className={cn('flex flex-col', className)}>
-      {/* Header — chip + heading + address. Matches cluster preview. */}
-      <div className="px-4 pt-4 pb-2">
-        <div className="flex items-center gap-2 mb-2">
-          <span
-            className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border tracking-[0.14em]"
-            style={{ color: '#C8962C', borderColor: 'rgba(200,150,44,0.25)', backgroundColor: 'rgba(200,150,44,0.08)' }}
-          >
-            <Navigation className="w-2.5 h-2.5" />
-            route
-          </span>
-        </div>
-        <h2 className="text-white font-black text-xl leading-tight">
-          {destinationName || 'Directions'}
-        </h2>
-        {destinationAddress && (
-          <p className="text-white/55 text-sm mt-1 leading-snug truncate">
-            {destinationAddress}
-          </p>
+
+      {/* ── MAP FIRST — visible the moment the sheet snaps open ── */}
+      <div className="relative h-[280px] mx-4 mt-3 rounded-xl overflow-hidden flex-shrink-0">
+        <div
+          ref={containerRef}
+          className="absolute inset-0"
+          style={{ width: '100%', height: '100%' }}
+        />
+        {/* Location error overlay — shown above the map, not instead of it */}
+        {locationError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm rounded-xl">
+            <div className="text-center p-4">
+              <MapPin className="w-10 h-10 text-white/15 mx-auto mb-2" />
+              <p className="text-white/55 text-sm">{locationError}</p>
+            </div>
+          </div>
+        )}
+        {isLoading && !originIsFar && (
+          <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-black/75 px-2.5 py-1 rounded-full text-[10px] text-white/55">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            <span>Loading route…</span>
+          </div>
+        )}
+        {originIsFar && (
+          <div className="absolute top-2 left-2 bg-black/70 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/10">
+            <p className="text-white/55 text-[10px] font-bold tracking-[0.06em]">Area preview</p>
+          </div>
         )}
       </div>
 
-      {/* Mode chips — same border-weight + radius as cluster's primary button.
-          Subtitle under active mode carries the D14 §3 emotional cue. */}
+        {/* ── HEADER — big ETA + destination ── */}
+        <div className="px-4 pt-4 pb-2">
+          <div className="flex items-baseline gap-2.5 mb-1">
+            {duration && (
+              <span className="text-white font-black text-4xl leading-none tracking-tight">
+                {duration}
+              </span>
+            )}
+            {distance && (
+              <span className="text-white/40 text-lg font-bold">{distance}</span>
+            )}
+          </div>
+          <h2 className="text-white/70 font-semibold text-base leading-tight">
+            {destinationName || 'Directions'}
+          </h2>
+          {destinationAddress && (
+            <p className="text-white/30 text-xs mt-0.5 leading-snug truncate">
+              {destinationAddress}
+            </p>
+          )}
+        </div>
+
+      {/* ── MODE CHIPS — Walk / Tube / Fastest / Night Route + Uber ── */}
       <div className="px-4 pt-2 pb-2 flex flex-col gap-1.5">
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
           {TRAVEL_MODES.map((m) => (
             <button
               key={m.id}
               onClick={() => setMode(m.id)}
               className={cn(
-                'flex-1 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl text-xs font-bold border active:scale-95 transition-transform',
+                'flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold border active:scale-95 transition-transform',
                 mode === m.id
                   ? 'bg-white/10 border-white/25 text-white'
-                  : 'bg-white/[0.03] border-white/10 text-white/55'
+                  : 'bg-white/[0.03] border-white/10 text-white/50'
               )}
             >
-              <m.icon className="w-3.5 h-3.5" style={{ color: mode === m.id ? m.color : undefined }} />
+              <m.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: mode === m.id ? m.color : undefined }} />
               <span>{m.label}</span>
             </button>
           ))}
-          {/* Uber chip — external eject, outline-only to signal "leaves the app". */}
+          {/* Uber — external eject. Outline-only signals "leaves the app". */}
           <button
             onClick={() => uberUrl && window.open(uberUrl, '_blank')}
             disabled={!uberUrl}
-            className="flex items-center justify-center gap-1 px-2.5 py-2.5 rounded-xl text-xs font-bold border border-white/10 bg-transparent text-white/45 active:scale-95 transition-transform"
+            className="flex-shrink-0 flex items-center justify-center gap-1 px-2.5 py-2.5 rounded-xl text-xs font-bold border border-white/10 bg-transparent text-white/40 active:scale-95 transition-transform"
           >
             <Car className="w-3.5 h-3.5" />
             <span>Uber</span>
@@ -595,70 +666,97 @@ export default function InAppDirections({
           </button>
         </div>
         {modeConfig?.subtitle && (
-          <p className="text-[10px] text-white/40 text-center tracking-[0.08em]">
+          <p className="text-[10px] text-white/35 text-center tracking-[0.08em]">
             {modeConfig.subtitle}
           </p>
         )}
       </div>
 
-      {/* Map — fixed-height. No internal chrome. */}
-      <div className="relative h-[260px] mx-4 mt-1 rounded-xl overflow-hidden">
-        {locationError ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/[0.03] border border-white/5 rounded-xl">
-            <div className="text-center p-4">
-              <MapPin className="w-10 h-10 text-white/15 mx-auto mb-2" />
-              <p className="text-white/55 text-sm">{locationError}</p>
+        {/* ── TURN-BY-TURN STEPS ── */}
+        {directions?.steps?.length > 0 && (
+          <div className="px-4 pb-8 mt-2">
+            <div className="rounded-2xl overflow-hidden border border-white/[0.07]">
+              {directions.steps.map((step, i) => {
+                const isLast = i === directions.steps.length - 1;
+                return (
+                  <div
+                    key={i}
+                    className={cn(
+                      'flex items-start gap-3.5 px-4 py-3.5',
+                      !isLast && 'border-b border-white/[0.05]'
+                    )}
+                  >
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                      style={{ background: (modeConfig?.color || '#C8962C') + '22' }}
+                    >
+                      <span
+                        className="text-base leading-none"
+                        style={{ color: modeConfig?.color || '#C8962C' }}
+                      >
+                        {getTurnIcon(step.instruction, step.mode)}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white text-[14px] font-semibold leading-snug">
+                        {step.instruction}
+                      </p>
+                      {(step.distance_meters != null || step.duration_seconds != null) && (
+                        <p className="text-white/35 text-[11px] mt-1 tabular-nums">
+                          {step.distance_meters != null ? formatDistance(step.distance_meters) : ''}
+                          {step.distance_meters != null && step.duration_seconds != null ? '  ·  ' : ''}
+                          {step.duration_seconds != null ? formatDuration(step.duration_seconds) : ''}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        ) : (
-          <div
-            ref={containerRef}
-            className="absolute inset-0"
-            style={{ width: '100%', height: '100%' }}
-          />
         )}
 
-        {isLoading && !locationError && !originIsFar && (
-          <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-black/75 px-2.5 py-1 rounded-full text-[10px] text-white/55">
-            <Loader2 className="w-3 h-3 animate-spin" />
-            <span>Loading route…</span>
-          </div>
-        )}
-
-        {/* D14 §0 far-origin contextual overlay. Replaces the route corridor
-            with a destination-only district view + a quiet message. HOTMESS
-            register (D15) — no travel-app phrasing, no "directions disabled". */}
-        {originIsFar && !locationError && (
-          <div className="absolute top-2 left-2 right-2 bg-black/75 backdrop-blur-md px-3 py-2 rounded-xl border border-white/8">
-            <p className="text-white text-xs font-bold leading-snug">
-              You're not near this signal.
-            </p>
-            <p className="text-white/50 text-[11px] mt-0.5 leading-snug">
-              Map's around the destination. Plan when nearby.
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* ETA row — terse, cluster-style. No density label, no ranking copy
-          (D14 §4.5). The constellation does the talking. Suppressed when
-          origin is far — distance / duration aren't meaningful information
-          when the user isn't moving toward the destination tonight. */}
-      {!originIsFar && (
-        <div className="px-4 pt-3 pb-4 flex items-center gap-3">
-          {duration && (
-            <div className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-white/40" />
-              <span className="text-sm font-bold text-white">{duration}</span>
+      {/* TRANSIT — fallback only when TfL returned no journey. Otherwise the
+          real step list above renders the tube/bus route in-app. */}
+      {isTransitMode && !directions?.steps?.length && !isLoading && (
+        <div className="px-4 pb-6 mt-1">
+          <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4 flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <Train className="w-4 h-4" style={{ color: '#E84040' }} />
+              <p className="text-sm font-black text-white">Tube &amp; Bus</p>
             </div>
-          )}
-          {distance && (
-            <span className="text-white/40 text-xs tabular-nums">{distance}</span>
-          )}
+            <p className="text-xs text-white/45 leading-relaxed">
+              No live transit route right now. Try Citymapper or the TfL Journey Planner for tube, bus, and rail.
+            </p>
+            <button
+              onClick={() => {
+                const params = new URLSearchParams({
+                  endcoord: `${destination.lat},${destination.lng}`,
+                  endname: destinationName || 'Destination',
+                });
+                if (origin && !originIsFar) params.set('startcoord', `${origin.lat},${origin.lng}`);
+                window.open(`https://citymapper.com/directions?${params}`, '_blank');
+              }}
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-[#E84040]/10 border border-[#E84040]/25 text-[#E84040] text-sm font-black active:scale-95 transition-transform"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Open Citymapper
+            </button>
+            <button
+              onClick={() => {
+                const dest = destinationName ? encodeURIComponent(destinationName) : `${destination.lat},${destination.lng}`;
+                window.open(`https://tfl.gov.uk/plan-a-journey/results?to=${dest}`, '_blank');
+              }}
+              className="flex items-center justify-center gap-2 w-full py-2 rounded-xl border border-white/10 text-white/40 text-xs font-bold active:scale-95 transition-transform"
+            >
+              <ExternalLink className="w-3 h-3" />
+              TfL Journey Planner
+            </button>
+          </div>
         </div>
       )}
-      {/* Far-origin spacer so the sheet doesn't slam into the map's bottom edge. */}
-      {originIsFar && <div className="h-4" />}
+      {/* Far-origin or no steps: spacer. Excluded for transit (has its own card). */}
+      {!directions?.steps?.length && mode !== 'transit' && <div className="h-4" />}
     </div>
   );
 }
@@ -707,7 +805,7 @@ export function DirectionsButton({
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 40, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg bg-black border-t border-[#C8962C]/40 sm:border sm:rounded-2xl overflow-hidden"
+              className="w-full max-w-lg bg-black border-t border-[#C8962C]/40 sm:border sm:rounded-2xl overflow-hidden max-h-[90vh] flex flex-col"
             >
               {/* Drag handle — visual cue that backdrop tap dismisses; matches
                   L2SheetContainer's top handle so the standalone modal feels

@@ -55,6 +55,7 @@ export function buildAckUrl(deliveryId, userId, baseUrl) {
   const tok = signAckToken(deliveryId, userId);
   if (!tok) return null;
   const root = baseUrl
+    || process.env.VITE_APP_URL
     || process.env.PUBLIC_URL
     || process.env.NEXT_PUBLIC_SITE_URL
     || 'https://hotmessldn.com';

@@ -116,11 +116,17 @@ export default function SellerDashboard() {
     queryKey: ['seller-payouts', currentUser?.id],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase.from('seller_payouts').select('*')
+        const { data, error } = await supabase.from('payouts').select('*')
           .eq('seller_id', currentUser.id)
           .order('created_at', { ascending: false });
         if (error) return [];
-        return data || [];
+        return (data || []).map((p) => ({
+          ...p,
+          amount_gbp: p.net_pence != null ? p.net_pence / 100 : Number(p.amount) || 0,
+          arrival_date: p.paid_at,
+          stripe_payout_id: p.stripe_transfer_id,
+          order_ids: [],
+        }));
       } catch {
         return [];
       }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
+import { deriveUsernameSlug } from '@/lib/utils';
 import { toast } from 'sonner';
 import { track, trackOnce } from '@/lib/analytics';
 
@@ -36,11 +37,15 @@ export default function PinSetupScreen({ onNext, onSkip }) {
     try {
       const hash = await hashPin(pin);
       const { data: { user } } = await supabase.auth.getUser();
+      const { data: idp } = await supabase.from('profiles').select('username, display_name').eq('id', user.id).maybeSingle();
+      const ensureName = (!(idp?.username || '').trim() && !(idp?.display_name || '').trim())
+        ? { username: deriveUsernameSlug({ username: idp?.username, displayName: idp?.display_name }) } : {};
       await supabase.from('profiles').update({
         pin_code_hash: hash,
         onboarding_stage: 'complete',
         onboarding_completed: true,
         onboarding_completed_at: new Date().toISOString(),
+        ...ensureName,
         updated_at: new Date().toISOString(),
       }).eq('id', user.id);
       // Set localStorage flags for BootGuard fallback
@@ -58,10 +63,14 @@ export default function PinSetupScreen({ onNext, onSkip }) {
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      const { data: idp } = await supabase.from('profiles').select('username, display_name').eq('id', user.id).maybeSingle();
+      const ensureName = (!(idp?.username || '').trim() && !(idp?.display_name || '').trim())
+        ? { username: deriveUsernameSlug({ username: idp?.username, displayName: idp?.display_name }) } : {};
       await supabase.from('profiles').update({
         onboarding_stage: 'complete',
         onboarding_completed: true,
         onboarding_completed_at: new Date().toISOString(),
+        ...ensureName,
         updated_at: new Date().toISOString(),
       }).eq('id', user.id);
       try {

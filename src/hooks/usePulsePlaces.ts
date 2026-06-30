@@ -32,6 +32,7 @@ export interface PulsePlace {
   // Polygon + intelligence (cruising_area rows only).
   boundary_geojson: Record<string, unknown> | null;
   area_metadata: Record<string, unknown> | null;
+  image_url: string | null;
 }
 
 /**
@@ -45,7 +46,7 @@ export function usePulsePlaces() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pulse_places')
-        .select('id, slug, name, type, country, lat, lng, priority, parent_slug, is_active, notes, tier, event_active, subscription_status, beacon_category, address, opening_hours, website, phone, globe_render_status, boundary_geojson, area_metadata')
+        .select('id, slug, name, type, country, lat, lng, priority, parent_slug, is_active, notes, tier, event_active, subscription_status, beacon_category, address, opening_hours, website, phone, globe_render_status, boundary_geojson, area_metadata, image_url')
         .eq('is_active', true)
         .neq('globe_render_status', 'suppress')
         .order('priority', { ascending: false });

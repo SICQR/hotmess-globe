@@ -1,5 +1,5 @@
 /**
- * ShopEngine — Shopify + Internal Products
+ * ShopEngine â Shopify + Internal Products
  */
 
 import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
@@ -45,7 +45,7 @@ function ShopProductCard({ product, index, onTap }: ShopProductCardProps) {
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
 
-  const symbol = product.currency === 'GBP' ? '£' : '$';
+  const symbol = product.currency === 'GBP' ? 'Â£' : '$';
 
   const gridItemVariants = {
     hidden: { opacity: 0, scale: 0.95 },
@@ -171,13 +171,13 @@ export function ShopEngine({ search, className = '' }: { search: string; classNa
         overscrollBehaviorY: 'contain',
       }}
     >
-      {/* HNH MESS hero — Phil 2026-05-31: lives INSIDE the scroll container
+      {/* HNH MESS hero â Phil 2026-05-31: lives INSIDE the scroll container
           so it scrolls with the products. Natural 16:9 ratio. Image is the
           designed comp (headline + wordmark baked in); object-cover at
           16:9 keeps the design intact. */}
       <ShopMarketHero />
 
-      {/* HNH MESS promo card — dismissible, 7-day cooldown, MESS20 code (Phil 2026-06-21) */}
+      {/* HNH MESS promo card â dismissible, 7-day cooldown, MESS20 code (Phil 2026-06-21) */}
       <HnhMessPromoCard />
 
       {isLoading && (
@@ -244,7 +244,7 @@ export function ShopEngine({ search, className = '' }: { search: string; classNa
 }
 
 /**
- * ShopMarketHero — inline HNH MESS hero shipped Phil 2026-05-31.
+ * ShopMarketHero â inline HNH MESS hero shipped Phil 2026-05-31.
  *
  * Renders the designed HNH BOYS HAVE FUN comp at full 16:9 aspect inside
  * ShopEngine's scroll container. Scrolls with the products. Image is the
@@ -252,8 +252,8 @@ export function ShopEngine({ search, className = '' }: { search: string; classNa
  * 16:9 keeps the entire design visible.
  *
  * `aspectRatio: '16 / 9'` is the natural ratio of the source image
- * (2600x1451 ≈ 1.79). Lives inside an `overflow-y-auto` scroll container
- * so the parent-width aspect-ratio bug from the prior fix can't recur —
+ * (2600x1451 â 1.79). Lives inside an `overflow-y-auto` scroll container
+ * so the parent-width aspect-ratio bug from the prior fix can't recur â
  * the scroll container governs the layout, not a flex column.
  */
 function ShopMarketHero() {

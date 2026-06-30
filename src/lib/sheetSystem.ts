@@ -641,6 +641,7 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: false,
     deepLinkParams: ['city'],
   },
+
   'vendor-event': {
     id: 'vendor-event',
     title: 'Manage Event',
