@@ -1,0 +1,139 @@
+{
+  "meta": {
+    "phase": 1,
+    "scope": "database-safety-and-integrity",
+    "project": "rfoftonnlwudilafhfkl",
+    "repo_commit": "c810c88",
+    "pulled": "2026-06-30",
+    "mode": "read-only",
+    "census": {
+      "tables": 215, "views": 34, "functions": 959, "rls_policies": 409,
+      "rls_enabled_tables": 214, "rls_no_policy_tables": 35, "rls_off_tables": 1,
+      "applied_migrations": 323, "tracked_migrations": 21,
+      "secdef_functions": 136, "secdef_anon_exec": 126, "secdef_no_search_path": 51,
+      "secdef_views": 0, "non_system_schemas": 14
+    }
+  },
+  "findings": [
+    {
+      "id": "DB-01", "surface": "C-presence-proximity", "severity": "CRITICAL",
+      "title": "Trilateration via nearby_candidates_secure",
+      "doctrine_refs": ["sacred-invariants#2", "sacred-invariants#3", "48-spatial-identity-exposure"],
+      "code_refs": ["api/nearby.js", "api/presence/update.js"],
+      "db_objects": ["public.nearby_candidates_secure", "public.user_presence_locations"],
+      "evidence": {
+        "doctrine": "no exact tracking invariant",
+        "code": "returns ROUND(lat,3) but distance from raw coords",
+        "db": "pg_get_functiondef: distance_meters = CAST(st_distance(viewer, raw) AS integer); anon EXECUTE granted"
+      },
+      "risk": "Exact location of any consenting user recoverable by anon attacker via banded distance over fuzzed coords",
+      "fix": "Band distance to >=100m + 50m floor, compute from fuzzed point; optional REVOKE anon EXECUTE",
+      "draft": "audit-synthesis/enforcement-drafts/DB-01_fix_trilateration.sql"
+    },
+    {
+      "id": "DB-02", "surface": "F-onboarding-agegate", "severity": "CRITICAL",
+      "title": "Age-verified profiles with NULL method, no enforcing constraint",
+      "doctrine_refs": ["09-onboarding-truth", "OSA-legal-duty"],
+      "code_refs": ["api/auth/*", "src/components/onboarding/screens/AgeGateScreen.jsx"],
+      "db_objects": ["public.profiles.age_verified_at", "public.profiles.age_verification_method"],
+      "evidence": {
+        "doctrine": "age gate must be provable",
+        "code": "age gate sets verified flag",
+        "db": "77 rows age_verified_at NOT NULL & method NULL of 228 verified / 306 total; 0 CHECK constraints"
+      },
+      "risk": "UK Online Safety Act exposure: unprovable age verification for 77 users",
+      "fix": "Triage 77 rows (backfill method or null flag); ADD CHECK age_verified_requires_method",
+      "draft": "audit-synthesis/enforcement-drafts/DB-02_age_verification_osa.sql"
+    },
+    {
+      "id": "DB-03", "surface": "multiple", "severity": "HIGH",
+      "title": "35 RLS-enabled/zero-policy tables protected by flag over open grants",
+      "doctrine_refs": ["sacred-invariants", "trust-system-spec"],
+      "code_refs": ["service-role API paths"],
+      "db_objects": ["product_orders", "marketing_cron_auth", "reentry_tokens", "cohort_locks", "globe_ad_bookings", "radio_ad_bookings", "+29 more"],
+      "evidence": {
+        "doctrine": "default-deny",
+        "code": "tables written via SECDEF/service-role only",
+        "db": "35 tables RLS-on, 0 policies, all carry GRANT ALL to anon+authenticated; product_orders=27 rows, reentry_tokens=68, marketing_cron_auth holds cron secret"
+      },
+      "risk": "One ALTER..DISABLE RLS or one SECDEF reader from exposing revenue, cron secret, auth tokens",
+      "fix": "REVOKE grants on secret/auth/log tables; add owner-scoped SELECT policies on revenue tables; decide read-policy on config/doc tables",
+      "draft": "audit-synthesis/policy-drafts/DB-03_rls_no_policy_resolution.sql"
+    },
+    {
+      "id": "DB-04", "surface": "infrastructure", "severity": "HIGH",
+      "title": "Migration drift 21 tracked vs 323 applied; schema not reconstructable",
+      "doctrine_refs": ["developer-rules-checklist", "infrastructure-constraints-memo"],
+      "code_refs": ["supabase/migrations/"],
+      "db_objects": ["supabase_migrations.schema_migrations"],
+      "evidence": {
+        "doctrine": "migrations are source of truth",
+        "code": "21 files, earliest 20260420000000_baseline_schema",
+        "db": "323 applied, earliest 20260222060750, latest 20260630173917; ~302 untracked; repo 20260617000000_seed_radio_shows not applied"
+      },
+      "risk": "No recoverable schema source of truth; presence/safety RLS lives only in prod",
+      "fix": "Commit baseline schema+RLS dump; add CI db diff gate; adopt production-is-truth doctrine",
+      "draft": "audit-synthesis/enforcement-drafts/DB-04_DB-05_drift_and_search_path.sql"
+    },
+    {
+      "id": "DB-05", "surface": "infrastructure", "severity": "HIGH",
+      "title": "51 SECURITY DEFINER functions with no pinned search_path; 126 anon-executable",
+      "doctrine_refs": ["trust-system-spec", "sacred-invariants"],
+      "code_refs": ["RPC call sites"],
+      "db_objects": ["136 SECDEF functions"],
+      "evidence": {"doctrine": "least privilege", "code": "RPCs invoked from client", "db": "51 prosecdef with proconfig IS NULL; 126 anon EXECUTE"},
+      "risk": "search_path injection / privilege escalation through SECDEF boundary",
+      "fix": "SET search_path on all 51; prune anon EXECUTE where session required",
+      "draft": "audit-synthesis/enforcement-drafts/DB-04_DB-05_drift_and_search_path.sql"
+    },
+    {
+      "id": "DB-06", "surface": "S-venue-operator", "severity": "MEDIUM",
+      "title": "partner schema referenced by D31 does not exist",
+      "doctrine_refs": ["31-venue-partner-power"],
+      "code_refs": ["api/operator/*"],
+      "db_objects": ["(missing) partner schema"],
+      "evidence": {"doctrine": "D31 asserts partner schema isolation", "code": "venue/operator paths", "db": "14 non-system schemas; no partner; only bespoke is atmosphere(1)"},
+      "risk": "Doctrine asserts an isolation boundary that is not built",
+      "fix": "Build partner schema isolation OR amend D31 to match reality (Phase 2 doctrine draft)",
+      "draft": "phase2"
+    },
+    {
+      "id": "DB-07", "surface": "H-payments / I-marketplace", "severity": "MEDIUM",
+      "title": "product_orders buyers cannot read their own orders",
+      "doctrine_refs": ["21-payment-payout", "19-marketplace"],
+      "code_refs": ["order history UI", "api/stripe/*"],
+      "db_objects": ["public.product_orders"],
+      "evidence": {"doctrine": "buyer sees own purchases", "code": "create_unified_order SECDEF writes", "db": "27 rows, RLS-on, 0 policies => buyer SELECT blocked via PostgREST"},
+      "risk": "Either intended server-only design or broken order history; undocumented",
+      "fix": "Add buyer SELECT policy or document service-only",
+      "draft": "audit-synthesis/policy-drafts/DB-03_rls_no_policy_resolution.sql"
+    },
+    {
+      "id": "DB-C1", "surface": "B-beacons / M-signal", "severity": "OK",
+      "title": "Signals expire on cron (invariant #5 conformant)",
+      "doctrine_refs": ["sacred-invariants#5", "22-temporal"],
+      "code_refs": ["vercel.json crons"],
+      "db_objects": ["expire_stale_signals", "expire_presence_and_beacons", "cron.job"],
+      "evidence": {"doctrine": "signals always expire", "code": "cron schedules", "db": "expire-person-signals */5min active; 9 expiry crons live"},
+      "risk": "none", "fix": "none", "draft": null
+    },
+    {
+      "id": "DB-C2", "surface": "C-presence-proximity", "severity": "OK",
+      "title": "user_presence_locations RLS owner-scoped (probe-proven) but untracked",
+      "doctrine_refs": ["sacred-invariants#2", "sacred-invariants#3"],
+      "code_refs": ["api/presence/update.js"],
+      "db_objects": ["public.user_presence_locations policies"],
+      "evidence": {"doctrine": "no exact tracking", "code": "presence writes own row", "db": "JWT-scoped probe: user B reads user A => 0 rows, 0 coords; 4 owner-scoped policies"},
+      "risk": "policy exists only in prod (see DB-04)", "fix": "track in baseline migration", "draft": "DB-04"
+    },
+    {
+      "id": "DB-C3", "surface": "G-membership / H-payments", "severity": "OK",
+      "title": "Tier pricing consistent; all paid tiers have Stripe price IDs",
+      "doctrine_refs": ["02-membership-entitlement-matrix", "21-payment-payout"],
+      "code_refs": ["api/stripe/*"],
+      "db_objects": ["membership_tiers", "membership_annual_pricing"],
+      "evidence": {"doctrine": "venue 99.99 promoter 44.99", "code": "stripe checkout", "db": "both tables agree; 4 paid tiers non-null stripe_monthly+annual price IDs"},
+      "risk": "two-surface UI lock unverified (Phase 2)", "fix": "Phase 2 UI check", "draft": null
+    }
+  ]
+}
