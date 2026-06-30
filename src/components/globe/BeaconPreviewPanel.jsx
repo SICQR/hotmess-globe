@@ -43,16 +43,16 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull, onView
           if (offset.y > 100 || velocity.y > 500) onClose();
         }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="fixed left-2 right-2 z-[200] bg-[#0A0A0A]/95 backdrop-blur-md border border-white/10 rounded-2xl px-4 pt-3 pb-3 shadow-[0_-12px_30px_rgba(0,0,0,0.6)] touch-none"
+        className="fixed left-0 right-0 z-[200] bg-[#0A0A0A]/95 backdrop-blur-md border-t border-white/10 rounded-t-2xl px-4 pt-3 pb-3 shadow-[0_-12px_30px_rgba(0,0,0,0.6)] touch-none"
         style={{
           height: 'auto',
-          maxHeight: '38vh',
+          maxHeight: '70dvh',
           overflowY: 'auto',
           // 2026-05-27 Phil — lift above the FAB cluster (z-150) + rail (z-30) +
           // beacon-drop button (z-40) + bottom nav. Was full-width sheet covering
           // everything. Now a floating card that sits just above the FAB zone so
           // the user can still see online indicator, drop beacons, use the rail.
-          bottom: 'calc(168px + env(safe-area-inset-bottom, 0px))',
+          bottom: 'calc(var(--mobile-nav-height, 72px) + env(safe-area-inset-bottom, 0px))',
           maxWidth: 'min(420px, calc(100vw - 16px))',
           marginLeft: 'auto',
           marginRight: 'auto',
@@ -107,7 +107,7 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull, onView
         </div>
 
         {/* Content */}
-        <div className="space-y-6 overflow-y-auto max-h-[60vh] pointer-events-auto pb-12">
+        <div className="space-y-6 overflow-y-auto max-h-[60dvh] pointer-events-auto pb-12">
           {(beacon.description || beacon.metadata?.description) && (
             <div className="bg-white/5 border border-white/5 rounded-2xl p-4">
               <p className="text-white/70 text-sm leading-relaxed font-medium">

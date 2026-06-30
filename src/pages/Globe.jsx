@@ -861,7 +861,7 @@ export default function GlobePage({ embedded = false }) {
         )}
         {/* PulseVenueDrawer — browseable venue+event list above the nav */}
         <PulseVenueDrawer
-          navHeight={56}
+          navHeight={72}
           places={Array.isArray(pulsePlaces) ? pulsePlaces : []}
           eventBeacons={[
             // Curated events from pulse_events (OutOut ingest + manual seeds)

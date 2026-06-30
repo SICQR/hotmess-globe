@@ -15,8 +15,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  Users, Download, Plus, Pencil, CheckCircle, XCircle,
-  Clock, RefreshCw, Search, ChevronRight, X, AlertTriangle,
+  Download, Pencil,
+  Search, X,
   UserPlus, Loader2, ToggleLeft, ToggleRight,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';

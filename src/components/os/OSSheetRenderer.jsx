@@ -23,7 +23,7 @@ export function OSSheetRenderer() {
       onClick={closeSheet}
     >
       <div 
-        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto"
+        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 max-h-[80dvh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Sheet Header */}

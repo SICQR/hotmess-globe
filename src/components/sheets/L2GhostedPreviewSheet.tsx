@@ -473,7 +473,7 @@ export default function L2GhostedPreviewSheet({ uid }: { uid?: string }) {
       />
 
       {/* Hero photo */}
-      <div className="relative w-full aspect-[4/5] max-h-[55vh] flex-shrink-0 bg-[#1C1C1E] md:max-h-none md:w-[400px] md:h-full md:aspect-auto">
+      <div className="relative w-full aspect-[4/5] max-h-[55dvh] flex-shrink-0 bg-[#1C1C1E] md:max-h-none md:w-[400px] md:h-full md:aspect-auto">
         {heroUrl ? (
           <img src={heroUrl} alt="" className="w-full h-full object-cover object-center" />
         ) : (
