@@ -674,6 +674,14 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: true,
     deepLinkParams: [],
   },
+  'cruising_area': {
+    id: 'cruising_area',
+    title: 'Cruising Area',
+    height: 'large',
+    peekFraction: 0.88,
+    auth: false,
+    deepLinkParams: [],
+  },
   'city-picker': {
     id: 'city-picker',
     title: 'City',

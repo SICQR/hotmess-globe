@@ -80,7 +80,7 @@ function resolveEditorialCity(lat, lng, zoom) {
   return best && bestD <= LOCAL_FOCUS_MAX_DEG ? best : null;
 }
 
-export default function PulseMap({ beacons = [], ltgoSignals = [], userLocation, onBeaconClick, onMapApi, onReady, onLocalFocus }) {
+export default function PulseMap({ beacons = [], ltgoSignals = [], userLocation, onBeaconClick, onMapApi, onReady, onLocalFocus, cruisingAreas = [] }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   // Latest props via refs so the create-once effect never needs to re-run.
@@ -102,6 +102,14 @@ export default function PulseMap({ beacons = [], ltgoSignals = [], userLocation,
   onReadyRef.current = onReady;
   const onLocalFocusRef = useRef(onLocalFocus);
   onLocalFocusRef.current = onLocalFocus;
+  // Cruising area polygon layer refs.
+  const cruisingAreasRef = useRef(cruisingAreas);
+  cruisingAreasRef.current = cruisingAreas;
+  // Callback ref set by the style.load handler; called by the polling effect.
+  const updateCruisingOpacityRef = useRef(null);
+  // Ref to installCruisingLayers fn — so the data-arrival effect below can
+  // re-call it once cruisingAreas loads from Supabase after map init.
+  const installCruisingLayersRef = useRef(null);
 
   // ─── D43 Slice A · PR 3 — in-world cluster preview state ──────────────────
   // The React-state-driven chip replaces the previous Mapbox-native popup.
@@ -366,6 +374,111 @@ export default function PulseMap({ beacons = [], ltgoSignals = [], userLocation,
             }
           };
           installBeaconStack('style.load');
+
+          // ── Cruising area polygon layers ──────────────────────────────────
+          // type='cruising_area' rows carry boundary_geojson (Polygon) and
+          // area_metadata. Rendered as fill+stroke — not teardrops — per the
+          // Globe Polygon Render Spec (Brief 1). Stacked BELOW venue markers
+          // so pins on the polygon edge remain the tap target.
+          // fill-opacity driven by place_live_state() → busy_score; the
+          // updateCruisingOpacityRef callback is wired by the polling effect.
+          const installCruisingLayers = () => {
+            const areas = cruisingAreasRef.current;
+            if (!areas || !areas.length) return;
+            try {
+              const makeGeojson = (liveMap) => ({
+                type: 'FeatureCollection',
+                features: areas.map(place => {
+                  const state = liveMap && liveMap.get(place.id);
+                  const busyOpacity = (state && !state.below_floor && state.state === 'busy') ? 0.42 : 0.22;
+                  return {
+                    type: 'Feature',
+                    geometry: place.boundary_geojson,
+                    properties: {
+                      id:            String(place.id),
+                      slug:          place.slug,
+                      name:          place.name,
+                      area_metadata: JSON.stringify(place.area_metadata || {}),
+                      busy_opacity:  busyOpacity,
+                    },
+                  };
+                }),
+              });
+              if (!map.getSource('hm-cruising-areas')) {
+                map.addSource('hm-cruising-areas', { type: 'geojson', data: makeGeojson(null) });
+              }
+              if (!map.getLayer('hm-cruising-fill')) {
+                map.addLayer({
+                  id:     'hm-cruising-fill',
+                  type:   'fill',
+                  source: 'hm-cruising-areas',
+                  minzoom: 10,
+                  paint: {
+                    'fill-color':   '#7B2D8B',
+                    'fill-opacity': ['coalesce', ['get', 'busy_opacity'], 0.22],
+                  },
+                }, LAYER_IDS.venueClusterCircles); // below venue markers
+              }
+              if (!map.getLayer('hm-cruising-stroke')) {
+                map.addLayer({
+                  id:     'hm-cruising-stroke',
+                  type:   'line',
+                  source: 'hm-cruising-areas',
+                  minzoom: 10,
+                  paint: {
+                    'line-color':   '#7B2D8B',
+                    'line-width':   1.8,
+                    'line-opacity': 0.75,
+                  },
+                }, LAYER_IDS.venueClusterCircles);
+              }
+              // Click → onBeaconClick with entity_kind='cruising_area'
+              if (!map.__hmCruisingClickBound) {
+                map.__hmCruisingClickBound = true;
+                map.on('click', 'hm-cruising-fill', (e) => {
+                  try {
+                    const props = e.features && e.features[0] && e.features[0].properties;
+                    if (!props) return;
+                    const meta = typeof props.area_metadata === 'string'
+                      ? JSON.parse(props.area_metadata)
+                      : (props.area_metadata || {});
+                    if (onBeaconClickRef.current) {
+                      onBeaconClickRef.current({
+                        id:            props.id,
+                        slug:          props.slug,
+                        name:          props.name,
+                        title:         props.name,
+                        type:          'cruising_area',
+                        entity_kind:   'cruising_area',
+                        beacon_category: 'cruising',
+                        area_metadata: meta,
+                        lat:           e.lngLat.lat,
+                        lng:           e.lngLat.lng,
+                      });
+                    }
+                  } catch (er) { /* non-fatal */ }
+                });
+                map.on('mouseenter', 'hm-cruising-fill', () => {
+                  try { map.getCanvas().style.cursor = 'pointer'; } catch (_) {}
+                });
+                map.on('mouseleave', 'hm-cruising-fill', () => {
+                  try { map.getCanvas().style.cursor = ''; } catch (_) {}
+                });
+              }
+              // Register the opacity-update callback so the polling effect
+              // can push fresh live-state values into the source.
+              updateCruisingOpacityRef.current = (liveMap) => {
+                try {
+                  const src = map.getSource('hm-cruising-areas');
+                  if (src && src.setData) src.setData(makeGeojson(liveMap));
+                } catch (_) {}
+              };
+            } catch (e) {
+              console.warn('[PulseMap] cruising layer install error:', e && e.message || e);
+            }
+          };
+          installCruisingLayersRef.current = installCruisingLayers;
+          installCruisingLayers();
 
           // D49 §9 (cascading from D43) — signal cluster tap = zoom in.
           // The atmospheric chip on hover/long-press is the preview surface;
@@ -916,6 +1029,48 @@ export default function PulseMap({ beacons = [], ltgoSignals = [], userLocation,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ── Cruising area live-state polling ──────────────────────────────────────
+  // Calls place_live_state() for each cruising area every 2 min.
+  // Below-floor results (< 3 active marks) render at base opacity (quiet).
+  // Above-floor busy areas brighten to 0.42 fill-opacity.
+  useEffect(() => {
+    if (status !== 'ready' || !cruisingAreas.length) return;
+
+    const poll = async () => {
+      try {
+        const results = await Promise.all(
+          cruisingAreas.map(async (place) => {
+            const { data } = await supabase
+              .rpc('place_live_state', { p_place_id: place.id })
+              .single();
+            return [place.id, data];
+          })
+        );
+        const liveMap = new Map(results.filter(([, d]) => d != null));
+        if (updateCruisingOpacityRef.current) {
+          updateCruisingOpacityRef.current(liveMap);
+        }
+      } catch (e) {
+        // Non-fatal — base opacity stays; no user-visible error.
+        console.warn('[PulseMap] cruising live-state poll error:', e && e.message || e);
+      }
+    };
+
+    poll(); // immediate first fetch
+    const interval = setInterval(poll, 2 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [status, cruisingAreas]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-install cruising polygon layers when cruisingAreas data arrives after
+  // map init. installCruisingLayers() fires on style.load but Supabase data
+  // is not ready yet at that point — cruisingAreasRef.current is [] so the
+  // function exits early. This effect re-calls it once data is available.
+  useEffect(() => {
+    if (status !== 'ready' || !cruisingAreas.length) return;
+    if (!installCruisingLayersRef.current) return;
+    installCruisingLayersRef.current();
+  }, [status, cruisingAreas]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Feed fresh beacon data in place — never recreate the map.
   useEffect(() => {
