@@ -15,7 +15,10 @@
 -- BANDS (Phil sign-off): <500m | 500m–1km | 1–2km | 2–5km | 5km+
 -- ============================================================================
 
-CREATE OR REPLACE FUNCTION public.nearby_candidates_secure(
+-- DROP first: adding distance_band changes the return type, which CREATE OR REPLACE
+-- cannot do (verified live: "cannot change return type of existing function").
+DROP FUNCTION IF EXISTS public.nearby_candidates_secure(double precision,double precision,integer,integer,uuid,integer);
+CREATE FUNCTION public.nearby_candidates_secure(
   p_viewer_lat double precision, p_viewer_lng double precision,
   p_radius_m integer, p_limit integer, p_exclude_user_id uuid,
   p_max_age_seconds integer DEFAULT 900)
@@ -78,6 +81,9 @@ AS $function$
   ORDER BY m.d ASC          -- order by true distance, expose only the band
   LIMIT p_limit;
 $function$;
+
+-- DROP removed the prior grants; restore EXECUTE to the same roles as before.
+GRANT EXECUTE ON FUNCTION public.nearby_candidates_secure(double precision,double precision,integer,integer,uuid,integer) TO anon, authenticated, service_role;
 
 -- NOTE FOR FRONTEND (DB-01 UI work, separate task): Nearby cards must render
 -- `distance_band` (e.g. "<500m"), not the raw "320m". distance_meters is now a

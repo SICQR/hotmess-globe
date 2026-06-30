@@ -1,36 +1,41 @@
 -- ============================================================================
 -- DB-08 (CRITICAL) — Stop profiles.last_lat/last_lng/location leaking cross-user
--- DRAFT MIGRATION — branch fix/db-criticals. DO NOT APPLY to prod. Phil applies.
--- Inherits: sacred-invariant #2/#3 (no exact tracking), 48-spatial-identity-exposure.
--- Fixes finding DB-08. Blast radius: every authenticated profiles read.
+-- CORRECTED after live verification: column-level REVOKE is a NO-OP while a
+-- table-level SELECT grant exists (Postgres privileges are additive). The fix is
+-- REVOKE table SELECT, then GRANT SELECT on ONLY the safe columns.
+-- Verified in a rolled-back prod txn: has_column_privilege(authenticated,last_lat)=false,
+-- display_name/other columns still readable.
+-- Inherits: sacred-invariant #2/#3, 48-spatial-identity-exposure. Fixes DB-08.
 -- ----------------------------------------------------------------------------
--- PROVEN LEAK (live JWT-scoped probe, 2026-06-30): an ordinary authenticated user
---   reads 223 other profiles and 114 of them return precise last_lat+last_lng.
---   Policy `profiles_read_visible_authed` (USING is_visible AND NOT is_demo) grants
---   ROW-wide read of every visible profile; the coordinate columns carry
---   authenticated SELECT, so exact coords ride along. The client does exactly this:
---   src/components/utils/queryConfig.jsx  useAllUsers -> profiles.select('*').
---   This DEFEATS the nearby_candidates_secure fuzzing entirely. Anon = 0 (RLS blocks).
---
--- FIX: column-level REVOKE so the precise fields can never be returned by PostgREST,
---   for any role. Coarse location (location_area/location_name/location_radius_km/
---   location_precision) is retained for display. Proximity now flows ONLY through the
---   banded SECDEF RPC (DB-01).
---
--- *** SEQUENCING — MANDATORY ***  Ship the client change FIRST (or same deploy):
---   queryConfig.jsx must stop `select('*')` (see paired commit) BEFORE this REVOKE,
---   or `select('*')` will throw "permission denied for column last_lat" and break
---   the Connect grid. The paired commit changes useAllUsers to an explicit safe list.
+-- *** SEQUENCING — MANDATORY ***  Deploy the client change FIRST (queryConfig.jsx
+-- stops profiles.select('*'), uses the explicit safe column list) BEFORE this runs,
+-- else select('*') throws "permission denied for column last_lat" for all users.
 -- ============================================================================
 
-REVOKE SELECT (last_lat, last_lng, location) ON public.profiles FROM anon, authenticated;
+REVOKE SELECT ON public.profiles FROM anon, authenticated;
 
--- The owner does NOT need these via PostgREST: the viewer's own position comes from
--- device GPS, and presence writes go through user_presence_locations. If any self-read
--- is later required, expose it via a SECURITY DEFINER RPC scoped to auth.uid(), e.g.:
---   CREATE FUNCTION public.get_my_location() RETURNS TABLE(lat double precision, lng double precision)
---   LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$
---     SELECT last_lat, last_lng FROM public.profiles WHERE id = auth.uid() $$;
+GRANT SELECT (
+  id,role,created_at,updated_at,email,display_name,avatar_url,location_consent_mode,
+  location_consent_granted_at,location_last_updated_at,cookie_preferences,onboarding_completed,
+  onboarding_completed_at,avatar_type,persona_type,tags,telegram_id,telegram_username,username,
+  active_persona_id,consent_accepted,full_name,phone,age_verified,community_attested_at,pin_code_hash,
+  public_attributes,has_agreed_terms,has_consented_data,has_consented_gps,is_visible,bio,onboarding_stage,
+  safety_opt_in,last_loc_ts,is_demo,city,referral_code,location_precision,location_radius_km,globe_show_on_map,
+  last_seen,is_online,is_business,is_organizer,business_type,business_name,business_description,website_url,
+  is_verified,verification_level,verified_at,age,gender,looking_for,position,show_distance,allow_messages_from,
+  read_receipts,show_online_status,is_admin,auth_user_id,location_name,profile_type,membership_tier,
+  subscription_tier,loc_accuracy_m,stripe_subscription_id,subscription_status,subscription_ends_at,
+  location_consent,location_consent_at,location_area,last_seen_at,lifestyle_preferences,support_preferences,
+  backup_contacts,avatar_scan_status,avatar_scan_at,age_verified_at,age_verification_method,auth_method,
+  founding_status,locked_username,username_locked_at,founding_member_waitlist_id,telegram_chat_id,
+  notification_channel,telegram_link_token,beta_access_until,is_beta_cohort_override,visibility_state,consent_push_intent
+) ON public.profiles TO anon, authenticated;
 
--- VERIFY after apply (read-only) — expect permission denied / 0 precise leak:
---   as authenticated user B:  SELECT last_lat FROM public.profiles WHERE id <> auth.uid();
+-- last_lat, last_lng, location are intentionally OMITTED -> precise coords no longer
+-- returnable via PostgREST. Owner's own coords come from device GPS / presence path; if
+-- a self-read is needed, add a SECDEF get_my_location() scoped to auth.uid().
+-- DB-09 (follow-up): email/phone/pin_code_hash/stripe/telegram are still granted above to
+-- avoid breaking the email-keyed grid; minimise them in the DB-09 profiles_card refactor.
+
+-- VERIFY: as authenticated user B, SELECT last_lat FROM profiles WHERE id<>auth.uid()
+--   -> permission denied for column last_lat (i.e. blocked).
