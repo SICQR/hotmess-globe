@@ -138,3 +138,21 @@ isolation boundary is not in production (DB-06). Only bespoke non-public schema 
 | DB-06 partner schema vs D31 | doctrine call | No |
 
 All fixes are **drafted, not applied** (audit-only). Runnable SQL in `docs/audit-synthesis/`.
+
+
+---
+
+## Addendum — DB-08 / DB-09 (added during DB-01 frontend tracing, 2026-06-30)
+
+Revised tally: **3 CRITICAL · 4 HIGH · 2 MEDIUM.** New worst finding:
+
+- **DB-08 (CRITICAL, now the #1 anti-stalking finding):** `profiles.select('*')` from the
+  browser (`useAllUsers`) returns every visible profile row-wide; JWT-scoped probe shows an
+  authenticated user reads 223 profiles, **114 leaking precise `last_lat`+`last_lng`**. This
+  bypasses `nearby_candidates_secure` entirely — banding the RPC (DB-01) is only defense-in-depth.
+  Fix staged on `fix/db-criticals` (column REVOKE + client coords-free select). Anon blocked.
+- **DB-09 (HIGH):** the same `profiles_read_visible_authed` policy also broadcasts
+  `email`/`phone`/`pin_code_hash`/Stripe+Telegram tokens to every authed user. Noted, not fixed
+  (grid uses `email` as a join key → needs a small refactor).
+
+Full writeup: `docs/DB_CONFORMANCE_AUDIT_ADDENDUM_DB08.md`.
