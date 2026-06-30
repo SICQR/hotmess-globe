@@ -58,7 +58,7 @@ export const CATEGORY_COLOR = {
   people: '#39FF14',
   market: '#FFD700',
   radio: '#B026FF',
-  care: '#F4ECD8',  // cream
+  care: '#4FC3C3',  // teal — D5X care_org: civic, quiet, never competing with gold/pink/amber
   other: '#C8962C',
 };
 
@@ -150,6 +150,10 @@ export function categoryOf(b) {
     const hasSchedule = b && (b.event_start_at || b.event_end_at);
     if (/event/.test(all) && !hasVenue && !hasSchedule) return 'editorial';
   }
+  // D5X: pulse_places type='event_brand' routes to 'events' (pink #FF4F9A)
+  // so roaming brands (Hard On, Pxssy Palace, etc.) render pink, not gold.
+  if (field(b, 'type') === 'event_brand') return 'events';
+  if (/event_brand/.test(all)) return 'events';
   if (/recovery|care|sober|na_aa|naaa|aftercare/.test(all)) return 'care';
   if (/event|ticket/.test(all)) return 'events';
   if (/venue/.test(all)) return 'venues';

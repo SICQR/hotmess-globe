@@ -1014,8 +1014,8 @@ export default function PulseMap({ beacons = [], ltgoSignals = [], userLocation,
       const tx = cx - Math.cos(liveAngle) * tailLen;
       const ty = cy - Math.sin(liveAngle) * tailLen;
       const tailGrad = ctx.createLinearGradient(cx, cy, tx, ty);
-      tailGrad.addColorStop(0, `rgba(191,90,242,${0.55 * opacity})`);
-      tailGrad.addColorStop(1, 'rgba(191,90,242,0)');
+      tailGrad.addColorStop(0, `rgba(255,158,44,${0.55 * opacity})`);
+      tailGrad.addColorStop(1, 'rgba(255,158,44,0)');
       ctx.strokeStyle = tailGrad;
       ctx.lineWidth = 7;
       ctx.lineCap = 'round';
@@ -1025,14 +1025,14 @@ export default function PulseMap({ beacons = [], ltgoSignals = [], userLocation,
       ctx.stroke();
       // Head glow
       const headGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 15);
-      headGrad.addColorStop(0, `rgba(191,90,242,${0.45 * opacity})`);
-      headGrad.addColorStop(1, 'rgba(191,90,242,0)');
+      headGrad.addColorStop(0, `rgba(255,158,44,${0.45 * opacity})`);
+      headGrad.addColorStop(1, 'rgba(255,158,44,0)');
       ctx.fillStyle = headGrad;
       ctx.beginPath();
       ctx.arc(cx, cy, 15, 0, Math.PI * 2);
       ctx.fill();
       // Core dot
-      ctx.fillStyle = `rgba(220,160,255,${opacity})`;
+      ctx.fillStyle = `rgba(255,185,80,${opacity})`;
       ctx.beginPath();
       ctx.arc(cx, cy, 4.5, 0, Math.PI * 2);
       ctx.fill();
@@ -1058,8 +1058,8 @@ export default function PulseMap({ beacons = [], ltgoSignals = [], userLocation,
       discEl.style.cssText = [
         `width:${radiusPx * 2}px`, `height:${radiusPx * 2}px`,
         'border-radius:50%',
-        'border:1.5px dashed rgba(191,90,242,0.3)',
-        'background:rgba(191,90,242,0.04)',
+        'border:1.5px dashed rgba(255,158,44,0.35)',
+        'background:rgba(255,158,44,0.05)',
         'pointer-events:none',
       ].join(';');
       try {
