@@ -450,7 +450,19 @@ export default function GlobePage({ embedded = false }) {
       const placeType = String(p.place_type || '').toLowerCase();
       return needles.some(n => cat === n || type === n || kind === n || placeType === n);
     };
+    // D5X — event_brand dormancy gate: only render event_brand places when they
+    // have a future occurrence in pulse_events. 26 of 27 event_brands currently
+    // have no upcoming event and must stay off the map until they do.
+    const eventsRaw = Array.isArray(pulseEvents) ? pulseEvents : [];
+    const nowIso = new Date().toISOString();
+    const activeBrandSlugs = new Set(
+      eventsRaw
+        .filter(e => e.place_slug && e.starts_at > nowIso)
+        .map(e => e.place_slug)
+    );
     const places = placesRaw.filter(p => {
+      // event_brand: only show when a future pulse_event references this place
+      if (p.type === 'event_brand' && !activeBrandSlugs.has(p.slug)) return false;
       if (!activeLayer.venues && placeMatches(p, 'venue', 'signal', 'gym', 'sauna', 'club', 'bar')) return false;
       if (!activeLayer.safety && placeMatches(p, 'safety', 'recovery', 'support', 'harm_reduction')) return false;
       if (!activeLayer.events && placeMatches(p, 'event')) return false;
@@ -459,7 +471,7 @@ export default function GlobePage({ embedded = false }) {
       return true;
     });
     return [...bs, ...places];
-  }, [filteredBeacons, pulsePlaces, activeLayer]);
+  }, [filteredBeacons, pulsePlaces, activeLayer, pulseEvents]);
 
   const handleBeaconClick = useCallback((beacon) => {
     if (!beacon) return;
