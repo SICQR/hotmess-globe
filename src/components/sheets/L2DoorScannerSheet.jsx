@@ -24,7 +24,6 @@ import {
   ScanLine, RefreshCw, Keyboard, ChevronRight,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
-import { toast } from 'sonner';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS

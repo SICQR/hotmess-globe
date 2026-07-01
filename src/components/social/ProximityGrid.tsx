@@ -39,7 +39,7 @@ export function ProximityGrid({
 }: ProximityGridProps) {
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] px-4">
+      <div className="flex flex-col items-center justify-center h-[60dvh] px-4">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
@@ -54,7 +54,7 @@ export function ProximityGrid({
   if (users.length === 0) {
     return (
       <motion.div
-        className="flex flex-col items-center justify-center h-[60vh] px-4"
+        className="flex flex-col items-center justify-center h-[60dvh] px-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}

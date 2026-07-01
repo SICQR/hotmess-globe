@@ -365,7 +365,7 @@ function StemUnlockSheet_DEPRECATED({ release, onClose }) {
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-        className="relative w-full max-h-[85vh] overflow-y-auto rounded-t-3xl bg-[#1C1C1E] px-6 pt-6 pb-10 z-10"
+        className="relative w-full max-h-[85dvh] overflow-y-auto rounded-t-3xl bg-[#1C1C1E] px-6 pt-6 pb-10 z-10"
       >
         {/* Drag handle */}
         <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-6" />

@@ -191,7 +191,7 @@ function CreatorsCartPanel({ currentUser, enabled }) {
         </div>
       ) : (
         <>
-          <div className="space-y-3 max-h-[50vh] overflow-y-auto">
+          <div className="space-y-3 max-h-[50dvh] overflow-y-auto">
             {cartWithProducts.map((item) => {
               const product = item.product;
               const qty = Number(item.quantity) || 0;

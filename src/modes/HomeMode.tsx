@@ -543,7 +543,7 @@ export default function HomeMode({ className = '' }: HomeModeProps) {
           onClick={() => setShowCareExplainer(false)}
         >
           <div
-            className="w-full sm:max-w-md bg-[#0a0a0c] rounded-t-2xl sm:rounded-2xl border-t sm:border border-white/10 max-h-[88vh] overflow-y-auto"
+            className="w-full sm:max-w-md bg-[#0a0a0c] rounded-t-2xl sm:rounded-2xl border-t sm:border border-white/10 max-h-[88dvh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
             style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.5rem)' }}
           >

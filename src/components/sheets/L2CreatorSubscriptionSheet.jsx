@@ -18,7 +18,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Star, Users, CheckCircle, XCircle, Loader2, Crown, TrendingUp, Lock, Clock } from 'lucide-react';
+import { Users, CheckCircle, XCircle, Loader2, Crown, TrendingUp, Lock, Clock } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 

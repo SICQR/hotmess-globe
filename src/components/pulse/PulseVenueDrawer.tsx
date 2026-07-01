@@ -254,7 +254,7 @@ export default function PulseVenueDrawer({ places, eventBeacons, onSelect, navHe
           {/* Filter chips */}
           <div
             className="flex gap-2 px-4 pb-3"
-            style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}
+            style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollSnapType: 'y proximity', scrollPaddingTop: '4px' }}
           >
             {(['tonight', 'weekend', 'all'] as TimeFilter[]).map(f => (
               <button
@@ -294,7 +294,7 @@ export default function PulseVenueDrawer({ places, eventBeacons, onSelect, navHe
           {/* Scrollable list */}
           <div
             className="flex-1 px-4 space-y-0.5"
-            style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
+            style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', scrollSnapType: 'y proximity', scrollPaddingTop: '4px' }}
           >
             {/* Events section */}
             {filteredEvents.length > 0 && (
@@ -363,7 +363,7 @@ export default function PulseVenueDrawer({ places, eventBeacons, onSelect, navHe
 
 function SectionHeader({ icon, label, className = '' }: { icon: React.ReactNode; label: string; className?: string }) {
   return (
-    <div className={`flex items-center gap-2 py-2 ${className}`}>
+    <div className={`sticky top-0 z-[1] flex items-center gap-2 py-2 bg-[#0E0E12]/95 backdrop-blur-sm ${className}`} style={{ scrollSnapAlign: 'start' }}>
       {icon}
       <span
         className="text-[10px] font-black uppercase tracking-[0.2em]"

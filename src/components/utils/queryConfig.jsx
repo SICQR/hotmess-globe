@@ -1,4 +1,4 @@
-// DB-08 fix: profiles reads exclude precise last_lat/last_lng/location (anti-stalking).
+// DB-08: profiles reads exclude precise last_lat/last_lng/location (anti-stalking).
 import { supabase } from '@/components/utils/supabaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_CONFIG } from './constants';

@@ -156,7 +156,7 @@ export default function L2RouteSheet({ destination, chatThreadId, recipientUserI
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-        className="relative w-full max-h-[80vh] rounded-t-3xl overflow-y-auto z-10"
+        className="relative w-full max-h-[80dvh] rounded-t-3xl overflow-y-auto z-10"
         style={{
           background: 'rgba(13,13,13,0.95)',
           backdropFilter: 'blur(24px)',
