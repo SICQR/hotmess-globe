@@ -12,12 +12,18 @@
  *   meet_sessions (last 30d), beacons, gdpr_consents, age_verification_log
  *
  * Does NOT return: other users' data, system internals, audit logs.
+ *
+ * P0 fix (2026-07-01): column references corrected to live schema; the endpoint
+ * NO LONGER returns HTTP 200 with a silently-partial bundle — if any section
+ * fails, it returns 500 and issues no file, so a data subject never receives an
+ * incomplete record presented as complete. Audit trail writes to the existing
+ * `user_data_requests` table (there is no `gdpr_requests` table).
  */
 
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY,
 );
 
@@ -39,6 +45,7 @@ export default async function handler(req, res) {
   }
 
   const userId = user.id;
+  const userEmail = user.email ?? null;
   const now = new Date();
 
   const bundle = {
@@ -51,12 +58,13 @@ export default async function handler(req, res) {
 
   const errors = [];
 
-  // ── profile ────────────────────────────────────────────────────────────────
+  // -- profile --
   try {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, display_name, bio, location_city, gender_identity, pronouns, kinks, '
-            + 'relationship_status, looking_for, public_attributes, onboarding_stage, '
+      .select('id, display_name, full_name, username, email, phone, bio, city, location_area, '
+            + 'age, gender, looking_for, position, persona_type, tags, membership_tier, '
+            + 'subscription_tier, public_attributes, onboarding_stage, onboarding_completed, '
             + 'created_at, updated_at')
       .eq('id', userId)
       .maybeSingle();
@@ -64,22 +72,22 @@ export default async function handler(req, res) {
     bundle.profile = data ?? null;
   } catch (e) { errors.push(`profile: ${e.message}`); }
 
-  // ── memberships ───────────────────────────────────────────────────────────
+  // -- memberships --
   try {
     const { data, error } = await supabase
       .from('memberships')
-      .select('tier, status, starts_at, ends_at, stripe_customer_id, created_at')
+      .select('tier, status, started_at, ends_at, payment_provider, updated_at')
       .eq('user_id', userId);
     if (error) throw error;
     bundle.memberships = data ?? [];
   } catch (e) { errors.push(`memberships: ${e.message}`); }
 
-  // ── messages (last 30d) ──────────────────────────────────────────────────
+  // -- messages sent (last 30d) --
   try {
     const cutoff = new Date(now.getTime() - 30 * 86400 * 1000).toISOString();
     const { data, error } = await supabase
       .from('messages')
-      .select('id, conversation_id, body, created_at, read_at')
+      .select('id, conversation_id, content, created_at')
       .eq('sender_id', userId)
       .gte('created_at', cutoff)
       .order('created_at', { ascending: false })
@@ -88,27 +96,27 @@ export default async function handler(req, res) {
     bundle.messages_sent = data ?? [];
   } catch (e) { errors.push(`messages: ${e.message}`); }
 
-  // ── taps (last 90d) ──────────────────────────────────────────────────────
+  // -- taps sent (last 90d) --
   try {
     const cutoff = new Date(now.getTime() - 90 * 86400 * 1000).toISOString();
     const { data, error } = await supabase
       .from('taps')
-      .select('id, target_user_id, tap_type, created_at')
-      .eq('sender_id', userId)
+      .select('id, from_user_id, to_user_id, tapper_email, tapped_email, tap_type, created_at')
+      .eq('from_user_id', userId)
       .gte('created_at', cutoff)
       .order('created_at', { ascending: false })
       .limit(500);
     if (error) throw error;
-    bundle.taps = data ?? [];
+    bundle.taps_sent = data ?? [];
   } catch (e) { errors.push(`taps: ${e.message}`); }
 
-  // ── meet_sessions (last 30d) ─────────────────────────────────────────────
+  // -- meet_sessions (last 30d) --
   try {
     const cutoff = new Date(now.getTime() - 30 * 86400 * 1000).toISOString();
     const { data, error } = await supabase
       .from('meet_sessions')
-      .select('id, partner_user_id, status, started_at, ended_at, created_at')
-      .eq('user_id', userId)
+      .select('id, user_a_id, user_b_id, status, met_at, closed_at, created_at')
+      .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`)
       .gte('created_at', cutoff)
       .order('created_at', { ascending: false })
       .limit(200);
@@ -116,30 +124,33 @@ export default async function handler(req, res) {
     bundle.meet_sessions = data ?? [];
   } catch (e) { errors.push(`meet_sessions: ${e.message}`); }
 
-  // ── beacons ───────────────────────────────────────────────────────────────
+  // -- beacons --
   try {
     const { data, error } = await supabase
       .from('beacons')
-      .select('id, category, message, venue_id, starts_at, ends_at, created_at')
-      .eq('user_id', userId)
+      .select('id, code, type, title, description, beacon_category, city, starts_at, ends_at, created_at')
+      .eq('owner_id', userId)
       .order('created_at', { ascending: false })
       .limit(200);
     if (error) throw error;
     bundle.beacons = data ?? [];
   } catch (e) { errors.push(`beacons: ${e.message}`); }
 
-  // ── gdpr_consents ────────────────────────────────────────────────────────
+  // -- gdpr_consents (keyed on email) --
   try {
-    const { data, error } = await supabase
-      .from('gdpr_consents')
-      .select('consent_type, granted, granted_at, withdrawn_at, created_at')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    bundle.gdpr_consents = data ?? [];
+    if (!userEmail) { bundle.gdpr_consents = []; }
+    else {
+      const { data, error } = await supabase
+        .from('gdpr_consents')
+        .select('consent_type, granted, granted_at, ip_address, user_agent')
+        .eq('user_email', userEmail)
+        .order('granted_at', { ascending: false });
+      if (error) throw error;
+      bundle.gdpr_consents = data ?? [];
+    }
   } catch (e) { errors.push(`gdpr_consents: ${e.message}`); }
 
-  // ── age_verification_log ─────────────────────────────────────────────────
+  // -- age_verification_log --
   try {
     const { data, error } = await supabase
       .from('age_verification_log')
@@ -151,18 +162,34 @@ export default async function handler(req, res) {
     bundle.age_verification = data ?? [];
   } catch (e) { errors.push(`age_verification_log: ${e.message}`); }
 
-  // Log this SAR request for audit trail
-  await supabase
-    .from('gdpr_requests')
-    .insert({ user_id: userId, request_type: 'export', status: 'completed', created_at: now.toISOString() })
-    .catch(() => {}); // non-fatal
+  // Log this SAR request for audit trail (existing table; non-fatal)
+  try {
+    const { error } = await supabase
+      .from('user_data_requests')
+      .insert({ user_id: userId, type: 'export', status: 'completed',
+                created_at: now.toISOString(), updated_at: now.toISOString() });
+    if (error) console.error('[gdpr/export] audit-log write failed:', error.message);
+  } catch (e) { console.error('[gdpr/export] audit-log write threw:', e.message); }
 
+  // -- HONESTY GATE --
+  // Never hand a data subject a 200 "your data" file that is silently partial.
+  // If any section failed, issue NO file and return 500 with the failed sections.
   if (errors.length) {
-    console.error('[gdpr/export] partial errors:', errors);
+    console.error('[gdpr/export] section failures:', errors);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Your data export could not be completed in full. To avoid giving you an '
+             + 'incomplete record presented as complete, no file has been issued. Our team '
+             + 'has been alerted and your Art. 15 request remains valid and will be fulfilled '
+             + 'within the statutory period.',
+      generated_at: now.toISOString(),
+      user_id: userId,
+      failed_sections: errors,
+    });
   }
 
-  // Return as JSON download
+  // All sections succeeded — return the complete bundle as a JSON download.
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Content-Disposition', `attachment; filename="hotmess-data-export-${userId.slice(0, 8)}.json"`);
-  return res.status(200).json({ ...bundle, _partial_errors: errors.length ? errors : undefined });
+  return res.status(200).json(bundle);
 }
