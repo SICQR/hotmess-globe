@@ -42,11 +42,24 @@
  * empty, unparseable, or already in the past. Once this returns false, only
  * consented contacts are paged.
  *
+ * GRACE LENGTH = 14 DAYS. The length is NOT hardcoded here — it is expressed
+ * purely as the absolute cutoff timestamp in SOS_CONSENT_GRACE_UNTIL. At deploy
+ * Phil sets SOS_CONSENT_GRACE_UNTIL = (deploy time + 14 days) on Vercel, e.g.
+ * `2026-07-15T00:00:00Z` for a 2026-07-01 deploy. Do NOT commit a literal date.
+ *
+ * Fail-safe posture for THIS flag: if the env var is unset or invalid we treat
+ * the grace window as INACTIVE (return false) — i.e. we fall toward the hard
+ * consent gate, never toward an always-open grace. This is the desired
+ * behaviour: an unset var must not silently keep paging unconfirmed contacts
+ * forever. (Consented contacts are always paged regardless — see
+ * selectSosRecipients — so this fallback can never drop a confirmed recipient.)
+ *
  * @returns {boolean}
  */
 export function isGraceActive() {
   const raw = process.env.SOS_CONSENT_GRACE_UNTIL || '';
   const until = Date.parse(raw);
+  // Unset / empty / unparseable => grace INACTIVE (fall toward the hard gate).
   if (Number.isNaN(until)) return false;
   return Date.now() < until;
 }
@@ -113,24 +126,80 @@ export function selectSosRecipients(contacts) {
 }
 
 /**
- * One-line notice prepended to the outbound message body for a still-pending
- * (grace-window) recipient, so they understand why they were contacted and how
- * to confirm or opt out. Kept short so it survives SMS segment budgets.
+ * Fallback owner display name when the SOS owner's name is unknown at
+ * compose time. Never leak a real name we don't have — use a neutral word.
  */
-export const CONSENT_NOTICE =
-  "You're listed as an emergency contact on HOTMESS but haven't confirmed yet — reply ACCEPT to confirm, STOP to opt out.";
+export const OWNER_FALLBACK_NAME = 'someone';
 
 /**
- * Prepend CONSENT_NOTICE to a message body when the recipient is unconsented.
- * No-op (returns body unchanged) for consented recipients. Never throws.
+ * Owner-facing warning shown when an SOS fan-out included one or more pending
+ * (unconfirmed) recipients that were only reached because the consent grace
+ * window is still open. Surfaced to the OWNER (not just logged) so they know
+ * their contact list has unconfirmed entries that will stop being paged once
+ * the 14-day grace window closes. EXACT approved copy (Phil).
+ */
+export const OWNER_UNCONSENTED_WARNING =
+  "Some of your SOS contacts haven\u2019t confirmed yet. They may receive alerts during the transition, but after 14 days only confirmed contacts will be paged.";
+
+/**
+ * Build the structured owner_warning payload for an SOS result, or null when
+ * there is nothing to warn about (no unconfirmed recipients were paged).
+ * Never throws.
+ *
+ * @param {number} unconsentedCount — count of _unconsented recipients paged
+ * @returns {{ code: string, unconsented_count: number, message: string } | null}
+ */
+export function buildOwnerWarning(unconsentedCount) {
+  const n = Number(unconsentedCount) || 0;
+  if (n <= 0) return null;
+  return {
+    code: 'unconfirmed_contacts_paged',
+    unconsented_count: n,
+    message: OWNER_UNCONSENTED_WARNING,
+  };
+}
+
+/**
+ * Build the one-line notice prepended to the outbound message body for a
+ * still-pending (grace-window) recipient, so they understand why they were
+ * contacted and can decide whether to accept future emergency alerts.
+ *
+ * Templated with the SOS owner's display name (never hardcode a person's
+ * name). Falls back to OWNER_FALLBACK_NAME ("someone") when the name is
+ * unknown. Kept to a single sentence-pair so it survives SMS segment budgets.
+ *
+ * @param {string|null|undefined} ownerName — the SOS owner's display name
+ * @returns {string}
+ */
+export function consentNotice(ownerName) {
+  const owner = (ownerName == null || String(ownerName).trim() === '')
+    ? OWNER_FALLBACK_NAME
+    : String(ownerName).trim();
+  return `You\u2019re receiving this because ${owner} listed you as an SOS safety contact on HOTMESS. Please confirm whether you accept future emergency alerts.`;
+}
+
+/**
+ * Back-compat constant for call sites that render the notice without an owner
+ * name available. Equivalent to consentNotice(undefined) — i.e. templated with
+ * the "someone" fallback. Prefer consentNotice(ownerName) / applyConsentNotice
+ * with the owner name wherever the owner's display_name is known.
+ */
+export const CONSENT_NOTICE = consentNotice(undefined);
+
+/**
+ * Prepend the consent notice to a message body when the recipient is
+ * unconsented (grace-window pending). No-op (returns body unchanged) for
+ * consented recipients. Never throws.
  *
  * @param {string} body — the composed message body
  * @param {Object|null} recipient — a recipient from selectSosRecipients()
+ * @param {string|null} [ownerName] — SOS owner display name for templating;
+ *   omit/null to use the "someone" fallback.
  * @returns {string}
  */
-export function applyConsentNotice(body, recipient) {
+export function applyConsentNotice(body, recipient, ownerName) {
   if (recipient && recipient._unconsented === true) {
-    return `${CONSENT_NOTICE}\n\n${body || ''}`;
+    return `${consentNotice(ownerName)}\n\n${body || ''}`;
   }
   return body;
 }

@@ -32,7 +32,7 @@
  *     raw?:      unknown,    // raw provider response for the audit row
  *   }
  */
-import { CONSENT_NOTICE } from '../../_utils/sosConsent.js';
+import { consentNotice } from '../../_utils/sosConsent.js';
 
 export const SAFETY_FROM_DISPLAY = 'HOTMESS Safety';
 
@@ -59,8 +59,11 @@ export function buildAlertCopy({ user, event, ackUrl, recipient = null }) {
   // Consent notice (Option B): when the recipient is still unconfirmed and is
   // only being paged because the grace window is open, prepend a one-line
   // notice so they know why they got this and how to confirm / opt out.
+  // Owner-name-templated consent notice (Option B item 5): render with the SOS
+  // owner's display name so the pending contact knows who listed them. Falls
+  // back to "someone" inside consentNotice() when the name is unknown.
   const notice = (recipient && recipient._unconsented === true)
-    ? `${CONSENT_NOTICE}\n`
+    ? `${consentNotice(user && user.display_name)}\n`
     : '';
   return {
     short: `${notice}${name} ${verb} on HOTMESS. ${where}.${ackLine}`.trim(),

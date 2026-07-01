@@ -138,7 +138,7 @@ export default async function handler(req, res) {
             user_email: contact.contact_email || profile?.email,
             notification_type: 'checkin_missed',
             title: '⏰ Check-in Missed — HOTMESS Safety',
-            message: applyConsentNotice(`${userName} was supposed to check in ${overdueMins} minute(s) ago and hasn't responded. Please check on them.`, contact),
+            message: applyConsentNotice(`${userName} was supposed to check in ${overdueMins} minute(s) ago and hasn't responded. Please check on them.`, contact, profile?.display_name),
             channel: contact.contact_phone ? 'whatsapp' : 'email',
             metadata: {
               type: 'checkin_missed',

@@ -106,7 +106,7 @@ export default async function handler(req, res) {
         user_email: c.contact_email || profile?.email || user.email,
         notification_type: 'sos_alert',
         title: '🆘 HOTMESS Safety — Get Out triggered',
-        message: applyConsentNotice(`${triggeredBy} pressed Get Out. Last known location: ${locStr}`, c),
+        message: applyConsentNotice(`${triggeredBy} pressed Get Out. Last known location: ${locStr}`, c, profile?.display_name),
         channel: c.contact_phone ? 'whatsapp' : 'email',
         metadata: {
           type: 'get_out',
@@ -153,6 +153,8 @@ export default async function handler(req, res) {
       cleared: true,
       event_id: eventRow?.id || null,
       unconsented_count: unconsentedCount,
+      // Option B item 3: owner-facing warning if unconfirmed contacts were paged.
+      owner_warning: dispatch?.owner_warning ?? null,
       dispatch,
     });
   } catch (err) {

@@ -13,6 +13,17 @@ import { trackEvent } from '@/components/utils/analytics';
 
 const RELATIONS = ['Friend', 'Partner', 'Family', 'Other'];
 
+// ── Consent status (Option B item 4) ────────────────────────────────────────
+// Exact approved helper copy for the "Not confirmed yet" pending state.
+const PENDING_HELPER_COPY =
+  "Not confirmed yet. We\u2019ll invite them to accept SOS alerts. During the safety transition, they may still receive emergency alerts for a limited time.";
+
+function consentStatus(c) {
+  if (c && c.declined_at != null) return 'declined';
+  if (c && c.accepted_at != null) return 'accepted';
+  return 'pending';
+}
+
 export default function L2EmergencyContactSheet() {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -181,8 +192,31 @@ export default function L2EmergencyContactSheet() {
                   <User className="w-4 h-4 text-[#C8962C]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white font-bold text-sm truncate">{contact.contact_name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-white font-bold text-sm truncate">{contact.contact_name}</p>
+                    {/* Consent status badge (Option B item 4). Pending stays visible. */}
+                    {(() => {
+                      const st = consentStatus(contact);
+                      if (st === 'accepted') {
+                        return <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 flex-shrink-0">Confirmed</span>;
+                      }
+                      if (st === 'declined') {
+                        return <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-white/10 text-white/40 flex-shrink-0">Declined</span>;
+                      }
+                      return (
+                        <span
+                          className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#C8962C]/20 text-[#C8962C] flex-shrink-0 cursor-help"
+                          title={PENDING_HELPER_COPY}
+                        >
+                          Not confirmed yet
+                        </span>
+                      );
+                    })()}
+                  </div>
                   <p className="text-white/50 text-xs truncate">{contact.contact_phone} · {contact.relationship}</p>
+                  {consentStatus(contact) === 'pending' && (
+                    <p className="text-white/30 text-[10px] mt-0.5 leading-snug">{PENDING_HELPER_COPY}</p>
+                  )}
                   {testStatus[contact.id] === 'sent' && (
                     <p className="text-emerald-400 text-[10px] font-bold mt-0.5">Test sent ✓</p>
                   )}

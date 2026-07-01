@@ -30,7 +30,7 @@
  */
 import { buildAckUrl } from '../safety/_ack-token.js';
 import { composeSosPayload } from '../safety/_payload-compose.js';
-import { selectSosRecipients } from '../_utils/sosConsent.js';
+import { selectSosRecipients, buildOwnerWarning } from '../_utils/sosConsent.js';
 import * as pushChannel from './channels/push.js';
 import * as smsChannel from './channels/sms.js';
 import * as emailChannel from './channels/email.js';
@@ -392,6 +392,11 @@ export async function dispatchSafetyEvent({ supabase, eventId, mode, contactsOve
   // the consent grace window is open (never confirmed). Non-fatal — surfaced in
   // the dispatch result + a warn so ops can see contacts are unconfirmed.
   const unconsentedCount = contacts.filter(c => c && c._unconsented === true).length;
+  // owner_warning (Option B item 3): structured, owner-facing warning returned
+  // to the client so the OWNER (not just ops logs) is told some contacts are
+  // unconfirmed and will stop being paged after the 14-day grace window. null
+  // when every paged contact is confirmed.
+  const ownerWarning = buildOwnerWarning(unconsentedCount);
   if (unconsentedCount > 0) {
     console.warn(`[dispatcher] SOS event ${event.id}: ${unconsentedCount} unconfirmed contact(s) paged under consent grace window`);
   }
@@ -409,10 +414,10 @@ export async function dispatchSafetyEvent({ supabase, eventId, mode, contactsOve
     if (isP0Type(event.type)) {
       opsAlert = await dispatchPhilOpsAlert({ supabase, event, user });
     }
-    return { mode: 'fanout', event_id: event.id, ops_alert: opsAlert, unconsented_count: unconsentedCount, ...stats };
+    return { mode: 'fanout', event_id: event.id, ops_alert: opsAlert, unconsented_count: unconsentedCount, owner_warning: ownerWarning, ...stats };
   }
   const stats = await dispatchSequential({ supabase, event, user, contacts });
-  return { mode: 'sequential', event_id: event.id, unconsented_count: unconsentedCount, ...stats };
+  return { mode: 'sequential', event_id: event.id, unconsented_count: unconsentedCount, owner_warning: ownerWarning, ...stats };
 }
 
 /**

@@ -49,6 +49,21 @@ const DURATIONS = [
 
 const RELATIONS = ['Friend', 'Partner', 'Family', 'Other'];
 
+// ── Consent status (Option B item 4) ────────────────────────────────────────
+// Exact approved helper copy for the "Not confirmed yet" state, shown near the
+// pending badge so the owner understands what pending means and that pending
+// contacts may still be reached during the safety transition.
+const PENDING_HELPER_COPY =
+  "Not confirmed yet. We\u2019ll invite them to accept SOS alerts. During the safety transition, they may still receive emergency alerts for a limited time.";
+
+// Derive a contact's consent status from its accepted_at / declined_at columns.
+// declined wins over accepted (decline is the stronger opt-out signal).
+function consentStatus(c) {
+  if (c && c.declined_at != null) return 'declined';
+  if (c && c.accepted_at != null) return 'accepted';
+  return 'pending';
+}
+
 export default function L2SafetySheet() {
   const { openSheet } = useSheet();
   const [tab, setTab] = useState('contacts');
@@ -62,6 +77,12 @@ export default function L2SafetySheet() {
   const [deleting, setDeleting]           = useState(null);
   const [formError, setFormError]         = useState('');
   const [form, setForm] = useState({ name: '', phone: '', email: '', relation: 'Friend' });
+
+  // ── Invite-on-add error surfacing (Option B item 2) ─────────────────────
+  // Map of contactId -> true when the acceptance invite POST failed. The
+  // contact is still added; this drives a visible, retryable warning row.
+  const [inviteError, setInviteError] = useState({});
+  const [retryingInvite, setRetryingInvite] = useState(null);
 
   // ── Check-in state ──────────────────────────────────────────────────────
   const [recentCheckIns, setRecentCheckIns] = useState([]);
@@ -133,28 +154,56 @@ export default function L2SafetySheet() {
     setSaving(false);
     if (error) { setFormError('Could not save. Try again.'); return; }
 
-    // Invite-on-add (Option B): fire the acceptance invitation so the new
-    // contact can confirm they agree to be an emergency contact. Best-effort —
-    // a failed invite must never block the successful insert. Until they accept,
-    // SOS reaches them only while the consent grace window is open.
-    if (inserted?.id) {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const jwt = session?.access_token;
-        if (jwt) {
-          fetch('/api/safety/dispatch-invitation', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json', Authorization: `Bearer ${jwt}` },
-            body: JSON.stringify({ trusted_contact_id: inserted.id, force: false }),
-          }).catch(() => { /* best-effort: invite failure never blocks add */ });
-        }
-      } catch { /* best-effort: invite failure never blocks add */ }
-    }
-
     toast.success(`${form.name} added`);
     setForm({ name: '', phone: '', email: '', relation: 'Friend' });
     setShowAddForm(false);
     loadContacts();
+
+    // Invite-on-add (Option B item 2): fire the acceptance invitation so the new
+    // contact can confirm they agree to be an emergency contact. The contact is
+    // ALREADY added above — a failed invite must never block the insert — but,
+    // unlike before, the failure is now SURFACED in the UI (a retryable warning
+    // on the contact row) instead of being silently swallowed.
+    if (inserted?.id) {
+      await sendInvite(inserted.id);
+    }
+  }
+
+  // ── Send / retry the acceptance invite for a contact ────────────────────
+  // Sets inviteError[contactId]=true on any failure so the UI can show a
+  // "Couldn't send invite — tap to retry" warning. Clears it on success.
+  async function sendInvite(contactId) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const jwt = session?.access_token;
+      if (!jwt) {
+        setInviteError(prev => ({ ...prev, [contactId]: true }));
+        return;
+      }
+      const res = await fetch('/api/safety/dispatch-invitation', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', Authorization: `Bearer ${jwt}` },
+        body: JSON.stringify({ trusted_contact_id: contactId, force: false }),
+      });
+      if (!res.ok) {
+        setInviteError(prev => ({ ...prev, [contactId]: true }));
+      } else {
+        setInviteError(prev => {
+          const next = { ...prev };
+          delete next[contactId];
+          return next;
+        });
+      }
+    } catch {
+      setInviteError(prev => ({ ...prev, [contactId]: true }));
+    }
+  }
+
+  // Retry handler for the visible invite-failure warning.
+  async function handleRetryInvite(contactId) {
+    setRetryingInvite(contactId);
+    await sendInvite(contactId);
+    setRetryingInvite(null);
   }
 
   // ── Delete trusted contact ──────────────────────────────────────────────
@@ -279,11 +328,48 @@ export default function L2SafetySheet() {
                       <User className="w-4 h-4 text-[#C8962C]" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white font-bold text-sm truncate">{c.contact_name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-white font-bold text-sm truncate">{c.contact_name}</p>
+                        {/* Consent status badge (Option B item 4). Pending stays
+                            visible — it is badged "Not confirmed yet", not hidden. */}
+                        {(() => {
+                          const st = consentStatus(c);
+                          if (st === 'accepted') {
+                            return <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 flex-shrink-0">Confirmed</span>;
+                          }
+                          if (st === 'declined') {
+                            return <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-white/10 text-white/40 flex-shrink-0">Declined</span>;
+                          }
+                          return (
+                            <span
+                              className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#C8962C]/20 text-[#C8962C] flex-shrink-0 cursor-help"
+                              title={PENDING_HELPER_COPY}
+                            >
+                              Not confirmed yet
+                            </span>
+                          );
+                        })()}
+                      </div>
                       <p className="text-white/40 text-xs truncate">
                         {[c.contact_phone, c.contact_email].filter(Boolean).join(' · ')}
                         {c.relationship ? ` · ${c.relationship}` : ''}
                       </p>
+                      {consentStatus(c) === 'pending' && (
+                        <p className="text-white/30 text-[10px] mt-0.5 leading-snug">{PENDING_HELPER_COPY}</p>
+                      )}
+                      {/* Invite-on-add failure surfaced + retryable (Option B item 2). */}
+                      {inviteError[c.id] && (
+                        <button
+                          type="button"
+                          onClick={() => handleRetryInvite(c.id)}
+                          disabled={retryingInvite === c.id}
+                          className="mt-1 inline-flex items-center gap-1 text-amber-400 text-[10px] font-bold active:opacity-70 disabled:opacity-50"
+                        >
+                          {retryingInvite === c.id
+                            ? <><Loader2 className="w-3 h-3 animate-spin" />Retrying…</>
+                            : <><AlertTriangle className="w-3 h-3" />Couldn't send invite — tap to retry</>}
+                        </button>
+                      )}
                     </div>
                     <button
                       onClick={() => handleDelete(c.id, c.contact_name)}

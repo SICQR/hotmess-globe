@@ -113,6 +113,26 @@ export function SOSProvider({ children }: { children: React.ReactNode }) {
         console.error('[SOS] /api/safety/sos failed:', res.status);
       } else {
         console.log('[InvisibleSafety] SOS Triggered Silently');
+        // Owner warning (Option B item 3): the API returns a structured
+        // owner_warning when unconfirmed contacts were paged under the grace
+        // window. We do NOT show a visible toast here — this SOS surface is a
+        // SILENT gesture and a popup could out a user mid-emergency. Instead we
+        // emit a non-blocking window event so a NON-silent owner surface (the
+        // Safety Centre / trusted-contacts settings) can render it later, and
+        // log it for observability.
+        // TODO(safety-ui): render owner_warning.message on a non-silent owner
+        //   surface — e.g. a dismissible banner in L2SafetySheet Contacts tab or
+        //   a post-incident SafetyRecoveryScreen note — so the owner sees that
+        //   some contacts are unconfirmed and will stop being paged after 14d.
+        try {
+          const payload = await res.clone().json();
+          if (payload?.owner_warning) {
+            console.warn('[SOS] owner_warning:', payload.owner_warning.message);
+            window.dispatchEvent(new CustomEvent('hm:sos-owner-warning', {
+              detail: payload.owner_warning,
+            }));
+          }
+        } catch { /* response body optional — never block on it */ }
       }
 
       if (!options.silent) {

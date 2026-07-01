@@ -125,9 +125,15 @@ export default async function handler(req, res) {
       console.error('[sos] dispatcher error (non-fatal):', dErr);
     }
 
+    // Hoist owner_warning (Option B item 3) to the top level so the SOS-trigger
+    // client can surface it without digging into the dispatch object. null when
+    // no unconfirmed contacts were paged.
+    const ownerWarning = dispatch?.owner_warning ?? null;
+
     return res.status(200).json({
       ok: true,
       event_id: eventRow.id,
+      owner_warning: ownerWarning,
       dispatch,
     });
   } catch (err) {

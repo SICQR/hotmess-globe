@@ -166,7 +166,7 @@ export default async function handler(req, res) {
           return;
         }
 
-        const result = await sendSms({ to: contact.contact_phone, body: applyConsentNotice(text, contact) });
+        const result = await sendSms({ to: contact.contact_phone, body: applyConsentNotice(text, contact, profile?.display_name) });
         if (result.ok) {
           await supabase.from('safety_alerts')
             .update({
