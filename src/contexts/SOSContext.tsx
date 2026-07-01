@@ -120,10 +120,11 @@ export function SOSProvider({ children }: { children: React.ReactNode }) {
         // emit a non-blocking window event so a NON-silent owner surface (the
         // Safety Centre / trusted-contacts settings) can render it later, and
         // log it for observability.
-        // TODO(safety-ui): render owner_warning.message on a non-silent owner
-        //   surface — e.g. a dismissible banner in L2SafetySheet Contacts tab or
-        //   a post-incident SafetyRecoveryScreen note — so the owner sees that
-        //   some contacts are unconfirmed and will stop being paged after 14d.
+        // RESOLVED(safety-ui): owner_warning is now surfaced on non-silent owner
+        //   surfaces — L2SafetySheet listens for hm:sos-owner-warning and shows
+        //   the message as a toast (post-trigger), and also renders an at-rest
+        //   dismissible banner when contacts are still unconfirmed. This surface
+        //   stays event-only (silent gesture must never pop UI mid-emergency).
         try {
           const payload = await res.clone().json();
           if (payload?.owner_warning) {

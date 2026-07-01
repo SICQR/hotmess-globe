@@ -8,7 +8,7 @@
  * - Link through to SOS emergency contacts + blocked users
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield, Phone, Lock, ChevronRight, ExternalLink,
@@ -18,6 +18,11 @@ import {
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
+import {
+  shouldShowOwnerWarning,
+  countPendingSosContacts,
+  OWNER_WARNING_COPY,
+} from '@/utils/ownerWarning';
 import LiveLocationShare from '@/components/safety/LiveLocationShare';
 
 // ── UK Crisis lines ─────────────────────────────────────────────────────────
@@ -89,6 +94,50 @@ export default function L2SafetySheet() {
   const [checkInsLoading, setCheckInsLoading] = useState(false);
   const [logging, setLogging]             = useState(false);
   const [selectedDuration, setSelectedDuration] = useState(120);
+
+  // ── Owner-warning banner (presentation only) ────────────────────────────
+  // Non-blocking, dismissible banner shown at rest when the owner has >=1
+  // pending SOS contact. "Pending" is derived from rows already loaded above
+  // (notify_on_sos && !accepted_at && !declined_at) via shouldShowOwnerWarning.
+  // This is DISPLAY ONLY — recipient selection lives server-side in
+  // api/_utils/sosConsent.js and is never re-decided here.
+  const OWNER_WARNING_DISMISS_KEY = 'hm.sos.ownerWarning.dismissed';
+  const [ownerWarningDismissed, setOwnerWarningDismissed] = useState(() => {
+    try { return sessionStorage.getItem(OWNER_WARNING_DISMISS_KEY) === '1'; }
+    catch { return false; }
+  });
+  const contactsListRef = useRef(null);
+
+  function dismissOwnerWarning(e) {
+    if (e) e.stopPropagation();
+    setOwnerWarningDismissed(true);
+    try { sessionStorage.setItem(OWNER_WARNING_DISMISS_KEY, '1'); } catch { /* noop */ }
+  }
+
+  // Tapping the banner routes to the Contacts tab (where the per-contact
+  // status badges live) and scrolls the list into view so the owner can act.
+  function openContactsFromBanner() {
+    setTab('contacts');
+    requestAnimationFrame(() => {
+      contactsListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  const pendingSosCount = countPendingSosContacts(contacts);
+  const showOwnerWarning = shouldShowOwnerWarning(contacts, ownerWarningDismissed);
+
+  // ── Post-trigger owner_warning (SECONDARY surface) ──────────────────────
+  // After an SOS fires with unconfirmed recipients, SOSContext emits
+  // hm:sos-owner-warning with the server's owner_warning payload. This
+  // non-silent owner surface renders it via the app toast (sonner).
+  useEffect(() => {
+    const onOwnerWarning = (ev) => {
+      const msg = ev?.detail?.message;
+      if (msg) toast.warning(msg, { duration: 12000 });
+    };
+    window.addEventListener('hm:sos-owner-warning', onOwnerWarning);
+    return () => window.removeEventListener('hm:sos-owner-warning', onOwnerWarning);
+  }, []);
 
   // ── Load user + trusted contacts ────────────────────────────────────────
   useEffect(() => {
@@ -261,6 +310,40 @@ export default function L2SafetySheet() {
         </div>
       </div>
 
+      {/* Owner-warning banner (at rest, non-blocking, dismissible) ─────────── */}
+      {showOwnerWarning && (
+        <div className="px-4 pb-3 flex-shrink-0">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={openContactsFromBanner}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openContactsFromBanner(); } }}
+            className="w-full text-left bg-[#C8962C]/10 border border-[#C8962C]/25 rounded-2xl p-3 flex items-start gap-3 active:bg-[#C8962C]/15 transition-colors cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-full bg-[#C8962C]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <AlertTriangle className="w-4 h-4 text-[#C8962C]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              {pendingSosCount > 0 && (
+                <p className="text-[#C8962C] font-black text-xs mb-0.5">
+                  {pendingSosCount} of your contacts aren't confirmed
+                </p>
+              )}
+              <p className="text-white/70 text-xs leading-relaxed">{OWNER_WARNING_COPY}</p>
+              <p className="text-[#C8962C]/80 text-[10px] font-bold mt-1">Tap to review contacts</p>
+            </div>
+            <button
+              type="button"
+              aria-label="Dismiss"
+              onClick={dismissOwnerWarning}
+              className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0 active:bg-white/10"
+            >
+              <X className="w-4 h-4 text-white/40" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex gap-1 px-4 pb-3 flex-shrink-0">
         {[
@@ -287,7 +370,7 @@ export default function L2SafetySheet() {
 
         {/* ─── CONTACTS ─────────────────────────────────────────────────── */}
         {tab === 'contacts' && (
-          <div className="px-4 pb-6 space-y-3">
+          <div ref={contactsListRef} className="px-4 pb-6 space-y-3">
 
             {/* SOS contacts shortcut */}
             <button
