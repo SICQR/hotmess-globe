@@ -21,8 +21,12 @@
  *       prepend a one-line "you haven't confirmed yet" notice to their message,
  *       and (b) flag to the owner/ops that some contacts are unconfirmed.
  *
- *   • After SOS_CONSENT_GRACE_UNTIL passes (or if the var is unset/invalid):
- *       ONLY consented contacts are paged. Pending contacts are dropped.
+ *   • After a VALID SOS_CONSENT_GRACE_UNTIL timestamp passes:
+ *       ONLY consented contacts are paged. Pending contacts are dropped (hard gate).
+ *
+ *   • If SOS_CONSENT_GRACE_UNTIL is UNSET or invalid:
+ *       grace is FORCED ACTIVE + a loud error is logged. A missing/typo'd env
+ *       var must NEVER silently hard-gate SOS to zero reachable contacts.
  *
  * DECLINED contacts (declined_at set) are NEVER paged, in the grace window or
  * outside it.
@@ -38,9 +42,10 @@
 /**
  * Is the interim consent grace window currently active?
  *
- * Reads SOS_CONSENT_GRACE_UNTIL (ISO-8601). Returns false if the var is unset,
- * empty, unparseable, or already in the past. Once this returns false, only
- * consented contacts are paged.
+ * Reads SOS_CONSENT_GRACE_UNTIL (ISO-8601). Returns false ONLY when the var is a
+ * valid timestamp already in the past (the intended 14-day hard-gate cutover).
+ * If the var is unset/empty/unparseable it returns TRUE (fail-open) and logs
+ * loudly — a forgotten env var must not equal silent SOS.
  *
  * GRACE LENGTH = 14 DAYS. The length is NOT hardcoded here — it is expressed
  * purely as the absolute cutoff timestamp in SOS_CONSENT_GRACE_UNTIL. At deploy
@@ -48,19 +53,26 @@
  * `2026-07-15T00:00:00Z` for a 2026-07-01 deploy. Do NOT commit a literal date.
  *
  * Fail-safe posture for THIS flag: if the env var is unset or invalid we treat
- * the grace window as INACTIVE (return false) — i.e. we fall toward the hard
- * consent gate, never toward an always-open grace. This is the desired
- * behaviour: an unset var must not silently keep paging unconfirmed contacts
- * forever. (Consented contacts are always paged regardless — see
- * selectSosRecipients — so this fallback can never drop a confirmed recipient.)
+ * the grace window as ACTIVE (return true) and log loudly — i.e. we fail toward
+ * still reaching people (consented normally + pending with a warning), NEVER
+ * toward silent SOS. A forgotten or typo'd env var at deploy must not silently
+ * hard-gate to zero reachable contacts. The hard gate engages only when the var
+ * is a VALID timestamp that has passed. (Consented contacts are always paged
+ * regardless — see selectSosRecipients.)
  *
  * @returns {boolean}
  */
 export function isGraceActive() {
-  const raw = process.env.SOS_CONSENT_GRACE_UNTIL || '';
+  const raw = (process.env.SOS_CONSENT_GRACE_UNTIL || '').trim();
   const until = Date.parse(raw);
-  // Unset / empty / unparseable => grace INACTIVE (fall toward the hard gate).
-  if (Number.isNaN(until)) return false;
+  if (Number.isNaN(until)) {
+    // SAFETY FAIL-OPEN: env unset/empty/unparseable => grace ACTIVE. A forgotten
+    // or mistyped var must never silently hard-gate SOS to zero reachable
+    // contacts. Log loudly so ops sets the real (deploy + 14d) cutover; until
+    // then we keep reaching consented contacts normally and pending with notice.
+    console.error('[SOS][CONSENT] SOS_CONSENT_GRACE_UNTIL unset/invalid — grace FORCED ACTIVE (fail-open). Set it to (deploy time + 14 days) on Vercel to arm the hard gate.');
+    return true;
+  }
   return Date.now() < until;
 }
 

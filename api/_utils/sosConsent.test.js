@@ -33,8 +33,8 @@ describe('sosConsent.selectSosRecipients — consent gate + grace', () => {
     expect(out[0]._unconsented).toBeUndefined();
   });
 
-  it('CASE 1b — accepted contacts are ALWAYS paged (grace closed / unset)', () => {
-    // Grace INACTIVE (env unset) — consented still paged.
+  it('CASE 1b — accepted contacts are ALWAYS paged (hard gate via past timestamp)', () => {
+    process.env.SOS_CONSENT_GRACE_UNTIL = PAST; // valid past ts => hard gate
     expect(isGraceActive()).toBe(false);
     const out = selectSosRecipients([accepted]);
     expect(out.map(c => c.id)).toEqual(['a']);
@@ -57,14 +57,18 @@ describe('sosConsent.selectSosRecipients — consent gate + grace', () => {
     expect(out).toEqual([]);
   });
 
-  it('CASE 3b — pending contacts are NOT paged when grace unset/invalid', () => {
-    // unset
-    expect(isGraceActive()).toBe(false);
-    expect(selectSosRecipients([pending])).toEqual([]);
-    // invalid value → also inactive
+  it('CASE 3b — FAIL-OPEN: unset/invalid env => grace ACTIVE, pending ARE paged (never silent SOS)', () => {
+    // A forgotten/typo'd var must NOT hard-gate to silence — grace forced active.
+    expect(isGraceActive()).toBe(true);
+    let out = selectSosRecipients([pending]);
+    expect(out.map(c => c.id)).toEqual(['p']);
+    expect(out[0]._unconsented).toBe(true);
+    // invalid value → also fail-open active
     process.env.SOS_CONSENT_GRACE_UNTIL = 'not-a-date';
-    expect(isGraceActive()).toBe(false);
-    expect(selectSosRecipients([pending])).toEqual([]);
+    expect(isGraceActive()).toBe(true);
+    out = selectSosRecipients([pending]);
+    expect(out.map(c => c.id)).toEqual(['p']);
+    expect(out[0]._unconsented).toBe(true);
   });
 
   it('CASE 4 — declined contacts are NEVER paged (grace open or closed)', () => {
