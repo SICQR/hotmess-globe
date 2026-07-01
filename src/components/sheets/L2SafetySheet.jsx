@@ -121,17 +121,35 @@ export default function L2SafetySheet() {
     let { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); setFormError('Not signed in.'); return; }
 
-    const { error } = await supabase.from('trusted_contacts').insert({
+    const { data: inserted, error } = await supabase.from('trusted_contacts').insert({
       user_id:        user.id,
       contact_name:  form.name.trim(),
       contact_phone: form.phone.trim() || null,
       contact_email: form.email.trim() || null,
       relationship:  form.relation,
       notify_on_sos: true,
-    });
+    }).select('id').single();
 
     setSaving(false);
     if (error) { setFormError('Could not save. Try again.'); return; }
+
+    // Invite-on-add (Option B): fire the acceptance invitation so the new
+    // contact can confirm they agree to be an emergency contact. Best-effort —
+    // a failed invite must never block the successful insert. Until they accept,
+    // SOS reaches them only while the consent grace window is open.
+    if (inserted?.id) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const jwt = session?.access_token;
+        if (jwt) {
+          fetch('/api/safety/dispatch-invitation', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', Authorization: `Bearer ${jwt}` },
+            body: JSON.stringify({ trusted_contact_id: inserted.id, force: false }),
+          }).catch(() => { /* best-effort: invite failure never blocks add */ });
+        }
+      } catch { /* best-effort: invite failure never blocks add */ }
+    }
 
     toast.success(`${form.name} added`);
     setForm({ name: '', phone: '', email: '', relation: 'Friend' });

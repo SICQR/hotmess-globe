@@ -18,6 +18,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { dispatchSafetyEvent } from '../notifications/dispatcher.js';
+import { selectSosRecipients, applyConsentNotice } from '../_utils/sosConsent.js';
 
 const supabaseUrl =
   process.env.SUPABASE_URL ??
@@ -47,12 +48,16 @@ export default async function handler(req, res) {
 
   try {
     // Load contacts that opted in to SOS notifications (up to 5 per CareAsKink spec)
-    const { data: contacts } = await supabaseAdmin
+    const { data: rawContacts } = await supabaseAdmin
       .from('trusted_contacts')
-      .select('contact_name, contact_phone, contact_email')
+      .select('contact_name, contact_phone, contact_email, accepted_at, declined_at')
       .eq('user_id', user.id)
       .eq('notify_on_sos', true)
       .limit(5);
+    // Consent gate (Option B): page consented contacts, plus still-pending ones
+    // while the SOS_CONSENT_GRACE_UNTIL window is open (tagged _unconsented).
+    // Declined contacts are never paged; consented recipients are never dropped.
+    const contacts = selectSosRecipients(rawContacts || []);
 
     // Load last known location + display name from profile
     const { data: profile } = await supabaseAdmin
@@ -85,6 +90,13 @@ export default async function handler(req, res) {
       .delete()
       .eq('user_id', user.id);
 
+    // Owner/ops visibility (Option B): contacts paged only because the consent
+    // grace window is open (never confirmed). Non-fatal warn + surfaced below.
+    const unconsentedCount = (contacts || []).filter(c => c && c._unconsented === true).length;
+    if (unconsentedCount > 0) {
+      console.warn(`[get-out] ${unconsentedCount} unconfirmed contact(s) paged under consent grace window (user ${user.id})`);
+    }
+
     // Queue notifications for each backup contact via the outbox dispatcher
     const notified = [];
     if (contacts && contacts.length > 0) {
@@ -94,7 +106,7 @@ export default async function handler(req, res) {
         user_email: c.contact_email || profile?.email || user.email,
         notification_type: 'sos_alert',
         title: '🆘 HOTMESS Safety — Get Out triggered',
-        message: `${triggeredBy} pressed Get Out. Last known location: ${locStr}`,
+        message: applyConsentNotice(`${triggeredBy} pressed Get Out. Last known location: ${locStr}`, c),
         channel: c.contact_phone ? 'whatsapp' : 'email',
         metadata: {
           type: 'get_out',
@@ -140,6 +152,7 @@ export default async function handler(req, res) {
       notified,
       cleared: true,
       event_id: eventRow?.id || null,
+      unconsented_count: unconsentedCount,
       dispatch,
     });
   } catch (err) {

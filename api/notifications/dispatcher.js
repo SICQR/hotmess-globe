@@ -30,6 +30,7 @@
  */
 import { buildAckUrl } from '../safety/_ack-token.js';
 import { composeSosPayload } from '../safety/_payload-compose.js';
+import { selectSosRecipients } from '../_utils/sosConsent.js';
 import * as pushChannel from './channels/push.js';
 import * as smsChannel from './channels/sms.js';
 import * as emailChannel from './channels/email.js';
@@ -105,14 +106,18 @@ async function loadUser(supabase, userId) {
 async function loadContacts(supabase, userId) {
   const { data } = await supabase
     .from('trusted_contacts')
-    .select('id, contact_name, contact_phone, contact_email, role, notify_on_sos')
+    .select('id, contact_name, contact_phone, contact_email, role, notify_on_sos, accepted_at, declined_at')
     .eq('user_id', userId)
     .eq('notify_on_sos', true)
     .limit(5);
+  // Consent gate (Option B): only page consented contacts, plus still-pending
+  // ones while the SOS_CONSENT_GRACE_UNTIL window is open (tagged _unconsented).
+  // Never pages declined contacts. Consented recipients are never dropped.
+  const gated = selectSosRecipients(data || []);
   // Best-effort: see if the contact's phone matches an internal HOTMESS user
   // — if so, web push becomes possible. Skipped if no matching profile.
   const enriched = [];
-  for (const c of data || []) {
+  for (const c of gated) {
     let internalUserId = null;
     if (c.contact_phone) {
       try {
@@ -383,6 +388,14 @@ export async function dispatchSafetyEvent({ supabase, eventId, mode, contactsOve
     };
   }
 
+  // Owner/ops visibility (Option B): count recipients being paged only because
+  // the consent grace window is open (never confirmed). Non-fatal — surfaced in
+  // the dispatch result + a warn so ops can see contacts are unconfirmed.
+  const unconsentedCount = contacts.filter(c => c && c._unconsented === true).length;
+  if (unconsentedCount > 0) {
+    console.warn(`[dispatcher] SOS event ${event.id}: ${unconsentedCount} unconfirmed contact(s) paged under consent grace window`);
+  }
+
   if (resolvedMode === 'fanout') {
     const stats = await dispatchFanout({ supabase, event, user, contacts, ackBaseUrl });
     // Cofounder ops alert (Sprint 1 #01 brief §"Three reference flows" / SOS):
@@ -396,10 +409,10 @@ export async function dispatchSafetyEvent({ supabase, eventId, mode, contactsOve
     if (isP0Type(event.type)) {
       opsAlert = await dispatchPhilOpsAlert({ supabase, event, user });
     }
-    return { mode: 'fanout', event_id: event.id, ops_alert: opsAlert, ...stats };
+    return { mode: 'fanout', event_id: event.id, ops_alert: opsAlert, unconsented_count: unconsentedCount, ...stats };
   }
   const stats = await dispatchSequential({ supabase, event, user, contacts });
-  return { mode: 'sequential', event_id: event.id, ...stats };
+  return { mode: 'sequential', event_id: event.id, unconsented_count: unconsentedCount, ...stats };
 }
 
 /**

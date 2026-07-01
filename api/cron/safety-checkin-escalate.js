@@ -25,6 +25,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { sendSms } from '../notifications/channels/sms.js';
+import { selectSosRecipients, applyConsentNotice } from '../_utils/sosConsent.js';
 
 const supabaseUrl =
   process.env.SUPABASE_URL ??
@@ -109,11 +110,15 @@ export default async function handler(req, res) {
         Math.round((Date.now() - new Date(checkin.expires_at).getTime()) / 60000),
       );
 
-      const { data: contacts } = await supabase
+      const { data: rawContacts } = await supabase
         .from('trusted_contacts')
-        .select('id, contact_name, contact_phone, contact_email')
+        .select('id, contact_name, contact_phone, contact_email, accepted_at, declined_at')
         .eq('user_id', checkin.user_id)
         .eq('notify_on_sos', true);
+      // Consent gate (Option B): consented contacts + still-pending ones while
+      // the SOS_CONSENT_GRACE_UNTIL window is open (tagged _unconsented).
+      // Declined contacts never paged; consented recipients never dropped.
+      const contacts = selectSosRecipients(rawContacts || []);
 
       if (!contacts?.length) {
         // Nothing to escalate to — already marked escalated above so we don't
@@ -161,7 +166,7 @@ export default async function handler(req, res) {
           return;
         }
 
-        const result = await sendSms({ to: contact.contact_phone, body: text });
+        const result = await sendSms({ to: contact.contact_phone, body: applyConsentNotice(text, contact) });
         if (result.ok) {
           await supabase.from('safety_alerts')
             .update({
