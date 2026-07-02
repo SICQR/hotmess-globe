@@ -47,7 +47,7 @@ export async function send(opts) {
     return { ok: false, skipped: true, error: 'no_push_subscription' };
   }
 
-  const copy = buildAlertCopy({ user, event, ackUrl });
+  const copy = buildAlertCopy({ user, event, ackUrl, recipient: contact });
   const payload = JSON.stringify({
     title: copy.title,
     body: copy.short,

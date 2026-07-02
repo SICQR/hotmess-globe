@@ -32,6 +32,8 @@
  *     raw?:      unknown,    // raw provider response for the audit row
  *   }
  */
+import { consentNotice } from '../../_utils/sosConsent.js';
+
 export const SAFETY_FROM_DISPLAY = 'HOTMESS Safety';
 
 export function safeStr(v, fallback = '') {
@@ -40,7 +42,7 @@ export function safeStr(v, fallback = '') {
   return s.length ? s : fallback;
 }
 
-export function buildAlertCopy({ user, event, ackUrl }) {
+export function buildAlertCopy({ user, event, ackUrl, recipient = null }) {
   const name = safeStr(user.display_name, 'A friend');
   const where = safeStr(event.location_str, 'Location unavailable');
   const verb = event.type === 'sos'
@@ -54,9 +56,18 @@ export function buildAlertCopy({ user, event, ackUrl }) {
           : 'triggered a safety alert';
 
   const ackLine = ackUrl ? ` Confirm safe: ${ackUrl}` : '';
+  // Consent notice (Option B): when the recipient is still unconfirmed and is
+  // only being paged because the grace window is open, prepend a one-line
+  // notice so they know why they got this and how to confirm / opt out.
+  // Owner-name-templated consent notice (Option B item 5): render with the SOS
+  // owner's display name so the pending contact knows who listed them. Falls
+  // back to "someone" inside consentNotice() when the name is unknown.
+  const notice = (recipient && recipient._unconsented === true)
+    ? `${consentNotice(user && user.display_name)}\n`
+    : '';
   return {
-    short: `${name} ${verb} on HOTMESS. ${where}.${ackLine}`.trim(),
+    short: `${notice}${name} ${verb} on HOTMESS. ${where}.${ackLine}`.trim(),
     title: `🆘 HOTMESS Safety — ${name}`,
-    body: `${name} ${verb} on HOTMESS.\nLast known: ${where}.${ackUrl ? `\n\nReached them? Tap to confirm: ${ackUrl}` : ''}`,
+    body: `${notice}${name} ${verb} on HOTMESS.\nLast known: ${where}.${ackUrl ? `\n\nReached them? Tap to confirm: ${ackUrl}` : ''}`,
   };
 }

@@ -9,6 +9,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { dispatchSafetyEvent } from '../notifications/dispatcher.js';
+import { selectSosRecipients, applyConsentNotice } from '../_utils/sosConsent.js';
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
@@ -121,19 +122,23 @@ export default async function handler(req, res) {
         const overdueMins = Math.round((Date.now() - new Date(checkin.expires_at).getTime()) / 60000);
 
         // Get trusted contacts for this user
-        const { data: contacts } = await supabase
+        const { data: rawContacts } = await supabase
           .from('trusted_contacts')
           .select('*')
           .eq('user_id', checkin.user_id)
           .eq('notify_on_sos', true);
+        // Consent gate (Option B): consented contacts + still-pending ones while
+        // the SOS_CONSENT_GRACE_UNTIL window is open (tagged _unconsented).
+        // Declined contacts never paged; consented recipients never dropped.
+        const contacts = selectSosRecipients(rawContacts || []);
 
-        for (const contact of contacts || []) {
+        for (const contact of contacts) {
           await supabase.from('notification_outbox').insert({
             user_id: checkin.user_id,
             user_email: contact.contact_email || profile?.email,
             notification_type: 'checkin_missed',
             title: '⏰ Check-in Missed — HOTMESS Safety',
-            message: `${userName} was supposed to check in ${overdueMins} minute(s) ago and hasn't responded. Please check on them.`,
+            message: applyConsentNotice(`${userName} was supposed to check in ${overdueMins} minute(s) ago and hasn't responded. Please check on them.`, contact, profile?.display_name),
             channel: contact.contact_phone ? 'whatsapp' : 'email',
             metadata: {
               type: 'checkin_missed',

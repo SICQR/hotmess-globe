@@ -59,7 +59,7 @@ export async function send(opts) {
     return { ok: false, skipped: true, error: 'resend_not_configured' };
   }
 
-  const copy = buildAlertCopy({ user, event, ackUrl });
+  const copy = buildAlertCopy({ user, event, ackUrl, recipient: contact });
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);

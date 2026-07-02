@@ -8,7 +8,7 @@
  * - Link through to SOS emergency contacts + blocked users
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield, Phone, Lock, ChevronRight, ExternalLink,
@@ -18,6 +18,11 @@ import {
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
+import {
+  shouldShowOwnerWarning,
+  countPendingSosContacts,
+  OWNER_WARNING_COPY,
+} from '@/utils/ownerWarning';
 import LiveLocationShare from '@/components/safety/LiveLocationShare';
 
 // ── UK Crisis lines ─────────────────────────────────────────────────────────
@@ -49,6 +54,21 @@ const DURATIONS = [
 
 const RELATIONS = ['Friend', 'Partner', 'Family', 'Other'];
 
+// ── Consent status (Option B item 4) ────────────────────────────────────────
+// Exact approved helper copy for the "Not confirmed yet" state, shown near the
+// pending badge so the owner understands what pending means and that pending
+// contacts may still be reached during the safety transition.
+const PENDING_HELPER_COPY =
+  "Not confirmed yet. We\u2019ll invite them to accept SOS alerts. During the safety transition, they may still receive emergency alerts for a limited time.";
+
+// Derive a contact's consent status from its accepted_at / declined_at columns.
+// declined wins over accepted (decline is the stronger opt-out signal).
+function consentStatus(c) {
+  if (c && c.declined_at != null) return 'declined';
+  if (c && c.accepted_at != null) return 'accepted';
+  return 'pending';
+}
+
 export default function L2SafetySheet() {
   const { openSheet } = useSheet();
   const [tab, setTab] = useState('contacts');
@@ -63,11 +83,61 @@ export default function L2SafetySheet() {
   const [formError, setFormError]         = useState('');
   const [form, setForm] = useState({ name: '', phone: '', email: '', relation: 'Friend' });
 
+  // ── Invite-on-add error surfacing (Option B item 2) ─────────────────────
+  // Map of contactId -> true when the acceptance invite POST failed. The
+  // contact is still added; this drives a visible, retryable warning row.
+  const [inviteError, setInviteError] = useState({});
+  const [retryingInvite, setRetryingInvite] = useState(null);
+
   // ── Check-in state ──────────────────────────────────────────────────────
   const [recentCheckIns, setRecentCheckIns] = useState([]);
   const [checkInsLoading, setCheckInsLoading] = useState(false);
   const [logging, setLogging]             = useState(false);
   const [selectedDuration, setSelectedDuration] = useState(120);
+
+  // ── Owner-warning banner (presentation only) ────────────────────────────
+  // Non-blocking, dismissible banner shown at rest when the owner has >=1
+  // pending SOS contact. "Pending" is derived from rows already loaded above
+  // (notify_on_sos && !accepted_at && !declined_at) via shouldShowOwnerWarning.
+  // This is DISPLAY ONLY — recipient selection lives server-side in
+  // api/_utils/sosConsent.js and is never re-decided here.
+  const OWNER_WARNING_DISMISS_KEY = 'hm.sos.ownerWarning.dismissed';
+  const [ownerWarningDismissed, setOwnerWarningDismissed] = useState(() => {
+    try { return sessionStorage.getItem(OWNER_WARNING_DISMISS_KEY) === '1'; }
+    catch { return false; }
+  });
+  const contactsListRef = useRef(null);
+
+  function dismissOwnerWarning(e) {
+    if (e) e.stopPropagation();
+    setOwnerWarningDismissed(true);
+    try { sessionStorage.setItem(OWNER_WARNING_DISMISS_KEY, '1'); } catch { /* noop */ }
+  }
+
+  // Tapping the banner routes to the Contacts tab (where the per-contact
+  // status badges live) and scrolls the list into view so the owner can act.
+  function openContactsFromBanner() {
+    setTab('contacts');
+    requestAnimationFrame(() => {
+      contactsListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  const pendingSosCount = countPendingSosContacts(contacts);
+  const showOwnerWarning = shouldShowOwnerWarning(contacts, ownerWarningDismissed);
+
+  // ── Post-trigger owner_warning (SECONDARY surface) ──────────────────────
+  // After an SOS fires with unconfirmed recipients, SOSContext emits
+  // hm:sos-owner-warning with the server's owner_warning payload. This
+  // non-silent owner surface renders it via the app toast (sonner).
+  useEffect(() => {
+    const onOwnerWarning = (ev) => {
+      const msg = ev?.detail?.message;
+      if (msg) toast.warning(msg, { duration: 12000 });
+    };
+    window.addEventListener('hm:sos-owner-warning', onOwnerWarning);
+    return () => window.removeEventListener('hm:sos-owner-warning', onOwnerWarning);
+  }, []);
 
   // ── Load user + trusted contacts ────────────────────────────────────────
   useEffect(() => {
@@ -121,14 +191,14 @@ export default function L2SafetySheet() {
     let { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); setFormError('Not signed in.'); return; }
 
-    const { error } = await supabase.from('trusted_contacts').insert({
+    const { data: inserted, error } = await supabase.from('trusted_contacts').insert({
       user_id:        user.id,
       contact_name:  form.name.trim(),
       contact_phone: form.phone.trim() || null,
       contact_email: form.email.trim() || null,
       relationship:  form.relation,
       notify_on_sos: true,
-    });
+    }).select('id').single();
 
     setSaving(false);
     if (error) { setFormError('Could not save. Try again.'); return; }
@@ -137,6 +207,52 @@ export default function L2SafetySheet() {
     setForm({ name: '', phone: '', email: '', relation: 'Friend' });
     setShowAddForm(false);
     loadContacts();
+
+    // Invite-on-add (Option B item 2): fire the acceptance invitation so the new
+    // contact can confirm they agree to be an emergency contact. The contact is
+    // ALREADY added above — a failed invite must never block the insert — but,
+    // unlike before, the failure is now SURFACED in the UI (a retryable warning
+    // on the contact row) instead of being silently swallowed.
+    if (inserted?.id) {
+      await sendInvite(inserted.id);
+    }
+  }
+
+  // ── Send / retry the acceptance invite for a contact ────────────────────
+  // Sets inviteError[contactId]=true on any failure so the UI can show a
+  // "Couldn't send invite — tap to retry" warning. Clears it on success.
+  async function sendInvite(contactId) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const jwt = session?.access_token;
+      if (!jwt) {
+        setInviteError(prev => ({ ...prev, [contactId]: true }));
+        return;
+      }
+      const res = await fetch('/api/safety/dispatch-invitation', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', Authorization: `Bearer ${jwt}` },
+        body: JSON.stringify({ trusted_contact_id: contactId, force: false }),
+      });
+      if (!res.ok) {
+        setInviteError(prev => ({ ...prev, [contactId]: true }));
+      } else {
+        setInviteError(prev => {
+          const next = { ...prev };
+          delete next[contactId];
+          return next;
+        });
+      }
+    } catch {
+      setInviteError(prev => ({ ...prev, [contactId]: true }));
+    }
+  }
+
+  // Retry handler for the visible invite-failure warning.
+  async function handleRetryInvite(contactId) {
+    setRetryingInvite(contactId);
+    await sendInvite(contactId);
+    setRetryingInvite(null);
   }
 
   // ── Delete trusted contact ──────────────────────────────────────────────
@@ -194,6 +310,40 @@ export default function L2SafetySheet() {
         </div>
       </div>
 
+      {/* Owner-warning banner (at rest, non-blocking, dismissible) ─────────── */}
+      {showOwnerWarning && (
+        <div className="px-4 pb-3 flex-shrink-0">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={openContactsFromBanner}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openContactsFromBanner(); } }}
+            className="w-full text-left bg-[#C8962C]/10 border border-[#C8962C]/25 rounded-2xl p-3 flex items-start gap-3 active:bg-[#C8962C]/15 transition-colors cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-full bg-[#C8962C]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <AlertTriangle className="w-4 h-4 text-[#C8962C]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              {pendingSosCount > 0 && (
+                <p className="text-[#C8962C] font-black text-xs mb-0.5">
+                  {pendingSosCount} of your contacts aren't confirmed
+                </p>
+              )}
+              <p className="text-white/70 text-xs leading-relaxed">{OWNER_WARNING_COPY}</p>
+              <p className="text-[#C8962C]/80 text-[10px] font-bold mt-1">Tap to review contacts</p>
+            </div>
+            <button
+              type="button"
+              aria-label="Dismiss"
+              onClick={dismissOwnerWarning}
+              className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0 active:bg-white/10"
+            >
+              <X className="w-4 h-4 text-white/40" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex gap-1 px-4 pb-3 flex-shrink-0">
         {[
@@ -220,7 +370,7 @@ export default function L2SafetySheet() {
 
         {/* ─── CONTACTS ─────────────────────────────────────────────────── */}
         {tab === 'contacts' && (
-          <div className="px-4 pb-6 space-y-3">
+          <div ref={contactsListRef} className="px-4 pb-6 space-y-3">
 
             {/* SOS contacts shortcut */}
             <button
@@ -261,11 +411,48 @@ export default function L2SafetySheet() {
                       <User className="w-4 h-4 text-[#C8962C]" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white font-bold text-sm truncate">{c.contact_name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-white font-bold text-sm truncate">{c.contact_name}</p>
+                        {/* Consent status badge (Option B item 4). Pending stays
+                            visible — it is badged "Not confirmed yet", not hidden. */}
+                        {(() => {
+                          const st = consentStatus(c);
+                          if (st === 'accepted') {
+                            return <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 flex-shrink-0">Confirmed</span>;
+                          }
+                          if (st === 'declined') {
+                            return <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-white/10 text-white/40 flex-shrink-0">Declined</span>;
+                          }
+                          return (
+                            <span
+                              className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#C8962C]/20 text-[#C8962C] flex-shrink-0 cursor-help"
+                              title={PENDING_HELPER_COPY}
+                            >
+                              Not confirmed yet
+                            </span>
+                          );
+                        })()}
+                      </div>
                       <p className="text-white/40 text-xs truncate">
                         {[c.contact_phone, c.contact_email].filter(Boolean).join(' · ')}
                         {c.relationship ? ` · ${c.relationship}` : ''}
                       </p>
+                      {consentStatus(c) === 'pending' && (
+                        <p className="text-white/30 text-[10px] mt-0.5 leading-snug">{PENDING_HELPER_COPY}</p>
+                      )}
+                      {/* Invite-on-add failure surfaced + retryable (Option B item 2). */}
+                      {inviteError[c.id] && (
+                        <button
+                          type="button"
+                          onClick={() => handleRetryInvite(c.id)}
+                          disabled={retryingInvite === c.id}
+                          className="mt-1 inline-flex items-center gap-1 text-amber-400 text-[10px] font-bold active:opacity-70 disabled:opacity-50"
+                        >
+                          {retryingInvite === c.id
+                            ? <><Loader2 className="w-3 h-3 animate-spin" />Retrying…</>
+                            : <><AlertTriangle className="w-3 h-3" />Couldn't send invite — tap to retry</>}
+                        </button>
+                      )}
                     </div>
                     <button
                       onClick={() => handleDelete(c.id, c.contact_name)}

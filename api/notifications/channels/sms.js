@@ -173,6 +173,6 @@ export async function send(opts) {
   if (!contact?.contact_phone) {
     return { ok: false, skipped: true, error: 'no_phone' };
   }
-  const copy = buildAlertCopy({ user, event, ackUrl });
+  const copy = buildAlertCopy({ user, event, ackUrl, recipient: contact });
   return sendSms({ to: contact.contact_phone, body: copy.short });
 }

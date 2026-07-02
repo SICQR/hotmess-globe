@@ -9,6 +9,11 @@
  * Side effects:
  *   - safety_delivery_log row → status='acked', acked_at=now()
  *   - safety_events row metadata.acked_count incremented (best-effort)
+ *   - safety_events row → resolved_at=now() on FIRST ack (best-effort).
+ *     Lifecycle fix (Option B item 6): safety_events had no resolve path, so
+ *     every event stayed open forever. A contact tapping "reached them" is an
+ *     explicit human signal that the incident is handled — we record it as the
+ *     resolve. Only set once (never overwrite an earlier resolved_at).
  *
  * Returns a minimal HTML page. Voice acks come through a different endpoint
  * (/api/safety/voice-response/:id, Twilio TwiML callback).
@@ -116,13 +121,18 @@ export default async function handler(req, res) {
   try {
     const { data: ev } = await supabase
       .from('safety_events')
-      .select('id, metadata')
+      .select('id, metadata, resolved_at')
       .eq('id', row.safety_event_id)
       .maybeSingle();
     if (ev) {
       const meta = (ev.metadata && typeof ev.metadata === 'object') ? ev.metadata : {};
       const next = { ...meta, acked_count: (Number(meta.acked_count) || 0) + 1, last_ack_at: nowIso };
-      await supabase.from('safety_events').update({ metadata: next }).eq('id', ev.id);
+      const patch = { metadata: next };
+      // Lifecycle fix (Option B item 6): resolve the event on the FIRST ack —
+      // an explicit human confirmation that the user was reached. Never
+      // overwrite an existing resolved_at (preserve the earliest resolve time).
+      if (ev.resolved_at == null) patch.resolved_at = nowIso;
+      await supabase.from('safety_events').update(patch).eq('id', ev.id);
     }
   } catch { /* non-fatal */ }
 
